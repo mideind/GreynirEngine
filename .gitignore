@@ -1,0 +1,100 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+.cache/
+.idea/
+*.py[cod]
+*.o
+*.so
+*.exe
+
+# Compressed DAWG trees
+*.dawg
+!ordalisti.text.dawg
+
+# Pickled DAWG trees
+*.pickle
+!ordalisti.dawg.pickle
+
+# Training data files
+*.gz
+*.zip
+
+# Experimental Python stuff
+test.py
+
+# Various resource files
+resources/*.txt
+!resources/ordalisti.sorted.txt
+!resources/obeygd.hreinsad.txt
+resources/*.csv
+resources/ord.compressed
+resources/*.tmLanguage
+resources/visir/
+resources/reykjanes/
+mim/
+ifd/
+gold/
+fonts/
+logs/
+node_modules/
+cffi_test/
+backup/
+
+# Scratch work files
+*.bin
+*.sublime-project
+*.sublime-workspace
+*.bak
+*.profile
+*.log
+t
+txt
+input.txt
+nohup.out
+
+# Distribution / packaging
+.Python
+env/
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+.eggs/
+*.egg-info/
+.installed.cfg
+*.egg
+log/
+console/
+
+# Virtual environments
+venv/
+p35/
+p358/
+p359/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+deploy_done.py
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
