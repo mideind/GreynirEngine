@@ -44,10 +44,11 @@ Prerequisites
 This package runs on CPython 3.4 or newer, and on PyPy 3.5
 or newer. PyPy is recommended for best performance.
 
-You need to have ``python3-dev`` installed on your system::
+You need to have ``python3-dev`` and/or potentially ``python3.6-dev`` installed on your system::
 
 	# Debian or Ubuntu:
 	sudo apt-get install python3-dev
+	sudo apt-get install python3.6-dev
 
 ************
 Installation
