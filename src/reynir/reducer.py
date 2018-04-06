@@ -353,8 +353,6 @@ class Reducer:
 
             def __init__(self):
                 super().__init__(visit_all = False)
-                self._stack = [ False ]
-                self._transformed = set()
 
             def copy_tree(self, root):
                 """ Copy the tree under the root, including the root itself.
@@ -365,7 +363,7 @@ class Reducer:
 
                 def copy_node(node):
 
-                    def dup(node, ix, offset):
+                    def dup(node):
                         """ Duplicate (copy) this node """
                         if node is None:
                             return None
@@ -384,10 +382,12 @@ class Reducer:
                         # Recurse to copy the child tree as well
                         return copy_node(node)
 
+                    if node is None:
+                        return None
                     # First, copy the root itself
                     if node not in copied:
                         # Do not copy nodes twice during the same subtree copy process
-                        # copied.add(node) !!! DEBUG
+                        copied.add(node)
                         node = Node.copy(node)
                         # Then, copy the children as required by applying the dup() function
                         node.transform_children(dup)
@@ -396,62 +396,36 @@ class Reducer:
 
                 return copy_node(root)
 
-            def _force_visit(self, node, visited):
-                """ Should we visit the given node even if it has already been visited? """
-                if node is None:
-                    return False
-                nt = node.nonterminal if node.is_completed else None
-                if nt is not None:
-                    if nt.has_tag("enable_prep_bonus"):
-                        # Yes, force a visit to SagnInnskot (which normally has
-                        # the enable_prep_bonus tag)
-                        return True
-                    if self._stack[-1] and nt.is_optional and node.is_empty:
-                        # No need to force a visit into optional and empty nodes
-                        return False
-                return self._stack[-1]
-
             def _visit_nonterminal(self, level, node):
-                nt = node.nonterminal if node.is_completed else None
-                visit_children = True
-                if nt is not None:
-                    if nt.has_any_tag(_PREP_SCOPE_SET) or nt.is_noun_phrase:
-                        # Contained preposition scope (such as Setning or SetningÁnF),
-                        # or a scope associated with a noun (FsRunaEftirNl),
-                        # or a scope that can't contain a preposition (EinnAl):
-                        # Don't duplicate from here, just use the original subtree
-                        self._stack.append(False)
-                    elif nt.has_tag("enable_prep_bonus"):
-                        # Starting scope for potential verb/preposition match
-                        # (Typically SagnInnskot)
-                        self._stack.append(True)
-                        # Duplicate the tree from this point
-                        # !!! NOTE: It is probably not enough to just duplicate
-                        # !!! the child nodes; the parent SagnInnskot must also
-                        # !!! be duplicated to become a unique child of the
-                        # !!! enclosing verb context
-                        def dup(node, ix, offset):
-                            return None if node is None else self.copy_tree(node)
-                        if node not in self._transformed:
-                            # Avoid re-transforming the children of a node
-                            # whose children have already been transformed
-                            node.transform_children(dup)
-                            # self._transformed.add(node) !!! DEBUG
-                        visit_children = False
-                if visit_children:
-                    super()._visit_nonterminal(level, node)
+                """ Create a result object to capture information about
+                    productions (families of children) of this nonterminal """
+                return defaultdict(list)
+
+            def _add_result(self, results, ix, r):
+                """ Capture a particular child node r of family ix """
+                results[ix].append(r)
 
             def _process_results(self, results, node):
-                nt = node.nonterminal if node.is_completed else None
-                if nt is not None:
-                    if nt.has_any_tag(_PREP_ALL_SET) or nt.is_noun_phrase:
-                        self._stack.pop()
+                """ Go through the child productions (families) and
+                    duplicate any nodes that have the enable_prep_bonus
+                    tag, so that they can receive independent scores in
+                    the reducer depending on the enclosing verb context """
+                for family_ix, children in results.items():
+                    for ix, child_nt in enumerate(children):
+                        # child_nt is None for all uninteresting nodes, i.e. terminal/token nodes
+                        # and nonterminal nodes that are not completed
+                        if child_nt is not None and child_nt.has_tag("enable_prep_bonus"):
+                            # This is a nonterminal node marked with enable_prep_bonus:
+                            # Duplicate its subtree
+                            node.transform_child(family_ix, ix, self.copy_tree)
+                # Return the nonterminal corresponding to this node,
+                # if the node represents a completed nonterminal
+                return node.nonterminal if node.is_completed else None
 
             def go(self, nt):
                 """ Override go() to visit and duplicate the children of
                     the root node, but not the root node itself """
                 super().go(nt)
-                assert len(self._stack) == 1 # Check that pushes and pops match
 
             @classmethod
             def navigate(cls, root_node):

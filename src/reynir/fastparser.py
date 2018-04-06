@@ -310,18 +310,20 @@ class Node:
             self._families.append(pc)
 
     def transform_children(self, func):
-        """ Apply a given function to the children of this node,
-            replacing the children with the result.
-            Calls func(child, ix, offset) where child is the
-            original child node, ix is the family, and offset
-            is the tuple index (0 or 1) """
+        """ Apply a given function to all children of this node,
+            replacing the children with the result. """
         if not self._families:
             return
-        for ix, pc in enumerate(self._families):
-            prod, f = pc
+        for ix, (prod, f) in enumerate(self._families):
             if f:
-                f = [ func(ch, ix, i) for i, ch in enumerate(f) ]
+                f = [ func(ch) for ch in f ]
                 self._families[ix] = (prod, f)
+
+    def transform_child(self, family_ix, child_ix, func):
+        """ Replace a single child of this node with the
+            result of applying a function to it """
+        _, children = self._families[family_ix]
+        children[child_ix] = func(children[child_ix])
 
     @property
     def start(self):
@@ -698,8 +700,7 @@ class ParseForestNavigator:
                             if len(children) > 1:
                                 child_ix -= len(children) - 1
                             for ch in children:
-                                self._add_result(results, ix,
-                                    _nav_helper(ch, child_ix, child_level))
+                                self._add_result(results, ix, _nav_helper(ch, child_ix, child_level))
                                 child_ix += 1
                     v = self._process_results(results, w)
             if not self._visit_all:

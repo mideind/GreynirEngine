@@ -32,7 +32,7 @@ def test_parse(verbose = False):
         # 1
         "Margar málsgreinar koma hér fyrir.",
         # 2
-        "Þetta takast ekki að þáttar.", # Villa
+        "Þetta takast ekki að þáttar.", # Error sentence
         # 3
         "Fjórða málsgreinin er síðust.",
         # 4
@@ -151,5 +151,8 @@ def test_parse(verbose = False):
 
     Reynir.cleanup()
 
+
 if __name__ == "__main__":
+    # When invoked as a main module, do a verbose test
     test_parse(verbose = True)
+
