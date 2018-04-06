@@ -1046,9 +1046,7 @@ Node* Parser::makeNode(State* pState, UINT nEnd, Node* pV, NodeDict& ndV)
    }
    Label label(iNtB, nDot, pProdLabel, nStart, nEnd);
    Node* pY = ndV.lookupOrAdd(label);
-   // Don't add a child family to a node that spans no terminals
-   if (nEnd > nStart)
-      pY->addFamily(pProd, pW, pV); // pW may be NULL
+   pY->addFamily(pProd, pW, pV); // pW may be NULL
    return pY;
 }
 

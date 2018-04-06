@@ -246,9 +246,12 @@ class Node:
                         # we correct it via the final [::-1].
                         ch = [ ]
                         p1, p2 = fe.p1, fe.p2
-                        while (p1 != ffi.NULL and p1.label.iNt == lb.iNt and
-                            p1.pHead != ffi.NULL and p1.pHead.pProd != ffi.NULL and
-                            p1.pHead.pNext == ffi.NULL):
+                        while (p1 != ffi.NULL and
+                            p1.label.iNt == lb.iNt and
+                            p1.pHead != ffi.NULL and
+                            p1.pHead.pProd != ffi.NULL and
+                            p1.pHead.pNext == ffi.NULL and
+                            p1.pHead.p1 != ffi.NULL):
                             # Interior node that can be coalesced into its parent
                             # Keep the second argument of each tuple
                             ch.append(p2)
@@ -273,6 +276,7 @@ class Node:
             assert parent.pList != ffi.NULL
             tix = parent.pList[index]
             node._terminal = job.grammar.lookup(tix)
+            assert isinstance(node._terminal, Terminal) # !!! DEBUG
             node._token = job.tokens[lb.iNt]
         return node
 
@@ -553,6 +557,7 @@ class Fast_Parser(BIN_Parser):
                     raise ParseError("No parse available at token {0} ({1} tokens in input)"
                         .format(ix, len(wrapped_tokens)), 0)
 
+            # eparser.dumpForest(node, Fast_Parser._c_grammar) # !!! DEBUG
             # Create a new Python-side node forest corresponding to the C++ one
             result = Node.from_c_node(job, node)
 

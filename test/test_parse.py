@@ -48,7 +48,11 @@ def test_parse(verbose = False):
         # 9
         "Barnið fór í loðfílarannsókn.", # Test composite words
         # 10
-        "Eðlisfræðingurinn Stephen Hawking lést í dag, á pí-deginum."
+        "Eðlisfræðingurinn Stephen Hawking lést í dag, á pí-deginum.",
+        # 11
+        "Löngu áður en Jón borðaði ísinn sem hafði bráðnað hratt "
+        "í hádeginu fór ég á veitingastaðinn á horninu og keypti mér rauðvín "
+        "með hamborgaranum sem ég borðaði í gær með mikilli ánægju."
     ]
     r = Reynir()
     job = r.submit(" ".join(sentences))
@@ -95,6 +99,8 @@ def test_parse(verbose = False):
     assert results[8].tree.nouns == [ "barn", "augnrannsókn", "húsnæðiskaup" ]
     assert results[9].tree.nouns == [ "barn", "loðfíla-rannsókn" ]
     assert results[10].tree.nouns == [ "eðlisfræðingur", "pí", "dagur" ]
+    assert results[11].tree.nouns == [ 'Jón', 'ís', 'veitingastaður', 'horn', 'rauðvín',
+        'hamborgari', 'ánægja' ]
 
     # Test that the parser finds the correct verbs
     assert results[0].tree.verbs == [ "vera", "vera", "gera" ]
@@ -108,6 +114,7 @@ def test_parse(verbose = False):
     assert results[8].tree.verbs == [ "fara" ]
     assert results[9].tree.verbs == [ "fara" ]
     assert results[10].tree.verbs == [ "láta" ]
+    assert results[11].tree.verbs == [ 'borða', 'hafa', 'bráðna', 'fara', 'kaupa', 'borða' ]
 
     # Test that the parser finds the correct word stems
     assert results[0].tree.stems == [ "hér", "vera", "vera", "að", "gera",
@@ -127,14 +134,20 @@ def test_parse(verbose = False):
     assert results[9].tree.stems == [ "barn", "fara", "í", "loðfíla-rannsókn", "." ]
     assert results[10].tree.stems == [ "eðlisfræðingur", "Stephen", "Hawking",
         "láta", "í dag", ",", "á", "pí", "—", "dagur", "." ]
+    assert results[11].tree.stems == [ 'langur', 'áður', 'en', 'Jón', 'borða', 'ís',
+        'sem', 'hafa', 'bráðna', 'hratt', 'í hádeginu', 'fara', 'ég', 'á',
+        'veitingastaður', 'á', 'horn', 'og', 'kaupa', 'ég', 'rauðvín', 'með',
+        'hamborgari', 'sem', 'ég', 'borða', 'í gær', 'með', 'mikill', 'ánægja', '.' ]
+
+    def num_pp(s):
+        """ Count the prepositional phrases in the parse tree for sentence s """
+        return len([t for t in s.tree.descendants if t.match("PP")])
 
     # Test that the correct number of prepositional phrases (PPs) is generated
-    pp8 = [ t.text for t in results[8].tree.descendants if t.match("PP") ]
-    assert len(pp8) == 2
-    pp9 = [ t.text for t in results[9].tree.descendants if t.match("PP") ]
-    assert len(pp9) == 1
-    pp10 = [ t.text for t in results[10].tree.descendants if t.match("PP") ]
-    assert len(pp10) == 1
+    assert num_pp(results[8]) == 2
+    assert num_pp(results[9]) == 1
+    assert num_pp(results[10]) == 1
+    assert num_pp(results[11]) == 4
 
     Reynir.cleanup()
 
