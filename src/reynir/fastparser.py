@@ -212,6 +212,7 @@ class Node:
         self._start = start
         self._end = end
         self._families = None
+        self._highest_prio = 0 # Priority of highest-priority child family
         self._nonterminal = None
         self._terminal = None
         self._token = None
@@ -270,13 +271,12 @@ class Node:
                     fe = fe.pNext
         else:
             # Token node: find the corresponding terminal
-            # assert parent is not None
-            assert parent != ffi.NULL
-            assert 0 <= index < parent.n
-            assert parent.pList != ffi.NULL
+            # assert parent != ffi.NULL
+            # assert 0 <= index < parent.n
+            # assert parent.pList != ffi.NULL
             tix = parent.pList[index]
             node._terminal = job.grammar.lookup(tix)
-            assert isinstance(node._terminal, Terminal) # !!! DEBUG
+            # assert isinstance(node._terminal, Terminal) # !!! DEBUG
             node._token = job.tokens[lb.iNt]
         return node
 
@@ -288,6 +288,7 @@ class Node:
         node._terminal = other._terminal
         node._token = other._token
         node._completed = other._completed
+        node._highest_prio = other._highest_prio
         if other._families:
             # Create a new list object having the
             # same child nodes as the source node
@@ -296,18 +297,29 @@ class Node:
 
     def _add_family(self, job, c_prod, c_children, ix_offset):
         """ Add a family of children to this node, in parallel with other families """
-        prod = None if c_prod == ffi.NULL else job.grammar.productions_by_ix[c_prod.nId]
-        children = [
+        if c_prod == ffi.NULL:
+            prod = None
+            prio = 0
+        else:
+            prod = job.grammar.productions_by_ix[c_prod.nId]
+            prio = prod.priority
+        # Note: lower priority values mean higher priority!
+        if self._families and prio > self._highest_prio:
+            # Lower priority than a family we already have: don't bother adding it
+            return
+        # Recreate the pc tuple from the production index
+        pc = (prod, [
             # Convert child node from C++ form to Python form
             job.c_dict.get(ch) or Node.from_c_node(job, ch, c_prod, ix + ix_offset)
             for ix, ch in enumerate(c_children)
-        ]
-        # Recreate the pc tuple from the production index
-        pc = (prod, children)
-        if self._families is None:
+        ])
+        if self._families is None or prio < self._highest_prio:
+            # First family of children, or highest priority so far: add as the only family
             self._families = [ pc ]
         else:
+            # Same priority as the families we have already: add this
             self._families.append(pc)
+        self._highest_prio = prio
 
     def transform_children(self, func):
         """ Apply a given function to all children of this node,
@@ -334,6 +346,11 @@ class Node:
     def end(self):
         """ Return the end token index """
         return self._end
+
+    @property
+    def is_span(self):
+        """ Returns True if the node spans one or more tokens """
+        return self._end > self._start
 
     @property
     def nonterminal(self):
