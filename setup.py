@@ -61,7 +61,7 @@ def read(*names, **kwargs):
 
 setup(
     name='reynir',
-    version='0.1.6',
+    version='0.1.7',
     license='GNU GPLv3',
     description='A natural language parser for Icelandic',
     long_description='%s\n%s' % (
@@ -100,7 +100,7 @@ setup(
     keywords=[
         'nlp', 'parser', 'icelandic'
     ],
-    setup_requires=['cffi>=1.0.0'],
+    setup_requires=['cffi>=1.10.0'],
     install_requires=[
         'cffi>=1.0.0',
         'tokenizer>=0.1.12'

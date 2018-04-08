@@ -7,12 +7,8 @@ include src/reynir/Reynir.grammar.bin
 include src/reynir/eparser.h
 exclude src/reynir/_eparser.cpp
 include src/reynir/config/*.conf
-exclude src/reynir/config/greynir.is.conf
-exclude src/reynir/config/ReynirSimple.conf
-exclude src/reynir/config/Reynir.conf
 exclude src/reynir/config/Index.conf
 include src/reynir/resources/ordalisti.text.dawg
-exclude src/reynir/resources/ordalisti.dawg.pickle
 include src/reynir/resources/ord.compressed
 exclude src/reynir/*.o
 exclude src/reynir/*.so

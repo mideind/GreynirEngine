@@ -438,9 +438,6 @@ class Reducer:
                 # We are only interested in completed nonterminals
                 self.nt = node.nonterminal if node.is_completed else None
                 self.name = self.nt.name if self.nt else None
-                self.highest_prio = None # The priority of the highest-priority child, if any
-                self.use_prio = False
-                self.highest_ix = None # List of children with that priority
                 # Verb/preposition matching stuff
                 self.pushed_preposition_bonus = False
                 verb = reducer.get("current_verb")
@@ -474,22 +471,8 @@ class Reducer:
                             self.reducer.set("current_verb", sc[key])
 
             def add_child_production(self, ix, prod):
-                """ Add a family of children to the priority pool """
+                """ Reset the current verb scope for each family """
                 self.reducer.set("current_verb", self.start_verb)
-                if self.nt is None:
-                    # Not a completed nonterminal; priorities don't apply
-                    return
-                prio = prod.priority
-                if self.highest_prio is not None and prio != self.highest_prio:
-                    # Note that there are different priorities
-                    self.use_prio = True
-                if self.highest_prio is None or prio < self.highest_prio:
-                    # Note: lower number means higher priority ;-)
-                    self.highest_prio = prio
-                    self.highest_ix = { ix }
-                elif prio == self.highest_prio:
-                    # Another child with the same (highest) priority
-                    self.highest_ix.add(ix)
 
             def process(self, node):
                 """ After accumulating scores for all possible productions
@@ -503,11 +486,6 @@ class Reducer:
                         # Not ambiguous: only one result, do a shortcut
                         [ sc ] = csc.values() # Will raise an exception if not exactly one value
                     else:
-                        if self.use_prio:
-                            # There is an absolute priority ordering ('>') between the productions
-                            # of this nonterminal: remove those child trees from consideration
-                            # that do not have the highest priority
-                            csc = { ix: sc for ix, sc in csc.items() if ix in self.highest_ix }
                         # Eliminate all families except the best scoring one
                         # Sort in decreasing order by score
                         s = sorted(csc.items(), key = lambda x: x[1]["sc"], reverse = True)
