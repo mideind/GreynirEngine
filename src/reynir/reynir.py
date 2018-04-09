@@ -100,6 +100,7 @@ class _Sentence:
         self._num = None # Number of possible combinations
         self._score = None # Score of best parse tree
         self._text = None # Cached text representation
+        self._terminals = None # Cached terminals
         if self._job._parse:
             # We want an immediate parse of the sentence
             self.parse()
@@ -193,8 +194,19 @@ class _Sentence:
             of variants (case, number, gender, etc.) """
         if self.tree is None:
             # Must parse the sentence first, without errors
-            return []
-        return [ (d.text, d.stem, d.tcat, d.variants) for d in self.tree.descendants if d.is_terminal ]
+            return None
+        if self._terminals is not None:
+            return self._terminals
+        self._terminals = [
+            (d.text, d.stem, d.tcat, d.variants) for d in self.tree.descendants if d.is_terminal
+        ]
+        return self._terminals
+
+    @property
+    def stems(self):
+        """ Convenience property to return the stems only """
+        t = self.terminals
+        return None if t is None else [ terminal[1] for terminal in t ]
 
     def __str__(self):
         return self.text
