@@ -13,9 +13,11 @@ Reynir is a Python 3.x package for **parsing Icelandic text into sentence trees*
 The trees can then be used to extract information from the text, for instance
 about contained nouns and noun phrases, person names, verbs, word stems, etc.
 
-.. image:: _static/GreynirTreeExampleSmall.png
+.. figure:: _static/GreynirTreeExampleSmall.png
     :align: center
     :alt: An example of a parse tree
+
+    Reynir is the engine of `Greynir.is <https://greynir.is>`_
 
 The entire `Database of Modern Icelandic Inflection <http://bin.arnastofnun.is/DMII/>`_
 (`Beygingarlýsing íslensks nútímamáls <http://bin.arnastofnun.is>`_),

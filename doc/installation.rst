@@ -28,12 +28,12 @@ To install Reynir::
     $ pip3 install reynir
 
 
-On the most common Linux i86_64 and AMD64 systems, this will download and install a binary wheel.
+On the most common Linux x86_64/amd64 systems, this will download and install a binary wheel.
 On other systems, a source distribution will be downloaded and compiled to binary.
 
 
-Installing into a virtualenv
-----------------------------
+Install into a virtualenv
+-------------------------
 
 In many cases, you will want to maintain a separate Python environment for
 your project that uses Reynir. For this, you can use *virtualenv*::
