@@ -223,6 +223,10 @@ class _Paragraph:
         for _, sent in self._p:
             yield _Sentence(self._job, sent)
 
+    def __iter__(self):
+        """ Allow easy iteration of sentences within this paragraph """
+        return iter(self.sentences())
+
 
 class _Job:
 
@@ -236,7 +240,7 @@ class _Job:
         self._parse_time = 0.0
         self._parse = parse
         self._num_sent = 0
-        self._num_parsed_sent = 0
+        self._num_parsed = 0
         self._num_tokens = 0
         self._num_combinations = 0
         self._total_ambig = 0.0
@@ -249,7 +253,7 @@ class _Job:
         self._num_tokens += slen
         if num > 0:
             # The sentence was parsed successfully
-            self._num_parsed_sent += 1
+            self._num_parsed += 1
             self._num_combinations += num
             ambig_factor = num ** (1 / slen)
             self._total_ambig += ambig_factor * slen
@@ -319,7 +323,7 @@ class _Job:
     @property
     def num_parsed(self):
         """ Total number of sentences successfully parsed within this job """
-        return self._num_parsed_sent
+        return self._num_parsed
 
     @property
     def num_combinations(self):

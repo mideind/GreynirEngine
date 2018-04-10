@@ -327,8 +327,9 @@ class SimpleTree:
         else:
             tags = self._tag_cache
         if isinstance(item, str):
-            item = item.split("-")
-        assert isinstance(item, list)
+            item = re.split(r"[_\-]", item) # Split on both _ and -
+        if not isinstance(item, list):
+            raise ValueError("Argument to match_tag() must be a string or a list")
         return tags[0:len(item)] == item
 
     @property
@@ -647,6 +648,14 @@ class SimpleTree:
         """ Return all subtree roots, including self, that match the given pattern """
         items = self._compile(pattern)
         return self._all_matches(items)
+
+    def first_match(self, pattern):
+        """ Return the first subtree root, including self, that matches the given
+            pattern. If no subtree matches, return None. """
+        try:
+            return next(iter(self.all_matches(pattern)))
+        except StopIteration:
+            return None
 
     class _NestedList(list):
 
