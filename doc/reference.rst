@@ -288,7 +288,8 @@ hence the leading underscore in the class name.
 
     .. py:attribute:: tree
 
-        Returns the best (highest-scoring) parse tree for the sentence,
+        Returns a :py:class:`SimpleTree` object representing the best
+        (highest-scoring) parse tree for the sentence,
         in a *simplified form* that is easy to work with.
 
         If the sentence has not yet been parsed, or no parse tree was found
@@ -362,4 +363,233 @@ hence the leading underscore in the class name.
         Returns a ``list`` of the stems of the words in the sentence, or
         the text of the token for non-word tokens. ``sent.stems`` is a shorthand for
         ``[ t[1] for t in sent.terminals ]``.
+
+
+The SimpleTree class
+--------------------
+
+Instances of this class are returned from :py:attr:`_Sentence.tree`.
+They describe a simplified parse tree or a part (subtree) thereof.
+
+.. py:class:: SimpleTree
+
+    .. py:attribute:: is_terminal
+
+        Returns ``True`` if this subtree corresponds to a grammar
+        terminal (in which case it has no child subtrees),
+        or ``False`` otherwise.
+
+    .. py:attribute:: tag
+
+        Returns a ``str`` with the name of the nonterminal corresponding
+        to the root of this tree or subtree. The tag may
+        have subcategories, separated by a hyphen, e.g. ``NP-OBJ``.
+
+    .. py:attribute:: terminal
+
+        Returns a ``str`` with the terminal corresponding to this
+        subtree. The terminal contains a category followed by eventual
+        variants, separated by underscores, e.g. ``no_ef_ft_hvk`` for
+        a noun, possessive case, singular, neutral gender.
+
+    .. py:attribute:: variants
+
+        Returns a ``set`` of the grammatical variants specified in
+        the terminal corresponding to this
+        subtree, e.g. ``{ "ef", "ft", "hvk" }`` for possessive case,
+        singular, neutral gender.
+
+    .. py:attribute:: tcat
+
+        Returns a ``str`` with the terminal category corresponding to this
+        subtree, e.g. ``no`` for nouns or ``dags`` for dates.
+
+    .. py:method:: match_tag(self, item) -> bool
+
+        Checks whether the root nonterminal of the tree matches the given
+        nonterminal identifier.
+
+        :param str item: The nonterminal identifier to match. The match can
+            be partial, i.e. the item ``NP`` matches the roots ``NP-OBJ`` and
+            ``NP-SUBJ`` as well as plain ``NP``.
+
+        :return: ``True`` if the root nonterminal matches, or ``False`` if not.
+
+    .. py:attribute:: children
+
+        Returns a generator for the (immediate) child subtrees of this tree.
+        The generator returns a :py:class:`SimpleTree` instance for
+        every child.
+
+    .. py:attribute:: descendants
+
+        Returns a generator for all descendants of this tree. This returns
+        a :py:class:`SimpleTree` instance for every child, recursively,
+        using left-first traversal.
+
+    .. py:attribute:: view
+
+        Returns a ``str`` representation of this subtree, in an easily
+        viewable indented format with nodes separated by newlines.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse("Ása sá sól.")["sentences"][0]
+            print(s.tree.view)
+
+        outputs::
+
+            P
+            +-S-MAIN
+              +-IP
+                +-NP-SUBJ
+                  +-no_et_nf_kvk: 'Ása'
+                +-VP
+                  +-so_1_þf_et_p3: 'sá'
+                  +-NP-OBJ
+                    +-no_et_þf_kvk: 'sól'
+            +-'.'
+
+    .. py:attribute:: flat
+
+        Returns this subtree, simplified and flattened to a text string.
+        Nonterminal scopes are
+        delimited like so: ``NAME ... /NAME`` where ``NAME`` is the name of
+        the nonterminal, for example ``NP`` for noun phrases and ``VP`` for
+        verb phrases. Terminals have lower-case identifiers with their
+        various grammar variants separated by underscores, e.g.
+        ``no_þf_kk_et`` for a noun, accusative case, masculine gender, singular.
+
+    .. py:method:: __getitem__(self, item) -> SimpleTree
+
+        Returns the specified child subtree of this tree.
+
+        :param str/int item:  This can be either a nonterminal identifier (e.g. ``"S-MAIN"``),
+            in which case the first child having that nonterminal as its root
+            is returned, or an ``int``, in which case the child having the specified
+            0-based index is returned. A nonterminal match
+            can be partial, i.e. the item ``NP`` matches the roots ``NP-OBJ`` and
+            ``NP-SUBJ`` as well as plain ``NP``.
+
+        :return: A :py:class:`SimpleTree` instance for the indicated child subtree.
+            If no such subtree is found, the exception ``KeyError`` (in the case
+            of a nonterminal identifier) or ``IndexError`` (in the case of an integer
+            index) are raised.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            my_text = "Prakkarinn Ása í Garðastræti sá tvær gular sólir."
+            s = r.parse(my_text)["sentences"][0]
+            print(s.tree[0]["IP"][1].stems)
+
+        outputs::
+
+            ['sjá', 'tveir', 'gulur', 'sól']
+
+    .. py:method:: __getattr__(self, name) -> SimpleTree
+
+        Returns the specified child subtree of this tree.
+
+        :param str name:  A nonterminal identifier (e.g. ``"NP"``). The first
+            child having that nonterminal as its root is returned. A nonterminal match
+            can be partial, i.e. the item ``NP`` matches the roots ``NP-OBJ`` and
+            ``NP-SUBJ`` as well as plain ``NP``. An underscore in the identifier
+            name matches a hyphen in the root nonterminal name.
+
+        :return: A :py:class:`SimpleTree` instance for the indicated child subtree.
+            If no such subtree is found, the exception ``KeyError`` is raised.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            my_text = "Prakkarinn Ása í Garðastræti sá sól."
+            s = r.parse(my_text)["sentences"][0]
+            print(s.tree.S_MAIN.IP.NP_SUBJ.stems)
+
+        outputs::
+
+            ['prakkari', 'Ása', 'í', 'Garðastræti']
+
+    .. py:attribute:: text
+
+        Returns a ``str`` with the raw text corresponding to this subtree,
+        including its children, with spaces between tokens.
+
+    .. py:attribute:: own_text
+
+        Returns a ``str`` with the raw text corresponding to the root
+        of this subtree only, i.e. not including its children. For nonterminals,
+        this is always an empty string. For terminals, it is the text of the
+        corresponding token.
+
+    .. py:attribute:: stems
+
+        Returns a ``list`` of the word stems corresponding to terminals contained
+        within this subtree. For terminals that correspond to non-word tokens,
+        the original token text is included in the list.
+
+    .. py:attribute:: stem
+
+        Returns a ``str`` containing a concatenation of the word stems corresponding
+        to terminals contained within this subtree. For terminals that correspond
+        to non-word tokens, the original token text is included in the string. The
+        stems are separated by spaces.
+
+    .. py:attribute:: own_stem
+
+        Returns a ``str`` containing the word stem corresponding to the root
+        of this subtree only. For nonterminal roots, this returns an empty string.
+
+    .. py:attribute:: nouns
+
+        Returns a ``list`` of the stems of all *nouns* within this subtree, i.e. the
+        root and all its descendants, recursively. The list is in left-traversal
+        order.
+
+    .. py:attribute:: verbs
+
+        Returns a ``list`` of the stems of all *verbs* within this subtree, i.e. the
+        root and all its descendants, recursively. The list is in left-traversal
+        order.
+
+    .. py:attribute:: persons
+
+        Returns a ``list`` of the stems (in nominative form) of all *person names*
+        within this subtree, i.e. the root and all its descendants, recursively.
+        The list is in left-traversal order.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            my_text = "Eftir síðustu kosningar ræddi " \
+                "Bjarni Benediktsson við Katrínu Jakobsdóttur " \
+                "um myndun ríkisstjórnar."
+            s = r.parse(my_text)["sentences"][0]
+            print(s.tree.persons)
+
+        outputs::
+
+            ['Bjarni Benediktsson', 'Katrín Jakobsdóttir']
+
+    .. py:attribute:: entities
+
+        Returns a ``list`` of the stems (in nominative form, as far as that can
+        be established and is applicable) of all *entity names*
+        within this subtree, i.e. the root and all its descendants, recursively.
+        The list is in left-traversal order.
+
+    .. py:attribute:: proper_names
+
+        Returns a ``list`` of the stems (in nominative form, as far as that can
+        be established and is applicable) of all *proper names (sérnöfn*)
+        within this subtree, i.e. the root and all its descendants, recursively.
+        The list is in left-traversal order.
+
+
 
