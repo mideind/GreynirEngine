@@ -103,8 +103,9 @@ def annotate(token_stream, auto_uppercase):
                 # Yield a word tuple with meanings
                 yield TOK.Word(w, m)
             else:
-                # Already have a meaning
-                yield t
+                # Already have a meaning, which probably needs conversion
+                # from a bare tuple to a BIN_Meaning
+                yield TOK.Word(t.txt, list(map(BIN_Meaning._make, t.val)))
             # No longer at sentence start
             at_sentence_start = False
 

@@ -197,6 +197,38 @@ def test_consistency():
     assert ITERATIONS * 4 // 5 in sc_set
 
 
+def test_long_parse(verbose = False):
+    if verbose:
+        print("Long parse test")
+    txt = """
+        [[ Reynt er að efla áhuga ungs fólks á borgarstjórnarmálum með framboðsfundum og skuggakosningum en þótt kjörstaðirnir í þeim séu færðir inn í framhaldsskólana er þátttakan lítil. Dagur B. Eggertsson nýtur mun meira fylgis í embætti borgarstjóra en fylgi Samfylkingarinnar gefur til kynna samkvæmt könnun Fréttablaðsins. ]]
+        [[ Eins og fram kom í fréttum okkar í gær stefnir í met í fjölda framboða fyrir komandi borgarstjórnarkosningar í vor og gætu þau orðið að minnsta kosti fjórtán. Þá þarf minna fylgi nú en áður til að ná inn borgarfulltrúa, því borgarfulltrúum verður fjölgað úr fimmtán í tuttugu og þrjá. ]]
+        [[ Kosningabaráttan fyrir borgarstjórnarkosningarnar í vor er hafin í framhaldsskólum borgarinnar. Samhliða framboðskynningum fara fram skuggakosningar til borgarstjórnar í skólunum. ]]
+        [[ „Þetta er eiginlega æfing í því að taka þátt í lýðræðislegum kosningum. Við reynum að herma eftir því hvernig raunverulegar kosningar fara fram,“ segir Róbert Ferdinandsson kennari á félagsfræðibraut Fjölbrautaskólans við Ármúla. ]]
+    """
+    job = r.submit(txt)
+    pg_count = 0
+    sent_count = 0
+    persons = []
+    for pg in job.paragraphs():
+        pg_count += 1
+        if verbose:
+            print("Paragraph {0}".format(pg_count))
+        for sent in pg:
+            sent_count += 1
+            assert sent.parse()
+            persons.extend(sent.tree.persons)
+    assert pg_count == 4
+    assert sent_count == 8
+    assert persons == ["Dagur B. Eggertsson", "Róbert Ferdinandsson"]
+
+    if verbose:
+        print("Number of sentences : {0}".format(job.num_sentences))
+        print("Thereof parsed      : {0}".format(job.num_parsed))
+        print("Ambiguity           : {0:.2f}".format(job.ambiguity))
+        print("Parsing time        : {0:.2f}".format(job.parse_time))
+
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -205,6 +237,7 @@ if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     test_init()
     test_parse(verbose = True)
+    test_long_parse(verbose = True)
     test_consistency()
     test_finish()
 
