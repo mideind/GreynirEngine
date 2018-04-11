@@ -7,7 +7,7 @@ Prerequisites
 -------------
 
 Reynir runs on **CPython 3.4** or newer, and on **PyPy 3.5**
-or newer. PyPy is recommended for best performance.
+or newer. `PyPy <http://pypy.org/>`_ is recommended for best performance.
 
 You may need to have ``python3-dev`` and/or potentially ``python3.6-dev`` (or other
 version corresponding to your Python interpreter) installed on your system::
@@ -27,8 +27,17 @@ To install Reynir::
     # ...or if you have both Python2 and Python3 available on your system:
     $ pip3 install reynir
 
+    # ...or if you want to be able to edit Reynir's source code in-place
+    # and perhaps submit pull requests (welcome!) to the project's
+    # GitHub repository:
+    $ mkdir ~/github
+    $ cd ~/github
+    $ git clone https://github.com/vthorsteinsson/ReynirPackage
+    $ cd ReynirPackage
+    $ python setup.py develop
 
-On the most common Linux x86_64/amd64 systems, this will download and install a binary wheel.
+
+On the most common Linux x86_64/amd64 systems, ``pip`` will download and install a binary wheel.
 On other systems, a source distribution will be downloaded and compiled to binary.
 
 
@@ -46,7 +55,8 @@ your project that uses Reynir. For this, you can use *virtualenv*::
     # Install reynir
     $ pip install reynir
 
-    # [ Use Python with reynir ]
+    $ python
+        [ Use Python with reynir ]
 
     # Leave the virtual environment
     $ deactivate

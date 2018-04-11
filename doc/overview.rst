@@ -11,6 +11,12 @@ prepositional phrases, etc.
 The individual tokens (words, numbers, punctuation, etc.) of the sentence
 correspond to leaves in the parse tree.
 
+.. figure:: _static/LitlaGula.png
+    :align: center
+    :alt: A parse tree
+
+    *The parse tree for the sentence "Litla gula hænan átti fræ".*
+
 By examining and processing the parse tree, information and meaning
 can be extracted from the sentence.
 
@@ -19,25 +25,25 @@ Example
 
 Here is a short example of what can be done with Reynir::
 
-	>>> from reynir import Reynir
-	>>> r = Reynir()
-	>>> job = r.submit("Ása sá sól.")
-	>>> sent = next(job.sentences())
-	>>> sent.parse()
-	True
-	>>> sent.tree.nouns
-	['Ása', 'sól']
-	>>> sent.tree.verbs
-	['sjá']
-	>>> # Show the subject noun phrase
-	>>> sent.tree.S.IP.NP_SUBJ.stems
-	['Ása']
-	>>> # Show the verb phrase
-	>>> sent.tree.S.IP.VP.stems
-	['sjá', 'sól']
-	>>> # Show the object of the verb
-	>>> sent.tree.S.IP.VP.NP_OBJ.stems
-	['sól']
+    >>> from reynir import Reynir
+    >>> r = Reynir()
+    >>> job = r.submit("Ása sá sól.")
+    >>> sent = next(job.sentences())
+    >>> sent.parse()
+    True
+    >>> sent.tree.nouns
+    ['Ása', 'sól']
+    >>> sent.tree.verbs
+    ['sjá']
+    >>> # Show the subject noun phrase
+    >>> sent.tree.S.IP.NP_SUBJ.stems
+    ['Ása']
+    >>> # Show the verb phrase
+    >>> sent.tree.S.IP.VP.stems
+    ['sjá', 'sól']
+    >>> # Show the object of the verb
+    >>> sent.tree.S.IP.VP.NP_OBJ.stems
+    ['sól']
 
 
 What Reynir does
@@ -48,9 +54,10 @@ numbers, punctuation and other tokens. For this, it uses the separate
 `Tokenizer <https://github.com/vthorsteinsson/Tokenizer>`_ package, which is automatically
 installed with Reynir.
 
-After tokenization, Reynir proceeds to **parse** the text according to a *context-free grammar* for the
-modern Icelandic language. This grammar contains rules describing how sentences and the various
-subparts thereof can be validly constructed.
+After tokenization, Reynir proceeds to **parse** the text according to a
+`context-free grammar <https://github.com/vthorsteinsson/ReynirPackage/blob/master/src/reynir/Reynir.grammar>`_
+for the modern Icelandic language. This grammar contains rules describing how sentences and
+the various subparts thereof can be validly constructed.
 
 Almost all sentences are **ambiguous**. This means that there multiple parse trees
 that can validly describe the sentence according to the grammar rules. Reynir thus has

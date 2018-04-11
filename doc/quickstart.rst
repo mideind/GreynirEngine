@@ -36,9 +36,9 @@ The output of the program is as follows (line breaks inserted)::
     Parse tree: P S-MAIN IP NP-SUBJ pfn_hk_et_nf /NP-SUBJ VP so_1_nf_et_p3
         NP-PRD no_et_nf_hk /NP-PRD /VP /IP /S-MAIN p /P
 
-The code first creates an instance of the ``Reynir`` class and assigns
-it to the ``r`` object. The ``Reynir`` class is Reynir's main service interface.
-We recommend that you only create a single ``Reynir`` instance in your program,
+The code first creates an instance of the :py:class:`Reynir` class and assigns
+it to the ``r`` object. The :py:class:`Reynir` class is Reynir's main service interface.
+We recommend that you only create a single :py:class:`Reynir` instance in your program,
 since each initialization maps the entire Icelandic lexicon into
 memory (about 60 megabytes).
 

@@ -45,14 +45,14 @@ The Reynir class
             Defaults to ``False``.
         :return: A fresh parse job object.
 
-        The given text string is tokenized and split into sentences.
+        The given text string is tokenized and split into paragraphs and sentences.
         If the ``parse`` parameter is ``True``, the sentences are parsed
         immediately, before returning from the method.
-        Otherwise, parsing should be done explicitly by
-        calling :py:meth:`_Sentence.parse()` on each sentence.
+        Otherwise, parsing is incremental (on demand) and is invoked by
+        calling :py:meth:`_Sentence.parse()` explicitly on each sentence.
 
         Returns a :py:class:`_Job` object which supports iteration through
-        the sentences of the parse job.
+        the paragraphs and sentences of the parse job.
 
     .. py:method:: parse(self, text : string) -> dict
 
@@ -62,11 +62,12 @@ The Reynir class
         :return: A dictionary containing the parse results as well as statistics
             from the parse job.
 
-        The given text string is tokenized and split into sentences. A parse
+        The given text string is tokenized and split into sentences. An internal parse
         job is created and the sentences are parsed. The resulting :py:class:`_Sentence`
         objects are returned in a list in the ``sentences`` field in the dictionary.
+        The text is treated as one contiguous paragraph.
 
-        The resulting dictionary contains the following keys:
+        The result dictionary contains the following items:
 
         * ``sentences``: A list of :py:class:`_Sentence` objects corresponding
             to the sentences found in the text.
@@ -187,7 +188,8 @@ hence the leading underscore in the class name.
     .. py:method:: sentences(self)
 
         Returns a generator of :py:class:`_Sentence` objects. Each object
-        corresponds to a sentence in the parsed text. If the sentence has
+        corresponds to a sentence within the paragraph in the parsed text.
+        If the sentence has
         already been successfully parsed, its :py:attr:`_Sentence.tree`
         property will contain its (best) parse tree. Otherwise, the property is
         ``None``.
@@ -213,6 +215,10 @@ hence the leading underscore in the class name.
 
 .. py:class:: _Sentence
 
+    .. py:method:: __len__(self) -> int
+
+        Returns an ``int`` with the number of tokens in the sentence.
+
     .. py:attribute:: text
 
         Returns a ``str`` with the raw text representation of the sentence, with spaces
@@ -235,6 +241,23 @@ hence the leading underscore in the class name.
         Returns a ``list`` of tokens in the sentence. Each token is represented
         by a ``Tok`` ``namedtuple`` instance from the ``Tokenizer`` package.
 
+        Example::
+
+            from reynir import Reynir, TOK
+            r = Reynir()
+            s = r.parse("5. janúar sá Ása 5 sólir.")["sentences"][0]
+            for t in s.tokens:
+                print(TOK.descr[t.kind], t.txt)
+
+        outputs::
+
+            DATE 5. janúar
+            WORD sá
+            PERSON Ása
+            NUMBER 5
+            WORD sólir
+            PUNCTUATION .
+
     .. py:method:: parse(self) -> bool
 
         Parses the sentence (unless it has already been parsed) and returns
@@ -243,3 +266,100 @@ hence the leading underscore in the class name.
         the best parse tree. Otherwise, :py:attr:`_Sentence.tree` is ``None``.
         If the parse is not successful, the 0-based index of the token where
         the parser gave up is stored in :py:attr:`_Sentence.err_index`.
+
+    .. py:attribute:: err_index
+
+        Returns an ``int`` with the 0-based index of the token where the
+        parser could not find any grammar production to continue the parse,
+        or ``None`` if the sentence has not been parsed yet or if no error
+        occurred during the parse.
+
+    .. py:attribute:: combinations
+
+        Returns an ``int`` with the number of possible parse trees for the
+        sentence, or ``0`` if no parse trees were found, or ``None`` if the
+        sentence hasn't been parsed yet.
+
+    .. py:attribute:: score
+
+        Returns an ``int`` representing the score that the best parse tree
+        got from the scoring heuristics of Reynir. The score is ``0`` if
+        the sentence has not been successfully parsed.
+
+    .. py:attribute:: tree
+
+        Returns the best (highest-scoring) parse tree for the sentence,
+        in a *simplified form* that is easy to work with.
+
+        If the sentence has not yet been parsed, or no parse tree was found
+        for it, this property is ``None``.
+
+    .. py:attribute:: deep_tree
+
+        Returns the best (highest-scoring) parse tree for the sentence,
+        in a *detailed form* corresponding directly to Reynir's context-free grammar
+        for Icelandic.
+
+        If the sentence has not yet been parsed, or no parse tree was found
+        for it, this property is ``None``.
+
+    .. py:attribute:: flat_tree
+
+        Returns the best (highest-scoring) parse tree for the sentence,
+        simplified and flattened to a text string. Nonterminal scopes are
+        delimited like so: ``NAME ... /NAME`` where ``NAME`` is the name of
+        the nonterminal, for example ``NP`` for noun phrases and ``VP`` for
+        verb phrases. Terminals have lower-case identifiers with their
+        various grammar variants separated by underscores, e.g.
+        ``no_þf_kk_et`` for a noun, accusative case, masculine gender, singular.
+
+        If the sentence has not yet been parsed, or no parse tree was found
+        for it, this property is ``None``.
+
+    .. py:attribute:: terminals
+
+        Returns a ``list`` of the terminals in the best parse tree for the
+        sentence, in the order in which they occur in the sentence (token order).
+        Each terminal corresponds to a token in the sentence. The entry for each
+        terminal is a tuple of four fields:
+
+        0. **text**: The token text.
+
+        1. **stem**: The stem of the word, if the token is a word, otherwise
+            it is the text of the token.
+
+        2. **category**: The word category (``no`` for noun, ``so`` for verb, etc.)
+
+        3. **variants**: A set of the grammatical variants for the word, if the
+            token is a word, otherwise an empty set. The variants include
+            the case (``nf``, ``þf``, ``þgf``, ``ef``), gender (``kvk``, ``kk``, ``hk``),
+            person, verb form, adjective degree, etc.
+
+        If the sentence has not yet been parsed, or no parse tree was found
+        for it, this property is ``None``.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse("Ása sá sól.")["sentences"][0]
+            for t in s.terminals:
+                print(t)
+
+        outputs::
+
+            ('Ása', 'Ása', 'no', {'nf', 'kvk', 'et'})
+            ('sá', 'sjá', 'so', {'1', 'p3', 'et', 'þf'})
+            ('sól', 'sól', 'no', {'kvk', 'et', 'þf'})
+            ('.', '.', '', set())
+
+        (The line for *sá* means that this is the verb (``so``) *sjá*,
+        in the third person (``p3``), singular (``et``), having one argument (``1``)
+        in accusative case (``þf``).)
+
+    .. py:attribute:: stems
+
+        Returns a ``list`` of the stems of the words in the sentence, or
+        the text of the token for non-word tokens. ``sent.stems`` is a shorthand for
+        ``[ t[1] for t in sent.terminals ]``.
+
