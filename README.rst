@@ -5,6 +5,7 @@ Reynir: A fast, efficient natural language parser for Icelandic
 ********
 Overview
 ********
+
 **Reynir** parses sentences of Icelandic text into **parse trees**.
 A parse tree recursively describes the grammatical structure
 of the sentence, including its noun phrases, verb phrases,
@@ -19,6 +20,7 @@ can be extracted from the sentence.
 *******
 Example
 *******
+
 >>> from reynir import Reynir
 >>> r = Reynir()
 >>> job = r.submit("Ása sá sól.")
@@ -31,16 +33,17 @@ True
 ['sjá']
 >>> sent.tree.flat
 'P S-MAIN IP NP-SUBJ no_et_nf_kvk /NP-SUBJ VP so_1_þf_et_p3 NP-OBJ no_et_þf_kvk /NP-OBJ /VP /IP /S-MAIN p /P'
->>> sent.tree.S.IP.NP_SUBJ.stems # The subject noun phrase (S.IP.NP also works)
+>>> sent.tree.S.IP.NP_SUBJ.lemmas # The subject noun phrase (S.IP.NP also works)
 ['Ása']
->>> sent.tree.S.IP.VP.stems # The verb phrase
+>>> sent.tree.S.IP.VP.lemmas # The verb phrase
 ['sjá', 'sól']
->>> sent.tree.S.IP.VP.NP_OBJ.stems # The object within the verb phrase (S.IP.VP.NP also works)
+>>> sent.tree.S.IP.VP.NP_OBJ.lemmas # The object within the verb phrase (S.IP.VP.NP also works)
 ['sól']
 
 *************
 Prerequisites
 *************
+
 This package runs on CPython 3.4 or newer, and on PyPy 3.5
 or newer. PyPy is recommended for best performance.
 
@@ -53,56 +56,19 @@ You need to have ``python3-dev`` and/or potentially ``python3.6-dev`` installed 
 ************
 Installation
 ************
+
 To install this package::
 
 	pip3 install reynir
 
-*****
-Usage
-*****
-To use::
+*************
+Documentation
+*************
 
-	from reynir import Reynir
+Please consult `Reynir's documentation <https://greynir.is/doc/>`_ for more detailed
+`installation instructions <https://greynir.is/doc/installation.html>`_,
+a `quickstart guide <https://greynir.is/doc/quickstart.html>`_,
+and `reference information <https://greynir.is/doc/reference.html>`_,
+as well as important information
+about `copyright and licensing <https://greynir.is/doc/copyright.html>`_.
 
-	my_text = ("Hér er verið að þátta íslenskan texta."
-		" Það er skemmtilegt.")
-
-	r = Reynir()
-	job = r.submit(my_text)
-
-	# Iterate through sentences and parse each one:
-	for sent in job:
-		if sent.parse():
-			# sentence parsed successfully
-			# do something with sent.tree
-			print("Successfully parsed '{0}'".format(s.tidy_text))
-		else:
-			# an error occurred in the parse
-			# the error token index is at sent.err_index
-			print("Could not parse '{0}'".format(sent.tidy_text))
-
-	# Alternatively, split into paragraphs first:
-	job = r.submit(my_text)
-	for p in job.paragraphs(): # Yields paragraphs
-		for sent in p.sentences(): # Yields sentences
-			if sent.parse():
-				# sentence parsed successfully
-				# do something with sent.tree
-				print("Successfully parsed '{0}'".format(s.tidy_text))
-			else:
-				# an error occurred in the parse
-				# the error token index is at sent.err_index
-				print("Could not parse '{0}'".format(sent.tidy_text))
-
-	# After parsing all sentences in a job, the following
-	# statistics are available:
-	num_sentences = job.num_sentences   # Total number of sentences
-	num_parsed = job.num_parsed         # Thereof successfully parsed
-	ambiguity = job.ambiguity           # Average ambiguity factor
-	parse_time = job.parse_time         # Elapsed time since job was created
-
-*********
-Reference
-*********
-
-lorem ipsum
