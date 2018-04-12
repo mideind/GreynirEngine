@@ -15,10 +15,10 @@ The trees can then be used to extract information from the text, for instance
 about contained nouns and noun phrases, person names, verbs, word stems, etc.
 
 .. figure:: _static/GreynirTreeExampleSmall.png
-    :align: center
-    :alt: An example of a parse tree
+   :align: center
+   :alt: An example of a parse tree
 
-    Reynir is the engine of `Greynir.is <https://greynir.is>`_
+   Reynir is the engine of `Greynir.is <https://greynir.is>`_
 
 The entire `Database of Modern Icelandic Inflection <http://bin.arnastofnun.is/DMII/>`_
 (`Beygingarlýsing íslensks nútímamáls <http://bin.arnastofnun.is>`_),
@@ -30,23 +30,33 @@ fit in the overall sentence structure.
 
 Reynir can serve as a component of applications such as:
 
-    * Natural language query systems
-    * Bots and conversational systems
-    * Information extraction tools
-    * Intelligent search tools
-    * Grammatical pattern analysis
-    * Text similarity
-    * Author identification
-    * Sentiment analysis
-    * Content summarization
-    * Content category labeling
-    * Generation of training corpora for machine learning
+   * Natural language query systems
+   * Bots and conversational systems
+   * Information extraction tools
+   * Intelligent search tools
+   * Grammatical pattern analysis
+   * Text similarity
+   * Author identification
+   * Sentiment analysis
+   * Content summarization
+   * Content category labeling
+   * Generation of training corpora for machine learning
 
 To get acquainted with Reynir, we recommend that you start with the :ref:`overview`,
 proceed with the :ref:`installation` instructions, and then look at the :ref:`quickstart`.
 For further reference, consult the :ref:`reference` section.
 
 This documentation also contains **important information** about :ref:`copyright`.
+
+About Reynir
+------------
+
+Reynir is a product of Miðeind ehf. of Reykjavík, Iceland. It is a free open source software
+project (FOSS), started in mid-2015 by its original author, Vilhjálmur Þorsteinsson.
+Its aim is to produce an industrial-strength NLP toolset for Icelandic, with the hope of
+supporting the language on the digital front in times of rapid advances in language technology;
+changes that may leave low-resource languages at a disadvantage unless explicit action is taken
+to strengthen their position.
 
 
 .. toctree::
@@ -57,5 +67,6 @@ This documentation also contains **important information** about :ref:`copyright
    installation
    quickstart
    reference
+   patterns
    copyright
 

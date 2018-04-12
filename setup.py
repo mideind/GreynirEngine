@@ -61,7 +61,7 @@ def read(*names, **kwargs):
 
 setup(
     name='reynir',
-    version='0.1.8',
+    version='0.1.9',
     license='GNU GPLv3',
     description='A natural language parser for Icelandic',
     long_description='%s\n%s' % (
