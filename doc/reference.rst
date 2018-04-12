@@ -426,7 +426,7 @@ They describe a simplified parse tree or a part (subtree) thereof.
         Returns a ``str`` with the terminal category corresponding to this
         subtree, e.g. ``no`` for nouns or ``dags`` for dates.
 
-    .. py:method:: match_tag(self, item) -> bool
+    .. py:method:: match_tag(self, item : str) -> bool
 
         Checks whether the root nonterminal of the tree matches the given
         nonterminal identifier.
@@ -448,6 +448,16 @@ They describe a simplified parse tree or a part (subtree) thereof.
         Returns a generator for all descendants of this tree. This returns
         a :py:class:`SimpleTree` instance for every child, recursively,
         using left-first traversal.
+
+    .. py:method:: match(self, pattern : str) -> bool
+
+        Checks whether this subtree matches the given pattern.
+
+        :param str pattern: The pattern to match against. For information
+            about pattern specifications, see :ref:`patterns`.
+
+        :return: ``True`` if this subtree matches the pattern,
+            or ``False`` if not.
 
     .. py:attribute:: view
 
