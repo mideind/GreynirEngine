@@ -36,20 +36,20 @@ Here is a short example of what can be done with Reynir::
     >>> sent.tree.verbs
     ['sjá']
     >>> # Show the subject noun phrase
-    >>> sent.tree.S.IP.NP_SUBJ.stems
+    >>> sent.tree.S.IP.NP_SUBJ.lemmas
     ['Ása']
     >>> # Show the verb phrase
-    >>> sent.tree.S.IP.VP.stems
+    >>> sent.tree.S.IP.VP.lemmas
     ['sjá', 'sól']
     >>> # Show the object of the verb
-    >>> sent.tree.S.IP.VP.NP_OBJ.stems
+    >>> sent.tree.S.IP.VP.NP_OBJ.lemmas
     ['sól']
 
 
 What Reynir does
 ----------------
 
-Reynir starts by **tokenizing** your text, i.e. dividing it up onto individual words,
+Reynir starts by **tokenizing** your text, i.e. dividing it up into individual words,
 numbers, punctuation and other tokens. For this, it uses the separate
 `Tokenizer <https://github.com/vthorsteinsson/Tokenizer>`_ package, which is automatically
 installed with Reynir.
@@ -59,7 +59,7 @@ After tokenization, Reynir proceeds to **parse** the text according to a
 for the modern Icelandic language. This grammar contains rules describing how sentences and
 the various subparts thereof can be validly constructed.
 
-Almost all sentences are **ambiguous**. This means that there multiple parse trees
+Almost all sentences are **ambiguous**. This means that there are multiple parse trees
 that can validly describe the sentence according to the grammar rules. Reynir thus has
 to choose a single best tree from the forest of possible trees. It does this with a scoring
 heuristic which assigns higher scores to common word forms and grammatical constructs, and lower
@@ -67,7 +67,7 @@ scores to rare word forms and uncommon constructs. The parse tree with the highe
 score wins and is returned from the ``parse()`` function.
 
 Once the best parse tree has been found, it is available for various kinds of **queries**.
-You can access word stems, extract noun and verb phrases as shown above, look for
+You can access word lemmas, extract noun and verb phrases as shown above, look for
 patterns via wildcard matching, and much more. This is described in detail in the
 :ref:`reference`.
 

@@ -43,7 +43,7 @@ The Reynir class
         :param str text: The text to parse. Can be a single sentence or multiple sentences.
         :param bool parse: Controls whether the text is parsed immediately or upon demand.
             Defaults to ``False``.
-        :return: A fresh parse job object.
+        :return: A fresh :py:class:`_Job` object.
 
         The given text string is tokenized and split into paragraphs and sentences.
         If the ``parse`` parameter is ``True``, the sentences are parsed
@@ -52,7 +52,8 @@ The Reynir class
         calling :py:meth:`_Sentence.parse()` explicitly on each sentence.
 
         Returns a :py:class:`_Job` object which supports iteration through
-        the paragraphs and sentences of the parse job.
+        the paragraphs (via :py:meth:`_Job.paragraphs()`) and sentences
+        (via :py:meth:`_Job.sentences()` or :py:meth:`_Job.__iter__()`) of the parse job.
 
     .. py:method:: parse(self, text : string) -> dict
 
@@ -119,9 +120,30 @@ in the class name.
 
         Returns a generator of :py:class:`_Paragraph` objects, corresponding
         to paragraphs in the parsed text. Paragraphs are assumed to be delimited by
-        ``[[`` and ``]]`` markers in the text. These markers are optional
-        and not required. If they are not present, the text is assumed to be
-        one contiguous paragraph.
+        ``[[`` and ``]]`` markers in the text, surrounded by whitespace.
+        These markers are optional and not required. If they are not present,
+        the text is assumed to be one contiguous paragraph.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            my_text = ("[[ Þetta er fyrsta efnisgreinin. Hún er stutt. ]] "
+                "[[ Hér er önnur efnisgreinin. Hún er líka stutt. ]]")
+            j = r.submit(my_text)
+            for pg in j.paragraphs():
+                for sent in pg:
+                    print(sent.tidy_text)
+                print()
+
+        Output::
+
+            Þetta er fyrsta efnisgreinin.
+            Hún er stutt.
+
+            Hér er önnur efnisgreinin.
+            Hún er líka stutt.
+
 
     .. py:method:: sentences(self)
 
@@ -326,7 +348,7 @@ hence the leading underscore in the class name.
 
         0. **text**: The token text.
 
-        1. **stem**: The stem of the word, if the token is a word, otherwise
+        1. **lemma**: The lemma of the word, if the token is a word, otherwise
             it is the text of the token.
 
         2. **category**: The word category (``no`` for noun, ``so`` for verb, etc.)
@@ -358,10 +380,10 @@ hence the leading underscore in the class name.
         in the third person (``p3``), singular (``et``), having one argument (``1``)
         in accusative case (``þf``).)
 
-    .. py:attribute:: stems
+    .. py:attribute:: lemmas
 
-        Returns a ``list`` of the stems of the words in the sentence, or
-        the text of the token for non-word tokens. ``sent.stems`` is a shorthand for
+        Returns a ``list`` of the lemmas of the words in the sentence, or
+        the text of the token for non-word tokens. ``sent.lemmas`` is a shorthand for
         ``[ t[1] for t in sent.terminals ]``.
 
 
@@ -484,7 +506,7 @@ They describe a simplified parse tree or a part (subtree) thereof.
             r = Reynir()
             my_text = "Prakkarinn Ása í Garðastræti sá tvær gular sólir."
             s = r.parse(my_text)["sentences"][0]
-            print(s.tree[0]["IP"][1].stems)
+            print(s.tree[0]["IP"][1].lemmas)
 
         outputs::
 
@@ -509,7 +531,7 @@ They describe a simplified parse tree or a part (subtree) thereof.
             r = Reynir()
             my_text = "Prakkarinn Ása í Garðastræti sá sól."
             s = r.parse(my_text)["sentences"][0]
-            print(s.tree.S_MAIN.IP.NP_SUBJ.stems)
+            print(s.tree.S_MAIN.IP.NP_SUBJ.lemmas)
 
         outputs::
 
@@ -527,39 +549,39 @@ They describe a simplified parse tree or a part (subtree) thereof.
         this is always an empty string. For terminals, it is the text of the
         corresponding token.
 
-    .. py:attribute:: stems
+    .. py:attribute:: lemmas
 
-        Returns a ``list`` of the word stems corresponding to terminals contained
+        Returns a ``list`` of the word lemmas corresponding to terminals contained
         within this subtree. For terminals that correspond to non-word tokens,
         the original token text is included in the list.
 
-    .. py:attribute:: stem
+    .. py:attribute:: lemma
 
-        Returns a ``str`` containing a concatenation of the word stems corresponding
+        Returns a ``str`` containing a concatenation of the word lemmas corresponding
         to terminals contained within this subtree. For terminals that correspond
         to non-word tokens, the original token text is included in the string. The
-        stems are separated by spaces.
+        lemmas are separated by spaces.
 
-    .. py:attribute:: own_stem
+    .. py:attribute:: own_lemma
 
-        Returns a ``str`` containing the word stem corresponding to the root
+        Returns a ``str`` containing the word lemma corresponding to the root
         of this subtree only. For nonterminal roots, this returns an empty string.
 
     .. py:attribute:: nouns
 
-        Returns a ``list`` of the stems of all *nouns* within this subtree, i.e. the
+        Returns a ``list`` of the lemmas of all *nouns* within this subtree, i.e. the
         root and all its descendants, recursively. The list is in left-traversal
         order.
 
     .. py:attribute:: verbs
 
-        Returns a ``list`` of the stems of all *verbs* within this subtree, i.e. the
+        Returns a ``list`` of the lemmas of all *verbs* within this subtree, i.e. the
         root and all its descendants, recursively. The list is in left-traversal
         order.
 
     .. py:attribute:: persons
 
-        Returns a ``list`` of the stems (in nominative form) of all *person names*
+        Returns a ``list`` of the lemmas (the nominative case) of all *person names*
         within this subtree, i.e. the root and all its descendants, recursively.
         The list is in left-traversal order.
 
@@ -579,14 +601,14 @@ They describe a simplified parse tree or a part (subtree) thereof.
 
     .. py:attribute:: entities
 
-        Returns a ``list`` of the stems (in nominative form, as far as that can
+        Returns a ``list`` of the lemmas (the nominative case, as far as that can
         be established and is applicable) of all *entity names*
         within this subtree, i.e. the root and all its descendants, recursively.
         The list is in left-traversal order.
 
     .. py:attribute:: proper_names
 
-        Returns a ``list`` of the stems (in nominative form, as far as that can
+        Returns a ``list`` of the lemmas (the nominative case, as far as that can
         be established and is applicable) of all *proper names (sérnöfn*)
         within this subtree, i.e. the root and all its descendants, recursively.
         The list is in left-traversal order.

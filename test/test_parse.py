@@ -125,25 +125,25 @@ def test_parse(verbose = False):
     assert results[10].tree.verbs == [ "láta" ]
     assert results[11].tree.verbs == [ 'borða', 'hafa', 'bráðna', 'fara', 'kaupa', 'borða' ]
 
-    # Test that the parser finds the correct word stems
-    assert results[0].tree.stems == [ "hér", "vera", "vera", "að", "gera",
+    # Test that the parser finds the correct word lemmas
+    assert results[0].tree.lemmas == [ "hér", "vera", "vera", "að", "gera",
         "tilraun", "með", "þáttun", "." ]
-    assert results[1].tree.stems == [ "margur", "málsgrein", "koma", "hér", "fyrir", "." ]
+    assert results[1].tree.lemmas == [ "margur", "málsgrein", "koma", "hér", "fyrir", "." ]
     assert results[2].tree == None # Error sentence
-    assert results[3].tree.stems == [ "fjórði", "málsgrein", "vera", "síðari", "." ]
-    assert results[4].tree.stems == [ "Vatnið", "vera", "30,5", "gráða", "heitur",
+    assert results[3].tree.lemmas == [ "fjórði", "málsgrein", "vera", "síðari", "." ]
+    assert results[4].tree.lemmas == [ "Vatnið", "vera", "30,5", "gráða", "heitur",
         "og", "ég", "vera", "ánægður", "með", "það", "." ]
-    assert results[5].tree.stems == [ "hún", "skulda", "ég", "1.000 dollara", "." ]
-    assert results[6].tree.stems == [ "ég", "hitta", "hún", "sá", "17. júní",
+    assert results[5].tree.lemmas == [ "hún", "skulda", "ég", "1.000 dollara", "." ]
+    assert results[6].tree.lemmas == [ "ég", "hitta", "hún", "sá", "17. júní",
         "ár", "1944", "á", "Þingvellir", "." ]
-    assert results[7].tree.stems == [ "hann", "eigna", "hús", "við", "strönd",
+    assert results[7].tree.lemmas == [ "hann", "eigna", "hús", "við", "strönd",
         "og", "hún", "taka", "að", "mála", "það", "." ]
-    assert results[8].tree.stems == [ "barn", "fara", "í", "augnrannsókn", "eftir",
+    assert results[8].tree.lemmas == [ "barn", "fara", "í", "augnrannsókn", "eftir",
         "húsnæðiskaup", "." ]
-    assert results[9].tree.stems == [ "barn", "fara", "í", "loðfíla-rannsókn", "." ]
-    assert results[10].tree.stems == [ "eðlisfræðingur", "Stephen", "Hawking",
+    assert results[9].tree.lemmas == [ "barn", "fara", "í", "loðfíla-rannsókn", "." ]
+    assert results[10].tree.lemmas == [ "eðlisfræðingur", "Stephen", "Hawking",
         "láta", "í dag", ",", "á", "pí", "—", "dagur", "." ]
-    assert results[11].tree.stems == [ 'langur', 'áður', 'en', 'Jón', 'borða', 'ís',
+    assert results[11].tree.lemmas == [ 'langur', 'áður', 'en', 'Jón', 'borða', 'ís',
         'sem', 'hafa', 'bráðna', 'hratt', 'í hádeginu', 'fara', 'ég', 'á',
         'veitingastaður', 'á', 'horn', 'og', 'kaupa', 'ég', 'rauðvín', 'með',
         'hamborgari', 'sem', 'ég', 'borða', 'í gær', 'með', 'mikill', 'ánægja', '.' ]

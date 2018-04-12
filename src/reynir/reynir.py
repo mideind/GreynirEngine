@@ -190,7 +190,7 @@ class _Sentence:
     def terminals(self):
         """ Return a list of tuples, one for each terminal in the sentence.
             The tuples contain the original text of the token that matched
-            the terminal, the associated word stem, the category, and a set
+            the terminal, the associated word lemma, the category, and a set
             of variants (case, number, gender, etc.) """
         if self.tree is None:
             # Must parse the sentence first, without errors
@@ -198,13 +198,13 @@ class _Sentence:
         if self._terminals is not None:
             return self._terminals
         self._terminals = [
-            (d.text, d.stem, d.tcat, d.variants) for d in self.tree.descendants if d.is_terminal
+            (d.text, d.lemma, d.tcat, d.variants) for d in self.tree.descendants if d.is_terminal
         ]
         return self._terminals
 
     @property
-    def stems(self):
-        """ Convenience property to return the stems only """
+    def lemmas(self):
+        """ Convenience property to return the lemmas only """
         t = self.terminals
         return None if t is None else [ terminal[1] for terminal in t ]
 

@@ -21,7 +21,7 @@ After :ref:`installing Reynir <installation>`, fire up your Python 3 interpreter
     for sent in job:
         sent.parse()
         print("Sentence:   {0}".format(sent.tidy_text))
-        print("Stems:      {0}".format(sent.stems))
+        print("Lemmas:     {0}".format(sent.lemmas))
         print("Parse tree: {0}".format(sent.tree.flat))
 
 The output of the program is as follows (line breaks inserted)::
@@ -59,8 +59,8 @@ which returns a normalized form of the tokenized sentence.
 
 If the sentence was successfully parsed, the ``sent.tree`` property
 contains its best parse tree. This tree can be further queried via
-properties such as ``sent.stems`` which returns a list of the
-stems of the word in the sentence, and ``sent.tree.flat`` which
+properties such as ``sent.lemmas`` which returns a list of the
+word lemmas in the sentence, and ``sent.tree.flat`` which
 returns a string with a compact form of the parse tree.
 
 The parse tree contains grammar **nonterminals** in uppercase, such

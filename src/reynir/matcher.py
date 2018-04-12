@@ -30,7 +30,7 @@
     `"literal"` matches a subtree covering exactly the given literal text,
         albeit case-neutral
 
-    `'stem'` matches a subtree covering exactly the given word stem(s)
+    `'lemma'` matches a subtree covering exactly the given word lemma(s)
 
     `NONTERMINAL` matches the given nonterminal
 
@@ -281,7 +281,7 @@ class SimpleTree:
         self._variants = None
         self._tcat = None
         self._text_cache = None
-        self._stem_cache = None
+        self._lemma_cache = None
         self._tag_cache = None
 
     def __str__(self):
@@ -408,7 +408,7 @@ class SimpleTree:
         for ch in self.children:
             yield from ch.deep_children
 
-    def _view(self, level):
+    def _tree(self, level):
         """ Return a string containing an indented map of this subtree """
         if level == 0:
             indent = ""
@@ -417,7 +417,7 @@ class SimpleTree:
         if self._len > 1 or self._children:
             # Children present: Array or nonterminal
             return indent + (self.tag or "[]") + "".join(
-                "\n" + child._view(level + 1) for child in self.children)
+                "\n" + child._tree(level + 1) for child in self.children)
         # No children
         if self._head.get("k") == "PUNCTUATION":
             # Punctuation
@@ -426,9 +426,9 @@ class SimpleTree:
         return "{0}{1}: '{2}'".format(indent, self.terminal, self.text)
 
     @property
-    def view(self):
+    def tree(self):
         """ Return a nicely formatted string showing this subtree """
-        return self._view(0)
+        return self._tree(0)
 
     # Convert literal terminals that did not have word category specifiers
     # in the grammar (now corrected)
@@ -528,17 +528,17 @@ class SimpleTree:
         return self._head.get("x", "")
 
     @property
-    def _stem(self):
-        """ Return the stem of this node only, if any """
-        if self._stem_cache is None:
-            stem = self._head.get("s", self._text)
-            if isinstance(stem, tuple):
+    def _lemma(self):
+        """ Return the lemma of this node only, if any """
+        if self._lemma_cache is None:
+            lemma = self._head.get("s", self._text)
+            if isinstance(lemma, tuple):
                 # We have a lazy-evaluation function tuple:
-                # call it to obtain the stem
-                f, args = stem
-                stem = f(*args)
-            self._stem_cache = stem
-        return self._stem_cache
+                # call it to obtain the lemma
+                f, args = lemma
+                lemma = f(*args)
+            self._lemma_cache = lemma
+        return self._lemma_cache
 
     @property
     def _cat(self):
@@ -567,27 +567,27 @@ class SimpleTree:
         return self._text
 
     def _list(self, filter_func):
-        """ Return a list of stems of words that meet the filter criteria within this subtree """
+        """ Return a list of word lemmas that meet the filter criteria within this subtree """
         if self._len > 1 or self._children:
             # Concatenate the text from the children
             t = []
             for ch in self.children:
                 t.extend(ch._list(filter_func))
             return t
-        # Terminal node: return own stem if it matches the given category
+        # Terminal node: return own lemma if it matches the given category
         if filter_func(self):
-            stem = self._stem
-            return [ stem ] if stem else []
+            lemma = self._lemma
+            return [ lemma ] if lemma else []
         return []
 
     @property
     def nouns(self):
-        """ Returns the stems of all nouns in the subtree """
+        """ Returns the lemmas of all nouns in the subtree """
         return self._list(lambda t: t._cat in {"kk", "kvk", "hk"})
 
     @property
     def verbs(self):
-        """ Returns the stems of all verbs in the subtree """
+        """ Returns the lemmas of all verbs in the subtree """
         return self._list(lambda t: t._cat == "so")
 
     @property
@@ -621,21 +621,21 @@ class SimpleTree:
         return self._list(is_proper_name)
 
     @property
-    def stems(self):
-        """ Returns the stems of all words in the subtree """
+    def lemmas(self):
+        """ Returns the lemmas of all words in the subtree """
         return self._list(lambda t: True)
 
     @property
-    def stem(self):
-        """ Return the stems of this subtree as a string """
+    def lemma(self):
+        """ Return the lemmas of this subtree as a string """
         if self.is_terminal:
             # Shortcut for terminal node
-            return self._stem
-        return " ".join(self.stems)
+            return self._lemma
+        return " ".join(self.lemmas)
 
     @property
-    def own_stem(self):
-        return self._stem if self.is_terminal else ""
+    def own_lemma(self):
+        return self._lemma if self.is_terminal else ""
 
     def _all_matches(self, items):
         """ Return all subtree roots, including self, that match the given items,
@@ -779,14 +779,14 @@ class SimpleTree:
                 # Case-neutral compare
                 return item[1:-1].lower() == tree.own_text.lower()
             if item.startswith("'"):
-                # Word stem(s)
+                # Word lemma(s)
                 if not tree.is_terminal:
                     return False
                 if not item.endswith("'"):
-                    raise ValueError("Missing single quote at end of word stem")
+                    raise ValueError("Missing single quote at end of word lemma")
                 # !!! Note: the following will also match nonterminal
-                # !!! nodes that contain exactly the given stem
-                return item[1:-1] == tree.own_stem
+                # !!! nodes that contain exactly the given lemma
+                return item[1:-1] == tree.own_lemma
             if tree.terminal:
                 if tree.terminal == item:
                     return True
