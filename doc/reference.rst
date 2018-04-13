@@ -5,6 +5,8 @@ Reference
 
 The following sections describe the available classes, methods and properties of Reynir.
 
+A separate section lists grammar :ref:`nonterminals`.
+
 Initializing Reynir
 -------------------
 
@@ -642,6 +644,4 @@ They describe a simplified parse tree or a part (subtree) thereof.
         be established and is applicable) of all *proper names (sérnöfn*)
         within this subtree, i.e. the root and all its descendants, recursively.
         The list is in left-traversal order.
-
-
 

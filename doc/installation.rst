@@ -24,12 +24,14 @@ To install Reynir::
 
     $ pip install reynir
 
-    # ...or if you have both Python2 and Python3 available on your system:
+...or if you have both Python2 and Python3 available on your system::
+
     $ pip3 install reynir
 
-    # ...or if you want to be able to edit Reynir's source code in-place
-    # and perhaps submit pull requests (welcome!) to the project's
-    # GitHub repository:
+...or if you want to be able to edit Reynir's source code in-place
+and perhaps submit pull requests (welcome!) to the project's
+`GitHub repository <https://github.com/vthorsteinsson/ReynirPackage>`_::
+
     $ mkdir ~/github
     $ cd ~/github
     $ git clone https://github.com/vthorsteinsson/ReynirPackage
@@ -63,3 +65,4 @@ your project that uses Reynir. For this, you can use *virtualenv*::
 
 
 More information about virtualenv is `available here <https://virtualenv.pypa.io/en/stable/>`_.
+

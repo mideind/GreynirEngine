@@ -45,14 +45,18 @@ Here is a short example of what can be done with Reynir::
     >>> sent.tree.S.IP.VP.NP_OBJ.lemmas
     ['sól']
 
+Here, ``S`` stands for sentence *(málsgrein)*, ``IP`` for inflected phrase *(beygingarliður)*,
+``VP`` is a verb phrase *(sagnliður)*, ``NP_SUBJ`` is a subject noun phrase *(frumlag)* and
+``NP_OBJ`` is an object noun phrase *(andlag)*.
+Nonterminal names are listed in the :ref:`nonterminals` section.
 
 What Reynir does
 ----------------
 
 Reynir starts by **tokenizing** your text, i.e. dividing it up into individual words,
 numbers, punctuation and other tokens. For this, it uses the separate
-`Tokenizer <https://github.com/vthorsteinsson/Tokenizer>`_ package, which is automatically
-installed with Reynir.
+`Tokenizer <https://github.com/vthorsteinsson/Tokenizer>`_ package, by the
+same authors, which is automatically installed with Reynir.
 
 After tokenization, Reynir proceeds to **parse** the text according to a
 `context-free grammar <https://github.com/vthorsteinsson/ReynirPackage/blob/master/src/reynir/Reynir.grammar>`_

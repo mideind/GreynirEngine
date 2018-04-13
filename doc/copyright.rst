@@ -38,3 +38,4 @@ The full text of the GNU GPLv3 license can be found at https://www.gnu.org/licen
     part of the Reynir project. *Any subsequent distribution of the data must be
     done only in full compliance with the original BÍN license terms.*
 
+

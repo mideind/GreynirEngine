@@ -20,27 +20,44 @@ After :ref:`installing Reynir <installation>`, fire up your Python 3 interpreter
     # Iterate through sentences and parse each one
     for sent in job:
         sent.parse()
-        print("Sentence:   {0}".format(sent.tidy_text))
-        print("Lemmas:     {0}".format(sent.lemmas))
-        print("Parse tree: {0}".format(sent.tree.flat))
+        print("Sentence: {0}".format(sent.tidy_text))
+        print("Lemmas:   {0}".format(sent.lemmas))
+        print("Parse tree:\n{0}\n".format(sent.tree.view))
 
-The output of the program is as follows (line breaks inserted)::
+The output of the program is as follows::
 
-    Sentence:   Litla gula hænan átti fræ.
-    Stems:      ['lítill', 'gulur', 'hæna', 'eiga', 'fræ', '.']
-    Parse tree: P S-MAIN IP NP-SUBJ lo_nf_et_kvk lo_nf_et_kvk no_et_nf_kvk
-        /NP-SUBJ VP so_1_þf_et_p3 NP-OBJ no_et_þf_hk /NP-OBJ /VP /IP
-        /S-MAIN p /P
-    Sentence:   Það var hveitifræ.
-    Stems:      ['það', 'vera', 'hveitifræ', '.']
-    Parse tree: P S-MAIN IP NP-SUBJ pfn_hk_et_nf /NP-SUBJ VP so_1_nf_et_p3
-        NP-PRD no_et_nf_hk /NP-PRD /VP /IP /S-MAIN p /P
+    Sentence: Litla gula hænan átti fræ.
+    Lemmas:   ['lítill', 'gulur', 'hæna', 'eiga', 'fræ', '.']
+    Parse tree:
+    P
+    +-S-MAIN
+      +-IP
+        +-NP-SUBJ
+          +-lo_nf_et_kvk: 'Litla'
+          +-lo_nf_et_kvk: 'gula'
+          +-no_et_nf_kvk: 'hænan'
+        +-VP
+          +-so_1_þf_et_p3: 'átti'
+          +-NP-OBJ
+            +-no_et_þf_hk: 'fræ'
+    +-'.'
+
+    Sentence: Það var hveitifræ.
+    Lemmas:   ['það', 'vera', 'hveitifræ', '.']
+    Parse tree:
+    P
+    +-S-MAIN
+      +-IP
+        +-NP-SUBJ
+          +-pfn_hk_et_nf: 'Það'
+        +-VP
+          +-so_1_nf_et_p3: 'var'
+          +-NP-PRD
+            +-no_et_nf_hk: 'hveitifræ'
+    +-'.'
 
 The code first creates an instance of the :py:class:`Reynir` class and assigns
 it to the ``r`` object. The :py:class:`Reynir` class is Reynir's main service interface.
-We recommend that you only create a single :py:class:`Reynir` instance in your program,
-since each initialization maps the entire Icelandic lexicon into
-memory (about 60 megabytes).
 
 Next, the program submits a piece of text containing two sentences to Reynir, which
 returns a job object. Each job object encapsulates a stream of sentences that
@@ -60,16 +77,15 @@ which returns a normalized form of the tokenized sentence.
 If the sentence was successfully parsed, the ``sent.tree`` property
 contains its best parse tree. This tree can be further queried via
 properties such as ``sent.lemmas`` which returns a list of the
-word lemmas in the sentence, and ``sent.tree.flat`` which
-returns a string with a compact form of the parse tree.
+word lemmas in the sentence, and ``sent.tree.view`` which
+returns a string with an "ASCII art" representation of the parse tree.
 
 The parse tree contains grammar **nonterminals** in uppercase, such
 as ``P`` (paragraph), ``S-MAIN`` (main sentence), ``IP`` (inflected
 phrase - *beygingarliður*), ``NP-SUBJ`` (noun phrase - subject,
-*frumlag*), ``VP`` (verb phrase - *sagnliður*), etc. An open
-nonterminal scope is closed by a forward slash ``/`` followed
-by the nonterminal name. A verb phrase is thus enclosed by
-``VP [...] /VP``.
+*frumlag*), ``VP`` (verb phrase - *sagnliður*), etc.
+
+Nonterminals are listed and explained in the :ref:`nonterminals` section.
 
 The tree also shows grammar **terminals** (leaves, corresponding to
 tokens) in lowercase. Examples are ``pfn_hk_et_nf`` (personal pronoun,
@@ -78,3 +94,4 @@ neutral gender, singular, nominative case), and ``so_1_nf_et_p3``
 
 The sentence and tree properties and functions are further
 detailed and described in the :ref:`reference` section.
+
