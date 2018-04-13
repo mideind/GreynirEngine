@@ -408,7 +408,7 @@ class SimpleTree:
         for ch in self.children:
             yield from ch.deep_children
 
-    def _tree(self, level):
+    def _view(self, level):
         """ Return a string containing an indented map of this subtree """
         if level == 0:
             indent = ""
@@ -417,7 +417,7 @@ class SimpleTree:
         if self._len > 1 or self._children:
             # Children present: Array or nonterminal
             return indent + (self.tag or "[]") + "".join(
-                "\n" + child._tree(level + 1) for child in self.children)
+                "\n" + child._view(level + 1) for child in self.children)
         # No children
         if self._head.get("k") == "PUNCTUATION":
             # Punctuation
@@ -426,9 +426,9 @@ class SimpleTree:
         return "{0}{1}: '{2}'".format(indent, self.terminal, self.text)
 
     @property
-    def tree(self):
+    def view(self):
         """ Return a nicely formatted string showing this subtree """
-        return self._tree(0)
+        return self._view(0)
 
     # Convert literal terminals that did not have word category specifiers
     # in the grammar (now corrected)

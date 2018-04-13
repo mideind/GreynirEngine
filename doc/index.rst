@@ -51,16 +51,16 @@ This documentation also contains **important information** about :ref:`copyright
 About Reynir
 ------------
 
-Reynir is a product of Miðeind ehf. of Reykjavík, Iceland. It is a free open source software
-project (FOSS), started in mid-2015 by its original author, Vilhjálmur Þorsteinsson.
-Its aim is to produce an industrial-strength NLP toolset for Icelandic, with the hope of
-supporting the language on the digital front in times of rapid advances in language technology;
-changes that may leave low-resource languages at a disadvantage unless explicit action is taken
-to strengthen their position.
+Reynir is a project and product of Miðeind ehf. of Reykjavík, Iceland. It is a free open source software
+project (FOSS, GNU GPLv3), started in mid-2015 by its original author, Vilhjálmur Þorsteinsson.
+Its aim is to produce an **industrial-strength Natural Language Processing toolset for Icelandic**,
+with the hope of supporting the language on the digital front in times of rapid advances in language
+technology; changes that may leave low-resource languages at a disadvantage unless explicit action is
+taken to strengthen their position.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :hidden:
 
    overview

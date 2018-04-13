@@ -349,14 +349,16 @@ hence the leading underscore in the class name.
         0. **text**: The token text.
 
         1. **lemma**: The lemma of the word, if the token is a word, otherwise
-            it is the text of the token.
+           it is the text of the token. Lemmas of composite words include hyphens
+           ``-`` at the component boundaries. Examples: ``borgar-stjórnarmál``,
+           ``skugga-kosning``.
 
         2. **category**: The word category (``no`` for noun, ``so`` for verb, etc.)
 
         3. **variants**: A set of the grammatical variants for the word, if the
-            token is a word, otherwise an empty set. The variants include
-            the case (``nf``, ``þf``, ``þgf``, ``ef``), gender (``kvk``, ``kk``, ``hk``),
-            person, verb form, adjective degree, etc.
+           token is a word, otherwise an empty set. The variants include
+           the case (``nf``, ``þf``, ``þgf``, ``ef``), gender (``kvk``, ``kk``, ``hk``),
+           person, verb form, adjective degree, etc.
 
         If the sentence has not yet been parsed, or no parse tree was found
         for it, this property is ``None``.
@@ -385,6 +387,9 @@ hence the leading underscore in the class name.
         Returns a ``list`` of the lemmas of the words in the sentence, or
         the text of the token for non-word tokens. ``sent.lemmas`` is a shorthand for
         ``[ t[1] for t in sent.terminals ]``.
+
+        Lemmas of composite words include hyphens ``-`` at the component boundaries.
+        Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
 
 
 The SimpleTree class
@@ -565,6 +570,9 @@ They describe a simplified parse tree or a part (subtree) thereof.
         within this subtree. For terminals that correspond to non-word tokens,
         the original token text is included in the list.
 
+        Lemmas of composite words include hyphens ``-`` at the component boundaries.
+        Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
+
     .. py:attribute:: lemma
 
         Returns a ``str`` containing a concatenation of the word lemmas corresponding
@@ -572,10 +580,16 @@ They describe a simplified parse tree or a part (subtree) thereof.
         to non-word tokens, the original token text is included in the string. The
         lemmas are separated by spaces.
 
+        Lemmas of composite words include hyphens ``-`` at the component boundaries.
+        Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
+
     .. py:attribute:: own_lemma
 
         Returns a ``str`` containing the word lemma corresponding to the root
         of this subtree only. For nonterminal roots, this returns an empty string.
+
+        Lemmas of composite words include hyphens ``-`` at the component boundaries.
+        Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
 
     .. py:attribute:: nouns
 
@@ -583,11 +597,17 @@ They describe a simplified parse tree or a part (subtree) thereof.
         root and all its descendants, recursively. The list is in left-traversal
         order.
 
+        Lemmas of composite words include hyphens ``-`` at the component boundaries.
+        Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
+
     .. py:attribute:: verbs
 
         Returns a ``list`` of the lemmas of all *verbs* within this subtree, i.e. the
         root and all its descendants, recursively. The list is in left-traversal
         order.
+
+        Lemmas of composite words include hyphens ``-`` at the component boundaries.
+        Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
 
     .. py:attribute:: persons
 
