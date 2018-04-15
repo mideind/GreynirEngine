@@ -5,7 +5,7 @@ Reference
 
 The following sections describe the available classes, methods and properties of Reynir.
 
-A separate section lists grammar :ref:`nonterminals`.
+Separate sections describe grammar :ref:`nonterminals` and :ref:`terminals`.
 
 Initializing Reynir
 -------------------
@@ -357,8 +357,8 @@ hence the leading underscore in the class name.
 
         2. **category**: The word category (``no`` for noun, ``so`` for verb, etc.)
 
-        3. **variants**: A set of the grammatical variants for the word, if the
-           token is a word, otherwise an empty set. The variants include
+        3. **variants**: A set of the :ref:`grammatical variants <variants>` for
+           the word, if the token is a word, otherwise an empty set. The variants include
            the case (``nf``, ``þf``, ``þgf``, ``ef``), gender (``kvk``, ``kk``, ``hk``),
            person, verb form, adjective degree, etc.
 
@@ -410,33 +410,33 @@ They describe a simplified parse tree or a part (subtree) thereof.
 
     .. py:attribute:: tag
 
-        Returns a ``str`` with the name of the nonterminal corresponding
-        to the root of this tree or subtree. The tag may
+        Returns a ``str`` with the name of the :ref:`nonterminal <nonterminals>`
+        corresponding to the root of this tree or subtree. The tag may
         have subcategories, separated by a hyphen, e.g. ``NP-OBJ``.
 
     .. py:attribute:: terminal
 
-        Returns a ``str`` with the terminal corresponding to this
+        Returns a ``str`` with the :ref:`terminal <terminals>` corresponding to this
         subtree. The terminal contains a category followed by eventual
-        variants, separated by underscores, e.g. ``no_ef_ft_hvk`` for
+        :ref:`variants <variants>`, separated by underscores, e.g. ``no_ef_ft_hvk`` for
         a noun, possessive case, singular, neutral gender.
 
     .. py:attribute:: variants
 
-        Returns a ``set`` of the grammatical variants specified in
-        the terminal corresponding to this
+        Returns a ``set`` of the :ref:`grammatical variants <variants>`
+        specified in the :ref:`terminal <terminals>` corresponding to this
         subtree, e.g. ``{ "ef", "ft", "hvk" }`` for possessive case,
         singular, neutral gender.
 
     .. py:attribute:: tcat
 
-        Returns a ``str`` with the terminal category corresponding to this
+        Returns a ``str`` with the :ref:`terminal category <terminals>` corresponding to this
         subtree, e.g. ``no`` for nouns or ``dags`` for dates.
 
     .. py:method:: match_tag(self, item : str) -> bool
 
         Checks whether the root nonterminal of the tree matches the given
-        nonterminal identifier.
+        :ref:`nonterminal identifier <nonterminals>`.
 
         :param str item: The nonterminal identifier to match. The match can
             be partial, i.e. the item ``NP`` matches the roots ``NP-OBJ`` and
@@ -494,18 +494,19 @@ They describe a simplified parse tree or a part (subtree) thereof.
     .. py:attribute:: flat
 
         Returns this subtree, simplified and flattened to a text string.
-        Nonterminal scopes are
+        :ref:`Nonterminal <nonterminals>` scopes are
         delimited like so: ``NAME ... /NAME`` where ``NAME`` is the name of
         the nonterminal, for example ``NP`` for noun phrases and ``VP`` for
-        verb phrases. Terminals have lower-case identifiers with their
-        various grammar variants separated by underscores, e.g.
+        verb phrases. :ref:`terminals` have lower-case identifiers with their
+        various :ref:`grammar variants <variants>` separated by underscores, e.g.
         ``no_þf_kk_et`` for a noun, accusative case, masculine gender, singular.
 
     .. py:method:: __getitem__(self, item) -> SimpleTree
 
         Returns the specified child subtree of this tree.
 
-        :param str/int item:  This can be either a nonterminal identifier (e.g. ``"S-MAIN"``),
+        :param str/int item:  This can be either a :ref:`nonterminal identifier <nonterminals>`
+            (e.g. ``"S-MAIN"``),
             in which case the first child having that nonterminal as its root
             is returned, or an ``int``, in which case the child having the specified
             0-based index is returned. A nonterminal match
@@ -533,9 +534,9 @@ They describe a simplified parse tree or a part (subtree) thereof.
 
         Returns the specified child subtree of this tree.
 
-        :param str name:  A nonterminal identifier (e.g. ``"NP"``). The first
-            child having that nonterminal as its root is returned. A nonterminal match
-            can be partial, i.e. the item ``NP`` matches the roots ``NP-OBJ`` and
+        :param str name:  A :ref:`nonterminal identifier <nonterminals>` (e.g. ``"NP"``).
+            The first child having that nonterminal as its root is returned. A nonterminal
+            match can be partial, i.e. the item ``NP`` matches the roots ``NP-OBJ`` and
             ``NP-SUBJ`` as well as plain ``NP``. An underscore in the identifier
             name matches a hyphen in the root nonterminal name.
 

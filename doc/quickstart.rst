@@ -88,9 +88,13 @@ phrase - *beygingarliður*), ``NP-SUBJ`` (noun phrase - subject,
 Nonterminals are listed and explained in the :ref:`nonterminals` section.
 
 The tree also shows grammar **terminals** (leaves, corresponding to
-tokens) in lowercase. Examples are ``pfn_hk_et_nf`` (personal pronoun,
+tokens) in lowercase, as well as their :ref:`grammatical variants <variants>`
+(features). Examples are ``pfn_hk_et_nf`` (personal pronoun,
 neutral gender, singular, nominative case), and ``so_1_nf_et_p3``
 (verb, one argument in nominative case, singular, 3rd person).
+
+Terminals and variants are listed and explained in the :ref:`terminals`
+section.
 
 The sentence and tree properties and functions are further
 detailed and described in the :ref:`reference` section.

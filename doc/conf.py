@@ -99,7 +99,7 @@ html_sidebars = {
     ]
 }
 html_theme_options = {
-    "logo" : "ReynirLogo216.png",
+    "logo" : "ReynirLogo400.png",
     "logo_name" : False,
     "logo_text_align" : "center",
     "description" : "Natural Language Processing for Icelandic",

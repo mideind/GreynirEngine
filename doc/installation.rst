@@ -65,4 +65,3 @@ your project that uses Reynir. For this, you can use *virtualenv*::
 
 
 More information about virtualenv is `available here <https://virtualenv.pypa.io/en/stable/>`_.
-

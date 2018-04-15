@@ -14,6 +14,9 @@ Reynir is a Python 3.x package for **parsing Icelandic text into sentence trees*
 The trees can then be used to extract information from the text, for instance
 about contained nouns and noun phrases, person names, verbs, word stems, etc.
 
+Along the way, Reynir tokenizes the text, finds lemmas and assigns part-of-speech
+(POS) tags to every word.
+
 .. figure:: _static/GreynirTreeExampleSmall.png
    :align: center
    :alt: An example of a parse tree
@@ -54,12 +57,13 @@ Reynir can serve as an enabling component of applications such as:
    * Bots and conversational systems
    * Information extraction tools
    * Intelligent search tools
-   * Grammatical pattern analysis
+   * Grammatical pattern analyzers
    * Text similarity
    * Author identification
    * Sentiment analysis
    * Content summarization
    * Content category labeling
+   * Part-of-speech (POS) taggers and lemmatizers
    * Generation of training corpora for machine learning
 
 About Reynir
@@ -83,5 +87,6 @@ taken to strengthen their position.
    reference
    patterns
    nonterminals
+   terminals
    copyright
 

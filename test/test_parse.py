@@ -159,42 +159,56 @@ def test_parse(verbose = False):
     assert num_pp(results[11]) == 4
 
 
-def test_consistency():
+def test_consistency(verbose = False):
     """ Check that multiple parses of the same sentences yield exactly
         the same preposition counts, and also identical scores. This is
         inter alia to guard agains nondeterminism that may arise from
         Python's random hash seeds. """
-    cnt = defaultdict(int)
-    scores = defaultdict(int)
 
-    ITERATIONS = 100
-    for i in range(ITERATIONS):
-        # The following two sentences have different scores
-        if i % 5 == 4:
-            # One fifth of the test cases
-            j = r.submit("Barnið fór í augnrannsóknina eftir húsnæðiskaupin.")
-        else:
-            # Four fifths of the test cases
-            j = r.submit("Barnið fór í augnrannsóknina fyrir húsnæðiskaupin.")
-        s = next(iter(j))
-        s.parse()
-        pp = [ t.text for t in s.tree.descendants if t.match("PP") ]
-        cnt[len(pp)] += 1
-        scores[s.score] += 1
+    sent15 = [
+        "Barnið fór í augnrannsóknina eftir húsnæðiskaupin.",
+        "Ég sendi póstinn frá Ísafirði með kettinum"
+    ]
+    sent45 = [
+        "Barnið fór í augnrannsóknina fyrir húsnæðiskaupin.",
+        "Ég sendi póstinn til Ísafjarðar með kettinum"
+    ]
+    for tc15, tc45 in zip(sent15, sent45):
 
-    # There should be 2 prepositions in all parse trees
-    assert len(cnt) == 1
-    assert 2 in cnt
-    assert cnt[2] == ITERATIONS
+        cnt = defaultdict(int)
+        scores = defaultdict(int)
 
-    # There should only be two different scores
-    assert len(scores) == 2
-    # The sum of the two counts should be the number of iterations
-    assert sum(scores.values()) == 100
-    sc_set = set(scores.values())
-    # The count for the scores should be 1/5 and 4/5 of the total, respectively
-    assert ITERATIONS * 1 // 5 in sc_set
-    assert ITERATIONS * 4 // 5 in sc_set
+        ITERATIONS = 100
+        if verbose:
+            print("Consistency test, {0} iterations:\n   {1}\n   {2}".format(ITERATIONS, tc15, tc45))
+
+        for i in range(ITERATIONS):
+            # The following two sentences have different scores
+            if i % 5 == 4:
+                # One fifth of the test cases
+                j = r.submit(tc15)
+            else:
+                # Four fifths of the test cases
+                j = r.submit(tc45)
+            s = next(iter(j))
+            s.parse()
+            pp = [ t.text for t in s.tree.descendants if t.match("PP") ]
+            cnt[len(pp)] += 1
+            scores[s.score] += 1
+
+        # There should be 2 prepositions in all parse trees
+        assert len(cnt) == 1
+        assert 2 in cnt
+        assert cnt[2] == ITERATIONS
+
+        # There should only be two different scores
+        assert len(scores) == 2
+        # The sum of the two counts should be the number of iterations
+        assert sum(scores.values()) == 100
+        sc_set = set(scores.values())
+        # The count for the scores should be 1/5 and 4/5 of the total, respectively
+        assert ITERATIONS * 1 // 5 in sc_set
+        assert ITERATIONS * 4 // 5 in sc_set
 
 
 def test_long_parse(verbose = False):
@@ -238,6 +252,6 @@ if __name__ == "__main__":
     test_init()
     test_parse(verbose = True)
     test_long_parse(verbose = True)
-    test_consistency()
+    test_consistency(verbose = True)
     test_finish()
 

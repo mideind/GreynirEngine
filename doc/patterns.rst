@@ -190,4 +190,3 @@ Output::
     ['borgar-stjórnarmál', 'með', 'framboðsfundur', 'og', 'skugga-kosning']
     ['það']
 
-

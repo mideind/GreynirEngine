@@ -12,49 +12,49 @@ Sentences and paragraphs
 
 *Setningar, málsgreinar og efnisgreinar*
 
-+------------+--------------------------------------------+
-| P          | Paragraph/head of tree                     |
-+------------+--------------------------------------------+
-| S          | Sentence                                   |
-+------------+--------------------------------------------+
-| S-MAIN     | Sentence-main                              |
-+------------+--------------------------------------------+
-| S-REF      | Sentence-referential (*sem Páll sá í dag*) |
-+------------+--------------------------------------------+
-| S-COND     | Sentence-condition (ef *Páll vildi*)       |
-+------------+--------------------------------------------+
-| S-CONS     | Sentence-consequence (þá *færi hann heim*) |
-+------------+--------------------------------------------+
-| S-EXPLAIN  | Sentence-explanation                       |
-|            | (Páll, *sem kom inn*, klappaði kettinum)   |
-+------------+--------------------------------------------+
-| S-QUOTE    | Sentence-quote (*sagði Jón*)               |
-+------------+--------------------------------------------+
-| S-PREFIX   | Sentence-prefix                            |
-+------------+--------------------------------------------+
-| S-THT      | Sentence-complement (skýring)              |
-+------------+--------------------------------------------+
-| S-QUE      | Sentence-question (*hvaða*...)             |
-+------------+--------------------------------------------+
-| S-ADV      | Sentence-adverbial (atvikssetning)         |
-+------------+--------------------------------------------+
-| S-ADV-TEMP | Sentence-adverbial-temporal                |
-|            | (Páll fór út *á meðan kötturinn mjálmaði*) |
-+------------+--------------------------------------------+
-| S-ADV-PURP | Sentence-adverbial-purpose                 |
-+------------+--------------------------------------------+
-| S-ADV-ACK  | Sentence-adverbial-acknowledgement         |
-|            | (Páll fór út, *þó að hann sé þreyttur*)    |
-+------------+--------------------------------------------+
-| S-ADV-COND | Sentence-adverbial-condition               |
-|            | (Páll færi út, *ef hann gæti*)             |
-+------------+--------------------------------------------+
-| S-ADV-CONS | Sentence-adverbial-consequence             |
-|            | (Páll fór út, *þannig að hann er þreyttur*)|
-+------------+--------------------------------------------+
-| S-ADV-CAUSE| Sentence-adverbial-cause                   |
-|            | (Páll fór út, *þar sem hann er þreyttur*)  |
-+------------+--------------------------------------------+
++------------+---------------------------------------------------+
+| P          | Paragraph/head of tree                            |
++------------+---------------------------------------------------+
+| S          | Sentence                                          |
++------------+---------------------------------------------------+
+| S-MAIN     | Sentence-main                                     |
++------------+---------------------------------------------------+
+| S-REF      | Sentence-referential (*sem Páll sá í dag*)        |
++------------+---------------------------------------------------+
+| S-COND     | Sentence-condition (ef *Páll vildi*)              |
++------------+---------------------------------------------------+
+| S-CONS     | Sentence-consequence (þá *færi hann heim*)        |
++------------+---------------------------------------------------+
+| S-EXPLAIN  | Sentence-explanation                              |
+|            | (Páll, *sem kom inn*, klappaði kettinum)          |
++------------+---------------------------------------------------+
+| S-QUOTE    | Sentence-quote (*sagði Jón*)                      |
++------------+---------------------------------------------------+
+| S-PREFIX   | Sentence-prefix                                   |
++------------+---------------------------------------------------+
+| S-THT      | Sentence-complement (skýring)                     |
++------------+---------------------------------------------------+
+| S-QUE      | Sentence-question (*hvaða*...)                    |
++------------+---------------------------------------------------+
+| S-ADV      | Sentence-adverbial (atvikssetning)                |
++------------+---------------------------------------------------+
+| S-ADV-TEMP | Sentence-adverbial-temporal                       |
+|            | (Páll fór út *á meðan kötturinn mjálmaði*)        |
++------------+---------------------------------------------------+
+| S-ADV-PURP | Sentence-adverbial-purpose                        |
++------------+---------------------------------------------------+
+| S-ADV-ACK  | Sentence-adverbial-acknowledgement                |
+|            | (Páll fór út, *þó að hann sé þreyttur*)           |
++------------+---------------------------------------------------+
+| S-ADV-COND | Sentence-adverbial-condition                      |
+|            | (Páll færi út, *ef hann gæti*)                    |
++------------+---------------------------------------------------+
+| S-ADV-CONS | Sentence-adverbial-consequence                    |
+|            | (Páll fór út, *þannig að hann er þreyttur*)       |
++------------+---------------------------------------------------+
+| S-ADV-CAUSE| Sentence-adverbial-cause                          |
+|            | (Páll fór út, *þar sem hann er þreyttur*)         |
++------------+---------------------------------------------------+
 
 Inflected phrases
 -----------------
@@ -134,4 +134,5 @@ Adverbial phrases
 +------------+---------------------------------------------------+
 | ADVP-DATE  | Adverbial phrase-date/time                        |
 +------------+---------------------------------------------------+
+
 

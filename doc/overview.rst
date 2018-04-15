@@ -75,3 +75,4 @@ You can access word lemmas, extract noun and verb phrases as shown above, look f
 patterns via wildcard matching, and much more. This is described in detail in the
 :ref:`reference`.
 
+
