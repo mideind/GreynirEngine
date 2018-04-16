@@ -95,6 +95,11 @@ import re
 from pprint import pformat
 from itertools import chain
 
+if not __package__:
+    from cache import cached_property
+else:
+    from .cache import cached_property
+
 
 # Default tree simplifier configuration maps
 
@@ -275,13 +280,10 @@ class SimpleTree:
         self._sents = sents
         self._len = len(sents)
         self._head = sents[0] if self._len == 1 else { }
-        self._sent_cache = None
         self._children = self._head.get("p")
         self._children_cache = None
         self._variants = None
         self._tcat = None
-        self._text_cache = None
-        self._lemma_cache = None
         self._tag_cache = None
 
     def __str__(self):
@@ -359,12 +361,10 @@ class SimpleTree:
                 self._tcat = t.split("_")[0]
         return self._tcat
 
-    @property
+    @cached_property
     def sentences(self):
-        """ Generator for the contained sentences """
-        if self._sent_cache is None:
-            self._sent_cache = [ SimpleTree([[ sent ]], parent = self.parent) for sent in self._sents ]
-        return self._sent_cache
+        """ A list of the contained sentences """
+        return [ SimpleTree([[ sent ]], parent = self.parent) for sent in self._sents ]
 
     @property
     def has_children(self):
@@ -527,40 +527,35 @@ class SimpleTree:
         """ Return the original text within this node only, if any """
         return self._head.get("x", "")
 
-    @property
+    @cached_property
     def _lemma(self):
         """ Return the lemma of this node only, if any """
-        if self._lemma_cache is None:
-            lemma = self._head.get("s", self._text)
-            if isinstance(lemma, tuple):
-                # We have a lazy-evaluation function tuple:
-                # call it to obtain the lemma
-                f, args = lemma
-                lemma = f(*args)
-            self._lemma_cache = lemma
-        return self._lemma_cache
+        lemma = self._head.get("s", self._text)
+        if isinstance(lemma, tuple):
+            # We have a lazy-evaluation function tuple:
+            # call it to obtain the lemma
+            f, args = lemma
+            lemma = f(*args)
+        return lemma
 
     @property
     def _cat(self):
         """ Return the word category of this node only, if any """
         return self._head.get("c")
 
-    @property
+    @cached_property
     def text(self):
         """ Return the original text contained within this subtree """
-        if self._text_cache is None:
-            if self.is_terminal:
-                # Terminal node: return own text
-                self._text_cache = self._text
-            else:
-                # Concatenate the text from the children
-                t = []
-                for ch in self.children:
-                    x = ch.text
-                    if x:
-                        t.append(x)
-                self._text_cache = " ".join(t)
-        return self._text_cache
+        if self.is_terminal:
+            # Terminal node: return own text
+            return self._text
+        # Concatenate the text from the children
+        t = []
+        for ch in self.children:
+            x = ch.text
+            if x:
+                t.append(x)
+        return " ".join(t)
 
     @property
     def own_text(self):

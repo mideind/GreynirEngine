@@ -1,4 +1,3 @@
-
 """
 
 	cache.py
@@ -41,6 +40,7 @@
 from heapq import nsmallest
 from operator import itemgetter
 import threading
+from functools import wraps
 
 
 LRU_DEFAULT = 1024
@@ -126,4 +126,30 @@ class LFU_Cache:
 
             return result
 
+
+def cached(func):
+    """ A decorator for caching function calls """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not hasattr(func, "_cache"):
+            func._cache = func(*args, **kwargs)
+        return func._cache
+    return wrapper
+
+
+class cached_property:
+
+    """ A decorator for caching instance properties """
+
+    def __init__(self, func):
+        self.__doc__ = getattr(func, "__doc__")
+        self.func = func
+
+    def __get__(self, obj, cls):
+        if obj is None:
+            return self
+        # Get the property value and put it into the instance's
+        # dict instead of the original function
+        value = obj.__dict__[self.func.__name__] = self.func(obj)
+        return value
 

@@ -5,6 +5,13 @@ if [ "$1" = "" ]; then
    exit 1
 fi
 echo "Upload a new Reynir version:" "$1"
+# Fix permission bits
+chmod -x src/reynir/*.py
+chmod -x src/reynir/*.cpp
+chmod -x src/reynir/*.grammar
+chmod -x src/reynir/*.grammar.bin
+chmod -x src/reynir/config/*
+chmod -x src/reynir/resources/*
 # Create the base source distribution
 python setup.py sdist
 # Create the binary wheels

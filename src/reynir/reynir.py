@@ -36,6 +36,7 @@ from .fastparser import Fast_Parser, ParseError, ParseForestNavigator, ParseFore
 from .reducer import Reducer
 from .incparser import paragraphs
 from .matcher import SimpleTreeBuilder
+from .cache import cached_property
 
 
 class _Simplifier(ParseForestNavigator):
@@ -99,7 +100,6 @@ class _Sentence:
         self._tree = self._simplified_tree = None
         self._num = None # Number of possible combinations
         self._score = None # Score of best parse tree
-        self._text = None # Cached text representation
         self._terminals = None # Cached terminals
         if self._job._parse:
             # We want an immediate parse of the sentence
@@ -173,13 +173,11 @@ class _Sentence:
         """ Return a flat text representation of the simplified parse tree """
         return None if self.tree is None else self.tree.flat
 
-    @property
+    @cached_property
     def text(self):
         """ Return a raw text representation of the sentence,
             with spaces between all tokens """
-        if self._text is None:
-            self._text = " ".join((t.txt or "") for t in self._s)
-        return self._text
+        return " ".join((t.txt or "") for t in self._s)
 
     @property
     def tidy_text(self):

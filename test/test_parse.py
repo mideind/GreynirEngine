@@ -171,12 +171,13 @@ def test_consistency(verbose = False):
     ]
     sent45 = [
         "Barnið fór í augnrannsóknina fyrir húsnæðiskaupin.",
-        "Ég sendi póstinn til Ísafjarðar með kettinum"
+        "Ég sendi póstinn með kettinum til Ísafjarðar"
     ]
     for tc15, tc45 in zip(sent15, sent45):
 
         cnt = defaultdict(int)
         scores = defaultdict(int)
+        ptime = 0.0
 
         ITERATIONS = 100
         if verbose:
@@ -192,19 +193,23 @@ def test_consistency(verbose = False):
                 j = r.submit(tc45)
             s = next(iter(j))
             s.parse()
+            ptime += j.parse_time
             pp = [ t.text for t in s.tree.descendants if t.match("PP") ]
             cnt[len(pp)] += 1
             scores[s.score] += 1
+
+        if verbose:
+            print("Parse time for {0} iterations was {1:.2f} seconds".format(ITERATIONS, ptime))
 
         # There should be 2 prepositions in all parse trees
         assert len(cnt) == 1
         assert 2 in cnt
         assert cnt[2] == ITERATIONS
 
+        # The sum of all counts should be the number of iterations
+        assert sum(scores.values()) == 100
         # There should only be two different scores
         assert len(scores) == 2
-        # The sum of the two counts should be the number of iterations
-        assert sum(scores.values()) == 100
         sc_set = set(scores.values())
         # The count for the scores should be 1/5 and 4/5 of the total, respectively
         assert ITERATIONS * 1 // 5 in sc_set
@@ -243,6 +248,17 @@ def test_long_parse(verbose = False):
         print("Parsing time        : {0:.2f}".format(job.parse_time))
 
 
+def test_properties():
+    s = r.parse("Þetta er prófun.")["sentences"][0]
+    sc = s.score
+    t = s.tokens
+    v = s.tree.view # Should not raise exception
+    try:
+        v = s.tree.tree
+        assert False, "Should have raised exception"
+    except AttributeError:
+        pass
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -251,6 +267,7 @@ if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     test_init()
     test_parse(verbose = True)
+    test_properties()
     test_long_parse(verbose = True)
     test_consistency(verbose = True)
     test_finish()
