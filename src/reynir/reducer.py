@@ -359,8 +359,6 @@ class Reducer:
                     Stop when coming to a nested preposition scope or to a
                     noun phrase (Nafnliður, Nl_*) """
 
-                copied = set()
-
                 def copy_node(node):
 
                     def dup(node):
@@ -385,13 +383,10 @@ class Reducer:
                     if node is None:
                         return None
                     # First, copy the root itself
-                    if node not in copied:
-                        # Do not copy nodes twice during the same subtree copy process
-                        copied.add(node)
-                        node = Node.copy(node)
-                        # Then, copy the children as required by applying the dup() function
-                        node.transform_children(dup)
-                        # Return the fresh copy
+                    node = Node.copy(node)
+                    # Then, copy the children as required by applying the dup() function
+                    node.transform_children(dup)
+                    # Return the fresh copy
                     return node
 
                 return copy_node(root)
@@ -660,6 +655,7 @@ class Reducer:
                 nodes that have the enable_prep_bonus tag """
             # self._check_stacks() # !!! DEBUG
             self.PrepositionUnpacker.navigate(root_node)
+            # ParseForestPrinter.print_forest(root_node, skip_duplicates = True)
             # Start normal navigation of the tree after the split
             result = super().go(root_node)
             # self._check_stacks() # !!! DEBUG

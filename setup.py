@@ -27,8 +27,7 @@
     automatically compile the eparser.cpp module to eparser.*.so/.pyd
     and build the required CFFI Python wrapper via eparser_build.py.
 
-    Note that installing under PyPy 3 is supported, and indeed encouraged,
-    for best performance.
+    Note that installing under PyPy >= 3.5 is supported.
 
 """
 
@@ -61,7 +60,7 @@ def read(*names, **kwargs):
 
 setup(
     name='reynir',
-    version='0.1.9',
+    version='1.0.0',
     license='GNU GPLv3',
     description='A natural language parser for Icelandic',
     long_description='%s\n%s' % (
@@ -78,7 +77,7 @@ setup(
     zip_safe=True,
     classifiers=[
         # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
@@ -102,7 +101,7 @@ setup(
     ],
     setup_requires=['cffi>=1.10.0'],
     install_requires=[
-        'cffi>=1.0.0',
+        'cffi>=1.10.0',
         'tokenizer>=0.1.14'
     ],
     cffi_modules=["src/reynir/eparser_build.py:ffibuilder"]
