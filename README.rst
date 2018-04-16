@@ -6,16 +6,14 @@ Reynir: A fast, efficient natural language parser for Icelandic
 Overview
 ********
 
-**Reynir** parses sentences of Icelandic text into **parse trees**.
-A parse tree recursively describes the grammatical structure
-of the sentence, including its noun phrases, verb phrases,
-prepositional phrases, etc.
+**Reynir** is a Python 3.x package for **parsing Icelandic text into sentence trees**.
+The trees can then be used to extract information from the text, for instance
+about people, titles, entities, facts, actions and opinions.
 
-The individual tokens (words and punctuation) of the sentence
-correspond to leaves in the parse tree.
+Along the way, Reynir tokenizes the text, finds **lemmas** and assigns
+**part-of-speech (POS) tags** to every word.
 
-By examining and processing the parse tree, information and meaning
-can be extracted from the sentence.
+Full documentation for Reynir is `available here <https://greynir.is/doc/>`_.
 
 *******
 Example
@@ -27,6 +25,17 @@ Example
 >>> sent = next(job.sentences())
 >>> sent.parse()
 True
+>>> print(sent.tree.view)
+P                             # Root
++-S-MAIN                      # Main sentence
+  +-IP                        # Inflected phrase
+    +-NP-SUBJ                 # Noun phrase, subject
+      +-no_et_nf_kvk: 'Ása'   # Noun, singular, nominative, feminine
+    +-VP                      # Verb phrase
+      +-so_1_þf_et_p3: 'sá'   # Verb, 1 accusative arg, singular, 3rd p
+      +-NP-OBJ                # Noun phrase, object
+        +-no_et_þf_kvk: 'sól' # Noun, singular, accusative, feminine
++-'.'                         # Punctuation
 >>> sent.tree.nouns
 ['Ása', 'sól']
 >>> sent.tree.verbs
@@ -44,14 +53,14 @@ True
 Prerequisites
 *************
 
-This package runs on CPython 3.4 or newer, and on PyPy 3.5
-or newer. PyPy is recommended for best performance.
+This package runs on CPython 3.4 or newer, and on PyPy 3.5 or newer.
 
-You need to have ``python3-dev`` and/or potentially ``python3.6-dev`` installed on your system::
+You may need to have ``python3-dev`` and/or potentially ``python3.6-dev`` installed on your system
+to set up Reynir successfully::
 
-	# Debian or Ubuntu:
-	sudo apt-get install python3-dev
-	sudo apt-get install python3.6-dev
+    # Debian or Ubuntu:
+    sudo apt-get install python3-dev
+    sudo apt-get install python3.6-dev
 
 ************
 Installation
@@ -59,13 +68,13 @@ Installation
 
 To install this package::
 
-	pip3 install reynir
+    $ pip3 install reynir
 
 *************
 Documentation
 *************
 
-Please consult `Reynir's documentation <https://greynir.is/doc/>`_ for more detailed
+Please consult `Reynir's documentation <https://greynir.is/doc/>`_ for detailed
 `installation instructions <https://greynir.is/doc/installation.html>`_,
 a `quickstart guide <https://greynir.is/doc/quickstart.html>`_,
 and `reference information <https://greynir.is/doc/reference.html>`_,
