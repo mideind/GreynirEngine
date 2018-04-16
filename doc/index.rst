@@ -12,10 +12,10 @@ the widest possible audience, Reynir's documentation is in English.*
 
 Reynir is a Python 3.x package for **parsing Icelandic text into sentence trees**.
 The trees can then be used to extract information from the text, for instance
-about contained nouns and noun phrases, person names, verbs, word stems, etc.
+about people, titles, entities, facts, actions and opinions.
 
-Along the way, Reynir tokenizes the text, finds lemmas and assigns part-of-speech
-(POS) tags to every word.
+Along the way, Reynir tokenizes the text, finds **lemmas** and assigns
+**part-of-speech (POS) tags** to every word.
 
 .. figure:: _static/GreynirTreeExampleSmall.png
    :align: center
@@ -42,7 +42,7 @@ The entire `Database of Modern Icelandic Inflection <http://bin.arnastofnun.is/D
 with over 6 million entries, is embedded within Reynir in compressed form.
 By looking up word forms in this database, and applying over 16,000
 grammar rules (productions), Reynir is able to infer what the most likely
-word stems are, how they are inflected in the parsed text, and where they
+lemmas are, how they are inflected in the parsed text, and where they
 fit in the overall sentence structure.
 
 Reynir is thoroughly documented, and its source code is of course

@@ -250,14 +250,32 @@ def test_long_parse(verbose = False):
 
 def test_properties():
     s = r.parse("Þetta er prófun.")["sentences"][0]
-    sc = s.score
-    t = s.tokens
-    v = s.tree.view # Should not raise exception
+    _ = s.score
+    _ = s.tokens
+    _ = s.tree.view # Should not raise exception
     try:
-        v = s.tree.tree
+        _ = s.tree.tree
         assert False, "Should have raised exception"
     except AttributeError:
         pass
+
+
+def test_terminals():
+    from reynir import Terminal
+    s = r.parse("Jón greiddi bænum 10 milljónir króna í skaðabætur.")["sentences"][0]
+    t = s.terminals
+    assert t == [
+        Terminal(text='Jón', lemma='Jón', category='person', variants={'nf', 'kk'}),
+        Terminal(text='greiddi', lemma='greiða', category='so', variants={'p3', '2', 'et', 'þgf', 'þf'}),
+        Terminal(text='bænum', lemma='bær', category='no', variants={'et', 'kk', 'þgf'}),
+        Terminal(text='10', lemma='10', category='tala', variants={'kvk', 'ft', 'þf'}),
+        Terminal(text='milljónir', lemma='milljón', category='no', variants={'kvk', 'ft', 'þf'}),
+        Terminal(text='króna', lemma='króna', category='no', variants={'kvk', 'ft', 'ef'}),
+        Terminal(text='í', lemma='í', category='fs', variants={'þf'}),
+        Terminal(text='skaðabætur', lemma='skaðabót', category='no', variants={'kvk', 'ft', 'þf'}),
+        Terminal(text='.', lemma='.', category='', variants=set())
+    ]
+
 
 def test_finish():
     r.__class__.cleanup()
@@ -270,5 +288,6 @@ if __name__ == "__main__":
     test_properties()
     test_long_parse(verbose = True)
     test_consistency(verbose = True)
+    test_terminals()
     test_finish()
 

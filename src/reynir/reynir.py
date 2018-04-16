@@ -28,6 +28,7 @@
 
 import time
 from threading import Lock
+from collections import namedtuple
 
 from tokenizer import correct_spaces
 
@@ -37,6 +38,9 @@ from .reducer import Reducer
 from .incparser import paragraphs
 from .matcher import SimpleTreeBuilder
 from .cache import cached_property
+
+
+Terminal = namedtuple("Terminal", ('text', 'lemma', 'category', 'variants'))
 
 
 class _Simplifier(ParseForestNavigator):
@@ -196,7 +200,7 @@ class _Sentence:
         if self._terminals is not None:
             return self._terminals
         self._terminals = [
-            (d.text, d.lemma, d.tcat, d.variants) for d in self.tree.descendants if d.is_terminal
+            Terminal(d.text, d.lemma, d.tcat, d.variants) for d in self.tree.descendants if d.is_terminal
         ]
         return self._terminals
 

@@ -6,8 +6,8 @@ Installation
 Prerequisites
 -------------
 
-Reynir runs on **CPython 3.4** or newer, and on **`PyPy <http://pypy.org/>`_ 3.5**
-or newer.
+Reynir runs on **CPython 3.4** or newer, and on **PyPy 3.5**
+or newer (more info on PyPy `here <http://pypy.org/>`_).
 
 You may need to have ``python3-dev`` and/or potentially ``python3.6-dev`` (or other
 version corresponding to your Python interpreter) installed on your system::

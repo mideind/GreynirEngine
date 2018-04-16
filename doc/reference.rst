@@ -346,7 +346,7 @@ hence the leading underscore in the class name.
         Returns a ``list`` of the terminals in the best parse tree for the
         sentence, in the order in which they occur in the sentence (token order).
         Each terminal corresponds to a token in the sentence. The entry for each
-        terminal is a tuple of four fields:
+        terminal is a ``namedtuple`` called ``Terminal``, having four fields:
 
         0. **text**: The token text.
 
@@ -355,7 +355,7 @@ hence the leading underscore in the class name.
            ``-`` at the component boundaries. Examples: ``borgar-stjórnarmál``,
            ``skugga-kosning``.
 
-        2. **category**: The word category (``no`` for noun, ``so`` for verb, etc.)
+        2. **category**: The word :ref:`category <categories>` (``no`` for noun, ``so`` for verb, etc.)
 
         3. **variants**: A set of the :ref:`grammatical variants <variants>` for
            the word, if the token is a word, otherwise an empty set. The variants include
@@ -373,12 +373,16 @@ hence the leading underscore in the class name.
             for t in s.terminals:
                 print(t)
 
-        outputs::
+        outputs (line breaks inserted)::
 
-            ('Ása', 'Ása', 'no', {'nf', 'kvk', 'et'})
-            ('sá', 'sjá', 'so', {'1', 'p3', 'et', 'þf'})
-            ('sól', 'sól', 'no', {'kvk', 'et', 'þf'})
-            ('.', '.', '', set())
+            Terminal(text='Ása', lemma='Ása', category='no',
+                variants={'nf', 'kvk', 'et'})
+            Terminal(text='sá', lemma='sjá', category='so',
+                variants={'1', 'p3', 'et', 'þf'})
+            Terminal(text='sól', lemma='sól', category='no',
+                variants={'kvk', 'et', 'þf'})
+            Terminal(text='.', lemma='.', category='',
+                variants=set())
 
         (The line for *sá* means that this is the verb (``so``) *sjá*,
         in the third person (``p3``), singular (``et``), having one argument (``1``)
@@ -430,7 +434,7 @@ They describe a simplified parse tree or a part (subtree) thereof.
 
     .. py:attribute:: tcat
 
-        Returns a ``str`` with the :ref:`terminal category <terminals>` corresponding to this
+        Returns a ``str`` with the terminal :ref:`category <categories>` corresponding to this
         subtree, e.g. ``no`` for nouns or ``dags`` for dates.
 
     .. py:method:: match_tag(self, item : str) -> bool

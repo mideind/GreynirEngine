@@ -21,7 +21,7 @@
 
 # Expose the reynir API
 
-from .reynir import Reynir
+from .reynir import Reynir, Terminal
 from .fastparser import ParseForestPrinter, ParseForestDumper
 from .settings import Settings
 

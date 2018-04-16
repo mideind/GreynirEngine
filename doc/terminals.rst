@@ -21,6 +21,8 @@ which is ``{ 'kk', 'nf', 'et' }`` in the example.
 
 The terminal categories and grammatical variants are listed below.
 
+.. _categories:
+
 Word categories
 ---------------
 
