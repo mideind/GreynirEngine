@@ -357,8 +357,8 @@ hence the leading underscore in the class name.
 
         2. **category**: The word :ref:`category <categories>` (``no`` for noun, ``so`` for verb, etc.)
 
-        3. **variants**: A set of the :ref:`grammatical variants <variants>` for
-           the word, if the token is a word, otherwise an empty set. The variants include
+        3. **variants**: A list of the :ref:`grammatical variants <variants>` for
+           the word or token, or an empty list if not applicable. The variants include
            the case (``nf``, ``þf``, ``þgf``, ``ef``), gender (``kvk``, ``kk``, ``hk``),
            person, verb form, adjective degree, etc.
 
@@ -376,13 +376,13 @@ hence the leading underscore in the class name.
         outputs (line breaks inserted)::
 
             Terminal(text='Ása', lemma='Ása', category='no',
-                variants={'nf', 'kvk', 'et'})
+                variants=['et', 'nf', 'kvk'])
             Terminal(text='sá', lemma='sjá', category='so',
-                variants={'1', 'p3', 'et', 'þf'})
+                variants=['1', 'þf', 'et', 'p3'])
             Terminal(text='sól', lemma='sól', category='no',
-                variants={'kvk', 'et', 'þf'})
+                variants=['et', 'þf', 'kvk'])
             Terminal(text='.', lemma='.', category='',
-                variants=set())
+                variants=[])
 
         (The line for *sá* means that this is the verb (``so``) *sjá*,
         in the third person (``p3``), singular (``et``), having one argument (``1``)
@@ -423,14 +423,14 @@ They describe a simplified parse tree or a part (subtree) thereof.
         Returns a ``str`` with the :ref:`terminal <terminals>` corresponding to this
         subtree. The terminal contains a category followed by eventual
         :ref:`variants <variants>`, separated by underscores, e.g. ``no_ef_ft_hvk`` for
-        a noun, possessive case, singular, neutral gender.
+        a noun, possessive case, plural, neutral gender.
 
     .. py:attribute:: variants
 
-        Returns a ``set`` of the :ref:`grammatical variants <variants>`
+        Returns a ``list`` of the :ref:`grammatical variants <variants>`
         specified in the :ref:`terminal <terminals>` corresponding to this
-        subtree, e.g. ``{ "ef", "ft", "hvk" }`` for possessive case,
-        singular, neutral gender.
+        subtree, e.g. ``[ 'ft', 'ef', 'hvk' ]`` for plural, possessive case,
+        neutral gender.
 
     .. py:attribute:: tcat
 
@@ -504,6 +504,20 @@ They describe a simplified parse tree or a part (subtree) thereof.
         verb phrases. :ref:`terminals` have lower-case identifiers with their
         various :ref:`grammar variants <variants>` separated by underscores, e.g.
         ``no_þf_kk_et`` for a noun, accusative case, masculine gender, singular.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse("Jón greiddi bænum 10 milljónir króna.")["sentences"][0]
+            print(s.tree.flat)
+
+        Output (line breaks inserted)::
+
+            P S-MAIN IP NP-SUBJ person_nf_kk /NP-SUBJ VP so_2_þgf_þf_et_p3
+                NP-IOBJ no_et_þgf_kk /NP-IOBJ NP-OBJ tala_ft_þf_kvk
+                no_ft_þf_kvk NP-POSS no_ft_ef_kvk /NP-POSS /NP-OBJ /VP /IP
+                /S-MAIN p /P
 
     .. py:method:: __getitem__(self, item) -> SimpleTree
 

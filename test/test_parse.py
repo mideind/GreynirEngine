@@ -265,15 +265,15 @@ def test_terminals():
     s = r.parse("Jón greiddi bænum 10 milljónir króna í skaðabætur.")["sentences"][0]
     t = s.terminals
     assert t == [
-        Terminal(text='Jón', lemma='Jón', category='person', variants={'nf', 'kk'}),
-        Terminal(text='greiddi', lemma='greiða', category='so', variants={'p3', '2', 'et', 'þgf', 'þf'}),
-        Terminal(text='bænum', lemma='bær', category='no', variants={'et', 'kk', 'þgf'}),
-        Terminal(text='10', lemma='10', category='tala', variants={'kvk', 'ft', 'þf'}),
-        Terminal(text='milljónir', lemma='milljón', category='no', variants={'kvk', 'ft', 'þf'}),
-        Terminal(text='króna', lemma='króna', category='no', variants={'kvk', 'ft', 'ef'}),
-        Terminal(text='í', lemma='í', category='fs', variants={'þf'}),
-        Terminal(text='skaðabætur', lemma='skaðabót', category='no', variants={'kvk', 'ft', 'þf'}),
-        Terminal(text='.', lemma='.', category='', variants=set())
+        Terminal(text='Jón', lemma='Jón', category='person', variants=['nf', 'kk']),
+        Terminal(text='greiddi', lemma='greiða', category='so', variants=['2', 'þgf', 'þf', 'et', 'p3']),
+        Terminal(text='bænum', lemma='bær', category='no', variants=['et', 'þgf', 'kk']),
+        Terminal(text='10', lemma='10', category='tala', variants=['ft', 'þf', 'kvk']),
+        Terminal(text='milljónir', lemma='milljón', category='no', variants=['ft', 'þf', 'kvk']),
+        Terminal(text='króna', lemma='króna', category='no', variants=['ft', 'ef', 'kvk']),
+        Terminal(text='í', lemma='í', category='fs', variants=['þf']),
+        Terminal(text='skaðabætur', lemma='skaðabót', category='no', variants=['ft', 'þf', 'kvk']),
+        Terminal(text='.', lemma='.', category='', variants=[])
     ]
 
 

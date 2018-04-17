@@ -16,8 +16,8 @@ A typical terminal string looks like this (for instance matching the word *hestu
 The terminal category, i.e. the first part of the terminal name (``no`` in the
 example), is available
 in the :py:attr:`SimpleTree.tcat` property. The grammatical variants of the
-terminal are stored in the set :py:attr:`SimpleTree.variants`,
-which is ``{ 'kk', 'nf', 'et' }`` in the example.
+terminal are stored in the list :py:attr:`SimpleTree.variants`,
+which is ``[ 'kk', 'nf', 'et' ]`` in the example.
 
 The terminal categories and grammatical variants are listed below.
 
@@ -97,6 +97,13 @@ Date and time categories
 +------------+---------------------------------------------------+
 | tímapunktur| Time point                                        |
 |            | (year, month, day, hour, minute, second)          |
++------------+---------------------------------------------------+
+
+Punctuation
+-----------
+
++------------+---------------------------------------------------+
+| p          | Punctuation                                       |
 +------------+---------------------------------------------------+
 
 |
