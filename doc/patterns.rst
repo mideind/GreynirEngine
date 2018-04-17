@@ -106,7 +106,7 @@ a person as an argument::
 
     "S >> { VP >> { NP-OBJ >> person }}"
 
-This pattern will match any sentence that has a verb phrases that refers to
+This pattern will match any sentence that has a verb phrase that refers to
 a male person as an argument::
 
     "S >> { VP >> { NP-OBJ >> person_kk }}"
