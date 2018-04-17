@@ -88,7 +88,7 @@ The Reynir class
 
             from reynir import Reynir
             r = Reynir()
-            my_text = "Litla gula hænan átti fræ. Það var hveitifræ."
+            my_text = "Litla gula hænan fann fræ. Það var hveitifræ."
             d = r.parse(my_text)
             print("{0} sentences were parsed".format(d["num_parsed"]))
             for sent in d["sentences"]:
@@ -116,14 +116,14 @@ The Reynir class
 
             from reynir import Reynir
             r = Reynir()
-            my_text = "Litla gula hænan átti fræ"
+            my_text = "Litla gula hænan fann fræ"
             sent = r.parse_single(my_text)
             print("The parse tree for '{0}' is:\n{1}"
                 .format(sent.tidy_text, sent.tree.view))
 
         Output::
 
-            The parse tree for 'Litla gula hænan átti fræ' is:
+            The parse tree for 'Litla gula hænan fann fræ' is:
             P
             +-S-MAIN
               +-IP
@@ -132,7 +132,7 @@ The Reynir class
                   +-lo_nf_et_kvk: 'gula'
                   +-no_et_nf_kvk: 'hænan'
                 +-VP
-                  +-so_1_þf_et_p3: 'átti'
+                  +-so_1_þf_et_p3: 'fann'
                   +-NP-OBJ
                     +-no_et_þf_hk: 'fræ'
 

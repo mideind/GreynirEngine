@@ -15,7 +15,7 @@ correspond to leaves in the parse tree.
     :align: center
     :alt: A parse tree
 
-    *The parse tree for the sentence "Litla gula hænan átti fræ".*
+    *The parse tree for the sentence "Litla gula hænan fann fræ".*
 
 By examining and processing the parse tree, information and meaning
 can be extracted from the sentence.
@@ -76,7 +76,7 @@ that can validly describe the sentence according to the grammar rules. Reynir th
 to choose a single best tree from the forest of possible trees. It does this with a scoring
 heuristic which assigns higher scores to common word forms and grammatical constructs, and lower
 scores to rare word forms and uncommon constructs. The parse tree with the highest overall
-score wins and is returned from the ``parse()`` function.
+score wins and is returned from the :py:meth:`Reynir.parse_single()` function.
 
 Once the best parse tree has been found, it is available for various kinds of **queries**.
 You can access word lemmas, extract noun and verb phrases as shown above, look for

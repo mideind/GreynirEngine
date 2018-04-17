@@ -11,7 +11,7 @@ After :ref:`installing Reynir <installation>`, fire up your Python 3 interpreter
 
     from reynir import Reynir
 
-    my_text = "Litla gula hænan átti fræ. Það var hveitifræ."
+    my_text = "Litla gula hænan fann fræ. Það var hveitifræ."
 
     # Initialize Reynir and submit the text as a parse job
     r = Reynir()
@@ -26,8 +26,8 @@ After :ref:`installing Reynir <installation>`, fire up your Python 3 interpreter
 
 The output of the program is as follows::
 
-    Sentence: Litla gula hænan átti fræ.
-    Lemmas:   ['lítill', 'gulur', 'hæna', 'eiga', 'fræ', '.']
+    Sentence: Litla gula hænan fann fræ.
+    Lemmas:   ['lítill', 'gulur', 'hæna', 'finna', 'fræ', '.']
     Parse tree:
     P
     +-S-MAIN
@@ -37,11 +37,10 @@ The output of the program is as follows::
           +-lo_nf_et_kvk: 'gula'
           +-no_et_nf_kvk: 'hænan'
         +-VP
-          +-so_1_þf_et_p3: 'átti'
+          +-so_1_þf_et_p3: 'fann'
           +-NP-OBJ
             +-no_et_þf_hk: 'fræ'
     +-'.'
-
     Sentence: Það var hveitifræ.
     Lemmas:   ['það', 'vera', 'hveitifræ', '.']
     Parse tree:
