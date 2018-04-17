@@ -76,6 +76,9 @@ with the hope of supporting the language on the digital front in times of rapid 
 technology; changes that may leave low-resource languages at a disadvantage unless explicit action is
 taken to strengthen their position.
 
+Reynir and associated projects received grants from the Icelandic Language Technology Fund
+*(Máltæknisjóður)* in 2016 and 2017.
+
 
 .. toctree::
    :maxdepth: 1
