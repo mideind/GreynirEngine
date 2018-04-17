@@ -96,6 +96,47 @@ The Reynir class
                     .format(sent.tidy_text, sent.tree.flat))
 
 
+    .. py:method:: parse_single(self, sentence : string) -> _Sentence
+
+        Parses a single sentence from a string and returns a corresponding
+        :py:class:`_Sentence` object.
+
+        :param str sentence: The single sentence to parse.
+        :return: A :py:class:`_Sentence` object. Raises ``StopIteration`` if
+            no sentence could be extracted from the string.
+
+        The given sentence string is tokenized. An internal parse
+        job is created and the first sentence found in the string is parsed.
+        Paragraph markers are ignored.
+        A single :py:class:`_Sentence` object is returned. If the sentence
+        was successfully parsed, :py:attr:`_Sentence.tree` is not ``None`` and
+        :py:attr:`_Sentence.combinations` is greater than zero.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            my_text = "Litla gula hænan átti fræ"
+            sent = r.parse_single(my_text)
+            print("The parse tree for '{0}' is:\n{1}"
+                .format(sent.tidy_text, sent.tree.view))
+
+        Output::
+
+            The parse tree for 'Litla gula hænan átti fræ' is:
+            P
+            +-S-MAIN
+              +-IP
+                +-NP-SUBJ
+                  +-lo_nf_et_kvk: 'Litla'
+                  +-lo_nf_et_kvk: 'gula'
+                  +-no_et_nf_kvk: 'hænan'
+                +-VP
+                  +-so_1_þf_et_p3: 'átti'
+                  +-NP-OBJ
+                    +-no_et_þf_hk: 'fræ'
+
+
     .. py:classmethod:: cleanup(cls)
 
         Deallocates memory resources allocated by :py:meth:`__init__`.
@@ -269,7 +310,7 @@ hence the leading underscore in the class name.
 
             from reynir import Reynir, TOK
             r = Reynir()
-            s = r.parse("5. janúar sá Ása 5 sólir.")["sentences"][0]
+            s = r.parse_single("5. janúar sá Ása 5 sólir.")
             for t in s.tokens:
                 print(TOK.descr[t.kind], t.txt)
 
@@ -369,7 +410,7 @@ hence the leading underscore in the class name.
 
             from reynir import Reynir
             r = Reynir()
-            s = r.parse("Ása sá sól.")["sentences"][0]
+            s = r.parse_single("Ása sá sól.")
             for t in s.terminals:
                 print(t)
 
@@ -479,7 +520,7 @@ They describe a simplified parse tree or a part (subtree) thereof.
 
             from reynir import Reynir
             r = Reynir()
-            s = r.parse("Ása sá sól.")["sentences"][0]
+            s = r.parse_single("Ása sá sól.")
             print(s.tree.view)
 
         outputs::
@@ -509,7 +550,7 @@ They describe a simplified parse tree or a part (subtree) thereof.
 
             from reynir import Reynir
             r = Reynir()
-            s = r.parse("Jón greiddi bænum 10 milljónir króna.")["sentences"][0]
+            s = r.parse_single("Jón greiddi bænum 10 milljónir króna.")
             print(s.tree.flat)
 
         Output (line breaks inserted)::
@@ -541,7 +582,7 @@ They describe a simplified parse tree or a part (subtree) thereof.
             from reynir import Reynir
             r = Reynir()
             my_text = "Prakkarinn Ása í Garðastræti sá tvær gular sólir."
-            s = r.parse(my_text)["sentences"][0]
+            s = r.parse_single(my_text)
             print(s.tree[0]["IP"][1].lemmas)
 
         outputs::
@@ -566,7 +607,7 @@ They describe a simplified parse tree or a part (subtree) thereof.
             from reynir import Reynir
             r = Reynir()
             my_text = "Prakkarinn Ása í Garðastræti sá sól."
-            s = r.parse(my_text)["sentences"][0]
+            s = r.parse_single(my_text)
             print(s.tree.S_MAIN.IP.NP_SUBJ.lemmas)
 
         outputs::
@@ -643,7 +684,7 @@ They describe a simplified parse tree or a part (subtree) thereof.
             my_text = "Eftir síðustu kosningar ræddi " \
                 "Bjarni Benediktsson við Katrínu Jakobsdóttur " \
                 "um myndun ríkisstjórnar."
-            s = r.parse(my_text)["sentences"][0]
+            s = r.parse_single(my_text)
             print(s.tree.persons)
 
         outputs::

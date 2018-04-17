@@ -277,6 +277,31 @@ def test_terminals():
     ]
 
 
+def test_single():
+    from reynir import Terminal
+    s = r.parse_single("Jón greiddi bænum 10 milljónir króna í skaðabætur.")
+    t = s.terminals
+    assert t == [
+        Terminal(text='Jón', lemma='Jón', category='person', variants=['nf', 'kk']),
+        Terminal(text='greiddi', lemma='greiða', category='so', variants=['2', 'þgf', 'þf', 'et', 'p3']),
+        Terminal(text='bænum', lemma='bær', category='no', variants=['et', 'þgf', 'kk']),
+        Terminal(text='10', lemma='10', category='tala', variants=['ft', 'þf', 'kvk']),
+        Terminal(text='milljónir', lemma='milljón', category='no', variants=['ft', 'þf', 'kvk']),
+        Terminal(text='króna', lemma='króna', category='no', variants=['ft', 'ef', 'kvk']),
+        Terminal(text='í', lemma='í', category='fs', variants=['þf']),
+        Terminal(text='skaðabætur', lemma='skaðabót', category='no', variants=['ft', 'þf', 'kvk']),
+        Terminal(text='.', lemma='.', category='', variants=[])
+    ]
+    try:
+        _ = r.parse_single("")
+        assert False, "Should have raised StopIteration"
+    except StopIteration:
+        pass
+    s = r.parse_single("kötturinn lömdu hesturinn")
+    assert s.combinations == 0
+    assert s.tree is None
+
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -289,5 +314,6 @@ if __name__ == "__main__":
     test_long_parse(verbose = True)
     test_consistency(verbose = True)
     test_terminals()
+    test_single()
     test_finish()
 

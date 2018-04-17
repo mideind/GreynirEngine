@@ -418,6 +418,13 @@ class Reynir:
             parse_time = job.parse_time
         )
 
+    def parse_single(self, sentence):
+        """ Convenience function to parse a single sentence only """
+        tokens = tokenize(sentence)
+        job = _Job(self, tokens, parse = True)
+        # Raises StopIteration if no sentence was parsed
+        return next(iter(job))
+
     @classmethod
     def cleanup(cls):
         """ Discard memory resources held by the Reynir class object """

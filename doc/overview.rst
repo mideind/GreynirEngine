@@ -27,10 +27,7 @@ Here is a short example of what can be done with Reynir::
 
     >>> from reynir import Reynir
     >>> r = Reynir()
-    >>> job = r.submit("Ása sá sól.")
-    >>> sent = next(job.sentences())
-    >>> sent.parse()
-    True
+    >>> sent = r.parse_single("Ása sá sól.")
     >>> print(sent.tree.view)
     P                             # Root
     +-S-MAIN                      # Main sentence
