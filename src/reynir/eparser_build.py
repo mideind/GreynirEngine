@@ -20,14 +20,15 @@
     along with this program.  If not, see http://www.gnu.org/licenses/.
 
 
-	This module only runs at setup/installation time. It is invoked
-	from setup.py as requested by the cffi_modules=[] parameter of the
-	setup() function. It causes the _eparser.*.so CFFI wrapper library
-	to be built from its source in eparser.cpp.
+    This module only runs at setup/installation time. It is invoked
+    from setup.py as requested by the cffi_modules=[] parameter of the
+    setup() function. It causes the _eparser.*.so CFFI wrapper library
+    to be built from its source in eparser.cpp.
 
 """
 
 import os
+import platform
 import cffi
 
 # Don't change the name of this variable unless you
@@ -35,6 +36,7 @@ import cffi
 ffibuilder = cffi.FFI()
 
 _PATH = os.path.dirname(__file__) or "."
+WINDOWS = platform.system() == "Windows"
 
 # What follows is the actual Python-wrapped C interface to eparser.*.so
 
@@ -104,13 +106,18 @@ declarations = """
 # to compile eparser.cpp at setup time, generate a .so library and
 # wrap it so that it is callable from Python and PyPy as _eparser
 
+if WINDOWS:
+    extra_compile_args = ['/Zc:offsetof-']
+else:
+    extra_compile_args = ['-std=c++11']
+
 ffibuilder.set_source("reynir._eparser",
-	# eparser.cpp is written in C++ but must export a pure C interface.
-	# This is the reason for the "extern 'C' { ... }" wrapper.
-	'extern "C" {\n' + declarations + '\n}\n',
-	source_extension=".cpp",
-	sources=["src/reynir/eparser.cpp"],
-	extra_compile_args = ['-std=c++11']
+    # eparser.cpp is written in C++ but must export a pure C interface.
+    # This is the reason for the "extern 'C' { ... }" wrapper.
+    'extern "C" {\n' + declarations + '\n}\n',
+    source_extension=".cpp",
+    sources=["src/reynir/eparser.cpp"],
+    extra_compile_args = extra_compile_args
 )
 
 ffibuilder.cdef(declarations)

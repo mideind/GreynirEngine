@@ -9,13 +9,16 @@ Prerequisites
 Reynir runs on **CPython 3.4** or newer, and on **PyPy 3.5**
 or newer (more info on PyPy `here <http://pypy.org/>`_).
 
-You may need to have ``python3-dev`` and/or potentially ``python3.6-dev`` (or other
-version corresponding to your Python interpreter) installed on your system::
+On GNU/Linux and similar systems, you may need to have ``python3-dev`` and/or
+potentially ``python3.6-dev`` (or other version corresponding to your Python
+interpreter) installed on your system::
 
     # Debian or Ubuntu:
     $ sudo apt-get install python3-dev
     $ sudo apt-get install python3.6-dev
 
+On Windows, you need the `Visual Studio Build Tools 2017 <http://landinghub.visualstudio.com/visual-cpp-build-tools>`_,
+specifically the Visual C++ build tools, installed on your PC along with the Windows 10 SDK.
 
 Install with pip
 ----------------
