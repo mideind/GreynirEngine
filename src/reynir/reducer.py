@@ -110,7 +110,6 @@ class Reducer:
         def _visit_token(self, level, node):
             """ At token node """
             # assert node.terminal is not None
-            # assert isinstance(node.terminal, Terminal)
             self._finals[node.start].add(node.terminal)
             self._tokens[node.start] = node.token
             return None
@@ -158,7 +157,6 @@ class Reducer:
             # No need to check preferences if the first parts of all possible terminals are equal
             # Look up the preference ordering from Reynir.conf, if any
             prefs = None if same_first else Preferences.get(txt_last)
-            found_pref = False
             sc = scores[i]
             if prefs:
                 adj_worse = defaultdict(int)
@@ -177,7 +175,6 @@ class Reducer:
                                         adj_b = +4 * factor
                                     adj_worse[wt] = min(adj_worse[wt], adj_w)
                                     adj_better[bt] = max(adj_better[bt], adj_b)
-                                    found_pref = True
                 for wt, adj in adj_worse.items():
                     sc[wt] += adj
                 for bt, adj in adj_better.items():
@@ -294,14 +291,10 @@ class Reducer:
                         # The token is uppercase and not at the start of a sentence:
                         # discourage it from being a verb
                         sc[t] -= 4
-                elif tfirst == "tala" or tfirst == "töl":
-                    # A complete 'töl' or 'no' is better (has more info) than a rough 'tala'
-                    if tfirst == "tala":
-                        sc[t] -= 1
-                    # Discourage possessive ('ef') meanings for numbers
-                    for pt in s:
-                        if (pt.first == "no" or pt.first == "töl") and pt.has_variant("ef"):
-                            sc[pt] -= 1
+                elif tfirst == "tala":
+                    if t.has_variant("ef"):
+                        # Try to avoid interpreting plain numbers as possessives
+                        sc[t] -= 4
                 elif tfirst == "person":
                     if t.has_variant("nf"):
                         # Prefer person names in the nominative case
@@ -465,7 +458,7 @@ class Reducer:
                         if key == "sl":
                             self.reducer.set("current_verb", sc[key])
 
-            def add_child_production(self, ix, prod):
+            def add_child_production(self):
                 """ Reset the current verb scope for each family """
                 self.reducer.set("current_verb", self.start_verb)
 
@@ -610,11 +603,12 @@ class Reducer:
                                 # Give the highest bonus that is available
                                 final_bonus = max(final_bonus, bonus)
                     if final_bonus is not None:
-                        sc += bonus
-            elif node.terminal.startswith("so"):
+                        sc += final_bonus
+            elif node.terminal.startswith("so"): # !!! Should be matches_category("so")?
                 # Verb terminal: pick up the verb
                 d["so"] = [(node.terminal, node.token)]
             d["sc"] = sc
+            # node.score = sc
             return d
 
         def _visit_nonterminal(self, level, node):
@@ -628,7 +622,7 @@ class Reducer:
             # if node.is_ambiguous:
             #     print(f"Visiting family {ix} of head node {node}")
             if results is not None:
-                results.add_child_production(ix, prod)
+                results.add_child_production()
 
         def _add_result(self, results, ix, sc):
             """ Append a single result to the result object """
@@ -640,7 +634,9 @@ class Reducer:
         def _process_results(self, results, node):
             """ Sort scores after visiting children, then prune the child families
                 (productions) leaving only the top-scoring family (production) """
-            return dict(sc = 0) if results is None else results.process(node)
+            d = dict(sc = 0) if results is None else results.process(node)
+            # node.score = d["sc"]
+            return d
 
         def _check_stacks(self):
             """ Runtime sanity check of the reducer stacks """

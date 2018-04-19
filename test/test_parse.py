@@ -208,6 +208,8 @@ def test_consistency(verbose = False):
 
         # The sum of all counts should be the number of iterations
         assert sum(scores.values()) == 100
+        if verbose:
+            print("There are {0} different scores in consistency check".format(len(scores)))
         # There should only be two different scores
         assert len(scores) == 2
         sc_set = set(scores.values())
@@ -302,6 +304,24 @@ def test_single():
     assert s.tree is None
 
 
+def test_complex(verbose = False):
+    if verbose:
+        print("Complex, sentence 1")
+    _ = r.parse_single("ákæran var þingfest en fréttastofu er kunnugt um að maðurinn "
+                       "játaði þar sem þinghaldið er lokað")
+    if verbose:
+        print("Complex, sentence 2")
+    _ = r.parse_single("Viðar Garðarsson, sem setti upp vefsíður fyrir Sigmund Davíð "
+                       "Gunnlaugsson í kjölfar birtingu Panamaskjalanna, segist ekki vita "
+                       "hvers vegna ákveðið var að segja að vefjunum væri haldið úti af "
+                       "stuðningsmönnum Sigmundar.")
+    if verbose:
+        print("Complex, sentence 3")
+    _ = r.parse_single("Ákæran var þingfest í Héraðsdómi Reykjaness í dag "
+                       "en fréttastofu er ekki kunnugt um hvort maðurinn játaði eða neitaði "
+                       "sök þar sem þinghaldið í málinu er lokað.")
+
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -315,5 +335,6 @@ if __name__ == "__main__":
     test_consistency(verbose = True)
     test_terminals()
     test_single()
+    test_complex(verbose = True)
     test_finish()
 

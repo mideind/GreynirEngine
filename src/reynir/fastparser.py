@@ -226,48 +226,64 @@ class Node:
         lb = c_node.label
         node = cls(lb.nI, lb.nJ) # Start token index, end token index
         if lb.iNt < 0:
-            # Nonterminal node, completed or not
+            # Nonterminal node
             node._nonterminal = job.grammar.lookup(lb.iNt)
-            completed = node._completed = lb.pProd == ffi.NULL
-            if completed:
-                job.c_dict[c_node] = node # Re-use nonterminal nodes if identical
+            node._completed = completed = lb.pProd == ffi.NULL
+            job.c_dict[c_node] = node # Re-use nonterminal nodes if identical
             if lb.nJ > lb.nI:
                 # Nonempty node: look at its children
                 fe = c_node.pHead
-                child_ix = 0 if completed else index
+                nt = lb.iNt
+
+                # Loop through the families of children of this node
                 while fe != ffi.NULL:
-                    if completed:
+
+                    if not completed:
+                        # Shortcut, we don't need the child-compaction code below
+                        node._add_family(job, fe.pProd, [ fe.p1, fe.p2 ], index)
+                    else:
                         # Save on node count by coalescing interior nodes
                         # into the child list of the enclosing completed
                         # nonterminal. Nodes can be coalesced while they
                         # refer to the same nonterminal, are interior,
-                        # and not ambiguous. When coalescing a child tuple
-                        # (p1, p2), we push the p2 node on our child list.
-                        # As the child list is produced in reverse order,
-                        # we correct it via the final [::-1].
+                        # and not ambiguous.
                         ch = [ ]
-                        p1, p2 = fe.p1, fe.p2
-                        while (p1 != ffi.NULL and
-                            p1.label.iNt == lb.iNt and
-                            p1.pHead != ffi.NULL and
-                            p1.pHead.pProd != ffi.NULL and
-                            p1.pHead.pNext == ffi.NULL and
-                            p1.pHead.p1 != ffi.NULL):
-                            # Interior node that can be coalesced into its parent
-                            # Keep the second argument of each tuple
-                            ch.append(p2)
-                            # Continue at the next level down the tree
-                            p1, p2 = p1.pHead.p1, p1.pHead.p2
-                        # This is as far as we go: finish up with the final tuple
-                        ch.append(p2)
-                        if p1 != ffi.NULL:
-                            ch.append(p1)
-                        # ...and reverse the result into correct order
-                        ch = ch[::-1]
-                    else:
-                        # Interior node that could not be coalesced
-                        ch = [ fe.p1, fe.p2 ]
-                    node._add_family(job, fe.pProd, ch, child_ix)
+
+                        def push_pair(p1, p2):
+                            """ Push a pair of child nodes onto the child list """
+
+                            def push_child(p):
+                                """ Push a single child node onto the child list """
+                                if p.label.iNt == nt and p.label.pProd != ffi.NULL:
+                                    # Interior node for the same nonterminal
+                                    if p.pHead.pNext == ffi.NULL:
+                                        # Unambiguous: recurse
+                                        push_pair(p.pHead.p1, p.pHead.p2)
+                                    else:
+                                        # Ambiguous node, i.e. more than one family of children.
+                                        # In this case we don't know which (p1,p2) pair
+                                        # to add as a child of the parent, so we must
+                                        # retain the original node with its family of children
+                                        # and end the recursion. We also need to add
+                                        # a placeholder (dummy) node to keep the child
+                                        # list in sync with the nonterminal's production.
+                                        ch.append(p)
+                                        ch.append(ffi.NULL) # Placeholder
+                                else:
+                                    # Terminal, epsilon or unrelated nonterminal
+                                    ch.append(p)
+
+                            if p1 != ffi.NULL and p2 != ffi.NULL:
+                                push_child(p1)
+                                push_child(p2)
+                            elif p2 != ffi.NULL:
+                                push_child(p2)
+                            else:
+                                push_child(p1)
+
+                        push_pair(fe.p1, fe.p2)
+                        node._add_family(job, fe.pProd, ch, 0)
+
                     fe = fe.pNext
         else:
             # Token node: find the corresponding terminal
@@ -421,7 +437,14 @@ class Node:
         return self._hash
 
     def _repr(self, indent):
-        label_rep = str(self._nonterminal or self._token)
+        if hasattr(self, "score"):
+            sc = " [{0}] ".format(self.score)
+        else:
+            sc = ""
+        if self._nonterminal is not None:
+            label_rep = str(self._nonterminal) + sc
+        else:
+            label_rep = str(self._token) + " -> " + str(self._terminal) + sc
         families_rep = ""
         istr = "  " * indent
         if self._families:
@@ -444,9 +467,7 @@ class Node:
     def __repr__(self):
         """ Create a reasonably nice text representation of this node
             and its families of children, if any """
-        r = self._repr(0)
-        complexity = r.count("\n")
-        return r + "\nComplexity: {0}".format(complexity)
+        return self._repr(0)
 
     def __str__(self):
         """ Return a string representation of this node """
@@ -707,7 +728,7 @@ class ParseForestNavigator:
                         else:
                             child_level = level + 1
                         for ix, (prod, children) in enumerate(w._families):
-                            assert len(children) > 0
+                            # assert len(children) > 0
                             self._visit_family(results, level, w, ix, prod)
                             if w.is_completed:
                                 # Completed nonterminal: restart children index
