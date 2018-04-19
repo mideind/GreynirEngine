@@ -198,9 +198,9 @@ Occurs with adjectives (``lo`` terminal category) only.
 +------------+---------------------------------------------------+
 | mst        | Comparative *(stærri)*                            |
 +------------+---------------------------------------------------+
-| esb        | Superlative, strong *(maðurinn er stærstur)*      |
+| esb        | Superlative, indefinite *(maðurinn er stærstur)*  |
 +------------+---------------------------------------------------+
-| evb        | Superlative, weak *(stærsti maðurinn)*            |
+| evb        | Superlative, definite *(stærsti maðurinn)*        |
 +------------+---------------------------------------------------+
 
 Verb forms
@@ -219,15 +219,15 @@ These variants occur with verbs (``so`` terminal category) only.
 +------------+---------------------------------------------------+
 | bh         | Imperative (boðháttur)                            |
 +------------+---------------------------------------------------+
-| vh         | Conditional/Potential (viðtengingarháttur)        |
+| vh         | Subjunctive (viðtengingarháttur)                  |
 +------------+---------------------------------------------------+
-| lh         | (lýsingarháttur nútíðar)                          |
+| lh         | Present participle (lýsingarháttur nútíðar)       |
 +------------+---------------------------------------------------+
 | nt         | Present tense (nútíð), only occurs with lh        |
 +------------+---------------------------------------------------+
-| sagnb      | (sagnbót)                                         |
+| lhþt       | Past participle (lýsingarþáttur þátíðar)          |
 +------------+---------------------------------------------------+
-| lhþt       | (lýsingarþáttur þátíðar)                          |
+| sagnb      | Supine (sagnbót)                                  |
 +------------+---------------------------------------------------+
 | sb         | Strong declination (sterk beyging),               |
 |            | only occurs with lhþt                             |
@@ -235,7 +235,7 @@ These variants occur with verbs (``so`` terminal category) only.
 | vb         | Weak declination (veik beyging),                  |
 |            | only occurs with lhþt                             |
 +------------+---------------------------------------------------+
-| op         | (ópersónuleg sögn)                                |
+| op         | Impersonal verb (ópersónuleg sögn)                |
 +------------+---------------------------------------------------+
 | subj       | Verb that requires the subject's case to be       |
 |            | non-nominative (sögn sem krefst frumlags í        |

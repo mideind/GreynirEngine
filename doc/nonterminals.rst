@@ -30,7 +30,7 @@ Sentences and paragraphs
 +------------+---------------------------------------------------+
 | S-QUOTE    | Sentence-quote (*sagði Jón*)                      |
 +------------+---------------------------------------------------+
-| S-PREFIX   | Sentence-prefix                                   |
+| S-PREFIX   | Sentence-prefix (*Með öðrum orðum:* Páll sá kött) |
 +------------+---------------------------------------------------+
 | S-THT      | Sentence-complement (skýring)                     |
 +------------+---------------------------------------------------+
@@ -42,6 +42,7 @@ Sentences and paragraphs
 |            | (Páll fór út *á meðan kötturinn mjálmaði*)        |
 +------------+---------------------------------------------------+
 | S-ADV-PURP | Sentence-adverbial-purpose                        |
+|            | (Fuglinn flaug *til þess að ná sér í mat*)        |
 +------------+---------------------------------------------------+
 | S-ADV-ACK  | Sentence-adverbial-acknowledgement                |
 |            | (Páll fór út, *þó að hann sé þreyttur*)           |
@@ -84,7 +85,7 @@ Noun phrases
 +------------+---------------------------------------------------+
 | NP-POSS    | Noun phrase-possessive (köttur *Páls*)            |
 +------------+---------------------------------------------------+
-| NP-DAT     | Noun phrase-dative                                |
+| NP-DAT     | Noun phrase-dative (Kona *tengd samtökunum* kom)  |
 +------------+---------------------------------------------------+
 | NP-ADDR    | Noun phrase-address (*Fiskislóð 31*)              |
 +------------+---------------------------------------------------+
