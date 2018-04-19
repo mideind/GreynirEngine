@@ -60,7 +60,7 @@ def read(*names, **kwargs):
 
 setup(
     name='reynir',
-    version='1.0.4',
+    version='1.1.0',
     license='GNU GPLv3',
     description='A natural language parser for Icelandic',
     long_description='%s\n%s' % (
@@ -69,7 +69,7 @@ setup(
     ),
     author='Vilhjálmur Þorsteinsson',
     author_email='vt@extrada.com',
-    url='https://github.com/vthorsteinsson/Reynir',
+    url='https://github.com/vthorsteinsson/ReynirPackage',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],

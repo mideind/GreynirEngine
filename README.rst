@@ -70,6 +70,14 @@ To install this package::
 
     $ pip3 install reynir
 
+If you want to be able to edit the source, do like so (assuming you have **git** installed)::
+
+    $ git clone https://github.com/vthorsteinsson/ReynirPackage
+    $ cd ReynirPackage
+    $ python setup.py develop
+
+The package source code is now in ``ReynirPackage/src/reynir``.
+
 *************
 Documentation
 *************
