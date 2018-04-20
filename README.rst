@@ -74,9 +74,19 @@ If you want to be able to edit the source, do like so (assuming you have **git**
 
     $ git clone https://github.com/vthorsteinsson/ReynirPackage
     $ cd ReynirPackage
+    $ # [ Activate your virtualenv here if you have one ]
     $ python setup.py develop
 
 The package source code is now in ``ReynirPackage/src/reynir``.
+
+*****
+Tests
+*****
+
+To run the built-in tests, install `pytest <https://docs.pytest.org/en/latest/>`_, ``cd`` to your
+``ReynirPackage`` subdirectory (and optionally activate your virtualenv), then run::
+
+    $ python -m pytest
 
 *************
 Documentation
