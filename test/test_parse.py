@@ -325,6 +325,14 @@ def test_complex(verbose = False):
     _ = r.parse_single("út úr stílfærðri túlkun listamannsins á gamla , litla og mjóa "
         "prófessornum kom búlduleitur beljaki sem þess vegna hefði getað verið "
         "trökkdræver að norðan .")
+    if verbose:
+        print("Complex, sentence 5")
+    _ = r.parse_single("rétt hjá anddyrinu var ein af þessum höggnu andlitsmyndum "
+        "af þjóðfrægum mönnum þar sem listamaðurinn hafði gefist upp við að ná "
+        "svipnum og ákveðið að hafa þetta í staðinn stílfærða mynd sem túlkaði "
+        "fremur innri mann fyrirmyndarinnar en þá ásjónu sem daglega blasti við "
+        "samferðamönnum .")
+
 
 def test_finish():
     r.__class__.cleanup()

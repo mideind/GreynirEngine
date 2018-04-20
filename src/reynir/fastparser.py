@@ -234,10 +234,6 @@ class Node:
                 # Nonempty node: look at its children
                 fe = c_node.pHead
                 nt = lb.iNt
-                if completed:
-                    child_ix = 0
-                else:
-                    child_ix = index
 
                 # Loop through the families of children of this node
                 while fe != ffi.NULL:
@@ -267,6 +263,11 @@ class Node:
                                     # and end the recursion. We also need to add
                                     # a placeholder (dummy) node to keep the child
                                     # list in sync with the nonterminal's production.
+                                    if p.label.nDot > 2:
+                                        # Add placeholders for the part of the production
+                                        # that is missing from the front since we abandon
+                                        # the recursion here
+                                        ch.extend([ ffi.NULL ] * (p.label.nDot - 2))
                                     ch.append(p)
                                     ch.append(ffi.NULL) # Placeholder
                             else:
@@ -282,7 +283,7 @@ class Node:
                             push_child(p1)
 
                     push_pair(fe.p1, fe.p2)
-                    node._add_family(job, fe.pProd, ch, child_ix)
+                    node._add_family(job, fe.pProd, ch)
 
                     fe = fe.pNext
         else:
@@ -311,7 +312,7 @@ class Node:
             node._families = other._families[:]
         return node
 
-    def _add_family(self, job, c_prod, c_children, ix_offset):
+    def _add_family(self, job, c_prod, c_children):
         """ Add a family of children to this node, in parallel with other families """
         if c_prod == ffi.NULL:
             prod = None
@@ -326,7 +327,7 @@ class Node:
         # Recreate the pc tuple from the production index
         pc = (prod, [
             # Convert child node from C++ form to Python form
-            job.c_dict.get(ch) or Node.from_c_node(job, ch, c_prod, ix + ix_offset)
+            job.c_dict.get(ch) or Node.from_c_node(job, ch, c_prod, ix)
             for ix, ch in enumerate(c_children)
         ])
         if self._families is None or prio < self._highest_prio:
@@ -452,7 +453,7 @@ class Node:
             def child_rep(children):
                 if not children:
                     return ""
-                return "\n".join(ch._repr(indent + 1) for ch in children)
+                return "\n".join(ch._repr(indent + 1) for ch in children if ch is not None)
             if len(self._families) == 1:
                 if not self._families[0][1]:
                     families_rep = ""
