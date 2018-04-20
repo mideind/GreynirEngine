@@ -22,6 +22,11 @@ __pycache__/
 # Experimental Python stuff
 test.py
 
+# Doc stuff
+doc/Makefile
+doc/make.bat
+doc/_build/
+
 # Various resource files
 resources/*.txt
 !resources/ordalisti.sorted.txt
