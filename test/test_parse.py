@@ -308,19 +308,23 @@ def test_complex(verbose = False):
     if verbose:
         print("Complex, sentence 1")
     _ = r.parse_single("ákæran var þingfest en fréttastofu er kunnugt um að maðurinn "
-                       "játaði þar sem þinghaldið er lokað")
+        "játaði þar sem þinghaldið er lokað")
     if verbose:
         print("Complex, sentence 2")
     _ = r.parse_single("Viðar Garðarsson, sem setti upp vefsíður fyrir Sigmund Davíð "
-                       "Gunnlaugsson í kjölfar birtingu Panamaskjalanna, segist ekki vita "
-                       "hvers vegna ákveðið var að segja að vefjunum væri haldið úti af "
-                       "stuðningsmönnum Sigmundar.")
+       "Gunnlaugsson í kjölfar birtingu Panamaskjalanna, segist ekki vita "
+       "hvers vegna ákveðið var að segja að vefjunum væri haldið úti af "
+       "stuðningsmönnum Sigmundar.")
     if verbose:
         print("Complex, sentence 3")
     _ = r.parse_single("Ákæran var þingfest í Héraðsdómi Reykjaness í dag "
-                       "en fréttastofu er ekki kunnugt um hvort maðurinn játaði eða neitaði "
-                       "sök þar sem þinghaldið í málinu er lokað.")
-
+       "en fréttastofu er ekki kunnugt um hvort maðurinn játaði eða neitaði "
+       "sök þar sem þinghaldið í málinu er lokað.")
+    if verbose:
+        print("Complex, sentence 4")
+    _ = r.parse_single("út úr stílfærðri túlkun listamannsins á gamla , litla og mjóa "
+        "prófessornum kom búlduleitur beljaki sem þess vegna hefði getað verið "
+        "trökkdræver að norðan .")
 
 def test_finish():
     r.__class__.cleanup()
