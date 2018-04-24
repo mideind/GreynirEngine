@@ -224,73 +224,74 @@ class Node:
         if c_node == ffi.NULL:
             return None
         lb = c_node.label
+        if lb.nI >= lb.nJ:
+            # Empty node (no tokens matched within it):
+            # don't bother creating a corresponding Python object,
+            # we never use these nodes anyway except as fillers
+            # to help in matching children with the parent production
+            return None
         node = cls(lb.nI, lb.nJ) # Start token index, end token index
         if lb.iNt < 0:
             # Nonterminal node
-            node._nonterminal = job.grammar.lookup(lb.iNt)
-            node._completed = completed = lb.pProd == ffi.NULL
+            nt = lb.iNt
+            node._nonterminal = job.grammar.lookup(nt)
+            node._completed = lb.pProd == ffi.NULL
             job.c_dict[c_node] = node # Re-use nonterminal nodes if identical
-            if lb.nJ > lb.nI:
-                # Nonempty node: look at its children
-                fe = c_node.pHead
-                nt = lb.iNt
+            fe = c_node.pHead
 
-                # Loop through the families of children of this node
-                while fe != ffi.NULL:
+            # Loop through the families of children of this node
+            while fe != ffi.NULL:
 
-                    # Save on node count by coalescing interior nodes
-                    # into the child list of the enclosing completed
-                    # nonterminal. Nodes can be coalesced while they
-                    # refer to the same nonterminal, are interior,
-                    # and not ambiguous.
-                    ch = [ ]
+                # Save on node count by coalescing interior nodes
+                # into the child list of the enclosing completed
+                # nonterminal. Nodes can be coalesced while they
+                # refer to the same nonterminal, are interior,
+                # and not ambiguous.
+                ch = [ ]
 
-                    def push_pair(p1, p2):
-                        """ Push a pair of child nodes onto the child list """
+                def push_pair(p1, p2):
+                    """ Push a pair of child nodes onto the child list """
 
-                        def push_child(p):
-                            """ Push a single child node onto the child list """
-                            if p.label.iNt == nt and p.label.pProd != ffi.NULL:
-                                # Interior node for the same nonterminal
-                                if p.pHead.pNext == ffi.NULL:
-                                    # Unambiguous: recurse
-                                    push_pair(p.pHead.p1, p.pHead.p2)
-                                else:
-                                    # Ambiguous node, i.e. more than one family of children.
-                                    # In this case we don't know which (p1,p2) pair
-                                    # to add as a child of the parent, so we must
-                                    # retain the original node with its family of children
-                                    # and end the recursion. We also need to add
-                                    # a placeholder (dummy) node to keep the child
-                                    # list in sync with the nonterminal's production.
-                                    if p.label.nDot > 2:
-                                        # Add placeholders for the part of the production
-                                        # that is missing from the front since we abandon
-                                        # the recursion here
-                                        ch.extend([ ffi.NULL ] * (p.label.nDot - 2))
-                                    ch.append(p)
-                                    ch.append(ffi.NULL) # Placeholder
+                    def push_child(p):
+                        """ Push a single child node onto the child list """
+                        if p.label.iNt == nt and p.label.pProd != ffi.NULL:
+                            # Interior node for the same nonterminal
+                            if p.pHead.pNext == ffi.NULL:
+                                # Unambiguous: recurse
+                                push_pair(p.pHead.p1, p.pHead.p2)
                             else:
-                                # Terminal, epsilon or unrelated nonterminal
+                                # Ambiguous node, i.e. more than one family of children.
+                                # In this case we don't know which (p1,p2) pair
+                                # to add as a child of the parent, so we must
+                                # retain the original node with its family of children
+                                # and end the recursion. We also need to add
+                                # placeholder (dummy) nodes to keep the child
+                                # list in sync with the nonterminal's production.
+                                if p.label.nDot > 2:
+                                    # Add placeholders for the part of the production
+                                    # that is missing from the front since we abandon
+                                    # the recursion here
+                                    ch.extend([ ffi.NULL ] * (p.label.nDot - 2))
                                 ch.append(p)
-
-                        if p1 != ffi.NULL and p2 != ffi.NULL:
-                            push_child(p1)
-                            push_child(p2)
-                        elif p2 != ffi.NULL:
-                            push_child(p2)
+                                ch.append(ffi.NULL) # Placeholder
                         else:
-                            push_child(p1)
+                            # Terminal, epsilon or unrelated nonterminal
+                            ch.append(p)
 
-                    push_pair(fe.p1, fe.p2)
-                    node._add_family(job, fe.pProd, ch)
+                    if p1 != ffi.NULL and p2 != ffi.NULL:
+                        push_child(p1)
+                        push_child(p2)
+                    elif p2 != ffi.NULL:
+                        push_child(p2)
+                    else:
+                        push_child(p1)
 
-                    fe = fe.pNext
+                push_pair(fe.p1, fe.p2)
+                node._add_family(job, fe.pProd, ch)
+
+                fe = fe.pNext
         else:
             # Token node: find the corresponding terminal
-            # assert parent != ffi.NULL
-            assert 0 <= index < parent.n # !!! DEBUG
-            # assert parent.pList != ffi.NULL
             tix = parent.pList[index]
             node._terminal = job.grammar.lookup(tix)
             assert isinstance(node._terminal, Terminal) # !!! DEBUG
@@ -731,7 +732,7 @@ class ParseForestNavigator:
                         for ix, (prod, children) in enumerate(w._families):
                             # assert len(children) > 0
                             self._visit_family(results, level, w, ix, prod)
-                            if w.is_completed:
+                            if w._completed:
                                 # Completed nonterminal: restart children index
                                 child_ix = -1
                             else:

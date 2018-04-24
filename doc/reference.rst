@@ -16,8 +16,8 @@ code to import it and initialize an instance of the :py:class:`Reynir` class::
     from reynir import Reynir
     r = Reynir()
 
-Now you can use the ``r`` instance to parse text, by calling the :py:meth:`Reynir.submit()`
-and/or :py:meth:`Reynir.parse()` methods on it.
+Now you can use the ``r`` instance to parse text, by calling the :py:meth:`Reynir.submit()`,
+:py:meth:`Reynir.parse()` and/or :py:meth:`Reynir.parse_single()` methods on it.
 
 .. topic:: The Reynir instance
 
@@ -290,6 +290,18 @@ hence the leading underscore in the class name.
         between all tokens. For a more correctly formatted version of the text,
         use the :py:attr:`_Sentence.tidy_text` property instead.
 
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Jón - faðir Ásgeirs - átti 2/3 hluta "
+                "af landinu árin 1944-1950.")
+            print(s.text)
+
+        Output (note the intervening spaces, also before the period at the end)::
+
+            Jón - faðir Ásgeirs - átti 2/3 hluta af landinu árin 1944 - 1950 .
+
     .. py:method:: __str__(self) -> str
 
         Returns a ``str`` with the raw text representation of the sentence, with spaces
@@ -299,7 +311,20 @@ hence the leading underscore in the class name.
     .. py:attribute:: tidy_text
 
         Returns a ``str`` with a text representation of the sentence, with
-        correct spacing between tokens.
+        correct spacing between tokens, and em- and en-dashes substituted for
+        regular hyphens as appropriate.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Jón - faðir Ásgeirs - átti 2/3 hluta "
+                "af landinu árin 1944-1950.")
+            print(s.tidy_text)
+
+        Output (note the dashes and the period at the end)::
+
+            Jón — faðir Ásgeirs — átti 2/3 hluta af landinu árin 1944–1950.
 
     .. py:attribute:: tokens
 
@@ -401,7 +426,8 @@ hence the leading underscore in the class name.
         3. **variants**: A list of the :ref:`grammatical variants <variants>` for
            the word or token, or an empty list if not applicable. The variants include
            the case (``nf``, ``þf``, ``þgf``, ``ef``), gender (``kvk``, ``kk``, ``hk``),
-           person, verb form, adjective degree, etc.
+           person, verb form, adjective degree, etc. This list identical to the one returned
+           from :py:attr:`SimpleTree.all_variants` for the terminal in question.
 
         If the sentence has not yet been parsed, or no parse tree was found
         for it, this property is ``None``.
@@ -419,7 +445,7 @@ hence the leading underscore in the class name.
             Terminal(text='Ása', lemma='Ása', category='no',
                 variants=['et', 'nf', 'kvk'])
             Terminal(text='sá', lemma='sjá', category='so',
-                variants=['1', 'þf', 'et', 'p3'])
+                variants=['1', 'þf', 'et', 'p3', 'fh', 'gm', 'þt'])
             Terminal(text='sól', lemma='sól', category='no',
                 variants=['et', 'þf', 'kvk'])
             Terminal(text='.', lemma='.', category='',
@@ -427,13 +453,14 @@ hence the leading underscore in the class name.
 
         (The line for *sá* means that this is the verb (``so``) *sjá*,
         in the third person (``p3``), singular (``et``), having one argument (``1``)
-        in accusative case (``þf``).)
+        in accusative case (``þf``); it is indicative (``fh``), active voice (``gm``)
+        and in past tense (``þt``). See :ref:`variants` for a detailed explanation.)
 
     .. py:attribute:: lemmas
 
         Returns a ``list`` of the lemmas of the words in the sentence, or
         the text of the token for non-word tokens. ``sent.lemmas`` is a shorthand for
-        ``[ t[1] for t in sent.terminals ]``.
+        ``[ t.lemma for t in sent.terminals ]``.
 
         Lemmas of composite words include hyphens ``-`` at the component boundaries.
         Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
@@ -470,8 +497,45 @@ They describe a simplified parse tree or a part (subtree) thereof.
 
         Returns a ``list`` of the :ref:`grammatical variants <variants>`
         specified in the :ref:`terminal <terminals>` corresponding to this
-        subtree, e.g. ``[ 'ft', 'ef', 'hvk' ]`` for plural, possessive case,
+        subtree.
+
+        For example, if the terminal is ``no_ft_ef_hvk`` this property is
+        ``[ 'ft', 'ef', 'hvk' ]`` for plural, possessive case,
         neutral gender.
+
+        This property only returns the variants that occur in the terminal
+        name in the context-free grammar, and are thus significant in the
+        parse. To obtain *all* applicable variants (features) of the associated word form,
+        augmented with data from the *Database of Modern Icelandic Inflection (BÍN)*,
+        use the :py:attr:`SimpleTree.all_variants` property.
+
+    .. py:attribute:: all_variants
+
+        Returns a ``list`` of all :ref:`grammatical variants <variants>`
+        (features) associated with this word form, as inferred from its
+        associated grammar terminal and as augmented from the
+        *Database of Modern Icelandic Inflection (BÍN)*.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Ása sá sól.")
+            print(s.tree.S.IP.VP[0].all_variants)
+
+        Output::
+
+            ['1', 'þf', 'et', 'p3', 'fh', 'gm', 'þt']
+
+        These are all the variants (features) of the verb form *sá*, in this case
+        specifying that it has one argument in accusative case (``þf``), and
+        that the verb itself is singular (``et``), third person (``p3``), indicative (``fh``),
+        active voice (``gm``), past tense (``þt``).
+
+        The last three variants are only returned from the :py:attr:`SimpleTree.all_variants`
+        property, not from the :py:attr:`SimpleTree.variants` property, as they are not
+        present in the terminal name in the grammar and are not significant when deriving
+        the parse tree.
 
     .. py:attribute:: tcat
 

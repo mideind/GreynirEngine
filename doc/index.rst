@@ -23,6 +23,12 @@ Along the way, Reynir tokenizes the text, finds **lemmas** and assigns
 
    Reynir is the engine of `Greynir.is <https://greynir.is>`_
 
+Reynir has been used to parse text from Icelandic news websites since 2015,
+processing 6 million sentences in 300.000 articles. Its optimized C++ parsing
+core is fast and efficient enough to parse real-world text according to a
+`context-free grammar for the Icelandic language <https://github.com/vthorsteinsson/ReynirPackage/blob/master/src/reynir/Reynir.grammar>`_
+with over 16,000 productions.
+
 To get acquainted with Reynir, we recommend that you start with the :ref:`overview`,
 proceed with the :ref:`installation` instructions, and then look at the :ref:`quickstart`.
 For further reference, consult the :ref:`reference` section.
@@ -40,10 +46,10 @@ To start using Reynir with Python, you (usually) need :ref:`ony one command <ins
 The entire `Database of Modern Icelandic Inflection <http://bin.arnastofnun.is/DMII/>`_
 (`Beygingarlýsing íslensks nútímamáls <http://bin.arnastofnun.is>`_),
 with over 6 million entries, is embedded within Reynir in compressed form.
-By looking up word forms in this database, and applying over 16,000
-grammar rules (productions), Reynir is able to infer what the most likely
-lemmas are, how they are inflected in the parsed text, and where they
-fit in the overall sentence structure.
+By looking up word forms in this database and applying context-free
+grammar rules (productions) and scoring heuristics, Reynir is able to
+infer what the most likely lemmas are, how they are inflected in the
+parsed text, and where they fit in the overall sentence structure.
 
 Reynir is thoroughly documented, and its source code is of course
 `available on GitHub <https://github.com/vthorsteinsson/ReynirPackage>`_.

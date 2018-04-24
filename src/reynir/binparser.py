@@ -124,7 +124,6 @@ class BIN_Token(Token):
         "lh" : "LH", # Lýsingarháttur (nútíðar)
         "vh" : "VH", # Viðtengingarháttur
         "nt" : "NT", # Nútíð
-        # "þt" : "ÞT", # Þátíð # !!! Conflict with LHÞT
         "sagnb" : "SAGNB", # Sagnbót ('vera' -> 'hefur verið')
         "lhþt" : "LHÞT", # Lýsingarháttur þátíðar ('var lentur')
         "gr" : "gr", # Greinir
@@ -133,6 +132,10 @@ class BIN_Token(Token):
         "abbrev" : None,
         "subj" : None
     }
+
+    # Make a copy of VARIANT with the past tense (þt) added
+    VARIANT_EX = { key : val for key, val in VARIANT.items() if val is not None }
+    VARIANT_EX["þt"] = "ÞT"
 
     # Bit mapping for all known variants
     VBIT = { key : 1 << i for i, key in enumerate(VARIANT.keys()) }
@@ -244,6 +247,7 @@ class BIN_Token(Token):
     _UNDERSTOOD_PUNCTUATION = ".?!,:;–-()[]"
 
     _MEANING_CACHE = { }
+    _VARIANT_CACHE = { }
 
     def __init__(self, t, original_index):
 
@@ -298,7 +302,7 @@ class BIN_Token(Token):
         """ Convert a 'beyging' field from BIN to a set of fbits """
         bit = cls.FBIT
         return reduce(lambda x, y: x | y, (b for key, b in bit.items() if key in beyging), 0)
-
+    
     @classmethod
     def get_fbits(cls, beyging):
         """ Get the (cached) fbits for a BIN 'beyging' field """
@@ -309,6 +313,21 @@ class BIN_Token(Token):
             fbits = cls.fbits(beyging)
             cls._MEANING_CACHE[beyging] = fbits
         return fbits
+
+    @classmethod
+    def bin_variants(cls, beyging):
+        """ Return the set of variants coded in the given BÍN beyging string """
+        if not beyging:
+            return set()
+        vset = cls._VARIANT_CACHE.get(beyging)
+        if vset is None:
+            vset = set(k for k, v in cls.VARIANT_EX.items() if v in beyging)
+            if "lhþt" in vset:
+                # Special case, since 'þt' is a substring of 'lhþt'
+                vset.remove("þt")
+                vset.remove("lh")
+            cls._VARIANT_CACHE[beyging] = vset
+        return vset
 
     @staticmethod
     def mm_verb_stem(verb):

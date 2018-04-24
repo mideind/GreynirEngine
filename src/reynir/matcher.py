@@ -97,8 +97,10 @@ from itertools import chain
 
 if not __package__:
     from cache import cached_property
+    from binparser import BIN_Token
 else:
     from .cache import cached_property
+    from .binparser import BIN_Token
 
 
 # Default tree simplifier configuration maps
@@ -344,6 +346,13 @@ class SimpleTree:
         return [] if t is None else t.split("_")[1:]
 
     @cached_property
+    def all_variants(self):
+        """ Returns a list of all variants associated with this subtree's terminal, if any,
+            augmented also by BÍN variants """
+        vlist = self.variants
+        return vlist + list(BIN_Token.bin_variants(self._head.get("b")) - set(vlist))
+
+    @cached_property
     def tcat(self):
         """ The word category associated with this subtree's terminal, if any """
         t = self.terminal
@@ -451,7 +460,7 @@ class SimpleTree:
             return " ".join([ "ao" ] * numwords + [ self.terminal ])
         # Repeat the terminal name for each component word
         # !!! TODO: Potentially divide composite tokens such as
-        # !!! dates into more detailed terminals, such as tala, raðnr, etc.
+        # !!! TODO: dates into more detailed terminals, such as tala, raðnr, etc.
         return " ".join([ self.terminal ] * (numwords + 1))
 
     @property

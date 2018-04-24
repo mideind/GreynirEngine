@@ -19,6 +19,9 @@ in the :py:attr:`SimpleTree.tcat` property. The grammatical variants of the
 terminal are stored in the list :py:attr:`SimpleTree.variants`,
 which is ``[ 'kk', 'nf', 'et' ]`` in the example.
 
+To obtain the entire set of variants (features) associated with a word form,
+use the property :py:attr:`SimpleTree.all_variants`.
+
 The terminal categories and grammatical variants are listed below.
 
 .. _categories:
@@ -221,18 +224,22 @@ These variants occur with verbs (``so`` terminal category) only.
 +------------+---------------------------------------------------+
 | vh         | Subjunctive (viðtengingarháttur)                  |
 +------------+---------------------------------------------------+
-| lh         | Present participle (lýsingarháttur nútíðar)       |
+| nt         | Present tense (nútíð)                             |
 +------------+---------------------------------------------------+
-| nt         | Present tense (nútíð), only occurs with lh        |
+| þt         | Past tense (þátíð)                                |
 +------------+---------------------------------------------------+
-| lhþt       | Past participle (lýsingarþáttur þátíðar)          |
+| lh         | | Present participle (lýsingarháttur nútíðar)     |
+|            | | (note that the nt variant will also be present) |
++------------+---------------------------------------------------+
+| lhþt       | | Past participle (lýsingarþáttur þátíðar)        |
+|            | | (note that the þt variant will NOT be present)  |
 +------------+---------------------------------------------------+
 | sagnb      | Supine (sagnbót)                                  |
 +------------+---------------------------------------------------+
-| sb         | Strong declination (sterk beyging),               |
+| sb         | Indefinite (sterk beyging),                       |
 |            | only occurs with lhþt                             |
 +------------+---------------------------------------------------+
-| vb         | Weak declination (veik beyging),                  |
+| vb         | Definite (veik beyging),                          |
 |            | only occurs with lhþt                             |
 +------------+---------------------------------------------------+
 | op         | Impersonal verb (ópersónuleg sögn)                |

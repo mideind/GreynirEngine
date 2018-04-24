@@ -186,7 +186,13 @@ class _Sentence:
     @property
     def tidy_text(self):
         """ Return a [more] correctly spaced text representation of the sentence """
-        return correct_spaces(self.text)
+        if self.tree is None:
+            # Not parsed (yet)
+            txt = self.text
+        else:
+            # Use the terminal text representation - it's got fancy em/en-dashes and stuff
+            txt = " ".join(t.text for t in self.terminals)
+        return correct_spaces(txt)
 
     @property
     def terminals(self):
@@ -200,7 +206,7 @@ class _Sentence:
         if self._terminals is not None:
             return self._terminals
         self._terminals = [
-            Terminal(d.text, d.lemma, d.tcat, d.variants) for d in self.tree.descendants if d.is_terminal
+            Terminal(d.text, d.lemma, d.tcat, d.all_variants) for d in self.tree.descendants if d.is_terminal
         ]
         return self._terminals
 
