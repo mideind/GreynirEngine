@@ -302,7 +302,7 @@ class BIN_Token(Token):
         """ Convert a 'beyging' field from BIN to a set of fbits """
         bit = cls.FBIT
         return reduce(lambda x, y: x | y, (b for key, b in bit.items() if key in beyging), 0)
-    
+
     @classmethod
     def get_fbits(cls, beyging):
         """ Get the (cached) fbits for a BIN 'beyging' field """

@@ -394,6 +394,50 @@ hence the leading underscore in the class name.
         If the sentence has not yet been parsed, or no parse tree was found
         for it, this property is ``None``.
 
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Ása sá sól.")
+            print(repr(s.deep_tree))
+
+        Output:
+
+        .. code-block:: none
+
+            S0
+              Málsgrein
+                MgrInnihald
+                  Yfirsetning
+                    HreinYfirsetning
+                      Setning
+                        Setning_et_p3_kvk
+                          BeygingarliðurÁnUmröðunar_et_p3_kvk
+                            NlFrumlag_nf_et_p3_kvk
+                              Nl_et_p3_nf_kvk
+                                NlEind_et_p3_nf_kvk
+                                  NlStak_et_p3_nf_kvk
+                                    NlStak_p3_et_nf_kvk
+                                      NlKjarni_et_nf_kvk
+                                        Fyrirbæri_nf_kvk
+                                          'Ása' -> no_et_nf_kvk
+                            SagnRuna_et_p3_kvk
+                              SagnRunaKnöpp_et_p3_kvk
+                                Sagnliður_et_p3_kvk
+                                  Sögn_1_et_p3_kvk
+                                    'sá' -> so_1_þf_et_p3
+                                    NlBeintAndlag_þf
+                                      Nl_þf
+                                        NlEind_et_p3_þf_kvk
+                                          NlStak_et_p3_þf_kvk
+                                            NlStak_p3_et_þf_kvk
+                                              NlKjarni_et_þf_kvk
+                                                Fyrirbæri_þf_kvk
+                                                  'sól' -> no_et_þf_kvk
+                  Lokatákn?
+                    Lokatákn
+                      '.' -> '.'
+
     .. py:attribute:: flat_tree
 
         Returns the best (highest-scoring) parse tree for the sentence,
@@ -436,20 +480,24 @@ hence the leading underscore in the class name.
 
             from reynir import Reynir
             r = Reynir()
-            s = r.parse_single("Ása sá sól.")
+            s = r.parse_single("Þórgnýr fór út og fékk sér ís.")
             for t in s.terminals:
-                print(t)
+                print("{0:8s} {1:8s} {2:8s} {3}"
+                    .format(t.text, t.lemma, t.category,
+                        ", ".join(t.variants)))
 
-        outputs (line breaks inserted)::
+        outputs:
 
-            Terminal(text='Ása', lemma='Ása', category='no',
-                variants=['et', 'nf', 'kvk'])
-            Terminal(text='sá', lemma='sjá', category='so',
-                variants=['1', 'þf', 'et', 'p3', 'fh', 'gm', 'þt'])
-            Terminal(text='sól', lemma='sól', category='no',
-                variants=['et', 'þf', 'kvk'])
-            Terminal(text='.', lemma='.', category='',
-                variants=[])
+        .. code-block:: none
+
+            Þórgnýr  Þórgnýr  person   nf, kk
+            fór      fara     so       0, et, p3, þt, gm, fh
+            út       út       ao
+            og       og       st
+            fékk     fá       so       2, þgf, þf, et, p3, þt, gm, fh
+            sér      sig      abfn     þgf
+            ís       ís       no       et, þf, kk
+            .        .
 
         (The line for *sá* means that this is the verb (``so``) *sjá*,
         in the third person (``p3``), singular (``et``), having one argument (``1``)
@@ -523,7 +571,7 @@ They describe a simplified parse tree or a part (subtree) thereof.
             s = r.parse_single("Ása sá sól.")
             print(s.tree.S.IP.VP[0].all_variants)
 
-        Output::
+        Output (the variants of the verb *sá* in the verb phrase)::
 
             ['1', 'þf', 'et', 'p3', 'fh', 'gm', 'þt']
 
@@ -649,7 +697,7 @@ They describe a simplified parse tree or a part (subtree) thereof.
             s = r.parse_single(my_text)
             print(s.tree[0]["IP"][1].lemmas)
 
-        outputs::
+        outputs (the lemmas of the verb phrase)::
 
             ['sjá', 'tveir', 'gulur', 'sól']
 
@@ -674,7 +722,7 @@ They describe a simplified parse tree or a part (subtree) thereof.
             s = r.parse_single(my_text)
             print(s.tree.S_MAIN.IP.NP_SUBJ.lemmas)
 
-        outputs::
+        outputs (the lemmas of the sentence's subject, *frumlag*)::
 
             ['prakkari', 'Ása', 'í', 'Garðastræti']
 
