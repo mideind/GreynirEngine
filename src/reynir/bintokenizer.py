@@ -29,7 +29,7 @@
 
 from collections import namedtuple, defaultdict
 
-from tokenizer import tokenize as raw_tokenize, TOK
+from tokenizer import tokenize as raw_tokenize, TOK, parse_tokens, paragraphs, correct_spaces
 
 from .settings import Settings, StaticPhrases, Abbreviations, AmbigPhrases, DisallowedNames
 from .settings import NamePreferences

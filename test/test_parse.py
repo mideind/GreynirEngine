@@ -269,9 +269,7 @@ def check_terminal(t, text, lemma, category, variants):
     assert set(t.variants) == set(variants)
 
 
-def test_terminals():
-    s = r.parse("Jón greiddi bænum 10 milljónir króna í skaðabætur.")["sentences"][0]
-    t = s.terminals
+def check_terminals(t):
     assert len(t) == 9
     check_terminal(t[0], text='Jón', lemma='Jón', category='person', variants=['nf', 'kk'])
     check_terminal(t[1], text='greiddi', lemma='greiða', category='so', variants=['2', 'þgf', 'þf', 'et', 'p3', 'fh', 'gm', 'þt'])
@@ -282,21 +280,30 @@ def test_terminals():
     check_terminal(t[6], text='í', lemma='í', category='fs', variants=['þf'])
     check_terminal(t[7], text='skaðabætur', lemma='skaðabót', category='no', variants=['ft', 'þf', 'kvk'])
     check_terminal(t[8], text='.', lemma='.', category='', variants=[])
+
+
+def test_terminals():
+    s = r.parse("Jón greiddi bænum 10 milljónir króna í skaðabætur.")["sentences"][0]
+    check_terminals(s.terminals)
+
+
+def test_year_range():
+    s = r.parse_single("Jón var formaður árin 1944-50.")
+    t = s.terminals
+    assert len(t) == 8
+    check_terminal(t[0], text='Jón', lemma='Jón', category='person', variants=['nf', 'kk']),
+    check_terminal(t[1], text='var', lemma='vera', category='so', variants=['1', 'nf', 'et', 'p3', 'þt', 'fh', 'gm']),
+    check_terminal(t[2], text='formaður', lemma='formaður', category='no', variants=['et', 'nf', 'kk']),
+    check_terminal(t[3], text='árin', lemma='ár', category='no', variants=['hk', 'gr', 'ft', 'þf']),
+    check_terminal(t[4], text='1944', lemma='1944', category='ártal', variants=[]),
+    check_terminal(t[5], text='–', lemma='–', category='', variants=[]),
+    check_terminal(t[6], text='50', lemma='50', category='tala', variants=[]),
+    check_terminal(t[7], text='.', lemma='.', category='', variants=[])
 
 
 def test_single():
     s = r.parse_single("Jón greiddi bænum 10 milljónir króna í skaðabætur.")
-    t = s.terminals
-    assert len(t) == 9
-    check_terminal(t[0], text='Jón', lemma='Jón', category='person', variants=['nf', 'kk'])
-    check_terminal(t[1], text='greiddi', lemma='greiða', category='so', variants=['2', 'þgf', 'þf', 'et', 'p3', 'fh', 'gm', 'þt'])
-    check_terminal(t[2], text='bænum', lemma='bær', category='no', variants=['et', 'þgf', 'kk', 'gr'])
-    check_terminal(t[3], text='10', lemma='10', category='tala', variants=['ft', 'þf', 'kvk'])
-    check_terminal(t[4], text='milljónir', lemma='milljón', category='no', variants=['ft', 'þf', 'kvk'])
-    check_terminal(t[5], text='króna', lemma='króna', category='no', variants=['ft', 'ef', 'kvk'])
-    check_terminal(t[6], text='í', lemma='í', category='fs', variants=['þf'])
-    check_terminal(t[7], text='skaðabætur', lemma='skaðabót', category='no', variants=['ft', 'þf', 'kvk'])
-    check_terminal(t[8], text='.', lemma='.', category='', variants=[])
+    check_terminals(s.terminals)
     try:
         _ = r.parse_single("")
         assert False, "Should have raised StopIteration"
@@ -350,6 +357,7 @@ if __name__ == "__main__":
     test_consistency(verbose = True)
     test_terminals()
     test_single()
+    test_year_range()
     test_complex(verbose = True)
     test_finish()
 

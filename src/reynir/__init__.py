@@ -22,7 +22,8 @@
 # Expose the reynir API
 
 from .reynir import Reynir, Terminal
-from .fastparser import ParseForestPrinter, ParseForestDumper
+from .fastparser import ParseForestPrinter, ParseForestDumper, ParseForestFlattener
+from .fastparser import ParseError, ParseForestNavigator
 from .settings import Settings
 
 # Expose the tokenizer API

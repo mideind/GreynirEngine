@@ -53,7 +53,7 @@ Word categories
 +------------+---------------------------------------------------+
 | st         | Conjunction (samtenging)                          |
 +------------+---------------------------------------------------+
-| stt        | Connective conjuction (sem/er-samtenging)         |
+| stt        | Connective conjunction (sem/er-samtenging)        |
 +------------+---------------------------------------------------+
 | fn         | Pronoun (fornafn)                                 |
 +------------+---------------------------------------------------+
@@ -260,6 +260,4 @@ These variants occur with noun terminals (``no`` category) only.
 +------------+---------------------------------------------------+
 | abbrev     | Abbreviation (skammstöfun)                        |
 +------------+---------------------------------------------------+
-
-
 

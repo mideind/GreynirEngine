@@ -36,7 +36,7 @@
 from functools import lru_cache
 from collections import namedtuple
 
-from .settings import Abbreviations, AdjectiveTemplate, Meanings, StemPreferences
+from .settings import Abbreviations, AdjectiveTemplate, Meanings, StemPreferences, StaticPhrases
 from .cache import LFU_Cache
 from .dawgdictionary import Wordbase
 from .bincompress import BIN_Compressed
@@ -184,10 +184,22 @@ class BIN_Db:
 
     @lru_cache(maxsize = CACHE_SIZE)
     def lookup_name_gender(self, name):
-        """ Given a person name, lookup its gender. This is used in the
-            main web server to show person names with an icon and a color
-            corresponding to gender. """
-        assert False, "This feature is not supported in the Reynir module"
+        """ Given a person name, lookup its gender. """
+        if not name:
+            return "hk" # Unknown gender
+        w = name.split(maxsplit = 1)[0] # First name
+        g = self.meanings(w)
+        m = next((x for x in g if x.fl in { "ism", "nafn" }), None)
+        if m:
+            # Found a meaning with fl='ism' or fl='nafn'
+            return m.ordfl
+        # The first name was not found: check whether the full name is
+        # in the static phrases
+        m = StaticPhrases.lookup(name)
+        if m is not None:
+            m = BIN_Meaning._make(m)
+            if m.fl in { "ism", "nafn" }:
+                return m.ordfl
         return "hk" # Unknown gender
 
     @staticmethod
