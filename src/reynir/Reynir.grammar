@@ -2575,6 +2575,9 @@ $score(+8) NlStakViðbót/fall/kyn
 NlStakViðbótNl/fall/kyn →
     NlStak_ft_p3/fall/kyn               # við fóstbræður, við alþingismennirnir
 
+NlStakViðbótNl/fall/nkyn →
+    Manneskja/fall/nkyn                 # (við) Sóley Tómasdóttir (fórum), (hann ræddi við okkur) Pál dómkirkjuprest
+
 $score(-20) NlStakViðbótNl/fall/kyn     # Draga af stig fyrir "við fóstbræður" vegna hættu á ruglingi við forsetninguna 'við'
 
 NlStak_ft_p1/fall/kyn → NlStak_p1_ft/fall/kyn FsRunaEftirNl?
