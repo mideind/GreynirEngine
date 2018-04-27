@@ -28,22 +28,7 @@ doc/make.bat
 doc/_build/
 
 # Various resource files
-resources/*.txt
-!resources/ordalisti.sorted.txt
-!resources/obeygd.hreinsad.txt
-resources/*.csv
-resources/ord.compressed
-resources/*.tmLanguage
-resources/visir/
-resources/reykjanes/
-mim/
-ifd/
-gold/
-fonts/
-logs/
-node_modules/
-cffi_test/
-backup/
+src/reynir/resources/*.csv
 
 # Scratch work files
 *.bin
