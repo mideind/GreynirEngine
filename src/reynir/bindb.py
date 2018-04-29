@@ -171,6 +171,12 @@ class BIN_Db:
         assert False, "This feature is not supported in the Reynir module"
         return None
 
+    @lru_cache(maxsize = CACHE_SIZE)
+    def lookup_nominative(self, w):
+        """ Return meaning tuples for all word forms in nominative
+            case for all { kk, kvk, hk, lo } category stems of the given word """
+        return list(map(BIN_Meaning._make, self._compressed_bin.nominative(w)))
+
     def lookup_word(self, w, at_sentence_start, auto_uppercase = False):
         """ Given a word form, look up all its possible meanings """
         return self._lookup(w, at_sentence_start, auto_uppercase, self._meanings_func)

@@ -538,6 +538,9 @@ SagnViðhengi/tala/pers/kyn →
 SagnHluti/tala/pers/kyn →
     SagnliðurMeðF/tala/pers/kyn SagnInnskot? SagnViðhengi/tala/pers/kyn?
 
+SagnHluti_et_p3_hk →
+    VirðistSem    # Samkvæmt heimildum mbl.is virtist sem Björn fengi aðsvif á sviðinu
+
 $tag(begin_prep_scope) SagnHluti/tala/pers/kyn # Nýtt undirtré fyrir tengingu sagnar og forsetningar
 
 FrumlagsInnskot/tala/pers/kyn →
@@ -754,7 +757,7 @@ SetningSo →
 
     | HjSögnMegiSkuli_et_p3 FsAtv? EinSögn_nh_et_hk SagnInnskot?    # Má með sanni segja (að þeir hafi sloppið með skrekkinn)
 
-    | 'þurfa:so'_gm_et_p3 FsRuna? NlBeintAndlag_þf AðLiður?          # Þarf til þess lagafyrirmæli að svipta mann réttindum
+    | 'þurfa:so'_gm_et_p3 FsRuna? NlBeintAndlag_þf AðLiður?         # Þarf til þess lagafyrirmæli að svipta mann réttindum
 
     | SagnliðurVh ","? "þá:st"? BeygingarliðurMeðUmröðun FsAtv?     # Haldi þessi þróun áfram er voðinn vís
 
@@ -764,6 +767,13 @@ SetningSo →
 
     # Þykir/finnst þeim vera slagsíða [í umfjölluninni] / þeim [það] ósanngjarnt
     | HjSögnFinnst NlFrumlag_þgf SögnFinnstBotn
+
+    | "svo:ao"? VirðistSem                                  # [Svo] virðist sem Björn hafi fengið aðsvif
+
+VirðistSem →
+    'virða:so'_op_mm_fh_p3_et "sem:st" HreinYfirsetning     # virtist/virðist sem Björn hafi fengið aðsvif á sviðinu
+
+$score(+10) VirðistSem # Sennilega rétt greint
 
 SögnFinnstBotn →
      'vera:so'_nh NlSagnfylling_nf

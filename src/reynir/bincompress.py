@@ -304,7 +304,7 @@ class BIN_Compressor:
 
     """
 
-    VERSION = b'Reynir 001.02.00'
+    VERSION = b'Reynir 001.03.00'
     assert len(VERSION) == 16
 
     def __init__(self):
@@ -352,9 +352,8 @@ class BIN_Compressor:
                     fix = self._forms.add(form) # Add to a trie
                     mix = self._meanings.add((ordfl, fl, meaning))
                     self._lookup_form[fix].append((six, mix))
-                    if cat in { "kk", "kvk", "hk", "lo" } and "NF" in m:
-                        # Nominative case: check whether this is a canonical form
-                        # which we want to store with the stem
+                    if "NF" in m:
+                        # Nominative case: store with the stem as a canonical form
                         if form not in self._lookup_stem[six]:
                             self._lookup_stem[six].add(form)
                             self._canonical_count += 1
@@ -870,12 +869,14 @@ class BIN_Compressed:
         return result
 
     def nominative(self, word):
-        """ Returns a list of all nominative forms of the stems of the given word form. """
-        result = []
+        """ Returns a set of all nominative forms of the stems of the given word form.
+            Note that the word form is case-sensitive. """
+        result = set()
         for stem_index, _ in self._raw_lookup(word):
             for c_latin in self.canonicals(stem_index):
                 c = c_latin.decode("latin-1")
-                result.extend(m for m in self.lookup(c) if "NF" in m[5])
+                # Make sure we only include each result once
+                result.update(m for m in self.lookup(c) if "NF" in m[5])
         return result
 
 

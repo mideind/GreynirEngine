@@ -10,5 +10,7 @@ include src/reynir/config/*.conf
 exclude src/reynir/config/Index.conf
 include src/reynir/resources/ordalisti.text.dawg
 include src/reynir/resources/ord.compressed
+exclude src/reynir/resources/ord.csv
+exclude src/reynir/resources/ord.add.csv
 exclude src/reynir/*.o
 exclude src/reynir/*.so
