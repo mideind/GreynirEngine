@@ -41,12 +41,10 @@ from tokenizer import TOK
 
 if not __package__:
     from settings import Settings, VerbObjects, VerbSubjects, Prepositions
-    from bindb import BIN_Db
     from grammar import Terminal, LiteralTerminal, Nonterminal, Token, Grammar, GrammarError
     from baseparser import Base_Parser
 else:
     from .settings import Settings, VerbObjects, VerbSubjects, Prepositions
-    from .bindb import BIN_Db
     from .grammar import Terminal, LiteralTerminal, Nonterminal, Token, Grammar, GrammarError
     from .baseparser import Base_Parser
 

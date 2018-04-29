@@ -29,11 +29,16 @@
 
 from collections import namedtuple, defaultdict
 
-from tokenizer import tokenize as raw_tokenize, TOK, parse_tokens, paragraphs, correct_spaces
+from tokenizer import tokenize_without_annotation, TOK, parse_tokens
 
-from .settings import Settings, StaticPhrases, Abbreviations, AmbigPhrases, DisallowedNames
+# The following imports are here in order to be visible in clients
+# (they are not used in this module)
+from tokenizer import correct_spaces, paragraphs, tokenize as raw_tokenize
+
+from .settings import StaticPhrases, AmbigPhrases, DisallowedNames
 from .settings import NamePreferences
 from .bindb import BIN_Db, BIN_Meaning
+
 
 # Person names that are not recognized at the start of sentences
 NOT_NAME_AT_SENTENCE_START = { "Annar" }
@@ -43,6 +48,121 @@ ALL_CASES = frozenset(["nf", "þf", "þgf", "ef"])
 
 # Named tuple for person names, including case and gender
 PersonName = namedtuple('PersonName', ['name', 'gender', 'case'])
+
+COMPOSITE_HYPHEN = '–' # en dash
+HYPHEN = '-' # Normal hyphen
+
+# Prefixes that can be applied to adjectives with an intervening hyphen
+ADJECTIVE_PREFIXES = frozenset(["hálf", "marg", "semí"])
+
+# Recognize words that multiply numbers
+MULTIPLIERS = {
+    #"núll": 0,
+    #"hálfur": 0.5,
+    #"helmingur": 0.5,
+    #"þriðjungur": 1.0 / 3,
+    #"fjórðungur": 1.0 / 4,
+    #"fimmtungur": 1.0 / 5,
+    "einn": 1,
+    "tveir": 2,
+    "þrír": 3,
+    "fjórir": 4,
+    "fimm": 5,
+    "sex": 6,
+    "sjö": 7,
+    "átta": 8,
+    "níu": 9,
+    "tíu": 10,
+    "ellefu": 11,
+    "tólf": 12,
+    "þrettán": 13,
+    "fjórtán": 14,
+    "fimmtán": 15,
+    "sextán": 16,
+    "sautján": 17,
+    "seytján": 17,
+    "átján": 18,
+    "nítján": 19,
+    "tuttugu": 20,
+    "þrjátíu": 30,
+    "fjörutíu": 40,
+    "fimmtíu": 50,
+    "sextíu": 60,
+    "sjötíu": 70,
+    "áttatíu": 80,
+    "níutíu": 90,
+    #"par": 2,
+    #"tugur": 10,
+    #"tylft": 12,
+    "hundrað": 100,
+    "þúsund": 1000, # !!! Bæði hk og kvk!
+    "þús.": 1000,
+    "milljón": 1e6,
+    "milla": 1e6,
+    "milljarður": 1e9,
+    "miljarður": 1e9,
+    "ma.": 1e9
+}
+
+# Recognize words for percentages
+PERCENTAGES = {
+    "prósent": 1,
+    "prósenta": 1,
+    "hundraðshluti": 1,
+    "prósentustig": 1
+}
+
+# Recognize words for nationalities (used for currencies)
+NATIONALITIES = {
+    "danskur": "dk",
+    "enskur": "uk",
+    "breskur": "uk",
+    "bandarískur": "us",
+    "kanadískur": "ca",
+    "svissneskur": "ch",
+    "sænskur": "se",
+    "norskur": "no",
+    "japanskur": "jp",
+    "íslenskur": "is",
+    "pólskur": "po",
+    "kínverskur": "cn",
+    "ástralskur": "au",
+    "rússneskur": "ru",
+    "indverskur": "in",
+    "indónesískur": "id"
+}
+
+# Valid currency combinations
+ISO_CURRENCIES = {
+    ("dk", "ISK"): "DKK",
+    ("is", "ISK"): "ISK",
+    ("no", "ISK"): "NOK",
+    ("se", "ISK"): "SEK",
+    ("uk", "GBP"): "GBP",
+    ("us", "USD"): "USD",
+    ("ca", "USD"): "CAD",
+    ("au", "USD"): "AUD",
+    ("ch", "CHF"): "CHF",
+    ("jp", "JPY"): "JPY",
+    ("po", "PLN"): "PLN",
+    ("ru", "RUB"): "RUB",
+    ("in", "INR"): "INR", # Indian rupee
+    ("id", "INR"): "IDR", # Indonesian rupiah
+    ("cn", "CNY"): "CNY"
+}
+
+# Amount abbreviations including 'kr' for the ISK
+# Corresponding abbreviations are found in Abbrev.conf
+AMOUNT_ABBREV = {
+    "þ.kr.": 1e3,
+    "þús.kr.": 1e3,
+    "m.kr.": 1e6,
+    "mkr.": 1e6,
+    "ma.kr.": 1e9
+}
+
+# Number words can be marked as subjects (any gender) or as numbers
+NUMBER_CATEGORIES = frozenset(["töl", "to", "kk", "kvk", "hk", "lo"])
 
 # Recognize words for currencies
 CURRENCIES = {
@@ -75,6 +195,20 @@ CURRENCIES = {
     "CNY": "CNY",
     "evra": "EUR",
     "EUR": "EUR"
+}
+
+CURRENCY_GENDERS = {
+    "ISK": "kvk",
+    "GBP": "hk",
+    "USD": "kk",
+    "CHF": "kk",
+    "RUB": "kvk",
+    "INR": "kvk",
+    "IDR": "kvk",
+    "JPY": "hk",
+    "PLN": "hk",
+    "CNY": "hk",
+    "EUR": "kvk"
 }
 
 
@@ -151,13 +285,15 @@ def add_cases(cases, bin_spec, default="nf"):
         cases.add(c)
 
 
-def all_cases(token):
+def all_cases(token, filter_func = None):
     """ Return a list of all cases that the token can be in """
     cases = set()
     if token.kind == TOK.WORD:
         # Roll through the potential meanings and extract the cases therefrom
         if token.val:
             for m in token.val:
+                if filter_func is not None and not filter_func(m):
+                    continue
                 if m.fl == "ob":
                     # One of the meanings is an undeclined word: all cases apply
                     cases = ALL_CASES
@@ -166,9 +302,13 @@ def all_cases(token):
     return list(cases)
 
 
-def all_common_cases(token1, token2):
+def all_common_cases(token1, token2, filter_func = None):
     """ Compute intersection of case sets for two tokens """
-    set1 = set(all_cases(token1))
+    set1 = set(all_cases(token1, filter_func))
+    if not token2.val:
+        # Token2 is not found in BÍN (probably an exotic currency name):
+        # just return the cases of the first token
+        return list(set1)
     set2 = set(all_cases(token2))
     return list(set1 & set2)
 
@@ -197,6 +337,170 @@ def all_genders(token):
             if gn is not None:
                g.add(gn)
     return list(g)
+
+
+def parse_phrases_1(token_stream):
+
+    """ Parse numbers and amounts """
+
+    with BIN_Db.get_db() as db:
+
+        token = None
+        try:
+
+            # Maintain a one-token lookahead
+            token = next(token_stream)
+            while True:
+                next_token = next(token_stream)
+
+                # Logic for numbers that are partially or entirely
+                # written out in words
+
+                def number(tok):
+                    """ If the token denotes a number, return that number - or None """
+                    if tok.txt.lower() == "áttu":
+                        # Do not accept 'áttu' (stem='átta', no kvk) as a number
+                        return None
+                    return match_stem_list(tok, MULTIPLIERS,
+                        filter_func = lambda m: m.ordfl in NUMBER_CATEGORIES)
+
+                # Check whether we have an initial number word
+                multiplier = number(token) if token.kind == TOK.WORD else None
+
+                # Check for [number] 'hundred|thousand|million|billion'
+                while (token.kind == TOK.NUMBER or multiplier is not None) \
+                    and next_token.kind == TOK.WORD:
+
+                    multiplier_next = number(next_token)
+
+                    def convert_to_num(token):
+                        if multiplier is not None:
+                            token = TOK.Number(token.txt, multiplier,
+                                all_cases(token), all_genders(token))
+                        return token
+
+                    if multiplier_next is not None:
+                        # Retain the case of the last multiplier, except
+                        # if it is possessive (eignarfall) and the previous
+                        # token had a case ('hundruðum milljarða' is dative,
+                        # not possessive)
+                        next_case = all_cases(next_token)
+                        next_gender = all_genders(next_token)
+                        if "ef" in next_case:
+                            # We may have something like 'hundruðum milljarða':
+                            # use the case and gender of 'hundruðum', not 'milljarða'
+                            next_case = all_cases(token) or next_case
+                            next_gender = all_genders(token) or next_gender
+                        token = convert_to_num(token)
+                        token = TOK.Number(token.txt + " " + next_token.txt,
+                            token.val[0] * multiplier_next,
+                            next_case, next_gender)
+                        # Eat the multiplier token
+                        next_token = next(token_stream)
+                    elif next_token.txt in AMOUNT_ABBREV:
+                        # Abbreviations for ISK amounts
+                        # For abbreviations, we do not know the case,
+                        # but we try to retain the previous case information if any
+                        token = convert_to_num(token)
+                        token = TOK.Amount(token.txt + " " + next_token.txt, "ISK",
+                            token.val[0] * AMOUNT_ABBREV[next_token.txt], # Number
+                            token.val[1], token.val[2]) # Cases and gender
+                        next_token = next(token_stream)
+                    else:
+                        # Check for [number] 'percent'
+                        percentage = match_stem_list(next_token, PERCENTAGES)
+                        if percentage is not None:
+                            token = convert_to_num(token)
+                            token = TOK.Percent(token.txt + " " + next_token.txt, token.val[0],
+                                all_cases(next_token), all_genders(next_token))
+                            # Eat the percentage token
+                            next_token = next(token_stream)
+                        else:
+                            break
+
+                    multiplier = None
+
+                # Check for currency name doublets, for example
+                # 'danish krona' or 'british pound'
+                if token.kind == TOK.WORD and next_token.kind == TOK.WORD:
+                    nat = match_stem_list(token, NATIONALITIES)
+                    if nat is not None:
+                        cur = match_stem_list(next_token, CURRENCIES)
+                        if cur is not None:
+                            if (nat, cur) in ISO_CURRENCIES:
+                                # Match: accumulate the possible cases
+                                iso_code = ISO_CURRENCIES[(nat, cur)]
+                                # Filter the possible cases by considering adjectives
+                                # having a strong declination (indefinite form) only
+                                token = TOK.Currency(token.txt + " "  + next_token.txt,
+                                    iso_code,
+                                    all_common_cases(token, next_token,
+                                        lambda m: (m.ordfl == "lo" and "SB" in m.beyging)),
+                                    [ CURRENCY_GENDERS[cur] ])
+                                next_token = next(token_stream)
+
+                # Check for composites:
+                # 'stjórnskipunar- og eftirlitsnefnd'
+                # 'viðskipta- og iðnaðarráðherra'
+                # 'marg-ítrekaðri'
+                if token.kind == TOK.WORD and \
+                    next_token.kind == TOK.PUNCTUATION and next_token.txt == COMPOSITE_HYPHEN:
+
+                    og_token = next(token_stream)
+                    if og_token.kind != TOK.WORD or (og_token.txt != "og" and og_token.txt != "eða"):
+                        # Incorrect prediction: make amends and continue
+                        handled = False
+                        if og_token.kind == TOK.WORD:
+                            composite = token.txt + "-" + og_token.txt
+                            if token.txt.lower() in ADJECTIVE_PREFIXES:
+                                # hálf-opinberri, marg-ítrekaðri
+                                token = TOK.Word(composite,
+                                    [m for m in og_token.val if m.ordfl == "lo" or m.ordfl == "ao"])
+                                next_token = next(token_stream)
+                                handled = True
+                            else:
+                                # Check for Vestur-Þýskaland, Suður-Múlasýsla (which are in BÍN in their entirety)
+                                m = db.meanings(composite)
+                                if m:
+                                    # Found composite in BÍN: return it as a single token
+                                    token = TOK.Word(composite, m)
+                                    next_token = next(token_stream)
+                                    handled = True
+                        if not handled:
+                            yield token
+                            # Put a normal hyphen instead of the composite one
+                            token = TOK.Punctuation(HYPHEN)
+                            next_token = og_token
+                    else:
+                        # We have 'viðskipta- og'
+                        final_token = next(token_stream)
+                        if final_token.kind != TOK.WORD:
+                            # Incorrect: unwind
+                            yield token
+                            yield TOK.Punctuation(HYPHEN) # Normal hyphen
+                            token = og_token
+                            next_token = final_token
+                        else:
+                            # We have 'viðskipta- og iðnaðarráðherra'
+                            # Return a single token with the meanings of
+                            # the last word, but an amalgamated token text.
+                            # Note: there is no meaning check for the first
+                            # part of the composition, so it can be an unknown word.
+                            txt = token.txt + "- " + og_token.txt + \
+                                " " + final_token.txt
+                            token = TOK.Word(txt, final_token.val)
+                            next_token = next(token_stream)
+
+                # Yield the current token and advance to the lookahead
+                yield token
+                token = next_token
+
+        except StopIteration:
+            pass
+
+        # Final token (previous lookahead)
+        if token:
+            yield token
 
 
 def parse_phrases_2(token_stream):
@@ -249,10 +553,10 @@ def parse_phrases_2(token_stream):
                 elif next_token.kind == TOK.CURRENCY:
                     # Already have an ISO identifier for a currency
                     cur = next_token.val[0]
-                    if next_token.val[1]:
-                        cases = next_token.val[1]
-                    if next_token.val[2]:
-                        genders = next_token.val[2]
+                    # Use the case and gender information from the currency name
+                    # if no such information was given with the number itself
+                    cases = cases or next_token.val[1]
+                    genders = genders or next_token.val[2]
 
                 if cur is not None:
                     # Create an amount
@@ -732,7 +1036,7 @@ def tokenize(text, auto_uppercase = False):
 
     # Thank you Python for enabling this programming pattern ;-)
 
-    token_stream = raw_tokenize(text)
+    token_stream = tokenize_without_annotation(text)
 
     # Static multiword phrases
     token_stream = parse_static_phrases(token_stream, auto_uppercase)
@@ -740,7 +1044,10 @@ def tokenize(text, auto_uppercase = False):
     # Lookup meanings from dictionary
     token_stream = annotate(token_stream, auto_uppercase)
 
-    # Second phrase pass
+    # Numbers and amounts
+    token_stream = parse_phrases_1(token_stream)
+
+    # Currencies, person names
     token_stream = parse_phrases_2(token_stream)
 
      # Eliminate very uncommon meanings

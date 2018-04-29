@@ -270,21 +270,119 @@ def check_terminal(t, text, lemma, category, variants):
 
 
 def check_terminals(t):
-    assert len(t) == 9
+    assert len(t) == 7
     check_terminal(t[0], text='Jón', lemma='Jón', category='person', variants=['nf', 'kk'])
     check_terminal(t[1], text='greiddi', lemma='greiða', category='so', variants=['2', 'þgf', 'þf', 'et', 'p3', 'fh', 'gm', 'þt'])
     check_terminal(t[2], text='bænum', lemma='bær', category='no', variants=['et', 'þgf', 'kk', 'gr'])
-    check_terminal(t[3], text='10', lemma='10', category='tala', variants=['ft', 'þf', 'kvk'])
-    check_terminal(t[4], text='milljónir', lemma='milljón', category='no', variants=['ft', 'þf', 'kvk'])
-    check_terminal(t[5], text='króna', lemma='króna', category='no', variants=['ft', 'ef', 'kvk'])
-    check_terminal(t[6], text='í', lemma='í', category='fs', variants=['þf'])
-    check_terminal(t[7], text='skaðabætur', lemma='skaðabót', category='no', variants=['ft', 'þf', 'kvk'])
-    check_terminal(t[8], text='.', lemma='.', category='', variants=[])
+    check_terminal(t[3], text='10 milljónir króna', lemma='10 milljónir króna', category='no', variants=['ft', 'þf', 'kvk'])
+    check_terminal(t[4], text='í', lemma='í', category='fs', variants=['þf'])
+    check_terminal(t[5], text='skaðabætur', lemma='skaðabót', category='no', variants=['ft', 'þf', 'kvk'])
+    check_terminal(t[6], text='.', lemma='.', category='', variants=[])
 
 
 def test_terminals():
     s = r.parse("Jón greiddi bænum 10 milljónir króna í skaðabætur.")["sentences"][0]
     check_terminals(s.terminals)
+
+
+def test_amounts():
+    s = r.parse_single("Tjónið nam 10 milljörðum króna.")
+    t = s.terminals
+    assert len(t) == 4
+    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
+    check_terminal(t[1], text='nam', lemma='nema', category='so', variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
+    check_terminal(t[2], text='10 milljörðum króna', lemma='10 milljörðum króna', category='no', variants=['ft', 'þgf', 'kk'])
+    check_terminal(t[3], text='.', lemma='.', category='', variants=[])
+    assert s.tokens[2].val[0] == 10e9
+    assert s.tokens[2].val[1] == "ISK"
+
+    s = r.parse_single("Tjónið þann 22. maí nam einum milljarði króna.")
+    t = s.terminals
+    assert len(t) == 6
+    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
+    check_terminal(t[1], text='þann', lemma='sá', category='fn', variants=['et', 'kk', 'þf'])
+    check_terminal(t[2], text='22. maí', lemma='22. maí', category='dags', variants=[])
+    check_terminal(t[3], text='nam', lemma='nema', category='so', variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
+    check_terminal(t[4], text='einum milljarði króna', lemma='einum milljarði króna', category='no', variants=['ft', 'þgf', 'kk'])
+    check_terminal(t[5], text='.', lemma='.', category='', variants=[])
+    assert s.tokens[2].val == (0, 5, 22)
+    assert s.tokens[4].val[0] == 1e9
+    assert s.tokens[4].val[1] == "ISK"
+
+    s = r.parse_single("Tjónið þann 19. október 1983 nam 4,8 milljörðum dala.")
+    t = s.terminals
+    assert len(t) == 6
+    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
+    check_terminal(t[1], text='þann', lemma='sá', category='fn', variants=['et', 'kk', 'þf'])
+    check_terminal(t[2], text='19. október 1983', lemma='19. október 1983', category='dags', variants=[])
+    check_terminal(t[3], text='nam', lemma='nema', category='so',
+        variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
+    check_terminal(t[4], text='4,8 milljörðum dala', lemma='4,8 milljörðum dala', category='no',
+        variants=['ft', 'þgf', 'kk'])
+    check_terminal(t[5], text='.', lemma='.', category='', variants=[])
+    assert s.tokens[2].val == (1983, 10, 19)
+    assert s.tokens[4].val[0] == 4.8e9
+    assert s.tokens[4].val[1] == "USD"
+
+    s = r.parse_single("Tjónið nam sautján milljörðum breskra punda.")
+    t = s.terminals
+    assert len(t) == 4
+    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
+    check_terminal(t[1], text='nam', lemma='nema', category='so',
+        variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
+    check_terminal(t[2], text='sautján milljörðum breskra punda', lemma='sautján milljörðum breskra punda',
+        category='no', variants=['ft', 'þgf', 'kk'])
+    check_terminal(t[3], text='.', lemma='.', category='', variants=[])
+    assert s.tokens[2].val[0] == 17e9
+    assert s.tokens[2].val[1] == "GBP"
+
+    s = r.parse_single("Tjónið nam 17 breskum pundum.")
+    t = s.terminals
+    assert len(t) == 4
+    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
+    check_terminal(t[1], text='nam', lemma='nema', category='so',
+        variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
+    check_terminal(t[2], text='17 breskum pundum', lemma='17 breskum pundum', category='no',
+        variants=['ft', 'þgf', 'hk'])
+    check_terminal(t[3], text='.', lemma='.', category='', variants=[])
+    assert s.tokens[2].val[0] == 17
+    assert s.tokens[2].val[1] == "GBP"
+
+    s = r.parse_single("Tjónið nam 17 pólskum zloty.")
+    t = s.terminals
+    assert len(t) == 4
+    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
+    check_terminal(t[1], text='nam', lemma='nema', category='so',
+        variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
+    check_terminal(t[2], text='17 pólskum zloty', lemma='17 pólskum zloty', category='no',
+        variants=['ft', 'þgf', 'hk'])
+    check_terminal(t[3], text='.', lemma='.', category='', variants=[])
+    assert s.tokens[2].val[0] == 17
+    assert s.tokens[2].val[1] == "PLN"
+
+    s = r.parse_single("Tjónið nam 101 indverskri rúpíu.")
+    t = s.terminals
+    assert len(t) == 4
+    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
+    check_terminal(t[1], text='nam', lemma='nema', category='so',
+        variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
+    check_terminal(t[2], text='101 indverskri rúpíu', lemma='101 indverskri rúpíu', category='no',
+        variants=['et', 'þgf', 'kvk'])
+    check_terminal(t[3], text='.', lemma='.', category='', variants=[])
+    assert s.tokens[2].val[0] == 101
+    assert s.tokens[2].val[1] == "INR"
+
+    s = r.parse_single("Tjónið nam 17 milljónum indónesískra rúpía.")
+    t = s.terminals
+    assert len(t) == 4
+    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
+    check_terminal(t[1], text='nam', lemma='nema', category='so',
+        variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
+    check_terminal(t[2], text='17 milljónum indónesískra rúpía', lemma='17 milljónum indónesískra rúpía', category='no',
+        variants=['ft', 'þgf', 'kvk'])
+    check_terminal(t[3], text='.', lemma='.', category='', variants=[])
+    assert s.tokens[2].val[0] == 17e6
+    assert s.tokens[2].val[1] == "IDR"
 
 
 def test_year_range():
@@ -332,16 +430,16 @@ def test_complex(verbose = False):
        "sök þar sem þinghaldið í málinu er lokað.")
     if verbose:
         print("Complex, sentence 4")
-    _ = r.parse_single("út úr stílfærðri túlkun listamannsins á gamla , litla og mjóa "
+    _ = r.parse_single("Út úr stílfærðri túlkun listamannsins á gamla , litla og mjóa "
         "prófessornum kom búlduleitur beljaki sem þess vegna hefði getað verið "
-        "trökkdræver að norðan .")
+        "trökkdræver að norðan.")
     if verbose:
         print("Complex, sentence 5")
-    _ = r.parse_single("rétt hjá anddyrinu var ein af þessum höggnu andlitsmyndum "
+    _ = r.parse_single("Rétt hjá anddyrinu var ein af þessum höggnu andlitsmyndum "
         "af þjóðfrægum mönnum þar sem listamaðurinn hafði gefist upp við að ná "
         "svipnum og ákveðið að hafa þetta í staðinn stílfærða mynd sem túlkaði "
         "fremur innri mann fyrirmyndarinnar en þá ásjónu sem daglega blasti við "
-        "samferðamönnum .")
+        "samferðamönnum.")
 
 
 def test_finish():
@@ -358,6 +456,7 @@ if __name__ == "__main__":
     test_terminals()
     test_single()
     test_year_range()
+    test_amounts()
     test_complex(verbose = True)
     test_finish()
 
