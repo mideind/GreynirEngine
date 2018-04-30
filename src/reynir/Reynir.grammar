@@ -431,11 +431,12 @@ Tíðartenging →
     | "þar:ao" "til:st" "að:st"?
     | "á_sama_tíma:ao" "og:st"
     | 'allar_götur_síðan:ao'
-    | "er:st" # Líka tilvísunartenging
+    | TengiorðEr # "er:stt", líka tilvísunartenging - fær mínus
 
 Tilgangstenging → 
     'til:fs'_ef 'það:pfn'_hk_ef_et "að:st"
-    | "svo:st" "að:st"?                 # Líka afleiðingartenging
+    | "svo:st" "að:st"    # Líka afleiðingartenging
+    | SvoTenging
 
 Viðurkenningartenging →
     "enda:st" "þótt:st" "að:st"?
@@ -444,20 +445,20 @@ Viðurkenningartenging →
     | "þrátt_fyrir:ao" 'það:pfn'_hk_þf_et? "að:st"
 
 Afleiðingartenging →
-    "svo:st" "að:st"?       # Líka tilgangstenging
-    | "þannig:ao" "að:st"
+    "þannig:ao" "að:st"
+    | "svo:st" "að:st"   # Líka tilgangstenging
+    | SvoTenging
 
 Orsakartenging →
     "fyrst:ao" "að:st"?
     | 'sökum:fs'_ef 'það:pfn'_hk_ef_et "að:st"
     | 'sakir:fs'_ef 'það:pfn'_hk_ef_et "að:st"
-    | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"
+    | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"?
     | "þar_eð:st"
     | "þar:ao" "sem:st"
     | 'af:fs'_þgf? 'það:pfn'_hk_þgf_et "að:st"?
     | 'vegna:fs'_ef 'það:pfn'_hk_ef_et "að:st"
     | 'með:fs'_þgf'það:pfn'_hk_þgf_et "að:st"
-    | "þar:ao" "sem:st"
 
 Skilyrðistenging →
     "ef:st" "að:st"?
@@ -466,9 +467,14 @@ Skilyrðistenging →
 
 $score(+8) Skilyrðistenging # Skilyrðissetning er með mínus á móti
 
+SvoTenging →
+    "svo:st"
+
+$score(-8) SvoTenging # Draga verulega úr "svo" einu og sér sem tengingu
+
 Samanburðartenging →
     "eins:ao" "og:st"
-    | 'líkur:lo'_hk_nf_et "og:st" # líkt og
+    | "líkt:ao" "og:st"
     | "svo:st" "sem:st"
 
 # Setningar með frumlagi
@@ -560,10 +566,17 @@ Frumlag/pers/tala/kyn →
 # sem annars er aðeins brúklegt í 3.p.
 
 Frumlag_p1/tala/kyn →
-    'allur:fn'_nf/tala/kyn # Öll erum við jöfn fyrir lögum
+    FrumlagAllur/tala/kyn
 
 Frumlag_p2/tala/kyn →
-    'allur:fn'_nf/tala/kyn # Allar eruð þið jafnar fyrir lögum
+    FrumlagAllur/tala/kyn
+
+FrumlagAllur/tala/kyn →
+    # Allar eruð þið jafnar fyrir lögum
+    # Öll erum við jöfn fyrir lögum
+    'allur:fn'_nf/tala/kyn
+
+$score(-5) FrumlagAllur/tala/kyn # Ekki nota þessa undantekningu nema þörf krefji
 
 # Hakk til að láta "Þetta/Það eru aðallega fjögur atriði" virka,
 # þ.e. þar sem ábendingarfornöfnin "þessi"/"sá" eru notuð í eintölu
@@ -582,7 +595,7 @@ SamanburðurNl →
 SamanburðarNlTenging →
     "heldur:st" "en:st"             # 'Forseti á ekki að gera meiri breytingu á sér heldur en forsætisráðherra'
     | ','? "eins:ao" "og:st"        # 'Hann á ekki andstæðinga eins og aðrir kjörnir fulltrúar'
-    | ','? 'líkur:lo'_hk_nf_et "og:st" # líkt og
+    | ','? "líkt:ao" "og:st"
     | Samanburðarmerki? "þar:ao" "af:ao"  # 'Fjöldi barna var í vélinni, þar af tvö kornabörn'
     | Samanburðarmerki? 'þar_á_meðal:ao'
     | Samanburðarmerki? "þar:ao" 'á_meðal:ao'
@@ -647,8 +660,14 @@ $score(-8) SetningÞað # Velja fremur hefðbundna setningu með tilgreindu frum
 SetningAð →
     # 'Að raða frímerkjum [í ró og næði] er góð skemmtun'
     NhLiður FsAtv? SagnRuna_et_p3_hk
+    | SetningAðHugsaSér
 
-$score(-2) SetningAð # Óalgengt form
+$score(-4) SetningAð # Óalgengt form
+
+SetningAðHugsaSér →
+    nhm 'hugsa:so'_gm_nh abfn_þgf # 'Að hugsa sér [, sagði Anna]'
+
+$score(+2) SetningAðHugsaSér
 
 SetningUmAðRæða →
     # Um væri að ræða
@@ -666,8 +685,8 @@ SetningForskeyti →
     FsAtv | SamanburðarForskeyti
 
 SamanburðarForskeyti →
-    "eins:ao" "og:st" Nl_nf                 # 'Eins og Páll borða ég ekki smjör'
-    | 'líkur:lo'_hk_nf_et "og:st" Nl_nf     # 'Líkt og bakarar eru smiðir óhressir með þetta'
+    "eins:ao" "og:st" Nl_nf       # 'Eins og Páll borða ég ekki smjör'
+    | "líkt:ao" "og:st" Nl_nf     # 'Líkt og bakarar eru smiðir óhressir með þetta'
 
 # Hvetja til forskeyta fremur en samtenginga, ef val er þar á milli
 $score(+10) SamanburðarForskeyti
@@ -3533,7 +3552,7 @@ OgEða → "og:st" | "eða:st" | "ellegar:st" | "eður:st"
     | "svo:st" "og:st" | "sem:st" "og:st" | "né:st"
     | ÞarÁMeðal | "meðal:ao" "annars:ao" | 'meðal_annars:ao'
     | 'það:pfn'_hk_et_nf "er:st" | 'það_er:ao'
-    | "eins:ao" "og:st" | 'líkur:lo'_hk_nf_et "og:st"
+    | "eins:ao" "og:st" | "líkt:ao" "og:st"
     | "þar:ao" "með:ao" 'telja:so'_lhþt_sb_hk_nf_et?
     | "svo:st" "sem:st" | "jafnt:ao" "sem:st"
     | EnÍOgEða
@@ -4157,7 +4176,7 @@ $tag(purge_prep) FsRunaEftirNl # Ekki senda innifaldar forsetningar upp tréð
 
 # Forskeyti sem leyfileg eru á undan forsetningarlið innan kommu
 FsForskeyti →
-    'líkur:lo'_hk_nf_et "og:st" | "eins:ao" "og:st"
+    "líkt:ao" "og:st" | "eins:ao" "og:st"
     | 'það_er:ao' | 'það:pfn'_hk_et_nf "er:so"
 
 # Forsetningar þar sem AL á undan gefur vísbendingar um fall í FL
@@ -4196,6 +4215,7 @@ EinnAl →
     | "hingað:ao" "til:ao"
     | "sem:ao" "sagt:so"
     | "svo:ao" "sem:ao"
+    | "sem:ao" "fyrst:ao"
 
 $tag(no_prep) EinnAl        # Engar forsetningar hér inni - óþarfi að skoða dótturgreinar
 

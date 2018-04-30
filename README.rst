@@ -15,6 +15,12 @@ Along the way, Reynir tokenizes the text, finds **lemmas** and assigns
 
 Full documentation for Reynir is `available here <https://greynir.is/doc/>`_.
 
+Reynir is the engine of `Greynir.is <https://greynir.is>`_, a natural-language
+front end for a database of 6 million sentences parsed from Icelandic news articles.
+
+Reynir uses the `Tokenizer <https://pypi.org/project/tokenizer/>`_ package,
+by the same authors, to tokenize text.
+
 *******
 Example
 *******

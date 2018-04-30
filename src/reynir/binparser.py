@@ -106,6 +106,7 @@ class BIN_Token(Token):
         "et" : "ET", # Eintala / singular
         "ft" : "FT", # Fleirtala / plural
         "mst" : "MST", # Miðstig / comparative
+        "est" : "EST", # Efsta stig / superlative
         "esb" : "ESB", # Efsta stig, sterk beyging / superlative
         "evb" : "EVB", # Efsta stig, veik beyging / superlative
         "p1" : "1P", # Fyrsta persóna / first person
@@ -324,6 +325,10 @@ class BIN_Token(Token):
                 # Special case, since 'þt' is a substring of 'lhþt'
                 vset.remove("þt")
                 vset.remove("lh")
+            elif "esb" in vset:
+                vset.remove("sb")
+            elif "evb" in vset:
+                vset.remove("vb")
             cls._VARIANT_CACHE[beyging] = vset
         return vset
 
