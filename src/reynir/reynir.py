@@ -180,7 +180,7 @@ class _Sentence:
     def text(self):
         """ Return a raw text representation of the sentence,
             with spaces between all tokens """
-        return " ".join((t.txt or "") for t in self._s)
+        return " ".join(t.txt for t in self._s if t.txt)
 
     @property
     def tidy_text(self):
@@ -438,3 +438,4 @@ class Reynir:
             Fast_Parser.discard_grammar()
             cls._parser.cleanup()
             cls._parser = None
+

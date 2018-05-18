@@ -1,5 +1,6 @@
-# -*- encoding: utf-8 -*-
 """
+
+    Reynir: Natural language processing for Icelandic
 
   	Copyright(C) 2018 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson

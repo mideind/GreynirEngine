@@ -222,10 +222,17 @@ def test_long_parse(verbose = False):
     if verbose:
         print("Long parse test")
     txt = """
-        [[ Reynt er að efla áhuga ungs fólks á borgarstjórnarmálum með framboðsfundum og skuggakosningum en þótt kjörstaðirnir í þeim séu færðir inn í framhaldsskólana er þátttakan lítil. Dagur B. Eggertsson nýtur mun meira fylgis í embætti borgarstjóra en fylgi Samfylkingarinnar gefur til kynna samkvæmt könnun Fréttablaðsins. ]]
-        [[ Eins og fram kom í fréttum okkar í gær stefnir í met í fjölda framboða fyrir komandi borgarstjórnarkosningar í vor og gætu þau orðið að minnsta kosti fjórtán. Þá þarf minna fylgi nú en áður til að ná inn borgarfulltrúa, því borgarfulltrúum verður fjölgað úr fimmtán í tuttugu og þrjá. ]]
-        [[ Kosningabaráttan fyrir borgarstjórnarkosningarnar í vor er hafin í framhaldsskólum borgarinnar. Samhliða framboðskynningum fara fram skuggakosningar til borgarstjórnar í skólunum. ]]
-        [[ „Þetta er eiginlega æfing í því að taka þátt í lýðræðislegum kosningum. Við reynum að herma eftir því hvernig raunverulegar kosningar fara fram,“ segir Róbert Ferdinandsson kennari á félagsfræðibraut Fjölbrautaskólans við Ármúla. ]]
+        [[ Reynt er að efla áhuga ungs fólks á borgarstjórnarmálum með framboðsfundum og skuggakosningum en þótt
+        kjörstaðirnir í þeim séu færðir inn í framhaldsskólana er þátttakan lítil. Dagur B. Eggertsson nýtur mun
+        meira fylgis í embætti borgarstjóra en fylgi Samfylkingarinnar gefur til kynna samkvæmt könnun Fréttablaðsins. ]]
+        [[ Eins og fram kom í fréttum okkar í gær stefnir í met í fjölda framboða fyrir komandi borgarstjórnarkosningar
+        í vor og gætu þau orðið að minnsta kosti fjórtán. Þá þarf minna fylgi nú en áður til að ná inn borgarfulltrúa,
+        því borgarfulltrúum verður fjölgað úr fimmtán í tuttugu og þrjá. ]]
+        [[ Kosningabaráttan fyrir borgarstjórnarkosningarnar í vor er hafin í framhaldsskólum borgarinnar. Samhliða
+        framboðskynningum fara fram skuggakosningar til borgarstjórnar í skólunum. ]]
+        [[ „Þetta er eiginlega æfing í því að taka þátt í lýðræðislegum kosningum. Við reynum að herma eftir því
+        hvernig raunverulegar kosningar fara fram,“ segir Róbert Ferdinandsson kennari á félagsfræðibraut
+        Fjölbrautaskólans við Ármúla. ]]
     """
     job = r.submit(txt)
     pg_count = 0
@@ -414,32 +421,69 @@ def test_single():
 
 def test_complex(verbose = False):
     if verbose:
-        print("Complex, sentence 1")
-    _ = r.parse_single("ákæran var þingfest en fréttastofu er kunnugt um að maðurinn "
+        print("Complex, sentence 1", end="")
+    d = r.parse("ákæran var þingfest en fréttastofu er kunnugt um að maðurinn "
         "játaði þar sem þinghaldið er lokað")
     if verbose:
-        print("Complex, sentence 2")
-    _ = r.parse_single("Viðar Garðarsson, sem setti upp vefsíður fyrir Sigmund Davíð "
+        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print("Complex, sentence 2", end="")
+    d = r.parse("Viðar Garðarsson, sem setti upp vefsíður fyrir Sigmund Davíð "
        "Gunnlaugsson í kjölfar birtingu Panamaskjalanna, segist ekki vita "
        "hvers vegna ákveðið var að segja að vefjunum væri haldið úti af "
        "stuðningsmönnum Sigmundar.")
     if verbose:
-        print("Complex, sentence 3")
-    _ = r.parse_single("Ákæran var þingfest í Héraðsdómi Reykjaness í dag "
+        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print("Complex, sentence 3", end="")
+    d = r.parse("Ákæran var þingfest í Héraðsdómi Reykjaness í dag "
        "en fréttastofu er ekki kunnugt um hvort maðurinn játaði eða neitaði "
        "sök þar sem þinghaldið í málinu er lokað.")
     if verbose:
-        print("Complex, sentence 4")
-    _ = r.parse_single("Út úr stílfærðri túlkun listamannsins á gamla , litla og mjóa "
+        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print("Complex, sentence 4", end="")
+    d = r.parse("Út úr stílfærðri túlkun listamannsins á gamla , litla og mjóa "
         "prófessornum kom búlduleitur beljaki sem þess vegna hefði getað verið "
         "trökkdræver að norðan.")
     if verbose:
-        print("Complex, sentence 5")
-    _ = r.parse_single("Rétt hjá anddyrinu var ein af þessum höggnu andlitsmyndum "
+        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print("Complex, sentence 5", end="")
+    d = r.parse("Rétt hjá anddyrinu var ein af þessum höggnu andlitsmyndum "
         "af þjóðfrægum mönnum þar sem listamaðurinn hafði gefist upp við að ná "
         "svipnum og ákveðið að hafa þetta í staðinn stílfærða mynd sem túlkaði "
         "fremur innri mann fyrirmyndarinnar en þá ásjónu sem daglega blasti við "
         "samferðamönnum.")
+    if verbose:
+        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print("Complex, sentence 6", end="")
+    d = r.parse(
+        "Sú fullyrðing byggist á því að ef hlutverk skólastarfs er eingöngu til þess "
+        "að undirbúa nemendur fyrir skilvirka og afkastamikla þátttöku í atvinnu- og "
+        "viðskiptalífi, skerðist það rými sem einstaklingar fá í gegnum menntun til "
+        "þess að rækta með sér þá flóknu hæfni sem þarf til að lifa í lýðræðissamfélagi; "
+        "að móta eigin skoðanir, þjálfa gagnrýna hugsun og læsi, læra að lifa í "
+        "margbreytilegu samfélagi, mynda tengsl við aðra, mótast sem einstaklingur "
+        "í hnattrænu samfélagi, og takast á við ólík viðhorf, skoðanir og gildi — svo "
+        "fátt eitt sé nefnt.")
+    if verbose:
+        print(", time: {:.2f} seconds".format(d["parse_time"]))
+
+
+def test_attachment(verbose = False):
+    """ Test attachment of prepositions to nouns and verbs """
+    if verbose:
+        print("Testing attachment of prepositions")
+    for _ in range(50):
+        # Test consistency for 50 iterations
+        s = r.parse_single("Ég setti dæmi um þetta í bókina mína.")
+        assert(s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ " # Ég
+            "VP-SEQ VP so_1_þf_et_p1 NP-OBJ no_et_þf_hk " # setti dæmi
+            "PP fs_þf NP fn_et_þf_hk /NP /PP " # um þetta
+            "/NP-OBJ /VP PP fs_þf NP no_et_þf_kvk fn_et_þf_kvk /NP /PP /VP-SEQ " # í bókina mína
+            "/IP /S-MAIN p /P") # .
+        s = r.parse_single("Ég setti dæmi í bókina mína um þetta.")
+        assert(s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ " # Ég
+            "VP-SEQ VP so_1_þf_et_p1 NP-OBJ no_et_þf_hk " # setti dæmi
+            "/NP-OBJ /VP PP fs_þf NP no_et_þf_kvk fn_et_þf_kvk " # í bókina mína
+            "PP fs_þf NP fn_et_þf_hk /NP /PP /NP /PP /VP-SEQ /IP /S-MAIN p /P") # um þetta .
 
 
 def test_finish():
@@ -458,5 +502,6 @@ if __name__ == "__main__":
     test_year_range()
     test_amounts()
     test_complex(verbose = True)
+    test_attachment(verbose = True)
     test_finish()
 

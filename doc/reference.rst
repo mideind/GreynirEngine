@@ -79,10 +79,13 @@ The Reynir class
 
         * ``num_parsed``: The number of sentences that were successfully parsed.
 
-        * ``ambiguity``: A weighted average of the ambiguity of the parsed
+        * ``ambiguity``: A ``float`` weighted average of the ambiguity of the parsed
             sentences. Ambiguity is defined as the *n*-th root of the number
             of possible parse trees for the sentence, where *n* is the number
             of tokens in the sentence.
+
+        * ``parse_time``: A ``float`` with the wall clock time, in seconds,
+            spent on tokenizing and parsing the sentences.
 
         Example *(try it!)*::
 

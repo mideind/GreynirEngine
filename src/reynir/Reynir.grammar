@@ -213,6 +213,7 @@ Samtenging →
     | 'það_er_að_segja:ao' Tengimerki "að:st"?
     | "svo:st" "sem:st"
     | "eins:ao" "og:st"
+    | "því:st" "að:st"
 
 $score(+2) Samtenging
 $tag(apply_length_bonus) Samtenging
@@ -230,7 +231,7 @@ HreinYfirsetning →
     | SetningAukafallForgangur
     | SetningLo
     | SetningSo
-    | AtvSetning # Atvikssetning fremst í aðalsetningu
+    | AtvSetning        # Atvikssetning fremst í aðalsetningu
     | Spurnarsetning
     | SamsettSetning    # Annaðhvort X eða Y; bæði X og Y; ýmist X eða Y
 
@@ -293,6 +294,9 @@ Atvikssetning →
 
 $score(+15) Atvikssetning
 
+KommaAtvikssetning →
+    ","? Atvikssetning
+
 $tag(begin_prep_scope) Atvikssetning # Nýtt undirtré fyrir tengingu sagnar og forsetningar
 
 Tíðarsetning → 
@@ -331,6 +335,8 @@ $score(-14) Skilyrðissetning_vh # Draga enn úr skilyrðissetningum sem byggja 
 
 Skýringarsetning → 
     Skýringartenging SkýringarBotn
+
+$tag(begin_prep_scope) Skýringarsetning
 
 Skýringartenging → 
     "að:st"
@@ -387,14 +393,14 @@ BeygingarliðurÁnUmröðunar →
 BeygingarliðurÁnUmröðunar/tala/pers/kyn →
     Frumlag/pers/tala/kyn FrumlagsInnskot/tala/pers/kyn? AtviksliðurEinkunn*
         SagnRuna/tala/pers/kyn Sjálfur/tala/kyn? KommaTilvísunarsetning/tala/pers/kyn?
-        SamanburðurNl? Upptalning/tala? ","? Atvikssetning?
+        SamanburðurNl? Upptalning/tala? KommaAtvikssetning?
 
 # Sögn kemur fremst, svo frumlag. Enginn annar liður leyfist fremst, tengingin situr þar.
 BeygingarliðurSögnFremst →
     BeygingarliðurSögnFremst/tala/pers/kyn
 
 BeygingarliðurSögnFremst/tala/pers/kyn →
-    SagnHluti/tala/pers/kyn Upptalning/tala? ","? Atvikssetning?
+    SagnHluti/tala/pers/kyn Upptalning/tala? KommaAtvikssetning?
 
 # Frumlag fyrir aftan sögn, annar liður getur komið fremst:
 # 'Gengu þau galvösk á Esjuna þrátt fyrir veðurútlitið'
@@ -410,7 +416,7 @@ BeygingarliðurMeðUmröðun →
     BeygingarliðurMeðUmröðun/tala/pers/kyn
 
 BeygingarliðurMeðUmröðun/tala/pers/kyn →
-    SetningForskeyti? SagnHluti/tala/pers/kyn Upptalning/tala? ","? Atvikssetning?
+    SetningForskeyti? SagnHluti/tala/pers/kyn Upptalning/tala? KommaAtvikssetning?
 
 # Mögulegar tengingar í aukasetningum eftir gerð aukasetningar
 Tíðartenging →
@@ -451,14 +457,15 @@ Afleiðingartenging →
 
 Orsakartenging →
     "fyrst:ao" "að:st"?
-    | 'sökum:fs'_ef 'það:pfn'_hk_ef_et "að:st"
-    | 'sakir:fs'_ef 'það:pfn'_hk_ef_et "að:st"
-    | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"?
+    | 'sökum:fs'_ef 'það:pfn'_hk_ef_et "að:st"  # sökum þess að
+    | 'sakir:fs'_ef 'það:pfn'_hk_ef_et "að:st"  # sakir þess að
+    | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"?  # úr því [að]
     | "þar_eð:st"
     | "þar:ao" "sem:st"
-    | 'af:fs'_þgf? 'það:pfn'_hk_þgf_et "að:st"?
-    | 'vegna:fs'_ef 'það:pfn'_hk_ef_et "að:st"
-    | 'með:fs'_þgf'það:pfn'_hk_þgf_et "að:st"
+    | 'af:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"?  # af því [að]
+    | "því:st" "að:st"?                         # því [að]
+    | 'vegna:fs'_ef 'það:pfn'_hk_ef_et "að:st"  # vegna þess að
+    | 'með:fs'_þgf'það:pfn'_hk_þgf_et "að:st"   # með því að
 
 Skilyrðistenging →
     "ef:st" "að:st"?
@@ -528,8 +535,8 @@ $tag(enable_prep_bonus) SagnInnskot
 
 SagnInnskotAtv →
     SagnInnskot
-    # (Ég ætla að fá mér ís) þegar ég verð 18 ára í haust (og borða hann úti)
-    | Atvikssetning
+    # (Ég ætla að fá mér ís) [,] þegar ég verð 18 ára í haust (og borða hann úti)
+    | KommaAtvikssetning
 
 EkkiNeitt →
     "ekki:ao" 'neinn:fn'_et_hk_nf # (Hann þekkti þá) ekki neitt
@@ -551,8 +558,8 @@ $tag(begin_prep_scope) SagnHluti/tala/pers/kyn # Nýtt undirtré fyrir tengingu 
 
 FrumlagsInnskot/tala/pers/kyn →
     ',' SetningÁnF/tala/pers/kyn ','
-    | ',' Samtenging HreinYfirsetning ','  # Lögheimili á Íslandi, þegar kosning fer fram, er skilyrði
-    | InnskotsSamtenging HreinYfirsetning # Lögheimili á Íslandi þegar kosning fer fram er skilyrði
+    | ',' Samtenging HreinYfirsetning ','   # Lögheimili á Íslandi, þegar kosning fer fram, er skilyrði
+    | InnskotsSamtenging HreinYfirsetning   # Lögheimili á Íslandi þegar kosning fer fram er skilyrði
 
 # Þröngt mengi samtenginga sem nota má án kommu í frumlagsinnskoti
 # (sé mengið of vítt eykst margræðni verulega)
@@ -1178,8 +1185,9 @@ SögnMeðF/tala/pers/kyn →
     | SögnMeðF_1/tala/pers/kyn # Sögn með einu viðfangi: (Í dag) sá Jón köttinn
     | SögnMeðF_2/tala/pers/kyn # Sögn með tveimur viðföngum: (Í dag) skrifaði Kata Önnu bréf
 
-$score(+2) SögnMeðF_1/tala/pers/kyn
-$score(+4) SögnMeðF_2/tala/pers/kyn
+$score(+1) SögnMeðF_0/tala/pers/kyn
+$score(+3) SögnMeðF_1/tala/pers/kyn
+$score(+5) SögnMeðF_2/tala/pers/kyn
 
 OgSögn_0/tala/pers →
     FsAtv? OgEðaEn FsAtv? so_0/tala/pers
@@ -1944,17 +1952,17 @@ SögnMeðF_2/tala/pers/kyn →
 # Hjálparsagnasambönd: vera, hafa, geta, skulu, munu...
 # Aðalsögnin er sagnbót (farið/gert/viljað/borðað...)
 HjSögn/tala/pers →
-    'hafa:so'/tala/pers Geta_sagnb?                # hafðir [í fátinu ekki getað] farið
-    | 'geta:so'/tala/pers                          # gast farið
-    | 'fá:so'/tala/pers                            # (allir) fái notið (þeirra réttinda)
-    | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh         # gast [ekki] hafa farið
-    | 'vilja:so'/tala/pers FsAtv? HafaGetaFá_nh    # vildir [ekki] geta/hafa farið
-    | 'mega:so'/tala/pers FsAtv? HafaGetaFá_nh     # máttir [ekki] geta/hafa farið
-    | 'þykja:so'/tala/pers FsAtv? HafaGetaFá_nh    # þóttir [ekki] geta/hafa farið
-    | 'skulu:so'/tala/pers FsAtv? HafaGetaFá_nh    # skulir [ekki] geta/hafa farið
-    | 'munu:so'/tala/pers FsAtv? HafaGetaFá_nh     # munir [ekki] geta/hafa farið
-    | 'eiga:so'/tala/pers FsAtv? nhm HafaGetaFá_nh # átt [ekki] að geta/hafa farið
-    | so_mm/tala/pers FsAtv? HjSögn_mm_nh       # segist [ekki] hafa farið
+    'hafa:so'/tala/pers Geta_sagnb?                 # hafðir [í fátinu ekki getað] farið
+    | 'geta:so'/tala/pers                           # gast farið
+    | 'fá:so'/tala/pers                             # (allir) fái notið (þeirra réttinda)
+    | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh       # gast [ekki] hafa farið
+    | 'vilja:so'/tala/pers FsAtv? HafaGetaFá_nh     # vildir [ekki] geta/hafa farið
+    | 'mega:so'/tala/pers FsAtv? HafaGetaFá_nh      # máttir [ekki] geta/hafa farið
+    | 'þykja:so'/tala/pers FsAtv? HafaGetaFá_nh     # þóttir [ekki] geta/hafa farið
+    | 'skulu:so'/tala/pers FsAtv? HafaGetaFá_nh     # skulir [ekki] geta/hafa farið
+    | 'munu:so'/tala/pers FsAtv? HafaGetaFá_nh      # munir [ekki] geta/hafa farið
+    | 'eiga:so'/tala/pers FsAtv? nhm HafaGetaFá_nh  # átt [ekki] að geta/hafa farið
+    | so_mm/tala/pers FsAtv? HjSögn_mm_nh           # segist [ekki] hafa farið
 
 # Hjálparsagnir koma ekki til álita varðandi tengingu forsetningar við sögn
 $tag(purge_verb) HjSögn/tala/pers
@@ -1972,24 +1980,24 @@ $score(+3) HafaGetaFá_nh        # Gefa plús fyrir flókin sagnform
 $tag(purge_verb) HafaGetaFá_nh  # Ekki horfa á hjálparsögnina þegar forsetningar eru tengdar
 
 HjSögn_mm_nh →
-    'hafa:so'_nh                # telst hafa farið
-    | 'geta:so'_nh 'hafa:so'_nh?   # sýnist geta hafa farið
-    | 'vilja:so'_nh 'hafa:so'_nh   # segist vilja hafa farið
-    | 'mega:so'_nh 'hafa:so'_nh    # virðist mega hafa farið
-    | 'munu:so'_nh 'hafa:so'_nh    # segist munu hafa farið
-    | 'skulu:so'_nh 'hafa:so'_nh   # segjast skulu hafa farið(?)
-    | 'fá:so'_nh                # þykist fá notið
+    'hafa:so'_nh                    # telst hafa farið
+    | 'geta:so'_nh 'hafa:so'_nh?    # sýnist geta hafa farið
+    | 'vilja:so'_nh 'hafa:so'_nh    # segist vilja hafa farið
+    | 'mega:so'_nh 'hafa:so'_nh     # virðist mega hafa farið
+    | 'munu:so'_nh 'hafa:so'_nh     # segist munu hafa farið
+    | 'skulu:so'_nh 'hafa:so'_nh    # segjast skulu hafa farið(?)
+    | 'fá:so'_nh                    # þykist fá notið
 
 $tag(purge_verb) HjSögn_mm_nh
 
 HjSögnVh →
-    'hafa:so'_et_p3_vh                         # hafi þurft
-    | 'geta:so'_et_p3_vh                       # gæti þurft
-    | 'geta:so'_et_p3_vh FsAtv? 'hafa:so'_nh      # gæti [ekki] hafa þurft
-    | 'mega:so'_et_p3_vh FsAtv? 'hafa:so'_nh      # mætti [ekki] hafa þurft
-    | 'þykja:so'_et_p3_vh FsAtv? 'hafa:so'_nh     # þætti [ekki] hafa þurft
-    | 'skulu:so'_et_p3_vh FsAtv? 'hafa:so'_nh     # skyldi [ekki] hafa þurft
-    | 'munu:so'_et_p3_vh FsAtv? 'hafa:so'_nh      # myndi [ekki] hafa þurft
+    'hafa:so'_et_p3_vh                          # hafi þurft
+    | 'geta:so'_et_p3_vh                        # gæti þurft
+    | 'geta:so'_et_p3_vh FsAtv? 'hafa:so'_nh    # gæti [ekki] hafa þurft
+    | 'mega:so'_et_p3_vh FsAtv? 'hafa:so'_nh    # mætti [ekki] hafa þurft
+    | 'þykja:so'_et_p3_vh FsAtv? 'hafa:so'_nh   # þætti [ekki] hafa þurft
+    | 'skulu:so'_et_p3_vh FsAtv? 'hafa:so'_nh   # skyldi [ekki] hafa þurft
+    | 'munu:so'_et_p3_vh FsAtv? 'hafa:so'_nh    # myndi [ekki] hafa þurft
 
 $tag(purge_verb) HjSögnVh
 
@@ -2047,47 +2055,47 @@ HjSögnNh_p3_ft → HjSögnNh_ft_p3
 $tag(purge_verb) HjSögnNh/tala/pers
 
 HjSögnÞurfaEiga_et_p3 →
-    'þurfa:so'_et_p3                   # Greinarmun þarf/þyrfti að gera
-    | 'eiga:so'_et_p3                  # Greinarmun á/ætti að gera
-    | 'verða:so'_et_p3                 # Greinarmun verður/varð/yrði að gera
-    | 'hafa:so'_et_p3 'þurfa:so'_sagnb    # Engan hefur þurft að undra
-    | 'hafa:so'_et_p3 'eiga:so'_sagnb     # Engan hefði átt að undra
-    | 'hafa:so'_et_p3 'verða:so'_sagnb    # Greinarmun hefði orðið að gera
-    | 'munu:so'_et_p3 'þurfa:so'_nh       # Engan mun þurfa að undra
-    | 'skulu:so'_et_p3 'þurfa:so'_nh      # Engan skal þurfa að undra
-    | 'munu:so'_et_p3 'eiga:so'_nh        # Greinarmun mun eiga að gera
-    | 'skulu:so'_et_p3 'eiga:so'_nh       # Greinarmun skal eiga að gera
-    | 'munu:so'_et_p3 'verða:so'_nh       # Greinarmun mun verða að gera
-    | 'skulu:so'_et_p3 'verða:so'_nh      # Greinarmun skal verða að gera
+    'þurfa:so'_et_p3                    # Greinarmun þarf/þyrfti að gera
+    | 'eiga:so'_et_p3                   # Greinarmun á/ætti að gera
+    | 'verða:so'_et_p3                  # Greinarmun verður/varð/yrði að gera
+    | 'hafa:so'_et_p3 'þurfa:so'_sagnb  # Engan hefur þurft að undra
+    | 'hafa:so'_et_p3 'eiga:so'_sagnb   # Engan hefði átt að undra
+    | 'hafa:so'_et_p3 'verða:so'_sagnb  # Greinarmun hefði orðið að gera
+    | 'munu:so'_et_p3 'þurfa:so'_nh     # Engan mun þurfa að undra
+    | 'skulu:so'_et_p3 'þurfa:so'_nh    # Engan skal þurfa að undra
+    | 'munu:so'_et_p3 'eiga:so'_nh      # Greinarmun mun eiga að gera
+    | 'skulu:so'_et_p3 'eiga:so'_nh     # Greinarmun skal eiga að gera
+    | 'munu:so'_et_p3 'verða:so'_nh     # Greinarmun mun verða að gera
+    | 'skulu:so'_et_p3 'verða:so'_nh    # Greinarmun skal verða að gera
 
 HjSögnMegiSkuli_et_p3 →
-    'mega:so'_et_p3                    # (Þann lærdóm) megi/mætti/má (draga)
-    | 'skulu:so'_et_p3                 # (Þann lærdóm) skuli/skyldi/skal (draga)
-    | 'hafa:so'_et_p3 'mega:so'_sagnb     # (Þann lærdóm) hefur/hefði mátt (draga)
+    'mega:so'_et_p3                     # (Þann lærdóm) megi/mætti/má (draga)
+    | 'skulu:so'_et_p3                  # (Þann lærdóm) skuli/skyldi/skal (draga)
+    | 'hafa:so'_et_p3 'mega:so'_sagnb   # (Þann lærdóm) hefur/hefði mátt (draga)
 
 $tag(purge_verb) HjSögnMegiSkuli_et_p3
 
 HjSögnMegiSkuliÞurfi_et_p3 →
-    'mega:so'_et_p3                    # (Endurnýja) megi/mætti/má (leigusamninginn)
-    | 'eiga:so'_et_p3                  # (Endurnýja) á/eigi/átti (leigusamninginn)
-    | 'þurfa:so'_et_p3                 # (Endurnýja) þyrfti/þarf/þurfti (leigusamninginn)
-    | 'skulu:so'_et_p3                 # (Endurnýja) skuli/skyldi/skal (leigusamninginn)
-    | 'verða:so'_et_p3                 # (Endurnýja) verður/yrði/varð (leigusamninginn)
-    | 'hafa:so'_et_p3 'mega:so'_sagnb     # (Endurnýja) hefur/hafði/hefði mátt (leigusamninginn)
-    | 'hafa:so'_et_p3 'þurfa:so'_sagnb    # (Endurnýja) hefur/hafði/hefði þurft (leigusamninginn)
-    | 'hafa:so'_et_p3 'eiga:so'_sagnb     # (Endurnýja) hefur/hafði/hefði átt (leigusamninginn)
+    'mega:so'_et_p3                     # (Endurnýja) megi/mætti/má (leigusamninginn)
+    | 'eiga:so'_et_p3                   # (Endurnýja) á/eigi/átti (leigusamninginn)
+    | 'þurfa:so'_et_p3                  # (Endurnýja) þyrfti/þarf/þurfti (leigusamninginn)
+    | 'skulu:so'_et_p3                  # (Endurnýja) skuli/skyldi/skal (leigusamninginn)
+    | 'verða:so'_et_p3                  # (Endurnýja) verður/yrði/varð (leigusamninginn)
+    | 'hafa:so'_et_p3 'mega:so'_sagnb   # (Endurnýja) hefur/hafði/hefði mátt (leigusamninginn)
+    | 'hafa:so'_et_p3 'þurfa:so'_sagnb  # (Endurnýja) hefur/hafði/hefði þurft (leigusamninginn)
+    | 'hafa:so'_et_p3 'eiga:so'_sagnb   # (Endurnýja) hefur/hafði/hefði átt (leigusamninginn)
 
 $tag(purge_verb) HjSögnMegiSkuliÞurfi_et_p3
 
 # Vera/verða sambönd, öll nema sjálfar sagnirnar 'vera' og 'verða'
 HjSögnEkkiVera →
-    'vilja:so'_nh 'vera:so'_nh              # (Mér sýndist Anna) vilja vera (ein)
-    | 'mega:so'_nh 'vera:so'_nh               # (Mér sýndist Anna) mega vera (ein)
-    | 'hafa:so'_nh 'vera:so'_sagnb            # (Mér sýndist Anna) hafa verið (valin)
-    | 'geta:so'_nh 'hafa:so'_nh? 'vera:so'_sagnb # (Mér sýndist Anna) geta [hafa] verið (farin)
-    | 'vilja:so'_nh 'hafa:so'_nh 'vera:so'_sagnb # (Mér sýndist Anna) vilja hafa verið (ein)
-    | 'mega:so'_nh 'hafa:so'_nh 'vera:so'_sagnb  # (Mér sýndist Anna) mega hafa verið (ánægð)
-    | 'þykja:so'_nh 'hafa:so'_nh 'vera:so'_sagnb # (Félögin) þykja hafa verið (illa rekin)
+    'vilja:so'_nh 'vera:so'_nh                      # (Mér sýndist Anna) vilja vera (ein)
+    | 'mega:so'_nh 'vera:so'_nh                     # (Mér sýndist Anna) mega vera (ein)
+    | 'hafa:so'_nh 'vera:so'_sagnb                  # (Mér sýndist Anna) hafa verið (valin)
+    | 'geta:so'_nh 'hafa:so'_nh? 'vera:so'_sagnb    # (Mér sýndist Anna) geta [hafa] verið (farin)
+    | 'vilja:so'_nh 'hafa:so'_nh 'vera:so'_sagnb    # (Mér sýndist Anna) vilja hafa verið (ein)
+    | 'mega:so'_nh 'hafa:so'_nh 'vera:so'_sagnb     # (Mér sýndist Anna) mega hafa verið (ánægð)
+    | 'þykja:so'_nh 'hafa:so'_nh 'vera:so'_sagnb    # (Félögin) þykja hafa verið (illa rekin)
     | 'vilja:so'_nh 'verða:so'_nh
     | 'mega:so'_nh 'verða:so'_nh
     | 'hafa:so'_nh 'verða:so'_sagnb
@@ -2287,7 +2295,7 @@ NhFyllingEðaAtv →
 # Mér fannst skemmtilegt [ að Jón læsi bókina / að fara út í þessu veðri / í dag ]
 AðLiður →
     NhFyllingAtv
-    | SagnInnskot
+    | SagnInnskotAtv
     # Málinu væri stillt upp þannig að Sjálfstæðisflokkurinn bæri ábyrgð
     | Atviksliður? Skýringarsetning
 
@@ -2551,7 +2559,7 @@ NlKjarni/tala/aukafall/kyn →
     | abfn/aukafall # Hér vitum við hvorki tölu né kyn
 
 # Mörg/flest þessara mála, sum þeirra sem lentu í slysinu
-# TODO bæta öðrum fornöfnum sem taka hlutaeignarfall við
+# !!! TODO bæta öðrum fornöfnum sem taka hlutaeignarfall við
 NlKjarni_ft/fall/kyn →
     'margur:fn'_ft/fall/kyn EfLiður_ft/kyn
     | 'fár:lo'_ft/fall/kyn EfLiður_ft/kyn
@@ -2734,10 +2742,11 @@ $score(+6) GreinirMeðLo/tala/fall/kyn
 NlStak_p3/tala/fall/kyn →
     AtviksliðurEinkunn* LoSemNafnliður/tala/fall/kyn
 
-# 'Fleiri komu í veisluna en ég bjóst við'
+# 'Fleiri/færri komu í veisluna en ég bjóst við'
 # 'Fleirum fannst kvikmyndin leiðinleg'
 NlStak_p3_ft/fall/kyn →
     'margur:lo'_mst_ft/fall/kyn
+    | 'fár:lo'_mst_ft/fall/kyn
 
 # Unnt er að hafa nafnlið í þágufalli á undan lýsingarorðinu:
 # 'sem varðar hagsmuni hans eða honum nákominna'
@@ -2752,9 +2761,35 @@ NlStak_p3_ft_ef/kyn →
 
 LoSemNafnliður/tala/fall/kyn →
     lo_sb/tala/fall/kyn | lo_mst/tala/fall/kyn # Efsta stig (ESB) er innifalið í _sb
+    | AlgengLoSemNafnliður_kk/tala/fall
+    | AlgengLoSemNafnliður_hvk_et/fall
+
+# Margir telja að myndin sé falleg / Margur telur mig sig
+# Fáir álíta að flokkurinn eigi möguleika
+# Þeir vita mikið / Mikið af því sem Jón sagði er della / Ég vænti mikils af honum
+AlgengLoSemNafnliður_kk_et_nf → 'margur:lo'_sb_et_nf_kk
+AlgengLoSemNafnliður_kk_et_þf → 'margur:lo'_sb_et_þf_kk
+AlgengLoSemNafnliður_kk_et_þgf → 'margur:lo'_sb_et_þgf_kk
+AlgengLoSemNafnliður_kk_et_ef → 'margur:lo'_sb_et_ef_kk
+AlgengLoSemNafnliður_kk_ft_nf → 'margur:lo'_sb_ft_nf_kk
+AlgengLoSemNafnliður_kk_ft_þf → 'margur:lo'_sb_ft_þf_kk
+AlgengLoSemNafnliður_kk_ft_þgf → 'margur:lo'_sb_ft_þgf_kk
+AlgengLoSemNafnliður_kk_ft_ef → 'margur:lo'_sb_ft_ef_kk
+AlgengLoSemNafnliður_kk_ft_nf → 'fár:lo'_sb_ft_nf_kk
+AlgengLoSemNafnliður_kk_ft_þf → 'fár:lo'_sb_ft_þf_kk
+AlgengLoSemNafnliður_kk_ft_þgf → 'fár:lo'_sb_ft_þgf_kk
+AlgengLoSemNafnliður_kk_ft_ef → 'fár:lo'_sb_ft_ef_kk
+AlgengLoSemNafnliður_hvk_et_nf → 'mikill:lo'_sb_et_nf_hvk
+AlgengLoSemNafnliður_hvk_et_þf → 'mikill:lo'_sb_et_þf_hvk
+AlgengLoSemNafnliður_hvk_et_þgf → 'mikill:lo'_sb_et_þgf_hvk
+AlgengLoSemNafnliður_hvk_et_ef → 'mikill:lo'_sb_et_ef_hvk
 
 # Gefa lýsingarorðum sem nafnliðum mínusstig
 $score(-14) LoSemNafnliður/tala/fall/kyn
+
+# ...en hlífa þó lýsingarorðum sem standa oft sjálfstætt sem nafnliðir
+$score(+10) AlgengLoSemNafnliður_kk/tala/fall
+$score(+10) AlgengLoSemNafnliður_hvk_et/fall
 
 NlStak_p3/tala/fall/kyn →
     'hver:fn'/tala/fall/kyn 'sá:fn'/tala/fall/kyn # Hver sá, hver sú, hvert það, hverjir þeir, hverjar þær, hver þau
@@ -3389,7 +3424,7 @@ $score(-4) TengiorðÞarSem # Þetta er oftar samtenging setninga ofar í trénu
 
 TengiorðEr → "er:stt"
 
-$score(-6) TengiorðEr # Sjaldgæft - ekki velja nema það þurfi
+$score(-8) TengiorðEr # Sjaldgæft - ekki velja nema það þurfi
 
 Tengisetning/tala/pers/kyn →
     TengiYfirsetning                    # (Maðurinn sem) konan kyssti í gær / konurnar kysstu í gær
@@ -4118,7 +4153,7 @@ EinEinföldFsAtv →
     FsMeðFallstjórn 
     | EinnAl 
     | SögnLhNt
-    | ","? Atvikssetning ","?
+#    | ","? Atvikssetning ","? # !!! ATH !!! Er þetta rétt?
 
 Nema →
     "nema:st" "þá:ao"? "helst:ao"?

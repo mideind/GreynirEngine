@@ -636,7 +636,7 @@ class Fast_Parser(BIN_Parser):
         nc = dict()
 
         def _num_comb(w):
-            if w is None or w.is_token:
+            if w is None or w._token is not None:
                 # Empty (epsilon) node or token node
                 return 1
             # If a subtree has already been counted, re-use that count
@@ -712,7 +712,7 @@ class ParseForestNavigator:
             if w is None:
                 # Epsilon node
                 v = self._visit_epsilon(level)
-            elif w.is_token:
+            elif w._token is not None:
                 # Return the score of this terminal option
                 v = self._visit_token(level, w)
             else:

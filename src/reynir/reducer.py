@@ -95,6 +95,357 @@ _LENGTH_BONUS_FACTOR = 10 # For length bonus, multiply number of tokens by this 
 _NOUN_SET = BIN_Token.GENDERS_SET # kk, kvk, hk
 
 
+def copy_node(node):
+    """ Copy the tree under the given node, including the node itself.
+        Stop when coming to a nested preposition scope or to a
+        noun phrase (Nafnliður, Nl_*) """
+
+    def dup(node):
+        """ Duplicate (copy) this node """
+        if node is None:
+            return None
+        nt = node.nonterminal if node.is_completed else None
+        if nt is not None:
+            if nt.has_any_tag(_PREP_SCOPE_SET):
+                # No copying from this point
+                return node
+            if nt.is_noun_phrase:
+                # No need to copy Nl after we've been through the
+                # preposition itself
+                return node
+            if nt.is_optional and node.is_empty:
+                # Explicitly nullable nonterminal with no child: don't bother copying
+                return node
+        # Recurse to copy the child tree as well
+        return copy_node(node)
+
+    if node is None:
+        return None
+    # First, copy the node itself
+    node = Node.copy(node)
+    # Then, copy the children as required by applying the dup() function
+    node.transform_children(dup)
+    # Return the fresh copy
+    return node
+
+
+class PrepositionUnpacker(ParseForestNavigator):
+
+    """ Subclass to duplicate (split) the tree at every enclosing
+        preposition scope (SagnInnskot) """
+
+    def __init__(self):
+        super().__init__(visit_all = False)
+
+    def _visit_nonterminal(self, level, node):
+        """ Create a result object to capture information about
+            productions (families of children) of this nonterminal """
+        return defaultdict(list)
+
+    def _add_result(self, results, ix, r):
+        """ Capture a particular child node r of family ix """
+        results[ix].append(r)
+
+    def _process_results(self, results, node):
+        """ Go through the child productions (families) and
+            duplicate any nodes that have the enable_prep_bonus
+            tag, so that they can receive independent scores in
+            the reducer depending on the containing verb context """
+        for family_ix, children in results.items():
+            for ix, child_nt in enumerate(children):
+                # child_nt is None for all uninteresting nodes, i.e. terminal/token nodes
+                # and nonterminal nodes that are not completed
+                if child_nt is not None and child_nt.has_tag("enable_prep_bonus"):
+                    # This is a nonterminal node marked with enable_prep_bonus:
+                    # Duplicate its subtree
+                    node.transform_child(family_ix, ix, copy_node)
+        # Return the nonterminal corresponding to this node,
+        # if the node represents a completed nonterminal
+        return node.nonterminal if node.is_completed else None
+
+    @classmethod
+    def navigate(cls, root_node):
+        cls().go(root_node)
+
+
+class ReductionInfo:
+
+    """ Class to accumulate information about a nonterminal and its
+        child production(s) during reduction """
+
+    def __init__(self, reducer, node):
+        self.reducer = reducer
+        self.node = node
+        self.sc = defaultdict(lambda: dict(sc = 0)) # Child tree scores
+        # We are only interested in completed nonterminals
+        self.nt = node.nonterminal if node.is_completed else None
+        self.name = self.nt.name if self.nt else None
+        # Verb/preposition matching stuff
+        self.pushed_prep_bonus = False
+        verb = reducer.get_current_verb()
+        if self.nt:
+            if self.nt.has_tag("enable_prep_bonus"):
+                # SagnInnskot has this tag
+                reducer.push_prep_bonus(None if verb is None else verb[:])
+                self.pushed_prep_bonus = True
+            elif self.nt.has_tag("begin_prep_scope") or self.nt.is_noun_phrase:
+                # Setning and SetningÁnF have this tag, and we also
+                # enter a new prep bonus scope in noun phrases
+                reducer.push_prep_bonus(None)
+                self.pushed_prep_bonus = True
+                verb = None
+        reducer.push_current_verb(verb)
+        self.start_verb = verb
+
+    def add_child_score(self, ix, sc):
+        """ Add a child node's score to the parent family's score,
+            where the parent family has index ix (0..n) """
+        self.sc[ix]["sc"] += sc["sc"]
+        # Carry information about contained prepositions ("fs") and verbs ("so")
+        # up the tree
+        for key in ("so", "sl"):
+            if key in sc:
+                if key in self.sc[ix]:
+                    self.sc[ix][key].extend(sc[key])
+                else:
+                    self.sc[ix][key] = sc[key][:]
+                if key == "sl":
+                    self.reducer.set_current_verb(sc[key])
+
+    def add_child_production(self):
+        """ Reset the current verb scope for each family """
+        self.reducer.set_current_verb(self.start_verb)
+
+    def process(self, node):
+        """ After accumulating scores for all possible productions
+            of this nonterminal (families of children), find the
+            highest scoring one and reduce the tree to that child only """
+        try:
+
+            csc = self.sc
+            if not csc:
+                return dict(sc = 0) # Empty node
+            if len(csc) == 1:
+                # Not ambiguous: only one result, do a shortcut
+                [ sc ] = csc.values() # Will raise an exception if not exactly one value
+            else:
+                # Eliminate all families except the best scoring one
+                # Sort in decreasing order by score, using the family index
+                # as a tie-breaker for determinism
+                s = sorted(csc.items(), key = lambda x: (x[1]["sc"], -x[0]), reverse = True)
+                # This is the best scoring family
+                # (and the one with the lowest index if there are many with the same score)
+                ix, sc = s[0]
+                # And now for the key action of the reducer: Eliminate all other families
+                node.reduce_to(ix)
+
+            if self.nt is not None:
+                # We will be adjusting the result: make sure we do so on
+                # a separate dict copy (we don't want to clobber the child's dict)
+                # Get score adjustment for this nonterminal, if any
+                # (This is the $score(+/-N) pragma from Reynir.grammar)
+                sc["sc"] += self.reducer._score_adj.get(self.nt, 0)
+
+                if self.nt.has_tag("apply_length_bonus"):
+                    # Give this nonterminal a bonus depending on how many tokens
+                    # it encloses
+                    bonus = (self.node.end - self.node.start - 1) * _LENGTH_BONUS_FACTOR
+                    sc["sc"] += bonus
+
+                if self.nt.has_tag("apply_prep_bonus") and self.reducer.get_prep_bonus() is not None:
+                    # This is a nonterminal that we like to see in a verb/prep context
+                    # An example is Dagsetning which we like to be associated with a verb
+                    # rather than a noun phrase
+                    sc["sc"] += _VERB_PREP_BONUS
+
+                if self.nt.has_tag("pick_up_verb"):
+                    verb = sc.get("so")
+                    if verb is not None:
+                        sc["sl"] = verb[:]
+
+                if self.nt.has_any_tag({ "begin_prep_scope", "purge_verb" }):
+                    # Delete information about contained verbs
+                    # SagnRuna, EinSetningÁnF, SagnHluti, NhFyllingAtv and Setning have this tag
+                    sc.pop("so", None) # Simpler than if "so" in sc: del sc["so"]
+                    sc.pop("sl", None)
+            return sc
+
+        finally:
+            # Make sure we pop everything that was pushed in __init__()
+            if self.pushed_prep_bonus:
+                self.reducer.pop_prep_bonus()
+            self.reducer.pop_current_verb()
+
+
+class ParseForestReducer(ParseForestNavigator):
+
+    """ Subclass to navigate a parse forest and reduce it
+        so that the highest-scoring alternative production of a nonterminal
+        (family of children) survives at each point of ambiguity """
+
+    def __init__(self, grammar, scores):
+        super().__init__()
+        self._scores = scores
+        self._grammar = grammar
+        self._score_adj = grammar._nt_scores
+        self._prep_bonus_stack = [ None ]
+        self._current_verb_stack = [ None ]
+        self._bonus_cache = dict()
+
+    def push_prep_bonus(self, val):
+        self._prep_bonus_stack.append(val)
+
+    def pop_prep_bonus(self):
+        self._prep_bonus_stack.pop()
+
+    def get_prep_bonus(self):
+        return self._prep_bonus_stack[-1]
+
+    def push_current_verb(self, val):
+        self._current_verb_stack.append(val)
+
+    def pop_current_verb(self):
+        self._current_verb_stack.pop()
+
+    def get_current_verb(self):
+        return self._current_verb_stack[-1]
+
+    def set_current_verb(self, val):
+        self._current_verb_stack[-1] = val
+
+    def verb_prep_bonus(self, prep_terminal, prep_token, verb_terminal, verb_token):
+        """ Return a verb/preposition match bonus, as and if applicable """
+        # Only do this if the prepositions match the verb being connected to
+        m = verb_token.match_with_meaning(verb_terminal)
+        verb = m.stofn
+        if "MM" in m.beyging:
+            # Use MM-NH nominal form for MM verbs,
+            # i.e. "eignast" instead of "eiga" for a verb such as "eignaðist"
+            verb = BIN_Token.mm_verb_stem(verb)
+        verb_with_cases = verb + verb_terminal.verb_cases
+        if prep_terminal.num_variants:
+            # Normal terminal, such as fs_ef
+            prep_case = prep_terminal.variant(0)
+            if prep_case in _CASES_SET:
+                prep_with_case = prep_token + "_" + prep_case
+            else:
+                # Probably fs_nh: match all cases
+                prep_with_case = prep_token
+        else:
+            # Literal terminal, such as "á:fs" - match all cases
+            prep_with_case = prep_token
+        # Do a lookup in the verb/preposition lexicon from the settings
+        # (typically stored in VerbPrepositions.conf)
+        if VerbObjects.verb_matches_preposition(verb_with_cases, prep_with_case):
+            # If the verb clicks with the given preposition in the
+            # given case, give a healthy bonus
+            return _VERB_PREP_BONUS
+        # If no match, discourage
+        return _VERB_PREP_PENALTY
+
+    def _visit_epsilon(self, level):
+        """ At Epsilon node """
+        return dict(sc = 0) # Score 0
+
+    def _visit_token(self, level, node):
+        """ At token node """
+        # Return the score of this token/terminal match
+        d = dict()
+        sc = self._scores[node.start][node.terminal]
+        if node.terminal.matches_category("fs"):
+            # Preposition terminal - this is either a normal fs_case terminal
+            # or a literal terminal such as "á:fs"
+            prep_bonus = self.get_prep_bonus()
+            if prep_bonus is not None:
+                # We are inside a preposition bonus zone:
+                # give bonus points if this preposition terminal matches
+                # an enclosing verb
+                # Iterate through enclosing verbs
+                final_bonus = None
+                for terminal, token in prep_bonus:
+                    # Attempt to find the preposition matching bonus in the cache
+                    key = (node.terminal, node.token.lower, terminal, token)
+                    bonus = self._bonus_cache.get(key)
+                    if bonus is None:
+                        bonus = self._bonus_cache[key] = self.verb_prep_bonus(*key)
+                    if bonus is not None:
+                        # Found a bonus, which can be positive or negative
+                        if final_bonus is None:
+                            final_bonus = bonus
+                        else:
+                            # Give the highest bonus that is available
+                            final_bonus = max(final_bonus, bonus)
+                if final_bonus is not None:
+                    sc += final_bonus
+        elif node.terminal.matches_category("so"): # !!! Was .startswith("so")
+            # Verb terminal: pick up the verb
+            d["so"] = [(node.terminal, node.token)]
+        d["sc"] = sc
+        # node.score = sc
+        return d
+
+    def _visit_nonterminal(self, level, node):
+        """ At nonterminal node """
+        # Return a fresh object to collect results, unless the
+        # node doesn't span any tokens, in which case we don't bother
+        return ReductionInfo(self, node) if node.is_span else None
+
+    def _visit_family(self, results, level, node, ix, prod):
+        """ Add information about a family of children to the result object """
+        # if node.is_ambiguous:
+        #     print(f"Visiting family {ix} of head node {node}")
+        if results is not None:
+            results.add_child_production()
+
+    def _add_result(self, results, ix, sc):
+        """ Append a single result to the result object """
+        # Add up scores for each family of children
+        # print(f"Node {results.node}: family {ix}, adding child score {sc}")
+        if results is not None:
+            results.add_child_score(ix, sc)
+
+    def _process_results(self, results, node):
+        """ Sort scores after visiting children, then prune the child families
+            (productions) leaving only the top-scoring family (production) """
+        d = dict(sc = 0) if results is None else results.process(node)
+        # node.score = d["sc"]
+        return d
+
+    def _check_stacks(self):
+        """ Runtime sanity check of the reducer stacks """
+        assert len(self._prep_bonus_stack) == 1 and self._prep_bonus_stack[0] is None
+        assert len(self._current_verb_stack) == 1 and self._current_verb_stack[0] is None
+
+    def go(self, root_node):
+        """ Perform the reduction, but first split the tree underneath
+            nodes that have the enable_prep_bonus tag """
+        self._check_stacks() # !!! DEBUG
+        PrepositionUnpacker.navigate(root_node)
+        # ParseForestPrinter.print_forest(root_node, skip_duplicates = True)
+        # Start normal navigation of the tree after the split
+        result = super().go(root_node)
+        self._check_stacks() # !!! DEBUG
+        return result
+
+
+class OptionFinder(ParseForestNavigator):
+
+    """ Subclass to navigate a parse forest and populate the set
+        of terminals that match each token """
+
+    def _visit_token(self, level, node):
+        """ At token node """
+        # assert node.terminal is not None
+        self._finals[node.start].add(node.terminal)
+        self._tokens[node.start] = node.token
+        return None
+
+    def __init__(self, finals, tokens):
+        super().__init__()
+        self._finals = finals
+        self._tokens = tokens
+
+
 class Reducer:
 
     """ Reduces parse forests to a single most likely parse tree """
@@ -102,26 +453,9 @@ class Reducer:
     def __init__(self, grammar):
         self._grammar = grammar
 
-    class OptionFinder(ParseForestNavigator):
-
-        """ Subclass to navigate a parse forest and populate the set
-            of terminals that match each token """
-
-        def _visit_token(self, level, node):
-            """ At token node """
-            # assert node.terminal is not None
-            self._finals[node.start].add(node.terminal)
-            self._tokens[node.start] = node.token
-            return None
-
-        def __init__(self, finals, tokens):
-            super().__init__()
-            self._finals = finals
-            self._tokens = tokens
-
     def _find_options(self, forest, finals, tokens):
         """ Find token-terminal match options in a parse forest with a root in w """
-        self.OptionFinder(finals, tokens).go(forest)
+        OptionFinder(finals, tokens).go(forest)
 
     def _calc_terminal_scores(self, w):
         """ Calculate the score for each possible terminal/token match """
@@ -333,333 +667,9 @@ class Reducer:
 
         return scores
 
-    class ParseForestReducer(ParseForestNavigator):
-
-        """ Subclass to navigate a parse forest and reduce it
-            so that the highest-scoring alternative production of a nonterminal
-            (family of children) survives at each point of ambiguity """
-
-        class PrepositionUnpacker(ParseForestNavigator):
-
-            """ Subclass to duplicate (split) the tree at every enclosing
-                preposition scope (SagnInnskot) """
-
-            def __init__(self):
-                super().__init__(visit_all = False)
-
-            def copy_tree(self, root):
-                """ Copy the tree under the root, including the root itself.
-                    Stop when coming to a nested preposition scope or to a
-                    noun phrase (Nafnliður, Nl_*) """
-
-                def copy_node(node):
-
-                    def dup(node):
-                        """ Duplicate (copy) this node """
-                        if node is None:
-                            return None
-                        nt = node.nonterminal if node.is_completed else None
-                        if nt is not None:
-                            if nt.has_any_tag(_PREP_SCOPE_SET):
-                                # No copying from this point
-                                return node
-                            if nt.is_noun_phrase:
-                                # No need to copy Nl after we've been through the
-                                # preposition itself
-                                return node
-                            if nt.is_optional and node.is_empty:
-                                # Explicitly nullable nonterminal with no child: don't bother copying
-                                return node
-                        # Recurse to copy the child tree as well
-                        return copy_node(node)
-
-                    if node is None:
-                        return None
-                    # First, copy the root itself
-                    node = Node.copy(node)
-                    # Then, copy the children as required by applying the dup() function
-                    node.transform_children(dup)
-                    # Return the fresh copy
-                    return node
-
-                return copy_node(root)
-
-            def _visit_nonterminal(self, level, node):
-                """ Create a result object to capture information about
-                    productions (families of children) of this nonterminal """
-                return defaultdict(list)
-
-            def _add_result(self, results, ix, r):
-                """ Capture a particular child node r of family ix """
-                results[ix].append(r)
-
-            def _process_results(self, results, node):
-                """ Go through the child productions (families) and
-                    duplicate any nodes that have the begin_prep_scope
-                    tag, so that they can receive independent scores in
-                    the reducer depending on the contained verb context """
-                for family_ix, children in results.items():
-                    for ix, child_nt in enumerate(children):
-                        # child_nt is None for all uninteresting nodes, i.e. terminal/token nodes
-                        # and nonterminal nodes that are not completed
-                        if child_nt is not None and child_nt.has_tag("begin_prep_scope"):
-                            # This is a nonterminal node marked with begin_prep_scope:
-                            # Duplicate its subtree
-                            node.transform_child(family_ix, ix, self.copy_tree)
-                # Return the nonterminal corresponding to this node,
-                # if the node represents a completed nonterminal
-                return node.nonterminal if node.is_completed else None
-
-            @classmethod
-            def navigate(cls, root_node):
-                cls().go(root_node)
-
-        class ReductionInfo:
-
-            """ Class to accumulate information about a nonterminal and its
-                child production(s) during reduction """
-
-            def __init__(self, reducer, node):
-                self.reducer = reducer
-                self.node = node
-                self.sc = defaultdict(lambda: dict(sc = 0)) # Child tree scores
-                # We are only interested in completed nonterminals
-                self.nt = node.nonterminal if node.is_completed else None
-                self.name = self.nt.name if self.nt else None
-                # Verb/preposition matching stuff
-                self.pushed_preposition_bonus = False
-                verb = reducer.get("current_verb")
-                if self.nt:
-                    if self.nt.has_tag("enable_prep_bonus"):
-                        # SagnInnskot has this tag
-                        reducer.push("prep_bonus", None if verb is None else verb[:])
-                        self.pushed_preposition_bonus = True
-                    elif self.nt.has_tag("begin_prep_scope") or self.nt.is_noun_phrase:
-                        # Setning and SetningÁnF have this tag, and we also
-                        # enter a new prep bonus scope in noun phrases
-                        reducer.push("prep_bonus", None)
-                        self.pushed_preposition_bonus = True
-                        verb = None
-                reducer.push("current_verb", verb)
-                self.start_verb = verb
-
-            def add_child_score(self, ix, sc):
-                """ Add a child node's score to the parent family's score,
-                    where the parent family has index ix (0..n) """
-                self.sc[ix]["sc"] += sc["sc"]
-                # Carry information about contained prepositions ("fs") and verbs ("so")
-                # up the tree
-                for key in ("so", "sl"):
-                    if key in sc:
-                        if key in self.sc[ix]:
-                            self.sc[ix][key].extend(sc[key])
-                        else:
-                            self.sc[ix][key] = sc[key][:]
-                        if key == "sl":
-                            self.reducer.set("current_verb", sc[key])
-
-            def add_child_production(self):
-                """ Reset the current verb scope for each family """
-                self.reducer.set("current_verb", self.start_verb)
-
-            def process(self, node):
-                """ After accumulating scores for all possible productions
-                    of this nonterminal (families of children), find the
-                    highest scoring one and reduce the tree to that child only """
-                try:
-                    csc = self.sc
-                    if not csc:
-                        return dict(sc = 0) # Empty node
-                    if len(csc) == 1:
-                        # Not ambiguous: only one result, do a shortcut
-                        [ sc ] = csc.values() # Will raise an exception if not exactly one value
-                    else:
-                        # Eliminate all families except the best scoring one
-                        # Sort in decreasing order by score
-                        s = sorted(csc.items(), key = lambda x: x[1]["sc"], reverse = True)
-                        # This is the best scoring family
-                        ix, sc = s[0]
-                        # And now for the key action of the reducer: Eliminate all other families
-                        node.reduce_to(ix)
-
-                    if self.nt is not None:
-                        # We will be adjusting the result: make sure we do so on
-                        # a separate dict copy (we don't want to clobber the child's dict)
-                        # Get score adjustment for this nonterminal, if any
-                        # (This is the $score(+/-N) pragma from Reynir.grammar)
-                        sc["sc"] += self.reducer._score_adj.get(self.nt, 0)
-
-                        if self.nt.has_tag("apply_length_bonus"):
-                            # Give this nonterminal a bonus depending on how many tokens
-                            # it encloses
-                            bonus = (self.node.end - self.node.start - 1) * _LENGTH_BONUS_FACTOR
-                            sc["sc"] += bonus
-
-                        if self.nt.has_tag("apply_prep_bonus") and self.reducer.get("prep_bonus") is not None:
-                            # This is a nonterminal that we like to see in a verb/prep context
-                            # An example is Dagsetning which we like to be associated with a verb
-                            # rather than a noun phrase
-                            sc["sc"] += _VERB_PREP_BONUS
-
-                        if self.nt.has_tag("pick_up_verb"):
-                            verb = sc.get("so")
-                            if verb is not None:
-                                sc["sl"] = verb[:]
-
-                        if self.nt.has_any_tag({ "begin_prep_scope", "purge_verb" }):
-                            # Delete information about contained verbs
-                            # SagnRuna, EinSetningÁnF, SagnHluti, NhFyllingAtv and Setning have this tag
-                            sc.pop("so", None) # Simpler than if "so" in sc: del sc["so"]
-                            sc.pop("sl", None)
-                    return sc
-                finally:
-                    # Make sure we pop everything that was pushed in __init__()
-                    if self.pushed_preposition_bonus:
-                        self.reducer.pop("prep_bonus")
-                    self.reducer.pop("current_verb")
-
-        def __init__(self, grammar, scores):
-            super().__init__()
-            self._scores = scores
-            self._grammar = grammar
-            self._score_adj = grammar._nt_scores
-            self._stack = defaultdict(list)
-            self._bonus_cache = dict()
-            self.push("prep_bonus", None)
-            self.push("current_verb", None)
-
-        def push(self, key, val):
-            self._stack[key].append(val)
-
-        def pop(self, key):
-            self._stack[key].pop()
-
-        def get(self, key):
-            return self._stack[key][-1]
-
-        def set(self, key, val):
-            self._stack[key][-1] = val
-
-        def _visit_epsilon(self, level):
-            """ At Epsilon node """
-            return dict(sc = 0) # Score 0
-
-        def _verb_prep_bonus(self, prep_terminal, prep_token, verb_terminal, verb_token):
-            """ Return a verb/preposition match bonus, as and if applicable """
-            # Only do this if the prepositions match the verb being connected to
-            m = verb_token.match_with_meaning(verb_terminal)
-            verb = m.stofn
-            if "MM" in m.beyging:
-                # Use MM-NH nominal form for MM verbs,
-                # i.e. "eignast" instead of "eiga" for a verb such as "eignaðist"
-                verb = BIN_Token.mm_verb_stem(verb)
-            verb_with_cases = verb + verb_terminal.verb_cases
-            if prep_terminal.num_variants:
-                # Normal terminal, such as fs_ef
-                prep_case = prep_terminal.variant(0)
-                if prep_case in _CASES_SET:
-                    prep_with_case = prep_token + "_" + prep_case
-                else:
-                    # Probably fs_nh: match all cases
-                    prep_with_case = prep_token
-            else:
-                # Literal terminal, such as "á:fs" - match all cases
-                prep_with_case = prep_token
-            # Do a lookup in the verb/preposition lexicon from the settings
-            # (typically stored in VerbPrepositions.conf)
-            if VerbObjects.verb_matches_preposition(verb_with_cases, prep_with_case):
-                # If the verb clicks with the given preposition in the
-                # given case, give a healthy bonus
-                return _VERB_PREP_BONUS
-            # If no match, discourage
-            return _VERB_PREP_PENALTY
-
-        def _visit_token(self, level, node):
-            """ At token node """
-            # Return the score of this token/terminal match
-            d = dict()
-            sc = self._scores[node.start][node.terminal]
-            if node.terminal.matches_category("fs"):
-                # Preposition terminal - this is either a normal fs_case terminal
-                # or a literal terminal such as "á:fs"
-                prep_bonus = self.get("prep_bonus")
-                if prep_bonus is not None:
-                    # We are inside a preposition bonus zone:
-                    # give bonus points if this preposition terminal matches
-                    # an enclosing verb
-                    # Iterate through enclosing verbs
-                    final_bonus = None
-                    for terminal, token in prep_bonus:
-                        # Attempt to find the preposition matching bonus in the cache
-                        key = (node.terminal, node.token.lower, terminal, token)
-                        bonus = self._bonus_cache.get(key)
-                        if bonus is None:
-                            bonus = self._bonus_cache[key] = self._verb_prep_bonus(*key)
-                        if bonus is not None:
-                            # Found a bonus, which can be positive or negative
-                            if final_bonus is None:
-                                final_bonus = bonus
-                            else:
-                                # Give the highest bonus that is available
-                                final_bonus = max(final_bonus, bonus)
-                    if final_bonus is not None:
-                        sc += final_bonus
-            elif node.terminal.startswith("so"): # !!! Should be matches_category("so")?
-                # Verb terminal: pick up the verb
-                d["so"] = [(node.terminal, node.token)]
-            d["sc"] = sc
-            # node.score = sc
-            return d
-
-        def _visit_nonterminal(self, level, node):
-            """ At nonterminal node """
-            # Return a fresh object to collect results, unless the
-            # node doesn't span any tokens, in which case we don't bother
-            return self.ReductionInfo(self, node) if node.is_span else None
-
-        def _visit_family(self, results, level, node, ix, prod):
-            """ Add information about a family of children to the result object """
-            # if node.is_ambiguous:
-            #     print(f"Visiting family {ix} of head node {node}")
-            if results is not None:
-                results.add_child_production()
-
-        def _add_result(self, results, ix, sc):
-            """ Append a single result to the result object """
-            # Add up scores for each family of children
-            # print(f"Node {results.node}: family {ix}, adding child score {sc}")
-            if results is not None:
-                results.add_child_score(ix, sc)
-
-        def _process_results(self, results, node):
-            """ Sort scores after visiting children, then prune the child families
-                (productions) leaving only the top-scoring family (production) """
-            d = dict(sc = 0) if results is None else results.process(node)
-            # node.score = d["sc"]
-            return d
-
-        def _check_stacks(self):
-            """ Runtime sanity check of the reducer stacks """
-            for key, stack in self._stack.items():
-                if key == "prep_bonus" or key == "current_verb":
-                    assert len(stack) == 1 and stack[0] is None
-                else:
-                    assert len(stack) == 0
-
-        def go(self, root_node):
-            """ Perform the reduction, but first split the tree underneath
-                nodes that have the enable_prep_bonus tag """
-            # self._check_stacks() # !!! DEBUG
-            self.PrepositionUnpacker.navigate(root_node)
-            # ParseForestPrinter.print_forest(root_node, skip_duplicates = True)
-            # Start normal navigation of the tree after the split
-            result = super().go(root_node)
-            # self._check_stacks() # !!! DEBUG
-            return result
-
     def _reduce(self, w, scores):
         """ Reduce a forest with a root in w based on subtree scores """
-        return self.ParseForestReducer(self._grammar, scores).go(w)
+        return ParseForestReducer(self._grammar, scores).go(w)
 
     def go_with_score(self, forest):
         """ Returns the argument forest after pruning it down to a single tree """
