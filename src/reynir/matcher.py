@@ -107,9 +107,9 @@ else:
 
 _DEFAULT_NT_MAP = {
     "S0" : "P",
+
     "HreinYfirsetning" : "S-MAIN",
     "Setning" : "S",
-    "SetningSo" : "VP-SEQ",
     "SetningLo" : "S",
     "SetningÁnF" : "S",
     "SetningAukafall" : "S",
@@ -136,19 +136,44 @@ _DEFAULT_NT_MAP = {
     "Skýringarsetning" : "S-THT",
     "Spurnaraukasetning" : "S-QUE",
     "Spurnarsetning" : "S-QUE",
+
+    "BeygingarliðurÁnF" : "IP",
+    "BeygingarliðurÁnUmröðunar" : "IP",
+    "BeygingarliðurMeðUmröðun" : "IP",
+
     "Nl" : "NP",
     "EfLiður" : "NP-POSS",
     "EfLiðurForskeyti" : "NP-POSS",
     "OkkarFramhald" : "NP-POSS",
     "LoEftirNlMeðÞgf" : "NP-DAT",
     "Heimilisfang" : "NP-ADDR",
+    "Magn" : "NP-MEASURE",
     "Titill" : "NP-TITLE",
     "Frumlag" : "NP-SUBJ",
     "NlFrumlag" : "NP-SUBJ",
     "NlBeintAndlag" : "NP-OBJ",
     "NlÓbeintAndlag" : "NP-IOBJ",
     "NlSagnfylling" : "NP-PRD",
+    "SögnErLoBotn" : "NP-PRD", # Show '(Hann er) góður / 18 ára' as a predicate argument
+    "Aldur" : "NP-AGE",
+
+    "Sagnliður" : "VP",
+    "SagnliðurMeðF" : "VP",
+    "So" : "VP",
+    # "SagnFramhald" : "VP",
+    "NhLiðir" : "VP",
+    "SagnliðurÁnF" : "VP",
+    "ÖfugurSagnliður" : "VP",
+    "SagnliðurVh" : "VP",
+    "SögnLhNt" : "VP-PP", # Present participle, lýsingarháttur nútíðar
+    "SagnHluti" : "VP-SEQ",
+    "SagnRuna" : "VP-SEQ",
+    "SetningSo" : "VP-SEQ",
+
     "FsMeðFallstjórn" : "PP",
+
+    "LoTengtSögn" : "ADJP",
+
     "SagnInnskot" : "ADVP",
     "FsAtv" : "ADVP",
     "AtvFs" : "ADVP",
@@ -156,22 +181,17 @@ _DEFAULT_NT_MAP = {
     "LoAtviksliðir" : "ADVP",
     "Dagsetning" : "ADVP-DATE",
     "Tímasetning" : "ADVP-DATE",
-    "SagnRuna" : "VP-SEQ",
-    "Sagnliður" : "VP",
-    "SagnliðurMeðF" : "VP",
-    "So" : "VP",
-    # "SagnFramhald" : "VP",
-    "SögnLhNt" : "VP-PP", # Present participle, lýsingarháttur nútíðar
-    "SögnErLoBotn" : "NP-PRD", # Show '(Hann er) góður / 18 ára' as a predicate argument
-    "NhLiðir" : "VP",
-    "SagnliðurÁnF" : "VP",
-    "ÖfugurSagnliður" : "VP",
-    "SagnHluti" : "VP-SEQ",
-    "SagnliðurVh" : "VP",
-    "LoTengtSögn" : "ADJP",
-    "BeygingarliðurÁnF" : "IP",
-    "BeygingarliðurÁnUmröðunar" : "IP",
-    "BeygingarliðurMeðUmröðun" : "IP",
+
+    # Adverbial time phrases
+    "FöstDagsetning" : "ADVP-DATE-ABS",
+    "AfstæðDagsetning" : "ADVP-DATE-REL",
+    "FasturTímapunktur" : "ADVP-TIMESTAMP-ABS",
+    "AfstæðurTímapunktur" : "ADVP-TIMESTAMP-REL",
+    "Tíðni" : "ADVP-TMP-SET",
+    "Tímabil" : "ADVP-DUR",
+    "FastTímabil" : "ADVP-DUR-ABS",
+    "AfstættTímabil" : "ADVP-DUR-REL",
+    "TímabilTími" : "ADVP-DUR-TIME",
 }
 
 # subject_to: don't push an instance of this if the
@@ -211,6 +231,8 @@ _DEFAULT_ID_MAP = {
     "NP-DAT" : dict(name = "Þágufallsliður", overrides = "NP"),
     "NP-ADDR" : dict(name = "Heimilisfang", overrides = "NP"),
     "NP-TITLE" : dict(name = "Titill", overrides = "NP"),
+    "NP-AGE" : dict(name = "Aldur"),
+    "NP-MEASURE" : dict(name = "Mælt magn", overrides = "NP"),
     "NP-SUBJ" : dict(name = "Frumlag",
         subject_to = { "NP-SUBJ" }),
     "NP-OBJ" : dict(name = "Beint andlag"),
@@ -218,8 +240,17 @@ _DEFAULT_ID_MAP = {
     "NP-PRD" : dict(name = "Sagnfylling"),
     "ADVP" : dict(name = "Atviksliður",
         subject_to = { "ADVP" }),
-    "ADVP-DATE" : dict(name = "Tímasetning", overrides = "ADVP",
-        subject_to = { "ADVP-DATE" }),
+    "ADVP-DATE" : dict(name = "Dagsetning"),
+    "ADVP-DATE-ABS" : dict(name = "Föst dagsetning"),
+    "ADVP-DATE-REL" : dict(name = "Afstæð dagsetning"),
+    "ADVP-TIMESTAMP" : dict(name = "Tímapunktur"),
+    "ADVP-TIMESTAMP-ABS" : dict(name = "Fastur tímapunktur"),
+    "ADVP-TIMESTAMP-REL" : dict(name = "Afstæður tímapunktur"),
+    "ADVP-TMP-SET" : dict(name = "Tíðni"),
+    "ADVP-DUR" : dict(name = "Tímabil"),
+    "ADVP-DUR-ABS" : dict(name = "Fast tímabil", overrides = "ADVP-DUR"),
+    "ADVP-DUR-REL" : dict(name = "Afstætt tímabil", overrides = "ADVP-DUR"),
+    "ADVP-DUR-TIME" : dict(name = "Tímabil", overrides = "ADVP-DUR"),
     "PP" : dict(name = "Forsetningarliður", overrides = "ADVP"),
     "ADJP" : dict(name = "Lýsingarliður",
         subject_to = { "ADJP" }),

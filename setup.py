@@ -102,7 +102,7 @@ setup(
     setup_requires=['cffi>=1.10.0'],
     install_requires=[
         'cffi>=1.10.0',
-        'tokenizer>=1.0.3'
+        'tokenizer>=1.0.4'
     ],
     cffi_modules=["src/reynir/eparser_build.py:ffibuilder"]
 )

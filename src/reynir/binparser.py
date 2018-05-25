@@ -80,6 +80,8 @@ class BIN_Token(Token):
         "hk": "no",
         "so": "so",
         "ao": "ao",
+        "tao": "tao",
+        "spao": "spao",
         "fs": "fs",
         "lo": "lo",
         "fn": "fn",
@@ -91,7 +93,7 @@ class BIN_Token(Token):
         "st": "st",
         "stt": "stt", # Never appears in BÍN
         "abfn": "abfn",
-        "nhm": "nhm"
+        "nhm": "nhm",
     }
 
     # Strings that must be present in the grammatical form for variants
@@ -242,6 +244,11 @@ class BIN_Token(Token):
 
     # Interrogative adverbs
     _SPAO = frozenset([ "hvar", "hvenær", "hvernig", "hvaðan", "hvert", "hví", "hve", "hversu" ])
+
+    # Temporal sentential adverbs
+    _TAO = frozenset([ "daglega", "dagsdaglega", "alltaf", "aldrei", "fyrr", "fyrrum", "loks", "loksins", 
+        "mánaðarlega", "nú", "núna", "næst", "oft", "reglulega", "seint", "snemma", "sjaldan", "stundum", 
+        "síðar", "síðla", "títt", "undanfarið", "vikulega", "árla", "árlega", "áður", "þá" ])
 
     _UNDERSTOOD_PUNCTUATION = ".?!,:;–-()[]"
 
@@ -678,6 +685,14 @@ class BIN_Token(Token):
         """ A date token matches a date (dags) terminal """
         return terminal.startswith("dags")
 
+    def matches_DATEABS(self, terminal):
+        """ An absolute date token matches an absolute date (dagsföst) terminal """
+        return terminal.startswith("dagsföst")
+
+    def matches_DATEREL(self, terminal):
+        """ A relative date token matches a relative date (dagsafs) terminal """
+        return terminal.startswith("dagsafs")
+
     def matches_TIME(self, terminal):
         """ A time token matches a time (tími) terminal """
         return terminal.startswith("tími")
@@ -686,9 +701,21 @@ class BIN_Token(Token):
         """ A timestamp token matches a timestamp (tímapunktur) terminal """
         return terminal.startswith("tímapunktur")
 
+    def matches_TIMESTAMPABS(self, terminal):
+        """ An absolute timestamp token matches an absolute timestamp (tímapunkturfast) terminal """
+        return terminal.startswith("tímapunkturfast")
+
+    def matches_TIMESTAMPREL(self, terminal):
+        """ A relative timestamp token matches a relative timestamp (tímapunkturafs) terminal """
+        return terminal.startswith("tímapunkturafs")
+
     def matches_ORDINAL(self, terminal):
         """ An ordinal token matches an ordinal (raðnr) terminal """
         return terminal.startswith("raðnr")
+
+    def matches_MEASUREMENT(self, terminal):
+        """ A measurement token matches a measurement (mælieining) terminal """
+        return terminal.startswith("mælieining")
 
     def matches_WORD(self, terminal):
         """ Match a word token, having the potential part-of-speech meanings
@@ -779,15 +806,24 @@ class BIN_Token(Token):
             """ Interrogative adverbs, 'spurnaratviksorð' """
             return "ao" in m.ordfl and m.stofn in BIN_Token._SPAO
 
+        def matcher_tao(m):
+            """ Temporal adverbs, 'tímaatviksorð' """
+            return m.ordfl == "tao" or m.stofn in BIN_Token._TAO
+
         def matcher_eo(m):
             """ 'Einkunnarorð': adverb (atviksorð) that is not the same
-                as a preposition (forsetning) or pronoun (fornafn) """
-            if "ao" not in m.ordfl or m.stofn in BIN_Token._SPAO:
-                return False
-            # This token can match an adverb:
-            # Cache whether it can also match a preposition
+                as a preposition (forsetning) or pronoun (fornafn).
+                Note that temporal adverbs (tao) are explicitly excluded
+                since we want them marked as such in the result tree.
+                Also, interrogative adverbs (spao) do not match. """
             if self._is_eo is None:
-                if self.t1_lower in BIN_Token._NOT_EO:
+                if matcher_tao(m):
+                    self._is_eo = False
+                elif "ao" not in m.ordfl or m.stofn in BIN_Token._SPAO:
+                    self._is_eo = False
+                # This token can match an adverb:
+                # Cache whether it can also match a preposition
+                elif self.t1_lower in BIN_Token._NOT_EO:
                     # Explicitly forbidden, no need to check further
                     self._is_eo = False
                 elif self.t1_lower in BIN_Token._NOT_NOT_EO:
@@ -801,8 +837,8 @@ class BIN_Token(Token):
             return self._is_eo
 
         def matcher_ao(m):
-            """ Adverbs, excluding eo and spao """
-            if "ao" != m.ordfl or matcher_spao(m):
+            """ Adverbs, excluding spao and tao (and meanings explicitly marked as eo) """
+            if m.ordfl != "ao" or matcher_spao(m) or matcher_tao(m):
                 return False
             fbits = BIN_Token.get_fbits(m.beyging)
             return terminal.fbits_match(fbits)
@@ -942,8 +978,13 @@ class BIN_Token(Token):
         TOK.ORDINAL: matches_ORDINAL,
         TOK.YEAR: matches_YEAR,
         TOK.DATE: matches_DATE,
+        TOK.DATEREL: matches_DATEREL,
+        TOK.DATEABS: matches_DATEABS,
         TOK.TIME: matches_TIME,
         TOK.TIMESTAMP: matches_TIMESTAMP,
+        TOK.TIMESTAMPREL: matches_TIMESTAMPREL,
+        TOK.TIMESTAMPABS: matches_TIMESTAMPABS,
+        TOK.MEASUREMENT: matches_MEASUREMENT,
         TOK.WORD: matches_WORD
     }
 
@@ -1198,7 +1239,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
     def __init__(self, name):
         super().__init__(name)
         # Peel off the quotes from the first part
-        assert len(self._first) >= 3
+        assert len(self._first) >= 2 # The string can be ""
         assert self._first[0] == self._first[-1]
         self._first = self._first[1:-1]
         self._cat = None

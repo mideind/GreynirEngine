@@ -1102,14 +1102,17 @@ def canonicalize_token(t):
         if kind == TOK.AMOUNT:
             # Flatten and simplify amounts
             t["v"] = dict(amount = val[0], currency = val[1])
+        elif kind == TOK.MEASUREMENT:
+            # Flatten and simplify measurements
+            t["v"] = dict(unit = val[0], value = val[1])
         elif kind in { TOK.NUMBER, TOK.CURRENCY, TOK.PERCENT }:
             # Number, ISO currency code, percentage
             t["v"] = val[0]
-        elif kind == TOK.DATE:
+        elif kind in { TOK.DATE, TOK.DATEREL, TOK.DATEABS }:
             t["v"] = dict(y = val[0], mo = val[1], d = val[2])
         elif kind == TOK.TIME:
             t["v"] = dict(h = val[0], m = val[1], s = val[2])
-        elif kind == TOK.TIMESTAMP:
+        elif kind in { TOK.TIMESTAMP, TOK.TIMESTAMPREL, TOK.TIMESTAMPABS }:
             t["v"] = dict(y = val[0], mo = val[1], d = val[2],
                 h = val[3], m = val[4], s = val[5])
         elif kind == TOK.PERSON:

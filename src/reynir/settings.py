@@ -382,6 +382,10 @@ class StaticPhrases:
             raise ConfigError("Static phrase must be enclosed in double quotes")
 
         phrase = phrase[1:-1]
+
+        if phrase in StaticPhrases.MAP:
+            raise ConfigError("Static phrase '{0}' is defined more than once".format(phrase))
+
         # First add to phrase list
         ix = len(StaticPhrases.LIST)
         m = StaticPhrases.MEANING

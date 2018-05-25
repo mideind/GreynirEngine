@@ -721,7 +721,10 @@ class Grammar:
 
                     if r[0] in "\"'":
                         # Literal terminal symbol
-                        if len(r) < 3 or r[0] not in r[2:]:
+                        if r == '""':
+                            # Empty literal: matches nothing
+                            pass
+                        elif len(r) < 3 or r[0] not in r[2:]:
                             raise GrammarError("Invalid literal terminal {0}".format(r), fname, line)
                     else:
                         # Identifier of nonterminal or terminal
