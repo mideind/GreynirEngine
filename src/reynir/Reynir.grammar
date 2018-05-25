@@ -2755,7 +2755,7 @@ NlStak_p3/tala/fall/kyn →
     Magn/fall/tala/kyn
 
 Magn/fall/tala/kyn →
-    TöluorðForskeyti/tala/fall/kyn* mælieining          # rúmlega 690 MW
+    TöluorðForskeyti/tala/fall/kyn* mælieining/tala/fall/kyn # rúmlega 690 MW
     | TöluorðForskeyti/tala/fall/kyn* Töluorð/tala/fall/kyn Mælieining/kyn/tala/fall # tæplega fjögurra tonna
 
 Mælieining_hk/tala/fall →
