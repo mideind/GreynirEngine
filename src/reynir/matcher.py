@@ -232,7 +232,7 @@ _DEFAULT_ID_MAP = {
     "NP-ADDR" : dict(name = "Heimilisfang", overrides = "NP"),
     "NP-TITLE" : dict(name = "Titill", overrides = "NP"),
     "NP-AGE" : dict(name = "Aldur"),
-    "NP-MEASURE" : dict(name = "Mælt magn", overrides = "NP"),
+    "NP-MEASURE" : dict(name = "Mæling", overrides = "NP"),
     "NP-SUBJ" : dict(name = "Frumlag",
         subject_to = { "NP-SUBJ" }),
     "NP-OBJ" : dict(name = "Beint andlag"),
