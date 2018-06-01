@@ -804,11 +804,11 @@ class BIN_Token(Token):
       
         def matcher_spao(m):
             """ Interrogative adverbs, 'spurnaratviksorð' """
-            return "ao" in m.ordfl and m.stofn in BIN_Token._SPAO
+            return m.ordfl.endswith("ao") and m.stofn in BIN_Token._SPAO
 
         def matcher_tao(m):
             """ Temporal adverbs, 'tímaatviksorð' """
-            return m.ordfl == "tao" or m.stofn in BIN_Token._TAO
+            return m.ordfl.endswith("ao") and m.stofn in BIN_Token._TAO
 
         def matcher_eo(m):
             """ 'Einkunnarorð': adverb (atviksorð) that is not the same
@@ -816,22 +816,26 @@ class BIN_Token(Token):
                 Note that temporal adverbs (tao) are explicitly excluded
                 since we want them marked as such in the result tree.
                 Also, interrogative adverbs (spao) do not match. """
+            if not m.ordfl.endswith("ao"):
+                # Do not delete this check or move it inside the if below.
+                # It is necessary to ensure that other word categories do not match,
+                # and to find the correct m that actually matches.
+                return False
             if self._is_eo is None:
-                if matcher_tao(m):
-                    self._is_eo = False
-                elif "ao" not in m.ordfl or m.stofn in BIN_Token._SPAO:
+                txt = self.t1_lower
+                if txt in BIN_Token._TAO or txt in BIN_Token._SPAO:
                     self._is_eo = False
                 # This token can match an adverb:
                 # Cache whether it can also match a preposition
-                elif self.t1_lower in BIN_Token._NOT_EO:
+                elif txt in BIN_Token._NOT_EO:
                     # Explicitly forbidden, no need to check further
                     self._is_eo = False
-                elif self.t1_lower in BIN_Token._NOT_NOT_EO:
+                elif txt in BIN_Token._NOT_NOT_EO:
                     # Explicitly allowed, no need to check further
                     self._is_eo = True
                 else:
                     # Check whether also a preposition or pronoun and return False in that case
-                    self._is_eo = not(self.t1_lower in Prepositions.PP or
+                    self._is_eo = not(txt in Prepositions.PP or
                         any(mm.ordfl == "fn" for mm in self.t2))
             # Return True if this token cannot also match a preposition
             return self._is_eo

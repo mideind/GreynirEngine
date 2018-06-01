@@ -185,7 +185,7 @@ class Nonterminal:
     def add_tag(self, tag):
         """ Check whether this nonterminal has been tagged with the given tag """
         if self._tags is None:
-            self._tags = set([tag])
+            self._tags = { tag }
         else:
             self._tags.add(tag)
 
@@ -257,7 +257,7 @@ class LiteralTerminal(Terminal):
             phrase = phrase.replace('_', ' ')
             lit = q + phrase + q + lit[ix + 1:]
             phrase = phrase.split(':')[0] # Remove :cat, if present
-            if StaticPhrases.lookup(phrase) == None and not Abbreviations.has_abbreviation(phrase):
+            if StaticPhrases.lookup(phrase) is None and not Abbreviations.has_abbreviation(phrase):
                 # Check that a multi-phrase literal terminal exists in the StaticPhrases
                 # dictionary (normally defined in Phrases.conf)
                 raise GrammarError("Multi-phrase literal '{0}' not found "

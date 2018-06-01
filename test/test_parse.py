@@ -99,7 +99,7 @@ def test_parse(verbose = False):
     # Test that the parser finds the correct nouns
     assert results[0].tree.nouns == [ "tilraun", "þáttun" ]
     assert results[1].tree.nouns == [ "málsgrein" ]
-    assert results[2].tree == None # Error sentence
+    assert results[2].tree is None # Error sentence
     assert results[3].tree.nouns == [ "málsgrein" ]
     assert results[4].tree.nouns == [ "Vatnið", "gráða" ] # 'Vatnið' is a proper place name (örnefni)
     assert results[5].tree.nouns == [ ]
@@ -114,7 +114,7 @@ def test_parse(verbose = False):
     # Test that the parser finds the correct verbs
     assert results[0].tree.verbs == [ "vera", "vera", "gera" ]
     assert results[1].tree.verbs == [ "koma" ]
-    assert results[2].tree == None # Error sentence
+    assert results[2].tree is None # Error sentence
     assert results[3].tree.verbs == [ "vera" ]
     assert results[4].tree.verbs == [ "vera", "vera" ]
     assert results[5].tree.verbs == [ "skulda" ]
@@ -129,7 +129,7 @@ def test_parse(verbose = False):
     assert results[0].tree.lemmas == [ "hér", "vera", "vera", "að", "gera",
         "tilraun", "með", "þáttun", "." ]
     assert results[1].tree.lemmas == [ "margur", "málsgrein", "koma", "hér", "fyrir", "." ]
-    assert results[2].tree == None # Error sentence
+    assert results[2].tree is None # Error sentence
     assert results[3].tree.lemmas == [ "fjórði", "málsgrein", "vera", "síðari", "." ]
     assert results[4].tree.lemmas == [ "Vatnið", "vera", "30,5", "gráða", "heitur",
         "og", "ég", "vera", "ánægður", "með", "það", "." ]

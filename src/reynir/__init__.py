@@ -2,7 +2,7 @@
 
     Reynir: Natural language processing for Icelandic
 
-  	Copyright(C) 2018 Miðeind ehf.
+    Copyright(C) 2018 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This program is free software: you can redistribute it and/or modify
