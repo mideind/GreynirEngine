@@ -126,7 +126,7 @@ _DEFAULT_NT_MAP = {
     "FrumlagsInnskot" : "S-EXPLAIN",
     "Tilvitnun" : "S-QUOTE",
     "Forskeyti" : "S-PREFIX",
-    #"EfÞegar" : "S-PREFIX",
+    # "EfÞegar" : "S-PREFIX",
     "Tíðarsetning" : "S-ADV-TEMP",
     "Tilgangssetning" : "S-ADV-PURP",
     "Viðurkenningarsetning" : "S-ADV-ACK",

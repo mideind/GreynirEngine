@@ -61,7 +61,8 @@ class BIN_Db:
     # Adjective endings
     _ADJECTIVE_TEST = "leg" # Check for adjective if word contains 'leg'
 
-    # Noun categories
+    # Word categories that are allowed to appear capitalized in the middle of sentences,
+    # as a result of compound word construction
     _NOUNS = frozenset(("kk", "kvk", "hk"))
 
     # Singleton LFU caches for word meaning lookup
@@ -73,18 +74,23 @@ class BIN_Db:
     @classmethod
     def get_db(cls):
         """ Return a session object that can be used in a with statement """
+
         class _BIN_Session:
+
             def __init__(self):
                 pass
+
             def __enter__(self):
                 """ Python context manager protocol """
                 if cls._singleton is None:
                     cls._singleton = cls()
                 return cls._singleton
+
             def __exit__(self, exc_type, exc_value, traceback):
                 """ Python context manager protocol """
                 # Return False to re-throw exception from the context, if any
                 return False
+
         return _BIN_Session()
 
     @classmethod
@@ -133,9 +139,11 @@ class BIN_Db:
             m = [ mm for mm in m if mm.stofn not in worse ]
             # The better (preferred) stem should still be there somewhere
             # assert any(mm.stofn in better for mm in m)
+
         # Order the meanings by priority, so that the most
         # common/likely ones are first in the list and thus
         # matched more readily than the less common ones
+
         def priority(m):
             # Order "VH" verbs (viðtengingarháttur) after other forms
             # Also order past tense ("ÞT") after present tense
@@ -148,28 +156,23 @@ class BIN_Db:
             prio += 1 if "FT" in m.beyging else 0
             prio += 1 if "2P" in m.beyging else 0
             return prio
+
         m.sort(key = priority)
         return m
 
     def forms(self, w):
         """ Return a list of all possible forms of a particular root (stem) """
-        #assert False, "This feature is not supported in the Reynir module"
-        print("Asking for forms of '{0}', returning None".format(w))
-        return None
+        assert False, "This feature is not supported in the Reynir module"
 
-    @lru_cache(maxsize = CACHE_SIZE_UNDECLINABLE)
     def is_undeclinable(self, stem, fl):
         """ Return True if the given stem, of the given word category,
             is undeclinable, i.e. all word forms are identical.
             This is presently only used in the POS tagger (postagger.py). """
         assert False, "This feature is not supported in the Reynir module"
-        return False
 
-    @lru_cache(maxsize = CACHE_SIZE)
     def lookup_utg(self, stofn, ordfl, utg, beyging = None):
         """ Return a list of meanings with the given integer id ('utg' column) """
         assert False, "This feature is not supported in the Reynir module"
-        return None
 
     @lru_cache(maxsize = CACHE_SIZE)
     def lookup_nominative(self, w):
@@ -183,10 +186,7 @@ class BIN_Db:
 
     def lookup_form(self, w, at_sentence_start):
         """ Given a word root (stem), look up all its forms """
-        #assert False,  "This feature is not supported in the Reynir module"
-        print("lookup_form for '{0}', returning None".format(w))
-        return None
-        #return self._lookup(w, at_sentence_start, False, self._forms_func)
+        assert False,  "This feature is not supported in the Reynir module"
 
     @lru_cache(maxsize = CACHE_SIZE)
     def lookup_name_gender(self, name):
@@ -288,7 +288,7 @@ class BIN_Db:
             # Most common path out of this function
             return (w, m)
 
-        if (lower_w != w or w[0] == '['):
+        if lower_w != w or w[0] == '[':
             # Still nothing: check abbreviations
             m = lookup_abbreviation(w)
             if not m and w[0] == '[':
@@ -323,6 +323,7 @@ class BIN_Db:
                 # This looks like a compound word:
                 # use the meaning of its last part
                 prefix = "-".join(cw[0:-1])
+                # Lookup the potential meanings of the last part
                 m = lookup(cw[-1])
                 if lower_w != w and not at_sentence_start:
                     # If this is an uppercase word in the middle of a
@@ -339,8 +340,8 @@ class BIN_Db:
                 om = lookup(suffix)
                 if om:
                     m = [ BIN_Meaning("ó" + r.stofn, r.utg, r.ordfl, r.fl,
-                            "ó" + r.ordmynd, r.beyging)
-                            for r in om if r.ordfl == "lo" ]
+                        "ó" + r.ordmynd, r.beyging)
+                        for r in om if r.ordfl == "lo" ]
 
         if not m and auto_uppercase and w.islower():
             # If no meaning found and we're auto-uppercasing,

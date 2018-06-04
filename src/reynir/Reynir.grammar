@@ -1,8 +1,9 @@
 #
 # Reynir.grammar
 #
-# Grammar specification file for Reynir,
-# a natural language processor for Icelandic
+# A context-free grammar for modern Icelandic
+#
+# Reynir - a natural language processor for Icelandic
 #
 # Copyright (C) 2018 Miðeind ehf.
 #
@@ -21,7 +22,7 @@
 #
 #
 # This file contains an extensive (but not complete) context-free grammar
-# for parsing Icelandic text.
+# for parsing modern Icelandic text.
 #
 # The grammar is presented in augmented Backus-Naur form, where
 # repetition specifiers are allowed on right-hand-side tokens
@@ -72,6 +73,9 @@
 # The terminal names are matched against POS tags from the BIN
 # database in the module binparser.py.
 #
+# Further documentation of the grammar terminals and variants is
+# available at https://greynir.is/doc/
+#
 # Alternative productions are separated with the '|' (vertical bar) sign.
 # If there is a priority ordering between the alternatives, so that
 # a single highest priority alternative should be automatically
@@ -104,7 +108,7 @@
 
 # GRAMMAR RULES
 
-# Note: all comments from this point are in Icelandic
+# Note: comments from this point are mostly in Icelandic
 
 # Setningargerðir
 
@@ -4963,9 +4967,9 @@ DaganaTímabilAfstætt →
     | 'ár:hk'_ft_gr_þf tala ÁraRuna* TímabilTil tala        # árin 2016-2017, árin 2016 til 2017
 
 DaganaTímabilFast →
-    'dagur:kk'_gr_ft_þf? dagsafs TímabilTil dagsföst      # (dagana) 13. október til 14. nóvember 2017; 13. október-14. nóvember 2017
-    | 'dagur:kk'_gr_ft_þf? raðnr TímabilTil dagsföst      # (dagana) 13.-14. nóvember 2017, 13. til 14. nóvember 2017
-    | Vikudagur_et_þf tímapunkturfast "-:en" tími         # miðvikudaginn 13. desember 2017 kl 14:00 - 15:00
+    'dagur:kk'_gr_ft_þf? dagsafs TímabilTil dagsföst        # (dagana) 13. október til 14. nóvember 2017; 13. október-14. nóvember 2017
+    | 'dagur:kk'_gr_ft_þf? raðnr TímabilTil dagsföst        # (dagana) 13.-14. nóvember 2017, 13. til 14. nóvember 2017
+    | Vikudagur_et_þf tímapunkturfast "-:en" tími           # miðvikudaginn 13. desember 2017 kl 14:00 - 15:00
 
 FráTilTími → 
     'frá:fs'_þgf? tími TímabilTil tími DaganaTímabilAfstætt?

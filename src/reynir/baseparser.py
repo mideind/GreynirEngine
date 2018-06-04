@@ -23,7 +23,6 @@ class Base_Parser:
     # Parser version - change when logic changes so that output is affected
     _VERSION = "1.0"
 
-
     class PackedProduction:
 
         """ A container for a packed production, i.e. a grammar Production
@@ -65,7 +64,6 @@ class Base_Parser:
         def __iter__(self):
             return iter(self._ix_list)
 
-
     def __init__(self, g):
 
         """ Initialize a parser for a given grammar """
@@ -86,12 +84,10 @@ class Base_Parser:
         self._nonterminals = g.nonterminals_by_ix
         self._terminals = g.terminals_by_ix
 
-
     @classmethod
     def for_grammar(cls, g):
         """ Create a parser for the Grammar in g """
         return cls(g)
-
 
     def _lookup(self, ix):
         """ Convert a production item from an index to an object reference """

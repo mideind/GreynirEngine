@@ -120,7 +120,6 @@ class GlobalLock:
             _lock_file(fp, block)
         except:
             fp.seek(1)
-            pid = fp.read().strip()[:20]
             fp.close()
             raise
 

@@ -57,12 +57,12 @@ ADJECTIVE_PREFIXES = frozenset(["hálf", "marg", "semí"])
 
 # Recognize words that multiply numbers
 MULTIPLIERS = {
-    #"núll": 0,
-    #"hálfur": 0.5,
-    #"helmingur": 0.5,
-    #"þriðjungur": 1.0 / 3,
-    #"fjórðungur": 1.0 / 4,
-    #"fimmtungur": 1.0 / 5,
+    # "núll": 0,
+    # "hálfur": 0.5,
+    # "helmingur": 0.5,
+    # "þriðjungur": 1.0 / 3,
+    # "fjórðungur": 1.0 / 4,
+    # "fimmtungur": 1.0 / 5,
     "einn": 1,
     "tveir": 2,
     "þrír": 3,
@@ -91,9 +91,9 @@ MULTIPLIERS = {
     "sjötíu": 70,
     "áttatíu": 80,
     "níutíu": 90,
-    #"par": 2,
-    #"tugur": 10,
-    #"tylft": 12,
+    # "par": 2,
+    # "tugur": 10,
+    # "tylft": 12,
     "hundrað": 100,
     "þúsund": 1000, # !!! Bæði hk og kvk!
     "þús.": 1000,
@@ -316,26 +316,28 @@ def all_common_cases(token1, token2, filter_func = None):
 _GENDER_SET = { "kk", "kvk", "hk" }
 _GENDER_DICT = { "KK": "kk", "KVK": "kvk", "HK": "hk" }
 
+
 def all_genders(token):
     """ Return a list of the possible genders of the word in the token, if any """
     if token.kind != TOK.WORD:
         return None
     g = set()
     if token.val:
+
+        def find_gender(m):
+            if m.ordfl in _GENDER_SET:
+                return m.ordfl  # Plain noun
+            # Probably number word ('töl' or 'to'): look at its spec
+            for k, v in _GENDER_DICT.items():
+                if k in m.beyging:
+                    return v
+            return None
+
         for meaning in token.val:
-
-            def find_gender(m):
-                if m.ordfl in _GENDER_SET:
-                    return m.ordfl # Plain noun
-                # Probably number word ('töl' or 'to'): look at its spec
-                for k, v in _GENDER_DICT.items():
-                    if k in m.beyging:
-                        return v
-                return None
-
             gn = find_gender(meaning)
             if gn is not None:
                g.add(gn)
+
     return list(g)
 
 
@@ -825,7 +827,7 @@ def parse_static_phrases(token_stream, auto_uppercase):
             if token.txt is None: # token.kind != TOK.WORD:
                 # Not a word: no match; discard state
                 if tq:
-                    for t in tq: yield t
+                    yield from tq
                     tq = []
                 if state:
                     state = defaultdict(list)
@@ -870,9 +872,7 @@ def parse_static_phrases(token_stream, auto_uppercase):
                             yield tq.pop(0)
                         w = " ".join([ t.txt for t in tq ])
                         # Add the entire phrase as one 'word' to the token queue
-                        yield TOK.Word(w,
-                            [ BIN_Meaning._make(r)
-                                for r in StaticPhrases.get_meaning(ix) ])
+                        yield TOK.Word(w, map(BIN_Meaning._make, StaticPhrases.get_meaning(ix)))
                         # Discard the state and start afresh
                         newstate = defaultdict(list)
                         w = wo = ""
@@ -883,7 +883,7 @@ def parse_static_phrases(token_stream, auto_uppercase):
                         break
                     add_to_state(sl, ix)
             elif tq:
-                for t in tq: yield t
+                yield from tq
                 tq = []
 
             wm = None
@@ -903,12 +903,10 @@ def parse_static_phrases(token_stream, auto_uppercase):
                     if not sl:
                         # Simple replace of a single word
                         if tq:
-                            for t in tq: yield tq
+                            yield from tq
                             tq = []
                         # Yield the replacement token
-                        yield TOK.Word(token.txt,
-                            [ BIN_Meaning._make(r)
-                                for r in StaticPhrases.get_meaning(ix) ])
+                        yield TOK.Word(token.txt, map(BIN_Meaning._make, StaticPhrases.get_meaning(ix)))
                         newstate = defaultdict(list)
                         token = None
                         break
@@ -926,7 +924,7 @@ def parse_static_phrases(token_stream, auto_uppercase):
         pass
 
     # Yield any tokens remaining in queue
-    for t in tq: yield t
+    yield from tq
 
 
 def disambiguate_phrases(token_stream):
@@ -951,7 +949,7 @@ def disambiguate_phrases(token_stream):
             if token.kind != TOK.WORD:
                 # Not a word: no match; yield the token queue
                 if tq:
-                    for t in tq: yield t
+                    yield from tq
                     tq = []
                 # Discard the previous state, if any
                 if state:
@@ -1004,7 +1002,7 @@ def disambiguate_phrases(token_stream):
             elif tq:
                 # This does not continue a started phrase:
                 # yield the accumulated token queue
-                for t in tq: yield t
+                yield from tq
                 tq = []
 
             if w in pdict:
@@ -1026,7 +1024,7 @@ def disambiguate_phrases(token_stream):
         pass
 
     # Yield any tokens remaining in queue
-    for t in tq: yield t
+    yield from tq
 
 
 def tokenize(text, auto_uppercase = False):
@@ -1050,7 +1048,7 @@ def tokenize(text, auto_uppercase = False):
     # Currencies, person names
     token_stream = parse_phrases_2(token_stream)
 
-     # Eliminate very uncommon meanings
+    # Eliminate very uncommon meanings
     token_stream = disambiguate_phrases(token_stream)
 
     return token_stream
@@ -1064,7 +1062,6 @@ def canonicalize_token(t):
     # Set the token kind to a readable string
     kind = t.get("k", TOK.WORD)
     t["k"] = TOK.descr[kind]
-    terminal = None
     if "t" in t:
         terminal = t["t"]
         # Change "literal:category" to category,
@@ -1166,7 +1163,6 @@ def stems_of_token(t):
         # TOK.ENTITY
         stem = t["x"]
         return [ (stem, "entity") ]
-    return []
 
 
 def choose_full_name(val, case, gender):
@@ -1196,7 +1192,6 @@ def describe_token(t, terminal, meaning):
     """ Return a compact dictionary describing the token t,
         which matches the given terminal with the given meaning """
     d = dict(x = t.txt)
-    wt = None
     if terminal is not None:
         # There is a token-terminal match
         if t.kind == TOK.PUNCTUATION:

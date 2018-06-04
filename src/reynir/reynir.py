@@ -33,7 +33,7 @@ from collections import namedtuple
 from tokenizer import correct_spaces, paragraphs
 
 from .bintokenizer import tokenize, canonicalize_token, describe_token
-from .fastparser import Fast_Parser, ParseError, ParseForestNavigator, ParseForestPrinter
+from .fastparser import Fast_Parser, ParseError, ParseForestNavigator # , ParseForestPrinter
 from .reducer import Reducer
 from .matcher import SimpleTreeBuilder
 from .cache import cached_property

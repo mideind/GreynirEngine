@@ -331,7 +331,6 @@ class BIN_Compressor:
                     t = line.split(";")
                     stem, wid, ordfl, fl, form, meaning = t
                     stem = stem.encode("latin-1")
-                    cat = ordfl
                     ordfl = ordfl.encode("latin-1")
                     fl = fl.encode("latin-1")
                     form = form.encode("latin-1")
@@ -793,7 +792,6 @@ class BIN_Compressed:
                 return 0 if chix > cword[fragment_index] else -1
             if hdr & 0x40000000:
                 # Childless node
-                num_children = 0
                 frag = node_offset + 4
             else:
                 num_children = self._UINT(node_offset + 4)
