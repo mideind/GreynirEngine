@@ -98,10 +98,11 @@ from itertools import chain
 if not __package__:
     from cache import cached_property
     from binparser import BIN_Token
+    from bindb import BIN_Db, BIN_Meaning
 else:
     from .cache import cached_property
     from .binparser import BIN_Token
-
+    from .bindb import BIN_Db, BIN_Meaning
 
 # Default tree simplifier configuration maps
 
@@ -112,8 +113,8 @@ _DEFAULT_NT_MAP = {
     "Setning" : "S",
     "SetningLo" : "S",
     "SetningÁnF" : "S",
-    "SetningAukafall" : "S",
-    "SetningAukafallForgangur" : "S",
+    "SetningAukafall" : ("S", "IP"), # Push two headers: S and IP
+    "SetningAukafallForgangur" : ("S", "IP"),
     "SetningSkilyrði" : "S",
     "SetningUmAðRæða" : "S",
     "StViðtenging" : "S",
@@ -384,6 +385,13 @@ class SimpleTree:
         return vlist + list(BIN_Token.bin_variants(self._head.get("b")) - set(vlist))
 
     @cached_property
+    def _vset(self):
+        """ Return a set of the variants associated with this subtree's terminal, if any.
+            Note that this set is undordered, so it is not intended for retrieving the cases
+            of verb subjects. """
+        return set(self.all_variants)
+
+    @cached_property
     def tcat(self):
         """ The word category associated with this subtree's terminal, if any """
         t = self.terminal
@@ -566,6 +574,183 @@ class SimpleTree:
             lemma = f(*args)
         return lemma
 
+    def _nominative_form(self, form):
+        """ Return a nominative form of the text within this node only, if any.
+            The form can be 'nominative' for the nominative case only,
+            'indefinite' for the indefinite nominative form,
+            or 'canonical' for the singular, indefinite, nominative. """
+        txt = self._text
+        if self._cat not in { "kvk", "kk", "hk", "lo", "to", "fn", "pfn" }:
+            if form == 'canonical':
+                # If we are asking for the canonical (singular) form, cut away undeclinable numbers
+                # so that 'sautján góðglaða alþingismenn' -> 'góðglaður alþingismaður',
+                # not 'sautján góðglaður alþingismaður'
+                return "" if self._cat == "töl" else txt
+            return txt
+        with BIN_Db.get_db() as db:
+            meanings = db.lookup_nominative(txt)
+            if not meanings and not txt.islower():
+                # We don't find this form in BÍN:
+                # if upper case, try a lower case version of it
+                meanings = db.lookup_nominative(txt.lower())
+
+            # The following functions filter the nominative list down to those desired forms
+            # that match our lemma and category
+
+            def filter_func_no(m):
+                """ Filter function for nouns """
+                if m.stofn != self._lemma or m.ordfl != self._cat:
+                    return False
+                if form == 'canonical':
+                    # Only return singular forms
+                    if 'FT' in m.beyging:
+                        return False
+                else:
+                    # Match the original word in terms of number (singular/plural)
+                    number = next(iter(self._vset & { "et", "ft" }), "et")
+                    if number.upper() not in m.beyging:
+                        return False
+                if form == 'nominative':
+                    # Match the original word in terms of definite/indefinite
+                    if ("gr" in self._vset) != ("gr" in m.beyging):
+                        return False
+                elif "gr" in m.beyging:
+                    # Only return indefinite forms
+                    return False
+                return True
+
+            def filter_func_without_gender(m):
+                """ Filter function for personal pronouns """
+                if m.stofn != self._lemma or m.ordfl != self._cat:
+                    return False
+                if form == 'canonical':
+                    # Only return singular forms
+                    if 'FT' in m.beyging:
+                        return False
+                else:
+                    # Match the original word in terms of number (singular/plural)
+                    number = next(iter(self._vset & { "et", "ft" }), "et")
+                    if number.upper() not in m.beyging:
+                        return False
+                return True
+
+            def filter_func_with_gender(m):
+                """ Filter function for nonpersonal pronouns and declinable number words """
+                if m.stofn != self._lemma or m.ordfl != self._cat:
+                    return False
+                # Match the original word in terms of gender
+                gender = next(iter(self._vset & { "kk", "kvk", "hk" }), "kk")
+                if gender.upper() not in m.beyging:
+                    return False
+                if form == 'canonical':
+                    # Only return singular forms
+                    if 'FT' in m.beyging:
+                        return False
+                else:
+                    # Match the original word in terms of number (singular/plural)
+                    number = next(iter(self._vset & { "et", "ft" }), "et")
+                    if number.upper() not in m.beyging:
+                        return False
+                return True
+
+            def filter_func_lo(m):
+                """ Filter function for adjectives """
+                if m.stofn != self._lemma or m.ordfl != "lo":
+                    return False
+                # Match the original word in terms of gender
+                gender = next(iter(self._vset & { "kk", "kvk", "hk" }), "kk")
+                if gender.upper() not in m.beyging:
+                    return False
+                if form == 'canonical':
+                    # Only return singular forms
+                    if 'FT' in m.beyging:
+                        return False
+                else:
+                    # Match the original word in terms of number (singular/plural)
+                    number = next(iter(self._vset & { "et", "ft" }), "et")
+                    if number.upper() not in m.beyging:
+                        return False
+                if form == 'nominative':
+                    if "est" in self._vset:
+                        if not ("EVB" in m.beyging or "ESB" in m.beyging):
+                            return False
+                    elif "evb" in self._vset:
+                        if "EVB" not in m.beyging:
+                            return False
+                    elif "esb" in self._vset:
+                        if "ESB" not in m.beyging:
+                            return False
+                    elif "mst" in self._vset:
+                        if "MST" not in m.beyging:
+                            return False
+                    elif "vb" in self._vset:
+                        if "VB" not in m.beyging: # Also applies to EVB
+                            return False
+                    elif "sb" in self._vset:
+                        if "SB" not in m.beyging: # Also applies to ESB
+                            return False
+                else:
+                    # 'indefinite' or 'canonical':
+                    # Only return strong declinations since we only want
+                    # indefinite forms
+                    if "mst" in self._vset:
+                        # For comparative degree, no change is required
+                        if "MST" not in m.beyging:
+                            return False
+                    elif "evb" in self._vset or "esb" in self._vset:
+                        # Superlative degree
+                        if "ESB" not in m.beyging:
+                            return False
+                    else:
+                        # Normal degree
+                        if "FSB" not in m.beyging:
+                            return False
+                return True
+
+            # Select and apply the appropriate filter function
+            FILTERS = {
+                "lo" : filter_func_lo,
+                "to" : filter_func_with_gender,
+                "fn" : filter_func_with_gender,
+                "pfn" : filter_func_without_gender
+            }
+            meanings = filter(FILTERS.get(self._cat, filter_func_no), meanings)
+            try:
+                # Choose the first nominative form that got past the filter
+                w = next(meanings).ordmynd
+                # Try to match the capitalization of the original word
+                if txt[0].isupper():
+                    if txt.isupper():
+                        txt = w.upper()
+                    else:
+                        txt = w.capitalize()
+                else:
+                    txt = w.lower()
+            except StopIteration:
+                # No matching nominative form found: return the original text as-is
+                if self._cat == "to" and form == 'canonical' and "ft" in self._vset:
+                    # ...except if we have a number word marked as plural and we're
+                    # asking for the canonical (singular) form: no such form exists
+                    # and we return an empty string in that case
+                    # ('þriggja alþingismanna' thus becomes 'alþingismaður', not 'þrír alþingismaður')
+                    txt = ""
+        return txt
+
+    @cached_property
+    def nominative(self):
+        """ Return the nominative form of this node only, if any """
+        return self._nominative_form('nominative')
+
+    @cached_property
+    def indefinite(self):
+        """ Return the indefinite nominative form of this node only, if any """
+        return self._nominative_form('indefinite')
+
+    @cached_property
+    def canonical(self):
+        """ Return the singular indefinite nominative form of this node only, if any """
+        return self._nominative_form('canonical')
+
     @property
     def _cat(self):
         """ Return the word category of this node only, if any """
@@ -578,12 +763,46 @@ class SimpleTree:
             # Terminal node: return own text
             return self._text
         # Concatenate the text from the children
-        t = []
-        for ch in self.children:
-            x = ch.text
-            if x:
-                t.append(x)
-        return " ".join(t)
+        return " ".join([ ch.text for ch in self.children if ch.text ])
+
+    def _np_form(self, prop):
+        """ Return a nominative form of the noun phrase (or noun/adjective terminal)
+            contained within this subtree. Prop is a property accessor that returns
+            either x.nominative, x.indefinite or x.canonical. """
+        if self.is_terminal:
+            # Terminal node: return its nominative form
+            return prop(self)
+        if self.match_tag("NP"):
+            # Noun phrase:
+            # Concatenate the nominative forms of the child terminals,
+            # and the literal text of nested nonterminals (such as NP-POSS and S-THT)
+            result = []
+            for ch in self.children:
+                # We do not want to recurse into nested NPs
+                np = prop(ch) if ch.is_terminal else ch.text
+                if np:
+                    result.append(np)
+            return " ".join(result)
+        # This is not a noun phrase: return its text as-is
+        return self.text
+
+    @cached_property
+    def nominative_np(self):
+        """ Return the nominative form of the noun phrase (or noun/adjective terminal)
+            contained within this subtree """
+        return self._np_form(lambda x: x.nominative)
+
+    @cached_property
+    def indefinite_np(self):
+        """ Return the indefinite nominative form of the noun phrase (or noun/adjective terminal)
+            contained within this subtree """
+        return self._np_form(lambda x: x.indefinite)
+
+    @cached_property
+    def canonical_np(self):
+        """ Return the singular indefinite nominative form of the noun phrase (or noun/adjective terminal)
+            contained within this subtree """
+        return self._np_form(lambda x: x.canonical)
 
     @property
     def own_text(self):
@@ -606,7 +825,7 @@ class SimpleTree:
     @property
     def nouns(self):
         """ Returns the lemmas of all nouns in the subtree """
-        return self._list(lambda t: t._cat in {"kk", "kvk", "hk"})
+        return self._list(lambda t: t._cat in { "kk", "kvk", "hk" })
 
     @property
     def verbs(self):
@@ -775,7 +994,6 @@ class SimpleTree:
     def _match(self, items):
         """ Returns True if this subtree matchs the given items,
             compiled from a string pattern """
-        len_items = len(items)
 
         def single_match(item, tree):
             """ Does the subtree match with item, in and of itself? """
@@ -1038,34 +1256,42 @@ class SimpleTreeBuilder:
     def push_nonterminal(self, nt_base):
         """ Entering a nonterminal node. Pass None if the nonterminal is
             not significant, e.g. an interior or optional node. """
-        self._pushed.append(False)
+        self._pushed.append(0) # Number of items pushed
         if not nt_base:
             return
-        mapped_nt = self._nt_map.get(nt_base)
-        if not mapped_nt:
+        mapped_nts = self._nt_map.get(nt_base)
+        if not mapped_nts:
             return
-        # We want this nonterminal in the simplified tree:
-        # push it (unless it is subject to a scope we're already in)
-        mapped_id = self._id_map[mapped_nt]
-        subject_to = mapped_id.get("subject_to")
-        if subject_to is not None and self._scope[-1] in subject_to:
-            # We are already within a nonterminal to which this one is subject:
-            # don't bother pushing it
-            return
-        # This is a significant and noteworthy nonterminal
-        children = []
-        self._stack[-1].append(dict(k = "NONTERMINAL",
-            n = mapped_id["name"], i = mapped_nt, p = children))
-        self._stack.append(children)
-        self._scope.append(mapped_nt)
-        self._pushed[-1] = True
+        # Allow a single nonterminal, or a list of nonterminals, to be pushed
+        if isinstance(mapped_nts, str):
+            mapped_nts = [ mapped_nts ]
+        for mapped_nt in mapped_nts:
+            # We want this nonterminal in the simplified tree:
+            # push it (unless it is subject to a scope we're already in)
+            mapped_id = self._id_map[mapped_nt]
+            subject_to = mapped_id.get("subject_to")
+            if subject_to is not None and self._scope[-1] in subject_to:
+                # We are already within a nonterminal to which this one is subject:
+                # don't bother pushing it
+                continue
+            # This is a significant and noteworthy nonterminal
+            children = []
+            self._stack[-1].append(dict(k = "NONTERMINAL",
+                n = mapped_id["name"], i = mapped_nt, p = children))
+            self._stack.append(children)
+            self._scope.append(mapped_nt)
+            self._pushed[-1] += 1 # Add to number of items pushed
 
     def pop_nonterminal(self):
         """ Exiting a nonterminal node. Calls to pop_nonterminal() must correspond
             to calls to push_nonterminal(). """
-        if not self._pushed.pop():
-            # Didn't push anything significant in push_nonterminal(): nothing to be done
-            return
+        # Pop the same number of entries as push_nonterminal() pushed
+        to_pop = self._pushed.pop()
+        for _ in range(to_pop):
+            self._pop_nonterminal()
+
+    def _pop_nonterminal(self):
+        """ Do the actual popping of a single level pushed by push_nonterminal() """
         children = self._stack.pop()
         mapped_nt = self._scope.pop()
         # Check whether this nonterminal has only one child, which is again
