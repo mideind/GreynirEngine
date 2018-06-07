@@ -661,6 +661,9 @@ class Reducer:
                     # If we have number and gender information with the reflexive
                     # pronoun, that's good: encourage it
                     sc[t] += 6 if t.num_variants > 1 else 2
+                elif tfirst == "gr":
+                    # Encourage separate definite article rather than pronoun
+                    sc[t] += 2
                 elif t.name[0] in "\"'":
                     # Give a bonus for exact or semi-exact matches
                     sc[t] += 1

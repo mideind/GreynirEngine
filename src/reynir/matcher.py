@@ -118,8 +118,7 @@ _DEFAULT_NT_MAP = {
     "SetningSkilyrði" : "S",
     "SetningUmAðRæða" : "S",
     "StViðtenging" : "S",
-    "Tengiliður" : "S-REF",
-    "OgTengisetning" : "S-REF",
+    "Tilvísunarsetning" : "S-REF",
     "Skilyrði" : "S-COND",
     "Afleiðing" : "S-CONS",
     "NlSkýring" : "S-EXPLAIN",
@@ -261,6 +260,76 @@ _DEFAULT_ID_MAP = {
 _DEFAULT_TERMINAL_MAP = {
     # Empty
 }
+
+# The following list was obtained using this SQL query:
+# select distinct ordmynd from ord where ((stofn='sá') or (stofn='þessi') or (stofn='hinn')) and (ordfl='fn');
+
+_DEFINITE_PRONOUNS = frozenset([
+    "þau",
+    "þeirri",
+    "það",
+    "þessi",
+    "hinnar",
+    "þessu",
+    "hinar",
+    "þeirra",
+    "því",
+    "hinn",
+    "þennan",
+    "hins",
+    "þetta",
+    "þessara",
+    "hin",
+    "hinu",
+    "sá",
+    "þessari",
+    "hinni",
+    "þeim",
+    "þessa",
+    "þess",
+    "þessir",
+    "sú",
+    "þessar",
+    "þær",
+    "þessarar",
+    "hinna",
+    "hinum",
+    "þeir",
+    "hinir",
+    "þessum",
+    "þeirrar",
+    "hina",
+    "hitt",
+    "þá",
+    "þann"
+])
+
+
+def cut_definite_pronouns(txt):
+    """ Removes definite pronouns from the front of txt and returns the result.
+        However, if the text consists of only definite pronouns, it is returned
+        as-is. """
+    lower_txt = txt.lower()
+    a = lower_txt.split()
+    len_a = len(a)
+    if not len_a:
+        return txt
+    len_txt = len(txt)
+    i = 0
+    n = 0
+    while n < len_txt and txt[n].isspace():
+        n += 1
+    while i < len_a and a[i] in _DEFINITE_PRONOUNS:
+        n += len(a[i])
+        # Roll past any trailing whitespace (there should be only one space character,
+        # but one is never too careful these days)
+        while n < len_txt and txt[n].isspace():
+            n += 1
+        i += 1
+    if n >= len_txt:
+        # Only pronouns: return the original text
+        return txt
+    return txt[n:]
 
 
 class MultiReplacer:
@@ -580,12 +649,7 @@ class SimpleTree:
             'indefinite' for the indefinite nominative form,
             or 'canonical' for the singular, indefinite, nominative. """
         txt = self._text
-        if self._cat not in { "kvk", "kk", "hk", "lo", "to", "fn", "pfn" }:
-            if form == 'canonical':
-                # If we are asking for the canonical (singular) form, cut away undeclinable numbers
-                # so that 'sautján góðglaða alþingismenn' -> 'góðglaður alþingismaður',
-                # not 'sautján góðglaður alþingismaður'
-                return "" if self._cat == "töl" else txt
+        if self._cat not in { "kvk", "kk", "hk", "lo", "to", "fn", "pfn", "gr" }:
             return txt
         with BIN_Db.get_db() as db:
             meanings = db.lookup_nominative(txt)
@@ -683,11 +747,11 @@ class SimpleTree:
                     elif "mst" in self._vset:
                         if "MST" not in m.beyging:
                             return False
-                    elif "vb" in self._vset:
-                        if "VB" not in m.beyging: # Also applies to EVB
+                    elif "vb" in self._vset or "fvb" in self._vset:
+                        if "FVB" not in m.beyging:
                             return False
-                    elif "sb" in self._vset:
-                        if "SB" not in m.beyging: # Also applies to ESB
+                    elif "sb" in self._vset or "fsb" in self._vset:
+                        if "FSB" not in m.beyging:
                             return False
                 else:
                     # 'indefinite' or 'canonical':
@@ -712,6 +776,7 @@ class SimpleTree:
                 "lo" : filter_func_lo,
                 "to" : filter_func_with_gender,
                 "fn" : filter_func_with_gender,
+                "gr" : filter_func_with_gender,
                 "pfn" : filter_func_without_gender
             }
             meanings = filter(FILTERS.get(self._cat, filter_func_no), meanings)
@@ -727,12 +792,9 @@ class SimpleTree:
                 else:
                     txt = w.lower()
             except StopIteration:
-                # No matching nominative form found: return the original text as-is
-                if self._cat == "to" and form == 'canonical' and "ft" in self._vset:
-                    # ...except if we have a number word marked as plural and we're
-                    # asking for the canonical (singular) form: no such form exists
-                    # and we return an empty string in that case
-                    # ('þriggja alþingismanna' thus becomes 'alþingismaður', not 'þrír alþingismaður')
+                if self._cat == "to" and "ft" in self._vset and form == 'canonical':
+                    # Declinable number, for which there is no singular form available,
+                    # such as "tveir": return an empty string
                     txt = ""
         return txt
 
@@ -765,13 +827,13 @@ class SimpleTree:
         # Concatenate the text from the children
         return " ".join([ ch.text for ch in self.children if ch.text ])
 
-    def _np_form(self, prop):
+    def _np_form(self, prop_func):
         """ Return a nominative form of the noun phrase (or noun/adjective terminal)
             contained within this subtree. Prop is a property accessor that returns
             either x.nominative, x.indefinite or x.canonical. """
         if self.is_terminal:
             # Terminal node: return its nominative form
-            return prop(self)
+            return prop_func(self)
         if self.match_tag("NP"):
             # Noun phrase:
             # Concatenate the nominative forms of the child terminals,
@@ -779,7 +841,7 @@ class SimpleTree:
             result = []
             for ch in self.children:
                 # We do not want to recurse into nested NPs
-                np = prop(ch) if ch.is_terminal else ch.text
+                np = prop_func(ch)
                 if np:
                     result.append(np)
             return " ".join(result)
@@ -790,19 +852,49 @@ class SimpleTree:
     def nominative_np(self):
         """ Return the nominative form of the noun phrase (or noun/adjective terminal)
             contained within this subtree """
-        return self._np_form(lambda x: x.nominative)
+        return self._np_form(lambda node: node.nominative if node.is_terminal else node.text)
 
     @cached_property
     def indefinite_np(self):
         """ Return the indefinite nominative form of the noun phrase (or noun/adjective terminal)
             contained within this subtree """
-        return self._np_form(lambda x: x.indefinite)
+
+        def prop_func(node):
+            if node.is_terminal:
+                if node._cat == "gr":
+                    # Cut away the definite article, if present
+                    # ('hinir ungu alþingismenn' -> 'ungir alþingismenn')
+                    return ""
+                return node.indefinite
+            return node.text
+
+        return cut_definite_pronouns(self._np_form(prop_func))
 
     @cached_property
     def canonical_np(self):
         """ Return the singular indefinite nominative form of the noun phrase (or noun/adjective terminal)
             contained within this subtree """
-        return self._np_form(lambda x: x.canonical)
+
+        def prop_func(node):
+            """ For canonical noun phrases, cut off S-REF and S-THT subtrees since they probably
+                don't make sense any more, with the noun phrase having been converted to singular and all.
+                The same applies to NP-POSS. """
+            if node.is_terminal:
+                if node.tcat == "töl" or (node.tcat == "tala" and "ft" in node._vset):
+                    # If we are asking for the canonical (singular) form, cut away undeclinable numbers
+                    # so that 'sautján góðglaða alþingismenn' -> 'góðglaður alþingismaður',
+                    # not 'sautján góðglaður alþingismaður'; and also cut away declinable plural numbers
+                    return ""
+                if node._cat == "gr":
+                    # Cut away the definite article, if present
+                    # ('hinir ungu alþingismenn' -> 'ungur alþingismaður')
+                    return ""
+                return node.canonical
+            if node.match_tag("S") or node.match_tag("NP-POSS"):
+                return None
+            return node.text
+
+        return cut_definite_pronouns(self._np_form(prop_func))
 
     @property
     def own_text(self):
@@ -835,32 +927,17 @@ class SimpleTree:
     @property
     def persons(self):
         """ Returns all person names occurring in the subtree """
-
-        def is_person(t):
-            terminal = t._head.get("t")
-            return terminal.split("_")[0] == "person" if terminal else False
-
-        return self._list(is_person)
+        return self._list(lambda t: t.tcat == "person")
 
     @property
     def entities(self):
         """ Returns all entity names occurring in the subtree """
-
-        def is_entity(t):
-            terminal = t._head.get("t")
-            return terminal.split("_")[0] == "entity" if terminal else False
-
-        return self._list(is_entity)
+        return self._list(lambda t: t.tcat == "entity")
 
     @property
     def proper_names(self):
         """ Returns all proper names occurring in the subtree """
-
-        def is_proper_name(t):
-            terminal = t._head.get("t")
-            return terminal.split("_")[0] == "sérnafn" if terminal else False
-
-        return self._list(is_proper_name)
+        return self._list(lambda t: t.tcat == "sérnafn")
 
     @property
     def lemmas(self):
@@ -889,15 +966,30 @@ class SimpleTree:
     def all_matches(self, pattern):
         """ Return all subtree roots, including self, that match the given pattern """
         items = self._compile(pattern)
-        return self._all_matches(items)
+        return self._all_matches(items)  # Returns a generator
 
     def first_match(self, pattern):
         """ Return the first subtree root, including self, that matches the given
             pattern. If no subtree matches, return None. """
         try:
-            return next(iter(self.all_matches(pattern)))
+            return next(self.all_matches(pattern))
         except StopIteration:
             return None
+
+    def top_matches(self, pattern):
+        """ Return all subtree roots, including self, that match the given pattern,
+            but not recursively, i.e. we don't include matches within matches """
+        items = self._compile(pattern)
+        return self._top_matches(items)  # Returns a generator
+
+    def _top_matches(self, items):
+        """ If this subtree matches the items, return it. Otherwise, recurse into
+            its children in a left-first traversal. """
+        if self._match(items):
+            yield self
+        else:
+            for child in self.children:
+                yield from child._top_matches(items)
 
     class _NestedList(list):
 

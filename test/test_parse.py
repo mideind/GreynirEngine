@@ -42,7 +42,7 @@ def test_parse(verbose = False):
         # 1
         "Margar málsgreinar koma hér fyrir.",
         # 2
-        "Þetta takast ekki að þáttar.", # Error sentence
+        "Þetta takast ekki að þáttar.",  # Error sentence
         # 3
         "Fjórða málsgreinin er síðust.",
         # 4
@@ -56,7 +56,7 @@ def test_parse(verbose = False):
         # 8
         "Barnið fór í augnrannsóknina eftir húsnæðiskaupin.",
         # 9
-        "Barnið fór í loðfílarannsókn.", # Test composite words
+        "Barnið fór í loðfílarannsókn.",  # Test composite words
         # 10
         "Eðlisfræðingurinn Stephen Hawking lést í dag, á pí-deginum.",
         # 11
@@ -101,9 +101,9 @@ def test_parse(verbose = False):
     assert results[1].tree.nouns == [ "málsgrein" ]
     assert results[2].tree is None # Error sentence
     assert results[3].tree.nouns == [ "málsgrein" ]
-    assert results[4].tree.nouns == [ "Vatnið", "gráða" ] # 'Vatnið' is a proper place name (örnefni)
+    assert results[4].tree.nouns == [ "Vatnið", "gráða" ]  # 'Vatnið' is a proper place name (örnefni)
     assert results[5].tree.nouns == [ ]
-    assert results[6].tree.nouns == [ "Þingvellir" ] # 'árið 1944' er tímaliður en ekki nafnliður
+    assert results[6].tree.nouns == [ "Þingvellir" ]  # 'árið 1944' er tímaliður en ekki nafnliður
     assert results[7].tree.nouns == [ "hús", "strönd" ]
     assert results[8].tree.nouns == [ "barn", "augnrannsókn", "húsnæðiskaup" ]
     assert results[9].tree.nouns == [ "barn", "loðfíla-rannsókn" ]
@@ -114,7 +114,7 @@ def test_parse(verbose = False):
     # Test that the parser finds the correct verbs
     assert results[0].tree.verbs == [ "vera", "vera", "gera" ]
     assert results[1].tree.verbs == [ "koma" ]
-    assert results[2].tree is None # Error sentence
+    assert results[2].tree is None  # Error sentence
     assert results[3].tree.verbs == [ "vera" ]
     assert results[4].tree.verbs == [ "vera", "vera" ]
     assert results[5].tree.verbs == [ "skulda" ]
@@ -129,7 +129,7 @@ def test_parse(verbose = False):
     assert results[0].tree.lemmas == [ "hér", "vera", "vera", "að", "gera",
         "tilraun", "með", "þáttun", "." ]
     assert results[1].tree.lemmas == [ "margur", "málsgrein", "koma", "hér", "fyrir", "." ]
-    assert results[2].tree is None # Error sentence
+    assert results[2].tree is None  # Error sentence
     assert results[3].tree.lemmas == [ "fjórði", "málsgrein", "vera", "síðari", "." ]
     assert results[4].tree.lemmas == [ "Vatnið", "vera", "30,5", "gráða", "heitur",
         "og", "ég", "vera", "ánægður", "með", "það", "." ]
@@ -261,7 +261,7 @@ def test_properties():
     s = r.parse("Þetta er prófun.")["sentences"][0]
     _ = s.score
     _ = s.tokens
-    _ = s.tree.view # Should not raise exception
+    _ = s.tree.view  # Should not raise exception
     try:
         _ = s.tree.tree
         assert False, "Should have raised exception"
@@ -469,13 +469,14 @@ def test_complex(verbose = False):
 
 def test_measurements():
     s = r.parse_single("Ég vildi leggja rúm 220 tonn en hann vildi kaupa "
-        "tæplega 3,8 km af efninu í yfir 32°F hita.")
+        "tæplega 3,8 km af efninu í yfir 32°F frosti.")
     assert (s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ VP so_et_p1 so_1_þf_nh "
         "NP-OBJ lo_þf_ft_hk tala_ft_þf_hk no_ft_þf_hk /NP-OBJ /VP /IP /S-MAIN st "
         "S-MAIN IP NP-SUBJ pfn_kk_et_nf /NP-SUBJ VP-SEQ VP so_et_p3 so_1_þf_nh "
         "NP-OBJ NP-MEASURE ao mælieining mælieining /NP-MEASURE /NP-OBJ /VP "
         "PP fs_þgf NP no_et_þgf_hk PP fs_þgf NP NP-POSS NP-MEASURE ao mælieining "
-        "mælieining /NP-MEASURE /NP-POSS no_et_þgf_kk /NP /PP /NP /PP /VP-SEQ /IP /S-MAIN p /P")
+        "mælieining /NP-MEASURE /NP-POSS no_et_þgf_hk /NP /PP /NP "
+        "/PP /VP-SEQ /IP /S-MAIN p /P")
 
 
 def test_attachment(verbose = False):
@@ -485,16 +486,88 @@ def test_attachment(verbose = False):
     for _ in range(50):
         # Test consistency for 50 iterations
         s = r.parse_single("Ég setti dæmi um þetta í bókina mína.")
-        assert (s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ " # Ég
-            "VP-SEQ VP so_1_þf_et_p1 NP-OBJ no_et_þf_hk " # setti dæmi
-            "PP fs_þf NP fn_et_þf_hk /NP /PP " # um þetta
-            "/NP-OBJ /VP PP fs_þf NP no_et_þf_kvk fn_et_þf_kvk /NP /PP /VP-SEQ " # í bókina mína
-            "/IP /S-MAIN p /P") # .
+        assert (s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ "  # Ég
+            "VP-SEQ VP so_1_þf_et_p1 NP-OBJ no_et_þf_hk "  # setti dæmi
+            "PP fs_þf NP fn_et_þf_hk /NP /PP "  # um þetta
+            "/NP-OBJ /VP PP fs_þf NP no_et_þf_kvk fn_et_þf_kvk /NP /PP /VP-SEQ "  # í bókina mína
+            "/IP /S-MAIN p /P")  # .
         s = r.parse_single("Ég setti dæmi í bókina mína um þetta.")
-        assert (s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ " # Ég
-            "VP-SEQ VP so_1_þf_et_p1 NP-OBJ no_et_þf_hk " # setti dæmi
-            "/NP-OBJ /VP PP fs_þf NP no_et_þf_kvk fn_et_þf_kvk " # í bókina mína
-            "PP fs_þf NP fn_et_þf_hk /NP /PP /NP /PP /VP-SEQ /IP /S-MAIN p /P") # um þetta .
+        assert (s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ "  # Ég
+            "VP-SEQ VP so_1_þf_et_p1 NP-OBJ no_et_þf_hk "  # setti dæmi
+            "/NP-OBJ /VP PP fs_þf NP no_et_þf_kvk fn_et_þf_kvk "  # í bókina mína
+            "PP fs_þf NP fn_et_þf_hk /NP /PP /NP /PP /VP-SEQ /IP /S-MAIN p /P")  # um þetta .
+
+
+def test_nominative():
+    """ Test conversion of noun phrases to nominative/indefinite/canonical forms """
+
+    s = r.parse_single("Frábærum bílskúrum þykir þetta leiðinlegt.")
+    subj = s.tree.S_MAIN.IP.NP_SUBJ
+    assert "{0} {1}".format(subj[0].nominative, subj[1].nominative) == "Frábærir bílskúrar"
+    assert "{0} {1}".format(subj[0].indefinite, subj[1].indefinite) == "Frábærir bílskúrar"
+    assert "{0} {1}".format(subj[0].canonical, subj[1].canonical) == "Frábær bílskúr"
+    assert subj.nominative_np == "Frábærir bílskúrar"
+    assert subj.indefinite_np == "Frábærir bílskúrar"
+    assert subj.canonical_np == "Frábær bílskúr"
+
+    s = r.parse_single("Frábærari bílskúrum þykir þetta leiðinlegt.")
+    subj = s.tree.S_MAIN.IP.NP_SUBJ
+    assert "{0} {1}".format(subj[0].nominative, subj[1].nominative) == "Frábærari bílskúrar"
+    assert "{0} {1}".format(subj[0].indefinite, subj[1].indefinite) == "Frábærari bílskúrar"
+    assert "{0} {1}".format(subj[0].canonical, subj[1].canonical) == "Frábærari bílskúr"
+    assert subj.nominative_np == "Frábærari bílskúrar"
+    assert subj.indefinite_np == "Frábærari bílskúrar"
+    assert subj.canonical_np == "Frábærari bílskúr"
+
+    s = r.parse_single("Frábærustum bílskúrum þykir þetta leiðinlegt.")
+    subj = s.tree.S_MAIN.IP.NP_SUBJ
+    assert "{0} {1}".format(subj[0].nominative, subj[1].nominative) == "Frábærastir bílskúrar"
+    assert "{0} {1}".format(subj[0].indefinite, subj[1].indefinite) == "Frábærastir bílskúrar"
+    assert "{0} {1}".format(subj[0].canonical, subj[1].canonical) == "Frábærastur bílskúr"
+    assert subj.nominative_np == "Frábærastir bílskúrar"
+    assert subj.indefinite_np == "Frábærastir bílskúrar"
+    assert subj.canonical_np == "Frábærastur bílskúr"
+
+    s = r.parse_single("Frábæru bílskúrunum þykir þetta leiðinlegt.")
+    subj = s.tree.S_MAIN.IP.NP_SUBJ
+    assert "{0} {1}".format(subj[0].nominative, subj[1].nominative) == "Frábæru bílskúrarnir"
+    assert "{0} {1}".format(subj[0].indefinite, subj[1].indefinite) == "Frábærir bílskúrar"
+    assert "{0} {1}".format(subj[0].canonical, subj[1].canonical) == "Frábær bílskúr"
+    assert subj.nominative_np == "Frábæru bílskúrarnir"
+    assert subj.indefinite_np == "Frábærir bílskúrar"
+    assert subj.canonical_np == "Frábær bílskúr"
+
+    s = r.parse_single("Frábærari bílskúrunum þykir þetta leiðinlegt.")
+    subj = s.tree.S_MAIN.IP.NP_SUBJ
+    assert "{0} {1}".format(subj[0].nominative, subj[1].nominative) == "Frábærari bílskúrarnir"
+    assert "{0} {1}".format(subj[0].indefinite, subj[1].indefinite) == "Frábærari bílskúrar"
+    assert "{0} {1}".format(subj[0].canonical, subj[1].canonical) == "Frábærari bílskúr"
+    assert subj.nominative_np == "Frábærari bílskúrarnir"
+    assert subj.indefinite_np == "Frábærari bílskúrar"
+    assert subj.canonical_np == "Frábærari bílskúr"
+
+    s = r.parse_single("Ótrúlega frábærustu bílskúrunum þriggja góðglöðu alþingismannanna "
+        "sem fóru út þykir þetta leiðinlegt.")
+    subj = s.tree.S_MAIN.IP.NP_SUBJ
+    assert ("{0} {1} {2}".format(subj[0].nominative, subj[1].nominative, subj[2].nominative) ==
+        "Ótrúlega frábærustu bílskúrarnir")
+    assert ("{0} {1} {2}".format(subj[0].indefinite, subj[1].indefinite, subj[2].indefinite) ==
+        "Ótrúlega frábærastir bílskúrar")
+    assert ("{0} {1} {2}".format(subj[0].canonical, subj[1].canonical, subj[2].canonical) ==
+        "Ótrúlega frábærastur bílskúr")
+    assert subj.nominative_np == "Ótrúlega frábærustu bílskúrarnir þriggja góðglöðu alþingismannanna sem fóru út"
+    assert subj.indefinite_np == "Ótrúlega frábærastir bílskúrar þriggja góðglöðu alþingismannanna sem fóru út"
+    assert subj.canonical_np == "Ótrúlega frábærastur bílskúr"
+    subj = subj.NP_POSS
+    assert subj.nominative_np == "þrír góðglöðu alþingismennirnir sem fóru út"
+    assert subj.indefinite_np == "þrír góðglaðir alþingismenn sem fóru út"
+    assert subj.canonical_np == "góðglaður alþingismaður"
+
+    s = r.parse_single("Ég var í Hinu íslenska bókmenntafélagi.")
+    subj = s.tree.S_MAIN.IP.VP.PP.NP
+    assert subj.nominative_np == "Hið íslenska bókmenntafélag"
+    assert subj.indefinite_np == "íslenskt bókmenntafélag"
+    assert subj.canonical_np == "íslenskt bókmenntafélag"
 
 
 def test_finish():
@@ -515,5 +588,6 @@ if __name__ == "__main__":
     test_complex(verbose = True)
     test_attachment(verbose = True)
     test_measurements()
+    test_nominative()
     test_finish()
 

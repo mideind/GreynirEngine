@@ -522,6 +522,8 @@ The SimpleTree class
 
 Instances of this class are returned from :py:attr:`_Sentence.tree`.
 They describe a simplified parse tree or a part (subtree) thereof.
+The tree can be queried in various ways for information about its
+head (top) node, as well as about its children and contained subtrees.
 
 .. py:class:: SimpleTree
 
@@ -615,16 +617,6 @@ They describe a simplified parse tree or a part (subtree) thereof.
         Returns a generator for all descendants of this tree. This returns
         a :py:class:`SimpleTree` instance for every child, recursively,
         using left-first traversal.
-
-    .. py:method:: match(self, pattern : str) -> bool
-
-        Checks whether this subtree matches the given pattern.
-
-        :param str pattern: The pattern to match against. For information
-            about pattern specifications, see :ref:`patterns`.
-
-        :return: ``True`` if this subtree matches the pattern,
-            or ``False`` if not.
 
     .. py:attribute:: view
 
@@ -819,4 +811,111 @@ They describe a simplified parse tree or a part (subtree) thereof.
         be established and is applicable) of all *proper names (sérnöfn*)
         within this subtree, i.e. the root and all its descendants, recursively.
         The list is in left-traversal order.
+
+    .. py:method:: match(self, pattern : str) -> bool
+
+        Checks whether this subtree matches the given pattern.
+
+        :param str pattern: The pattern to match against. For information
+            about pattern specifications, see :ref:`patterns`.
+
+        :return: ``True`` if this subtree matches the pattern,
+            or ``False`` if not.
+
+    .. py:method:: first_match(self, pattern : str) -> SimpleTree
+
+        Finds the first match of the given pattern within this subtree.
+        The first match may be the subtree itself. If no match is found,
+        returns ``None``.
+
+        :param str pattern: The pattern to match against. For information
+            about pattern specifications, see :ref:`patterns`.
+
+        :return: A :py:class:`SimpleTree` instance that matches the given
+            pattern, or ``None``.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Kristín málaði hús Steingríms")
+            # Show the first possessive noun phrase ('Steingríms')
+            print(s.tree.first_match("NP-POSS").nominative_np)
+
+        outputs::
+
+            Steingrímur
+
+    .. py:method:: all_matches(self, pattern : str) -> generator[SimpleTree]
+
+        Returns a generator of all matches of the given pattern within this subtree.
+        The generator may yield the subtree itself, if it matches the pattern.
+        Note that the search is recursive and exhaustive, so that matches within matching
+        subtrees (for instance noun phrases within noun phrases) will also be returned.
+
+        :param str pattern: The pattern to match against. For information
+            about pattern specifications, see :ref:`patterns`.
+
+        :return: A generator of :py:class:`SimpleTree` instances that match the given
+            pattern.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Stóri feiti jólasveinninn beislaði "
+                "fjögur sætustu hreindýrin og ók rauða vagninum "
+                "með fjölda gjafa til spenntu barnanna sem biðu "
+                "milli vonar og ótta.")
+            print("\n".join(n.nominative_np for n in s.tree.all_matches("NP")))
+
+        outputs::
+
+            Stóri feiti jólasveinninn
+            fjögur sætustu hreindýrin
+            rauði vagninn með fjölda pakka til spenntu barnanna sem biðu milli vonar og ótta
+            fjöldi gjafa til spenntu barnanna sem biðu milli vonar og ótta
+            gjafir til spenntu barnanna sem biðu milli vonar og ótta
+            spenntu börnin sem biðu milli vonar og ótta
+
+        Note that *milli vonar og ótta* is parsed as an adverbial phrase. The nouns
+        *von* and *ótti* are thus not included in the list of noun phrases.
+
+        Also note that *rauði vagninn með fjölda gjafa til spenntu barnanna sem biðu milli vonar og ótta*
+        is a noun phrase containing two nested noun phrases. :py:meth:`SimpleTree.all_matches()` returns
+        all three noun phrases, also the nested ones. If you only want the outermost (top) matching tree
+        for a pattern, use :py:meth:`SimpleTree.top_matches()` instead.
+
+    .. py:method:: top_matches(self, pattern : str) -> generator[SimpleTree]
+
+        Returns a generator of all topmost (enclosing) matches of the given pattern within this subtree.
+        The generator may yield the subtree itself (only), if it matches the pattern. This
+        search is different from :py:meth:`SimpleTree.all_matches()` in that it is
+        recursive but not exhaustive, i.e. does not return matches within matches.
+
+        :param str pattern: The pattern to match against. For information
+            about pattern specifications, see :ref:`patterns`.
+
+        :return: A generator of :py:class:`SimpleTree` instances that match the given
+            pattern.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Stóri feiti jólasveinninn beislaði "
+                "fjögur sætustu hreindýrin og ók rauða vagninum "
+                "með fjölda gjafa til spenntu barnanna sem biðu "
+                "milli vonar og ótta.")
+            print("\n".join(n.nominative_np for n in s.tree.top_matches("NP")))
+
+        outputs::
+
+            Stóri feiti jólasveinninn
+            fjögur sætustu hreindýrin
+            rauði vagninn með fjölda gjafa til spenntu barnanna sem biðu milli vonar og ótta
+
+        Note that *rauði vagninn með fjölda gjafa til spenntu barnanna sem biðu milli vonar og ótta*
+        is a single noun phrase containing two nested noun phrases. If you want all matching phrases for a
+        pattern, including nested ones, use :py:meth:`SimpleTree.all_matches()` instead.
 
