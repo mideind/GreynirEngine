@@ -665,7 +665,9 @@ class SimpleTree:
                         result.append(
                             next(
                                 filter(
-                                    lambda m: m.ordfl == gender and m.fl in { "ism", "föð", "móð" }, meanings
+                                    lambda m: m.ordfl == gender and "FT" not in m.beyging and
+                                        m.fl in { "ism", "föð", "móð" },
+                                    meanings
                                 )
                             ).ordmynd
                         )
