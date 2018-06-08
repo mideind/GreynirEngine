@@ -74,6 +74,7 @@ The sentence object has a number of properties, including ``sent.tidy_text``
 which returns a normalized form of the tokenized sentence.
 
 If the sentence was successfully parsed, the ``sent.tree`` property
+(of type :py:class:`SimpleTree`)
 contains its best parse tree. This tree can be further queried via
 properties such as ``sent.lemmas`` which returns a list of the
 word lemmas in the sentence, and ``sent.tree.view`` which

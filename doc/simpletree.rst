@@ -76,7 +76,8 @@ head (top) node, as well as about its children and contained subtrees.
     .. py:attribute:: tcat
 
         Returns a ``str`` with the terminal :ref:`category <categories>` corresponding to this
-        subtree, e.g. ``no`` for nouns or ``dags`` for dates.
+        subtree, e.g. ``no`` for nouns or ``dags`` for dates. If this subtree does not
+        correspond to a terminal, an empty string is returned.
 
     .. py:method:: match_tag(self, item : str) -> bool
 
