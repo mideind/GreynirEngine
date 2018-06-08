@@ -569,6 +569,44 @@ def test_nominative():
     assert subj.indefinite_np == "íslenskt bókmenntafélag"
     assert subj.canonical_np == "íslenskt bókmenntafélag"
 
+    s = r.parse_single("Kristín málaði hús Hönnu Önfjörð Álfhildardóttur")
+    assert s.tree.first_match("NP-POSS").nominative_np == "Hanna Önfjörð Álfhildardóttir"
+
+    s = r.parse_single("Stóri feiti jólasveinninn beislaði "
+       "fjögur sætustu hreindýrin og ók rauða vagninum "
+       "með fjölda gjafa til spenntu barnanna sem biðu "
+       "milli vonar og ótta.")
+    assert len(list(s.tree.all_matches("NP"))) == 6
+    assert len(list(s.tree.top_matches("NP"))) == 3
+
+    assert (
+        list(n.text for n in s.tree.all_matches("( no | lo)")) ==
+        [
+            'Stóri', 'feiti', 'jólasveinninn', 'sætustu', 'hreindýrin', 'rauða', 'vagninum',
+            'fjölda', 'gjafa', 'spenntu', 'barnanna'
+        ]
+    )
+    assert (
+        list(n.nominative for n in s.tree.all_matches("( no | lo)")) ==
+        [
+            'Stóri', 'feiti', 'jólasveinninn', 'sætustu', 'hreindýrin', 'rauði', 'vagninn',
+            'fjöldi', 'gjafir', 'spenntu', 'börnin'
+        ]
+    )
+    assert (
+        list(n.canonical for n in s.tree.all_matches("( no | lo)")) ==
+        [
+            'Stór', 'feitur', 'jólasveinn', 'sætast', 'hreindýr', 'rauður', 'vagn',
+            'fjöldi', 'gjöf', 'spennt', 'barn'
+        ]
+    )
+    assert (
+        list(n.canonical for t in s.tree.top_matches("NP") for n in t.all_matches("no")) ==
+        [
+            'jólasveinn', 'hreindýr', 'vagn', 'fjöldi', 'gjöf', 'barn'
+        ]
+    )
+
 
 def test_finish():
     r.__class__.cleanup()

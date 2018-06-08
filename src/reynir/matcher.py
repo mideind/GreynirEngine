@@ -650,8 +650,35 @@ class SimpleTree:
             or 'canonical' for the singular, indefinite, nominative. """
         txt = self._text
         if self._cat not in { "kvk", "kk", "hk", "lo", "to", "fn", "pfn", "gr" }:
+            # This is not a potentially declined terminal node: return the original text
             return txt
         with BIN_Db.get_db() as db:
+
+            if self.tcat == "person":
+                # Special case for person names as they may have embedded spaces
+                result = []
+                gender = self._cat
+                for name in txt.split():
+                    meanings = db.lookup_nominative(name)
+                    try:
+                        # Try to find an 'ism', 'föð' or 'móð' nominative form of the correct gender
+                        result.append(
+                            next(
+                                filter(
+                                    lambda m: m.ordfl == gender and m.fl in { "ism", "föð", "móð" }, meanings
+                                )
+                            ).ordmynd
+                        )
+                    except StopIteration:
+                        # No 'ism', 'föð' or 'móð' nominative form
+                        try:
+                            # Try the first available nominative form, regardless of what it is
+                            result.append(next(iter(meanings)).ordmynd)
+                        except StopIteration:
+                            # No such thing: use the part as-is
+                            result.append(name)
+                return " ".join(result)
+
             meanings = db.lookup_nominative(txt)
             if not meanings and not txt.islower():
                 # We don't find this form in BÍN:
@@ -816,6 +843,8 @@ class SimpleTree:
     @property
     def _cat(self):
         """ Return the word category of this node only, if any """
+        # This is the category that is picked up from BÍN, not the terminal
+        # category. The terminal category is available in the .tcat property)
         return self._head.get("c")
 
     @cached_property

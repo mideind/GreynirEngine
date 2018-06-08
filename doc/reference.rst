@@ -760,6 +760,127 @@ head (top) node, as well as about its children and contained subtrees.
         Lemmas of composite words include hyphens ``-`` at the component boundaries.
         Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
 
+    .. py:attribute:: nominative
+
+        Returns a ``str`` containing the *nominative* form, if it exists, of the word
+        corresponding to the root of this subtree only. If no nominative form exists,
+        the word or token text is returned unchanged. For nonterminal
+        roots, an empty string is returned.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Góðglaða karlana langar í hest.")
+            print(" ".join(n.nominative for n in s.tree.descendants if n.is_terminal))
+
+        outputs::
+
+            Góðglaðir karlarnir langar í hestur .
+
+    .. py:attribute:: indefinite
+
+        Returns a ``str`` containing the *indefinite nominative* form, if it exists, of the word
+        corresponding to the root of this subtree only. If no such form exists,
+        the word or token text is returned unchanged. For nonterminal
+        roots, an empty string is returned.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Góðglaða karlana langar í hest.")
+            print(" ".join(n.indefinite for n in s.tree.descendants if n.is_terminal))
+
+        outputs::
+
+            Góðglaðir karlar langar í hestur .
+
+    .. py:attribute:: canonical
+
+        Returns a ``str`` containing the *singular indefinite nominative* form,
+        if it exists, of the word corresponding to the root of this subtree only.
+        If no such form exists, the word or token text is returned unchanged.
+        For nonterminal roots, an empty string is returned.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Góðglaða karlana langar í hest.")
+            print(" ".join(n.canonical for n in s.tree.descendants if n.is_terminal))
+
+        outputs::
+
+            Góðglaður karl langar í hestur .
+
+    .. py:attribute:: nominative_np
+
+        Returns a ``str`` containing the text within the subtree, except that if the
+        subtree root is a noun phrase (``NP``) nonterminal, that phrase is converted to
+        *nominative* form (*nefnifall*).
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Ótrúlega frábærum bílstjórum þriggja góðglöðu alþingismannanna "
+                "sem fóru út þykir þetta leiðinlegt.")
+            print(s.tree.S_MAIN.IP.NP_SUBJ.nominative_np)
+            print(s.tree.S_MAIN.IP.NP_SUBJ.NP_POSS.nominative_np)
+
+        outputs::
+
+            Ótrúlega frábærir bílstjórar þriggja góðglöðu alþingismannanna sem fóru út
+            þrír góðglöðu alþingismennirnir sem fóru út
+
+    .. py:attribute:: indefinite_np
+
+        Returns a ``str`` containing the text within the subtree, except that if the
+        subtree root is a noun phrase (``NP``) nonterminal, that phrase is converted to *indefinite nominative* form
+        (*nefnifall án greinis*). The determiner (*laus greinir*) and any demonstrative pronouns
+        (*ábendingarfornöfn*) are cut off the front of the noun phrases in the conversion, if present.
+        Adjectives are converted from definite (*veik beyging*) to indefinite forms (*sterk beyging*).
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Hinum ótrúlega frábæru bílstjórum þriggja góðglöðu alþingismannanna "
+                "sem fóru út þykir þetta leiðinlegt.")
+            print(s.tree.S_MAIN.IP.NP_SUBJ.indefinite_np)
+            print(s.tree.S_MAIN.IP.NP_SUBJ.NP_POSS.indefinite_np)
+
+        outputs::
+
+            ótrúlega frábærir bílstjórar þriggja góðglöðu alþingismannanna sem fóru út
+            þrír góðglaðir alþingismenn sem fóru út
+
+    .. py:attribute:: canonical_np
+
+        Returns a ``str`` containing the text within the subtree, except that if the
+        subtree root is a noun phrase (``NP``) nonterminal, that phrase is converted to
+        *singular indefinite nominative* form
+        (*nefnifall eintölu án greinis*). The determiner (*laus greinir*) and any demonstrative pronouns
+        (*ábendingarfornöfn*) are cut off the front of the noun phrases in the conversion, if present.
+        Also, associated possessive phrases and referential sentences are removed
+        (*mennina sem ég þekkti vel* -> *maður*). Adjectives are converted from definite
+        (*veik beyging*) to indefinite forms (*sterk beyging*).
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Hinum ótrúlega frábæru bílstjórum þriggja góðglöðu alþingismannanna "
+                "sem fóru út þykir þetta leiðinlegt.")
+            print(s.tree.S_MAIN.IP.NP_SUBJ.canonical_np)
+            print(s.tree.S_MAIN.IP.NP_SUBJ.NP_POSS.canonical_np)
+
+        outputs::
+
+            ótrúlega frábær bílstjóri
+            góðglaður alþingismaður
+
     .. py:attribute:: nouns
 
         Returns a ``list`` of the lemmas of all *nouns* within this subtree, i.e. the
@@ -878,12 +999,12 @@ head (top) node, as well as about its children and contained subtrees.
             gjafir til spenntu barnanna sem biðu milli vonar og ótta
             spenntu börnin sem biðu milli vonar og ótta
 
-        Note that *milli vonar og ótta* is parsed as an adverbial phrase. The nouns
+        Note that *milli vonar og ótta* is parsed as a fixed adverbial phrase. The nouns
         *von* and *ótti* are thus not included in the list of noun phrases.
 
         Also note that *rauði vagninn með fjölda gjafa til spenntu barnanna sem biðu milli vonar og ótta*
         is a noun phrase containing two nested noun phrases. :py:meth:`SimpleTree.all_matches()` returns
-        all three noun phrases, also the nested ones. If you only want the outermost (top) matching tree
+        all three noun phrases, also the nested ones. If you only want the outermost (top) matching subtree
         for a pattern, use :py:meth:`SimpleTree.top_matches()` instead.
 
     .. py:method:: top_matches(self, pattern : str) -> generator[SimpleTree]

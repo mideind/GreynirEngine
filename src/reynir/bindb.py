@@ -192,8 +192,8 @@ class BIN_Db:
     def lookup_name_gender(self, name):
         """ Given a person name, lookup its gender. """
         if not name:
-            return "hk" # Unknown gender
-        w = name.split(maxsplit = 1)[0] # First name
+            return "hk"  # Unknown gender
+        w = name.split(maxsplit = 1)[0]  # First name
         g = self.meanings(w)
         m = next((x for x in g if x.fl in { "ism", "nafn" }), None)
         if m:
@@ -206,7 +206,7 @@ class BIN_Db:
             m = BIN_Meaning._make(m)
             if m.fl in { "ism", "nafn" }:
                 return m.ordfl
-        return "hk" # Unknown gender
+        return "hk"  # Unknown gender
 
     @staticmethod
     def prefix_meanings(mlist, prefix):
