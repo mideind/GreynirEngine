@@ -19,7 +19,8 @@ interpreter) installed on your system:
     $ sudo apt-get install python3-dev
     $ sudo apt-get install python3.6-dev
 
-On Windows, you may need the `Visual Studio Build Tools 2017 <http://landinghub.visualstudio.com/visual-cpp-build-tools>`_,
+On Windows, you may need the latest
+`Visual Studio Build Tools <https://www.visualstudio.com/downloads/?q=build+tools+for+visual+studio>`_,
 specifically the Visual C++ build tools, installed on your PC along with the Windows 10 SDK.
 
 Install with pip
