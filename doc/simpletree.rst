@@ -256,7 +256,8 @@ head (top) node, as well as about its children and contained subtrees.
             from reynir import Reynir
             r = Reynir()
             s = r.parse_single("Góðglaða karlana langar í hest.")
-            print(" ".join(n.nominative for n in s.tree.descendants if n.is_terminal))
+            print(" ".join(n.nominative
+                for n in s.tree.descendants if n.is_terminal))
 
         outputs::
 
@@ -274,7 +275,8 @@ head (top) node, as well as about its children and contained subtrees.
             from reynir import Reynir
             r = Reynir()
             s = r.parse_single("Góðglaða karlana langar í hest.")
-            print(" ".join(n.indefinite for n in s.tree.descendants if n.is_terminal))
+            print(" ".join(n.indefinite
+                for n in s.tree.descendants if n.is_terminal))
 
         outputs::
 
@@ -292,7 +294,8 @@ head (top) node, as well as about its children and contained subtrees.
             from reynir import Reynir
             r = Reynir()
             s = r.parse_single("Góðglaða karlana langar í hest.")
-            print(" ".join(n.canonical for n in s.tree.descendants if n.is_terminal))
+            print(" ".join(n.canonical
+                for n in s.tree.descendants if n.is_terminal))
 
         outputs::
 
@@ -308,7 +311,8 @@ head (top) node, as well as about its children and contained subtrees.
 
             from reynir import Reynir
             r = Reynir()
-            s = r.parse_single("Ótrúlega frábærum bílstjórum þriggja góðglöðu alþingismannanna "
+            s = r.parse_single("Ótrúlega frábærum bílstjórum "
+                "þriggja góðglöðu alþingismannanna "
                 "sem fóru út þykir þetta leiðinlegt.")
             print(s.tree.S_MAIN.IP.NP_SUBJ.nominative_np)
             print(s.tree.S_MAIN.IP.NP_SUBJ.NP_POSS.nominative_np)
@@ -330,7 +334,8 @@ head (top) node, as well as about its children and contained subtrees.
 
             from reynir import Reynir
             r = Reynir()
-            s = r.parse_single("Hinum ótrúlega frábæru bílstjórum þriggja góðglöðu alþingismannanna "
+            s = r.parse_single("Hinum ótrúlega frábæru bílstjórum "
+                "þriggja góðglöðu alþingismannanna "
                 "sem fóru út þykir þetta leiðinlegt.")
             print(s.tree.S_MAIN.IP.NP_SUBJ.indefinite_np)
             print(s.tree.S_MAIN.IP.NP_SUBJ.NP_POSS.indefinite_np)
@@ -355,7 +360,8 @@ head (top) node, as well as about its children and contained subtrees.
 
             from reynir import Reynir
             r = Reynir()
-            s = r.parse_single("Hinum ótrúlega frábæru bílstjórum þriggja góðglöðu alþingismannanna "
+            s = r.parse_single("Hinum ótrúlega frábæru bílstjórum "
+                "þriggja góðglöðu alþingismannanna "
                 "sem fóru út þykir þetta leiðinlegt.")
             print(s.tree.S_MAIN.IP.NP_SUBJ.canonical_np)
             print(s.tree.S_MAIN.IP.NP_SUBJ.NP_POSS.canonical_np)
