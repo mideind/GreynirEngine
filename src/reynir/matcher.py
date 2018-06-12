@@ -310,6 +310,15 @@ def cut_definite_pronouns(txt):
         However, if the text consists of only definite pronouns, it is returned
         as-is. """
     lower_txt = txt.lower()
+    if lower_txt.startswith("það að"):
+        # Make an exception for 'það að X sé Y' - this is OK to return,
+        # even as an indefinite form
+        return txt
+    # 'Stefna Norður-Kóreu hefur ávallt verið sú að Bandaríkin setjist við samningaborðið'
+    # -> 'það að Bandaríkin setjist við samningaborðið'
+    for prefix in ("sá að ", "sú að "):
+        if lower_txt.startswith(prefix):
+            return "það að " + txt[len(prefix):]
     a = lower_txt.split()
     len_a = len(a)
     if not len_a:
@@ -648,10 +657,11 @@ class SimpleTree:
             The form can be 'nominative' for the nominative case only,
             'indefinite' for the indefinite nominative form,
             or 'canonical' for the singular, indefinite, nominative. """
-        txt = self._text
         if self._cat not in { "kvk", "kk", "hk", "lo", "to", "fn", "pfn", "gr" }:
             # This is not a potentially declined terminal node: return the original text
-            return txt
+            return self._text
+        txt = self._text
+        prefix = ""
         with BIN_Db.get_db() as db:
 
             if self.tcat == "person":
@@ -681,6 +691,22 @@ class SimpleTree:
                             result.append(name)
                 return " ".join(result)
 
+            # Find the composite word prefix, if any
+            lemma = self._lemma
+            if "-" in lemma and "abbrev" not in self._vset:
+                # This is a composite word ("bakgrunns-upplýsingar")
+                a = lemma.rsplit("-", maxsplit=1)
+                prefix = a[0].replace("-", "")
+                lemma = a[1]
+                # Cut the prefix off the front of the word form
+                txt = txt[len(prefix):]
+                if txt and txt[0] == '-':
+                    # The original word may have been hyphenated
+                    # ('Norður-Kóreu'), in which case we want
+                    # to lookup 'Kóreu', not '-Kóreu'
+                    txt = txt[1:]
+                    prefix += '-'
+
             meanings = db.lookup_nominative(txt)
             if not meanings and not txt.islower():
                 # We don't find this form in BÍN:
@@ -692,7 +718,7 @@ class SimpleTree:
 
             def filter_func_no(m):
                 """ Filter function for nouns """
-                if m.stofn != self._lemma or m.ordfl != self._cat:
+                if m.stofn != lemma or m.ordfl != self._cat:
                     return False
                 if form == 'canonical':
                     # Only return singular forms
@@ -714,7 +740,7 @@ class SimpleTree:
 
             def filter_func_without_gender(m):
                 """ Filter function for personal pronouns """
-                if m.stofn != self._lemma or m.ordfl != self._cat:
+                if m.stofn != lemma or m.ordfl != self._cat:
                     return False
                 if form == 'canonical':
                     # Only return singular forms
@@ -729,7 +755,7 @@ class SimpleTree:
 
             def filter_func_with_gender(m):
                 """ Filter function for nonpersonal pronouns and declinable number words """
-                if m.stofn != self._lemma or m.ordfl != self._cat:
+                if m.stofn != lemma or m.ordfl != self._cat:
                     return False
                 # Match the original word in terms of gender
                 gender = next(iter(self._vset & { "kk", "kvk", "hk" }), "kk")
@@ -748,7 +774,7 @@ class SimpleTree:
 
             def filter_func_lo(m):
                 """ Filter function for adjectives """
-                if m.stofn != self._lemma or m.ordfl != "lo":
+                if m.stofn != lemma or m.ordfl != "lo":
                     return False
                 # Match the original word in terms of gender
                 gender = next(iter(self._vset & { "kk", "kvk", "hk" }), "kk")
@@ -777,10 +803,14 @@ class SimpleTree:
                         if "MST" not in m.beyging:
                             return False
                     elif "vb" in self._vset or "fvb" in self._vset:
-                        if "FVB" not in m.beyging:
+                        # We are satisfied with any adjective that has
+                        # 'FVB', or no degree indicator
+                        if any(degree in m.beyging for degree in ("FSB", "MST", "EVB", "ESB")):
                             return False
                     elif "sb" in self._vset or "fsb" in self._vset:
-                        if "FSB" not in m.beyging:
+                        # We are satisfied with any adjective that has
+                        # 'FSB', or no degree indicator
+                        if any(degree in m.beyging for degree in ("FVB", "MST", "EVB", "ESB")):
                             return False
                 else:
                     # 'indefinite' or 'canonical':
@@ -796,7 +826,10 @@ class SimpleTree:
                             return False
                     else:
                         # Normal degree
-                        if "FSB" not in m.beyging:
+                        # Note that some adjectives (ordfl='lo') have
+                        # no degree indication in BÍN. It's therefore not
+                        # correct to simply check for the presence of FSB here.
+                        if any(degree in m.beyging for degree in ("FVB", "MST", "EVB", "ESB")):
                             return False
                 return True
 
@@ -813,7 +846,9 @@ class SimpleTree:
                 # Choose the first nominative form that got past the filter
                 w = next(meanings).ordmynd
                 # Try to match the capitalization of the original word
-                if txt[0].isupper():
+                if prefix and prefix[-1] != '-':
+                    txt = w.lower()
+                elif txt[0].isupper():
                     if txt.isupper():
                         txt = w.upper()
                     else:
@@ -824,8 +859,8 @@ class SimpleTree:
                 if self._cat == "to" and "ft" in self._vset and form == 'canonical':
                     # Declinable number, for which there is no singular form available,
                     # such as "tveir": return an empty string
-                    txt = ""
-        return txt
+                    txt = prefix = ""
+        return prefix + txt
 
     @cached_property
     def nominative(self):
@@ -870,12 +905,34 @@ class SimpleTree:
             # Concatenate the nominative forms of the child terminals,
             # and the literal text of nested nonterminals (such as NP-POSS and S-THT)
             result = []
-            for ch in self.children:
-                # We do not want to recurse into nested NPs
-                np = prop_func(ch)
+            children = list(self.children)
+            # Cut away all leading adverbs (einkunnarorð, "eo")
+            for i, ch in enumerate(children):
+                if ch.is_terminal and ch.tcat == "eo":
+                    continue
+                else:
+                    if i > 0:
+                        children = children[i:]
+                    break
+            if len(children) == 1 and children[0].tag == "S-THT":
+                # If the noun phrase consists only of a S-THT nonterminal
+                # ('skýringarsetning'), add 'það' to the front so the
+                # result is something like 'það að fjöldi dæmdra glæpamanna hafi aukist'
+                np = prop_func(children[0])
                 if np:
-                    result.append(np)
-            return " ".join(result)
+                    np = "það " + np
+                else:
+                    np = ""
+            else:
+                for ch in children:
+                    np = prop_func(ch)
+                    if np:
+                        result.append(np)
+                np = " ".join(result)
+            # Cut off trailing punctuation
+            while len(np) >= 2 and np[-1] in { ',', ':', ';', '!', '-', '.' }:
+                np = np[0:-2]
+            return np
         # This is not a noun phrase: return its text as-is
         return self.text
 
@@ -921,7 +978,8 @@ class SimpleTree:
                     # ('hinir ungu alþingismenn' -> 'ungur alþingismaður')
                     return ""
                 return node.canonical
-            if node.match_tag("S") or node.match_tag("NP-POSS"):
+            # Cut off connected explanatory sentences, possessive phrases, and prepositional phrases
+            if any(node.match_tag(tag) for tag in ("S", "NP-POSS", "PP", "ADVP")):
                 return None
             return node.text
 

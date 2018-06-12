@@ -3609,7 +3609,7 @@ NlSkýring/tala/pers/fall/kyn →
     | ',' SvigaInnihald/tala/pers/fall/kyn LokatáknEðaKomma
     | ',' Skýring Skýringarliður LokatáknEðaKomma
     # (Verslunin þjónar fjölbreyttum markhópi), allt frá börnum til aldraðra, (og er vinsæl í hverfinu)
-    | Samanburðarmerki 'allur:fn'_nf_et_hk 'frá:fs'_þgf Nl_þgf
+    | Samanburðarmerki 'allur:fn'_et_nf_hk 'frá:fs'_þgf Nl_þgf
         'til:fs'_ef Nl_ef LokatáknEðaKomma
 
 # Gefa aukastig fyrir skýringar á nafnliðum
@@ -4339,8 +4339,9 @@ EinnAl →
     | "sem:ao" 'segja:so'_lhþt_sb_hk_nf_et  # sem sagt
     | "svo:ao" "sem:ao"
     | "sem:ao" "fyrst:ao"
-    | 'vinsamlegur:lo'_esb_hk_nf_et # (Þátttakendur eru) vinsamlegast (beðnir að fylla út eyðublað)
-    | 'náðarsamlegur:lo'_esb_hk_nf_et # (Þátttakendur eru) náðarsamlegast (beðnir að fylla út eyðublað)
+    | 'vinsamlegur:lo'_esb_hk_nf_et     # (Þátttakendur eru) vinsamlegast (beðnir að fylla út eyðublað)
+    | 'náðarsamlegur:lo'_esb_hk_nf_et   # (Þátttakendur eru) náðarsamlegast (beðnir að fylla út eyðublað)
+    | 'allur:fn'_ft_þf_kk "jafna:ao"    # Alla jafna eru menn rólegir yfir þessu
 
 $tag(no_prep) EinnAl        # Engar forsetningar hér inni - óþarfi að skoða dótturgreinar
 
@@ -4636,7 +4637,7 @@ AfstæðurTími →
     | 'aðfaranótt:kvk'_et_þf Vikudagur_ef_et
     | TímaVísiNafnliðurMinni_þf_et/kyn              # sömu mínútu, sama klukkutíma
     | FyrrSíðarSeinna? TímaÁkvæðisliður_þf_et/kyn 
-        MorgunnKvöld/kyn                      # sama kvöld, fyrr sama morgun
+        MorgunnKvöld/kyn                            # sama kvöld, fyrr sama morgun
     | FyrrSíðarSeinna? AfstæðurTímiFs
 
 ÁTímanum → 
@@ -5149,16 +5150,15 @@ FyrrSíðarSeinna →
     | 'snemma:ao'_mst # fyrr
 
 TímaÁkvæðisliður/fall/tala/kyn →
-    SáÞessi/fall/tala/kyn TímaÁkvæðisLo/fall/tala/kyn
-    | SáÞessi/fall/tala/kyn
+    SáÞessi/fall/tala/kyn TímaÁkvæðisLo/fall/tala/kyn?
     | TímaÁkvæðisLo/fall/tala/kyn
 
 TímaÁkvæðisLo/fall/tala/kyn →
     'næstur:lo'/fall/tala/kyn
-    | 'síðari:lo'_est/fall/tala/kyn     # síðastur
+    | 'síðari:lo'_evb/fall/tala/kyn     # síðastur
     | 'sami:fn'/fall/tala/kyn           # 'fyrr í þeim sama mánuði' -- hegðar sér frekar sem lo hér.
     | 'samur:fn'/fall/tala/kyn
-    | 'seinn:lo'_est/fall/tala/kyn      # seinastur
+    | 'seinn:lo'_evb/fall/tala/kyn      # seinastur
     | 'næstkomandi:lo'/fall/tala/kyn
     | 'síðastliðinn:lo'/fall/tala/kyn
     | "sl."

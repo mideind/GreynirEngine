@@ -32,7 +32,8 @@ from collections import namedtuple
 
 from tokenizer import correct_spaces, paragraphs
 
-from .bintokenizer import tokenize, canonicalize_token, describe_token
+from .bintokenizer import tokenize, describe_token
+from .binparser import canonicalize_token
 from .fastparser import Fast_Parser, ParseError, ParseForestNavigator # , ParseForestPrinter
 from .reducer import Reducer
 from .matcher import SimpleTreeBuilder
