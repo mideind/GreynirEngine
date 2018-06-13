@@ -689,7 +689,7 @@ SetningUmAðRæða →
     # Um yrði að ræða
     # Um gæti hafa verið að ræða
     # ...o.s.frv.
-    'um:fs'_þf HjSögnLhÞt_et_p3 nhm 'ræða:so'_0_gm_nh NlBeintAndlag_þf AtvFsAuka?
+    'um:fs'_þf HjSögnLhÞt_et_p3 nhm 'ræða:so'_0_gm_nh FsRuna? NlBeintAndlag_þf AtvFsAuka?
     # Í dag hafi verið um að ræða skipulegt undanhald
     | SetningForskeyti HjSögnLhÞt_et_p3 'um:fs'_þf nhm 'ræða:so'_0_gm_nh NlBeintAndlag_þf AtvFsAuka?
 
@@ -881,8 +881,8 @@ SetningAukafall →
 
     # Miðmynd sagna: Mér áskotnaðist, mér fyrirgefst, mér gremst, okkur finnst [öllum]...
     | NlFrumlag_þgf/tala/kyn so_0_mm LoÞgf/tala/kyn? MiðmyndarBotn?
-    # Viðreisn hefur [ekki] borist/hlotnast/áskotnast öflugur liðsauki [í dag]
-    | NlFrumlag_þgf HjSögnMM FsAtv? so_mm_sagnb NlBeintAndlag_nf/tala/pers AtvFsAuka?
+    # Viðreisn hefur [ekki] borist/hlotnast/áskotnast [að þessu sinni] öflugur liðsauki [í dag]
+    | NlFrumlag_þgf HjSögnMM FsAtv? so_mm_sagnb FsRuna? NlBeintAndlag_nf/tala/pers AtvFsAuka?
     # Bönkunum hefur/hafði/hefði [flestum] tekist að halda í horfinu
     | NlFrumlag_þgf/tala/kyn HjSögnMM LoÞgf/tala/kyn? so_mm_sagnb MiðmyndarBotn?
 
@@ -922,7 +922,7 @@ SetningAukafall →
     | NlÓbeintAndlag_þgf HjSögnMegiSkuli_et_p3 FsAtv? So_2_nh_þgf/fall NlBeintAndlag/fall AtvFsAuka?
 
     # Öllum skal [ekki] standa [til boða] menntun (Menntun skal standa öllum til boða)
-    | NlÓbeintAndlag/aukafall HjSögnMegiSkuli_et_p3 FsAtv? So_1_nh/aukafall FsAtv? NlFrumlag_nf AtvFsAuka?
+    | NlÓbeintAndlag/aukafall HjSögnMegiSkuli_et_p3 FsAtv? So_1_nh/aukafall FsRuna? NlFrumlag_nf AtvFsAuka?
 
     # Mér/okkur/ykkur/börnunum finnst/þykir [mörgum [það]] [ekki] skemmtilegt
     # [að borða góðan mat / hérna í kvöld / að Jón lesi bók]
@@ -1112,8 +1112,8 @@ SagnliðurÁnF →
 
     | 'þurfa:so'_1_þf_gm_fh_et_p3 FsRuna? NlBeintAndlag_þf  # Þarf til þess lagafyrirmæli
 
-    | StökSögn_et_p3_gm                                 # (Í dag) segir
-    | so_0_et_p3_gm SagnInnskot                         # (Í dag) fýkur í fólk / kreppir að / losnar um stífluna / segir
+    | StökSögn_et_p3_gm                                     # (Í dag) segir
+    | so_0_et_p3_gm SagnInnskot                             # (Í dag) fýkur í fólk / kreppir að / losnar um stífluna / segir
 
 $tag(begin_prep_scope) SagnliðurÁnF # Nýtt undirtré fyrir tengingu sagnar og forsetningar
 
@@ -1136,8 +1136,8 @@ SagnliðurVh →
     so_0_vh/tala/pers NlFrumlag_nf/tala/pers/kyn LoTengtSögn_nf/tala/kyn? NhFyllingEðaAtv?
 
     # Borði börnin [ekki] matinn (getum við farið í sund)
-    | So_1_vh_nf/tala/pers NlFrumlag_nf/tala/pers AtvFs? NlSagnfylling_nf AtvFsAuka?
-    | So_1_vh/aukafall/tala/pers NlFrumlag_nf/tala/pers AtvFs? NlBeintAndlag/aukafall AtvFsAuka?
+    | So_1_vh_nf/tala/pers NlFrumlag_nf/tala/pers FsRuna? NlSagnfylling_nf AtvFsAuka?
+    | So_1_vh/aukafall/tala/pers NlFrumlag_nf/tala/pers FsRuna? NlBeintAndlag/aukafall AtvFsAuka?
 
     # Verði þessi tillaga felld (geng ég úr flokknum)
     # Verði karlarnir byrjaðir að grilla (sæki ég sósuna)
@@ -1589,8 +1589,8 @@ So_1_p3_ef/tala → so_1_ef_p3/tala
 
 Sögn_1_sagnb →
     So_1_sagnb_nf FsAtv? NlSagnfylling_nf
-    # Þingmenn geta/hafa lagt [fram / fyrir Alþingi] frumvörp (til laga)
-    | So_1_sagnb/aukafall FsAtv? NlBeintAndlag/aukafall
+    # Þingmenn geta/hafa lagt [fyrir Alþingi] frumvörp (til laga)
+    | So_1_sagnb/aukafall FsRuna? NlBeintAndlag/aukafall
     | 'enginn:fn'/fall/tala/kyn Nl/fall/tala/kyn So_1_sagnb/fall # (Þó getur hann) enga samninga gert
 
 # Sögn í nafnhætti með einu viðfangi
@@ -1799,31 +1799,49 @@ $score(+6) SagnarBotn
     # (þgf:) Konurnar sem höfnuðu [ekki] Páli
     # (ef:)  Konurnar sem nutu [ekki] matarins
 
-    So_1_sagnb_nf HjSögn/tala/pers NlSagnfylling_nf LoTengtSögn_nf/tala/kyn?      # Konurnar sem verið höfðu leikarar [sjálfar/galvaskar]
-    | So_1_sagnb/aukafall HjSögn/tala/pers NlBeintAndlag/aukafall LoTengtSögn_nf/tala/kyn?    # Konurnar sem borðað höfðu matinn [sjálfar/galvaskar]
-    
-    | NlSagnfylling_nf HjSögn/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_sagnb_nf    # Konurnar sem leikarar höfðu [sjálfar/galvaskar] verið
-    | NlBeintAndlag/aukafall HjSögn/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_sagnb/aukafall    # Konurnar sem matinn höfðu [sjálfar/galvaskar] borðað
+    # Konurnar sem verið höfðu leikarar [sjálfar/galvaskar]
+    So_1_sagnb_nf HjSögn/tala/pers NlSagnfylling_nf LoTengtSögn_nf/tala/kyn?
+    # Konurnar sem borðað höfðu matinn [sjálfar/galvaskar]
+    | So_1_sagnb/aukafall HjSögn/tala/pers NlBeintAndlag/aukafall LoTengtSögn_nf/tala/kyn?
 
-    | So_1_nh_nf HjSögnNh/tala/pers NlSagnfylling_nf LoTengtSögn_nf/tala/kyn?   # Konurnar sem vera munu leikarar [allar/galvaskar]
-    | So_1_nh/aukafall HjSögnNh/tala/pers NlBeintAndlag/aukafall LoTengtSögn_nf/tala/kyn?   # Konurnar sem borða munu matinn [allar/galvaskar]
+    # Konurnar sem leikarar höfðu [sjálfar/galvaskar] verið    
+    | NlSagnfylling_nf HjSögn/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_sagnb_nf
+    # Konurnar sem matinn höfðu [sjálfar/galvaskar] borðað
+    | NlBeintAndlag/aukafall HjSögn/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_sagnb/aukafall
 
-    | NlSagnfylling_nf HjSögnNh/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_nh_nf   # Konurnar sem leikarar munu [allar/galvaskar] vera
-    | NlBeintAndlag/aukafall HjSögnNh/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_nh/aukafall   # Konurnar sem matinn munu [allar/galvaskar] borða
+    # Konurnar sem vera munu leikarar [allar/galvaskar]
+    | So_1_nh_nf HjSögnNh/tala/pers NlSagnfylling_nf LoTengtSögn_nf/tala/kyn?
+    # Konurnar sem borða munu matinn [allar/galvaskar]
+    | So_1_nh/aukafall HjSögnNh/tala/pers NlBeintAndlag/aukafall LoTengtSögn_nf/tala/kyn?
 
-    | NlSagnfylling_nf AtvFs? so_1_nf/tala/pers LoTengtSögn_nf/tala/kyn?      # Konurnar sem matinn [snarlega] borðuðu [báðar/galvaskar]
-    | NlBeintAndlag/aukafall AtvFs? so_1/aukafall/tala/pers LoTengtSögn_nf/tala/kyn?      # Konurnar sem matinn [snarlega] borðuðu [báðar/galvaskar]
+    # Konurnar sem leikarar munu [allar/galvaskar] vera
+    | NlSagnfylling_nf HjSögnNh/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_nh_nf
+    # Konurnar sem matinn munu [allar/galvaskar] borða
+    | NlBeintAndlag/aukafall HjSögnNh/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_nh/aukafall
 
-    | so_2_þgf_þf_lhþt/tala/kyn HjSögnLhÞtSM/tala/pers NlÓbeintAndlag_þgf          # Konan sem gefin hafði verið/skal/mun Páli
-    | NlÓbeintAndlag_þgf HjSögnLhÞtSM/tala/pers FsAtv? so_2_þgf_þf_lhþt/tala/kyn   # Konan sem Páli hafði verið/skal/mun gefin
+    # Konurnar sem matinn [snarlega] borðuðu [báðar/galvaskar]
+    | NlSagnfylling_nf AtvFs? so_1_nf/tala/pers LoTengtSögn_nf/tala/kyn?
+    # Konurnar sem matinn [snarlega] borðuðu [báðar/galvaskar]
+    | NlBeintAndlag/aukafall AtvFs? so_1/aukafall/tala/pers LoTengtSögn_nf/tala/kyn?
 
-    | so_2_þf_þgf_lhþt/tala/kyn HjSögnLhÞtSM/tala/pers NlÓbeintAndlag_þgf          # Konan sem kölluð hafði verið/skal/mun illum nöfnum
-    | Nl_þgf HjSögnLhÞtSM/tala/pers FsAtv? so_2_þf_þgf_lhþt/tala/kyn   # Konan sem illum nöfnum hafði verið/skal/mun kölluð
+    # Konan sem gefin hafði verið/skal/mun Páli
+    | so_2_þgf_þf_lhþt/tala/kyn HjSögnLhÞtSM/tala/pers NlÓbeintAndlag_þgf
+    # Konan sem Páli hafði verið/skal/mun gefin
+    | NlÓbeintAndlag_þgf HjSögnLhÞtSM/tala/pers FsAtv? so_2_þgf_þf_lhþt/tala/kyn
 
-    | so_2_þf_ef_lhþt/tala/kyn HjSögnLhÞtSM/tala/pers Nl_ef            # Konan sem spurð hafði verið/skal/mun álits
-    | Nl_ef HjSögnLhÞtSM/tala/pers FsAtv? so_2_þf_ef_lhþt/tala/kyn     # Konan sem álits hafði verið/skal/mun spurð
+    # Konan sem kölluð hafði verið/skal/mun illum nöfnum
+    | so_2_þf_þgf_lhþt/tala/kyn HjSögnLhÞtSM/tala/pers NlÓbeintAndlag_þgf
+    # Konan sem illum nöfnum hafði verið/skal/mun kölluð
+    | Nl_þgf HjSögnLhÞtSM/tala/pers FsAtv? so_2_þf_þgf_lhþt/tala/kyn
 
-    | SoFrumlag_1_þf_nh FsAtv? NhRuna                                  # Orðin sem Páll lét [ekki] falla
+    # Konan sem spurð hafði verið/skal/mun álits
+    | so_2_þf_ef_lhþt/tala/kyn HjSögnLhÞtSM/tala/pers Nl_ef
+    # Konan sem álits hafði verið/skal/mun spurð
+    | Nl_ef HjSögnLhÞtSM/tala/pers FsAtv? so_2_þf_ef_lhþt/tala/kyn
+
+    # Orðin sem Páll lét [ekki] falla
+    | SoFrumlag_1_þf_nh FsAtv? NhRuna
+
     # so_2_þgf_ef, so_2_þgf_þgf og so_2_þf_þf virðast ekki geta staðið
     # í lhþt heldur aðeins sem sagnbót
 
@@ -2414,9 +2432,13 @@ $tag(pick_up_verb) NhLiður
 
 # Nafnliðir
 
-# (Kötturinn ákvað) [strax] að Jón væri farinn heim
+# (Kötturinn ákvað) [strax] [,] að Jón væri farinn heim
 NlSkýringarsetning → AtviksliðurEinkunn* ","? Skýringarsetning
 $score(-2) NlSkýringarsetning
+
+# (Lögreglan rannsakar) [nú] hvort Jón hafi ekið bílnum
+NlSpurnaraukasetning → AtviksliðurEinkunn* Spurnaraukasetning
+$score(-2) NlSpurnaraukasetning
 
 NlFrumlag/fall → Nl/fall | NlSkýringarsetning
 NlFrumlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
@@ -2439,18 +2461,18 @@ NlFrumlag_nf_et_p3 → NlSkýringarsetning
 NlFrumlag_þf_et_p3 → NlSkýringarsetning
 NlFrumlag_þgf_et_p3 → NlSkýringarsetning
 NlFrumlag_ef_et_p3 → NlSkýringarsetning
-NlBeintAndlag/fall → Nl/fall | Spurnaraukasetning | NlSkýringarsetning
+NlBeintAndlag/fall → Nl/fall | NlSpurnaraukasetning | NlSkýringarsetning
 NlBeintAndlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
-NlBeintAndlag_nf_et_p3_hk → Spurnaraukasetning | NlSkýringarsetning
-NlBeintAndlag_þf_et_p3_hk → Spurnaraukasetning | NlSkýringarsetning
-NlBeintAndlag_þgf_et_p3_hk → Spurnaraukasetning | NlSkýringarsetning
-NlBeintAndlag_ef_et_p3_hk → Spurnaraukasetning | NlSkýringarsetning
+NlBeintAndlag_nf_et_p3_hk → NlSpurnaraukasetning | NlSkýringarsetning
+NlBeintAndlag_þf_et_p3_hk → NlSpurnaraukasetning | NlSkýringarsetning
+NlBeintAndlag_þgf_et_p3_hk → NlSpurnaraukasetning | NlSkýringarsetning
+NlBeintAndlag_ef_et_p3_hk → NlSpurnaraukasetning | NlSkýringarsetning
 NlBeintAndlag/fall/tala/pers → Nl/fall/tala/pers
-NlBeintAndlag_nf_et_p3 → Spurnaraukasetning | NlSkýringarsetning
-NlBeintAndlag_þf_et_p3 → Spurnaraukasetning | NlSkýringarsetning
-NlBeintAndlag_þgf_et_p3 → Spurnaraukasetning | NlSkýringarsetning
-NlBeintAndlag_ef_et_p3 → Spurnaraukasetning | NlSkýringarsetning
-NlBeintAndlag_nf_þf/tala → Nl_nf_þf/tala | Spurnaraukasetning | NlSkýringarsetning
+NlBeintAndlag_nf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
+NlBeintAndlag_þf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
+NlBeintAndlag_þgf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
+NlBeintAndlag_ef_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
+NlBeintAndlag_nf_þf/tala → Nl_nf_þf/tala | NlSpurnaraukasetning | NlSkýringarsetning
 NlÓbeintAndlag/fall → Nl/fall | NlSkýringarsetning
 NlSagnfylling/fall → Nl/fall | NlSkýringarsetning
 NlSagnfylling/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
