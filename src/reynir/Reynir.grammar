@@ -1788,7 +1788,7 @@ SagnarBotn →
     | FsAtv? so_subj_nh_ef Nl_ef
     # !!! Ekki virðist þörf fyrir öfuga orðaröð í þgf eða þf
 
-$score(+4) SagnarBotn
+$score(+6) SagnarBotn
 
 # Sögn með einu viðfangi sem stendur í undirsetningu
 # ('Konurnar sem borðuðu matinn')
@@ -2334,7 +2334,7 @@ OgNhLiður →
     SagnInnskot? KommaOgEðaEnNema SagnInnskot? NhSögn
 
 NhSögn →
-    so_0_nh so_0_gm_vh_p3_et? OgNhSögn*                          # að kjósa [þurfi] og telja (upp á nýtt)
+    so_0_nh so_0_gm_vh_p3_et? OgNhSögn*                                     # að kjósa [þurfi] og telja (upp á nýtt)
     | so_1_nf_nh so_0_gm_vh_p3_et? OgNhSögn_nf* FsRuna? NlBeintAndlag_nf    # að hrjósa [muni] hugur
     | so_1_þf_nh so_0_gm_vh_p3_et? OgNhSögn_þf* FsRuna? NlBeintAndlag_þf    # að selja [skyldi] í snatri hestinn
     | so_1_þgf_nh so_0_gm_vh_p3_et? OgNhSögn_þgf* FsRuna? NlBeintAndlag_þgf # að hætta [ætti] baráttunni

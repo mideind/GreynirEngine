@@ -1267,8 +1267,8 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
                     # without having them affect the matching (since genders
                     # are not included on pfn's in BÍN)
                     self.cut_fbits(BIN_Token.VBIT_GENDERS)
-                elif self._cat == "fs":
-                    # Hack to allow cases to be specified on fs literal terminals
+                elif self._cat == "fs" or self._cat == "so":
+                    # Hack to allow cases to be specified on fs and so literal terminals
                     # (like so: 'í:fs'_þgf) without having them affect the matching
                     self.cut_fbits(BIN_Token.VBIT_CASES)
         # Check whether we have variants on an exact literal
