@@ -1095,15 +1095,15 @@ Sagnliður/tala/pers/kyn →
 # '(Ef hann hringir) má sækja tölvuna og byrja að vinna'
 
 SagnliðurÁnF →
-    so_subj_gm_none NhFyllingAtv?                          # (Í dag) þarf [sannarlega] (að vökva grasið)
-    | so_0_mm_p3_et NhFyllingAtv?                          # (Í dag) dregst [sennilega] (að vökva grasið)
+    # so_subj_gm_none NhFyllingAtv?                          # (Í dag) þarf [sannarlega] (að vökva grasið)
+    so_0_mm_p3_et NhFyllingAtv?                          # (Í dag) dregst [sennilega] (að vökva grasið)
 
-    | HjSögn_et_p3 FsAtv? so_subj_sagnb_none NhFyllingAtv? # (Í ár) hefur [í sumarhitanum] þurft (að vökva grasið)
+    # | HjSögn_et_p3 FsAtv? so_subj_sagnb_none NhFyllingAtv? # (Í ár) hefur [í sumarhitanum] þurft (að vökva grasið)
     | HjSögn_et_p3 FsAtv? so_mm_sagnb NhFyllingAtv?        # (Í ár) hefur [vegna leti] dregist (að vökva grasið)
-    | HjSögnNh_et_p3 FsAtv? so_subj_nh_none NhFyllingAtv?  # (Í ár) mun [í sumarhitanum] þurfa (að vökva grasið)
+    # | HjSögnNh_et_p3 FsAtv? so_subj_nh_none NhFyllingAtv?  # (Í ár) mun [í sumarhitanum] þurfa (að vökva grasið)
     | HjSögnNh_et_p3 FsAtv? so_mm_nh NhFyllingAtv?         # (Í ár) mun [í sumarhitanum] dragast (að vökva grasið)
 
-    | HjSögnLhÞtSM_et_p3 FsAtv? so_sagnb NhFyllingEðaAtv? # (í dag) verður/skal/mun [líklega] lent á brautinni (eftir hádegi)
+    # | HjSögnLhÞtSM_et_p3 FsAtv? so_sagnb NhFyllingEðaAtv? # (í dag) verður/skal/mun [líklega] lent á brautinni (eftir hádegi)
 
     | HjSögnMegiSkuli_et_p3 HreinSögn_nh_et_hk SagnInnskot? # [Í dag] má sækja tölvuna (og byrja að vinna)
     | so_0_nh HjSögnNhMeðSo_et_p3 HreinSögnAtv_nh?          # [hvort] leggja skuli/eigi/þarf/verður [á skatt, breyta honum eða afnema hann]
@@ -1538,9 +1538,15 @@ SögnMeðF_0/tala/pers/kyn →
     | HjSögnSkuluMunu/tala/pers NlFrumlag_nf/tala/pers/kyn VeraVerðaAtv? HreinSögn_lhþt/tala/kyn
 
 SögnMeðF_nh/tala/pers/kyn →
-    HjSögnNh/tala/pers NlFrumlag_nf/tala/pers/kyn Atviksliður? HreinSögn_nh/tala/kyn # (Í stað takka) vill Apple koma fyrir snertiskynjurum
+    HjSögnNh/tala/pers NlFrumlag_nf/tala/pers/kyn Atviksliður? SögnMeðFNhBotn/tala/pers/kyn
 
 $score(+4) SögnMeðF_nh/tala/pers/kyn
+
+SögnMeðFNhBotn/tala/pers/kyn →
+    # (Í stað takka) vill Apple [nú] koma fyrir snertiskynjurum
+    HreinSögn_nh/tala/kyn
+    # (Samkvæmt fréttum) mun þingkonan [nú] hafa gefið í skyn / geta fengið gögnin / fá upplýst um málið
+    | HafaGetaFá_nh HreinSögn_sagnb/tala/kyn
 
 VeraVerðaAtv →
      FsAtv? HjSögnVeraVerða

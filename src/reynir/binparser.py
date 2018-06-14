@@ -1527,7 +1527,10 @@ def canonicalize_token(t):
             if a[1] in "012":
                 args = int(a[1])
                 cases = a[1 : 2 + args]
-                vstart += 2 + args
+                vstart = 2 + args
+            elif a[1] == "subj":
+                cases = a[1 : 2]
+                vstart = 2
         variants = sorted(list(set(a[vstart:]) | BIN_Token.bin_variants(t["b"])))
         t_all = "_".join(a[0:1] + cases + variants)
         if t["t"] != t_all:
