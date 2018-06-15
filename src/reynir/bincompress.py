@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 
     Reynir: Natural language processing for Icelandic
@@ -880,6 +881,7 @@ class BIN_Compressed:
 
 if __name__ == "__main__":
     # When run as a main program, generate a compressed binary file
+    print("Welcome to the Reynir compressed vocabulary file generator")
     b = BIN_Compressor()
     b.read([
         os.path.join(_PATH, "resources", "ord.csv"),

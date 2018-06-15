@@ -207,23 +207,8 @@ class Meanings:
     """ Wrapper around list of additional word meanings, initialized from the config file """
 
     # Dictionary of additional words and their meanings
-    DICT = defaultdict(list) # Keyed by word form
-    ROOT = defaultdict(list) # Keyed by word root (stem)
-
-    @staticmethod
-    def add (stofn, ordmynd, ordfl, fl, beyging):
-        """ Add word meaning to the dictionary. Called from the config file handler. """
-        # This is stubbed out in the Reynir package, as the additional word meanings
-        # have already been incorporated into the compressed BÍN image
-        pass
-
-    @staticmethod
-    def add_composite (stofn, ordfl):
-        """ Add composite word forms by putting a prefix on existing BIN word forms.
-            Called from the config file handler. """
-        # This is stubbed out in the Reynir package, as the additional word meanings
-        # have already been incorporated into the compressed BÍN image
-        pass
+    DICT = defaultdict(list)  # Keyed by word form
+    ROOT = defaultdict(list)  # Keyed by word root (stem)
 
 
 class VerbObjects:
@@ -788,30 +773,8 @@ class Settings:
     @staticmethod
     def _handle_meanings(s):
         """ Handle additional word meanings in the settings section """
-        # Format: stofn ordmynd ordfl fl (default ob) beyging (default -)
-        a = s.split()
-        if len(a) < 2 or len(a) > 5:
-            raise ConfigError("Meaning should have two to five arguments, {0} given".format(len(a)))
-        stofn = None
-        fl = None
-        beyging = None
-        if len(a) == 2:
-            # Short format: only ordmynd and ordfl
-            ordmynd = a[0]
-            ordfl = a[1]
-        else:
-            # Full format: at least three arguments, stofn ordmynd ordfl
-            stofn = a[0]
-            ordmynd = a[1]
-            ordfl = a[2]
-            fl = a[3] if len(a) >= 4 else None
-            beyging = a[4] if len(a) >= 5 else None
-
-        if len(a) == 2 and "-" in ordmynd:
-            # Creating new meanings by prefixing existing ones
-            Meanings.add_composite(ordmynd, ordfl)
-        else:
-            Meanings.add(stofn, ordmynd, ordfl, fl, beyging)
+        # Not required in the ReynirPackage module
+        pass
 
     @staticmethod
     def _handle_verb_objects(s):
