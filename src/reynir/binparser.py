@@ -80,8 +80,8 @@ class BIN_Token(Token):
         "hk": "no",
         "so": "so",
         "ao": "ao",
-        "tao": "tao",
-        "spao": "spao",
+        "tao": "tao",  # Never appears in BÍN
+        "spao": "spao",  # Never appears in BÍN
         "fs": "fs",
         "lo": "lo",
         "fn": "fn",
@@ -91,43 +91,43 @@ class BIN_Token(Token):
         "töl": "töl",
         "uh": "uh",
         "st": "st",
-        "stt": "stt", # Never appears in BÍN
+        "stt": "stt",  # Never appears in BÍN
         "abfn": "abfn",
         "nhm": "nhm",
     }
 
     # Strings that must be present in the grammatical form for variants
     VARIANT = {
-        "nf" : "NF", # Nefnifall / nominative
-        "þf" : "ÞF", # Þolfall / accusative
-        "þgf" : "ÞGF", # Þágufall / dative
-        "ef" : "EF", # Eignarfall / possessive
-        "kk" : "KK", # Karlkyn / masculine
-        "kvk" : "KVK", # Kvenkyn / feminine
-        "hk" : "HK", # Hvorugkyn / neutral
-        "et" : "ET", # Eintala / singular
-        "ft" : "FT", # Fleirtala / plural
-        "mst" : "MST", # Miðstig / comparative
-        "est" : "EST", # Efsta stig / superlative
-        "esb" : "ESB", # Efsta stig, sterk beyging / superlative
-        "evb" : "EVB", # Efsta stig, veik beyging / superlative
-        "p1" : "1P", # Fyrsta persóna / first person
-        "p2" : "2P", # Önnur persóna / second person
-        "p3" : "3P", # Þriðja persóna / third person
-        "op" : "OP", # Ópersónuleg sögn
-        "gm" : "GM", # Germynd
-        "mm" : "MM", # Miðmynd
-        "sb" : "SB", # Sterk beyging
-        "vb" : "VB", # Veik beyging
-        "nh" : "NH", # Nafnháttur
-        "fh" : "FH", # Framsöguháttur
-        "bh" : "BH", # Boðháttur
-        "lh" : "LH", # Lýsingarháttur (nútíðar)
-        "vh" : "VH", # Viðtengingarháttur
-        "nt" : "NT", # Nútíð
-        "sagnb" : "SAGNB", # Sagnbót ('vera' -> 'hefur verið')
-        "lhþt" : "LHÞT", # Lýsingarháttur þátíðar ('var lentur')
-        "gr" : "gr", # Greinir
+        "nf" : "NF",  # Nefnifall / nominative
+        "þf" : "ÞF",  # Þolfall / accusative
+        "þgf" : "ÞGF",  # Þágufall / dative
+        "ef" : "EF",  # Eignarfall / possessive
+        "kk" : "KK",  # Karlkyn / masculine
+        "kvk" : "KVK",  # Kvenkyn / feminine
+        "hk" : "HK",  # Hvorugkyn / neutral
+        "et" : "ET",  # Eintala / singular
+        "ft" : "FT",  # Fleirtala / plural
+        "mst" : "MST",  # Miðstig / comparative
+        "est" : "EST",  # Efsta stig / superlative
+        "esb" : "ESB",  # Efsta stig, sterk beyging / superlative
+        "evb" : "EVB",  # Efsta stig, veik beyging / superlative
+        "p1" : "1P",  # Fyrsta persóna / first person
+        "p2" : "2P",  # Önnur persóna / second person
+        "p3" : "3P",  # Þriðja persóna / third person
+        "op" : "OP",  # Ópersónuleg sögn
+        "gm" : "GM",  # Germynd
+        "mm" : "MM",  # Miðmynd
+        "sb" : "SB",  # Sterk beyging
+        "vb" : "VB",  # Veik beyging
+        "nh" : "NH",  # Nafnháttur
+        "fh" : "FH",  # Framsöguháttur
+        "bh" : "BH",  # Boðháttur
+        "lh" : "LH",  # Lýsingarháttur (nútíðar)
+        "vh" : "VH",  # Viðtengingarháttur
+        "nt" : "NT",  # Nútíð
+        "sagnb" : "SAGNB",  # Sagnbót ('vera' -> 'hefur verið')
+        "lhþt" : "LHÞT",  # Lýsingarháttur þátíðar ('var lentur')
+        "gr" : "gr",  # Greinir
 
         # Variants that do not have a corresponding BIN meaning
         "abbrev" : None,
@@ -1531,7 +1531,14 @@ def canonicalize_token(t):
             elif a[1] == "subj":
                 cases = a[1 : 2]
                 vstart = 2
-        variants = sorted(list(set(a[vstart:]) | BIN_Token.bin_variants(t["b"])))
+        # Collect the variants from the terminal and from the 'b' field
+        vset = set(a[vstart:]) | BIN_Token.bin_variants(t["b"])
+        # For impersonal verbs ('ópersónulegar sagnir'), cut away
+        # the person indicator (p1, p2, p3) since all three person forms
+        # are identical anyway
+        if "op" in vset:
+            vset -= { "p1", "p2", "p3" }
+        variants = sorted(list(vset))
         t_all = "_".join(a[0:1] + cases + variants)
         if t["t"] != t_all:
             # Augment the information with the full set of variants

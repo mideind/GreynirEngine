@@ -206,7 +206,9 @@ class _Sentence:
         if self._terminals is not None:
             return self._terminals
         self._terminals = [
-            Terminal(d.text, d.lemma, d.tcat, d.all_variants) for d in self.tree.descendants if d.is_terminal
+            Terminal(d.text, d.lemma, d.tcat, d.all_variants)
+            for d in self.tree.descendants
+            if d.is_terminal
         ]
         return self._terminals
 
@@ -215,6 +217,16 @@ class _Sentence:
         """ Convenience property to return the lemmas only """
         t = self.terminals
         return None if t is None else [ terminal[1] for terminal in t ]
+
+    @property
+    def ifd_tags(self):
+        """ Return a list of Icelandic Frequency Dictionary (IFD) tags for
+            the terminals/tokens in this sentence. """
+        if self.tree is None:
+            return None
+        # Flatten the ifd_tags lists for the individual nodes
+        # (nonterminal nodes return an empty list in the ifd_tags property)
+        return [ ifd_tag for d in self.tree.descendants for ifd_tag in d.ifd_tags ]
 
     def __str__(self):
         return self.text

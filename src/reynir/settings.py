@@ -283,8 +283,8 @@ class VerbSubjects:
     @staticmethod
     def set_case(case):
         """ Set the case of the subject for the following verbs """
-        #if case not in { "þf", "þgf", "ef", "none", "lhþt" }:
-        #    raise ConfigError("Unknown verb subject case '{0}' in verb_subjects".format(case))
+        # if case not in { "þf", "þgf", "ef", "none", "lhþt" }:
+        #     raise ConfigError("Unknown verb subject case '{0}' in verb_subjects".format(case))
         VerbSubjects._CASE = case
 
     @staticmethod
@@ -336,6 +336,19 @@ class DisallowedNames:
     def add(cls, name, cases):
         """ Add an adjective ending and its associated form. """
         cls.STEMS[name] = set(cases)
+
+
+class UndeclinableAdjectives:
+
+    """ Wrapper around list of undeclinable adjectives """
+
+    # Set of adjectives
+    ADJECTIVES = set()
+
+    @classmethod
+    def add(cls, wrd):
+        """ Add an adjective """
+        cls.ADJECTIVES.add(wrd)
 
 
 class StaticPhrases:
@@ -837,6 +850,14 @@ class Settings:
         VerbSubjects.add(par)
 
     @staticmethod
+    def _handle_undeclinable_adjectives(s):
+        """ Handle list of undeclinable adjectives """
+        s = s.lower().strip()
+        if not s.isalpha():
+            raise ConfigError("Expected word but got '{0}' in undeclinable_adjectives".format(s))
+        UndeclinableAdjectives.add(s)
+
+    @staticmethod
     def _handle_noindex_words(s):
         """ Handle no index instructions in the settings section """
         # Format: category = [cat] followed by word stem list
@@ -1011,6 +1032,7 @@ class Settings:
                 "ambiguous_phrases" : Settings._handle_ambiguous_phrases,
                 "meanings" : Settings._handle_meanings,
                 "adjective_template" : Settings._handle_adjective_template,
+                "undeclinable_adjectives" : Settings._handle_undeclinable_adjectives,
                 "disallowed_names" : Settings._handle_disallowed_names,
                 "noindex_words" : Settings._handle_noindex_words,
                 "topics" : Settings._handle_topics

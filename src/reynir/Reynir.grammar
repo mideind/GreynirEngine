@@ -1482,7 +1482,7 @@ SögnMeðF_0/tala/pers/kyn →
     | so_mm_et_p3 OgSögn_mm_et_p3* NlFrumlag_þgf/tala/pers/kyn NhFylling_þgf/tala/kyn?
 
     # (Í dag) ber stjórnvöldum að taka hætturnar alvarlega
-    | so_subj_gm_op_p3_et_þgfnh NlFrumlag_þgf/tala/pers/kyn NhFylling/tala/kyn
+    # | so_subj_gm_op_p3_et_þgfnh NlFrumlag_þgf/tala/pers/kyn NhFylling/tala/kyn
 
     # (Í dag) líður mér [vel að hafa ekki farið þá leið]
     # (Í gær) dreymdi mig [um að fara alsæll í sólarlandaferð]

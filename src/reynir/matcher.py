@@ -97,12 +97,16 @@ from itertools import chain
 
 if not __package__:
     from cache import cached_property
+    from settings import StaticPhrases
     from binparser import BIN_Token
     from bindb import BIN_Db, BIN_Meaning
+    from ifdtagger import IFD_Tagset
 else:
     from .cache import cached_property
+    from .settings import StaticPhrases
     from .binparser import BIN_Token
     from .bindb import BIN_Db, BIN_Meaning
+    from .ifdtagger import IFD_Tagset
 
 # Default tree simplifier configuration maps
 
@@ -304,6 +308,8 @@ _DEFINITE_PRONOUNS = frozenset([
     "þann"
 ])
 
+# _CUT_LEADING_ADVERBS = frozenset(("því", "út", "fram", "þó"))
+
 
 def cut_definite_pronouns(txt):
     """ Removes definite pronouns from the front of txt and returns the result.
@@ -428,6 +434,56 @@ class SimpleTree:
         """ The simplified tag of this subtree, i.e. P, S, NP, VP, ADVP... """
         return self._head.get("i")
 
+    @property
+    def ifd_tags(self):
+        """ Return a list of the Icelandic Frequency Dictionary (IFD) tag(s) for this token """
+        if not self.is_terminal:
+            return []
+        x = self.text
+        if " " in x:
+            # Multi-word phrase
+            lower_x = x.lower()
+            if StaticPhrases.has_details(lower_x):
+                # This is a static multi-word phrase:
+                # return its tags, which are defined in the Phrases.conf file
+                return StaticPhrases.tags(lower_x)
+            # This may potentially be an entity or person name,
+            # an amount, a date, or a measurement unit
+            tag = str(IFD_Tagset(self._head))
+            result = []
+            for part in lower_x.split():
+                # Unknown multi-token phrase:
+                # deal with it, simplistically
+                if part in {"og", "eða"}:
+                    result.append("c")  # Conjunction
+                elif part[0] in "0123456789":
+                    if tag[0] == "n":
+                        # Use the case, number, and gender info from the noun
+                        result.append("tf" + tag[1:4])
+                    else:
+                        result.append("ta")  # Year or other undeclinable number
+                elif tag == "to" or tag == "ta":
+                    # Word inside an amount or a date
+                    # !!! TODO: Handle currency names and measurement units
+                    if part == "árið":
+                        result.append("nheo")
+                    elif part.startswith("f.kr") or part.startswith("e.kr"):
+                        # Abbreviation 'f.Kr.' or 'e.Kr.': handle as adverbial phrase
+                        result.append("aa")
+                    elif part == "klukkan" or part == "kl.":
+                        result.append("nven")
+                    elif part in { "janúar", "jan.", "febrúar", "feb.", "mars", "apríl", "apr.", "maí", "júní",
+                        "júlí", "ágúst", "ágú.", "september", "sep.", "október", "okt.",
+                        "nóvember", "nóv.", "desember", "des." }:
+                        result.append("nkeo")  # Assume accusative case
+                    else:
+                        result.append("x")  # Unknown
+                else:
+                    result.append(tag)
+            return result
+        # Single word, single tag
+        return [ str(IFD_Tagset(self._head)) ]
+
     def match_tag(self, item):
         """ Return True if the given item matches the tag of this subtree
             either fully or partially """
@@ -459,6 +515,11 @@ class SimpleTree:
     def all_variants(self):
         """ Returns a list of all variants associated with this subtree's terminal, if any,
             augmented also by BÍN variants """
+        # First, check whether an 'a' field is present
+        a = self._head.get("a")
+        if a is not None:
+            # The 'a' field contains the entire variant set, canonically ordered
+            return a.split("_")[1:]
         vlist = self.variants
         return vlist + list(BIN_Token.bin_variants(self._head.get("b")) - set(vlist))
 
@@ -620,7 +681,7 @@ class SimpleTree:
             try:
                 return self.__getattr__(index)
             except AttributeError:
-                raise KeyError("Subtree has no {0}".format(index))
+                raise KeyError("Subtree has no {0} child".format(index))
         # Handle tree[1]
         if self._children_cache is not None:
             return self._children_cache[index]
@@ -906,14 +967,20 @@ class SimpleTree:
             # and the literal text of nested nonterminals (such as NP-POSS and S-THT)
             result = []
             children = list(self.children)
-            # Cut away all leading adverbs (einkunnarorð, "eo")
-            for i, ch in enumerate(children):
-                if ch.is_terminal and ch.tcat == "eo":
-                    continue
-                else:
-                    if i > 0:
-                        children = children[i:]
-                    break
+            # If the noun phrase has an adjective, we keep any leading adverbs
+            # ('stórkostlega fallegu blómin', 'ekki vingjarnlegu mennirnir', 'strax fáanlegu vörurnar').
+            # Otherwise, they probably belong to a previous verb and we
+            # cut them away.
+            has_adjective = any(ch.is_terminal and ch.tcat == "lo" for ch in children)
+            if not has_adjective:
+                # Cut away certain leading adverbs (einkunnarorð, "eo")
+                for i, ch in enumerate(children):
+                    if ch.is_terminal and ch.tcat == "eo":  # and ch._text in _CUT_LEADING_ADVERBS:
+                        continue
+                    else:
+                        if i > 0:
+                            children = children[i:]
+                        break
             if len(children) == 1 and children[0].tag == "S-THT":
                 # If the noun phrase consists only of a S-THT nonterminal
                 # ('skýringarsetning'), add 'það' to the front so the

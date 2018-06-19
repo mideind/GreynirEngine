@@ -30,11 +30,12 @@ r = None
 def test_init():
     """ Test that importing and initializing the reynir module works """
     from reynir import Reynir
+
     global r
     r = Reynir()
 
 
-def test_parse(verbose = False):
+def test_parse(verbose=False):
 
     sentences = [
         # 0
@@ -62,7 +63,7 @@ def test_parse(verbose = False):
         # 11
         "Löngu áður en Jón borðaði ísinn sem hafði bráðnað hratt "
         "í hádeginu fór ég á veitingastaðinn á horninu og keypti mér rauðvín "
-        "með hamborgaranum sem ég borðaði í gær með mikilli ánægju."
+        "með hamborgaranum sem ég borðaði í gær með mikilli ánægju.",
     ]
     job = r.submit(" ".join(sentences))
 
@@ -71,7 +72,9 @@ def test_parse(verbose = False):
     for i, sent in enumerate(results):
         if verbose:
             print("Sentence {0}: {1}".format(i, sent.tidy_text))
-        assert sent.tidy_text == sentences[i], "'{0}' != '{1}'".format(sent.tidy_text, sentences[i])
+        assert sent.tidy_text == sentences[i], "'{0}' != '{1}'".format(
+            sent.tidy_text, sentences[i]
+        )
         if sent.parse():
             # Sentence parsed successfully
             assert i != 2
@@ -97,56 +100,175 @@ def test_parse(verbose = False):
         print("Parsing time        : {0:.2f}".format(job.parse_time))
 
     # Test that the parser finds the correct nouns
-    assert results[0].tree.nouns == [ "tilraun", "þáttun" ]
-    assert results[1].tree.nouns == [ "málsgrein" ]
-    assert results[2].tree is None # Error sentence
-    assert results[3].tree.nouns == [ "málsgrein" ]
-    assert results[4].tree.nouns == [ "Vatnið", "gráða" ]  # 'Vatnið' is a proper place name (örnefni)
-    assert results[5].tree.nouns == [ ]
-    assert results[6].tree.nouns == [ "Þingvellir" ]  # 'árið 1944' er tímaliður en ekki nafnliður
-    assert results[7].tree.nouns == [ "hús", "strönd" ]
-    assert results[8].tree.nouns == [ "barn", "augnrannsókn", "húsnæðiskaup" ]
-    assert results[9].tree.nouns == [ "barn", "loðfíla-rannsókn" ]
-    assert results[10].tree.nouns == [ "eðlisfræðingur", "dagur", "pí", "dagur" ]
-    assert results[11].tree.nouns == [ 'Jón', 'ís', 'hádegi', 'veitingastaður', 'horn', 'rauðvín',
-        'hamborgari', 'ánægja' ]
+    assert results[0].tree.nouns == ["tilraun", "þáttun"]
+    assert results[1].tree.nouns == ["málsgrein"]
+    assert results[2].tree is None  # Error sentence
+    assert results[3].tree.nouns == ["málsgrein"]
+    # 'Vatnið' is a proper place name (örnefni)
+    assert results[4].tree.nouns == [
+        "Vatnið",
+        "gráða",
+    ]
+    assert results[5].tree.nouns == []
+    # 'árið 1944' er tímaliður en ekki nafnliður
+    assert results[6].tree.nouns == [
+        "Þingvellir"
+    ]
+    assert results[7].tree.nouns == ["hús", "strönd"]
+    assert results[8].tree.nouns == ["barn", "augnrannsókn", "húsnæðiskaup"]
+    assert results[9].tree.nouns == ["barn", "loðfíla-rannsókn"]
+    assert results[10].tree.nouns == ["eðlisfræðingur", "dagur", "pí", "dagur"]
+    assert results[11].tree.nouns == [
+        "Jón",
+        "ís",
+        "hádegi",
+        "veitingastaður",
+        "horn",
+        "rauðvín",
+        "hamborgari",
+        "ánægja",
+    ]
 
     # Test that the parser finds the correct verbs
-    assert results[0].tree.verbs == [ "vera", "vera", "gera" ]
-    assert results[1].tree.verbs == [ "koma" ]
+    assert results[0].tree.verbs == ["vera", "vera", "gera"]
+    assert results[1].tree.verbs == ["koma"]
     assert results[2].tree is None  # Error sentence
-    assert results[3].tree.verbs == [ "vera" ]
-    assert results[4].tree.verbs == [ "vera", "vera" ]
-    assert results[5].tree.verbs == [ "skulda" ]
-    assert results[6].tree.verbs == [ "hitta" ]
-    assert results[7].tree.verbs == [ "eigna", "taka", "mála" ]
-    assert results[8].tree.verbs == [ "fara" ]
-    assert results[9].tree.verbs == [ "fara" ]
-    assert results[10].tree.verbs == [ "láta" ]
-    assert results[11].tree.verbs == [ 'borða', 'hafa', 'bráðna', 'fara', 'kaupa', 'borða' ]
+    assert results[3].tree.verbs == ["vera"]
+    assert results[4].tree.verbs == ["vera", "vera"]
+    assert results[5].tree.verbs == ["skulda"]
+    assert results[6].tree.verbs == ["hitta"]
+    assert results[7].tree.verbs == ["eigna", "taka", "mála"]
+    assert results[8].tree.verbs == ["fara"]
+    assert results[9].tree.verbs == ["fara"]
+    assert results[10].tree.verbs == ["láta"]
+    assert results[11].tree.verbs == [
+        "borða",
+        "hafa",
+        "bráðna",
+        "fara",
+        "kaupa",
+        "borða",
+    ]
 
     # Test that the parser finds the correct word lemmas
-    assert results[0].tree.lemmas == [ "hér", "vera", "vera", "að", "gera",
-        "tilraun", "með", "þáttun", "." ]
-    assert results[1].tree.lemmas == [ "margur", "málsgrein", "koma", "hér", "fyrir", "." ]
+    assert results[0].tree.lemmas == [
+        "hér",
+        "vera",
+        "vera",
+        "að",
+        "gera",
+        "tilraun",
+        "með",
+        "þáttun",
+        ".",
+    ]
+    assert results[1].tree.lemmas == [
+        "margur",
+        "málsgrein",
+        "koma",
+        "hér",
+        "fyrir",
+        ".",
+    ]
     assert results[2].tree is None  # Error sentence
-    assert results[3].tree.lemmas == [ "fjórði", "málsgrein", "vera", "síðari", "." ]
-    assert results[4].tree.lemmas == [ "Vatnið", "vera", "30,5", "gráða", "heitur",
-        "og", "ég", "vera", "ánægður", "með", "það", "." ]
-    assert results[5].tree.lemmas == [ "hún", "skulda", "ég", "1.000 dollara", "." ]
-    assert results[6].tree.lemmas == [ "ég", "hitta", "hún", "sá", "17. júní árið 1944",
-        "á", "Þingvellir", "." ]
-    assert results[7].tree.lemmas == [ "hann", "eigna", "hús", "við", "strönd",
-        "og", "hún", "taka", "að", "mála", "það", "." ]
-    assert results[8].tree.lemmas == [ "barn", "fara", "í", "augnrannsókn", "eftir",
-        "húsnæðiskaup", "." ]
-    assert results[9].tree.lemmas == [ "barn", "fara", "í", "loðfíla-rannsókn", "." ]
-    assert results[10].tree.lemmas == [ "eðlisfræðingur", "Stephen", "Hawking",
-        "láta", "í", "dagur", ",", "á", "pí", "—", "dagur", "." ]
-    assert results[11].tree.lemmas == [ 'löngu', 'áður', 'en', 'Jón', 'borða', 'ís',
-        'sem', 'hafa', 'bráðna', 'hratt', 'í', 'hádegi', 'fara', 'ég', 'á',
-        'veitingastaður', 'á', 'horn', 'og', 'kaupa', 'ég', 'rauðvín', 'með',
-        'hamborgari', 'sem', 'ég', 'borða', 'í gær', 'með', 'mikill', 'ánægja', '.' ]
+    assert results[3].tree.lemmas == ["fjórði", "málsgrein", "vera", "síðari", "."]
+    assert results[4].tree.lemmas == [
+        "Vatnið",
+        "vera",
+        "30,5",
+        "gráða",
+        "heitur",
+        "og",
+        "ég",
+        "vera",
+        "ánægður",
+        "með",
+        "það",
+        ".",
+    ]
+    assert results[5].tree.lemmas == ["hún", "skulda", "ég", "1.000 dollara", "."]
+    assert results[6].tree.lemmas == [
+        "ég",
+        "hitta",
+        "hún",
+        "sá",
+        "17. júní árið 1944",
+        "á",
+        "Þingvellir",
+        ".",
+    ]
+    assert results[7].tree.lemmas == [
+        "hann",
+        "eigna",
+        "hús",
+        "við",
+        "strönd",
+        "og",
+        "hún",
+        "taka",
+        "að",
+        "mála",
+        "það",
+        ".",
+    ]
+    assert results[8].tree.lemmas == [
+        "barn",
+        "fara",
+        "í",
+        "augnrannsókn",
+        "eftir",
+        "húsnæðiskaup",
+        ".",
+    ]
+    assert results[9].tree.lemmas == ["barn", "fara", "í", "loðfíla-rannsókn", "."]
+    assert results[10].tree.lemmas == [
+        "eðlisfræðingur",
+        "Stephen",
+        "Hawking",
+        "láta",
+        "í",
+        "dagur",
+        ",",
+        "á",
+        "pí",
+        "—",
+        "dagur",
+        ".",
+    ]
+    assert results[11].tree.lemmas == [
+        "löngu",
+        "áður",
+        "en",
+        "Jón",
+        "borða",
+        "ís",
+        "sem",
+        "hafa",
+        "bráðna",
+        "hratt",
+        "í",
+        "hádegi",
+        "fara",
+        "ég",
+        "á",
+        "veitingastaður",
+        "á",
+        "horn",
+        "og",
+        "kaupa",
+        "ég",
+        "rauðvín",
+        "með",
+        "hamborgari",
+        "sem",
+        "ég",
+        "borða",
+        "í gær",
+        "með",
+        "mikill",
+        "ánægja",
+        ".",
+    ]
 
     def num_pp(s):
         """ Count the prepositional phrases in the parse tree for sentence s """
@@ -159,7 +281,7 @@ def test_parse(verbose = False):
     assert num_pp(results[11]) == 4
 
 
-def test_consistency(verbose = False):
+def test_consistency(verbose=False):
     """ Check that multiple parses of the same sentences yield exactly
         the same preposition counts, and also identical scores. This is
         inter alia to guard agains nondeterminism that may arise from
@@ -167,11 +289,11 @@ def test_consistency(verbose = False):
 
     sent15 = [
         "Barnið fór í augnrannsóknina eftir húsnæðiskaupin.",
-        "Ég sendi póstinn frá Ísafirði með kettinum"
+        "Ég sendi póstinn frá Ísafirði með kettinum",
     ]
     sent45 = [
         "Barnið fór í augnrannsóknina fyrir húsnæðiskaupin.",
-        "Ég sendi póstinn með kettinum til Ísafjarðar"
+        "Ég sendi póstinn með kettinum til Ísafjarðar",
     ]
     for tc15, tc45 in zip(sent15, sent45):
 
@@ -181,7 +303,11 @@ def test_consistency(verbose = False):
 
         ITERATIONS = 100
         if verbose:
-            print("Consistency test, {0} iterations:\n   {1}\n   {2}".format(ITERATIONS, tc15, tc45))
+            print(
+                "Consistency test, {0} iterations:\n   {1}\n   {2}".format(
+                    ITERATIONS, tc15, tc45
+                )
+            )
 
         for i in range(ITERATIONS):
             # The following two sentences have different scores
@@ -194,12 +320,16 @@ def test_consistency(verbose = False):
             s = next(iter(j))
             s.parse()
             ptime += j.parse_time
-            pp = [ t.text for t in s.tree.descendants if t.match("PP") ]
+            pp = [t.text for t in s.tree.descendants if t.match("PP")]
             cnt[len(pp)] += 1
             scores[s.score] += 1
 
         if verbose:
-            print("Parse time for {0} iterations was {1:.2f} seconds".format(ITERATIONS, ptime))
+            print(
+                "Parse time for {0} iterations was {1:.2f} seconds".format(
+                    ITERATIONS, ptime
+                )
+            )
 
         # There should be 2 prepositions in all parse trees
         assert len(cnt) == 1
@@ -209,7 +339,11 @@ def test_consistency(verbose = False):
         # The sum of all counts should be the number of iterations
         assert sum(scores.values()) == 100
         if verbose:
-            print("There are {0} different scores in consistency check".format(len(scores)))
+            print(
+                "There are {0} different scores in consistency check".format(
+                    len(scores)
+                )
+            )
         # There should only be two different scores
         assert len(scores) == 2
         sc_set = set(scores.values())
@@ -218,7 +352,7 @@ def test_consistency(verbose = False):
         assert ITERATIONS * 4 // 5 in sc_set
 
 
-def test_long_parse(verbose = False):
+def test_long_parse(verbose=False):
     if verbose:
         print("Long parse test")
     txt = """
@@ -278,13 +412,39 @@ def check_terminal(t, text, lemma, category, variants):
 
 def check_terminals(t):
     assert len(t) == 7
-    check_terminal(t[0], text='Jón', lemma='Jón', category='person', variants=['nf', 'kk'])
-    check_terminal(t[1], text='greiddi', lemma='greiða', category='so', variants=['2', 'þgf', 'þf', 'et', 'p3', 'fh', 'gm', 'þt'])
-    check_terminal(t[2], text='bænum', lemma='bær', category='no', variants=['et', 'þgf', 'kk', 'gr'])
-    check_terminal(t[3], text='10 milljónir króna', lemma='10 milljónir króna', category='no', variants=['ft', 'þf', 'kvk'])
-    check_terminal(t[4], text='í', lemma='í', category='fs', variants=['þf'])
-    check_terminal(t[5], text='skaðabætur', lemma='skaðabót', category='no', variants=['ft', 'þf', 'kvk'])
-    check_terminal(t[6], text='.', lemma='.', category='', variants=[])
+    check_terminal(
+        t[0], text="Jón", lemma="Jón", category="person", variants=["nf", "kk"]
+    )
+    check_terminal(
+        t[1],
+        text="greiddi",
+        lemma="greiða",
+        category="so",
+        variants=["2", "þgf", "þf", "et", "p3", "fh", "gm", "þt"],
+    )
+    check_terminal(
+        t[2],
+        text="bænum",
+        lemma="bær",
+        category="no",
+        variants=["et", "þgf", "kk", "gr"],
+    )
+    check_terminal(
+        t[3],
+        text="10 milljónir króna",
+        lemma="10 milljónir króna",
+        category="no",
+        variants=["ft", "þf", "kvk"],
+    )
+    check_terminal(t[4], text="í", lemma="í", category="fs", variants=["þf"])
+    check_terminal(
+        t[5],
+        text="skaðabætur",
+        lemma="skaðabót",
+        category="no",
+        variants=["ft", "þf", "kvk"],
+    )
+    check_terminal(t[6], text=".", lemma=".", category="", variants=[])
 
 
 def test_terminals():
@@ -296,22 +456,62 @@ def test_amounts():
     s = r.parse_single("Tjónið nam 10 milljörðum króna.")
     t = s.terminals
     assert len(t) == 4
-    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
-    check_terminal(t[1], text='nam', lemma='nema', category='so', variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
-    check_terminal(t[2], text='10 milljörðum króna', lemma='10 milljörðum króna', category='no', variants=['ft', 'þgf', 'kk'])
-    check_terminal(t[3], text='.', lemma='.', category='', variants=[])
+    check_terminal(
+        t[0],
+        text="Tjónið",
+        lemma="tjón",
+        category="no",
+        variants=["et", "nf", "hk", "gr"],
+    )
+    check_terminal(
+        t[1],
+        text="nam",
+        lemma="nema",
+        category="so",
+        variants=["1", "þgf", "et", "p3", "gm", "þt", "fh"],
+    )
+    check_terminal(
+        t[2],
+        text="10 milljörðum króna",
+        lemma="10 milljörðum króna",
+        category="no",
+        variants=["ft", "þgf", "kk"],
+    )
+    check_terminal(t[3], text=".", lemma=".", category="", variants=[])
     assert s.tokens[2].val[0] == 10e9
     assert s.tokens[2].val[1] == "ISK"
 
     s = r.parse_single("Tjónið þann 22. maí nam einum milljarði króna.")
     t = s.terminals
     assert len(t) == 6
-    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
-    check_terminal(t[1], text='þann', lemma='sá', category='fn', variants=['et', 'kk', 'þf'])
-    check_terminal(t[2], text='22. maí', lemma='22. maí', category='dagsafs', variants=[])
-    check_terminal(t[3], text='nam', lemma='nema', category='so', variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
-    check_terminal(t[4], text='einum milljarði króna', lemma='einum milljarði króna', category='no', variants=['ft', 'þgf', 'kk'])
-    check_terminal(t[5], text='.', lemma='.', category='', variants=[])
+    check_terminal(
+        t[0],
+        text="Tjónið",
+        lemma="tjón",
+        category="no",
+        variants=["et", "nf", "hk", "gr"],
+    )
+    check_terminal(
+        t[1], text="þann", lemma="sá", category="fn", variants=["et", "kk", "þf"]
+    )
+    check_terminal(
+        t[2], text="22. maí", lemma="22. maí", category="dagsafs", variants=[]
+    )
+    check_terminal(
+        t[3],
+        text="nam",
+        lemma="nema",
+        category="so",
+        variants=["1", "þgf", "et", "p3", "gm", "þt", "fh"],
+    )
+    check_terminal(
+        t[4],
+        text="einum milljarði króna",
+        lemma="einum milljarði króna",
+        category="no",
+        variants=["ft", "þgf", "kk"],
+    )
+    check_terminal(t[5], text=".", lemma=".", category="", variants=[])
     assert s.tokens[2].val == (0, 5, 22)
     assert s.tokens[4].val[0] == 1e9
     assert s.tokens[4].val[1] == "ISK"
@@ -319,14 +519,38 @@ def test_amounts():
     s = r.parse_single("Tjónið þann 19. október 1983 nam 4,8 milljörðum dala.")
     t = s.terminals
     assert len(t) == 6
-    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
-    check_terminal(t[1], text='þann', lemma='sá', category='fn', variants=['et', 'kk', 'þf'])
-    check_terminal(t[2], text='19. október 1983', lemma='19. október 1983', category='dagsföst', variants=[])
-    check_terminal(t[3], text='nam', lemma='nema', category='so',
-        variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
-    check_terminal(t[4], text='4,8 milljörðum dala', lemma='4,8 milljörðum dala', category='no',
-        variants=['ft', 'þgf', 'kk'])
-    check_terminal(t[5], text='.', lemma='.', category='', variants=[])
+    check_terminal(
+        t[0],
+        text="Tjónið",
+        lemma="tjón",
+        category="no",
+        variants=["et", "nf", "hk", "gr"],
+    )
+    check_terminal(
+        t[1], text="þann", lemma="sá", category="fn", variants=["et", "kk", "þf"]
+    )
+    check_terminal(
+        t[2],
+        text="19. október 1983",
+        lemma="19. október 1983",
+        category="dagsföst",
+        variants=[],
+    )
+    check_terminal(
+        t[3],
+        text="nam",
+        lemma="nema",
+        category="so",
+        variants=["1", "þgf", "et", "p3", "gm", "þt", "fh"],
+    )
+    check_terminal(
+        t[4],
+        text="4,8 milljörðum dala",
+        lemma="4,8 milljörðum dala",
+        category="no",
+        variants=["ft", "þgf", "kk"],
+    )
+    check_terminal(t[5], text=".", lemma=".", category="", variants=[])
     assert s.tokens[2].val == (1983, 10, 19)
     assert s.tokens[4].val[0] == 4.8e9
     assert s.tokens[4].val[1] == "USD"
@@ -334,60 +558,140 @@ def test_amounts():
     s = r.parse_single("Tjónið nam sautján milljörðum breskra punda.")
     t = s.terminals
     assert len(t) == 4
-    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
-    check_terminal(t[1], text='nam', lemma='nema', category='so',
-        variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
-    check_terminal(t[2], text='sautján milljörðum breskra punda', lemma='sautján milljörðum breskra punda',
-        category='no', variants=['ft', 'þgf', 'kk'])
-    check_terminal(t[3], text='.', lemma='.', category='', variants=[])
+    check_terminal(
+        t[0],
+        text="Tjónið",
+        lemma="tjón",
+        category="no",
+        variants=["et", "nf", "hk", "gr"],
+    )
+    check_terminal(
+        t[1],
+        text="nam",
+        lemma="nema",
+        category="so",
+        variants=["1", "þgf", "et", "p3", "gm", "þt", "fh"],
+    )
+    check_terminal(
+        t[2],
+        text="sautján milljörðum breskra punda",
+        lemma="sautján milljörðum breskra punda",
+        category="no",
+        variants=["ft", "þgf", "kk"],
+    )
+    check_terminal(t[3], text=".", lemma=".", category="", variants=[])
     assert s.tokens[2].val[0] == 17e9
     assert s.tokens[2].val[1] == "GBP"
 
     s = r.parse_single("Tjónið nam 17 breskum pundum.")
     t = s.terminals
     assert len(t) == 4
-    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
-    check_terminal(t[1], text='nam', lemma='nema', category='so',
-        variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
-    check_terminal(t[2], text='17 breskum pundum', lemma='17 breskum pundum', category='no',
-        variants=['ft', 'þgf', 'hk'])
-    check_terminal(t[3], text='.', lemma='.', category='', variants=[])
+    check_terminal(
+        t[0],
+        text="Tjónið",
+        lemma="tjón",
+        category="no",
+        variants=["et", "nf", "hk", "gr"],
+    )
+    check_terminal(
+        t[1],
+        text="nam",
+        lemma="nema",
+        category="so",
+        variants=["1", "þgf", "et", "p3", "gm", "þt", "fh"],
+    )
+    check_terminal(
+        t[2],
+        text="17 breskum pundum",
+        lemma="17 breskum pundum",
+        category="no",
+        variants=["ft", "þgf", "hk"],
+    )
+    check_terminal(t[3], text=".", lemma=".", category="", variants=[])
     assert s.tokens[2].val[0] == 17
     assert s.tokens[2].val[1] == "GBP"
 
     s = r.parse_single("Tjónið nam 17 pólskum zloty.")
     t = s.terminals
     assert len(t) == 4
-    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
-    check_terminal(t[1], text='nam', lemma='nema', category='so',
-        variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
-    check_terminal(t[2], text='17 pólskum zloty', lemma='17 pólskum zloty', category='no',
-        variants=['ft', 'þgf', 'hk'])
-    check_terminal(t[3], text='.', lemma='.', category='', variants=[])
+    check_terminal(
+        t[0],
+        text="Tjónið",
+        lemma="tjón",
+        category="no",
+        variants=["et", "nf", "hk", "gr"],
+    )
+    check_terminal(
+        t[1],
+        text="nam",
+        lemma="nema",
+        category="so",
+        variants=["1", "þgf", "et", "p3", "gm", "þt", "fh"],
+    )
+    check_terminal(
+        t[2],
+        text="17 pólskum zloty",
+        lemma="17 pólskum zloty",
+        category="no",
+        variants=["ft", "þgf", "hk"],
+    )
+    check_terminal(t[3], text=".", lemma=".", category="", variants=[])
     assert s.tokens[2].val[0] == 17
     assert s.tokens[2].val[1] == "PLN"
 
     s = r.parse_single("Tjónið nam 101 indverskri rúpíu.")
     t = s.terminals
     assert len(t) == 4
-    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
-    check_terminal(t[1], text='nam', lemma='nema', category='so',
-        variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
-    check_terminal(t[2], text='101 indverskri rúpíu', lemma='101 indverskri rúpíu', category='no',
-        variants=['et', 'þgf', 'kvk'])
-    check_terminal(t[3], text='.', lemma='.', category='', variants=[])
+    check_terminal(
+        t[0],
+        text="Tjónið",
+        lemma="tjón",
+        category="no",
+        variants=["et", "nf", "hk", "gr"],
+    )
+    check_terminal(
+        t[1],
+        text="nam",
+        lemma="nema",
+        category="so",
+        variants=["1", "þgf", "et", "p3", "gm", "þt", "fh"],
+    )
+    check_terminal(
+        t[2],
+        text="101 indverskri rúpíu",
+        lemma="101 indverskri rúpíu",
+        category="no",
+        variants=["et", "þgf", "kvk"],
+    )
+    check_terminal(t[3], text=".", lemma=".", category="", variants=[])
     assert s.tokens[2].val[0] == 101
     assert s.tokens[2].val[1] == "INR"
 
     s = r.parse_single("Tjónið nam 17 milljónum indónesískra rúpía.")
     t = s.terminals
     assert len(t) == 4
-    check_terminal(t[0], text='Tjónið', lemma='tjón', category='no', variants=['et', 'nf', 'hk', 'gr'])
-    check_terminal(t[1], text='nam', lemma='nema', category='so',
-        variants=['1', 'þgf', 'et', 'p3', 'gm', 'þt', 'fh'])
-    check_terminal(t[2], text='17 milljónum indónesískra rúpía', lemma='17 milljónum indónesískra rúpía', category='no',
-        variants=['ft', 'þgf', 'kvk'])
-    check_terminal(t[3], text='.', lemma='.', category='', variants=[])
+    check_terminal(
+        t[0],
+        text="Tjónið",
+        lemma="tjón",
+        category="no",
+        variants=["et", "nf", "hk", "gr"],
+    )
+    check_terminal(
+        t[1],
+        text="nam",
+        lemma="nema",
+        category="so",
+        variants=["1", "þgf", "et", "p3", "gm", "þt", "fh"],
+    )
+    check_terminal(
+        t[2],
+        text="17 milljónum indónesískra rúpía",
+        lemma="17 milljónum indónesískra rúpía",
+        category="no",
+        variants=["ft", "þgf", "kvk"],
+    )
+    check_terminal(t[3], text=".", lemma=".", category="", variants=[])
     assert s.tokens[2].val[0] == 17e6
     assert s.tokens[2].val[1] == "IDR"
 
@@ -396,14 +700,30 @@ def test_year_range():
     s = r.parse_single("Jón var formaður árin 1944-50.")
     t = s.terminals
     assert len(t) == 8
-    check_terminal(t[0], text='Jón', lemma='Jón', category='person', variants=['nf', 'kk']),
-    check_terminal(t[1], text='var', lemma='vera', category='so', variants=['1', 'nf', 'et', 'p3', 'þt', 'fh', 'gm']),
-    check_terminal(t[2], text='formaður', lemma='formaður', category='no', variants=['et', 'nf', 'kk']),
-    check_terminal(t[3], text='árin', lemma='ár', category='no', variants=['hk', 'gr', 'ft', 'þf']),
-    check_terminal(t[4], text='1944', lemma='1944', category='tala', variants=[]),
-    check_terminal(t[5], text='–', lemma='–', category='', variants=[]),
-    check_terminal(t[6], text='50', lemma='50', category='tala', variants=[]),
-    check_terminal(t[7], text='.', lemma='.', category='', variants=[])
+    check_terminal(
+        t[0], text="Jón", lemma="Jón", category="person", variants=["nf", "kk"]
+    ),
+    check_terminal(
+        t[1],
+        text="var",
+        lemma="vera",
+        category="so",
+        variants=["1", "nf", "et", "p3", "þt", "fh", "gm"],
+    ),
+    check_terminal(
+        t[2],
+        text="formaður",
+        lemma="formaður",
+        category="no",
+        variants=["et", "nf", "kk"],
+    ),
+    check_terminal(
+        t[3], text="árin", lemma="ár", category="no", variants=["hk", "gr", "ft", "þf"]
+    ),
+    check_terminal(t[4], text="1944", lemma="1944", category="tala", variants=[]),
+    check_terminal(t[5], text="–", lemma="–", category="", variants=[]),
+    check_terminal(t[6], text="50", lemma="50", category="tala", variants=[]),
+    check_terminal(t[7], text=".", lemma=".", category="", variants=[])
 
 
 def test_single():
@@ -419,38 +739,48 @@ def test_single():
     assert s.tree is None
 
 
-def test_complex(verbose = False):
+def test_complex(verbose=False):
     if verbose:
         print("Complex, sentence 1", end="")
-    d = r.parse("ákæran var þingfest en fréttastofu er kunnugt um að maðurinn "
-        "játaði þar sem þinghaldið er lokað")
+    d = r.parse(
+        "ákæran var þingfest en fréttastofu er kunnugt um að maðurinn "
+        "játaði þar sem þinghaldið er lokað"
+    )
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 2", end="")
-    d = r.parse("Viðar Garðarsson, sem setti upp vefsíður fyrir Sigmund Davíð "
-       "Gunnlaugsson í kjölfar birtingu Panamaskjalanna, segist ekki vita "
-       "hvers vegna ákveðið var að segja að vefjunum væri haldið úti af "
-       "stuðningsmönnum Sigmundar.")
+    d = r.parse(
+        "Viðar Garðarsson, sem setti upp vefsíður fyrir Sigmund Davíð "
+        "Gunnlaugsson í kjölfar birtingu Panamaskjalanna, segist ekki vita "
+        "hvers vegna ákveðið var að segja að vefjunum væri haldið úti af "
+        "stuðningsmönnum Sigmundar."
+    )
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 3", end="")
-    d = r.parse("Ákæran var þingfest í Héraðsdómi Reykjaness í dag "
-       "en fréttastofu er ekki kunnugt um hvort maðurinn játaði eða neitaði "
-       "sök þar sem þinghaldið í málinu er lokað.")
+    d = r.parse(
+        "Ákæran var þingfest í Héraðsdómi Reykjaness í dag "
+        "en fréttastofu er ekki kunnugt um hvort maðurinn játaði eða neitaði "
+        "sök þar sem þinghaldið í málinu er lokað."
+    )
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 4", end="")
-    d = r.parse("Út úr stílfærðri túlkun listamannsins á gamla , litla og mjóa "
+    d = r.parse(
+        "Út úr stílfærðri túlkun listamannsins á gamla , litla og mjóa "
         "prófessornum kom búlduleitur beljaki sem þess vegna hefði getað verið "
-        "trökkdræver að norðan.")
+        "trökkdræver að norðan."
+    )
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 5", end="")
-    d = r.parse("Rétt hjá anddyrinu var ein af þessum höggnu andlitsmyndum "
+    d = r.parse(
+        "Rétt hjá anddyrinu var ein af þessum höggnu andlitsmyndum "
         "af þjóðfrægum mönnum þar sem listamaðurinn hafði gefist upp við að ná "
         "svipnum og ákveðið að hafa þetta í staðinn stílfærða mynd sem túlkaði "
         "fremur innri mann fyrirmyndarinnar en þá ásjónu sem daglega blasti við "
-        "samferðamönnum.")
+        "samferðamönnum."
+    )
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 6", end="")
@@ -462,40 +792,49 @@ def test_complex(verbose = False):
         "að móta eigin skoðanir, þjálfa gagnrýna hugsun og læsi, læra að lifa í "
         "margbreytilegu samfélagi, mynda tengsl við aðra, mótast sem einstaklingur "
         "í hnattrænu samfélagi, og takast á við ólík viðhorf, skoðanir og gildi — svo "
-        "fátt eitt sé nefnt.")
+        "fátt eitt sé nefnt."
+    )
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
 
 
 def test_measurements():
-    s = r.parse_single("Ég vildi leggja rúm 220 tonn en hann vildi kaupa "
-        "tæplega 3,8 km af efninu í yfir 32°F frosti.")
-    assert (s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ VP so_et_p1 so_1_þf_nh "
+    s = r.parse_single(
+        "Ég vildi leggja rúm 220 tonn en hann vildi kaupa "
+        "tæplega 3,8 km af efninu í yfir 32°F frosti."
+    )
+    assert (
+        s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ VP so_et_p1 so_1_þf_nh "
         "NP-OBJ lo_þf_ft_hk tala_ft_þf_hk no_ft_þf_hk /NP-OBJ /VP /IP /S-MAIN st "
         "S-MAIN IP NP-SUBJ pfn_kk_et_nf /NP-SUBJ VP-SEQ VP so_et_p3 so_1_þf_nh "
         "NP-OBJ NP-MEASURE ao mælieining mælieining /NP-MEASURE /NP-OBJ /VP "
         "PP fs_þgf NP no_et_þgf_hk PP fs_þgf NP NP-POSS NP-MEASURE ao mælieining "
         "mælieining /NP-MEASURE /NP-POSS no_et_þgf_hk /NP /PP /NP "
-        "/PP /VP-SEQ /IP /S-MAIN p /P")
+        "/PP /VP-SEQ /IP /S-MAIN p /P"
+    )
 
 
-def test_attachment(verbose = False):
+def test_attachment(verbose=False):
     """ Test attachment of prepositions to nouns and verbs """
     if verbose:
         print("Testing attachment of prepositions")
     for _ in range(50):
         # Test consistency for 50 iterations
         s = r.parse_single("Ég setti dæmi um þetta í bókina mína.")
-        assert (s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ "  # Ég
+        assert (
+            s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ "  # Ég
             "VP-SEQ VP so_1_þf_et_p1 NP-OBJ no_et_þf_hk "  # setti dæmi
             "PP fs_þf NP fn_et_þf_hk /NP /PP "  # um þetta
             "/NP-OBJ /VP PP fs_þf NP no_et_þf_kvk fn_et_þf_kvk /NP /PP /VP-SEQ "  # í bókina mína
-            "/IP /S-MAIN p /P")  # .
+            "/IP /S-MAIN p /P"
+        )  # .
         s = r.parse_single("Ég setti dæmi í bókina mína um þetta.")
-        assert (s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ "  # Ég
+        assert (
+            s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ "  # Ég
             "VP-SEQ VP so_1_þf_et_p1 NP-OBJ no_et_þf_hk "  # setti dæmi
             "/NP-OBJ /VP PP fs_þf NP no_et_þf_kvk fn_et_þf_kvk "  # í bókina mína
-            "PP fs_þf NP fn_et_þf_hk /NP /PP /NP /PP /VP-SEQ /IP /S-MAIN p /P")  # um þetta .
+            "PP fs_þf NP fn_et_þf_hk /NP /PP /NP /PP /VP-SEQ /IP /S-MAIN p /P"
+        )  # um þetta .
 
 
 def test_nominative():
@@ -503,8 +842,12 @@ def test_nominative():
 
     s = r.parse_single("Frábærum bílskúrum þykir þetta leiðinlegt.")
     subj = s.tree.S_MAIN.IP.NP_SUBJ
-    assert "{0} {1}".format(subj[0].nominative, subj[1].nominative) == "Frábærir bílskúrar"
-    assert "{0} {1}".format(subj[0].indefinite, subj[1].indefinite) == "Frábærir bílskúrar"
+    assert (
+        "{0} {1}".format(subj[0].nominative, subj[1].nominative) == "Frábærir bílskúrar"
+    )
+    assert (
+        "{0} {1}".format(subj[0].indefinite, subj[1].indefinite) == "Frábærir bílskúrar"
+    )
     assert "{0} {1}".format(subj[0].canonical, subj[1].canonical) == "Frábær bílskúr"
     assert subj.nominative_np == "Frábærir bílskúrar"
     assert subj.indefinite_np == "Frábærir bílskúrar"
@@ -512,8 +855,14 @@ def test_nominative():
 
     s = r.parse_single("Frábærari bílskúrum þykir þetta leiðinlegt.")
     subj = s.tree.S_MAIN.IP.NP_SUBJ
-    assert "{0} {1}".format(subj[0].nominative, subj[1].nominative) == "Frábærari bílskúrar"
-    assert "{0} {1}".format(subj[0].indefinite, subj[1].indefinite) == "Frábærari bílskúrar"
+    assert (
+        "{0} {1}".format(subj[0].nominative, subj[1].nominative)
+        == "Frábærari bílskúrar"
+    )
+    assert (
+        "{0} {1}".format(subj[0].indefinite, subj[1].indefinite)
+        == "Frábærari bílskúrar"
+    )
     assert "{0} {1}".format(subj[0].canonical, subj[1].canonical) == "Frábærari bílskúr"
     assert subj.nominative_np == "Frábærari bílskúrar"
     assert subj.indefinite_np == "Frábærari bílskúrar"
@@ -521,17 +870,30 @@ def test_nominative():
 
     s = r.parse_single("Frábærustum bílskúrum þykir þetta leiðinlegt.")
     subj = s.tree.S_MAIN.IP.NP_SUBJ
-    assert "{0} {1}".format(subj[0].nominative, subj[1].nominative) == "Frábærastir bílskúrar"
-    assert "{0} {1}".format(subj[0].indefinite, subj[1].indefinite) == "Frábærastir bílskúrar"
-    assert "{0} {1}".format(subj[0].canonical, subj[1].canonical) == "Frábærastur bílskúr"
+    assert (
+        "{0} {1}".format(subj[0].nominative, subj[1].nominative)
+        == "Frábærastir bílskúrar"
+    )
+    assert (
+        "{0} {1}".format(subj[0].indefinite, subj[1].indefinite)
+        == "Frábærastir bílskúrar"
+    )
+    assert (
+        "{0} {1}".format(subj[0].canonical, subj[1].canonical) == "Frábærastur bílskúr"
+    )
     assert subj.nominative_np == "Frábærastir bílskúrar"
     assert subj.indefinite_np == "Frábærastir bílskúrar"
     assert subj.canonical_np == "Frábærastur bílskúr"
 
     s = r.parse_single("Frábæru bílskúrunum þykir þetta leiðinlegt.")
     subj = s.tree.S_MAIN.IP.NP_SUBJ
-    assert "{0} {1}".format(subj[0].nominative, subj[1].nominative) == "Frábæru bílskúrarnir"
-    assert "{0} {1}".format(subj[0].indefinite, subj[1].indefinite) == "Frábærir bílskúrar"
+    assert (
+        "{0} {1}".format(subj[0].nominative, subj[1].nominative)
+        == "Frábæru bílskúrarnir"
+    )
+    assert (
+        "{0} {1}".format(subj[0].indefinite, subj[1].indefinite) == "Frábærir bílskúrar"
+    )
     assert "{0} {1}".format(subj[0].canonical, subj[1].canonical) == "Frábær bílskúr"
     assert subj.nominative_np == "Frábæru bílskúrarnir"
     assert subj.indefinite_np == "Frábærir bílskúrar"
@@ -539,24 +901,44 @@ def test_nominative():
 
     s = r.parse_single("Frábærari bílskúrunum þykir þetta leiðinlegt.")
     subj = s.tree.S_MAIN.IP.NP_SUBJ
-    assert "{0} {1}".format(subj[0].nominative, subj[1].nominative) == "Frábærari bílskúrarnir"
-    assert "{0} {1}".format(subj[0].indefinite, subj[1].indefinite) == "Frábærari bílskúrar"
+    assert (
+        "{0} {1}".format(subj[0].nominative, subj[1].nominative)
+        == "Frábærari bílskúrarnir"
+    )
+    assert (
+        "{0} {1}".format(subj[0].indefinite, subj[1].indefinite)
+        == "Frábærari bílskúrar"
+    )
     assert "{0} {1}".format(subj[0].canonical, subj[1].canonical) == "Frábærari bílskúr"
     assert subj.nominative_np == "Frábærari bílskúrarnir"
     assert subj.indefinite_np == "Frábærari bílskúrar"
     assert subj.canonical_np == "Frábærari bílskúr"
 
-    s = r.parse_single("Ótrúlega frábærustu bílskúrunum þriggja góðglöðu alþingismannanna "
-        "sem fóru út þykir þetta leiðinlegt.")
+    s = r.parse_single(
+        "Ótrúlega frábærustu bílskúrunum þriggja góðglöðu alþingismannanna "
+        "sem fóru út þykir þetta leiðinlegt."
+    )
     subj = s.tree.S_MAIN.IP.NP_SUBJ
-    assert ("{0} {1} {2}".format(subj[0].nominative, subj[1].nominative, subj[2].nominative) ==
-        "Ótrúlega frábærustu bílskúrarnir")
-    assert ("{0} {1} {2}".format(subj[0].indefinite, subj[1].indefinite, subj[2].indefinite) ==
-        "Ótrúlega frábærastir bílskúrar")
-    assert ("{0} {1} {2}".format(subj[0].canonical, subj[1].canonical, subj[2].canonical) ==
-        "Ótrúlega frábærastur bílskúr")
-    assert subj.nominative_np == "Ótrúlega frábærustu bílskúrarnir þriggja góðglöðu alþingismannanna sem fóru út"
-    assert subj.indefinite_np == "Ótrúlega frábærastir bílskúrar þriggja góðglöðu alþingismannanna sem fóru út"
+    assert (
+        "{0} {1} {2}".format(subj[0].nominative, subj[1].nominative, subj[2].nominative)
+        == "Ótrúlega frábærustu bílskúrarnir"
+    )
+    assert (
+        "{0} {1} {2}".format(subj[0].indefinite, subj[1].indefinite, subj[2].indefinite)
+        == "Ótrúlega frábærastir bílskúrar"
+    )
+    assert (
+        "{0} {1} {2}".format(subj[0].canonical, subj[1].canonical, subj[2].canonical)
+        == "Ótrúlega frábærastur bílskúr"
+    )
+    assert (
+        subj.nominative_np
+        == "Ótrúlega frábærustu bílskúrarnir þriggja góðglöðu alþingismannanna sem fóru út"
+    )
+    assert (
+        subj.indefinite_np
+        == "Ótrúlega frábærastir bílskúrar þriggja góðglöðu alþingismannanna sem fóru út"
+    )
     assert subj.canonical_np == "Ótrúlega frábærastur bílskúr"
     subj = subj.NP_POSS
     assert subj.nominative_np == "þrír góðglöðu alþingismennirnir sem fóru út"
@@ -570,43 +952,100 @@ def test_nominative():
     assert subj.canonical_np == "íslenskt bókmenntafélag"
 
     s = r.parse_single("Kristín málaði hús Hönnu Önfjörð Álfhildardóttur")
-    assert s.tree.first_match("NP-POSS").nominative_np == "Hanna Önfjörð Álfhildardóttir"
+    assert (
+        s.tree.first_match("NP-POSS").nominative_np == "Hanna Önfjörð Álfhildardóttir"
+    )
 
-    s = r.parse_single("Stóri feiti jólasveinninn beislaði "
-       "fjögur sætustu hreindýrin og ók rauða vagninum "
-       "með fjölda gjafa til spenntu barnanna sem biðu "
-       "milli vonar og ótta.")
+    s = r.parse_single(
+        "Stóri feiti jólasveinninn beislaði "
+        "fjögur sætustu hreindýrin og ók rauða vagninum "
+        "með fjölda gjafa til spenntu barnanna sem biðu "
+        "milli vonar og ótta."
+    )
     assert len(list(s.tree.all_matches("NP"))) == 6
     assert len(list(s.tree.top_matches("NP"))) == 3
 
-    assert (
-        list(n.text for n in s.tree.all_matches("( no | lo)")) ==
-        [
-            'Stóri', 'feiti', 'jólasveinninn', 'sætustu', 'hreindýrin', 'rauða', 'vagninum',
-            'fjölda', 'gjafa', 'spenntu', 'barnanna'
-        ]
-    )
-    assert (
-        list(n.nominative for n in s.tree.all_matches("( no | lo)")) ==
-        [
-            'Stóri', 'feiti', 'jólasveinninn', 'sætustu', 'hreindýrin', 'rauði', 'vagninn',
-            'fjöldi', 'gjafir', 'spenntu', 'börnin'
-        ]
-    )
-    assert (
-        list(n.canonical for n in s.tree.all_matches("( no | lo)")) ==
-        [
-            'Stór', 'feitur', 'jólasveinn', 'sætast', 'hreindýr', 'rauður', 'vagn',
-            'fjöldi', 'gjöf', 'spennt', 'barn'
-        ]
-    )
-    assert (
-        list(n.canonical for t in s.tree.top_matches("NP") for n in t.all_matches("no")) ==
-        [
-            'jólasveinn', 'hreindýr', 'vagn', 'fjöldi', 'gjöf', 'barn'
-        ]
-    )
+    assert list(n.text for n in s.tree.all_matches("( no | lo)")) == [
+        "Stóri",
+        "feiti",
+        "jólasveinninn",
+        "sætustu",
+        "hreindýrin",
+        "rauða",
+        "vagninum",
+        "fjölda",
+        "gjafa",
+        "spenntu",
+        "barnanna",
+    ]
+    assert list(n.nominative for n in s.tree.all_matches("( no | lo)")) == [
+        "Stóri",
+        "feiti",
+        "jólasveinninn",
+        "sætustu",
+        "hreindýrin",
+        "rauði",
+        "vagninn",
+        "fjöldi",
+        "gjafir",
+        "spenntu",
+        "börnin",
+    ]
+    assert list(n.canonical for n in s.tree.all_matches("( no | lo)")) == [
+        "Stór",
+        "feitur",
+        "jólasveinn",
+        "sætast",
+        "hreindýr",
+        "rauður",
+        "vagn",
+        "fjöldi",
+        "gjöf",
+        "spennt",
+        "barn",
+    ]
+    assert list(
+        n.canonical for t in s.tree.top_matches("NP") for n in t.all_matches("no")
+    ) == ["jólasveinn", "hreindýr", "vagn", "fjöldi", "gjöf", "barn"]
 
+
+def test_ifd_tag():
+    """ Test IFD tagging """
+    s = r.parse_single(
+        "Að minnsta kosti stal Guðbjörn J. Óskarsson 200 krónum þann 19. júní 2003 og þyngdist um 300 kg."
+    )
+    assert s.ifd_tags == [
+        "aþ",
+        "lkeþve",
+        "nkeþ",
+        "sfg3eþ",
+        "nken-m", "nken-m", "nken-m",  # Guðbjörn J. Óskarsson
+        "tfvfþ",  "nvfþ",  # 200 krónum
+        "fakeo",
+        "ta", "nkeo", "ta",  # 19. júní 2003
+        "c",
+        "sfm3eþ",
+        "aa",
+        "ta", "x",  # 300 kg
+        ".",
+    ]
+    s = r.parse_single(
+        "Vestur-Þýskalandi bar blátt áfram að bjarga a.m.k. 284,47 börnum kl. 11:45 árið 374 f.Kr."
+    )
+    assert s.ifd_tags == [
+        'nheþ-ö',
+        'sfg3eþ',
+        'lhensf',
+        'aa',
+        'cn',
+        'sng',
+        'aa',
+        'tfkfn',  # 284,47
+        'nhfþ',
+        'nven', 'ta',  # kl. 11:45
+        'nheo', 'ta', 'aa',  # árið 374 f.Kr
+        '.'
+    ]
 
 def test_finish():
     r.__class__.cleanup()
@@ -615,17 +1054,17 @@ def test_finish():
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     test_init()
-    test_parse(verbose = True)
+    test_parse(verbose=True)
     test_properties()
-    test_long_parse(verbose = True)
-    test_consistency(verbose = True)
+    test_long_parse(verbose=True)
+    test_consistency(verbose=True)
     test_terminals()
     test_single()
     test_year_range()
     test_amounts()
-    test_complex(verbose = True)
-    test_attachment(verbose = True)
+    test_complex(verbose=True)
+    test_attachment(verbose=True)
     test_measurements()
     test_nominative()
+    test_ifd_tag()
     test_finish()
-
