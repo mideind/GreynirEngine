@@ -13,14 +13,16 @@ head (top) node, as well as about its children and contained subtrees.
     .. py:attribute:: is_terminal
 
         Returns ``True`` if this subtree corresponds to a grammar
-        terminal (in which case it has no child subtrees),
-        or ``False`` otherwise.
+        :ref:`terminal <terminals>` (in which case it has no child subtrees),
+        or ``False`` if it corresponds to a grammar :ref:`nonterminal <nonterminals>`
+        (in which case it has child subtrees).
 
     .. py:attribute:: tag
 
         Returns a ``str`` with the name of the :ref:`nonterminal <nonterminals>`
         corresponding to the root of this tree or subtree. The tag may
-        have subcategories, separated by a hyphen, e.g. ``NP-OBJ``.
+        have subcategories, separated by a hyphen, e.g. ``NP-OBJ``
+        (Noun Phrase - OBJect).
 
     .. py:attribute:: terminal
 
@@ -216,6 +218,39 @@ head (top) node, as well as about its children and contained subtrees.
         of this subtree only, i.e. not including its children. For nonterminals,
         this is always an empty string. For terminals, it is the text of the
         corresponding token.
+
+    .. py:attribute:: ifd_tags
+
+        Returns a ``list`` of Icelandic Frequency Dictionary (IFD) part-of-speech tag strings
+        corresponding to raw tokens contained within this subtree.
+
+        The IFD tagset is `documented here <http://www.malfong.is/files/ot_tagset_files_is.pdf>`_.
+
+        The list returned from ``tree.ifd_tags`` has the same length as ``tree.text.split()``.
+        Note that it may be longer than the list of terminals within ``tree``, and also longer
+        than the list of tokens within ``tree``, for instance in the case of person names,
+        dates and amounts.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            t = "María Jónsdóttir skuldaði leigusalanum 10.000 krónur."
+            s = r.parse_single(t)
+            for token, ifd_tag in zip(s.text.split(), s.ifd_tags):
+                print("{0:13}: {1:6}".format(token, ifd_tag))
+
+        outputs:
+
+        .. code-block:: none
+
+            María        : nven-m
+            Jónsdóttir   : nven-m
+            skuldaði     : sfg3eþ
+            leigusalanum : nkeþg
+            10.000       : tfvfo
+            krónur       : nvfo
+            .            : .
 
     .. py:attribute:: lemmas
 

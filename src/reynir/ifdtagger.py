@@ -27,11 +27,8 @@
 """
 
 from .settings import (
-    Settings,
-    Prepositions,
     UndeclinableAdjectives,
     StaticPhrases,
-    ConfigError,
 )
 from .binparser import canonicalize_token
 from .bintokenizer import TOK
