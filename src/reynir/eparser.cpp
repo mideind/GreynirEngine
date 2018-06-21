@@ -362,7 +362,7 @@ void* operator new(size_t nBytes, StateChunk*& pChunkHead)
       pChunkHead = p = pNew;
    }
    void* pPlace = (void*)(p->m_ast + p->m_nIndex);
-   p->m_nIndex += nBytes;
+   p->m_nIndex += (UINT)nBytes;
    ASSERT(p->m_nIndex <= CHUNK_SIZE);
    return pPlace;
 }
@@ -627,9 +627,9 @@ public:
       { return this->m_f != NULL; }
 
    UINT read(void* pb, UINT nLen)
-      { return this->m_f ? fread(pb, 1, nLen, this->m_f) : 0; }
+      { return this->m_f ? (UINT)fread(pb, 1, nLen, this->m_f) : 0; }
    UINT write(void* pb, UINT nLen)
-      { return this->m_f ? fwrite(pb, 1, nLen, this->m_f) : 0; }
+      { return this->m_f ? (UINT)fwrite(pb, 1, nLen, this->m_f) : 0; }
 
    BOOL read_UINT(UINT& n)
       { return this->read(&n, sizeof(UINT)) == sizeof(UINT); }
