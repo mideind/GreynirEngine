@@ -4,17 +4,22 @@ Patterns
 ========
 
 This section describes matching patterns that can be used with the
-:py:meth:`SimpleTree.match()` method.
+:py:meth:`SimpleTree.match()`, :py:meth:`SimpleTree.first_match()`,
+:py:meth:`SimpleTree.all_matches()` and :py:meth:`SimpleTree.top_matches()`
+methods.
 
 Overview
 --------
 
-The :py:meth:`SimpleTree.match()` method can be used to find trees and subtrees that match
-a specific grammatical pattern. This pattern can include conditions that apply to the root
-of the subtree as well as its children, direct or indirect.
+The above mentioned methods can be used to find trees and subtrees that match
+a specific grammatical pattern. This pattern can include conditions that apply
+to the root of each subtree as well as its children, direct or indirect.
 
 The patterns are given as strings, with pattern tokens separated by whitespace.
 :ref:`examples` are given below.
+
+See the documentation of each method for a further explanation of how the
+given pattern is matched in each case, and how results are returned.
 
 Simple matches
 --------------
@@ -101,8 +106,8 @@ Hierarchical matches
 Examples
 --------
 
-This pattern will match any sentence that has a verb phrase that refers to
-a person as an argument::
+This pattern will match the root subtree of any sentence that has a verb phrase
+that refers to a person as an argument::
 
     "S >> { VP >> { NP-OBJ >> person }}"
 
@@ -118,17 +123,16 @@ Here is a short program using some of the matching features::
     my_text = ("Reynt er að efla áhuga ungs fólks á borgarstjórnarmálum "
         "með framboðsfundum og skuggakosningum en þótt kjörstaðirnir "
         "í þeim séu færðir inn í framhaldsskólana er þátttakan lítil.")
-    s = r.parse(my_text)["sentences"][0]
+    s = r.parse_single(my_text)
     print("Parse tree:")
     print(s.tree.view)
     print("All subjects:")
     for d in s.tree.descendants:
         if d.match_tag("NP-SUBJ"):
             print(d.text)
-    print("All neutral noun and pronoun phrases:")
-    for d in s.tree.descendants:
-        if d.match("NP > { (no_hk | pfn_hk) } "):
-            print(d.lemmas)
+    print("All masculine noun and pronoun phrases:")
+    for m in s.tree.all_matches("NP > { (no_kk | pfn_kk) } "):
+        print(m.canonical_np)
 
 Output::
 
@@ -185,8 +189,9 @@ Output::
     All subjects:
     kjörstaðirnir í þeim
     þátttakan
-    All neutral noun and pronoun phrases:
-    ['ungur', 'fólk', 'á', 'borgar-stjórnarmál', 'með', 'framboðsfundur', 'og', 'skugga-kosning']
-    ['borgar-stjórnarmál', 'með', 'framboðsfundur', 'og', 'skugga-kosning']
-    ['það']
+    All masculine noun and pronoun phrases:
+    áhugi
+    framboðsfundur og skuggakosning
+    kjörstaður
+    framhaldsskóli
 
