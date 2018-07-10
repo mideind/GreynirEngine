@@ -814,6 +814,20 @@ def test_measurements():
     )
 
 
+def test_abbreviations():
+    s = r.parse_single(
+        "Ég borða köku BHM á laugard. í okt. nk. og mun þykja hún vond."
+    )
+    assert (
+        s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ VP-SEQ VP "
+        "so_1_þf_et_p1 NP-OBJ no_et_þf_kvk NP-POSS no_et_ef_hk PP fs_þgf "
+        "NP no_et_þgf_kk /NP /PP /NP-POSS /NP-OBJ /VP ADVP ADVP-DATE-REL "
+        "fs_þgf dagsafs lo_þgf_et_kk /ADVP-DATE-REL /ADVP st VP so_et_p1 "
+        "so_1_nf_nh NP-OBJ pfn_kvk_et_nf /NP-OBJ /VP ADJP lo_sb_nf_et_kvk "
+        "/ADJP /VP-SEQ /IP /S-MAIN p /P"
+    )
+
+
 def test_attachment(verbose=False):
     """ Test attachment of prepositions to nouns and verbs """
     if verbose:
@@ -1065,6 +1079,7 @@ if __name__ == "__main__":
     test_complex(verbose=True)
     test_attachment(verbose=True)
     test_measurements()
+    test_abbreviations()
     test_nominative()
     test_ifd_tag()
     test_finish()

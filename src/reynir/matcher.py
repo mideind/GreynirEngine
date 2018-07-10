@@ -672,7 +672,7 @@ class SimpleTree:
         if multi > index:
             raise AttributeError("Subtree has {0} {1} but index {2} was requested"
                 .format(multi - index, name, multi))
-        raise AttributeError("Subtree has no {0}".format(name))
+        raise AttributeError("Subtree has no child named '{0}'".format(name))
 
     def __getitem__(self, index):
         """ Return the appropriate child subtree """

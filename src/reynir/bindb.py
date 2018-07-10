@@ -36,7 +36,9 @@
 from functools import lru_cache
 from collections import namedtuple
 
-from .settings import Abbreviations, AdjectiveTemplate, Meanings, StemPreferences, StaticPhrases
+from tokenizer import Abbreviations
+
+from .settings import AdjectiveTemplate, Meanings, StemPreferences, StaticPhrases
 from .cache import LFU_Cache
 from .dawgdictionary import Wordbase
 from .bincompress import BIN_Compressed

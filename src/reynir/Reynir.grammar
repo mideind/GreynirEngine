@@ -4524,7 +4524,7 @@ DaganaFast →
 AfstæðDagsetning →
     ÓfullkominDagsetning
     | 'í:fs'_þf Árstíð_þf_et/kyn        # í haust, í sumar
-    | 'í:fs'_þf dagsafs                 # í október 1933
+    | 'í:fs'_þgf dagsafs NæstSíðast_þgf_et_kk? # í október [1933] [síðastliðnum]
     | ÍByrjunLok Mánuður_et_ef          # í byrjun septembermánaðar
     | ÍByrjunLok dagsafs                # í byrjun október (2014)
     | ÍByrjunLok 'ár:hk'_et_ef ártal    # í byrjun árs 1945
@@ -4564,7 +4564,8 @@ VísiDagsetning →
     | 'í:fs'_þf 'fyrri:lo'_þf_et_mst    # í fyrra
     | 'dagur:kk'_þf_et_gr 'eftir:ao'    # daginn eftir
 
-Mánuður_et/fall → 
+# Hér eru aðeins orð yfir mánuði sem ekki tengjast við 'dagsafs' lauf
+Mánuður_et/fall →
     'janúarmánuður:kk'/fall
     | 'febrúarmánuður:kk'/fall
     | 'marsmánuður:kk'/fall
@@ -4577,19 +4578,6 @@ Mánuður_et/fall →
     | 'októbermánuður:kk'/fall
     | 'nóvembermánuður:kk'/fall
     | 'desembermánuður:kk'/fall
-    | "jan."
-    | "feb."
-    | "mar."
-    | "apr."
-    | "jún."
-    | "júl."
-    | "ág."
-    | "ágú."
-    | "sep."
-    | "sept."
-    | "okt."
-    | "nóv."
-    | "des."
 
 DaganaAfs → 
     'dagur:kk'_gr_ft_þf? dagsafs Til dagsafs       # (dagana) 13. október og/til/- 14. nóvember
@@ -5126,20 +5114,6 @@ Vikudagur/fall/tala →
     | 'föstudagur:kk'/fall/tala
     | 'laugardagur:kk'/fall/tala
     | 'sunnudagur:kk'/fall/tala
-    #| "mán."                     # 'mán.' er ekki í Abbrev.conf eins og er, rekst á mán. fyrir mánuður.
-    | "þri."
-    #| "mið."                     # 'mið.' er ekki inni í Abbrev.conf eins og er, rekst á 'mið' aftast í setningu.
-    | "fim."
-    | "fös."
-    | "lau."
-    | "sun."
-    | "mánud."
-    | "þriðjud."
-    | "miðvikud."
-    | "fimmtud."
-    | "föstud."
-    | "laugard."
-    | "sunnud."
 
 Vikudagur_gr/tala/fall → Vikudagur_gr/fall/tala
 Vikudagur_gr/fall/tala →
@@ -5151,20 +5125,6 @@ Vikudagur_gr/fall/tala →
     | 'föstudagur:kk'_gr/fall/tala
     | 'laugardagur:kk'_gr/fall/tala
     | 'sunnudagur:kk'_gr/fall/tala
-    #| "mán."                     # 'mán.' er ekki í Abbrev.conf eins og er, rekst á mán. fyrir mánuður.
-    | "þri."
-    #| "mið."                     # 'mið.' er ekki inni í Abbrev.conf eins og er, rekst á 'mið' aftast í setningu.
-    | "fim."
-    | "fös."
-    | "lau."
-    | "sun."
-    | "mánud."
-    | "þriðjud."
-    | "miðvikud."
-    | "fimmtud."
-    | "föstud."
-    | "laugard."
-    | "sunnud."
 
 FyrrSíðarSeinna →
     'snemma:ao'_mst     # fyrr
@@ -5189,19 +5149,15 @@ TímaÁkvæðisLo/fall/tala/kyn →
     | 'seinn:lo'_evb/fall/tala/kyn      # seinastur
     | 'næstkomandi:lo'/fall/tala/kyn
     | 'síðastliðinn:lo'/fall/tala/kyn
-    | "sl."
     | 'undanfarinn:lo'/fall/tala/kyn
     | 'undangenginn:lo'/fall/tala/kyn
 
 SáÞessi/fall/tala/kyn → 'sá:fn'/fall/tala/kyn | 'þessi:fn'/fall/tala/kyn
 
-# Lýsingarorð sem ganga á eftir dagsetningum.
+# Lýsingarorð sem ganga á eftir dagsetningum
 NæstSíðast/fall/tala/kyn →
     'næstkomandi:lo'/fall/tala/kyn
     | 'síðastliðinn:lo'/fall/tala/kyn
-    | "sl."
-    | "nk."
-    | "n.k."        # Algeng villa.
 
 ÁðurEftir →
     'áður:ao'

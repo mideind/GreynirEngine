@@ -31,8 +31,10 @@ from .settings import Settings
 
 from tokenizer import TOK, Tok, tokenize, correct_spaces
 from tokenizer import TP_LEFT, TP_CENTER, TP_RIGHT, TP_NONE, TP_WORD
+from tokenizer import Abbreviations
 
 __author__ = u"Vilhjálmur Þorsteinsson"
 
+Abbreviations.initialize()
 Settings.read("config/ReynirPackage.conf")
 

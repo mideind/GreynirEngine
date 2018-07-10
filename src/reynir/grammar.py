@@ -59,10 +59,9 @@ import struct
 from datetime import datetime
 from collections import defaultdict, OrderedDict
 
-if not __package__:
-    from settings import Settings, StaticPhrases, Abbreviations, changedlocale
-else:
-    from .settings import Settings, StaticPhrases, Abbreviations, changedlocale
+from tokenizer import Abbreviations
+
+from .settings import Settings, StaticPhrases, changedlocale
 
 
 class GrammarError(Exception):
