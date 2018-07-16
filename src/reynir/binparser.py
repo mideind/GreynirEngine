@@ -1519,6 +1519,8 @@ def canonicalize_token(t):
         # Add an 'a' field with a terminal name including all
         # variants, in a canonical form that lists verb arguments
         # first, followed by other variants in alphabetical order.
+        # !!! Note: This code should be synchronized with code in
+        # matcher.py (SimpleTree.terminal_with_all_variants)
         a = t["t"].split("_")
         cases = []
         vstart = 1

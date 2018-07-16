@@ -95,14 +95,21 @@ MULTIPLIERS = {
     # "tugur": 10,
     # "tylft": 12,
     "hundrað": 100,
-    "þúsund": 1000, # !!! Bæði hk og kvk!
+    "þúsund": 1000,  # !!! Bæði hk og kvk!
     "þús.": 1000,
     "milljón": 1e6,
     "milla": 1e6,
+    "millj.": 1e6,
     "milljarður": 1e9,
     "miljarður": 1e9,
-    "ma.": 1e9
+    "ma.": 1e9,
+    "mrð.": 1e9,
 }
+
+# The following must occur as lemmas in BÍN
+DECLINABLE_MULTIPLIERS = frozenset((
+    'hundrað', 'þúsund', 'milljón', 'milljarður'
+))
 
 # Recognize words for percentages
 PERCENTAGES = {
@@ -148,17 +155,27 @@ ISO_CURRENCIES = {
     ("ru", "RUB"): "RUB",
     ("in", "INR"): "INR", # Indian rupee
     ("id", "INR"): "IDR", # Indonesian rupiah
-    ("cn", "CNY"): "CNY"
+    ("cn", "CNY"): "CNY",
+    ("cn", "RMB"): "RMB"
 }
 
 # Amount abbreviations including 'kr' for the ISK
 # Corresponding abbreviations are found in Abbrev.conf
 AMOUNT_ABBREV = {
+    "kr.": 1,
+    "kr": 1,
     "þ.kr.": 1e3,
+    "þ.kr": 1e3,
     "þús.kr.": 1e3,
+    "þús.kr": 1e3,
     "m.kr.": 1e6,
+    "m.kr": 1e6,
     "mkr.": 1e6,
-    "ma.kr.": 1e9
+    "mkr": 1e6,
+    "ma.kr.": 1e9,
+    "ma.kr": 1e9,
+    "mrð.kr.": 1e9,
+    "mrð.kr": 1e9,
 }
 
 # Number words can be marked as subjects (any gender) or as numbers
@@ -171,6 +188,9 @@ CURRENCIES = {
     "[kr.]": "ISK",
     "kr.": "ISK",
     "kr": "ISK",
+    "DKK": "DKK",
+    "NOK": "NOK",
+    "SEK": "SEK",
     "pund": "GBP",
     "sterlingspund": "GBP",
     "GBP": "GBP",
@@ -179,12 +199,12 @@ CURRENCIES = {
     "bandaríkjadalur": "USD",
     "USD": "USD",
     "franki": "CHF",
+    "CHF": "CHF",
     "rúbla": "RUB",
     "RUB": "RUB",
     "rúpía": "INR",
     "INR": "INR",
     "IDR": "IDR",
-    "CHF": "CHF",
     "jen": "JPY",
     "yen": "JPY",
     "JPY": "JPY",
@@ -193,12 +213,17 @@ CURRENCIES = {
     "júan": "CNY",
     "yuan": "CNY",
     "CNY": "CNY",
+    "renminbi": "RMB",
+    "RMB": "RMB",
     "evra": "EUR",
-    "EUR": "EUR"
+    "EUR": "EUR",
 }
 
 CURRENCY_GENDERS = {
     "ISK": "kvk",
+    "DKK": "kvk",
+    "NOK": "kvk",
+    "SEK": "kvk",
     "GBP": "hk",
     "USD": "kk",
     "CHF": "kk",
@@ -208,6 +233,7 @@ CURRENCY_GENDERS = {
     "JPY": "hk",
     "PLN": "hk",
     "CNY": "hk",
+    "RMB": "hk",
     "EUR": "kvk"
 }
 
@@ -545,7 +571,9 @@ def parse_phrases_2(token_stream):
                         if not cases:
                             cases = list(ALL_CASES)
                         if not genders:
-                            genders = ["hk"]
+                            # Try to find a correct gender for the ISO abbrev,
+                            # or use neutral as a default
+                            genders = [ CURRENCY_GENDERS.get(next_token.txt, "hk") ]
                     if cur is not None:
                         # Use the case and gender information from the currency name
                         if not cases:

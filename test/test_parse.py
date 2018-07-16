@@ -807,8 +807,8 @@ def test_measurements():
         s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ VP so_et_p1 so_1_þf_nh "
         "NP-OBJ lo_þf_ft_hk tala_ft_þf_hk no_ft_þf_hk /NP-OBJ /VP /IP /S-MAIN st "
         "S-MAIN IP NP-SUBJ pfn_kk_et_nf /NP-SUBJ VP-SEQ VP so_et_p3 so_1_þf_nh "
-        "NP-OBJ NP-MEASURE ao mælieining mælieining /NP-MEASURE /NP-OBJ /VP "
-        "PP fs_þgf NP no_et_þgf_hk PP fs_þgf NP NP-POSS NP-MEASURE ao mælieining "
+        "NP-OBJ NP-MEASURE ao tala mælieining /NP-MEASURE /NP-OBJ /VP "
+        "PP fs_þgf NP no_et_þgf_hk PP fs_þgf NP NP-POSS NP-MEASURE ao tala "
         "mælieining /NP-MEASURE /NP-POSS no_et_þgf_hk /NP /PP /NP "
         "/PP /VP-SEQ /IP /S-MAIN p /P"
     )
@@ -1061,6 +1061,86 @@ def test_ifd_tag():
         '.'
     ]
 
+
+def test_tree_flat():
+
+    AMOUNTS = {
+        "þf": [
+            ("13", "þf", "tala"),
+            ("1.234,5", "þf", "tala"),
+            ("1,234.5", "þf", "tala"),
+            ("13 þúsund", "þf", "tala töl"),
+            ("13 þús.", "þf", "tala töl"),
+            ("13 millj.", "þf", "tala töl"),
+            ("13 mrð.", "þf", "tala töl"),
+            ("3 þúsundir", "ef", "tala no_ft_kvk_þf"),
+            ("1.234,5 milljónir", "ef", "tala no_ft_kvk_þf"),
+            ("1.234,5 milljarða", "ef", "tala no_ft_kk_þf"),
+        ],
+        "þgf": [
+            ("13", "þgf", "tala"),
+            ("1.234,5", "þgf", "tala"),
+            ("1,234.5", "þgf", "tala"),
+            ("13 þúsund", "þgf", "tala töl"),
+            ("13 þús.", "þgf", "tala töl"),
+            ("13 millj.", "þgf", "tala töl"),
+            ("13 mrð.", "þgf", "tala töl"),
+            ("3 þúsundum", "ef", "tala no_ft_hk_þgf"),
+            ("1.234,5 milljónum", "ef", "tala no_ft_kvk_þgf"),
+            ("1.234,5 milljörðum", "ef", "tala no_ft_kk_þgf"),
+        ]
+    }
+
+    CURRENCIES = {
+        "þf": (
+            ("ISK", "no_ft_kvk_þf"),
+            ("krónur", "no_ft_kvk_þf"),
+            ("íslenskar krónur", "lo_ft_kvk_sb_þf no_ft_kvk_þf"),
+            ("bresk pund", "lo_ft_hk_sb_þf no_ft_hk_þf"),
+            ("danskar krónur", "lo_ft_kvk_sb_þf no_ft_kvk_þf"),
+            ("bandaríkjadali", "no_ft_kk_þf"),
+            ("bandaríska dali", "lo_ft_kk_sb_þf no_ft_kk_þf"),
+            ("indónesískar rúpíur", "lo_ft_kvk_sb_þf no_ft_kvk_þf"),
+            ("indverskar rúpíur", "lo_ft_kvk_sb_þf no_ft_kvk_þf"),
+        ),
+        "þgf": (
+            ("ISK", "no_ft_kvk_þgf"),
+            ("krónum", "no_ft_kvk_þgf"),
+            ("íslenskum krónum", "lo_ft_kvk_sb_þgf no_ft_kvk_þgf"),
+            ("breskum pundum", "lo_ft_hk_sb_þgf no_ft_hk_þgf"),
+            ("dönskum krónum", "lo_ft_kvk_sb_þgf no_ft_kvk_þgf"),
+            ("bandaríkjadölum", "no_ft_kk_þgf"),
+            ("bandarískum dölum", "lo_ft_kk_sb_þgf no_ft_kk_þgf"),
+            ("indónesískum rúpíum", "lo_ft_kvk_sb_þgf no_ft_kvk_þgf"),
+            ("indverskum rúpíum", "lo_ft_kvk_sb_þgf no_ft_kvk_þgf"),
+        ),
+        "ef": (
+            ("ISK", "no_ef_ft_kvk"),
+            ("króna", "no_ef_ft_kvk"),
+            ("íslenskra króna", "lo_ef_ft_kvk_sb no_ef_ft_kvk"),
+            ("breskra punda", "lo_ef_ft_hk_sb no_ef_ft_hk"),
+            ("danskra króna", "lo_ef_ft_kvk_sb no_ef_ft_kvk"),
+            ("bandaríkjadala", "no_ef_ft_kk"),
+            ("bandarískra dala", "lo_ef_ft_kk_sb no_ef_ft_kk"),
+            ("indónesískra rúpía", "lo_ef_ft_kvk_sb no_ef_ft_kvk"),
+            ("indverskra rúpía", "lo_ef_ft_kvk_sb no_ef_ft_kvk"),
+        )
+    }
+
+    for verb_case, amounts in AMOUNTS.items():
+        for amount, currency_case, t1 in amounts:
+            for currency, t2 in CURRENCIES[currency_case]:
+                if verb_case == "þf":
+                    sent = "Hann skuldaði mér " + amount + " " + currency + "."
+                elif verb_case == "þgf":
+                    sent = "Hann tapaði " + amount + " " + currency + "."
+                else:
+                    assert False  # Unknown verb case
+                s = r.parse_single(sent)
+                np_obj = s.tree.S.IP.VP.NP_OBJ.flat_with_all_variants
+                assert np_obj == "NP-OBJ " + t1 + " " + t2 + " /NP-OBJ"
+
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -1082,4 +1162,5 @@ if __name__ == "__main__":
     test_abbreviations()
     test_nominative()
     test_ifd_tag()
+    test_tree_flat()
     test_finish()

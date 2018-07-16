@@ -139,6 +139,12 @@ head (top) node, as well as about its children and contained subtrees.
         various :ref:`grammar variants <variants>` separated by underscores, e.g.
         ``no_þf_kk_et`` for a noun, accusative case, masculine gender, singular.
 
+        Note that the terminal identifiers returned by this property correspond
+        directly with the Reynir grammar. If you want all grammatical variants
+        (features) of the word that matched a terminal (for instance whether
+        a verb was in the present (``_nt``) or past (``_þt``) tense), use the
+        :py:attr:`SimpleTree.flat_with_all_variants` property instead.
+
         Example::
 
             from reynir import Reynir
@@ -148,10 +154,46 @@ head (top) node, as well as about its children and contained subtrees.
 
         Output (line breaks inserted)::
 
-            P S-MAIN IP NP-SUBJ person_nf_kk /NP-SUBJ VP so_2_þgf_þf_et_p3
-                NP-IOBJ no_et_þgf_kk /NP-IOBJ NP-OBJ tala_ft_þf_kvk
-                no_ft_þf_kvk NP-POSS no_ft_ef_kvk /NP-POSS /NP-OBJ /VP /IP
-                /S-MAIN p /P
+            P S-MAIN IP
+                NP-SUBJ person_nf_kk /NP-SUBJ
+                VP so_2_þgf_þf_et_p3
+                    NP-IOBJ no_et_þgf_kk /NP-IOBJ
+                    NP-OBJ tala no_ft_þf_kvk no_ef_ft_kvk /NP-OBJ
+                /VP
+            /IP /S-MAIN p /P
+
+    .. py:attribute:: flat_with_all_variants
+
+        Returns this subtree, simplified and flattened to a text string.
+        :ref:`Nonterminal <nonterminals>` scopes are
+        delimited like so: ``NAME ... /NAME`` where ``NAME`` is the name of
+        the nonterminal, for example ``NP`` for noun phrases and ``VP`` for
+        verb phrases. :ref:`terminals` have lower-case identifiers with their
+        various :ref:`grammar variants <variants>` separated by underscores, e.g.
+        ``no_þf_kk_et_gr`` for a noun, accusative case, masculine gender, singular,
+        with attached definite article (*greinir*).
+
+        For each terminal in the tree, this property returns all grammatical variants
+        (features) of the word that matched the terminal. If you only need the
+        terminals variants that were actually specified in the Reynir grammar, use the
+        :py:attr:`SimpleTree.flat` property instead.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Jón greiddi bænum 10 milljónir króna.")
+            print(s.tree.flat_with_all_variants)
+
+        Output (line breaks inserted)::
+
+            P S-MAIN IP
+                NP-SUBJ person_nf_kk /NP-SUBJ
+                VP so_2_þgf_þf_et_fh_gm_p3_þt
+                    NP-IOBJ no_et_gr_kk_þgf /NP-IOBJ
+                    NP-OBJ tala no_ft_kvk_þf no_ef_ft_kvk /NP-OBJ
+                /VP
+            /IP /S-MAIN p /P
 
     .. py:method:: __getitem__(self, item) -> SimpleTree
 

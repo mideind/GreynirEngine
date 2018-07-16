@@ -95,18 +95,13 @@ import re
 from pprint import pformat
 from itertools import chain
 
-if not __package__:
-    from cache import cached_property
-    from settings import StaticPhrases
-    from binparser import BIN_Token
-    from bindb import BIN_Db, BIN_Meaning
-    from ifdtagger import IFD_Tagset
-else:
-    from .cache import cached_property
-    from .settings import StaticPhrases
-    from .binparser import BIN_Token
-    from .bindb import BIN_Db, BIN_Meaning
-    from .ifdtagger import IFD_Tagset
+from .cache import cached_property
+from .settings import StaticPhrases
+from .binparser import BIN_Token
+from .bintokenizer import CURRENCIES, CURRENCY_GENDERS, MULTIPLIERS, DECLINABLE_MULTIPLIERS
+from .bindb import BIN_Db
+from .ifdtagger import IFD_Tagset
+
 
 # Default tree simplifier configuration maps
 
@@ -117,7 +112,7 @@ _DEFAULT_NT_MAP = {
     "Setning" : "S",
     "SetningLo" : "S",
     "SetningÁnF" : "S",
-    "SetningAukafall" : ("S", "IP"), # Push two headers: S and IP
+    "SetningAukafall" : ("S", "IP"),  # Push two headers: S and IP
     "SetningAukafallForgangur" : ("S", "IP"),
     "SetningSkilyrði" : "S",
     "SetningUmAðRæða" : "S",
@@ -158,7 +153,7 @@ _DEFAULT_NT_MAP = {
     "NlBeintAndlag" : "NP-OBJ",
     "NlÓbeintAndlag" : "NP-IOBJ",
     "NlSagnfylling" : "NP-PRD",
-    "SögnErLoBotn" : "NP-PRD", # Show '(Hann er) góður / 18 ára' as a predicate argument
+    "SögnErLoBotn" : "NP-PRD",  # Show '(Hann er) góður / 18 ára' as a predicate argument
     "Aldur" : "NP-AGE",
 
     "Sagnliður" : "VP",
@@ -169,7 +164,7 @@ _DEFAULT_NT_MAP = {
     "SagnliðurÁnF" : "VP",
     "ÖfugurSagnliður" : "VP",
     "SagnliðurVh" : "VP",
-    "SögnLhNt" : "VP-PP", # Present participle, lýsingarháttur nútíðar
+    "SögnLhNt" : "VP-PP",  # Present participle, lýsingarháttur nútíðar
     "SagnHluti" : "VP-SEQ",
     "SagnRuna" : "VP-SEQ",
     "SetningSo" : "VP-SEQ",
@@ -210,21 +205,21 @@ _DEFAULT_ID_MAP = {
         subject_to = { "S-MAIN" }),
     "S" : dict(name = "Setning",
         subject_to = { "S", "S-EXPLAIN", "S-REF", "IP" }),
-    "S-COND" : dict(name = "Skilyrði", overrides = "S"), # Condition
-    "S-CONS" : dict(name = "Afleiðing", overrides = "S"), # Consequence
+    "S-COND" : dict(name = "Skilyrði", overrides = "S"),  # Condition
+    "S-CONS" : dict(name = "Afleiðing", overrides = "S"),  # Consequence
     "S-REF" : dict(name = "Tilvísunarsetning", overrides = "S",
-        subject_to = { "S-REF" }), # Reference
-    "S-EXPLAIN" : dict(name = "Skýring"), # Explanation
-    "S-QUOTE" : dict(name = "Tilvitnun"), # Quote at end of sentence
-    "S-PREFIX" : dict(name = "Forskeyti"), # Prefix in front of sentence
-    "S-ADV-TEMP" : dict(name = "Tíðarsetning"), # Adverbial temporal phrase
-    "S-ADV-PURP" : dict(name = "Tilgangssetning"), # Adverbial purpose phrase
-    "S-ADV-ACK" : dict(name = "Viðurkenningarsetning"), # Adverbial acknowledgement phrase
-    "S-ADV-CONS" : dict(name = "Afleiðingarsetning"), # Adverbial consequence phrase
-    "S-ADV-CAUSE" : dict(name = "Orsakarsetning"), # Adverbial causal phrase
-    "S-ADV-COND" : dict(name = "Skilyrðissetning"), # Adverbial conditional phrase
-    "S-THT" : dict(name = "Skýringarsetning"), # Complement clause
-    "S-QUE" : dict(name = "Spurnarsetning"), # Question clause
+        subject_to = { "S-REF" }),  # Reference
+    "S-EXPLAIN" : dict(name = "Skýring"),  # Explanation
+    "S-QUOTE" : dict(name = "Tilvitnun"),  # Quote at end of sentence
+    "S-PREFIX" : dict(name = "Forskeyti"),  # Prefix in front of sentence
+    "S-ADV-TEMP" : dict(name = "Tíðarsetning"),  # Adverbial temporal phrase
+    "S-ADV-PURP" : dict(name = "Tilgangssetning"),  # Adverbial purpose phrase
+    "S-ADV-ACK" : dict(name = "Viðurkenningarsetning"),  # Adverbial acknowledgement phrase
+    "S-ADV-CONS" : dict(name = "Afleiðingarsetning"),  # Adverbial consequence phrase
+    "S-ADV-CAUSE" : dict(name = "Orsakarsetning"),  # Adverbial causal phrase
+    "S-ADV-COND" : dict(name = "Skilyrðissetning"),  # Adverbial conditional phrase
+    "S-THT" : dict(name = "Skýringarsetning"),  # Complement clause
+    "S-QUE" : dict(name = "Spurnarsetning"),  # Question clause
     "VP-SEQ" : dict(name = "Sagnliður"),
     "VP" : dict(name = "Sögn", overrides = "VP-SEQ",
         subject_to = { "VP" }),
@@ -258,7 +253,7 @@ _DEFAULT_ID_MAP = {
     "PP" : dict(name = "Forsetningarliður", overrides = "ADVP"),
     "ADJP" : dict(name = "Lýsingarliður",
         subject_to = { "ADJP" }),
-    "IP" : dict(name = "Beygingarliður"),   # Inflectional phrase
+    "IP" : dict(name = "Beygingarliður"),  # Inflectional phrase
 }
 
 _DEFAULT_TERMINAL_MAP = {
@@ -309,6 +304,20 @@ _DEFINITE_PRONOUNS = frozenset([
 ])
 
 # _CUT_LEADING_ADVERBS = frozenset(("því", "út", "fram", "þó"))
+
+_MULTIWORD_TOKENS = frozenset(("AMOUNT", "MEASUREMENT", "TIME",
+    "TIMESTAMPABS", "TIMESTAMPREL", "DATEABS", "DATEREL"))
+
+_MONTH_NAMES = frozenset(("janúar", "febrúar", "mars", "apríl", "maí", "júní",
+    "júlí", "ágúst", "september", "október", "nóvember", "desember",
+    "jan.", "feb.", "mar.", "apr.", "jún.", "júl.", "ágú.", "ág.",
+    "sep.", "sept.", "okt.", "nóv.", "des."))
+
+_CLOCK = frozenset(("klukkan", "kl."))
+
+_CE_BCE = frozenset(("e.kr.", "e.kr", "f.kr.", "f.kr"))  # Lowercase here is deliberate
+
+_CASES = frozenset(("nf", "þf", "þgf", "ef"))
 
 
 def cut_definite_pronouns(txt):
@@ -378,7 +387,7 @@ class SimpleTree:
         '{' : '}'
     }
     _FINISHERS = frozenset(_NEST.values())
-    _NOT_ITEMS = frozenset(( '>', '*', '+', '?', '[', '(', '{', ']', ')', '}', '$' ))
+    _NOT_ITEMS = frozenset(('>', '*', '+', '?', '[', '(', '{', ']', ')', '}', '$'))
 
     _pattern_cache = dict()
 
@@ -467,14 +476,13 @@ class SimpleTree:
                     # !!! TODO: Handle currency names and measurement units
                     if part == "árið":
                         result.append("nheo")
-                    elif part.startswith("f.kr") or part.startswith("e.kr"):
+                    elif part in _CE_BCE:
                         # Abbreviation 'f.Kr.' or 'e.Kr.': handle as adverbial phrase
                         result.append("aa")
-                    elif part == "klukkan" or part == "kl.":
+                    elif part in _CLOCK:
+                        # Feminine, singular, nominative case
                         result.append("nven")
-                    elif part in { "janúar", "jan.", "febrúar", "feb.", "mars", "apríl", "apr.", "maí", "júní",
-                        "júlí", "ágúst", "ágú.", "september", "sep.", "október", "okt.",
-                        "nóvember", "nóv.", "desember", "des." }:
+                    elif part in _MONTH_NAMES:
                         result.append("nkeo")  # Assume accusative case
                     else:
                         result.append("x")  # Unknown
@@ -504,6 +512,44 @@ class SimpleTree:
     def terminal(self):
         """ The terminal matched by this subtree """
         return self._head.get("t")
+
+    @property
+    def terminal_with_all_variants(self):
+        """ The terminal matched by this subtree, with all applicable variants
+            in canonical form (in alphabetical order, except for verb argument cases) """
+        terminal = self._head.get("a")
+        if terminal is not None:
+            # All variants already available in canonical form: we're done
+            return terminal
+        terminal = self._head.get("t")
+        if terminal is None:
+            return None
+        # Reshape the terminal string to the canonical form where
+        # the variants are in alphabetical order, except
+        # for verb arguments, which are always first, immediately
+        # following the terminal category.
+        # !!! Note: This code should be synchronized with code in
+        # binparser.py (canonicalize_token)
+        a = terminal.split("_")
+        verb_args = []
+        rest = 1
+        if len(a) > 1:
+            if a[1] in "012":
+                # Terminal of the form so_N[_case1][_case2]_rest...
+                nargs = int(a[1])
+                verb_args = a[1:1 + nargs]
+                rest += 1 + nargs
+            elif a[1] == "subj":
+                # Terminal of the form so_subj_rest...
+                verb_args = a[1:2]
+                rest += 1
+        vset = set(a[rest:])
+        if "op" in vset:
+            # For impersonal verbs, we leave out the person variant
+            # since all person forms are identical
+            vset -= { "p1", "p2", "p3" }
+        # Reassemble the terminal name: tcat_verbargs_rest
+        return "_".join(a[0:1] + verb_args + sorted(list(vset)))
 
     @cached_property
     def variants(self):
@@ -616,39 +662,190 @@ class SimpleTree:
         "'hafa'_nh" : "so_nh"
     })
 
-    def _flat(self, level):
+    @staticmethod
+    def _make_terminal_with_case(cat, variants, terminal, default_case="nf"):
+        """ Return a terminal identifier with the given category and
+            variants, plus the case indicated in the terminal, if any """
+        tcase = set(terminal.split("_")[1:]) & _CASES
+        if len(tcase) == 0:
+            # If no case given, assume nominative rather than nothing
+            tcase = {default_case}
+        return "_".join([ cat ] + sorted(list(variants | tcase)))
+
+    @staticmethod
+    def _multiword_token(txt, tokentype, terminal):
+        """ Return a sequence of terminals corresponding to a multi-word token
+            whose source text is in txt """
+        # Multi-word tokens can be dates and timestamps, amounts and measurements.
+        # We need to jump through several hoops to reconstruct a sequence of
+        # terminals that correspond to the source token atoms.
+        # A trick is employed here: the source tokens are processed in reverse
+        # order, so that we can note the case and gender of a finishing noun
+        # (typically a currency name such as 'króna') and use it to qualify
+        # a subsequent (but textually preceding) adjective (such as 'danskra').
+        result = []
+        case = None
+        gender = None
+        terminal_case = None
+        # Token atoms (components of a multiword token)
+        a = list(reversed(txt.split()))
+        for tok in a:
+            if re.match(r"^\d{1,2}:\d\d(:\d\d)?$", tok):
+                # 12:34 or 11:34:50
+                result.append("tími")
+                continue
+            if (re.match(r"^\d{1,2}\.\d{1,2}(\.\d{2,4})?$", tok) or
+                re.match(r"^\d{1,2}/\d{1,2}(/\d{2,4})?$", tok)):
+                # 17.6, 30.12.1965, 17/6 or 30/12/65
+                result.append("dags")
+                continue
+            if re.match(r'^\d+\.$', tok):
+                # 12.
+                result.append("raðnr")
+                continue
+            if re.match(r'^\d\d\d\d$', tok) and 1776 <= int(tok) <= 2100:
+                # 1981
+                result.append("ártal")
+                continue
+            if re.match(r'^[\+\-]?\d+(\.\d\d\d)*(,\d+)?$', tok):
+                # 12, 1.234 or 1.234,56
+                result.append("tala")
+                continue
+            tok_lower = tok.lower()
+            if tok_lower == "árið":
+                result.append("no_et_gr_hk_þf")
+                continue
+            if tok_lower in _MONTH_NAMES:
+                # For month names, return a noun terminal with singular,
+                # masculine variants plus the case from the original terminal, if any
+                result.append(SimpleTree._make_terminal_with_case("no", {"et", "kk"}, terminal, "þf"))
+                continue
+            if tok_lower in _CLOCK:
+                # klukkan, kl.
+                result.append("no_et_gr_kvk_nf")
+                continue
+            if tok_lower in _CE_BCE:
+                # e.Kr./e.Kr, f.Kr./f.Kr
+                result.append("ao")
+                continue
+            if tokentype == "AMOUNT":
+                if tok_lower.endswith("."):
+                    if tok_lower in MULTIPLIERS:
+                        # Abbreviations such as 'þús.', 'mrð.': treat as
+                        # undeclinable 'töl' tokens
+                        result.append("töl")
+                        continue
+                # For spelled-out amounts, we look up contained words in BÍN
+                # These may be number prefixes ('sautján'), adjectives ('norskar'),
+                # and nouns ('krónur')
+                with BIN_Db.get_db() as db:
+                    _, m = db.lookup_word(tok_lower, at_sentence_start=False)
+                    # We only consider to, töl, lo, currency names or declinable multipliers
+                    # ('þúsund', 'milljónir', 'milljarðar')
+                    m = list(filter(lambda mm:
+                        (mm.stofn in CURRENCIES or mm.stofn in DECLINABLE_MULTIPLIERS)
+                        if mm.ordfl in {"kk", "kvk", "hk"}
+                        else mm.ordfl in {"to", "töl", "lo"},
+                        m
+                    ))
+                    if len(m) == 0:
+                        if tok in CURRENCY_GENDERS:
+                            # This is a three-letter currency abbreviation:
+                            # put the right gender on it
+                            result.append(SimpleTree._make_terminal_with_case("no",
+                                {"ft", CURRENCY_GENDERS[tok]}, terminal, "þf")
+                            )
+                            continue
+                    else:
+                        # Make sure plural forms are chosen rather than singular ones
+                        m.sort(key=lambda mm: 0 if "FT" in mm.beyging else 1)
+                        # Make sure that the case of the terminal is preferred
+                        # over other cases
+                        if terminal_case is None:
+                            # Only calculate the terminal case once, on-demand
+                            terminal_case = next(iter(set(terminal.split("_")[1:]) & _CASES), "").upper()
+                        if terminal_case:
+                            # The terminal actually specifies a case: sort on it
+                            m.sort(key=lambda mm: 0 if terminal_case in mm.beyging else 1)
+                        # If we can get away with just a 'töl', do it
+                        mm = next((mm for mm in m if mm.ordfl == "töl"), m[0])
+                        if mm.ordfl == "lo" and case is not None and gender is not None:
+                            # Looks like this is an adjective: filter down to those that
+                            # match the previously seen noun
+                            m = [ mm for mm in m if case in mm.beyging and gender in mm.beyging ]
+                            mm = next(iter(m), mm)
+                        variants = BIN_Token.bin_variants(mm.beyging)
+                        if mm.ordfl in {"kk", "kvk", "hk"}:
+                            # The word is a noun
+                            ordfl = mm.ordfl
+                            result.append("no_" + "_".join(sorted(list(variants | {ordfl}))))
+                            # Note the gender and case of the noun, so we can restrict our
+                            # set of adjective forms, if an adjective is attached
+                            gender = ordfl.upper()
+                            case = next(iter(variants & _CASES), "nf").upper()
+                            continue
+                        # Something besides a noun: return the category and the variants
+                        result.append(mm.ordfl + "".join("_" + v for v in sorted(list(variants))))
+                        continue
+
+            # No special case for this atom: return the terminal
+            result.append(terminal)
+        # Fix the last terminal if it denotes a currency abbreviation
+        # that should be in the possessive case
+        if tokentype == "AMOUNT":
+            # Note that the terminal list is reversed, so a[0] is the last terminal
+            if a[0] in CURRENCY_GENDERS:
+                # ISO currency abbreviation
+                if result[1].startswith("no_"):
+                    # Following a noun (we're assuming that it's a multiplier
+                    # such as 'þúsund', 'milljónir', 'milljarðar'):
+                    # assemble a terminal identifier with plural, possessive
+                    # and the correct gender
+                    result[0] = "no_" + "_".join(sorted(["ft", "ef", CURRENCY_GENDERS[a[0]]]))
+        return " ".join(reversed(result))
+
+    def _flat(self, func):
         """ Return a string containing an a flat representation of this subtree """
         if self._len > 1 or self._children:
             # Children present: Array or nonterminal
-            tag = self.tag or "X" # Unknown tag (should not occur)
+            tag = self.tag or "X"  # Unknown tag (should not occur)
             return tag + " " + " ".join(
-                child._flat(level + 1) for child in self.children) + " /" + tag
+                child._flat(func) for child in self.children) + " /" + tag
         # No children
-        if self._head.get("k") == "PUNCTUATION":
+        tokentype = self._head.get("k")
+        if tokentype == "PUNCTUATION":
             # Punctuation
             return "p"
         # Terminal
+        terminal = func(self)  # Get the terminal representation
         numwords = self._text.count(" ")
         if not numwords:
-            return self._replacer.replace(self.terminal)
+            return self._replacer.replace(terminal)
         # Multi-word phrase
         if self.tcat == "fs":
             # fs phrase:
             # Return a sequence of ao prefixes before the terminal itself
-            return " ".join([ "ao" ] * numwords + [ self.terminal ])
-        # Repeat the terminal name for each component word
-        # !!! TODO: Potentially divide composite tokens such as
-        # !!! TODO: dates into more detailed terminals, such as tala, raðnr, etc.
-        return " ".join([ self.terminal ] * (numwords + 1))
+            return " ".join([ "ao" ] * numwords + [ terminal ])
+        if tokentype in _MULTIWORD_TOKENS:
+            # Use a special handler for these multiword tokens
+            return self._multiword_token(self._text, tokentype, terminal)
+        # Fallback: Repeat the terminal name for each component word
+        return " ".join([ terminal ] * (numwords + 1))
 
     @property
     def flat(self):
         """ Return a flat representation of this subtree """
-        return self._flat(0)
+        return self._flat(lambda tree: tree.terminal)
+
+    @property
+    def flat_with_all_variants(self):
+        """ Return a flat representation of this subtree, where terminals
+            include all applicable variants """
+        return self._flat(lambda tree: tree.terminal_with_all_variants)
 
     def __getattr__(self, name):
         """ Return the first child of this subtree having the given tag """
-        name = name.replace("_", "-") # Convert NP_POSS to NP-POSS
+        name = name.replace("_", "-")  # Convert NP_POSS to NP-POSS
         index = 1
         # Check for NP1, NP2 etc., i.e. a tag identifier followed by a number
         s = re.match(r"^(\D+)(\d+)$", name)
