@@ -39,14 +39,9 @@ import json
 
 from tokenizer import TOK
 
-if not __package__:
-    from settings import Settings, VerbObjects, VerbSubjects, Prepositions
-    from grammar import Terminal, LiteralTerminal, Nonterminal, Token, Grammar, GrammarError
-    from baseparser import Base_Parser
-else:
-    from .settings import Settings, VerbObjects, VerbSubjects, Prepositions
-    from .grammar import Terminal, LiteralTerminal, Nonterminal, Token, Grammar, GrammarError
-    from .baseparser import Base_Parser
+from .settings import Settings, VerbObjects, VerbSubjects, Prepositions
+from .grammar import Terminal, LiteralTerminal, Nonterminal, Token, Grammar, GrammarError
+from .baseparser import Base_Parser
 
 
 # This is the base path where we expect to find the Reynir.grammar file
@@ -135,13 +130,13 @@ class BIN_Token(Token):
     }
 
     # Make a copy of VARIANT with the past tense (þt) added
-    VARIANT_EX = { key : val for key, val in VARIANT.items() if val is not None }
+    VARIANT_EX = {key : val for key, val in VARIANT.items() if val is not None}
     VARIANT_EX["þt"] = "ÞT"
 
     # Bit mapping for all known variants
-    VBIT = { key : 1 << i for i, key in enumerate(VARIANT.keys()) }
+    VBIT = {key: 1 << i for i, key in enumerate(VARIANT.keys())}
     # Bit mapping for all variants that have a corresponding BIN meaning
-    FBIT = { val : 1 << i for i, val in enumerate(VARIANT.values()) if val }
+    FBIT = {val: 1 << i for i, val in enumerate(VARIANT.values()) if val}
 
     VBIT_ET = VBIT["et"]
     VBIT_FT = VBIT["ft"]
@@ -165,7 +160,7 @@ class BIN_Token(Token):
     CASES = ["nf", "þf", "þgf", "ef"]
     GENDERS = ["kk", "kvk", "hk"]
     GENDERS_SET = frozenset(GENDERS)
-    GENDERS_MAP = { "kk" : "KK", "kvk" : "KVK", "hk" : "HK" }
+    GENDERS_MAP = {"kk" : "KK", "kvk" : "KVK", "hk" : "HK"}
 
     VBIT_CASES = VBIT["nf"] | VBIT["þf"] | VBIT["þgf"] | VBIT["ef"]
     VBIT_GENDERS = VBIT["kk"] | VBIT["kvk"] | VBIT["hk"]
@@ -175,7 +170,7 @@ class BIN_Token(Token):
     VERB_VARIANTS = ["p1", "p2", "p3", "nh", "vh", "lh", "bh", "fh",
         "sagnb", "lhþt", "nt", "kk", "kvk", "hk", "sb", "vb", "gm", "mm"]
     # Pre-calculate a dictionary of associated BIN forms
-    _VERB_FORMS = None # Initialized later
+    _VERB_FORMS = None  # Initialized later
 
     # Set of adverbs that cannot be an "eo" (prepositions and pronouns are already excluded)
     _NOT_EO = frozenset(["og", "eða", "sem", "ekkert"])
@@ -213,19 +208,23 @@ class BIN_Token(Token):
     # '... fór vestur'
     # '... hefur því áhrif'
 
-    _NOT_NOT_EO = frozenset([ "inn", "eftir", "til", "upp", "um", "fram", "nær", "nærri",
-        "út", "meðal", "neðan", "jafnframt", "samt", "af", "fyrir", "því"])
+    _NOT_NOT_EO = frozenset([
+        "inn", "eftir", "til", "upp", "um", "fram", "nær", "nærri",
+        "út", "meðal", "neðan", "jafnframt", "samt", "af", "fyrir", "því"
+    ])
 
     # Words that are not eligible for interpretation as proper names, even if they are capitalized
-    _NOT_PROPER_NAME = frozenset([ "ég", "þú", "hann", "hún", "það", "við", "þið", "þau",
+    _NOT_PROPER_NAME = frozenset([
+        "ég", "þú", "hann", "hún", "það", "við", "þið", "þau",
         "þeir", "þær", "mér", "mig", "mín", "þig", "þér", "þín", "þeim", "þeirra", "þetta", "þessi",
         "í", "á", "af", "um", "að", "með", "til", "frá", "búist", "annars", "samkvæmt", "en", "og",
-        "sem", "ekkert", "hæð", "svo", "veggir", "þarna", "allt" ])
+        "sem", "ekkert", "hæð", "svo", "veggir", "þarna", "allt"
+    ])
 
     # Numbers that can be used in the singular even if they are nominally plural.
     # This applies to the media company 365, where it is OK to say "365 skuldaði 389 milljónir",
     # as it would be incorrect to say "365 skulduðu 389 milljónir".
-    _SINGULAR_SPECIAL_CASES = frozenset([ 365 ])
+    _SINGULAR_SPECIAL_CASES = frozenset([365])
 
     # Note: these must have a meaning for this to work, so specifying them
     # as abbreviations to Main.conf is recommended
@@ -240,15 +239,18 @@ class BIN_Token(Token):
         "AS", "ASA",
         "SA", "S.A.",
         "GmbH", "AG",
-        "SARL", "S.à.r.l." ])
+        "SARL", "S.à.r.l."
+    ])
 
     # Interrogative adverbs
-    _SPAO = frozenset([ "hvar", "hvenær", "hvernig", "hvaðan", "hvert", "hví", "hve", "hversu" ])
+    _SPAO = frozenset(["hvar", "hvenær", "hvernig", "hvaðan", "hvert", "hví", "hve", "hversu"])
 
     # Temporal sentential adverbs
-    _TAO = frozenset([ "daglega", "dagsdaglega", "alltaf", "aldrei", "fyrr", "fyrrum", "loks", "loksins", 
+    _TAO = frozenset([
+        "daglega", "dagsdaglega", "alltaf", "aldrei", "fyrr", "fyrrum", "loks", "loksins",
         "mánaðarlega", "nú", "núna", "næst", "oft", "reglulega", "seint", "snemma", "sjaldan", "stundum", 
-        "síðar", "síðla", "títt", "undanfarið", "vikulega", "árla", "árlega", "áður", "þá" ])
+        "síðar", "síðla", "títt", "undanfarið", "vikulega", "árla", "árlega", "áður", "þá"
+    ])
 
     _UNDERSTOOD_PUNCTUATION = ".?!,:;–-()[]"
 
@@ -258,17 +260,17 @@ class BIN_Token(Token):
     def __init__(self, t, original_index):
 
         Token.__init__(self, TOK.descr[t[0]], t[1])
-        self.t0 = t[0] # Token type (TOK.WORD, etc.)
-        self.t1 = t[1] # Token text
-        self.t1_lower = t[1].lower() # Token text, lower case
+        self.t0 = t[0]  # Token type (TOK.WORD, etc.)
+        self.t1 = t[1]  # Token text
+        self.t1_lower = t[1].lower()  # Token text, lower case
         # t2 contains auxiliary token information, such as part-of-speech annotation, numbers, etc.
         if isinstance(t[2], list):
             self.t2 = tuple(t[2])
         else:
             self.t2 = t[2]
-        self.is_upper = self.t1[0] != self.t1_lower[0] # True if starts with upper case
-        self._hash = None # Cached hash
-        self._index = original_index # Index of original token within sentence
+        self.is_upper = self.t1[0] != self.t1_lower[0]  # True if starts with upper case
+        self._hash = None  # Cached hash
+        self._index = original_index  # Index of original token within sentence
 
         # We store a cached check of whether this is an "eo". An "eo" is an adverb (atviksorð)
         # that cannot also be a preposition ("fs") and is therefore a possible non-ambiguous
@@ -336,6 +338,10 @@ class BIN_Token(Token):
                 vset.remove("sb")
             elif "evb" in vset:
                 vset.remove("vb")
+            elif "op" in vset:
+                # For impersonal verbs, all three persons are identical
+                # and not required
+                vset -= {"p1", "p2", "p3"}
             cls._VARIANT_CACHE[beyging] = vset
         return vset
 
@@ -1395,12 +1401,14 @@ class BIN_Parser(Base_Parser):
             t0 = time.time()
             g = BIN_Grammar()
             if Settings.DEBUG:
-                print("Loading grammar file {0} with timestamp {1}".format(BIN_Parser._GRAMMAR_FILE, datetime.fromtimestamp(ts)))
-            g.read(BIN_Parser._GRAMMAR_FILE, verbose = verbose)
+                print("Loading grammar file {0} with timestamp {1}"
+                    .format(BIN_Parser._GRAMMAR_FILE, datetime.fromtimestamp(ts)))
+            g.read(BIN_Parser._GRAMMAR_FILE, verbose=verbose)
             BIN_Parser._grammar = g
             BIN_Parser._grammar_ts = ts
             if Settings.DEBUG:
-                print("Grammar parsed and loaded in {0:.2f} seconds".format(time.time() - t0))
+                print("Grammar parsed and loaded in {0:.2f} seconds"
+                    .format(time.time() - t0))
         super().__init__(g)
 
     @property
@@ -1411,67 +1419,131 @@ class BIN_Parser(Base_Parser):
     @property
     def version(self):
         """ Return a composite version string from BIN_Parser and Parser """
-        ftime = str(self.grammar.file_time)[0:19] # YYYY-MM-DD HH:MM:SS
+        ftime = str(self.grammar.file_time)[0:19]  # YYYY-MM-DD HH:MM:SS
         return ftime + "/" + BIN_Parser._VERSION + "/" + super()._VERSION
 
     @staticmethod
     def _wrap(tokens):
         """ Sanitize the 'raw' tokens and wrap them in BIN_Token() wrappers """
-
-        # Remove stuff that won't be understood in any case
-        # Start with runs of unknown words inside parentheses
-        tlist = list(tokens)
-        tlen = len(tlist)
-
-        def scan_par(left):
-            """ Scan tokens inside parentheses and remove'em all
-                if they are only unknown words - perhaps starting with
-                an abbreviation """
-            right = left + 1
-            while right < tlen:
-                tok = tlist[right]
-                if tok[0] == TOK.PUNCTUATION and tok[1] == ')':
-                    # Check the contents of the token list from left+1 to right-1
-
-                    # Skip parentheses starting with "e." (English), "þ." (German) or "d." (Danish)
-                    foreign = right > left + 1 and tlist[left + 1][1] in { "e.", "d.", "þ." }
-
-                    def is_unknown(t):
-                        """ A token is unknown if it is a TOK.UNKNOWN or if it is a
-                            TOK.WORD with no meanings """
-                        UNKNOWN = { "e.", "d.", "þ.", "t.d.", "þ.e.", "m.a." } # Abbreviations and stuff that we ignore inside parentheses
-                        return t[0] == TOK.UNKNOWN or (t[0] == TOK.WORD and not t[2]) or t[1] in UNKNOWN
-
-                    if foreign or all(is_unknown(t) for t in tlist[left+1:right]):
-                        # Only unknown tokens: erase'em, including the parentheses
-                        for ix in range(left, right + 1):
-                            tlist[ix] = None
-
-                    return right + 1
-
-                right += 1
-            # No match: we're done
-            return right
-
-        ix = 0
-        while ix < tlen:
-            tok = tlist[ix]
-            if tok[0] == TOK.PUNCTUATION and tok[1] == '(':
-                ix = scan_par(ix) # Jumps to the right parenthesis, if found
-            else:
-                ix += 1
-
-        # Wrap the sanitized token list in BIN_Token()
-        # while keeping a back index to the original token
-        wrapped_tokens = [ ]
-        for ix, t in enumerate(tlist):
-            if t is not None and BIN_Token.is_understood(t):
-                wrapped_tokens.append(BIN_Token(t, ix))
-        return wrapped_tokens
+        return wrap_tokens(tokens, wrap_func=lambda t, ix: BIN_Token(t, ix))
 
     def go(self, tokens):
         """ Parse the token list after wrapping each understood token in the BIN_Token class """
-        raise NotImplementedError # This should never be called - is overridden in Fast_Parser
+        raise NotImplementedError  # This should never be called - is overridden in Fast_Parser
+
+
+# Abbreviations and stuff that we ignore inside parentheses
+_UNKNOWN = frozenset(("e.", "d.", "þ.", "t.d.", "þ.e.", "m.a."))
+_SKIP_PARENTHESIS = frozenset(("e.", "d.", "þ."))
+
+
+def wrap_tokens(tokens, wrap_func=None):
+    """ Pre-process a token stream, removing tokens that will not be looked at
+        during parsing - for instance insignificant punctuation and non-Icelandic
+        text within parentheses. The function returns a fresh token list, with
+        each token eventually processed through the wrap_func given, if any. """
+
+    # Remove stuff that won't be understood in any case
+    # Start with runs of unknown words inside parentheses
+    tlist = list(tokens)
+    tlen = len(tlist)
+
+    def scan_par(left):
+        """ Scan tokens inside parentheses and remove'em all
+            if they are only unknown words - perhaps starting with
+            an abbreviation """
+        right = left + 1
+        while right < tlen:
+            tok = tlist[right]
+            if tok[0] == TOK.PUNCTUATION and tok[1] == ')':
+                # Check the contents of the token list from left+1 to right-1
+
+                # Skip parentheses starting with "e." (English), "þ." (German) or "d." (Danish)
+                foreign = right > left + 1 and tlist[left + 1][1] in _SKIP_PARENTHESIS
+
+                def is_unknown(t):
+                    """ A token is unknown if it is a TOK.UNKNOWN or if it is a
+                        TOK.WORD with no meanings """
+                    return (t[0] == TOK.UNKNOWN or
+                        (t[0] == TOK.WORD and not t[2]) or
+                        t[1] in _UNKNOWN)
+
+                if foreign or all(is_unknown(t) for t in tlist[left + 1:right]):
+                    # Only unknown tokens: erase'em, including the parentheses
+                    for i in range(left, right + 1):
+                        tlist[i] = None
+
+                return right + 1
+
+            right += 1
+        # No match: we're done
+        return right
+
+    ix = 0
+    while ix < tlen:
+        tok = tlist[ix]
+        if tok[0] == TOK.PUNCTUATION and tok[1] == '(':
+            ix = scan_par(ix)  # Jumps to the right parenthesis, if found
+        else:
+            ix += 1
+
+    # Wrap the sanitized token list using wrap_func, if given,
+    # while keeping a back index to the original token
+    wrapped_tokens = []
+    for ix, t in enumerate(tlist):
+        if t is not None and BIN_Token.is_understood(t):
+            wrapped_tokens.append(t if wrap_func is None else wrap_func(t, ix))
+    return wrapped_tokens
+
+
+def simplify_terminal(terminal, cat=None):
+    """ Return a simplified terminal name where literal specifications of
+        the form 'literal:cat'_var1 and "literal:cat" have been converted
+        to cat_var1, with the further complication that kk/kvk/hk are
+        converted to no_kk/no_kvk/no_hk. If the cat parameter is given,
+        it is the fallback if no category is specified in the literal. """
+    if terminal[0] not in "\"'":
+        # Not a literal terminal: no need to do anything
+        return terminal
+    # Change "literal:category" to category,
+    # or 'stem'_var1_var2 to category_var1_var2
+    # Convert 'literal'_var1_var2 to cat_var1_var2
+    # Note that the literal can contain underscores!
+    endq = terminal.rindex(terminal[0])
+    first = terminal[0:endq + 1]
+    rest = terminal[endq + 1:]
+    if ':' in first:
+        # The word category was given in the literal: use it
+        # (In almost all cases this matches the meaning, but
+        # 'stt' is an exception)
+        first = first.split(':')[-1][:-1]
+    elif cat is not None:
+        # Get the word category from the meaning
+        first = cat
+    if first in {"kk", "kvk", "hk"}:
+        first = "no_" + first
+    return first + rest
+
+
+def augment_terminal(terminal, beyging):
+    """ Augment a terminal name string with additional variants from BÍN,
+        extracted from the 'beyging' string """
+    a = terminal.split("_")
+    cases = []
+    vstart = 1
+    if a[0] == "so" and len(a) > 1:
+        # Special case for verb arguments: keep them in order
+        if a[1] in "012":
+            args = int(a[1])
+            cases = a[1:2 + args]
+            vstart = 2 + args
+        elif a[1] == "subj":
+            cases = a[1:2]
+            vstart = 2
+    # Collect the variants from the terminal and from the BÍN 'beyging' string
+    vset = set(a[vstart:]) | BIN_Token.bin_variants(beyging)
+    # Return the full augmented terminal string
+    return "_".join(a[0:1] + cases + sorted(list(vset)))
 
 
 def canonicalize_token(t):
@@ -1483,36 +1555,21 @@ def canonicalize_token(t):
     kind = t.get("k", TOK.WORD)
     t["k"] = TOK.descr[kind]
     if "t" in t:
-        terminal = t["t"]
-        # Change "literal:category" to category,
-        # or 'stem'_var1_var2 to category_var1_var2
-        if terminal[0] in "\"'":
-            # Convert 'literal'_var1_var2 to cat_var1_var2
-            # Note that the literal can contain underscores!
-            endq = terminal.rindex(terminal[0])
-            first = terminal[0:endq + 1]
-            rest = terminal[endq + 1:]
-            if ':' in first:
-                # The word category was given in the literal: use it
-                # (In almost all cases this matches the meaning, but
-                # 'stt' is an exception)
-                cat_override = first.split(':')[-1][:-1]
-                first = cat_override
-            elif "m" in t:
-                # Get the word category from the meaning
-                first = t["m"][1]
-            if first in { "kk", "kvk", "hk" }:
-                first = "no_" + first
-            t["t"] = first + rest
+        t["t"] = simplify_terminal(t["t"],
+            t["m"][1] if "m" in t else None)  # Fallback category
     if "m" in t:
         # Flatten the meaning from a tuple/list
         m = t["m"]
         del t["m"]
-        # s = stofn (stem)
+        # s = stofn (lemma)
         # c = ordfl (category)
         # f = fl (class)
         # b = beyging (declination)
-        t.update(dict(s = m[0], c = m[1], f = m[2], b = m[3]))
+        # For abbreviations (fl='skst'), we include the original token text as the
+        # lemma, instead of the abbreviation meaning (which is stored in m[0])
+        fl = m[2]
+        lemma = t["x"] if fl == "skst" else m[0]
+        t.update(dict(s=lemma, c=m[1], f=fl, b=m[3]))
     if "t" in t and "b" in t:
         # This is a terminal that may have additional information
         # about itself in the 'b' (beyging) field from BÍN.
@@ -1521,27 +1578,7 @@ def canonicalize_token(t):
         # first, followed by other variants in alphabetical order.
         # !!! Note: This code should be synchronized with code in
         # matcher.py (SimpleTree.terminal_with_all_variants)
-        a = t["t"].split("_")
-        cases = []
-        vstart = 1
-        if a[0] == "so":
-            # Special case for verb arguments: keep them in order
-            if a[1] in "012":
-                args = int(a[1])
-                cases = a[1 : 2 + args]
-                vstart = 2 + args
-            elif a[1] == "subj":
-                cases = a[1 : 2]
-                vstart = 2
-        # Collect the variants from the terminal and from the 'b' field
-        vset = set(a[vstart:]) | BIN_Token.bin_variants(t["b"])
-        # For impersonal verbs ('ópersónulegar sagnir'), cut away
-        # the person indicator (p1, p2, p3) since all three person forms
-        # are identical anyway
-        if "op" in vset:
-            vset -= { "p1", "p2", "p3" }
-        variants = sorted(list(vset))
-        t_all = "_".join(a[0:1] + cases + variants)
+        t_all = augment_terminal(t["t"], t["b"])
         if t["t"] != t_all:
             # Augment the information with the full set of variants
             t["a"] = t_all
@@ -1572,7 +1609,7 @@ def canonicalize_token(t):
             if "g" in t:
                 t["c"] = t["g"]
                 del t["g"]
-    if (kind == TOK.ENTITY) or (kind == TOK.WORD) and "s" not in t:
+    if kind in (TOK.ENTITY, TOK.WORD) and "s" not in t:
         # Put in a stem for entities and proper names
         t["s"] = t["x"]
 

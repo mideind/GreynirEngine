@@ -189,10 +189,10 @@ class Nonterminal:
             self._tags.add(tag)
 
     def __repr__(self):
-        return '{0}'.format(self._name)
+        return self._name
 
     def __str__(self):
-        return '{0}'.format(self._name)
+        return self._name
 
 
 class Terminal:
@@ -212,10 +212,10 @@ class Terminal:
         return self._hash
 
     def __repr__(self):
-        return '{0}'.format(self._name)
+        return self._name
 
     def __str__(self):
-        return '{0}'.format(self._name)
+        return self._name
 
     @property
     def name(self):
@@ -292,7 +292,7 @@ class Token:
     def __repr__(self):
         """ Return a simple string representation of this token """
         if self._kind == self._val:
-            return '{0}'.format(self._kind)
+            return self._kind
         return '{0}:{1}'.format(self._kind, self._val)
 
     @property

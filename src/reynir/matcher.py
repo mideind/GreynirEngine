@@ -97,7 +97,7 @@ from itertools import chain
 
 from .cache import cached_property
 from .settings import StaticPhrases
-from .binparser import BIN_Token
+from .binparser import BIN_Token, augment_terminal
 from .bintokenizer import CURRENCIES, CURRENCY_GENDERS, MULTIPLIERS, DECLINABLE_MULTIPLIERS
 from .bindb import BIN_Db
 from .ifdtagger import IFD_Tagset
@@ -305,19 +305,27 @@ _DEFINITE_PRONOUNS = frozenset([
 
 # _CUT_LEADING_ADVERBS = frozenset(("því", "út", "fram", "þó"))
 
-_MULTIWORD_TOKENS = frozenset(("AMOUNT", "MEASUREMENT", "TIME",
-    "TIMESTAMPABS", "TIMESTAMPREL", "DATEABS", "DATEREL"))
+_MULTIWORD_TOKENS = frozenset((
+    "AMOUNT", "MEASUREMENT", "TIME",
+    "TIMESTAMPABS", "TIMESTAMPREL", "DATEABS", "DATEREL"
+))
 
-_MONTH_NAMES = frozenset(("janúar", "febrúar", "mars", "apríl", "maí", "júní",
+_MONTH_NAMES = frozenset((
+    "janúar", "febrúar", "mars", "apríl", "maí", "júní",
     "júlí", "ágúst", "september", "október", "nóvember", "desember",
     "jan.", "feb.", "mar.", "apr.", "jún.", "júl.", "ágú.", "ág.",
-    "sep.", "sept.", "okt.", "nóv.", "des."))
+    "sep.", "sept.", "okt.", "nóv.", "des."
+))
 
 _CLOCK = frozenset(("klukkan", "kl."))
 
 _CE_BCE = frozenset(("e.kr.", "e.kr", "f.kr.", "f.kr"))  # Lowercase here is deliberate
 
 _CASES = frozenset(("nf", "þf", "þgf", "ef"))
+
+_GENDERS = frozenset(("kk", "kvk", "hk"))
+
+_DECLINABLE_CATEGORIES = frozenset(("kvk", "kk", "hk", "lo", "to", "fn", "pfn", "gr"))
 
 
 def cut_definite_pronouns(txt):
@@ -490,7 +498,7 @@ class SimpleTree:
                     result.append(tag)
             return result
         # Single word, single tag
-        return [ str(IFD_Tagset(self._head)) ]
+        return [str(IFD_Tagset(self._head))]
 
     def match_tag(self, item):
         """ Return True if the given item matches the tag of this subtree
@@ -528,28 +536,7 @@ class SimpleTree:
         # the variants are in alphabetical order, except
         # for verb arguments, which are always first, immediately
         # following the terminal category.
-        # !!! Note: This code should be synchronized with code in
-        # binparser.py (canonicalize_token)
-        a = terminal.split("_")
-        verb_args = []
-        rest = 1
-        if len(a) > 1:
-            if a[1] in "012":
-                # Terminal of the form so_N[_case1][_case2]_rest...
-                nargs = int(a[1])
-                verb_args = a[1:1 + nargs]
-                rest += 1 + nargs
-            elif a[1] == "subj":
-                # Terminal of the form so_subj_rest...
-                verb_args = a[1:2]
-                rest += 1
-        vset = set(a[rest:])
-        if "op" in vset:
-            # For impersonal verbs, we leave out the person variant
-            # since all person forms are identical
-            vset -= { "p1", "p2", "p3" }
-        # Reassemble the terminal name: tcat_verbargs_rest
-        return "_".join(a[0:1] + verb_args + sorted(list(vset)))
+        return augment_terminal(terminal, self._head.get("b"))
 
     @cached_property
     def variants(self):
@@ -567,7 +554,8 @@ class SimpleTree:
             # The 'a' field contains the entire variant set, canonically ordered
             return a.split("_")[1:]
         vlist = self.variants
-        return vlist + list(BIN_Token.bin_variants(self._head.get("b")) - set(vlist))
+        bin_variants = BIN_Token.bin_variants(self._head.get("b"))
+        return vlist + list(bin_variants - set(vlist))  # Add any missing variants
 
     @cached_property
     def _vset(self):
@@ -585,7 +573,7 @@ class SimpleTree:
     @cached_property
     def sentences(self):
         """ A list of the contained sentences """
-        return [ SimpleTree([[ sent ]], parent = self.parent) for sent in self._sents ]
+        return [SimpleTree([[sent]], parent=self.parent) for sent in self._sents]
 
     @property
     def has_children(self):
@@ -606,7 +594,7 @@ class SimpleTree:
         elif self._children:
             # Proper children: yield'em
             for child in self._children:
-                yield SimpleTree([[ child ]], parent = self.parent)
+                yield SimpleTree([[child]], parent=self.parent)
 
     @property
     def children(self):
@@ -744,7 +732,7 @@ class SimpleTree:
                     # ('þúsund', 'milljónir', 'milljarðar')
                     m = list(filter(lambda mm:
                         (mm.stofn in CURRENCIES or mm.stofn in DECLINABLE_MULTIPLIERS)
-                        if mm.ordfl in {"kk", "kvk", "hk"}
+                        if mm.ordfl in _GENDERS
                         else mm.ordfl in {"to", "töl", "lo"},
                         m
                     ))
@@ -775,7 +763,7 @@ class SimpleTree:
                             m = [ mm for mm in m if case in mm.beyging and gender in mm.beyging ]
                             mm = next(iter(m), mm)
                         variants = BIN_Token.bin_variants(mm.beyging)
-                        if mm.ordfl in {"kk", "kvk", "hk"}:
+                        if mm.ordfl in _GENDERS:
                             # The word is a noun
                             ordfl = mm.ordfl
                             result.append("no_" + "_".join(sorted(list(variants | {ordfl}))))
@@ -883,9 +871,9 @@ class SimpleTree:
         if self._children_cache is not None:
             return self._children_cache[index]
         if self._len > 1:
-            return SimpleTree([[ self._sents[index] ]], parent = self.parent)
+            return SimpleTree([[self._sents[index]]], parent=self.parent)
         if self._children:
-            return SimpleTree([[ self._children[index] ]], parent = self.parent)
+            return SimpleTree([[self._children[index]]], parent=self.parent)
         raise IndexError("Subtree has no children")
 
     def __len__(self):
@@ -915,7 +903,7 @@ class SimpleTree:
             The form can be 'nominative' for the nominative case only,
             'indefinite' for the indefinite nominative form,
             or 'canonical' for the singular, indefinite, nominative. """
-        if self._cat not in { "kvk", "kk", "hk", "lo", "to", "fn", "pfn", "gr" }:
+        if self._cat not in _DECLINABLE_CATEGORIES:
             # This is not a potentially declined terminal node: return the original text
             return self._text
         txt = self._text
@@ -933,8 +921,9 @@ class SimpleTree:
                         result.append(
                             next(
                                 filter(
-                                    lambda m: m.ordfl == gender and "FT" not in m.beyging and
-                                        m.fl in { "ism", "föð", "móð" },
+                                    lambda m: m.ordfl == gender and
+                                        "FT" not in m.beyging and
+                                        m.fl in {"ism", "föð", "móð"},
                                     meanings
                                 )
                             ).ordmynd
@@ -984,7 +973,7 @@ class SimpleTree:
                         return False
                 else:
                     # Match the original word in terms of number (singular/plural)
-                    number = next(iter(self._vset & { "et", "ft" }), "et")
+                    number = next(iter(self._vset & {"et", "ft"}), "et")
                     if number.upper() not in m.beyging:
                         return False
                 if form == 'nominative':
@@ -1006,7 +995,7 @@ class SimpleTree:
                         return False
                 else:
                     # Match the original word in terms of number (singular/plural)
-                    number = next(iter(self._vset & { "et", "ft" }), "et")
+                    number = next(iter(self._vset & {"et", "ft"}), "et")
                     if number.upper() not in m.beyging:
                         return False
                 return True
@@ -1016,7 +1005,7 @@ class SimpleTree:
                 if m.stofn != lemma or m.ordfl != self._cat:
                     return False
                 # Match the original word in terms of gender
-                gender = next(iter(self._vset & { "kk", "kvk", "hk" }), "kk")
+                gender = next(iter(self._vset & _GENDERS), "kk")
                 if gender.upper() not in m.beyging:
                     return False
                 if form == 'canonical':
@@ -1025,7 +1014,7 @@ class SimpleTree:
                         return False
                 else:
                     # Match the original word in terms of number (singular/plural)
-                    number = next(iter(self._vset & { "et", "ft" }), "et")
+                    number = next(iter(self._vset & {"et", "ft"}), "et")
                     if number.upper() not in m.beyging:
                         return False
                 return True
@@ -1035,7 +1024,7 @@ class SimpleTree:
                 if m.stofn != lemma or m.ordfl != "lo":
                     return False
                 # Match the original word in terms of gender
-                gender = next(iter(self._vset & { "kk", "kvk", "hk" }), "kk")
+                gender = next(iter(self._vset & _GENDERS), "kk")
                 if gender.upper() not in m.beyging:
                     return False
                 if form == 'canonical':
@@ -1044,7 +1033,7 @@ class SimpleTree:
                         return False
                 else:
                     # Match the original word in terms of number (singular/plural)
-                    number = next(iter(self._vset & { "et", "ft" }), "et")
+                    number = next(iter(self._vset & {"et", "ft"}), "et")
                     if number.upper() not in m.beyging:
                         return False
                 if form == 'nominative':
@@ -1149,7 +1138,7 @@ class SimpleTree:
             # Terminal node: return own text
             return self._text
         # Concatenate the text from the children
-        return " ".join([ ch.text for ch in self.children if ch.text ])
+        return " ".join([ch.text for ch in self.children if ch.text])
 
     def _np_form(self, prop_func):
         """ Return a nominative form of the noun phrase (or noun/adjective terminal)
@@ -1194,7 +1183,7 @@ class SimpleTree:
                         result.append(np)
                 np = " ".join(result)
             # Cut off trailing punctuation
-            while len(np) >= 2 and np[-1] in { ',', ':', ';', '!', '-', '.' }:
+            while len(np) >= 2 and np[-1] in {',', ':', ';', '!', '-', '.'}:
                 np = np[0:-2]
             return np
         # This is not a noun phrase: return its text as-is
@@ -1264,13 +1253,13 @@ class SimpleTree:
         # Terminal node: return own lemma if it matches the given category
         if filter_func(self):
             lemma = self._lemma
-            return [ lemma ] if lemma else []
+            return [lemma] if lemma else []
         return []
 
     @property
     def nouns(self):
         """ Returns the lemmas of all nouns in the subtree """
-        return self._list(lambda t: t._cat in { "kk", "kvk", "hk" })
+        return self._list(lambda t: t._cat in _GENDERS)
 
     @property
     def verbs(self):
@@ -1312,7 +1301,7 @@ class SimpleTree:
     def _all_matches(self, items):
         """ Return all subtree roots, including self, that match the given items,
             compiled from a pattern """
-        for subtree in chain([ self ], self.descendants):
+        for subtree in chain([self], self.descendants):
             if subtree._match(items):
                 yield subtree
 
@@ -1386,7 +1375,7 @@ class SimpleTree:
                                 for n in nested:
                                     if isinstance(n, str) and n in cls._FINISHERS:
                                         raise ValueError("Mismatched '{0}' in pattern".format(n))
-                                items = items[0:i] + [ nested ] + items[j+1:]
+                                items = items[0:i] + [nested] + items[j+1:]
                                 len_items = len(items)
                                 break
                         elif item2 == item1:
@@ -1664,7 +1653,7 @@ class SimpleTree:
             # by a tree node, otherwise False
             return False
 
-        return run_set(iter([ self ]), items)
+        return run_set(iter([self]), items)
 
 
 class SimpleTreeBuilder:
@@ -1678,8 +1667,8 @@ class SimpleTreeBuilder:
         self._id_map = id_map or _DEFAULT_ID_MAP
         self._terminal_map = terminal_map or _DEFAULT_TERMINAL_MAP
         self._result = []
-        self._stack = [ self._result ]
-        self._scope = [ NotImplemented ] # Sentinel value
+        self._stack = [self._result]
+        self._scope = [NotImplemented]  # Sentinel value
         self._pushed = []
 
     def push_terminal(self, d):
@@ -1695,13 +1684,12 @@ class SimpleTreeBuilder:
         else:
             # Yes: create an intermediate nonterminal with this terminal
             # as its only child
-            self._stack[-1].append(dict(k = "NONTERMINAL",
-                n = mapped_t, i = mapped_t, p = [ d ]))
+            self._stack[-1].append(dict(k="NONTERMINAL", n=mapped_t, i=mapped_t, p=[d]))
 
     def push_nonterminal(self, nt_base):
         """ Entering a nonterminal node. Pass None if the nonterminal is
             not significant, e.g. an interior or optional node. """
-        self._pushed.append(0) # Number of items pushed
+        self._pushed.append(0)  # Number of items pushed
         if not nt_base:
             return
         mapped_nts = self._nt_map.get(nt_base)
@@ -1709,7 +1697,7 @@ class SimpleTreeBuilder:
             return
         # Allow a single nonterminal, or a list of nonterminals, to be pushed
         if isinstance(mapped_nts, str):
-            mapped_nts = [ mapped_nts ]
+            mapped_nts = [mapped_nts]
         for mapped_nt in mapped_nts:
             # We want this nonterminal in the simplified tree:
             # push it (unless it is subject to a scope we're already in)
@@ -1721,11 +1709,11 @@ class SimpleTreeBuilder:
                 continue
             # This is a significant and noteworthy nonterminal
             children = []
-            self._stack[-1].append(dict(k = "NONTERMINAL",
-                n = mapped_id["name"], i = mapped_nt, p = children))
+            self._stack[-1].append(dict(k="NONTERMINAL",
+                n=mapped_id["name"], i=mapped_nt, p=children))
             self._stack.append(children)
             self._scope.append(mapped_nt)
-            self._pushed[-1] += 1 # Add to number of items pushed
+            self._pushed[-1] += 1  # Add to number of items pushed
 
     def pop_nonterminal(self):
         """ Exiting a nonterminal node. Calls to pop_nonterminal() must correspond
@@ -1778,5 +1766,5 @@ class SimpleTreeBuilder:
 
     @property
     def tree(self):
-        return SimpleTree([[ self.result ]])
+        return SimpleTree([[self.result]])
 

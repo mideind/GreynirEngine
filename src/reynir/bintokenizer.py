@@ -1148,16 +1148,16 @@ def choose_full_name(val, case, gender):
 def describe_token(t, terminal, meaning):
     """ Return a compact dictionary describing the token t,
         which matches the given terminal with the given meaning """
-    d = dict(x = t.txt)
+    d = dict(x=t.txt)
     if terminal is not None:
         # There is a token-terminal match
         if t.kind == TOK.PUNCTUATION:
             if t.txt == "-":
                 # Hyphen: check whether it is matching an em or en-dash terminal
                 if terminal.colon_cat == "em":
-                    d["x"] = "—" # Substitute em dash (will be displayed with surrounding space)
+                    d["x"] = "—"  # Substitute em dash (will be displayed with surrounding space)
                 elif terminal.colon_cat == "en":
-                    d["x"] = "–" # Substitute en dash
+                    d["x"] = "–"  # Substitute en dash
         else:
             # Annotate with terminal name and BÍN meaning (no need to do this for punctuation)
             d["t"] = terminal.name
@@ -1172,14 +1172,14 @@ def describe_token(t, terminal, meaning):
     if t.kind != TOK.WORD:
         # Optimize by only storing the k field for non-word tokens
         d["k"] = t.kind
-    if t.val is not None and t.kind not in { TOK.WORD, TOK.ENTITY, TOK.PUNCTUATION }:
+    if t.val is not None and t.kind not in {TOK.WORD, TOK.ENTITY, TOK.PUNCTUATION}:
         # For tokens except words, entities and punctuation, include the val field
         if t.kind == TOK.PERSON:
             case = None
             gender = None
             if terminal is not None and terminal.num_variants >= 1:
                 gender = terminal.variant(-1)
-                if gender in { "nf", "þf", "þgf", "ef" }:
+                if gender in {"nf", "þf", "þgf", "ef"}:
                     # Oops, mistaken identity
                     case = gender
                     gender = None

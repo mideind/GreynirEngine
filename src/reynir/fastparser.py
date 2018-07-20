@@ -54,7 +54,7 @@ import operator
 from threading import Lock
 from functools import reduce
 
-from .binparser import BIN_Parser
+from .binparser import BIN_Parser, simplify_terminal, augment_terminal
 from .grammar import Terminal, GrammarError
 from .settings import Settings
 from .glock import GlobalLock
@@ -101,7 +101,7 @@ class ParseJob:
                 # No: create a fresh one (assumed to be initialized to zero)
                 b = self.matching_cache[key] = ffi.new("BYTE[]", size)
         except TypeError:
-            b = ffi.NULL
+            # b = ffi.NULL
             assert False, "alloc_cache() unable to hash key: {0}".format(repr(key))
         return b
 
@@ -163,6 +163,7 @@ def matching_func(handle, token, terminal):
         earleyParse(). In this case, it is used to identify
         a ParseJob object that dispatches the match query. """
     return ParseJob.dispatch(handle, token, terminal)
+
 
 @ffi.callback("BYTE*(UINT, UINT, UINT)")
 def alloc_func(handle, token, size):
@@ -333,7 +334,7 @@ class Node:
         ])
         if self._families is None or prio < self._highest_prio:
             # First family of children, or highest priority so far: add as the only family
-            self._families = [ pc ]
+            self._families = [pc]
         else:
             # Same priority as the families we have already: add this
             self._families.append(pc)
@@ -346,7 +347,7 @@ class Node:
             return
         for ix, (prod, f) in enumerate(self._families):
             if f:
-                f = [ func(ch) for ch in f ]
+                f = [func(ch) for ch in f]
                 self._families[ix] = (prod, f)
 
     def transform_child(self, family_ix, child_ix, func):
@@ -575,7 +576,7 @@ class Fast_Parser(BIN_Parser):
     def go(self, tokens):
         """ Call the C++ parser module to parse the tokens """
 
-        wrapped_tokens = self._wrap(tokens) # Inherited from BIN_Parser
+        wrapped_tokens = self._wrap(tokens)  # Inherited from BIN_Parser
         lw = len(wrapped_tokens)
         err = ffi.new("unsigned int*")
         result = None
@@ -588,7 +589,7 @@ class Fast_Parser(BIN_Parser):
             node = eparser.earleyParse(self._c_parser, lw, self._root_index, job.handle, err)
 
             if node == ffi.NULL:
-                ix = err[0] # Token index
+                ix = err[0]  # Token index
                 if ix >= 1:
                     # Find the error token index in the original (unwrapped) token list
                     orig_ix = wrapped_tokens[ix].index if ix < lw else ix
@@ -647,7 +648,7 @@ class Fast_Parser(BIN_Parser):
             if cnt is not None:
                 assert cnt is not NotImplemented, "Loop in node tree at {0}".format(str(w))
                 return cnt
-            nc[w] = NotImplemented # Special marker for an unassigned cache entry
+            nc[w] = NotImplemented  # Special marker for an unassigned cache entry
             comb = 0
             for _, f in w.enum_children():
                 comb += reduce(operator.mul, (_num_comb(ch) for ch in f), 1)
@@ -755,9 +756,9 @@ class ParseForestPrinter(ParseForestNavigator):
 
     """ Print a parse forest to stdout or a file """
 
-    def __init__(self, detailed = False, file = None,
-        show_scores = False, show_ids = False, visit_all = True,
-        skip_duplicates = False):
+    def __init__(self, detailed=False, file=None,
+        show_scores=False, show_ids=False, visit_all=True,
+        skip_duplicates=False):
 
         # Normally, we visit all nodes, also those we've seen before
         super().__init__(visit_all = visit_all)
@@ -797,9 +798,9 @@ class ParseForestPrinter(ParseForestNavigator):
             if not self._detailed:
                 if w.is_empty and w.nonterminal.is_optional:
                     # Skip printing optional nodes that don't contain anything
-                    return NotImplemented # Don't visit child nodes
+                    return NotImplemented  # Don't visit child nodes
             h = w.nonterminal.name
-            indent = "  " * level # Two spaces per indent level
+            indent = "  " * level  # Two spaces per indent level
             if self._show_ids:
                 h += " @ {0:x}".format(id(w))
             print(indent + h + self._score(w), file = self._file)
@@ -808,23 +809,23 @@ class ParseForestPrinter(ParseForestNavigator):
                 # seen before
                 if w in self._visited:
                     print(indent + "  <Seen before>", file = self._file)
-                    return NotImplemented # Don't visit child nodes
+                    return NotImplemented  # Don't visit child nodes
                 self._visited.add(w)
-        return None # No results required, but visit children
+        return None  # No results required, but visit children
 
     def _visit_family(self, results, level, w, ix, prod):
         """ Show trees for different options, if ambiguous """
         if w.is_ambiguous:
-            indent = "  " * level # Two spaces per indent level
-            print(indent + "Option " + str(ix + 1) + ":", file = self._file)
+            indent = "  " * level  # Two spaces per indent level
+            print(indent + "Option " + str(ix + 1) + ":", file=self._file)
 
     @classmethod
-    def print_forest(cls, root_node, detailed = False, file = None,
-        show_scores = False, show_ids = False, visit_all = True,
-        skip_duplicates = False):
+    def print_forest(cls, root_node, detailed=False, file=None,
+        show_scores=False, show_ids=False, visit_all=True,
+        skip_duplicates=False):
         """ Print a parse forest to the given file, or stdout if none """
         cls(detailed, file, show_scores, show_ids, visit_all,
-            skip_duplicates = skip_duplicates).go(root_node)
+            skip_duplicates=skip_duplicates).go(root_node)
 
 
 class ParseForestDumper(ParseForestNavigator):
@@ -843,18 +844,35 @@ class ParseForestDumper(ParseForestNavigator):
 
     VERSION = "Reynir/1.00"
 
-    def __init__(self):
-        super().__init__(visit_all = True) # Visit all nodes
-        self._result = ["R1"] # Start indicator and version number
+    def __init__(self, token_dicts):
+        super().__init__(visit_all=True)  # Visit all nodes
+        self._result = ["R1"]  # Start indicator and version number
+        self._token_dicts = token_dicts
 
     def _visit_epsilon(self, level):
         # Identify this as an epsilon (null) node
-        self._result.append("P{0}".format(level))
+        # !!! Not necessary - removed July 2018 VTh
+        # self._result.append("P{0}".format(level))
         return None
 
     def _visit_token(self, level, w):
         # Identify this as a terminal/token
-        self._result.append("T{0} {1} {2}".format(level, w.terminal, w.token.dump))
+        ta = ""  # Augmented terminal
+        if self._token_dicts is not None:
+            # Get the descriptor dict for this token/terminal match
+            td = self._token_dicts[w.token.index]
+            if "t" in td and "m" in td:
+                # Calculate an augmented terminal, including additional info from BÍN
+                if td["t"] != w.terminal.name:
+                    assert False
+                ta = simplify_terminal(td["t"], td["m"][1])  # Fallback category
+                ta = augment_terminal(ta, td["m"][3])  # The m(3) field is 'beyging'
+                if w.terminal.name == ta:
+                    ta = ""  # No need to repeat augmented terminal if it is identical
+                else:
+                    ta = " " + ta
+
+        self._result.append("T{0} {1} {2}{3}".format(level, w.terminal.name, w.token.dump, ta))
         return None
 
     def _visit_nonterminal(self, level, w):
@@ -863,10 +881,10 @@ class ParseForestDumper(ParseForestNavigator):
         if not w.is_interior:
             if w.is_empty and w.nonterminal.is_optional:
                 # Skip printing optional nodes that don't contain anything
-                return NotImplemented # Don't visit child nodes
+                return NotImplemented  # Don't visit child nodes
             # Identify this as a nonterminal
             self._result.append("N{0} {1}".format(level, w.nonterminal.name))
-        return None # No results required, but visit children
+        return None  # No results required, but visit children
 
     def _visit_family(self, results, level, w, ix, prod):
         if w.is_ambiguous:
@@ -874,11 +892,11 @@ class ParseForestDumper(ParseForestNavigator):
             self._result.append("O{0} {1}".format(level, ix))
 
     @classmethod
-    def dump_forest(cls, root_node):
-        """ Print a parse forest to the given file, or stdout if none """
-        dumper = cls()
+    def dump_forest(cls, root_node, token_dicts=None):
+        """ Return a string with a multi-line text representation of the parse tree """
+        dumper = cls(token_dicts)
         dumper.go(root_node)
-        dumper._result.append("Q0") # End marker
+        dumper._result.append("Q0")  # End marker
         return "\n".join(dumper._result)
 
 

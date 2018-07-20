@@ -80,8 +80,6 @@ def test_parse(verbose=False):
             assert i != 2
             if verbose:
                 print("Successfully parsed")
-                # print(sent.tree)
-                # print(ParseForestDumper.dump_forest(sent.tree))
         else:
             # An error occurred in the parse
             # The error token index is at sent.err_index
@@ -1141,6 +1139,15 @@ def test_tree_flat():
                 assert np_obj == "NP-OBJ " + t1 + " " + t2 + " /NP-OBJ"
 
 
+def test_noun_lemmas():
+    """ Test abbreviation lemmas ('Schengen' is an abbreviation), proper name
+        lemmas ('Ísland'), and lemmas of literal terminals in the grammar
+        ('munur:kk' in this case) """
+    sent = "Schengen rekur mun öflugri gagnagrunn en Ísland gæti gert."
+    s = r.parse_single(sent)
+    assert s.tree.nouns == ["Schengen", "munur", "gagnagrunnur", "Ísland"]
+
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -1163,4 +1170,5 @@ if __name__ == "__main__":
     test_nominative()
     test_ifd_tag()
     test_tree_flat()
+    test_noun_lemmas()
     test_finish()
