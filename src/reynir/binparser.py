@@ -1525,7 +1525,47 @@ def simplify_terminal(terminal, cat=None):
     return first + rest
 
 
-def augment_terminal(terminal, beyging):
+# Missing variants for personal pronouns
+_PFN_VARIANTS = {
+    "ég": {"p1"},
+    "mig": {"p1"},
+    "mér": {"p1"},
+    "mín": {"p1"},
+    "við": {"p1"},
+    "okkur": {"p1"},
+    "okkar": {"p1"},
+    "vér": {"p1"},
+    "oss": {"p1"},
+    "vor": {"p1"},
+    "þú": {"p2"},
+    "þig": {"p2"},
+    "þér": {"p2"},
+    "þín": {"p2"},
+    "þið": {"p2"},
+    "ykkur": {"p2"},
+    "ykkar": {"p2"},
+    "yður": {"p2"},
+    "yðar": {"p2"},
+    "hann": {"p3", "kk"},
+    "honum": {"p3", "kk"},
+    "hans": {"p3", "kk"},
+    "þeir": {"p3", "kk"},
+    "þá": {"p3", "kk"},
+    "hún": {"p3", "kvk"},
+    "hana": {"p3", "kvk"},
+    "henni": {"p3", "kvk"},
+    "hennar": {"p3", "kvk"},
+    "þær": {"p3", "kvk"},
+    "það": {"p3", "hk"},
+    "því": {"p3", "hk"},
+    "þess": {"p3", "hk"},
+    "þau": {"p3", "hk"},
+    "þeim": {"p3"},  # Gender unknown
+    "þeirra": {"p3"},  # Gender unknown
+}
+
+
+def augment_terminal(terminal, text_lower, beyging):
     """ Augment a terminal name string with additional variants from BÍN,
         extracted from the 'beyging' string """
     a = terminal.split("_")
@@ -1540,8 +1580,13 @@ def augment_terminal(terminal, beyging):
         elif a[1] == "subj":
             cases = a[1:2]
             vstart = 2
+    vset = set(a[vstart:])
+    if a[0] == "pfn":
+        # For personal pronouns, BÍN is missing gender and person information
+        # Add it here for completeness
+        vset |= _PFN_VARIANTS.get(text_lower, set())
     # Collect the variants from the terminal and from the BÍN 'beyging' string
-    vset = set(a[vstart:]) | BIN_Token.bin_variants(beyging)
+    vset |= BIN_Token.bin_variants(beyging)
     # Return the full augmented terminal string
     return "_".join(a[0:1] + cases + sorted(list(vset)))
 
@@ -1576,12 +1621,7 @@ def canonicalize_token(t):
         # Add an 'a' field with a terminal name including all
         # variants, in a canonical form that lists verb arguments
         # first, followed by other variants in alphabetical order.
-        # !!! Note: This code should be synchronized with code in
-        # matcher.py (SimpleTree.terminal_with_all_variants)
-        t_all = augment_terminal(t["t"], t["b"])
-        if t["t"] != t_all:
-            # Augment the information with the full set of variants
-            t["a"] = t_all
+        t["a"] = augment_terminal(t["t"], t["x"].lower(), t["b"])
     if "v" in t:
         # Flatten and simplify the val field, if present
         val = t["v"]

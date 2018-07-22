@@ -536,7 +536,7 @@ class SimpleTree:
         # the variants are in alphabetical order, except
         # for verb arguments, which are always first, immediately
         # following the terminal category.
-        return augment_terminal(terminal, self._head.get("b"))
+        return augment_terminal(terminal, self._text.lower(), self._head.get("b"))
 
     @cached_property
     def variants(self):

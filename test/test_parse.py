@@ -824,6 +824,17 @@ def test_abbreviations():
         "so_1_nf_nh NP-OBJ pfn_kvk_et_nf /NP-OBJ /VP ADJP lo_sb_nf_et_kvk "
         "/ADJP /VP-SEQ /IP /S-MAIN p /P"
     )
+    # The following also tests augmented variants for personal pronouns,
+    # i.e. pfn_et_nf_p1 for 'ég' and pfn_et_kvk_nf_p3 for 'hún'
+    # (the person is added; it's not included in BÍN)
+    assert (
+        s.tree.flat_with_all_variants == "P S-MAIN IP NP-SUBJ pfn_et_nf_p1 /NP-SUBJ "
+        "VP-SEQ VP so_1_þf_et_fh_gm_nt_p1 NP-OBJ no_et_kvk_þf NP-POSS no_ef_et_hk "
+        "PP fs_þgf NP no_et_kk_þgf /NP /PP /NP-POSS /NP-OBJ /VP "
+        "ADVP ADVP-DATE-REL fs_þgf dagsafs lo_et_kk_þgf /ADVP-DATE-REL /ADVP st "
+        "VP so_et_fh_gm_nt_p1 so_1_nf_gm_nh NP-OBJ pfn_et_kvk_nf_p3 /NP-OBJ /VP "
+        "ADJP lo_et_kvk_nf_sb /ADJP /VP-SEQ /IP /S-MAIN p /P"
+    )
 
 
 def test_attachment(verbose=False):

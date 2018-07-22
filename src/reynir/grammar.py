@@ -68,7 +68,7 @@ class GrammarError(Exception):
 
     """ Exception class for errors in a grammar """
 
-    def __init__(self, text, fname = None, line = 0):
+    def __init__(self, text, fname=None, line=0):
 
         """ A GrammarError contains an error text and optionally the name
             of a grammar file and a line number where the error occurred """
@@ -100,9 +100,9 @@ class Nonterminal:
     """ A nonterminal, either at the left hand side of
         a rule or within a production """
 
-    _INDEX = -1 # Running sequence number (negative) of all nonterminals
+    _INDEX = -1  # Running sequence number (negative) of all nonterminals
 
-    def __init__(self, name, fname = None, line = 0):
+    def __init__(self, name, fname=None, line=0):
         self._name = name
         # Place of initial definition in a grammar file
         self._fname = fname
@@ -184,7 +184,7 @@ class Nonterminal:
     def add_tag(self, tag):
         """ Check whether this nonterminal has been tagged with the given tag """
         if self._tags is None:
-            self._tags = { tag }
+            self._tags = {tag}
         else:
             self._tags.add(tag)
 
@@ -199,7 +199,7 @@ class Terminal:
 
     """ A terminal within a right-hand-side production """
 
-    _INDEX = 1 # Running sequence number (positive) of all terminals
+    _INDEX = 1  # Running sequence number (positive) of all terminals
 
     def __init__(self, name):
         self._name = name
@@ -220,7 +220,7 @@ class Terminal:
     @property
     def name(self):
         return self._name
-    
+
     @property
     def index(self):
         """ Return the (positive) sequence number of this terminal """
@@ -248,25 +248,29 @@ class LiteralTerminal(Terminal):
         # Replace any underscores within the literal with spaces, allowing literals
         # to match tokens with spaces in them
         q = lit[0]
-        assert q in "\'\""
-        ix = lit[1:].index(q) + 1 # Find closing quote
+        assert q in "'\""
+        ix = lit[1:].index(q) + 1  # Find closing quote
         # Replace underscores within the literal with spaces
         phrase = lit[1:ix]
         if "_" in phrase:
-            phrase = phrase.replace('_', ' ')
-            lit = q + phrase + q + lit[ix + 1:]
-            phrase = phrase.split(':')[0] # Remove :cat, if present
-            if StaticPhrases.lookup(phrase) is None and not Abbreviations.has_abbreviation(phrase):
+            phrase = phrase.replace("_", " ")
+            lit = q + phrase + q + lit[ix + 1 :]
+            phrase = phrase.split(":")[0]  # Remove :cat, if present
+            if StaticPhrases.lookup(
+                phrase
+            ) is None and not Abbreviations.has_abbreviation(phrase):
                 # Check that a multi-phrase literal terminal exists in the StaticPhrases
                 # dictionary (normally defined in Phrases.conf)
-                raise GrammarError("Multi-phrase literal '{0}' not found "
-                    "in static phrases or abbreviations".format(phrase))
+                raise GrammarError(
+                    "Multi-phrase literal '{0}' not found "
+                    "in static phrases or abbreviations".format(phrase)
+                )
         super().__init__(lit)
         # If a double quote was used, this is a 'strong' literal
         # that matches an exact terminal string as it appeared in the source
         # - no stemming or other canonization should be applied,
         # although the string will be converted to lowercase
-        self._strong = (q == '\"')
+        self._strong = q == '"'
 
     def matches(self, t_kind, t_val, t_lit):
         """ A literal terminal matches a token if the token text is
@@ -282,7 +286,7 @@ class Token:
 
     """ A single input token as seen by the parser """
 
-    def __init__(self, kind, val, lit = None):
+    def __init__(self, kind, val, lit=None):
         """ A basic token has a kind, a canonical value and an optional literal value,
             all strings """
         self._kind = kind
@@ -293,7 +297,7 @@ class Token:
         """ Return a simple string representation of this token """
         if self._kind == self._val:
             return self._kind
-        return '{0}:{1}'.format(self._kind, self._val)
+        return "{0}:{1}".format(self._kind, self._val)
 
     @property
     def kind(self):
@@ -322,9 +326,9 @@ class Production:
 
     """ A right-hand side of a grammar rule """
 
-    _INDEX = 0 # Running sequence number of all productions
+    _INDEX = 0  # Running sequence number of all productions
 
-    def __init__(self, fname = None, line = 0, rhs = None, priority = 0):
+    def __init__(self, fname=None, line=0, rhs=None, priority=0):
 
         """ Initialize a production from a list of
             right-hand-side nonterminals and terminals """
@@ -353,11 +357,11 @@ class Production:
         return id(self).__hash__()
 
     def __eq__(self, other):
-        #return isinstance(other, Production) and self._index == other._index
+        # return isinstance(other, Production) and self._index == other._index
         return id(self) == id(other)
 
     def __ne__(self, other):
-        #return not isinstance(other, Production) or self._index != other._index
+        # return not isinstance(other, Production) or self._index != other._index
         return id(self) != id(other)
 
     def append(self, t):
@@ -377,7 +381,7 @@ class Production:
     @property
     def index(self):
         return self._index
-    
+
     @property
     def length(self):
         """ Return the length of this production """
@@ -399,7 +403,7 @@ class Production:
     @property
     def priority(self):
         return self._priority
-    
+
     @property
     def prod(self):
         """ Return this production in tuple form """
@@ -470,19 +474,19 @@ class Grammar:
         self._terminals = OrderedDict()
 
         # Dictionary of nonterminals indexed by integers < 0
-        self._nonterminals_by_ix = { }
+        self._nonterminals_by_ix = {}
         # Dictionary of terminals indexed by integers > 0
-        self._terminals_by_ix = { }
+        self._terminals_by_ix = {}
         # Dictionary of productions indexed by integers >= 0
-        self._productions_by_ix = { }
+        self._productions_by_ix = {}
 
         # Mapping of nonterminals to a list of their productions
         self._nt_dict = OrderedDict()
         # Nonterminal score adjustment as specified by $score(n)
-        self._nt_scores = { }
+        self._nt_scores = {}
 
         self._root = None
-        self._secondary_roots = [] # Additional, secondary roots, if any
+        self._secondary_roots = []  # Additional, secondary roots, if any
 
         # Information about the grammar file
         self._file_name = None
@@ -567,11 +571,12 @@ class Grammar:
         return self._nt_dict[nt]
 
     def __str__(self):
-
         def to_str(plist):
             return " | ".join([str(p) for p in plist])
 
-        return "".join([str(nt) + " → " + to_str(pp[1]) + "\n" for nt, pp in self._nt_dict.items()])
+        return "".join(
+            [str(nt) + " → " + to_str(pp[1]) + "\n" for nt, pp in self._nt_dict.items()]
+        )
 
     @staticmethod
     def _make_terminal(name):
@@ -598,7 +603,7 @@ class Grammar:
             if Settings.DEBUG:
                 print("Writing binary grammar file {0}".format(fname))
             # Version header
-            f.write("Reynir 00.00.01\n".encode('ascii')) # 16 bytes total
+            f.write("Reynir 00.00.01\n".encode("ascii"))  # 16 bytes total
             num_nt = self.num_nonterminals
             # Number of terminals and nonterminals in grammar
             f.write(struct.pack("<II", self.num_terminals, num_nt))
@@ -616,12 +621,16 @@ class Grammar:
                     lenp = len(p)
                     f.write(struct.pack("<III", p.index, prio, lenp))
                     if lenp:
-                        f.write(struct.pack("<"+str(lenp)+"i", *p.prod))
+                        f.write(struct.pack("<" + str(lenp) + "i", *p.prod))
         if Settings.DEBUG:
             print("Writing of binary grammar file completed")
-            print("num_terminals was {0}, num_nonterminals {1}".format(self.num_terminals, num_nt))
+            print(
+                "num_terminals was {0}, num_nonterminals {1}".format(
+                    self.num_terminals, num_nt
+                )
+            )
 
-    def read(self, fname, verbose = False, write_binary = True):
+    def read(self, fname, verbose=False, write_binary=True):
         """ Read grammar from a text file. Set verbose = True to get diagnostic messages
             about unused nonterminals and nonterminals that are unreachable from the root.
             Set write_binary = False to avoid writing a fresh binary file if the
@@ -654,12 +663,12 @@ class Grammar:
                 """ Parse a right-hand side sequence, eventually with relative priority
                     within the nonterminal """
 
-                def _add_rhs(nt_id, rhs, priority = 0):
+                def _add_rhs(nt_id, rhs, priority=0):
                     """ Add a fully expanded right-hand-side production to a nonterminal rule """
                     nt = nonterminals[nt_id]
                     if nt not in grammar:
                         # First production of this nonterminal
-                        grammar[nt] = [ ] if rhs is None else [ (priority, rhs) ]
+                        grammar[nt] = [] if rhs is None else [(priority, rhs)]
                         return
                     if rhs is None:
                         return
@@ -690,13 +699,16 @@ class Grammar:
                     if r == "0":
                         # Empty (epsilon) production
                         if len(tokens) != 1:
-                            raise GrammarError("Empty (epsilon) rule must be of the form NT -> 0", fname, line)
+                            raise GrammarError(
+                                "Empty (epsilon) rule must be of the form NT -> 0",
+                                fname, line
+                            )
                         rhs.append((None, None, None))
                         break
 
                     # Check for repeat/conditionality
                     repeat = None
-                    if r[-1] in '*+?':
+                    if r[-1] in "*+?":
                         # Optional repeat/conditionality specifier
                         # Asterisk: Can be repeated 0 or more times
                         # Plus: Can be repeated 1 or more times
@@ -705,7 +717,7 @@ class Grammar:
                         r = r[0:-1]
 
                     # Check for variant specs
-                    v = r.split('/')
+                    v = r.split("/")
                     r = v[0]
                     v = v[1:]
                     if not v:
@@ -713,7 +725,10 @@ class Grammar:
                     else:
                         for vspec in v:
                             if vspec not in variants:
-                                raise GrammarError("Unknown variant '{0}'".format(vspec), fname, line)
+                                raise GrammarError(
+                                    "Unknown variant '{0}'".format(vspec),
+                                    fname, line
+                                )
                             if vspec not in vts:
                                 # Free variant: add to set
                                 vfree.add(vspec)
@@ -724,11 +739,17 @@ class Grammar:
                             # Empty literal: matches nothing
                             pass
                         elif len(r) < 3 or r[0] not in r[2:]:
-                            raise GrammarError("Invalid literal terminal {0}".format(r), fname, line)
+                            raise GrammarError(
+                                "Invalid literal terminal {0}".format(r),
+                                fname, line
+                            )
                     else:
                         # Identifier of nonterminal or terminal
                         if not r.isidentifier():
-                            raise GrammarError("Invalid identifier '{0}'".format(r), fname, line)
+                            raise GrammarError(
+                                "Invalid identifier '{0}'".format(r),
+                                fname, line
+                            )
                     rhs.append((r, repeat, v))
 
                 assert len(rhs) == len(tokens)
@@ -738,15 +759,15 @@ class Grammar:
                 def variant_values(vlist):
                     """ Returns a list of names with all applicable variant options appended """
                     if not vlist:
-                        yield [ "" ]
+                        yield [""]
                         return
                     if len(vlist) == 1:
                         for vopt in variants[vlist[0]]:
-                            yield [ vopt ]
+                            yield [vopt]
                         return
                     for v in variant_values(vlist[1:]):
                         for vopt in variants[vlist[0]]:
-                            yield [ vopt ] + v
+                            yield [vopt] + v
 
                 # Make a list of all variants that occur in the
                 # nonterminal or on the right hand side
@@ -757,11 +778,13 @@ class Grammar:
 
                     # Calculate the nonterminal suffix for this variant
                     # combination
-                    nt_suffix = "_".join(vval[vall.index(vx)] for vx in vts) if vts else ""
+                    nt_suffix = (
+                        "_".join(vval[vall.index(vx)] for vx in vts) if vts else ""
+                    )
                     if nt_suffix:
                         nt_suffix = "_" + nt_suffix
 
-                    result = Production(fname, line, priority = priority)
+                    result = Production(fname, line, priority=priority)
                     for r, repeat, v in rhs:
                         # Calculate the token suffix, if any
                         # This may be different from the nonterminal suffix as
@@ -771,7 +794,9 @@ class Grammar:
                             # Epsilon
                             n = None
                         else:
-                            suffix = "_".join(vval[vall.index(vx)] for vx in v) if v else ""
+                            suffix = (
+                                "_".join(vval[vall.index(vx)] for vx in v) if v else ""
+                            )
                             if suffix:
                                 suffix = "_" + suffix
                             sym = r + suffix
@@ -783,9 +808,11 @@ class Grammar:
                             elif r[0].isupper():
                                 # Identifier of nonterminal
                                 if sym not in nonterminals:
-                                    nonterminals[sym] = self._make_nonterminal(sym, fname, line)
+                                    nonterminals[sym] = self._make_nonterminal(
+                                        sym, fname, line
+                                    )
                                 n = nonterminals[sym]
-                                n.add_ref() # Note that the nonterminal has been referenced
+                                n.add_ref()  # Note that the nonterminal has been referenced
                             else:
                                 # Identifier of terminal
                                 if sym not in terminals:
@@ -806,44 +833,54 @@ class Grammar:
 
                         if repeat is not None:
                             if n is None:
-                                raise GrammarError("Epsilon (0) cannot be repeated with * or +", fname, line)
+                                raise GrammarError(
+                                    "Epsilon (0) cannot be repeated with * or +",
+                                    fname, line
+                                )
                             new_nt_id = sym + repeat
                             # Make the new nonterminal and production if not already there
                             if new_nt_id not in nonterminals:
-                                new_nt = nonterminals[new_nt_id] = self._make_nonterminal(new_nt_id, fname, line)
+                                new_nt = nonterminals[
+                                    new_nt_id
+                                ] = self._make_nonterminal(new_nt_id, fname, line)
                                 new_nt.add_ref()
                                 # Note that the Earley algorithm is more efficient on left recursion
                                 # than middle or right recursion. Therefore it is better to generate
                                 # Cx -> Cx C than Cx -> C Cx.
                                 # First production: Cx C
                                 new_p = Production(fname, line)
-                                if repeat != '?':
-                                    new_p.append(new_nt) # C* / C+
-                                new_p.append(n) # C
-                                _add_rhs(new_nt_id, new_p) # Default priority 0
+                                if repeat != "?":
+                                    new_p.append(new_nt)  # C* / C+
+                                new_p.append(n)  # C
+                                _add_rhs(new_nt_id, new_p)  # Default priority 0
                                 # Second production: epsilon(*, ?) or C(+)
                                 new_p = Production(fname, line)
-                                if repeat == '+':
+                                if repeat == "+":
                                     new_p.append(n)
-                                _add_rhs(new_nt_id, new_p) # Default priority 0
+                                _add_rhs(new_nt_id, new_p)  # Default priority 0
                             # Substitute the Cx in the original production
                             n = nonterminals[new_nt_id]
 
                         if n is not None:
                             result.append(n)
 
-                    assert len(result) == len(rhs) or (len(rhs) == 1 and rhs[0] == (None, None, None))
+                    assert len(result) == len(rhs) or (
+                        len(rhs) == 1 and rhs[0] == (None, None, None)
+                    )
 
                     nt_id_full = nt_id + nt_suffix
 
                     if len(result) == 1 and result[0] == nonterminals[nt_id_full]:
                         # Nonterminal derives itself
-                        raise GrammarError("Nonterminal {0} deriving itself".format(nt_id_full), fname, line)
+                        raise GrammarError(
+                            "Nonterminal {0} deriving itself".format(nt_id_full),
+                            fname, line
+                        )
                     _add_rhs(nt_id_full, result, priority)
 
             def variant_names(nt, vts):
                 """ Returns a list of names with all applicable variant options appended """
-                result = [ nt ]
+                result = [nt]
                 for v in vts:
                     newresult = []
                     for vopt in variants[v]:
@@ -855,45 +892,65 @@ class Grammar:
             def apply_to_nonterminals(s, func):
                 """ Parse a nonterminal/var list from string s, then apply func(nt, p) to
                     all nonterminals, where p is the parameter of the pragma """
-                ix = s.find(')')
+                ix = s.find(")")
                 if ix < 0:
-                    raise GrammarError("Expected right parenthesis in pragma", fname, line)
-                param = s[0 : ix].strip()
-                s = s[ix + 1:]
+                    raise GrammarError(
+                        "Expected right parenthesis in pragma",
+                        fname, line
+                    )
+                param = s[0:ix].strip()
+                s = s[ix + 1 :]
                 nts = s.split()
                 for nt_name in nts:
-                    ntv = nt_name.split('/')
-                    #if not ntv[0].isidentifier():
+                    ntv = nt_name.split("/")
+                    # if not ntv[0].isidentifier():
                     #    raise GrammarError("Invalid nonterminal name '{0}'".format(ntv[0]), fname, line)
                     for vname in ntv[1:]:
                         if vname not in variants:
-                            raise GrammarError("Unknown variant '{0}' for nonterminal '{1}'".format(vname, ntv[0]), fname, line)
+                            raise GrammarError(
+                                "Unknown variant '{0}' for nonterminal '{1}'".format(
+                                    vname, ntv[0]
+                                ),
+                                fname, line
+                            )
                     var_names = variant_names(ntv[0], ntv[1:])
                     for vname in var_names:
                         if vname not in nonterminals:
-                            raise GrammarError("Unknown nonterminal '{0}'".format(vname), fname, line)
+                            raise GrammarError(
+                                "Unknown nonterminal '{0}'".format(vname),
+                                fname, line
+                            )
                         try:
                             func(nonterminals[vname], param)
                         except:
-                            raise GrammarError("Invalid pragma argument '{0}'".format(param), fname, line)
+                            raise GrammarError(
+                                "Invalid pragma argument '{0}'".format(param),
+                                fname, line
+                            )
 
-            if s.startswith('/'):
+            if s.startswith("/"):
                 # Definition of variant
                 # A variant is specified as /varname = opt1 opt2 opt3...
-                v = s.split('=', maxsplit = 1)
+                v = s.split("=", maxsplit=1)
                 if len(v) != 2:
                     raise GrammarError("Invalid variant syntax", fname, line)
                 vname = v[0].strip()[1:]
                 if "_" in vname or not vname.isidentifier():
                     # Variant names must be valid identifiers without underscores
-                    raise GrammarError("Invalid variant name '{0}'".format(vname), fname, line)
+                    raise GrammarError(
+                        "Invalid variant name '{0}'".format(vname),
+                        fname, line
+                    )
                 v = v[1].split()
                 for vopt in v:
-                    if "_"  in vopt or not vopt.isidentifier():
+                    if "_" in vopt or not vopt.isidentifier():
                         # Variant options must be valid identifiers without underscores
-                        raise GrammarError("Invalid option '{0}' in variant '{1}'".format(vopt, vname), fname, line)
+                        raise GrammarError(
+                            "Invalid option '{0}' in variant '{1}'".format(vopt, vname),
+                            fname, line
+                        )
                 variants[vname] = v
-            elif s.startswith('$'):
+            elif s.startswith("$"):
                 # Pragma
                 s = s.strip()
                 PRAGMA_SCORE = "$score("
@@ -901,7 +958,7 @@ class Grammar:
                 PRAGMA_TAG = "$tag("
                 if s.startswith(PRAGMA_SCORE):
                     # Pragma $score(int) Nonterminal/var1/var2 ...
-                    s = s[len(PRAGMA_SCORE):]
+                    s = s[len(PRAGMA_SCORE) :]
 
                     def set_score(nt, score):
                         self._nt_scores[nt] = int(score)
@@ -910,17 +967,23 @@ class Grammar:
 
                 elif s.startswith(PRAGMA_TAG):
                     # Pragma $tag(tagstring) Nonterminal/var1/var2 ...
-                    s = s[len(PRAGMA_TAG):]
-                    apply_to_nonterminals(s, lambda nt, tag : nt.add_tag(tag))
+                    s = s[len(PRAGMA_TAG) :]
+                    apply_to_nonterminals(s, lambda nt, tag: nt.add_tag(tag))
 
                 elif s.startswith(PRAGMA_ROOT):
                     # Pragma $root(Nonterminal)
                     # Identify a nonterminal as a secondary parse root
-                    if s[-1] != ')':
-                        raise GrammarError("Expected right parenthesis in $root() pragma", fname, line)
-                    root_nt = s[len(PRAGMA_ROOT):-1].strip()
+                    if s[-1] != ")":
+                        raise GrammarError(
+                            "Expected right parenthesis in $root() pragma",
+                            fname, line
+                        )
+                    root_nt = s[len(PRAGMA_ROOT) : -1].strip()
                     if not root_nt.isidentifier():
-                        raise GrammarError("Invalid nonterminal name '{0}'".format(root_nt), fname, line)
+                        raise GrammarError(
+                            "Invalid nonterminal name '{0}'".format(root_nt),
+                            fname, line
+                        )
                     if root_nt not in nonterminals:
                         raise GrammarError("Unknown nonterminal '{0}'".format(root_nt))
                     # Add an implicit reference to the root
@@ -940,14 +1003,22 @@ class Grammar:
 
                 # Split nonterminal spec into name and variant(s),
                 # i.e. NtName/var1/var2...
-                ntv = rule[0].strip().split('/')
+                ntv = rule[0].strip().split("/")
                 current_NT = nt = ntv[0]
                 current_variants = ntv[1:]
                 if not nt.isidentifier():
-                    raise GrammarError("Invalid nonterminal name '{0}'".format(nt), fname, line)
+                    raise GrammarError(
+                        "Invalid nonterminal name '{0}'".format(nt),
+                        fname, line
+                    )
                 for vname in current_variants:
                     if vname not in variants:
-                        raise GrammarError("Unknown variant '{0}' for nonterminal '{1}'".format(vname, nt), fname, line)
+                        raise GrammarError(
+                            "Unknown variant '{0}' for nonterminal '{1}'".format(
+                                vname, nt
+                            ),
+                            fname, line
+                        )
                 var_names = variant_names(nt, current_variants)
 
                 # Add all previously unknown nonterminal variants
@@ -960,19 +1031,27 @@ class Grammar:
                         if self._root is None:
                             # Remember first nonterminal as the root
                             self._root = cnt
-                            self._root.add_ref() # Implicitly referenced
+                            self._root.add_ref()  # Implicitly referenced
                     if cnt not in grammar:
-                        grammar[cnt] = [ ]
+                        grammar[cnt] = []
 
-                sep = '|' # Default production separator
-                if '>' in rule[1]:
+                sep = "|"  # Default production separator
+                if ">" in rule[1]:
                     # Looks like a priority specification between productions
-                    if '|' in rule[1]:
-                        raise GrammarError("Cannot mix '|' and '>' between productions", fname, line)
-                    sep = '>'
+                    if "|" in rule[1]:
+                        raise GrammarError(
+                            "Cannot mix '|' and '>' between productions",
+                            fname, line
+                        )
+                    sep = ">"
                 for priority, prod in enumerate(rule[1].split(sep)):
                     # Add the productions on the right hand side, delimited by '|' or '>'
-                    _parse_rhs(current_NT, current_variants, prod, priority if sep == '>' else 0)
+                    _parse_rhs(
+                        current_NT,
+                        current_variants,
+                        prod,
+                        priority if sep == ">" else 0,
+                    )
 
         # Main parse loop
 
@@ -984,7 +1063,7 @@ class Grammar:
 
                     line += 1
                     # Ignore comments
-                    ix = s.find('#')
+                    ix = s.find("#")
                     if ix >= 0:
                         s = s[0:ix]
 
@@ -1014,20 +1093,31 @@ class Grammar:
         for nt in nonterminals.values():
             if verbose and not nt.has_ref:
                 # Emit a warning message if verbose=True
-                print ("Nonterminal {0} is never referenced in a production".format(nt))
+                print("Nonterminal {0} is never referenced in a production".format(nt))
                 # raise GrammarError("Nonterminal {0} is never referenced in a production".format(nt), nt.fname(), nt.line())
             if nt not in grammar:
-                raise GrammarError("Nonterminal {0} is referenced but not defined".format(nt), nt.fname, nt.line)
+                raise GrammarError(
+                    "Nonterminal {0} is referenced but not defined".format(nt),
+                    nt.fname,
+                    nt.line
+                )
         for nt, plist in grammar.items():
             if len(plist) == 0:
-                raise GrammarError("Nonterminal {0} has no productions".format(nt), nt.fname, nt.line)
+                raise GrammarError(
+                    "Nonterminal {0} has no productions".format(nt),
+                    nt.fname, nt.line
+                )
             else:
                 for _, p in plist:
                     if len(p) == 1 and p[0] == nt:
-                        raise GrammarError("Nonterminal {0} produces itself".format(nt), p.fname, p.line)
+                        raise GrammarError(
+                            "Nonterminal {0} produces itself".format(nt),
+                            p.fname,
+                            p.line
+                        )
 
         # Check that all nonterminals derive terminal strings
-        agenda = [ nt for nt in nonterminals.values() ]
+        agenda = [nt for nt in nonterminals.values()]
         der_t = set()
         while agenda:
             reduced = False
@@ -1040,16 +1130,21 @@ class Grammar:
                     reduced = True
             if not reduced:
                 break
-            agenda = [ nt for nt in nonterminals.values() if nt not in der_t ]
+            agenda = [nt for nt in nonterminals.values() if nt not in der_t]
         if agenda:
-            raise GrammarError("Nonterminals {0} do not derive terminal strings"
-                .format(", ".join([str(nt) for nt in agenda])), fname, 0)
+            raise GrammarError(
+                "Nonterminals {0} do not derive terminal strings".format(
+                    ", ".join([str(nt) for nt in agenda])
+                ),
+                fname,
+                0
+            )
 
         # Short-circuit nonterminals that point directly and uniquely to other nonterminals.
         # Becausee this creates a gap between the original grammar
         # and the resulting trees, we only do this for nonterminals with variants
         # that do not have a $score pragma
-        shortcuts = { } # Dictionary of shortcuts
+        shortcuts = {}  # Dictionary of shortcuts
         for nt, plist in grammar.items():
             if not "_" in nt.name:
                 # 'Pure' nonterminal with no variants: don't shortcut
@@ -1057,7 +1152,11 @@ class Grammar:
             if self.nt_score(nt) != 0 or nt.has_tags:
                 # Nonterminal has a score adjustment or a tag: don't shortcut
                 continue
-            if len(plist) == 1 and len(plist[0][1]) == 1 and isinstance(plist[0][1][0], Nonterminal):
+            if (
+                len(plist) == 1
+                and len(plist[0][1]) == 1
+                and isinstance(plist[0][1][0], Nonterminal)
+            ):
                 # This nonterminal has only one production, with only one nonterminal item
                 target = plist[0][1][0]
                 assert target != nt
@@ -1074,14 +1173,14 @@ class Grammar:
                     if isinstance(s, Nonterminal) and s in shortcuts:
                         # Replace the nonterminal in the production
                         target = shortcuts[s]
-                        #if verbose:
+                        # if verbose:
                         #    # Print informational message in verbose mode
                         #    print("Production of {2}: Replaced {0} with {1}"
                         #        .format(s, target, nt))
                         p[ix] = target
 
         # Now, after applying shortcuts, check that all nonterminals are reachable from the root
-        unreachable = { nt for nt in nonterminals.values() }
+        unreachable = {nt for nt in nonterminals.values()}
 
         def _remove(nt):
             """ Recursively remove all nonterminals that are reachable from nt """
@@ -1099,9 +1198,12 @@ class Grammar:
         if unreachable:
             if verbose:
                 # Emit a warning message if verbose=True
-                print("The following nonterminals are unreachable from the root\nand will be removed from the grammar:")
+                print(
+                    "The following nonterminals are unreachable from the root\n"
+                    "and will be removed from the grammar:"
+                )
                 with changedlocale() as strxfrm:
-                    for nt in sorted([ str(nt) for nt in unreachable ], key = strxfrm):
+                    for nt in sorted([str(nt) for nt in unreachable], key=strxfrm):
                         print("* {0}".format(str(nt)))
             # Simplify the grammar dictionary by removing unreachable nonterminals
             for nt in unreachable:
@@ -1116,14 +1218,18 @@ class Grammar:
         # but rather on the default Python string sorting order for maximum
         # repeatability and to avoid requiring the is-IS locale to be installed.
         nt_sorted = sorted(nonterminals.keys())
-        self._nonterminals_by_ix = { -1 - ix : nonterminals[key] for ix, key in enumerate(nt_sorted) }
+        self._nonterminals_by_ix = {
+            -1 - ix: nonterminals[key] for ix, key in enumerate(nt_sorted)
+        }
         for key, nt in self._nonterminals_by_ix.items():
             nt.set_index(key)
 
         # Reassign indices for terminals
         # Terminals are indexed upwards from 1
         t_sorted = sorted(terminals.keys())
-        self._terminals_by_ix = { ix + 1 : terminals[key] for ix, key in enumerate(t_sorted) }
+        self._terminals_by_ix = {
+            ix + 1: terminals[key] for ix, key in enumerate(t_sorted)
+        }
         for key, t in self._terminals_by_ix.items():
             t.set_index(key)
 
@@ -1150,13 +1256,11 @@ class Grammar:
                 # No binary file or older than text file: write a fresh one
                 self._write_binary(fname)
 
-
     def follow_set(self, nonterminal):
 
         nullable = set()
 
         def is_nullable(nt):
-
             def is_nullable_prod(p):
                 return p.is_empty or all(s in nullable for s in p)
 
@@ -1179,11 +1283,11 @@ class Grammar:
             for _, p in plist:
                 for s in p:
                     if isinstance(s, Terminal):
-                        follow[s].append(prod_seq + [ p ])
+                        follow[s].append(prod_seq + [p])
                         break
                     if s not in seen:
                         seen.add(s)
-                        add_follow(s, prod_seq + [ p ])
+                        add_follow(s, prod_seq + [p])
                     if s not in nullable:
                         break
 
@@ -1222,13 +1326,19 @@ if __name__ == "__main__":
     if ts is None:
         print("Unable to read grammar file {0}".format(fname))
     else:
-        print("Reading grammar file {0} with timestamp {1:%Y-%m-%d %H:%M:%S}\n".format(fname, datetime.fromtimestamp(ts)))
+        print(
+            "Reading grammar file {0} with timestamp {1:%Y-%m-%d %H:%M:%S}\n".format(
+                fname, datetime.fromtimestamp(ts)
+            )
+        )
         import time
+
         t0 = time.time()
         g = Grammar()
         try:
-            g.read(fname, verbose = True)
-            print("Grammar parsed and loaded in {0:.2f} seconds".format(time.time() - t0))
+            g.read(fname, verbose=True)
+            print(
+                "Grammar parsed and loaded in {0:.2f} seconds".format(time.time() - t0)
+            )
         except GrammarError as err:
             print(str(err))
-
