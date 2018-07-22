@@ -866,7 +866,7 @@ class ParseForestDumper(ParseForestNavigator):
                 if td["t"] != w.terminal.name:
                     assert False
                 ta = simplify_terminal(td["t"], td["m"][1])  # Fallback category
-                ta = augment_terminal(ta, t["x"].lower(), td["m"][3])  # The m(3) field is 'beyging'
+                ta = augment_terminal(ta, td["x"].lower(), td["m"][3])  # The m(3) field is 'beyging'
                 if w.terminal.name == ta:
                     ta = ""  # No need to repeat augmented terminal if it is identical
                 else:

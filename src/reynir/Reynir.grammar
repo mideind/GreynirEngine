@@ -540,7 +540,8 @@ SagnInnskot →
 $tag(enable_prep_bonus) SagnInnskot
 
 SagnInnskotAtv →
-    SagnInnskot
+    # (Manninum var vikið) frá störfum [þegar málið kom upp]
+    SagnInnskot KommaAtvikssetning?
     # (Ég ætla að fá mér ís) [,] þegar ég verð 18 ára í haust (og borða hann úti)
     | KommaAtvikssetning
 
@@ -961,6 +962,7 @@ AukafallÞgfAndlag →
     # (Stóru skipunum hefur verið/skal/mun) stýrt (í land)
     # (Hannesi var í fyrra) falið að stýra rannsóknaverkefni
     # (Mér var strax) sagt að Friðgeir væri farinn að drekka aftur
+    # (Manninum var) vikið [frá störfum [þegar málið kom upp]]
     so_1_þgf_sagnb AðLiður?
 
     # (Þátttakendum er) gert kleift að matast með reisn
@@ -2733,7 +2735,7 @@ NlFornafn/tala/fall/kyn →
         Fornafn/tala/fall/kyn FornafnViðskeyti/tala/fall/kyn? LoLiður/tala/fall/kyn*
     # 'okkar besta' / 'óumdeilanlega ykkar versta'
     | AtviksliðurEinkunn* OkkarYkkar LoLiður/tala/fall/kyn
-    | AtviksliðurEinkunn* 'margur'/tala/fall/kyn 'annar'/tala/fall/kyn
+    | AtviksliðurEinkunn* 'margur:fn'/tala/fall/kyn 'annar:fn'/tala/fall/kyn
 
 Pfn_kk/tala/fall → 'hann:pfn'_kk/tala/fall
 Pfn_kvk/tala/fall → 'hún:pfn'_kvk/tala/fall
@@ -4563,6 +4565,8 @@ VísiDagsetning →
     | 'í_fyrradag:ao'                   # í fyrradag
     | 'í:fs'_þf 'fyrri:lo'_þf_et_mst    # í fyrra
     | 'dagur:kk'_þf_et_gr 'eftir:ao'    # daginn eftir
+    | 'annar:fn'_et_þf_hk 'kvöld:hk'_et_þf # annað kvöld
+    | 'annar:fn'_et_þf_kvk 'nótt:kvk'_et_þf # aðra nótt
 
 # Hér eru aðeins orð yfir mánuði sem ekki tengjast við 'dagsafs' lauf
 Mánuður_et/fall →
@@ -4599,7 +4603,8 @@ Mánaðamót →
 Árstíð_þf_et_kvk →
     "" # Never matches
 
-# Bara AfstæðDagsetning -- aðrir svipaðir liðir fara í aðrar reglur (í viku (Tímabil), á ári (Tíðni), í mánuð (Tímabil), ...)
+# Bara AfstæðDagsetning -- aðrir svipaðir liðir fara í aðrar reglur
+# (í viku (Tímabil), á ári (Tíðni), í mánuð (Tímabil), ...)
 # á árinu, í vikunni, í mánuðinum
 AfstæðDagsetningFs → 
     'á:fs'_þgf 'ár:hk'_þgf_et_gr                                # á árinu
