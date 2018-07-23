@@ -2749,7 +2749,8 @@ FornafnViðskeyti/tala/fall/kyn →
     | Töluorð/tala/fall/kyn # öllum fjórum, þeirra tveggja
 
 FornafnViðskeyti_et/fall/kyn →
-    Pfn_ft_ef/kyn Töluorð_ft_ef/kyn? FornafnViðskeytiLo_ft_ef/kyn? # neinum þeirra þriggja, öllum þeirra, hvern þeirra fjögurra
+    # neinum þeirra þriggja, öllum þeirra, hvern þeirra fjögurra
+    Pfn_ft_ef/kyn Töluorð_ft_ef/kyn? FornafnViðskeytiLo_ft_ef/kyn?
 
 FornafnViðskeytiLo_ft_ef/kyn →
     AtviksliðurEinkunn* lo_vb_ft_ef/kyn # hvern þeirra fjögurra langsamlega sigursælustu
@@ -2757,13 +2758,36 @@ FornafnViðskeytiLo_ft_ef/kyn →
 FornafnViðskeyti_ft/fall/kyn →
     HverHvor/fall/kyn       # þá hvern fyrir sig / þær hverja í sínu lagi / öll hvert á fætur öðru
 
+# Sértilvik þar sem "allt" kemur framan við fornafn óháð tölu, falli og kyni
 # allt annar | allt aðrir
 # allt önnur | allt aðrar
 # allt annað | allt önnur
 NlFornafn/tala/fall/kyn →
     'allur:fn'_et_nf_hk 'annar:fn'/tala/fall/kyn
 
-OkkarYkkar → "okkar:pfn" | "ykkar:pfn"      # Þarf að kallast pfn til að greinast.
+# Sértilvik þar sem lýsingarorðin "margur"/"fjölmargur" standa
+# fyrir framan fornafn og úr verður sjálfstæður nafnliður.
+# "flestur" er fornafn í BÍN og þarf ekki sérreglu.
+NlFornafn/tala/fall/kyn →
+    # margt annað / mörgu öðru / margs annars
+    # margir aðrir / marga aðra / mörgum öðrum / margra annarra
+    'margur:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
+    | 'fjölmargur:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
+
+# Sértilvik þar sem "ýmislegt annað" er sjálfstæður nafnliður:
+# 'Ýmislegt annað (bendir til þess að Jón sé þjófurinn)'
+# Þetta virðist aðeins vera hægt í eintölu, ekki fleirtölu.
+NlFornafn_et_nf_hk → ÝmislegtAnnað_nf
+NlFornafn_et_þf_hk → ÝmislegtAnnað_þf
+NlFornafn_et_þgf_hk → ÝmislegtAnnað_þgf
+NlFornafn_et_ef_hk → ÝmislegtAnnað_ef
+
+ÝmislegtAnnað/fall →
+    'ýmislegur:lo'_sb_et_hk/fall 'annar:fn'_et_hk/fall
+
+$score(+15) ÝmislegtAnnað/fall
+
+OkkarYkkar → "okkar:pfn" | "ykkar:pfn" # Þarf að kallast pfn til að greinast.
 
 # Gefa stökum fornöfnum mínusstig - við viljum frekar sjá þau sem hluta af stærri nafnlið
 $score(-4) NlFornafn/tala/fall/kyn
@@ -3698,7 +3722,9 @@ Skýringarliður →
 # !!! (strákurinn og stelpan eru...), og þeirra sem halda eintölu
 # !!! (hópurinn, þar á meðal ég, var... / Össur, ekki síður en þingflokkurinn, var...)
 
-OgEða → "og:st" | "eða:st" | "ellegar:st" | "eður:st"
+OgEða →
+    "og:st" "jafnframt:ao"?
+    | "eða:st" | "ellegar:st" | "eður:st"
     | "svo:st" "og:st" | "sem:st" "og:st" | "né:st"
     | ÞarÁMeðal | "meðal:ao" "annars:ao" | 'meðal_annars:ao'
     | 'það:pfn'_hk_et_nf "er:st" | 'það_er:ao'
@@ -3712,13 +3738,15 @@ EnÍOgEða →
 
 $score(-24) EnÍOgEða # Frekar að líta á 'en' sem samtengingu ef það er hægt
 
-OgSem → "og:st" "sem:stt"? | "eða:st" "sem:stt"? | "ellegar:st" | "en:st" "sem:stt"?
+OgSem →
+    "og:st" "sem:stt"? | "eða:st" "sem:stt"? | "ellegar:st" | "en:st" "sem:stt"?
 
 ÞarÁMeðal → "þar:ao" 'á_meðal:ao'
 
 $score(+16) ÞarÁMeðal # Líta frekar á "þar á meðal" sem samtengingu en skýringu
 
-KommaOgEða → ','? OgEða
+KommaOgEða →
+    ','? OgEða
     | "-:em" "eða:st" # 'Ég tók tvö tonn af eldsneyti - eða tvö þúsund lítra'
     | KommaOgEðaStrik
     | ',' "ekki:ao" # Við vildum gin, ekki viskí
