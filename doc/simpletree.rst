@@ -158,7 +158,7 @@ head (top) node, as well as about its children and contained subtrees.
                 NP-SUBJ person_nf_kk /NP-SUBJ
                 VP so_2_þgf_þf_et_p3
                     NP-IOBJ no_et_þgf_kk /NP-IOBJ
-                    NP-OBJ tala no_ft_þf_kvk no_ef_ft_kvk /NP-OBJ
+                    NP-OBJ tala no_ft_kvk_þf no_ef_ft_kvk /NP-OBJ
                 /VP
             /IP /S-MAIN p /P
 
@@ -188,7 +188,7 @@ head (top) node, as well as about its children and contained subtrees.
         Output (line breaks inserted)::
 
             P S-MAIN IP
-                NP-SUBJ person_nf_kk /NP-SUBJ
+                NP-SUBJ person_kk_nf /NP-SUBJ
                 VP so_2_þgf_þf_et_fh_gm_p3_þt
                     NP-IOBJ no_et_gr_kk_þgf /NP-IOBJ
                     NP-OBJ tala no_ft_kvk_þf no_ef_ft_kvk /NP-OBJ
