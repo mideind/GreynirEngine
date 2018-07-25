@@ -34,13 +34,13 @@ from tokenizer import correct_spaces, paragraphs
 
 from .bintokenizer import tokenize, describe_token
 from .binparser import canonicalize_token
-from .fastparser import Fast_Parser, ParseError, ParseForestNavigator # , ParseForestPrinter
+from .fastparser import Fast_Parser, ParseError, ParseForestNavigator
 from .reducer import Reducer
 from .matcher import SimpleTreeBuilder
 from .cache import cached_property
 
 
-Terminal = namedtuple("Terminal", ('text', 'lemma', 'category', 'variants'))
+Terminal = namedtuple("Terminal", ("text", "lemma", "category", "variants"))
 
 
 class _Simplifier(ParseForestNavigator):
@@ -50,15 +50,18 @@ class _Simplifier(ParseForestNavigator):
         structure """
 
     def __init__(self, tokens):
-        super().__init__(visit_all = True)
+        super().__init__(visit_all=True)
         self._tokens = tokens
         self._builder = SimpleTreeBuilder()
 
     def _visit_token(self, level, node):
         """ At terminal node, matching a token """
         meaning = node.token.match_with_meaning(node.terminal)
-        d = describe_token(self._tokens[node.token.index], node.terminal,
-            None if isinstance(meaning, bool) else meaning)
+        d = describe_token(
+            self._tokens[node.token.index],
+            node.terminal,
+            None if isinstance(meaning, bool) else meaning,
+        )
         # Convert from compact form to external (more verbose and descriptive) form
         canonicalize_token(d)
         self._builder.push_terminal(d)
@@ -99,13 +102,13 @@ class _Sentence:
         self._job = job
         self._s = s
         self._len = len(s)
-        assert self._len > 0 # Input should be already sanitized
+        assert self._len > 0  # Input should be already sanitized
         self._err_index = None
         self._tree = self._simplified_tree = None
-        self._num = None # Number of possible combinations
-        self._score = None # Score of best parse tree
-        self._terminals = None # Cached terminals
-        if self._job._parse:
+        self._num = None  # Number of possible combinations
+        self._score = None  # Score of best parse tree
+        self._terminals = None  # Cached terminals
+        if self._job.parse_immediately:
             # We want an immediate parse of the sentence
             self.parse()
 
@@ -216,7 +219,7 @@ class _Sentence:
     def lemmas(self):
         """ Convenience property to return the lemmas only """
         t = self.terminals
-        return None if t is None else [ terminal[1] for terminal in t ]
+        return None if t is None else [terminal[1] for terminal in t]
 
     @property
     def ifd_tags(self):
@@ -226,14 +229,13 @@ class _Sentence:
             return None
         # Flatten the ifd_tags lists for the individual nodes
         # (nonterminal nodes return an empty list in the ifd_tags property)
-        return [ ifd_tag for d in self.tree.descendants for ifd_tag in d.ifd_tags ]
+        return [ifd_tag for d in self.tree.descendants for ifd_tag in d.ifd_tags]
 
     def __str__(self):
         return self.text
 
 
 class _Paragraph:
-
     def __init__(self, job, p):
         self._job = job
         self._p = p
@@ -281,6 +283,11 @@ class _Job:
         # Accumulate the time spent on parsing
         self._parse_time += parse_time
 
+    @property
+    def parse_immediately(self):
+        """ Return True if sentences in the job should be parsed immediately """
+        return self._parse
+
     def paragraphs(self):
         """ Yield the paragraphs from the token stream """
         for p in paragraphs(self._tokens):
@@ -300,7 +307,7 @@ class _Job:
         tree = None
         t0 = time.time()
         try:
-            forest = self.parser.go(tokens) # May raise ParseError
+            forest = self.parser.go(tokens)  # May raise ParseError
             if forest is not None:
                 num = Fast_Parser.num_combinations(forest)
                 if num > 1:
@@ -323,12 +330,12 @@ class _Job:
     @property
     def parser(self):
         """ The job's associated parser object """
-        return self._r._parser
+        return self._r.parser
 
     @property
     def reducer(self):
         """ The job's associated reducer object """
-        return self._r._reducer
+        return self._r.reducer
 
     @property
     def num_tokens(self):
@@ -353,7 +360,9 @@ class _Job:
     @property
     def ambiguity(self):
         """ The weighted average total ambiguity of parsed sentences within this job """
-        return (self._total_ambig / self._total_tokens) if self._total_tokens > 0 else 1.0
+        return (
+            (self._total_ambig / self._total_tokens) if self._total_tokens > 0 else 1.0
+        )
 
     @property
     def parse_time(self):
@@ -412,7 +421,17 @@ class Reynir:
                 Reynir._parser = Fast_Parser()
                 Reynir._reducer = Reducer(Reynir._parser.grammar)
 
-    def submit(self, text, parse = False):
+    @property
+    def parser(self):
+        """ Return the singleton parser instance """
+        return Reynir._parser
+
+    @property
+    def reducer(self):
+        """ Return the singleton reducer instance """
+        return Reynir._reducer
+
+    def submit(self, text, parse=False):
         """ Submit a text to the tokenizer and parser, yielding a job object.
             The paragraphs and sentences of the text can then be iterated
             through via the job object. If parse is set to True, the
@@ -421,25 +440,25 @@ class Reynir:
             sent.parse(). This is a more incremental, asynchronous
             approach than Reynir.parse(). """
         tokens = tokenize(text)
-        return _Job(self, tokens, parse = parse)
+        return _Job(self, tokens, parse=parse)
 
     def parse(self, text):
         """ Convenience function to parse text synchronously and return
             a summary of all contained sentences. """
         tokens = tokenize(text)
-        job = _Job(self, tokens, parse = True)
+        job = _Job(self, tokens, parse=True)
         return dict(
-            sentences = [ sent for sent in job ],
-            num_sentences = job.num_sentences,
-            num_parsed = job.num_parsed,
-            ambiguity = job.ambiguity,
-            parse_time = job.parse_time
+            sentences=[sent for sent in job],
+            num_sentences=job.num_sentences,
+            num_parsed=job.num_parsed,
+            ambiguity=job.ambiguity,
+            parse_time=job.parse_time,
         )
 
     def parse_single(self, sentence):
         """ Convenience function to parse a single sentence only """
         tokens = tokenize(sentence)
-        job = _Job(self, tokens, parse = True)
+        job = _Job(self, tokens, parse=True)
         # Raises StopIteration if no sentence was parsed
         return next(iter(job))
 
@@ -451,4 +470,3 @@ class Reynir:
             Fast_Parser.discard_grammar()
             cls._parser.cleanup()
             cls._parser = None
-

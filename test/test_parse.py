@@ -1159,6 +1159,15 @@ def test_noun_lemmas():
     assert s.tree.nouns == ["Schengen", "munur", "gagnagrunnur", "Ísland"]
 
 
+def test_composite_words():
+    s = r.parse_single("Hann var mennta- og menningarmálaráðherra.")
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP so_1_nf_et_fh_gm_p3_þt "
+        "NP-PRD no_et_kk_nf st no_et_kk_nf /NP-PRD /VP /IP /S-MAIN p /P"
+    )
+
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -1182,4 +1191,5 @@ if __name__ == "__main__":
     test_ifd_tag()
     test_tree_flat()
     test_noun_lemmas()
+    test_composite_words()
     test_finish()

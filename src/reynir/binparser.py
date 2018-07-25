@@ -40,7 +40,14 @@ import json
 from tokenizer import TOK
 
 from .settings import Settings, VerbObjects, VerbSubjects, Prepositions
-from .grammar import Terminal, LiteralTerminal, Nonterminal, Token, Grammar, GrammarError
+from .grammar import (
+    Terminal,
+    LiteralTerminal,
+    Nonterminal,
+    Token,
+    Grammar,
+    GrammarError,
+)
 from .baseparser import Base_Parser
 
 
@@ -93,44 +100,43 @@ class BIN_Token(Token):
 
     # Strings that must be present in the grammatical form for variants
     VARIANT = {
-        "nf" : "NF",  # Nefnifall / nominative
-        "þf" : "ÞF",  # Þolfall / accusative
-        "þgf" : "ÞGF",  # Þágufall / dative
-        "ef" : "EF",  # Eignarfall / possessive
-        "kk" : "KK",  # Karlkyn / masculine
-        "kvk" : "KVK",  # Kvenkyn / feminine
-        "hk" : "HK",  # Hvorugkyn / neutral
-        "et" : "ET",  # Eintala / singular
-        "ft" : "FT",  # Fleirtala / plural
-        "mst" : "MST",  # Miðstig / comparative
-        "est" : "EST",  # Efsta stig / superlative
-        "esb" : "ESB",  # Efsta stig, sterk beyging / superlative
-        "evb" : "EVB",  # Efsta stig, veik beyging / superlative
-        "p1" : "1P",  # Fyrsta persóna / first person
-        "p2" : "2P",  # Önnur persóna / second person
-        "p3" : "3P",  # Þriðja persóna / third person
-        "op" : "OP",  # Ópersónuleg sögn
-        "gm" : "GM",  # Germynd
-        "mm" : "MM",  # Miðmynd
-        "sb" : "SB",  # Sterk beyging
-        "vb" : "VB",  # Veik beyging
-        "nh" : "NH",  # Nafnháttur
-        "fh" : "FH",  # Framsöguháttur
-        "bh" : "BH",  # Boðháttur
-        "lh" : "LH",  # Lýsingarháttur (nútíðar)
-        "vh" : "VH",  # Viðtengingarháttur
-        "nt" : "NT",  # Nútíð
-        "sagnb" : "SAGNB",  # Sagnbót ('vera' -> 'hefur verið')
-        "lhþt" : "LHÞT",  # Lýsingarháttur þátíðar ('var lentur')
-        "gr" : "gr",  # Greinir
-
+        "nf": "NF",  # Nefnifall / nominative
+        "þf": "ÞF",  # Þolfall / accusative
+        "þgf": "ÞGF",  # Þágufall / dative
+        "ef": "EF",  # Eignarfall / possessive
+        "kk": "KK",  # Karlkyn / masculine
+        "kvk": "KVK",  # Kvenkyn / feminine
+        "hk": "HK",  # Hvorugkyn / neutral
+        "et": "ET",  # Eintala / singular
+        "ft": "FT",  # Fleirtala / plural
+        "mst": "MST",  # Miðstig / comparative
+        "est": "EST",  # Efsta stig / superlative
+        "esb": "ESB",  # Efsta stig, sterk beyging / superlative
+        "evb": "EVB",  # Efsta stig, veik beyging / superlative
+        "p1": "1P",  # Fyrsta persóna / first person
+        "p2": "2P",  # Önnur persóna / second person
+        "p3": "3P",  # Þriðja persóna / third person
+        "op": "OP",  # Ópersónuleg sögn
+        "gm": "GM",  # Germynd
+        "mm": "MM",  # Miðmynd
+        "sb": "SB",  # Sterk beyging
+        "vb": "VB",  # Veik beyging
+        "nh": "NH",  # Nafnháttur
+        "fh": "FH",  # Framsöguháttur
+        "bh": "BH",  # Boðháttur
+        "lh": "LH",  # Lýsingarháttur (nútíðar)
+        "vh": "VH",  # Viðtengingarháttur
+        "nt": "NT",  # Nútíð
+        "sagnb": "SAGNB",  # Sagnbót ('vera' -> 'hefur verið')
+        "lhþt": "LHÞT",  # Lýsingarháttur þátíðar ('var lentur')
+        "gr": "gr",  # Greinir
         # Variants that do not have a corresponding BIN meaning
-        "abbrev" : None,
-        "subj" : None
+        "abbrev": None,
+        "subj": None,
     }
 
     # Make a copy of VARIANT with the past tense (þt) added
-    VARIANT_EX = {key : val for key, val in VARIANT.items() if val is not None}
+    VARIANT_EX = {key: val for key, val in VARIANT.items() if val is not None}
     VARIANT_EX["þt"] = "ÞT"
 
     # Bit mapping for all known variants
@@ -160,15 +166,33 @@ class BIN_Token(Token):
     CASES = ["nf", "þf", "þgf", "ef"]
     GENDERS = ["kk", "kvk", "hk"]
     GENDERS_SET = frozenset(GENDERS)
-    GENDERS_MAP = {"kk" : "KK", "kvk" : "KVK", "hk" : "HK"}
+    GENDERS_MAP = {"kk": "KK", "kvk": "KVK", "hk": "HK"}
 
     VBIT_CASES = VBIT["nf"] | VBIT["þf"] | VBIT["þgf"] | VBIT["ef"]
     VBIT_GENDERS = VBIT["kk"] | VBIT["kvk"] | VBIT["hk"]
     VBIT_NUMBER = VBIT["et"] | VBIT["ft"]
 
     # Variants to be checked for verbs
-    VERB_VARIANTS = ["p1", "p2", "p3", "nh", "vh", "lh", "bh", "fh",
-        "sagnb", "lhþt", "nt", "kk", "kvk", "hk", "sb", "vb", "gm", "mm"]
+    VERB_VARIANTS = [
+        "p1",
+        "p2",
+        "p3",
+        "nh",
+        "vh",
+        "lh",
+        "bh",
+        "fh",
+        "sagnb",
+        "lhþt",
+        "nt",
+        "kk",
+        "kvk",
+        "hk",
+        "sb",
+        "vb",
+        "gm",
+        "mm",
+    ]
     # Pre-calculate a dictionary of associated BIN forms
     _VERB_FORMS = None  # Initialized later
 
@@ -208,18 +232,72 @@ class BIN_Token(Token):
     # '... fór vestur'
     # '... hefur því áhrif'
 
-    _NOT_NOT_EO = frozenset([
-        "inn", "eftir", "til", "upp", "um", "fram", "nær", "nærri",
-        "út", "meðal", "neðan", "jafnframt", "samt", "af", "fyrir", "því"
-    ])
+    _NOT_NOT_EO = frozenset(
+        [
+            "inn",
+            "eftir",
+            "til",
+            "upp",
+            "um",
+            "fram",
+            "nær",
+            "nærri",
+            "út",
+            "meðal",
+            "neðan",
+            "jafnframt",
+            "samt",
+            "af",
+            "fyrir",
+            "því",
+        ]
+    )
 
     # Words that are not eligible for interpretation as proper names, even if they are capitalized
-    _NOT_PROPER_NAME = frozenset([
-        "ég", "þú", "hann", "hún", "það", "við", "þið", "þau",
-        "þeir", "þær", "mér", "mig", "mín", "þig", "þér", "þín", "þeim", "þeirra", "þetta", "þessi",
-        "í", "á", "af", "um", "að", "með", "til", "frá", "búist", "annars", "samkvæmt", "en", "og",
-        "sem", "ekkert", "hæð", "svo", "veggir", "þarna", "allt"
-    ])
+    _NOT_PROPER_NAME = frozenset(
+        [
+            "ég",
+            "þú",
+            "hann",
+            "hún",
+            "það",
+            "við",
+            "þið",
+            "þau",
+            "þeir",
+            "þær",
+            "mér",
+            "mig",
+            "mín",
+            "þig",
+            "þér",
+            "þín",
+            "þeim",
+            "þeirra",
+            "þetta",
+            "þessi",
+            "í",
+            "á",
+            "af",
+            "um",
+            "að",
+            "með",
+            "til",
+            "frá",
+            "búist",
+            "annars",
+            "samkvæmt",
+            "en",
+            "og",
+            "sem",
+            "ekkert",
+            "hæð",
+            "svo",
+            "veggir",
+            "þarna",
+            "allt",
+        ]
+    )
 
     # Numbers that can be used in the singular even if they are nominally plural.
     # This applies to the media company 365, where it is OK to say "365 skuldaði 389 milljónir",
@@ -228,34 +306,90 @@ class BIN_Token(Token):
 
     # Note: these must have a meaning for this to work, so specifying them
     # as abbreviations to Main.conf is recommended
-    _CORPORATION_ENDINGS = frozenset([
-        "ehf.", "ehf", "hf.", "hf",
-        "bs.", "bs", "sf.", "sf", "slhf.", "slhf", "slf.", "slf", "svf.", "svf", "ohf.", "ohf",
-        "Inc", "Inc.", "Incorporated",
-        "Corp", "Corp.", "Corporation",
-        "Ltd", "Ltd.", "Limited",
-        "Co", "Co.", "Company",
-        "Group",
-        "AS", "ASA",
-        "SA", "S.A.",
-        "GmbH", "AG",
-        "SARL", "S.à.r.l."
-    ])
+    _CORPORATION_ENDINGS = frozenset(
+        [
+            "ehf.",
+            "ehf",
+            "hf.",
+            "hf",
+            "bs.",
+            "bs",
+            "sf.",
+            "sf",
+            "slhf.",
+            "slhf",
+            "slf.",
+            "slf",
+            "svf.",
+            "svf",
+            "ohf.",
+            "ohf",
+            "Inc",
+            "Inc.",
+            "Incorporated",
+            "Corp",
+            "Corp.",
+            "Corporation",
+            "Ltd",
+            "Ltd.",
+            "Limited",
+            "Co",
+            "Co.",
+            "Company",
+            "Group",
+            "AS",
+            "ASA",
+            "SA",
+            "S.A.",
+            "GmbH",
+            "AG",
+            "SARL",
+            "S.à.r.l.",
+        ]
+    )
 
     # Interrogative adverbs
-    _SPAO = frozenset(["hvar", "hvenær", "hvernig", "hvaðan", "hvert", "hví", "hve", "hversu"])
+    _SPAO = frozenset(
+        ["hvar", "hvenær", "hvernig", "hvaðan", "hvert", "hví", "hve", "hversu"]
+    )
 
     # Temporal sentential adverbs
-    _TAO = frozenset([
-        "daglega", "dagsdaglega", "alltaf", "aldrei", "fyrr", "fyrrum", "loks", "loksins",
-        "mánaðarlega", "nú", "núna", "næst", "oft", "reglulega", "seint", "snemma", "sjaldan", "stundum", 
-        "síðar", "síðla", "títt", "undanfarið", "vikulega", "árla", "árlega", "áður", "þá"
-    ])
+    _TAO = frozenset(
+        [
+            "daglega",
+            "dagsdaglega",
+            "alltaf",
+            "aldrei",
+            "fyrr",
+            "fyrrum",
+            "loks",
+            "loksins",
+            "mánaðarlega",
+            "nú",
+            "núna",
+            "næst",
+            "oft",
+            "reglulega",
+            "seint",
+            "snemma",
+            "sjaldan",
+            "stundum",
+            "síðar",
+            "síðla",
+            "títt",
+            "undanfarið",
+            "vikulega",
+            "árla",
+            "árlega",
+            "áður",
+            "þá",
+        ]
+    )
 
     _UNDERSTOOD_PUNCTUATION = ".?!,:;–-()[]"
 
-    _MEANING_CACHE = { }
-    _VARIANT_CACHE = { }
+    _MEANING_CACHE = {}
+    _VARIANT_CACHE = {}
 
     def __init__(self, t, original_index):
 
@@ -302,14 +436,17 @@ class BIN_Token(Token):
             return '"' + self.t1 + '"'
         if self.t2 is None:
             return '"{0}" {1}'.format(self.t1, self._kind)
-        return '"{0}" {1} {2}'.format(self.t1, self._kind,
-            json.dumps(self.t2, ensure_ascii = False))
+        return '"{0}" {1} {2}'.format(
+            self.t1, self._kind, json.dumps(self.t2, ensure_ascii=False)
+        )
 
     @classmethod
     def fbits(cls, beyging):
         """ Convert a 'beyging' field from BIN to a set of fbits """
         bit = cls.FBIT
-        return reduce(lambda x, y: x | y, (b for key, b in bit.items() if key in beyging), 0)
+        return reduce(
+            lambda x, y: x | y, (b for key, b in bit.items() if key in beyging), 0
+        )
 
     @classmethod
     def get_fbits(cls, beyging):
@@ -385,10 +522,10 @@ class BIN_Token(Token):
                 # Central form of verb ('miðmynd')
                 if "GM" not in form:
                     return False
-            if terminal.is_singular and not "ET" in form:
+            if terminal.is_singular and "ET" not in form:
                 # Require singular
                 return False
-            if terminal.is_plural and not "FT" in form:
+            if terminal.is_plural and "FT" not in form:
                 # Require plural
                 return False
 
@@ -413,7 +550,7 @@ class BIN_Token(Token):
                 # For regular subj, we don't allow SAGNB form
                 # ('langað', 'þótt')
                 return False
-            if terminal.has_variant("op") and not "OP" in form:
+            if terminal.has_variant("op") and "OP" not in form:
                 return False
             # Make sure that the subject case (last variant) matches the terminal
             return subject_matches(terminal.variant(-1))
@@ -428,13 +565,13 @@ class BIN_Token(Token):
         for v in terminal.variants:
             # Lookup variant to see if it is one of the required ones for verbs
             rq = BIN_Token._VERB_FORMS.get(v)
-            if rq is not None and not rq in form:
+            if rq is not None and rq not in form:
                 # If this is required variant that is not found in the form we have,
                 # return False
                 return False
         # Check restrictive variants, i.e. we don't accept meanings
         # that have those unless they are explicitly present in the terminal
-        for v in [ "sagnb", "lhþt", "bh" ]: # Be careful with "lh" here - !!! add mm?
+        for v in ("sagnb", "lhþt", "bh"):  # Be careful with "lh" here - !!! add mm?
             if BIN_Token.VARIANT[v] in form and not terminal.has_variant(v):
                 return False
         if terminal.is_lh:
@@ -454,7 +591,10 @@ class BIN_Token(Token):
             # No argument number: all verbs match, except...
             if terminal.is_lh:
                 # Special check for lhþt: may specify a case without it being an argument case
-                if any(terminal.has_variant(c) and BIN_Token.VARIANT[c] not in form for c in BIN_Token.CASES):
+                if any(
+                    terminal.has_variant(c) and BIN_Token.VARIANT[c] not in form
+                    for c in BIN_Token.CASES
+                ):
                     # Terminal specified a non-argument case but the token doesn't have it:
                     # no match
                     return False
@@ -502,16 +642,6 @@ class BIN_Token(Token):
                 # Prevent verb from matching a terminal if it
                 # doesn't have all the arguments that the terminal requires
                 return False
-        # !!! TEMPORARY code while the verb lexicon is being built
-        # unknown = True
-        # for i in range(nargs + 1, 3):
-        #     if verb in VerbObjects.VERBS[i]:
-        #         # The verb is known but takes more arguments than this
-        #         unknown = False
-        # # Unknown verb or arguments not too many: consider this a match
-        # if unknown:
-        #     # Note the unknown verb
-        #     UnknownVerbs.add(verb)
         return True
 
     def matches_PERSON(self, terminal):
@@ -533,7 +663,10 @@ class BIN_Token(Token):
         # Check each PersonName tuple in the t2 list
         case = terminal.variant(0)
         gender = terminal.variant(1) if terminal.num_variants > 1 else None
-        return any(case == m.case and (gender is None or gender == m.gender) for m in self.t2)
+        return any(
+            case == m.case and (gender is None or gender == m.gender)
+            for m in self.t2
+        )
 
     def matches_ENTITY(self, terminal):
         """ Handle an entity name token, matching it with an entity terminal """
@@ -541,12 +674,12 @@ class BIN_Token(Token):
         # !!! TBD !!!
         # Allow person terminals to match entity names that look like person names,
         # i.e. are composed of more than one uppercase words
-        #if not terminal.startswith("person"):
+        # if not terminal.startswith("person"):
         #    return False
-        #a = self.t1.split()
-        #if len(a) < 2:
+        # a = self.t1.split()
+        # if len(a) < 2:
         #    return False
-        #return all(n[0].isupper() for n in a)
+        # return all(n[0].isupper() for n in a)
 
     def matches_PUNCTUATION(self, terminal):
         """ Match a literal terminal with the same content as the punctuation token """
@@ -682,7 +815,9 @@ class BIN_Token(Token):
             return False
         # Only singular match ('2014 var gott ár', not '2014 voru góð ár')
         # Years only match the neutral gender
-        if terminal.has_any_vbits(BIN_Token.VBIT_FT | BIN_Token.VBIT_KK | BIN_Token.VBIT_KVK):
+        if terminal.has_any_vbits(
+            BIN_Token.VBIT_FT | BIN_Token.VBIT_KK | BIN_Token.VBIT_KVK
+        ):
             return False
         # No case associated with year numbers: match all
         return True
@@ -757,7 +892,7 @@ class BIN_Token(Token):
                 elif no_info:
                     # No case and number info: probably a foreign word
                     # Match all cases and numbers
-                    #if v == "ft":
+                    # if v == "ft":
                     #    return False
                     if v == "gr":
                         # Do not match a demand for the definitive article ('greinir')
@@ -769,7 +904,7 @@ class BIN_Token(Token):
 
         def matcher_gata(m):
             """ Check street name """
-            if m.fl != "göt": # Götuheiti
+            if m.fl != "göt":  # Götuheiti
                 return False
             if BIN_Token.KIND[m.ordfl] != "no":
                 return False
@@ -799,15 +934,17 @@ class BIN_Token(Token):
             fbits = BIN_Token.get_fbits(m.beyging)
             # Check the case and number only
             # (don't check the gender, even if present, since it isn't found in BÍN)
-            return terminal.fbits_match_mask(BIN_Token.VBIT_CASES | BIN_Token.VBIT_NUMBER, fbits)
+            return terminal.fbits_match_mask(
+                BIN_Token.VBIT_CASES | BIN_Token.VBIT_NUMBER, fbits
+            )
 
         def matcher_stt(m):
             """ Check connective conjunction ('sem', 'er') """
             # This is actually never used by the current grammar,
             # since all instances of stt are of the form "sem:stt"
             # which is handled in matcher_default() / terminal.matches_first()
-            return m.ordfl == "st" and m.stofn in { "sem", "er" }
-      
+            return m.ordfl == "st" and m.stofn in {"sem", "er"}
+
         def matcher_spao(m):
             """ Interrogative adverbs, 'spurnaratviksorð' """
             return m.ordfl.endswith("ao") and m.stofn in BIN_Token._SPAO
@@ -841,8 +978,10 @@ class BIN_Token(Token):
                     self._is_eo = True
                 else:
                     # Check whether also a preposition or pronoun and return False in that case
-                    self._is_eo = not(txt in Prepositions.PP or
-                        any(mm.ordfl == "fn" for mm in self.t2))
+                    self._is_eo = not (
+                        txt in Prepositions.PP or
+                        any(mm.ordfl == "fn" for mm in self.t2)
+                    )
             # Return True if this token cannot also match a preposition
             return self._is_eo
 
@@ -864,7 +1003,7 @@ class BIN_Token(Token):
             # such as 'skv.' for 'samkvæmt', the full expanded form
             # is found in m.stofn - not self.t1_lower or m.ordmynd
             fs = self.t1_lower
-            if '.' in fs:
+            if "." in fs:
                 fs = m.stofn
             # !!! Note that this will match a word and return True even if the
             # meanings of the token (the list in self.t2) do not include
@@ -888,7 +1027,11 @@ class BIN_Token(Token):
                 return False
             # Check case, if present
             if m.beyging != "-":
-                if any(BIN_Token.VARIANT[c] in m.beyging and not terminal.has_variant(c) for c in BIN_Token.CASES):
+                if any(
+                    BIN_Token.VARIANT[c] in m.beyging and
+                    not terminal.has_variant(c)
+                    for c in BIN_Token.CASES
+                ):
                     # The name has an associated case, but this is not it: quit
                     return False
             if terminal.has_vbits(BIN_Token.VBIT_KK) and m.ordfl != "kk":
@@ -927,7 +1070,9 @@ class BIN_Token(Token):
                 # In that case, add it to the beyging field so that the relevant fbits
                 # are included and can be matched against the terminal if it requires
                 # a gender
-                fbits = BIN_Token.get_fbits(m.beyging + BIN_Token.GENDERS_MAP.get(m.ordfl, ""))
+                fbits = BIN_Token.get_fbits(
+                    m.beyging + BIN_Token.GENDERS_MAP.get(m.ordfl, "")
+                )
             # Check whether variants required by the terminal are present
             # in the meaning string
             if not terminal.fbits_match(fbits):
@@ -951,7 +1096,10 @@ class BIN_Token(Token):
             # The terminal is sérnafn_case: We only accept nouns or adjectives
             # that match the given case
             fbits = BIN_Token.get_fbits(m.beyging) & BIN_Token.VBIT_CASES
-            return BIN_Token.KIND[m.ordfl] in { "no", "lo" } and terminal.fbits_match(fbits)
+            return (
+                BIN_Token.KIND[m.ordfl] in {"no", "lo"} and
+                terminal.fbits_match(fbits)
+            )
 
         # We have a match if any of the possible part-of-speech meanings
         # of this token match the terminal
@@ -965,16 +1113,20 @@ class BIN_Token(Token):
         # Unknown word, i.e. no meanings in BÍN (might be foreign, unknown name, etc.)
         if self.is_upper:
             # Starts in upper case: We allow this to match a named entity terminal ('sérnafn')
-            if terminal.startswith("sérnafn") and \
-                terminal.num_variants == 0 and \
-                " " not in self.t1_lower:
+            if (
+                terminal.startswith("sérnafn")
+                and terminal.num_variants == 0
+                and " " not in self.t1_lower
+            ):
                 return True
 
         # Not upper case: allow it to match a singular, neutral noun in all cases,
         # but without the definite article ('greinir')
-        return terminal.startswith("no") and \
-            terminal.has_vbits(BIN_Token.VBIT_ET | BIN_Token.VBIT_HK) and \
-            not terminal.has_vbits(BIN_Token.VBIT_GR)
+        return (
+            terminal.startswith("no")
+            and terminal.has_vbits(BIN_Token.VBIT_ET | BIN_Token.VBIT_HK)
+            and not terminal.has_vbits(BIN_Token.VBIT_GR)
+        )
 
     # Dispatch table for the token matching functions
     _MATCHING_FUNC = {
@@ -995,7 +1147,7 @@ class BIN_Token(Token):
         TOK.TIMESTAMPREL: matches_TIMESTAMPREL,
         TOK.TIMESTAMPABS: matches_TIMESTAMPABS,
         TOK.MEASUREMENT: matches_MEASUREMENT,
-        TOK.WORD: matches_WORD
+        TOK.WORD: matches_WORD,
     }
 
     @classmethod
@@ -1010,7 +1162,10 @@ class BIN_Token(Token):
         """ Return True if this token matches the given terminal """
         # If the terminal already knows it doesn't match this token,
         # bail out quickly
-        if terminal.shortcut_match is not None and terminal.shortcut_match(self.t1_lower):
+        if (
+            terminal.shortcut_match is not None
+            and terminal.shortcut_match(self.t1_lower)
+        ):
             return False
         # Otherwise, dispatch the token matching according to the dispatch table in _MATCHING_FUNC
         return self._matching_func(self, terminal) is not False
@@ -1020,7 +1175,10 @@ class BIN_Token(Token):
             otherwise True or the actual meaning tuple that matched """
         # If the terminal already knows it doesn't match this token,
         # bail out quickly
-        if terminal.shortcut_match is not None and terminal.shortcut_match(self.t1_lower):
+        if (
+            terminal.shortcut_match is not None
+            and terminal.shortcut_match(self.t1_lower)
+        ):
             # Strong literal terminals (those in double quotes) implement this feature
             return False
         # Dispatch the token matching according to the dispatch table in _MATCHING_FUNC
@@ -1030,7 +1188,7 @@ class BIN_Token(Token):
         return "[" + TOK.descr[self.t0] + ": " + self.t1 + "]"
 
     def __str__(self):
-        return "\'" + self.t1 + "\'"
+        return "'" + self.t1 + "'"
 
     @property
     def key(self):
@@ -1043,9 +1201,9 @@ class BIN_Token(Token):
             # For words, the t2 tuple is significant because it may have been
             # cut down by the tokenizer due to the word's context, cf. the
             # [ambiguous_phrases] section in Main.conf
-            return (self.t0, self.t1, self.t2)
+            return self.t0, self.t1, self.t2
         # Otherwise, the t0 and t1 fields are enough
-        return (self.t0, self.t1)
+        return self.t0, self.t1
 
     def __hash__(self):
         """ Calculate and cache a hash for this token """
@@ -1056,7 +1214,8 @@ class BIN_Token(Token):
     @classmethod
     def init(cls):
         # Initialize cached dictionary of verb variant forms in BIN
-        cls._VERB_FORMS = { v : cls.VARIANT[v] for v in cls.VERB_VARIANTS }
+        cls._VERB_FORMS = {v: cls.VARIANT[v] for v in cls.VERB_VARIANTS}
+
 
 BIN_Token.init()
 
@@ -1080,8 +1239,11 @@ class VariantHandler:
         self._vset = set(self._vparts)
         # Also map variant names to bits in self._vbits
         bit = BIN_Token.VBIT
-        self._vbits = reduce(lambda x, y: x | y,
-            (bit[v] for v in self._vset if v in bit), 0)
+        self._vbits = reduce(
+            lambda x, y: (x | y),
+            (bit[v] for v in self._vset if v in bit),
+            0
+        )
         # fbits are like vbits but leave out variants that have no BIN meaning
         self._fbits = self._vbits & (~BIN_Token.FBIT_MASK)
         # For speed, store the cases associated with a verb
@@ -1143,7 +1305,7 @@ class VariantHandler:
     def verb_cases(self):
         """ Return the verb cases associated with a so_ terminal, or empty string """
         return self._cases
-    
+
     def has_variant(self, v):
         """ Returns True if the terminal name has the given variant """
         return v in self._vset
@@ -1249,7 +1411,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
     def __init__(self, name):
         super().__init__(name)
         # Peel off the quotes from the first part
-        assert len(self._first) >= 2 # The string can be ""
+        assert len(self._first) >= 2  # The string can be ""
         assert self._first[0] == self._first[-1]
         self._first = self._first[1:-1]
         self._cat = None
@@ -1257,9 +1419,11 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
         if len(self._first) > 1:
             # Check for a word category specification,
             # i.e. "sem:st", "að:fs", 'vera:so'_gm_nt
-            a = self._first.split(':')
+            a = self._first.split(":")
             if len(a) > 2:
-                raise GrammarError("A literal terminal can only have one word category specification")
+                raise GrammarError(
+                    "A literal terminal can only have one word category specification"
+                )
             elif len(a) == 2:
                 # We have a word category specification
                 self._first = a[0]
@@ -1281,7 +1445,9 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
         if self._strong and self.num_variants > 0:
             # It doesn't make sense to have variants on exact literals
             # since they are constant and cannot vary
-            raise GrammarError('An exact literal terminal with double quotes cannot have variants')
+            raise GrammarError(
+                "An exact literal terminal with double quotes cannot have variants"
+            )
         if self._match_cat is None:
             # In the simple case where there is no associated category,
             # override matches_first with a simple comparison
@@ -1330,7 +1496,6 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
 
 
 class BIN_Nonterminal(Nonterminal):
-
     def __init__(self, name, fname, line):
         super().__init__(name, fname, line)
         # Optimized check for whether this is a noun phrase nonterminal
@@ -1391,7 +1556,7 @@ class BIN_Parser(Base_Parser):
     _VERSION = "1.0"
     _GRAMMAR_FILE = os.path.join(_PATH, "Reynir.grammar")
 
-    def __init__(self, verbose = False):
+    def __init__(self, verbose=False):
         """ Load the shared BIN grammar if not already there, then initialize
             the Base_Parser parent class """
         g = BIN_Parser._grammar
@@ -1401,14 +1566,20 @@ class BIN_Parser(Base_Parser):
             t0 = time.time()
             g = BIN_Grammar()
             if Settings.DEBUG:
-                print("Loading grammar file {0} with timestamp {1}"
-                    .format(BIN_Parser._GRAMMAR_FILE, datetime.fromtimestamp(ts)))
+                print(
+                    "Loading grammar file {0} with timestamp {1}"
+                    .format(
+                        BIN_Parser._GRAMMAR_FILE, datetime.fromtimestamp(ts)
+                    )
+                )
             g.read(BIN_Parser._GRAMMAR_FILE, verbose=verbose)
             BIN_Parser._grammar = g
             BIN_Parser._grammar_ts = ts
             if Settings.DEBUG:
-                print("Grammar parsed and loaded in {0:.2f} seconds"
-                    .format(time.time() - t0))
+                print(
+                    "Grammar parsed and loaded in {0:.2f} seconds"
+                    .format(time.time() - t0)
+                )
         super().__init__(g)
 
     @property
@@ -1455,7 +1626,7 @@ def wrap_tokens(tokens, wrap_func=None):
         right = left + 1
         while right < tlen:
             tok = tlist[right]
-            if tok[0] == TOK.PUNCTUATION and tok[1] == ')':
+            if tok[0] == TOK.PUNCTUATION and tok[1] == ")":
                 # Check the contents of the token list from left+1 to right-1
 
                 # Skip parentheses starting with "e." (English), "þ." (German) or "d." (Danish)
@@ -1464,11 +1635,13 @@ def wrap_tokens(tokens, wrap_func=None):
                 def is_unknown(t):
                     """ A token is unknown if it is a TOK.UNKNOWN or if it is a
                         TOK.WORD with no meanings """
-                    return (t[0] == TOK.UNKNOWN or
-                        (t[0] == TOK.WORD and not t[2]) or
-                        t[1] in _UNKNOWN)
+                    return (
+                        t[0] == TOK.UNKNOWN
+                        or (t[0] == TOK.WORD and not t[2])
+                        or t[1] in _UNKNOWN
+                    )
 
-                if foreign or all(is_unknown(t) for t in tlist[left + 1:right]):
+                if foreign or all(is_unknown(t) for t in tlist[left + 1 : right]):
                     # Only unknown tokens: erase'em, including the parentheses
                     for i in range(left, right + 1):
                         tlist[i] = None
@@ -1482,7 +1655,7 @@ def wrap_tokens(tokens, wrap_func=None):
     ix = 0
     while ix < tlen:
         tok = tlist[ix]
-        if tok[0] == TOK.PUNCTUATION and tok[1] == '(':
+        if tok[0] == TOK.PUNCTUATION and tok[1] == "(":
             ix = scan_par(ix)  # Jumps to the right parenthesis, if found
         else:
             ix += 1
@@ -1510,13 +1683,13 @@ def simplify_terminal(terminal, cat=None):
     # Convert 'literal'_var1_var2 to cat_var1_var2
     # Note that the literal can contain underscores!
     endq = terminal.rindex(terminal[0])
-    first = terminal[0:endq + 1]
-    rest = terminal[endq + 1:]
-    if ':' in first:
+    first = terminal[0 : endq + 1]
+    rest = terminal[endq + 1 :]
+    if ":" in first:
         # The word category was given in the literal: use it
         # (In almost all cases this matches the meaning, but
         # 'stt' is an exception)
-        first = first.split(':')[-1][:-1]
+        first = first.split(":")[-1][:-1]
     elif cat is not None:
         # Get the word category from the meaning
         first = cat
@@ -1575,7 +1748,7 @@ def augment_terminal(terminal, text_lower, beyging):
         # Special case for verb arguments: keep them in order
         if a[1] in "012":
             args = int(a[1])
-            cases = a[1:2 + args]
+            cases = a[1 : 2 + args]
             vstart = 2 + args
         elif a[1] == "subj":
             cases = a[1:2]
@@ -1600,8 +1773,9 @@ def canonicalize_token(t):
     kind = t.get("k", TOK.WORD)
     t["k"] = TOK.descr[kind]
     if "t" in t:
-        t["t"] = simplify_terminal(t["t"],
-            t["m"][1] if "m" in t else None)  # Fallback category
+        t["t"] = simplify_terminal(
+            t["t"], t["m"][1] if "m" in t else None
+        )  # Fallback category
     if "m" in t:
         # Flatten the meaning from a tuple/list
         m = t["m"]
@@ -1627,20 +1801,19 @@ def canonicalize_token(t):
         val = t["v"]
         if kind == TOK.AMOUNT:
             # Flatten and simplify amounts
-            t["v"] = dict(amount = val[0], currency = val[1])
+            t["v"] = dict(amount=val[0], currency=val[1])
         elif kind == TOK.MEASUREMENT:
             # Flatten and simplify measurements
-            t["v"] = dict(unit = val[0], value = val[1])
-        elif kind in { TOK.NUMBER, TOK.CURRENCY, TOK.PERCENT }:
+            t["v"] = dict(unit=val[0], value=val[1])
+        elif kind in {TOK.NUMBER, TOK.CURRENCY, TOK.PERCENT}:
             # Number, ISO currency code, percentage
             t["v"] = val[0]
-        elif kind in { TOK.DATE, TOK.DATEREL, TOK.DATEABS }:
-            t["v"] = dict(y = val[0], mo = val[1], d = val[2])
+        elif kind in {TOK.DATE, TOK.DATEREL, TOK.DATEABS}:
+            t["v"] = dict(y=val[0], mo=val[1], d=val[2])
         elif kind == TOK.TIME:
-            t["v"] = dict(h = val[0], m = val[1], s = val[2])
-        elif kind in { TOK.TIMESTAMP, TOK.TIMESTAMPREL, TOK.TIMESTAMPABS }:
-            t["v"] = dict(y = val[0], mo = val[1], d = val[2],
-                h = val[3], m = val[4], s = val[5])
+            t["v"] = dict(h=val[0], m=val[1], s=val[2])
+        elif kind in {TOK.TIMESTAMP, TOK.TIMESTAMPREL, TOK.TIMESTAMPABS}:
+            t["v"] = dict(y=val[0], mo=val[1], d=val[2], h=val[3], m=val[4], s=val[5])
         elif kind == TOK.PERSON:
             # Move the nominal form of the name to the "s" (stem) field
             t["s"] = t["v"]
@@ -1652,4 +1825,3 @@ def canonicalize_token(t):
     if kind in (TOK.ENTITY, TOK.WORD) and "s" not in t:
         # Put in a stem for entities and proper names
         t["s"] = t["x"]
-

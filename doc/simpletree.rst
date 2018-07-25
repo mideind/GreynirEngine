@@ -175,7 +175,7 @@ head (top) node, as well as about its children and contained subtrees.
 
         For each terminal in the tree, this property returns all grammatical variants
         (features) of the word that matched the terminal. If you only need the
-        terminals variants that were actually specified in the Reynir grammar, use the
+        variants that were actually specified in the Reynir grammar, use the
         :py:attr:`SimpleTree.flat` property instead.
 
         Example::
