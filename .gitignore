@@ -33,6 +33,8 @@ src/reynir/resources/*.csv
 
 # Scratch work files
 *.bin
+!ordalisti-*.dawg.bin
+
 *.sublime-project
 *.sublime-workspace
 *.bak
