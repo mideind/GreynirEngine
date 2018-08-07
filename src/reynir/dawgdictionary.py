@@ -37,7 +37,7 @@ import threading
 import logging
 import time
 import struct
-import codecs
+import mmap
 
 
 _PATH = os.path.dirname(__file__) or "."
@@ -47,14 +47,17 @@ class Wordbase:
 
     """ Container for a singleton instance of the word database """
 
+    # All word forms
     _dawg = None
+    # Allowed prefixes of compound words
     _dawg_formers = None
+    # Allowed suffixes of compound words
     _dawg_last = None
 
     _lock = threading.Lock()
 
-    @classmethod
-    def _load_resource(cls, resource):
+    @staticmethod
+    def _load_resource(resource):
         """ Load a PackedDawgDictionary from a file """
         # Assumes that the appropriate lock has been acquired
         t0 = time.time()
@@ -70,7 +73,6 @@ class Wordbase:
             "Loaded packed DAWG '{1}' in {0:.2f} seconds"
             .format(t1 - t0, resource)
         )
-        # Do not assign Wordbase._dawg until fully loaded, to prevent race conditions
         return dawg
 
     @classmethod
@@ -78,7 +80,7 @@ class Wordbase:
         """ Load the combined dictionary """
         with cls._lock:
             if cls._dawg is None:
-                cls._dawg = cls._load_resource("ordalisti-all")  # Main dictionary
+                cls._dawg = Wordbase._load_resource("ordalisti-all")
             assert cls._dawg is not None
             return cls._dawg
 
@@ -89,7 +91,7 @@ class Wordbase:
             the last part of the compound word) """
         with cls._lock:
             if cls._dawg_formers is None:
-                cls._dawg_formers = cls._load_resource("ordalisti-formers")
+                cls._dawg_formers = Wordbase._load_resource("ordalisti-formers")
             assert cls._dawg_formers is not None
             return cls._dawg_formers
 
@@ -99,7 +101,7 @@ class Wordbase:
             part of a compound word """
         with cls._lock:
             if cls._dawg_last is None:
-                cls._dawg_last = cls._load_resource("ordalisti-last")
+                cls._dawg_last = Wordbase._load_resource("ordalisti-last")
             assert cls._dawg_last is not None
             return cls._dawg_last
 
@@ -204,8 +206,8 @@ class CompoundNavigator:
                 for j in CompoundNavigator._JOINERS:
                     lenj = len(j)
                     if (
-                        (lenj == 0) or
-                        (
+                        lenj == 0
+                        or (
                             self._index + lenj < self._len and
                             self._word[self._index:self._index + lenj] == j
                         )
@@ -254,8 +256,9 @@ class PackedDawgDictionary:
             # Already loaded
             return
         # Quickly gulp the file contents into the byte buffer
-        with open(fname, mode='rb') as fin:
-            self._b = bytearray(fin.read())
+        with open(fname, mode="rb") as stream:
+            # self._b = bytearray(fin.read())
+            self._b = mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ)
         # Check the signature
         assert self._b[0:12] == b"ReynirDawg!\n"
         len_voc, = struct.Struct("<L").unpack_from(self._b, 12)
@@ -264,11 +267,11 @@ class PackedDawgDictionary:
         # Assemble a decoding dictionary where encoded indices are mapped to
         # characters, eventually with a suffixed vertical bar '|' to denote finality
         self._encoding = {
-            i : c for i, c in enumerate(self._vocabulary)
+            i: c for i, c in enumerate(self._vocabulary)
         }
         self._encoding.update(
             {
-                i | 0x80 : c + u"|"
+                i | 0x80: c + "|"
                 for i, c in enumerate(self._vocabulary)
             }
         )
@@ -293,7 +296,7 @@ class PackedDawgDictionary:
         # where each combination is a list of word parts. We return
         # the combination with the longest last part and the shortest overall
         # number of parts.
-        w.sort(key = lambda x : (len(x[-1]), -len(x)), reverse = True)
+        w.sort(key=lambda x: (len(x[-1]), -len(x)), reverse=True)
         # Cut out interpretations that end with closed word categories,
         # i.e. conjunctions and prepositions
         # gr, st, abfn, nhm, fs?
@@ -360,7 +363,7 @@ class PackedNavigation:
         for _ in range(num_edges):
             len_byte = b[offset] & 0x7f
             offset += 1
-            prefix = u"".join(encoding[b[offset + j]] for j in range(len_byte))
+            prefix = "".join(encoding[b[offset + j]] for j in range(len_byte))
             offset += len_byte
             if b[offset - 1] & 0x80:
                 # The last character of the prefix had a final marker: nextnode is 0
@@ -380,7 +383,7 @@ class PackedNavigation:
             d = self._iter_cache[offset]
         except KeyError:
             d = {
-                prefix : nextnode
+                prefix: nextnode
                 for prefix, nextnode in self._iter_from_node(offset)
             }
             self._iter_cache[offset] = d
@@ -444,4 +447,3 @@ class PackedNavigation:
             # Leave shore and navigate the open seas
             self._navigate_from_node(self._root_offset, "")
         self._nav.done()
-

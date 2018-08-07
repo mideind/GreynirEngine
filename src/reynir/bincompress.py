@@ -68,38 +68,38 @@ UINT32 = struct.Struct("<I")
 
 class _Node:
 
-    """ A node within a Trie """
+    """ A Node within a Trie """
 
     def __init__(self, fragment, value):
         # The key fragment that leads into this node (and value)
-        self._fragment = fragment
-        self._value = value
+        self.fragment = fragment
+        self.value = value
         # List of outgoing nodes
-        self._children = None
+        self.children = None
 
     def add(self, fragment, value):
         """ Add the given remaining key fragment to this node """
         if len(fragment) == 0:
-            if self._value is not None:
+            if self.value is not None:
                 # This key already exists: return its value
-                return self._value
+                return self.value
             # This was previously an internal node without value;
             # turn it into a proper value node
-            self._value = value
+            self.value = value
             return None
 
-        if self._children is None:
+        if self.children is None:
             # Trivial case: add an only child
-            self._children = [ _Node(fragment, value) ]
+            self.children = [_Node(fragment, value)]
             return None
 
         # Check whether we need to take existing child nodes into account
         lo = 0
-        hi = len(self._children)
+        hi = len(self.children)
         ch = fragment[0]
         while hi > lo:
             mid = (lo + hi) // 2
-            mid_ch = self._children[mid]._fragment[0]
+            mid_ch = self.children[mid].fragment[0]
             if mid_ch < ch:
                 lo = mid + 1
             elif mid_ch > ch:
@@ -114,21 +114,24 @@ class _Node:
             #     assert self._children[lo - 1]._fragment[0] < fragment[0]
             # if lo < len(self._children):
             #     assert self._children[lo]._fragment[0] > fragment[0]
-            self._children.insert(lo, _Node(fragment, value))
+            self.children.insert(lo, _Node(fragment, value))
             return None
 
         assert hi > lo
         # Found a child with at least one common prefix character
         # noinspection PyUnboundLocalVariable
-        child = self._children[mid]
-        child_fragment = child._fragment
+        child = self.children[mid]
+        child_fragment = child.fragment
         # assert child_fragment[0] == ch
         # Count the number of common prefix characters
         common = 1
         len_fragment = len(fragment)
         len_child_fragment = len(child_fragment)
-        while (common < len_fragment and common < len_child_fragment
-            and fragment[common] == child_fragment[common]):
+        while (
+            common < len_fragment
+            and common < len_child_fragment
+            and fragment[common] == child_fragment[common]
+        ):
             common += 1
         if common == len_child_fragment:
             # We have 'abcd' but the child is 'ab':
@@ -141,51 +144,51 @@ class _Node:
         # assert common <= len_fragment
         # We have 'ab' but the child is 'abcd',
         # or we have 'abd' but the child is 'acd'
-        child._fragment = child_fragment[common:] # 'cd'
+        child.fragment = child_fragment[common:]  # 'cd'
         if common == len_fragment:
             # The fragment is a proper prefix of the child,
             # i.e. it is 'ab' while the child is 'abcd':
             # Break the child up into two nodes, 'ab' and 'cd'
-            node = _Node(fragment, value) # New parent 'ab'
-            node._children = [ child ] # Make 'cd' a child of 'ab'
+            node = _Node(fragment, value)  # New parent 'ab'
+            node.children = [child]  # Make 'cd' a child of 'ab'
         else:
             # The fragment and the child diverge,
             # i.e. we have 'abd' but the child is 'acd'
-            new_fragment = fragment[common:] # 'bd'
+            new_fragment = fragment[common:]  # 'bd'
             # Make an internal node without a value
-            node = _Node(fragment[0:common], None) # 'a'
+            node = _Node(fragment[0:common], None)  # 'a'
             # assert new_fragment[0] != child._fragment[0]
-            if new_fragment[0] < child._fragment[0]:
+            if new_fragment[0] < child.fragment[0]:
                 # Children: 'bd', 'cd'
-                node._children = [ _Node(new_fragment, value), child ]
+                node.children = [_Node(new_fragment, value), child]
             else:
-                node._children = [ child, _Node(new_fragment, value) ]
+                node.children = [child, _Node(new_fragment, value)]
         # Replace 'abcd' in the original children list
-        self._children[mid] = node
+        self.children[mid] = node
         return None
 
     def lookup(self, fragment):
         """ Lookup the given key fragment in this node and its children
             as necessary """
-        if len(fragment) == 0:
+        if not fragment:
             # We've arrived at our destination: return the value
-            return self._value
-        if self._children is None:
+            return self.value
+        if self.children is None:
             # Nowhere to go: the key was not found
             return None
         # Note: The following could be a faster binary search,
         # but this lookup is not used in time critical code,
         # so the optimization is probably not worth it.
-        for child in self._children:
-            if fragment.startswith(child._fragment):
+        for child in self.children:
+            if fragment.startswith(child.fragment):
                 # This is a continuation route: take it
-                return child.lookup(fragment[len(child._fragment):])
+                return child.lookup(fragment[len(child.fragment):])
         # No route matches: the key was not found
         return None
 
     def __str__(self):
-        s = "Fragment: '{0}', value '{1}'\n".format(self._fragment, self._value)
-        c = [ "   {0}".format(child) for child in self._children ] if self._children else []
+        s = "Fragment: '{0}', value '{1}'\n".format(self.fragment, self.value)
+        c = ["   {0}".format(child) for child in self.children] if self.children else []
         return s + "\n".join(c)
 
     def __hash__(self):
@@ -201,7 +204,7 @@ class Trie:
         Each node in the trie contains a prefix string, leading
         to its children. """
 
-    def __init__(self, root_fragment = b""):
+    def __init__(self, root_fragment=b""):
         self._cnt = 0
         self._root = _Node(root_fragment, None)
 
@@ -209,13 +212,13 @@ class Trie:
     def root(self):
         return self._root
 
-    def add(self, key, value = None):
+    def add(self, key, value=None):
         """ Add the given (key, value) pair to the trie.
             Duplicates are not allowed and not added to the trie.
             If the value is None, it is set to the number of entries
             already in the trie, thereby making it function as
             an automatic generator of list indices. """
-        assert len(key) > 0
+        assert key
         if value is None:
             value = self._cnt
         prev_value = self._root.add(key, value)
@@ -263,7 +266,7 @@ class Indexer:
 
     def invert(self):
         """ Invert the index, so it is index->key instead of key->index """
-        self._d = { v : k for k, v in self._d.items() }
+        self._d = {v: k for k, v in self._d.items()}
 
     def __len__(self):
         return len(self._d)
@@ -271,7 +274,7 @@ class Indexer:
     def __getitem__(self, key):
         return self._d[key]
 
-    def get(self, key, default = None):
+    def get(self, key, default=None):
         return self._d.get(key, default)
 
     def __str__(self):
@@ -313,9 +316,12 @@ class BIN_Compressor:
         self._stems = Indexer()     # stofn
         self._meanings = Indexer()  # beyging
         self._alphabet = set()
-        self._lookup_form = defaultdict(list) # map form index -> [ (stem, cat, tcat, meaning) ]
-        self._lookup_stem = defaultdict(set) # map stem index -> { form }
-        self._stem_cat_count = defaultdict(int) # Count of stem word categories
+        # map form index -> [ (stem, cat, tcat, meaning) ]
+        self._lookup_form = defaultdict(list)
+        # map stem index -> { form }
+        self._lookup_stem = defaultdict(set)
+        # Count of stem word categories
+        self._stem_cat_count = defaultdict(int)
         self._canonical_count = 0
 
     def read(self, fnames):
@@ -339,7 +345,7 @@ class BIN_Compressor:
                     meaning = meaning.encode("latin-1")
                     # Cut off redundant ending of meaning (beyging),
                     # e.g. ÞGF2
-                    if meaning and meaning[-1] in { b'2', b'3' }:
+                    if meaning and meaning[-1] in {b'2', b'3'}:
                         meaning = meaning[:-1]
                     self._alphabet |= set(form)
                     # Map null (no string) in utg to -1
@@ -349,7 +355,7 @@ class BIN_Compressor:
                         # New stem, not seen before: count its category (ordfl)
                         self._stem_cat_count[t[2]] += 1
                         stem_cnt = six
-                    fix = self._forms.add(form) # Add to a trie
+                    fix = self._forms.add(form)  # Add to a trie
                     mix = self._meanings.add((ordfl, fl, meaning))
                     self._lookup_form[fix].append((six, mix))
                     if "NF" in m:
@@ -360,7 +366,7 @@ class BIN_Compressor:
                     cnt += 1
                     # Progress indicator
                     if cnt % 10000 == 0:
-                        print(cnt, end = "\r")
+                        print(cnt, end="\r")
         print("{0} done\n".format(cnt))
         print("Time: {0:.1f} seconds".format(time.time() - start_time))
         self._stems.invert()
@@ -392,10 +398,14 @@ class BIN_Compressor:
             ]
             # Convert to Unicode and return a 5-tuple (stofn, utg, ordfl, fl, ordmynd, beyging)
             return [
-                (s[0].decode("latin-1"), s[1],
-                m[0].decode("latin-1"), m[1].decode("latin-1"),
-                form,
-                m[2].decode("latin-1"))
+                (
+                    s[0].decode("latin-1"),     # stofn
+                    s[1],                       # utg
+                    m[0].decode("latin-1"),     # ordfl
+                    m[1].decode("latin-1"),     # fl
+                    form,                       # ordmynd
+                    m[2].decode("latin-1")      # beyging
+                )
                 for s, m in result
             ]
         except KeyError:
@@ -441,25 +451,31 @@ class BIN_Compressor:
                 and fix up the parent's pointer to the location
                 of this node """
             loc = f.tell()
-            val = 0x007FFFFF if node._value is None else lookup_map[node._value]
+            val = 0x007FFFFF if node.value is None else lookup_map[node.value]
             assert val < 2**23
             nonlocal node_cnt, single_char_node_count, multi_char_node_count
             nonlocal no_child_node_count
             node_cnt += 1
-            childless_bit = 0 if node._children else 0x40000000
-            if len(node._fragment) <= 1:
+            childless_bit = 0 if node.children else 0x40000000
+            if len(node.fragment) <= 1:
                 # Single-character fragment:
                 # Pack it into 32 bits, with the high bit
                 # being 1, the childless bit following it,
                 # the fragment occupying the next 7 bits,
                 # and the value occupying the remaining 23 bits
-                if len(node._fragment) == 0:
+                if len(node.fragment) == 0:
                     chix = 0
                 else:
-                    chix = alphabet.index(node._fragment[0]) + 1
+                    chix = alphabet.index(node.fragment[0]) + 1
                 assert chix < 2**7
-                f.write(UINT32.pack(0x80000000 | childless_bit |
-                    (chix << 23) | (val & 0x007FFFFF)))
+                f.write(
+                    UINT32.pack(
+                        0x80000000
+                        | childless_bit
+                        | (chix << 23)
+                        | (val & 0x007FFFFF)
+                    )
+                )
                 single_char_node_count += 1
                 b = None
             else:
@@ -467,12 +483,12 @@ class BIN_Compressor:
                 # Store the value first, in 32 bits, and then
                 # the fragment bytes with a trailing zero, padded to 32 bits
                 f.write(UINT32.pack(childless_bit | (val & 0x007FFFFF)))
-                b = node._fragment
+                b = node.fragment
                 multi_char_node_count += 1
             # Write the child nodes, if any
-            if node._children:
-                f.write(UINT32.pack(len(node._children)))
-                for child in node._children:
+            if node.children:
+                f.write(UINT32.pack(len(node.children)))
+                for child in node.children:
                     todo.append((child, f.tell()))
                     # Write a placeholder - will be overwritten
                     f.write(UINT32.pack(0xFFFFFFFF))
@@ -491,8 +507,10 @@ class BIN_Compressor:
         while todo:
             write_node(*todo.pop())
 
-        print("Written {0} nodes, thereof {1} single-char nodes and {2} multi-char."
-            .format(node_cnt, single_char_node_count, multi_char_node_count))
+        print(
+            "Written {0} nodes, thereof {1} single-char nodes and {2} multi-char."
+            .format(node_cnt, single_char_node_count, multi_char_node_count)
+        )
         print("Childless nodes are {0}.".format(no_child_node_count))
 
     def write_binary(self, fname):
@@ -528,7 +546,7 @@ class BIN_Compressor:
         def write_spaced(s):
             """ Write a string in the latin-1 charset, zero-terminated,
                 padded to align on a DWORD (32-bit) boundary """
-            pad = 4 - (len(s) & 0x03) # Always add at least one space
+            pad = 4 - (len(s) & 0x03)  # Always add at least one space
             f.write(s + b' ' * pad)
 
         def write_string(s):
@@ -620,7 +638,7 @@ class BIN_Compressor:
             # Squeeze the word id into the lower 31 bits
             # and a flag for whether a canonical forms list
             # is present into the uppermost bit
-            wid = self._stems[ix][1] + 1 # -1 becomes 0
+            wid = self._stems[ix][1] + 1  # -1 becomes 0
             if ix in self._lookup_stem:
                 wid |= 0x80000000
             f.write(UINT32.pack(wid))
@@ -642,7 +660,7 @@ class BIN_Compressor:
         f.write(UINT32.pack(len(self._meanings)))
         for ix in range(len(self._meanings)):
             lookup_map.append(f.tell())
-            write_spaced(b' '.join(self._meanings[ix])) # ordfl, fl, beyging
+            write_spaced(b' '.join(self._meanings[ix]))  # ordfl, fl, beyging
         f.write(b' ' * 24)
         fixup(meanings_offset)
 
@@ -674,8 +692,9 @@ class BIN_Compressed:
         with open(self.BIN_COMPRESSED_FILE, "rb") as stream:
             self._b = mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ)
         assert self._b[0:16] == BIN_Compressor.VERSION
-        mappings_offset, forms_offset, stems_offset, meanings_offset, alphabet_offset = \
+        mappings_offset, forms_offset, stems_offset, meanings_offset, alphabet_offset = (
             struct.unpack("<IIIII", self._b[16:36])
+        )
         self._forms_offset = forms_offset
         self._mappings = self._b[mappings_offset:]
         self._stems = self._b[stems_offset:]
@@ -703,7 +722,7 @@ class BIN_Compressed:
         off, = UINT32.unpack(self._meanings[ix * 4:ix * 4 + 4])
         b = bytes(self._b[off:off+24])
         s = b.decode('latin-1').split(maxsplit=4)
-        return tuple(s[0:3]) # ordfl, fl, beyging
+        return tuple(s[0:3])  # ordfl, fl, beyging
 
     def stem(self, ix):
         """ Find and decode a stem (utg, stofn) tuple, given its index """
@@ -712,10 +731,10 @@ class BIN_Compressed:
         # The id (utg) is stored in the lower 31 bits, after adding 1
         wid = (wid & 0x7FFFFFFF) - 1
         p = off + 4
-        lw = self._b[p] # Length byte
+        lw = self._b[p]  # Length byte
         p += 1
         b = bytes(self._b[p:p + lw])
-        return b.decode('latin-1'), wid # stofn, utg
+        return b.decode('latin-1'), wid  # stofn, utg
 
     def canonicals(self, ix):
         """ Return all canonical word forms, i.e. forms with the nominative
@@ -727,7 +746,7 @@ class BIN_Compressed:
             p += 1
             last_w = self._b[p: p + lw]
             p += lw
-            c = [ last_w ]
+            c = [last_w]
             while True:
                 common = self._b[p]
                 if common == 255:
@@ -735,7 +754,7 @@ class BIN_Compressed:
                 p += 1
                 lw = self._b[p]
                 p += 1
-                w = last_w[0:common] + self._b[p : p + lw]
+                w = last_w[0:common] + self._b[p:p + lw]
                 p += lw
                 c.append(w)
                 last_w = w
@@ -749,7 +768,7 @@ class BIN_Compressed:
             return []
         # Skip past the stem itself
         p = off + 4
-        lw = self._b[p] # Length byte
+        lw = self._b[p]  # Length byte
         lw += 1
         if lw & 3:
             lw += 4 - (lw & 3)
@@ -798,8 +817,11 @@ class BIN_Compressed:
                 num_children = self._UINT(node_offset + 4)
                 frag = node_offset + 8 + 4 * num_children
             matched = 0
-            while self._b[frag] != 0 and (fragment_index + matched < word_len) and \
-                self._b[frag] == word_latin[fragment_index + matched]:
+            while (
+                self._b[frag] != 0
+                and (fragment_index + matched < word_len)
+                and self._b[frag] == word_latin[fragment_index + matched]
+            ):
                 frag += 1
                 matched += 1
             if self._b[frag] == 0:
@@ -883,10 +905,12 @@ if __name__ == "__main__":
     # When run as a main program, generate a compressed binary file
     print("Welcome to the Reynir compressed vocabulary file generator")
     b = BIN_Compressor()
-    b.read([
-        os.path.join(_PATH, "resources", "ord.csv"),
-        os.path.join(_PATH, "resources", "ord.add.csv")
-    ])
+    b.read(
+        [
+            os.path.join(_PATH, "resources", "ord.csv"),
+            os.path.join(_PATH, "resources", "ord.add.csv")
+        ]
+    )
     b.print_stats()
 
     # print(b.lookup_forms("aðförin"))
