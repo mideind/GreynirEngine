@@ -714,8 +714,8 @@ class SimpleTree:
                 result.append("tími")
                 continue
             if (
-                re.match(r"^\d{1,2}\.\d{1,2}(\.\d{2,4})?$", tok) or
-                re.match(r"^\d{1,2}/\d{1,2}(/\d{2,4})?$", tok)
+                re.match(r"^\d{1,2}\.\d{1,2}(\.\d{2,4})?$", tok)
+                or re.match(r"^\d{1,2}/\d{1,2}(/\d{2,4})?$", tok)
             ):
                 # 17.6, 30.12.1965, 17/6 or 30/12/65
                 result.append("dags")
@@ -771,8 +771,8 @@ class SimpleTree:
                         filter(
                             lambda mm: (
                                 (
-                                    mm.stofn in CURRENCIES or
-                                    mm.stofn in DECLINABLE_MULTIPLIERS
+                                    mm.stofn in CURRENCIES
+                                    or mm.stofn in DECLINABLE_MULTIPLIERS
                                 )
                                 if mm.ordfl in _GENDERS
                                 else mm.ordfl in {"to", "töl", "lo"}

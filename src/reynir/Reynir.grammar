@@ -2565,10 +2565,6 @@ Fyrirbæri_ft/fall/kyn →
     Skst? no_ft/fall/kyn                            # [Commodore PET] tölvur
     | Skst? no_ft_gr/fall/kyn Fjöldi_ft/fall/kyn    # Mennina tíu / félögin tvö
     | FyrirbæriMeðGreini_ft/fall/kyn
-    | raðnr/fall/kyn OgRaðnr/fall/kyn+ no/tala/fall/kyn # 2. og 3. grein laganna (eru fallnar úr gildi)
-
-OgRaðnr/fall/kyn →
-    "og:st" raðnr/fall/kyn
 
 Númer → 'númer:hk' tala
 
@@ -2675,11 +2671,12 @@ NlStak_ft_p2/fall/kyn → NlStak_p2_ft/fall/kyn FsRunaEftirNl?
 
 NlStak_p3/tala/fall/kyn →
 
-    NlKjarni/tala/fall/kyn Fornafn/tala/fall/kyn*   # (stjórnarframkvæmdum) þessum öllum
+    NlKjarni/tala/fall/kyn Fornafn/tala/fall/kyn*           # (stjórnarframkvæmdum) þessum öllum
     | NlKjarni/tala/fall/kyn EignarFornafn/tala/fall/kyn KommaOgEðaEn EfLiður # skattskýrslur mínar og eiginkonu minnar
     | NlFornafn/tala/fall/kyn
-    | Pfn/kyn/tala/fall to/tala/fall/kyn?           # 'þið tvær', 'við fjögur', 'hann einn'
-    | LoTöluorð_ef 'konar:kk'_ef_et NlKjarni/tala/fall/kyn # 'tvenns/þrenns/ferns konar innstungur'
+    | Pfn/kyn/tala/fall to/tala/fall/kyn?                   # 'þið tvær', 'við fjögur', 'hann einn'
+    | LoTöluorð_ef 'konar:kk'_ef_et NlKjarni/tala/fall/kyn  # 'tvenns/þrenns/ferns konar innstungur'
+    | Raðnr/fall/kyn NlKjarni/tala/fall/kyn Fornafn/tala/fall/kyn*   # 1. verðlaunin öll, 1.-3. sætið, 10. og 12. árið
 
 LoTöluorð_ef →
     'tvennur:lo'_ef_et_hk
@@ -3236,15 +3233,17 @@ $score(+4) Skst_abbrev
 
 Fyrirbæri/fall/kyn →
     Skst? no_et/fall/kyn        # Microsoft-hugbúnaðarrisinn, Nikon myndavél
-    | Raðnr/fall/kyn no_et/fall/kyn
     | FyrirbæriMeðGreini/fall/kyn
     | Úrslit/fall/kyn
 
 # Raðnúmer
 
 Raðnr/fall/kyn →
-    raðnr/fall/kyn
+    raðnr/fall/kyn OgRaðnr/fall/kyn*
     | raðnr/fall/kyn Til raðnr/fall/kyn # 2.-3. sæti listans / 2. til 3. sæti listans
+
+OgRaðnr/fall/kyn →
+    "og:st" raðnr/fall/kyn
 
 # Talnabil nota en-dash
 Til → "-:en" | "til:st" | "og:st" | 'til:fs'_ef "og:st" 'með:fs'_þgf | 'til_og_með:ao'
