@@ -427,23 +427,27 @@ BeygingarliðurMeðUmröðun/tala/pers/kyn →
 # Mögulegar tengingar í aukasetningum eftir gerð aukasetningar
 Tíðartenging →
     "löngu:ao"? "áður:ao" "en:st" "að:st"?  # áður en [að]
+    | "löngu:ao"? "eftir:ao" "að:st"
     | 'allt:fn'_nf_hk_et? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"
     | 'allt:fn'_nf_hk_et? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "er:st"?
-    | 'snemma:ao'_mst "en:st" "að:st"?  # fyrr en [að]
+    | 'snemma:ao'_mst "en:st" "að:st"? # fyrr en [að]
     | 'ótt:ao'_mst "en:st" "að:st"? # óðar en [að]
     | "þá:ao" "er:st"
-    | "löngu:ao"? "eftir:ao" "að:st"
-    | 'um:fs'_þf 'leið:kvk'_þf_et "og:st"  # um leið og
+    | 'um:fs'_þf 'leið:kvk'_þf_et "og:st" # um leið og
+    | 'um:fs'_þf 'svipaður:lo'_sb_hk_þf_et 'leyti:hk'_þf_et "og:st" # um svipað leyti og
+    | 'um:fs'_þf 'samur:fn'_hk_þf_et 'leyti:hk'_þf_et "og:st" # um sama leyti og
+    | 'á_sama_tíma:ao' "og:st"
     | "síðan:st"
     | "þegar:st"
     | "uns:st"
-    | 'á_meðan:ao' "að:st"? # á meðan [að]
     | "meðan:st"
+    | 'á_meðan:ao' "að:st"? # á meðan [að]
     | "þangað:ao" "til:st" "að:st"?
     | "þar:ao" "til:st" "að:st"?
-    | 'á_sama_tíma:ao' "og:st"
     | 'allar_götur_síðan:ao'
     | TengiorðEr # "er:stt", líka tilvísunartenging - fær mínus
+
+$tag(apply_length_bonus) Tíðartenging
 
 Tilgangstenging → 
     'til:fs'_ef 'það:pfn'_hk_ef_et "að:st"

@@ -1496,6 +1496,9 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
 
 
 class BIN_Nonterminal(Nonterminal):
+
+    """ Subclass of Nonterminal with BÍN-specific convenience functions """
+
     def __init__(self, name, fname, line):
         super().__init__(name, fname, line)
         # Optimized check for whether this is a noun phrase nonterminal
@@ -1510,9 +1513,11 @@ class BIN_Nonterminal(Nonterminal):
     def first(self):
         """ Return the initial part (before any underscores) of the nonterminal name """
         # Do this on demand
-        if not hasattr(self, "_parts"):
+        try:
+            return self._parts[0]
+        except AttributeError:
             self._parts = self.name.split("_")
-        return self._parts[0]
+            return self._parts[0]
 
 
 class BIN_Grammar(Grammar):
@@ -1760,7 +1765,15 @@ def augment_terminal(terminal, text_lower, beyging):
         vset |= _PFN_VARIANTS.get(text_lower, set())
     # Collect the variants from the terminal and from the BÍN 'beyging' string
     vset |= BIN_Token.bin_variants(beyging)
-    # Return the full augmented terminal string
+    # Additional hygiene to make sure we don't have both _esb and _sb / _evb and _vb
+    if "esb" in vset and "sb" in vset:
+        vset.remove("sb")
+    elif "evb" in vset and "vb" in vset:
+        vset.remove("vb")
+    elif "op" in vset:
+        # For impersonal verbs, all three persons are identical
+        # and not required
+        vset -= {"p1", "p2", "p3"}
     return "_".join(a[0:1] + cases + sorted(list(vset)))
 
 

@@ -255,7 +255,8 @@ _DEFAULT_TERMINAL_MAP = {
 }
 
 # The following list was obtained using this SQL query:
-# select distinct ordmynd from ord where ((stofn='sá') or (stofn='þessi') or (stofn='hinn')) and (ordfl='fn');
+# select distinct ordmynd from ord
+# where ((stofn='sá') or (stofn='þessi') or (stofn='hinn')) and (ordfl='fn');
 
 _DEFINITE_PRONOUNS = frozenset(
     [
@@ -479,7 +480,8 @@ class SimpleTree:
 
     @property
     def ifd_tags(self):
-        """ Return a list of the Icelandic Frequency Dictionary (IFD) tag(s) for this token """
+        """ Return a list of the Icelandic Frequency Dictionary
+            (IFD) tag(s) for this token """
         if not self.is_terminal:
             return []
         x = self.text
@@ -566,14 +568,15 @@ class SimpleTree:
 
     @cached_property
     def variants(self):
-        """ Returns a list of the variants associated with this subtree's terminal, if any """
+        """ Returns a list of the variants associated with
+            this subtree's terminal, if any """
         t = self.terminal
         return [] if t is None else t.split("_")[1:]
 
     @cached_property
     def all_variants(self):
-        """ Returns a list of all variants associated with this subtree's terminal, if any,
-            augmented also by BÍN variants """
+        """ Returns a list of all variants associated with
+            this subtree's terminal, if any, augmented also by BÍN variants """
         # First, check whether an 'a' field is present
         a = self._head.get("a")
         if a is not None:
@@ -585,9 +588,9 @@ class SimpleTree:
 
     @cached_property
     def _vset(self):
-        """ Return a set of the variants associated with this subtree's terminal, if any.
-            Note that this set is undordered, so it is not intended for retrieving the cases
-            of verb subjects. """
+        """ Return a set of the variants associated with this subtree's terminal,
+            if any. Note that this set is undordered, so it is not intended for
+            retrieving the cases of verb subjects. """
         return set(self.all_variants)
 
     @cached_property
@@ -765,8 +768,8 @@ class SimpleTree:
                 # and nouns ('krónur')
                 with BIN_Db.get_db() as db:
                     _, m = db.lookup_word(tok_lower, at_sentence_start=False)
-                    # We only consider to, töl, lo, currency names or declinable multipliers
-                    # ('þúsund', 'milljónir', 'milljarðar')
+                    # We only consider to, töl, lo, currency names or
+                    # declinable multipliers ('þúsund', 'milljónir', 'milljarðar')
                     m = list(
                         filter(
                             lambda mm: (
@@ -780,7 +783,7 @@ class SimpleTree:
                             m
                         )
                     )
-                    if len(m) == 0:
+                    if not m:
                         if tok in CURRENCY_GENDERS:
                             # This is a three-letter currency abbreviation:
                             # put the right gender on it
@@ -985,7 +988,8 @@ class SimpleTree:
                 for name in txt.split():
                     meanings = db.lookup_nominative(name)
                     try:
-                        # Try to find an 'ism', 'föð' or 'móð' nominative form of the correct gender
+                        # Try to find an 'ism', 'föð' or 'móð' nominative form
+                        # of the correct gender
                         result.append(
                             next(
                                 filter(
@@ -1001,7 +1005,8 @@ class SimpleTree:
                     except StopIteration:
                         # No 'ism', 'föð' or 'móð' nominative form
                         try:
-                            # Try the first available nominative form, regardless of what it is
+                            # Try the first available nominative form,
+                            # regardless of what it is
                             result.append(next(iter(meanings)).ordmynd)
                         except StopIteration:
                             # No such thing: use the part as-is
@@ -1030,8 +1035,8 @@ class SimpleTree:
                 # if upper case, try a lower case version of it
                 meanings = db.lookup_nominative(txt.lower())
 
-            # The following functions filter the nominative list down to those desired forms
-            # that match our lemma and category
+            # The following functions filter the nominative list down
+            # to those desired forms that match our lemma and category
 
             def filter_func_no(m):
                 """ Filter function for nouns """
@@ -1071,7 +1076,8 @@ class SimpleTree:
                 return True
 
             def filter_func_with_gender(m):
-                """ Filter function for nonpersonal pronouns and declinable number words """
+                """ Filter function for nonpersonal pronouns
+                    and declinable number words """
                 if m.stofn != lemma or m.ordfl != self._cat:
                     return False
                 # Match the original word in terms of gender
@@ -1233,7 +1239,8 @@ class SimpleTree:
             result = []
             children = list(self.children)
             # If the noun phrase has an adjective, we keep any leading adverbs
-            # ('stórkostlega fallegu blómin', 'ekki vingjarnlegu mennirnir', 'strax fáanlegu vörurnar').
+            # ('stórkostlega fallegu blómin', 'ekki vingjarnlegu mennirnir',
+            # 'strax fáanlegu vörurnar').
             # Otherwise, they probably belong to a previous verb and we
             # cut them away.
             has_adjective = any(ch.is_terminal and ch.tcat == "lo" for ch in children)
@@ -1294,8 +1301,8 @@ class SimpleTree:
 
     @cached_property
     def canonical_np(self):
-        """ Return the singular indefinite nominative form of the noun phrase (or noun/adjective terminal)
-            contained within this subtree """
+        """ Return the singular indefinite nominative form of the noun phrase
+            (or noun/adjective terminal) contained within this subtree """
 
         def prop_func(node):
             """ For canonical noun phrases, cut off S-REF and S-THT subtrees since they probably
@@ -1561,7 +1568,8 @@ class SimpleTree:
         def unpack(items, ix):
             """ Unpack an argument for the '>' or '>>' containment operators.
                 These are usually lists or sets but may be single items, in
-                which case they are interpreted as a set having that single item only. """
+                which case they are interpreted as a set having
+                that single item only. """
             item = items[ix]
             if isinstance(item, self._NestedList) and item.kind in {"[", "{"}:
                 return item, item.kind
