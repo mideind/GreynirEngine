@@ -149,11 +149,6 @@ class FindNavigator:
         # We only need to visit one outgoing edge, so short-circuit the edge loop
         return False
 
-    # noinspection PyMethodMayBeStatic
-    def done(self):
-        """ Called when the whole navigation is done """
-        pass
-
     def is_found(self):
         return self._found
 
@@ -208,8 +203,8 @@ class CompoundNavigator:
                     if (
                         lenj == 0
                         or (
-                            self._index + lenj < self._len and
-                            self._word[self._index:self._index + lenj] == j
+                            self._index + lenj < self._len
+                            and self._word[self._index:self._index + lenj] == j
                         )
                     ):
                         nav = CompoundNavigator(
@@ -228,11 +223,6 @@ class CompoundNavigator:
     def pop_edge(self):
         """ Called when leaving an edge that has been navigated """
         return False
-
-    # noinspection PyMethodMayBeStatic
-    def done(self):
-        """ Called when the whole navigation is done """
-        pass
 
     def result(self):
         return self._parts
@@ -255,12 +245,12 @@ class PackedDawgDictionary:
         if self._b is not None:
             # Already loaded
             return
-        # Quickly gulp the file contents into the byte buffer
+        # Map the file contents to a memory map, reflected in a byte buffer
         with open(fname, mode="rb") as stream:
-            # self._b = bytearray(fin.read())
             self._b = mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ)
         # Check the signature
         assert self._b[0:12] == b"ReynirDawg!\n"
+        # Get the DAWG vocabulary (alphabet)
         len_voc, = struct.Struct("<L").unpack_from(self._b, 12)
         self._vocabulary = self._b[16:16 + len_voc].decode("utf-8")
         self._root_offset = 16 + len_voc
@@ -278,13 +268,13 @@ class PackedDawgDictionary:
 
     def find(self, word):
         """ Look for a word in the graph, returning True if it is found or False if not """
-        nav = FindNavigator(word)
-        self.navigate(nav)
-        return nav.is_found()
+        return self.__contains__(word)
 
     def __contains__(self, word):
         """ Enable simple lookup syntax: "word" in dawgdict """
-        return self.find(word)
+        nav = FindNavigator(word)
+        self.navigate(nav)
+        return nav.is_found()
 
     def slice_compound_word(self, word):
         """ Attempt to slice an unknown word into parts, where each part is
@@ -329,14 +319,9 @@ class PackedDawgDictionary:
             def pop_edge()
                 called when leaving an edge that has been navigated; returns False
                 if there is no need to visit other edges
-            def done()
-                called when the navigation is completed
         """
-        if self._b is None:
-            # No graph: no navigation
-            nav.done()
-        else:
-            PackedNavigation(nav, self._b, self._root_offset, self._encoding).go()
+        assert self._b is not None
+        PackedNavigation(nav, self._b, self._root_offset, self._encoding).go()
 
 
 class PackedNavigation:
@@ -456,4 +441,3 @@ class PackedNavigation:
         if self._nav.accepting():
             # Leave shore and navigate the open seas
             self._navigate_from_node(self._root_offset, "")
-        self._nav.done()

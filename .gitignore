@@ -3,6 +3,7 @@ __pycache__/
 .cache/
 .pytest_cache/
 .idea/
+.vscode/
 *.py[cod]
 *.o
 *.so
@@ -37,6 +38,7 @@ src/reynir/resources/*.csv
 
 *.sublime-project
 *.sublime-workspace
+*.code-workspace
 *.bak
 *.profile
 *.log
