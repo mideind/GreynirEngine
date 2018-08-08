@@ -293,14 +293,24 @@ class PackedDawgDictionary:
         self.navigate(nav)
         w = nav.result()
         # We get back a list of lists, i.e. all possible compound word combinations
-        # where each combination is a list of word parts. We return
-        # the combination with the longest last part and the shortest overall
-        # number of parts.
-        w.sort(key=lambda x: (len(x[-1]), -len(x)), reverse=True)
-        # Cut out interpretations that end with closed word categories,
-        # i.e. conjunctions and prepositions
-        # gr, st, abfn, nhm, fs?
-        return w[0] if w else None
+        # where each combination is a list of word parts.
+        if w:
+            # Sort by (1) longest last part and (2) the lowest overall number of parts
+            w.sort(key=lambda x: (len(x[-1]), -len(x)), reverse=True)
+            prefixes = Wordbase.dawg_formers()
+            suffixes = Wordbase.dawg_last()
+            # Loop over the sorted combinations until we find a legal one,
+            # i.e. where the suffix is a legal suffix and all prefixes are
+            # legal prefixes
+            for combination in w:
+                if (
+                    combination[-1] in suffixes
+                    and all(c in prefixes for c in combination[0:-1])
+                ):
+                    # Valid combination: return it
+                    return combination
+        # No legal combination found
+        return None
 
     def navigate(self, nav):
         """ A generic function to navigate through the DAWG under
