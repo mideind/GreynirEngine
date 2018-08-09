@@ -1166,6 +1166,14 @@ def test_composite_words():
         "P S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP so_1_nf_et_fh_gm_p3_þt "
         "NP-PRD no_et_kk_nf st no_et_kk_nf /NP-PRD /VP /IP /S-MAIN p /P"
     )
+    s = r.parse_single("Ég borðaði sykursaltan fiskinn")
+    assert s.lemmas == ['ég', 'borða', 'sykur-saltur', 'fiskur']
+    s = r.parse_single("Ég borðaði sykurinnsaltan fiskinn")
+    assert s.lemmas == ['ég', 'borða', 'sykur-inn-saltur', 'fiskur']
+    s = r.parse_single("Ég borðaði sykrisaltan fiskinn")
+    # 'sykrisaltan' is not a valid composite word, so this should get parsed
+    # as an unknown noun - causing 'fiskinn' to be parsed as an adjective
+    assert s.lemmas == ['ég', 'borða', 'sykrisaltan', 'fiskinn']
 
 
 def test_finish():
