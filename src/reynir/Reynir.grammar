@@ -549,6 +549,10 @@ SagnInnskotAtv →
     # (Ég ætla að fá mér ís) [,] þegar ég verð 18 ára í haust (og borða hann úti)
     | KommaAtvikssetning
 
+# Gefa plús fyrir að forsetningar- og atviksliðir tengist sögnum,
+# frekar en að þeir séu t.d. forskeyti á næstu setningu
+$score(+2) SagnInnskotAtv
+
 EkkiNeitt →
     "ekki:ao" 'neinn:fn'_et_hk_nf # (Hann þekkti þá) ekki neitt
 
@@ -1381,15 +1385,15 @@ $score(+2) Sögn_nh/tala/pers/kyn
 # Miðmynd + nafnháttur
 # TODO skgr. hvaða sagnir ganga sem "hjálparsagnir" hér?
 Sögn_nh_mm/tala/pers/kyn →
-    so_mm/tala/pers OgSögn_mm/tala/pers* Botn_nh_mm/tala/kyn
+    so_mm/tala/pers OgSögn_mm/tala/pers* FsAtv? Botn_nh_mm/tala/kyn
     # Hann segist munu borða kökuna
     # Ég telst vilja kjósa flokkinn
     # Þau segjast geta látið henda Jóni út
     | So_1_þf_mm HjSögnNh_ft_p3 HreinSögn_nh/tala/kyn
 
 Botn_nh_mm/tala/kyn →
-     HreinSögn_nh/tala/kyn # Páll hyggst/þykist/telst skrifa söguna
-     | HreinSögn_lhþt/tala/kyn # Kvennalistakonur virðast [ekki] taldar sigurstranglegar
+     HreinSögn_nh/tala/kyn      # (Páll hyggst/þykist/telst) skrifa söguna
+     | HreinSögn_lhþt/tala/kyn  # (Kvennalistakonur virðast [ekki]) taldar sigurstranglegar
      # (Jón sagðist) þeirrar skoðunar [að múslimar væru óalandi og óferjandi]
      # (Maðurinn reyndist) þeirrar innréttingar að ekki var á hann treystandi
      | Botn_nh_ef

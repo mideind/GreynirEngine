@@ -160,9 +160,6 @@ class CompoundNavigator:
         together form a long (compound) word.
     """
 
-    # Stuff not in BÍN that may occur within compound words
-    _JOINERS = ["", "s"]
-
     def __init__(self, dawg, word):
         self._dawg = dawg
         self._word = word
@@ -172,8 +169,7 @@ class CompoundNavigator:
 
     def push_edge(self, firstchar):
         """ Returns True if the edge should be entered or False if not """
-        # Follow all edges that match a letter in the rack
-        # (which can be '?', matching all edges)
+        # Follow all edges that match a letter in the compound word
         return self._word[self._index] == firstchar
 
     def accepting(self):
@@ -198,26 +194,11 @@ class CompoundNavigator:
                 self._parts = [[matched]]
             else:
                 # So far so good: try to match the rest
-                for j in CompoundNavigator._JOINERS:
-                    lenj = len(j)
-                    if (
-                        lenj == 0
-                        or (
-                            self._index + lenj < self._len
-                            and self._word[self._index:self._index + lenj] == j
-                        )
-                    ):
-                        nav = CompoundNavigator(
-                            self._dawg, self._word[self._index + lenj:]
-                        )
-                        self._dawg.navigate(nav)
-                        result = nav.result()
-                        if result:
-                            self._parts.extend(
-                                [[matched + j] + tail for tail in result]
-                            )
-                            break
-                        # Else, try next joiner
+                nav = CompoundNavigator(self._dawg, self._word[self._index:])
+                self._dawg.navigate(nav)
+                result = nav.result()
+                if result:
+                    self._parts.extend([[matched] + tail for tail in result])
 
     # noinspection PyMethodMayBeStatic
     def pop_edge(self):
