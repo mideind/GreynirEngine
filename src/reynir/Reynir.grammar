@@ -4172,17 +4172,17 @@ FsMeðFallstjórn →
     | fs_nh FsAð
 
     # Fleiryrtar forsetningar sem eru ekki dregnar saman í Phrases.conf
-    | 'nær:fs'_þgf 'draga:so'_op_gm_et_p3 Nl_þgf # 'þegar nær dró/dregur jólum'
-    | 'fyrir_hönd:fs'_ef Nl_ef             # Skammstöfunin f.h.
+    | 'nær:fs'_þgf 'draga:so'_op_gm_et_p3 Nl_þgf    # 'þegar nær dró/dregur jólum'
+    | 'fyrir_hönd:fs'_ef Nl_ef                      # Skammstöfunin f.h.
     | 'beggja:fn'_hk_ef_ft 'vegna:fs'_ef Nl_ef      # 'beggja vegna vegarins'
-    | 'með_tilliti_til:fs'_ef Nl_ef        # Skammstöfunin m.t.t.
-    | 'samanbera:so'_lhþt_sb_hk_nf_et 'við:fs'_þf Nl_þf         # samanborið við (fyrra ár)
-    | 'bera:so'_lhþt_sb_hk_nf_et "saman:ao" 'við:fs'_þf Nl_þf   # borið saman við (fyrra ár)
+    | 'með_tilliti_til:fs'_ef Nl_ef                 # Skammstöfunin m.t.t.
+    | 'samanbera:so'_lhþt_sb_hk_nf_et 'við:fs'_þf Nl_þf        # samanborið við (fyrra ár)
+    | 'bera:so'_lhþt_sb_hk_nf_et "saman:ao" 'við:fs'_þf Nl_þf  # borið saman við (fyrra ár)
     | "fyrir:ao" "nú:ao"? 'utan:fs'_þf Nl_þf
     | "innan:ao" 'við:fs'_þf Nl_þf
     | "innan:ao" "sem:st" 'utan:fs'_ef Nl_ef
     | "hvað:ao" FsHvaðVarðar
-    | 'allt:fn'_nf_hk_et 'frá:fs'_þgf Nl_þgf     # allt frá hruni, allt frá börnum til fullorðinna
+    | 'allt:fn'_nf_hk_et 'frá:fs'_þgf Nl_þgf        # allt frá hruni, allt frá börnum til fullorðinna
     # 'um að lög um endurupptökunefnd standist ekki stjórnarskrá' - Ath: 'um það að' er höndlað í ÞaðTenging
     | 'um:fs'_þf "að:st" HreinYfirsetning ','?
     # 'um hvort/hvenær/af hverju/til hvers/hví Jón kaus Framsóknarflokkinn'
@@ -4190,8 +4190,7 @@ FsMeðFallstjórn →
     # 'er bjartsýnn á að Alfreð komi aftur í liðið' - Ath: 'á það/því að' er höndlað í ÞaðTenging
     | 'á:fs'_þf "að:st" HreinYfirsetning ','?
     | 'að:fs'_þgf 'nafn:hk'_þgf_et person_nf  # Ég ræddi við konu að nafni Aðalbjörg Jónsdóttir
-    | 'á:fs'_þf Vikudagur_gr_þf_et 'koma:so'_0_gm_fh_et_p3  # á sunnudaginn kemur
-    | 'á:fs'_þf VikuMorgunnKvöld_gr_þf_et 'koma:so'_0_gm_fh_et_p3  # á laugardagskvöldið kemur
+    | 'af:fs'_þgf Nl_þgf nhm so_0_nh  # Af fyrstu fregnum að dæma (virðist veiðitímabilið byrja vel)
     | FsMiðaðVið
     | FsÍGegnUm
     | FsUmOgEftir
@@ -4200,7 +4199,7 @@ FsMeðFallstjórn →
     | AtvFsSaman    # inn eftir firðinum, fram undan rúminu
     # 'hvorki við stjórn spítalans né ráðherrann'
     # 'hvorki til mín né stjórnarinnar'
-    | "hvorki:ao" fs/fall Nl/fall "né:st" Nl/fall
+    | "hvorki:st" fs/fall Nl/fall "né:st" Nl/fall
     | FsÞgfTilEf
 
     | '(' FsMeðFallstjórn ')'
@@ -4293,8 +4292,11 @@ EinFsAtv →
     | EinnAl
     # '(hann tók á móti mér) hlæjandi'
     | SögnLhNt
+    | SamsettFsAtv
+
+SamsettFsAtv →
     # 'hvorki í Frakklandi né annars staðar í Evrópusambandinu'
-    | "hvorki:st" EinEinföldFsAtv+ "né:st" EinEinföldFsAtv+
+    "hvorki:st" EinEinföldFsAtv+ "né:st" EinEinföldFsAtv+
     # 'annað hvort í Breiðholti eða við World Class'
     | 'annar:fn'_nf_et_hk "hvort:st" EinEinföldFsAtv+ "eða:st" EinEinföldFsAtv+
     # 'annaðhvort í Breiðholti eða við World Class'
@@ -4303,6 +4305,11 @@ EinFsAtv →
     | "bæði:st" EinEinföldFsAtv+ ','? "og:st" EinEinföldFsAtv+
     # 'ýmist að fullu eða til hálfs'
     | "ýmist:ao" EinEinföldFsAtv+ "eða:st" EinEinföldFsAtv+
+    # Hann sagði ósatt, annars vegar í fyrstu yfirheyrslu og hins vegar með framburði sínum í lok málsins
+    | 'annars_vegar:ao' EinEinföldFsAtv+ ','? "og:st" 'hins_vegar:ao' EinEinföldFsAtv+
+
+# Gefa samsetningum auka stig, þær smella vel saman
+$score(+4) SamsettFsAtv
 
 EinEinföldFsAtv → 
     FsMeðFallstjórn 
@@ -4561,6 +4568,7 @@ DaganaFast →
 AfstæðDagsetning →
     ÓfullkominDagsetning
     | 'í:fs'_þf Árstíð_þf_et/kyn        # í haust, í sumar
+    | 'í:fs'_þgf 'liðinn:lo'_kvk_et_þgf_sb 'vika:kvk'_þgf_et # í liðinni viku
     | 'í:fs'_þgf dagsafs NæstSíðast_þgf_et_kk? # í október [1933] [síðastliðnum]
     | ÍByrjunLok Mánuður_et_ef          # í byrjun septembermánaðar
     | ÍByrjunLok dagsafs                # í byrjun október (2014)
@@ -4602,6 +4610,8 @@ VísiDagsetning →
     | 'dagur:kk'_þf_et_gr 'eftir:ao'    # daginn eftir
     | 'annar:fn'_et_þf_hk 'kvöld:hk'_et_þf # annað kvöld
     | 'annar:fn'_et_þf_kvk 'nótt:kvk'_et_þf # aðra nótt
+    | 'á:fs'_þf Vikudagur_gr_þf_et 'koma:so'_0_gm_fh_et_p3          # á sunnudaginn kemur
+    | 'á:fs'_þf VikuMorgunnKvöld_gr_þf_et 'koma:so'_0_gm_fh_et_p3   # á laugardagskvöldið kemur
 
 # Hér eru aðeins orð yfir mánuði sem ekki tengjast við 'dagsafs' lauf
 Mánuður_et/fall →
