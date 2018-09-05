@@ -1265,7 +1265,7 @@ LhÞtBotn/tala/kyn →
     so_0_nh? NhFylling/tala/kyn
     | NhRuna                                # (Mennirnir eru sagðir) fara sjaldan í bað, og raka sig aldrei
     | LoTengtSögn_nf/tala/kyn               # (Mennirnir eru taldir) ritfærir
-    | Aldur 'gamall:lo'_sb_nf/tala/kyn?     # (Mennirnir eru orðnir) fimmtán ára [gamlir]
+    | eo* Aldur 'gamall:lo'_sb_nf/tala/kyn?     # (Mennirnir eru orðnir) [tæplega] fimmtán ára [gamlir]
 
 EinSögn_lhþt/tala/kyn →
     so_0_lhþt/tala/kyn LhÞtBotn/tala/kyn?           # (Mennirnir eru) lentir
@@ -1308,9 +1308,9 @@ SögnErLo/tala/pers/kyn →
     HjSögnLhÞt/tala/pers SögnErLoBotn/tala/kyn
 
 SögnErLoBotn/tala/kyn →
-    LoTengtSögn_nf/tala/kyn AðLiður?     # (Guðrún er) snögg [að svara fyrir sig] / (Það er) torsótt [að Siggi fari einn í skólann]
-    | Aldur 'gamall:lo'_sb_nf/tala/kyn? # (Páll var) tíu ára [gamall]
-    | LoMeðÞf_nf/tala/kyn Nl_þf         # (Jón var) viðstaddur blaðamannafundinn
+    LoTengtSögn_nf/tala/kyn AðLiður?            # (Guðrún er) snögg [að svara fyrir sig] / (Það er) torsótt [að Siggi fari einn í skólann]
+    | eo* Aldur 'gamall:lo'_sb_nf/tala/kyn?     # (Páll var) [rúmlega] tíu ára [gamall]
+    | LoMeðÞf_nf/tala/kyn Nl_þf                 # (Jón var) viðstaddur blaðamannafundinn
 
 # Lýsingarorð sem taka með sér þolfall
 
@@ -2610,8 +2610,10 @@ NlKjarni/tala/aukafall/kyn →
 # Mörg/flest þessara mála, sum þeirra sem lentu í slysinu
 # !!! TODO bæta öðrum fornöfnum sem taka hlutaeignarfall við
 NlKjarni_ft/fall/kyn →
-    'margur:fn'_ft/fall/kyn EfLiður_ft/kyn
-    | 'fár:lo'_ft/fall/kyn EfLiður_ft/kyn
+    'margur:lo'_sb_ft/fall/kyn EfLiður_ft/kyn
+    | 'allmargur:lo'_sb_ft/fall/kyn EfLiður_ft/kyn
+    | 'fár:lo'_sb_ft/fall/kyn EfLiður_ft/kyn
+    | 'örfár:lo'_sb_ft/fall/kyn EfLiður_ft/kyn
     | 'sumur:fn'_ft/fall/kyn EfLiður_ft/kyn
 
 # Prósentubil með eignarfalli
@@ -2779,8 +2781,11 @@ NlFornafn/tala/fall/kyn →
 NlFornafn/tala/fall/kyn →
     # margt annað / mörgu öðru / margs annars
     # margir aðrir / marga aðra / mörgum öðrum / margra annarra
+    # fáir aðrir / örfáir aðrir
     'margur:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
     | 'fjölmargur:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
+    | 'fár:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
+    | 'örfár:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
 
 # Sértilvik þar sem "ýmislegt annað" er sjálfstæður nafnliður:
 # 'Ýmislegt annað (bendir til þess að Jón sé þjófurinn)'
@@ -2902,22 +2907,18 @@ LoSemNafnliður/tala/fall/kyn →
 # Margir telja að myndin sé falleg / Margur telur mig sig
 # Fáir álíta að flokkurinn eigi möguleika
 # Þeir vita mikið / Mikið af því sem Jón sagði er della / Ég vænti mikils af honum
-AlgengLoSemNafnliður_kk_et_nf → 'margur:lo'_sb_et_nf_kk
-AlgengLoSemNafnliður_kk_et_þf → 'margur:lo'_sb_et_þf_kk
-AlgengLoSemNafnliður_kk_et_þgf → 'margur:lo'_sb_et_þgf_kk
-AlgengLoSemNafnliður_kk_et_ef → 'margur:lo'_sb_et_ef_kk
-AlgengLoSemNafnliður_kk_ft_nf → 'margur:lo'_sb_ft_nf_kk
-AlgengLoSemNafnliður_kk_ft_þf → 'margur:lo'_sb_ft_þf_kk
-AlgengLoSemNafnliður_kk_ft_þgf → 'margur:lo'_sb_ft_þgf_kk
-AlgengLoSemNafnliður_kk_ft_ef → 'margur:lo'_sb_ft_ef_kk
-AlgengLoSemNafnliður_kk_ft_nf → 'fár:lo'_sb_ft_nf_kk
-AlgengLoSemNafnliður_kk_ft_þf → 'fár:lo'_sb_ft_þf_kk
-AlgengLoSemNafnliður_kk_ft_þgf → 'fár:lo'_sb_ft_þgf_kk
-AlgengLoSemNafnliður_kk_ft_ef → 'fár:lo'_sb_ft_ef_kk
-AlgengLoSemNafnliður_hk_et_nf → 'mikill:lo'_sb_et_nf_hk
-AlgengLoSemNafnliður_hk_et_þf → 'mikill:lo'_sb_et_þf_hk
-AlgengLoSemNafnliður_hk_et_þgf → 'mikill:lo'_sb_et_þgf_hk
-AlgengLoSemNafnliður_hk_et_ef → 'mikill:lo'_sb_et_ef_hk
+AlgengLoSemNafnliður_kk_ft/fall →
+    'margur:lo'_sb_ft_kk/fall           # margir telja
+    | 'fjölmargur:lo'_sb_ft_kk/fall     # fjölmargir telja
+    | 'allmargur:lo'_sb_ft_kk/fall      # allmargir telja
+    | 'allflestur:lo'_sb_ft_kk/fall     # allflestir telja
+    | 'langflestur:lo'_sb_ft_kk/fall    # langflestir telja
+    | 'fár:lo'_sb_ft_kk/fall            # fáir / fæstir telja
+    | 'örfár:lo'_sb_ft_kk/fall          # örfáir telja
+AlgengLoSemNafnliður_kk_et/fall →
+    'margur:lo'_sb_et_kk/fall           # margur telur
+AlgengLoSemNafnliður_hk_et/fall →
+    'mikill:lo'_sb_et_hk/fall           # þeir vita mikið / ég vænti mikils af honum
 
 # Gefa lýsingarorðum sem nafnliðum mínusstig
 $score(-14) LoSemNafnliður/tala/fall/kyn
@@ -4564,12 +4565,14 @@ AtviksliðurAuka →
 # [tæpra] 29 ára, [rúmlega] eins árs, tveggja vikna, margra ára
 Aldur →
     TöluorðForskeyti_ef/tala/kyn? Töluorð_ef/tala/kyn TímaNafnorðStærri_ef/tala/kyn
-    | 'margur:lo'_ef_ft TímaNafnorðStærri_ef_ft/kyn
-    | 'allmargur:lo'_ef_ft TímaNafnorðStærri_ef_ft/kyn
-    | 'fjölmargur:lo'_ef_ft TímaNafnorðStærri_ef_ft/kyn
+    | 'margur:lo'_sb_ef_ft/kyn TímaNafnorðStærri_ef_ft/kyn
+    | 'allmargur:lo'_sb_ef_ft/kyn TímaNafnorðStærri_ef_ft/kyn
+    | 'fjölmargur:lo'_sb_ef_ft/kyn TímaNafnorðStærri_ef_ft/kyn
+    | 'fár:lo'_sb_ef_ft/kyn TímaNafnorðStærri_ef_ft/kyn
+    | 'örfár:lo'_sb_ef_ft/kyn TímaNafnorðStærri_ef_ft/kyn
 
 # Gefa plús fyrir aldur
-$score(+6)  Aldur
+$score(+6) Aldur
 
 
 # Dagsetning og tími
@@ -4734,6 +4737,7 @@ AfstæðurTími →
     | 'aðfaranótt:kvk'_et_þf AfstæðDagsetning
     | 'aðfaranótt:kvk'_et_þf Vikudagur_ef_et
     | TímaVísiNafnliðurMinni_þf_et/kyn              # sömu mínútu, sama klukkutíma
+    | TímaVísiNafnliðurStærri_þf/tala/kyn           # undanfarið ár / undanfarna áratugi
     | FyrrSíðarSeinna? TímaÁkvæðisliður_þf_et/kyn 
         MorgunnKvöld/kyn                            # sama kvöld, fyrr sama morgun
     | FyrrSíðarSeinna? AfstæðurTímiFs
@@ -5146,6 +5150,7 @@ TímaNafnorðStærri_kk/fall/tala →
     | 'ársfjórðungur:kk'/fall/tala
     | 'áratugur:kk'/fall/tala
     | 'aldarfjórðungur:kk'/fall/tala
+    | 'vetur:kk'/fall/tala
 
 TímaNafnorðStærri_kvk/fall/tala →
     'vika:kvk'/fall/tala
@@ -5158,6 +5163,7 @@ TímaNafnorðStærri_hk/fall/tala →
     | 'ár:hk'/fall/tala
     | 'árhundrað:hk'/fall/tala
     | 'árþúsund:hk'/fall/tala
+    | 'sumar:hk'/fall/tala
 
 TímaAtviksEinkunn →
     'rétt:ao' TímaAtviksEinkunn
@@ -5177,6 +5183,11 @@ Tímatala/fall/tala/kyn →
     | töl/fall/tala/kyn
     | to/fall/tala/kyn
     | 'hálfur:lo'/fall/tala/kyn
+    | 'nokkur:fn'/fall/tala/kyn # nokkrum dögum seinna
+    | 'fár:lo'_sb/fall/tala/kyn # fáum dögum síðar
+    | 'örfár:lo'_sb/fall/tala/kyn # örfáum vikum síðar
+    | 'margur:lo'_sb/fall/tala/kyn # mörgum vikum síðar
+    | 'allmargur:lo'_sb/fall/tala/kyn # allmörgum vikum síðar
     | Tímatala/fall/tala/kyn 'til:ao' Tímatala/fall/tala/kyn
     | Tímatala/fall/tala/kyn '-:en' Tímatala/fall/tala/kyn
 

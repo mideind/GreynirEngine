@@ -34,7 +34,7 @@
 
 import os
 import threading
-import logging
+# import logging
 import time
 import struct
 import mmap
@@ -69,10 +69,10 @@ class Wordbase:
         dawg = PackedDawgDictionary()
         dawg.load(pname)
         t1 = time.time()
-        logging.info(
-            "Loaded packed DAWG '{1}' in {0:.2f} seconds"
-            .format(t1 - t0, resource)
-        )
+        # logging.info(
+        #     "Loaded packed DAWG '{1}' in {0:.2f} seconds"
+        #     .format(t1 - t0, resource)
+        # )
         return dawg
 
     @classmethod
