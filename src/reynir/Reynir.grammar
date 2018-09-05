@@ -4603,8 +4603,10 @@ DaganaFast →
 AfstæðDagsetning →
     ÓfullkominDagsetning
     | 'í:fs'_þf Árstíð_þf_et/kyn        # í haust, í sumar
-    | 'í:fs'_þgf 'liðinn:lo'_kvk_et_þgf_sb 'vika:kvk'_þgf_et # í liðinni viku
+    | 'í:fs'_þgf 'liðinn:lo'_sb_þgf_et_kvk 'vika:kvk'_þgf_et # í liðinni viku
+    | 'á:fs'_þgf 'liðinn:lo'_sb_þgf_ft_hk 'ár:hk'_þgf_ft OgÁratugum? # á liðnum árum [og áratugum]
     | 'í:fs'_þgf dagsafs NæstSíðast_þgf_et_kk? # í október [1933] [síðastliðnum]
+
     | ÍByrjunLok Mánuður_et_ef          # í byrjun septembermánaðar
     | ÍByrjunLok dagsafs                # í byrjun október (2014)
     | ÍByrjunLok 'ár:hk'_et_ef ártal    # í byrjun árs 1945
@@ -4619,6 +4621,9 @@ AfstæðDagsetning →
     | 'í_hitteðfyrra:ao'
     | 'í_hittiðfyrra:ao'
     | VísiDagsetning                                               # á föstudag, um helgina, á morgun, í gær
+
+OgÁratugum →
+    "og:st" 'áratugur:kk'_þgf_ft
 
 ÓfullkominDagsetning →
     Vikudagur_þf_et? dagsafs NæstSíðast_þf_et_kk?
