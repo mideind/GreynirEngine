@@ -27,10 +27,7 @@ Example
 
 >>> from reynir import Reynir
 >>> r = Reynir()
->>> job = r.submit("Ása sá sól.")
->>> sent = next(job.sentences())
->>> sent.parse()
-True
+>>> sent = r.parse_single("Ása sá sól.")
 >>> print(sent.tree.view)
 P                             # Root
 +-S-MAIN                      # Main sentence
@@ -61,8 +58,10 @@ Prerequisites
 
 This package runs on CPython 3.4 or newer, and on PyPy 3.5 or newer.
 
-You may need to have ``python3-dev`` and/or potentially ``python3.6-dev`` installed on your system
-to set up Reynir successfully::
+If a binary wheel package isn't available on `PyPi <https://pypi.org>`_ for your system,
+you may need to have the ``python3-dev`` and/or potentially ``python3.6-dev`` packages
+(or their Windows equivalents) installed on your system to set up Reynir successfully.
+This is because a source distribution install requires a C++ compiler and linker::
 
     # Debian or Ubuntu:
     sudo apt-get install python3-dev
@@ -74,7 +73,7 @@ Installation
 
 To install this package::
 
-    $ pip3 install reynir
+    $ pip3 install reynir   # or pip install reynir if Python3 is your default
 
 If you want to be able to edit the source, do like so (assuming you have **git** installed)::
 
