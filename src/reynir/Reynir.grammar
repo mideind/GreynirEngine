@@ -4722,12 +4722,12 @@ AfstæðurTímapunktur →
     | tími Vikudagur_gr_et_þf dagsföst
     | tími VísiDagsetning
     | VísiDagsetning tími
-    | tími HinnSá_þf dagsafs NæstSíðast_þf_et_kk?           # kl. 14:00 hinn/þann 14. nóvember [síðastliðinn]
-    | tími HinnSá_þf dagsföst                               # kl. 14:00 hinn/þann 14. nóvember 2017
+    | tími HinnSá_þf dagsafs NæstSíðast_þf_et_kk?   # kl. 14:00 hinn/þann 14. nóvember [síðastliðinn]
+    | tími HinnSá_þf dagsföst                       # kl. 14:00 hinn/þann 14. nóvember 2017
 
 FasturTími →
-    tími Dagspartur?                                        # 14:00, kl. 14.00 [síðdegis/árdegis]
-    | Mínútur YfirÍ_þf tími Dagspartur?                     # tuttugu mínútur í tvö, korter yfir átta
+    tími Dagspartur?                                # 14:00, kl. 14.00 [síðdegis/árdegis]
+    | Mínútur YfirÍ_þf tími Dagspartur?             # tuttugu mínútur í tvö, korter yfir átta
     | Mínútur YfirÍ_þf Klukkutala_þf/tala Dagspartur?
 
 AfstæðurTími →
