@@ -1,39 +1,3 @@
-"""
-
-    Reynir: Natural language processing for Icelandic
-
-    IFD tagger module
-
-    Copyright (C) 2018 Miðeind ehf.
-
-       This program is free software: you can redistribute it and/or modify
-       it under the terms of the GNU General Public License as published by
-       the Free Software Foundation, either version 3 of the License, or
-       (at your option) any later version.
-       This program is distributed in the hope that it will be useful,
-       but WITHOUT ANY WARRANTY; without even the implied warranty of
-       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-       GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see http://www.gnu.org/licenses/.
-
-
-    This module implements a class that handles conversion from Reynir's
-    terminal variants to the Icelandic Frequency Dictionary (IFD) tagset.
-
-    The tagset is described here: http://www.malfong.is/files/ot_tagset_files_is.pdf
-
-"""
-
-from .settings import (
-    UndeclinableAdjectives,
-    StaticPhrases,
-)
-from .binparser import canonicalize_token
-from .bintokenizer import TOK
-
-
 class IFD_Tagset:
 
     """ Utility class to generate POS tags compatible with
@@ -44,8 +8,11 @@ class IFD_Tagset:
     BIN_TO_VARIANT = {
         "NF": "nf",  # Nefnifall / nominative
         "ÞF": "þf",  # Þolfall / accusative
+        "ÞF2": "þf",  # Þolfall / accusative
         "ÞGF": "þgf",  # Þágufall / dative
+        "ÞGF2": "þgf",  # Þágufall / dative
         "EF": "ef",  # Eignarfall / possessive
+        "EF2": "ef",  # Eignarfall / possessive
         "KK": "kk",  # Karlkyn / masculine
         "KVK": "kvk",  # Kvenkyn / feminine
         "HK": "hk",  # Hvorugkyn / neutral
