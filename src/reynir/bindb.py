@@ -67,6 +67,8 @@ class BIN_Db:
     # as a result of compound word construction
     _NOUNS = frozenset(("kk", "kvk", "hk"))
 
+    _OPEN_CATS = frozenset(("so", "kk", "hk", "kvk", "lo")) # Open word categories
+
     # Singleton LFU caches for word meaning lookup
     _meanings_cache = LFU_Cache(maxsize = CACHE_SIZE_MEANINGS)
 

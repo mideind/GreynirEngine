@@ -34,7 +34,7 @@
 
 import os
 import threading
-#import logging
+import logging
 import time
 import pickle
 import platform
@@ -223,12 +223,14 @@ class Wordbase:
     def _load_resource(resource):
         """ Load a DawgDictionary, from either a text file or a pickle file """
         # Assumes that the appropriate lock has been acquired
-        pname_all = os.path.abspath(os.path.join("resources",
-            resource + ("_all.text.dawg" if is_pypy else ".dawg.pickle")))
-        pname_formers = os.path.abspath(os.path.join("resources",
-            resource + ("_formers.text.dawg" if is_pypy else ".dawg.pickle")))
-        pname_last = os.path.abspath(os.path.join("resources",
-            resource + ("_last.text.dawg" if is_pypy else ".dawg.pickle")))
+        # TODO: Use .bin-files instead
+        is_pypy = platform.python_implementation() == "PyPy"        
+        pname_all = os.path.abspath(os.path.join("src/reynir/resources",
+            resource + ("-all.dawg.txt" if is_pypy else ".dawg.pickle")))
+        pname_formers = os.path.abspath(os.path.join("src/reynir/resources",
+            resource + ("-formers.dawg.txt" if is_pypy else ".dawg.pickle")))
+        pname_last = os.path.abspath(os.path.join("src/reynir/resources",
+            resource + ("-last.dawg.txt" if is_pypy else ".dawg.pickle")))
 
         dawg_all = DawgDictionary()
         dawg_formers = DawgDictionary()
@@ -242,7 +244,7 @@ class Wordbase:
         logging.info(u"Loaded {0} graph nodes in {1:.2f} seconds".format(dawg_all.num_nodes(), t1 - t0))
 
         # Do not assign Wordbase._dawg until fully loaded, to prevent race conditions
-        return dawg
+        return dawg_all, dawg_formers, dawg_last
 
     def slice_compound_word(word):
         """ Get best combination of word parts if such a combination exists """
@@ -258,7 +260,7 @@ class Wordbase:
         # number of parts.
         possibles.sort(key = lambda x : (len(x[-1]), -len(x)), reverse = True)
         #if possibles:
-        #    print("SORTED:{}".format(possibles))
+        #    print("\tSORTED:{}".format(possibles))
         return possibles[0] if possibles else None
 
     def valid_combo(combo):
@@ -282,6 +284,13 @@ class Wordbase:
                 return Wordbase._dawg_all, Wordbase._dawg_formers, Wordbase._dawg_last
             return Wordbase._load_resource("ordalisti") # Main dictionary
 
+    @staticmethod
+    def dawg():
+        """ Return the main dictionary DAWG object, loading it if required """
+        if Wordbase._dawg_all is None:
+            Wordbase._dawg_all, Wordbase._dawg_formers, Wordbase._dawg_last = Wordbase._load()
+        assert Wordbase._dawg_all is not None
+        return Wordbase._dawg_all, Wordbase._dawg_formers, Wordbase._dawg_last
 
 class Navigation:
 
