@@ -25,6 +25,9 @@
 			"**/.pytest_cache": true,
 			"**/*.sublime-project": true,
 			"**/*.sublime-workspace": true,
-		}
+		},
+		"restructuredtext.confPath": "b:\\github\\ReynirPackage\\doc",
+		"files.eol": "\n",
+		"files.insertFinalNewline": true
 	}
 }

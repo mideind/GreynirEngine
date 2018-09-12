@@ -19,4 +19,3 @@ source wheels.sh
 # Upload the new release
 twine upload dist/reynir-$1*
 echo "Upload of" "$1" "done"
-
