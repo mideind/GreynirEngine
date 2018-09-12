@@ -3,7 +3,7 @@
 
     Parser base module
 
-    Copyright (c) 2017 Miðeind ehf.
+    Copyright (c) 2018 Miðeind ehf.
     All rights reserved
 
     This module defines a base parser class. The base is used in

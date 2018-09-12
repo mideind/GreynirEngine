@@ -28,6 +28,7 @@
 		},
 		"restructuredtext.confPath": "b:\\github\\ReynirPackage\\doc",
 		"files.eol": "\n",
-		"python.pythonPath": "C:\\Python36\\python.exe"
+		"python.pythonPath": "C:\\Python36\\python.exe",
+		"python.formatting.provider": "black"
 	}
 }

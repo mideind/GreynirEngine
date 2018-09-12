@@ -47,7 +47,7 @@ def test_parse(verbose=False):
         # 3
         "Fjórða málsgreinin er síðust.",
         # 4
-        "Vatnið var 30,5 gráða heitt og ég var ánægður með það.",
+        "Hitastig vatnsins var 30,5 gráður og ég var ánægð með það.",
         # 5
         "Hún skuldaði mér 1.000 dollara.",
         # 6
@@ -102,9 +102,9 @@ def test_parse(verbose=False):
     assert results[1].tree.nouns == ["málsgrein"]
     assert results[2].tree is None  # Error sentence
     assert results[3].tree.nouns == ["málsgrein"]
-    # 'Vatnið' is a proper place name (örnefni)
     assert results[4].tree.nouns == [
-        "Vatnið",
+        "hitastig",
+        "vatn",
         "gráða",
     ]
     assert results[5].tree.nouns == []
@@ -171,11 +171,11 @@ def test_parse(verbose=False):
     assert results[2].tree is None  # Error sentence
     assert results[3].tree.lemmas == ["fjórði", "málsgrein", "vera", "síðari", "."]
     assert results[4].tree.lemmas == [
-        "Vatnið",
+        "hitastig",
+        "vatn",
         "vera",
         "30,5",
         "gráða",
-        "heitur",
         "og",
         "ég",
         "vera",
