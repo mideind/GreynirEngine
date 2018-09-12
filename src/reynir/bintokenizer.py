@@ -1634,7 +1634,7 @@ def disambiguate_phrases(token_stream):
     # Yield any tokens remaining in queue
     yield from tq
 
-# TODO skrifa yfir smiðinn fyrir TOK úr tokenizer.py í Tokenizer-pakka
+# !!! TODO skrifa yfir smiðinn fyrir TOK úr tokenizer.py í Tokenizer-pakka
 # Tok = namedtuple('Tok', ['kind', 'txt', 'val', 'error'], )
 # Mögulega líka allar aðferðir
 def parse_errors(token_stream):
