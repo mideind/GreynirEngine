@@ -36,7 +36,7 @@ src/reynir/resources/*.csv
 
 *.sublime-project
 *.sublime-workspace
-*.code-workspace
+# *.code-workspace
 *.bak
 *.profile
 *.log
