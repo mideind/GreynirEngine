@@ -212,7 +212,7 @@ Samtenging →
     "og:st" | "eða:st" | "ellegar:st" | "heldur:st" 
     | "enda:st" | "en:st" | "hvorki:st"
     | 'það:pfn'_hk_nf_et 'vera:so'_0_gm_fh_et_p3 | 'það_er:ao'  # ERROR -- er þetta inni sem ao liður?
-    | "þar:ao" 'á_meðal:ao' | 'þar_á_meðal:ao'                  # ERROR -- er þetta inni sem ao liður?
+    | "þar:ao" 'á_meðal:ao'                                     # ERROR -- er þetta inni sem ao liður?
     | 'auk_þess:ao' "sem:st" "að:st"?                           # ERROR -- að
     | 'það_er_að_segja:ao' Tengimerki "að:st"?
     | "svo:st" "sem:st"
@@ -621,7 +621,6 @@ SamanburðarNlTenging →
     | ','? "eins:ao" "og:st"        # 'Hann á ekki andstæðinga eins og aðrir kjörnir fulltrúar'
     | ','? "líkt:ao" "og:st"
     | Samanburðarmerki? "þar:ao" "af:ao"  # 'Fjöldi barna var í vélinni, þar af tvö kornabörn'
-    | Samanburðarmerki? 'þar_á_meðal:ao'
     | Samanburðarmerki? "þar:ao" 'á_meðal:ao'
     | Samanburðarmerki? 'þar_með_talið:ao' # Skammstöfunin 'þ.m.t.'
     | Samanburðarmerki? "nema:st"   # Allir vita það, nema ég.
@@ -3711,7 +3710,7 @@ Skýring →
     "svo:st" "sem:st"
     | "sem:st" 'segja:so'_lhþt_sb_hk_nf_et      # sem sagt
     | 'til:fs'_ef 'dæmi:hk'_ef_et | 'til_dæmis:ao'
-    | "þar:ao" 'á_meðal:ao' | 'þar_á_meðal:ao'
+    | "þar:ao" 'á_meðal:ao'
     | "meðal:ao" "annars:ao" | 'meðal_annars:ao'
     | 'það:pfn'_hk_et_nf 'vera:so'_0_gm_fh_et_p3 | 'það_er:ao'
     | 'með:fs'_þgf 'annar:lo'_hk_þgf_ft 'orð:hk'_þgf_ft | 'með_öðrum_orðum:ao'
