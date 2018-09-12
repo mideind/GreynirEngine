@@ -173,21 +173,13 @@ class DawgDictionary:
         self.navigate(nav)
         return nav.result()
 
-    def slice_compound_word(self, word):
+    def find_combinations(self, word):
         """ Attempt to slice an unknown word into parts, where each part is
             a valid word form in itself, and the parts form a valid compound word. """
         nav = CompoundNavigator(self, word)
         self.navigate(nav)
-        w = nav.result()
-        # We get back a list of lists, i.e. all possible compound word combinations
-        # where each combination is a list of word parts. We return
-        # the combination with the longest last part and the shortest overall
-        # number of parts.
-        w.sort(key = lambda x : (len(x[-1]), -len(x)), reverse = True)
-        # Cut out interpretations that end with closed word categories,
-        # i.e. conjunctions and prepositions
-        # gr, st, abfn, nhm, fs?
-        return w[0] if w else None
+        #print("ORIG:{}".format(nav.result()))
+        return nav.result()
 
     def navigate(self, nav):
         """ A generic function to navigate through the DAWG under
@@ -221,7 +213,9 @@ class Wordbase:
 
     """ Container for a singleton instance of the word database """
 
-    _dawg = None
+    _dawg_all = None   # All word forms
+    _dawg_formers = None   # Word forms allowed as former parts of compounds
+    _dawg_last = None   # Word forms allowed as last part of compounds
 
     _lock = threading.Lock()
 
@@ -229,35 +223,64 @@ class Wordbase:
     def _load_resource(resource):
         """ Load a DawgDictionary, from either a text file or a pickle file """
         # Assumes that the appropriate lock has been acquired
-        pname = os.path.abspath(os.path.join(_PATH, "resources",
-            resource + ".text.dawg"))
+        pname_all = os.path.abspath(os.path.join("resources",
+            resource + ("_all.text.dawg" if is_pypy else ".dawg.pickle")))
+        pname_formers = os.path.abspath(os.path.join("resources",
+            resource + ("_formers.text.dawg" if is_pypy else ".dawg.pickle")))
+        pname_last = os.path.abspath(os.path.join("resources",
+            resource + ("_last.text.dawg" if is_pypy else ".dawg.pickle")))
 
-        dawg = DawgDictionary()
+        dawg_all = DawgDictionary()
+        dawg_formers = DawgDictionary()
+        dawg_last = DawgDictionary()
 
         t0 = time.time()
-        dawg.load(pname)
+        dawg_all.load(pname_all)
+        dawg_formers.load(pname_formers)
+        dawg_last.load(pname_last)
         t1 = time.time()
-        logging.info(u"Loaded {0} graph nodes in {1:.2f} seconds".format(dawg.num_nodes(), t1 - t0))
+        logging.info(u"Loaded {0} graph nodes in {1:.2f} seconds".format(dawg_all.num_nodes(), t1 - t0))
 
         # Do not assign Wordbase._dawg until fully loaded, to prevent race conditions
         return dawg
+
+    def slice_compound_word(word):
+        """ Get best combination of word parts if such a combination exists """
+        # We get back a list of lists, i.e. all possible compound word combinations
+        # where each combination is a list of word parts. 
+
+        Wordbase._dawg_all, Wordbase._dawg_formers, Wordbase._dawg_last = Wordbase.dawg()
+        
+        # Only keep valid combinations
+        possibles = [ x for x in Wordbase._dawg_all.find_combinations(word) if x and Wordbase.valid_combo(x) ]
+        #print("AFTER:{}".format(possibles))
+        # We return the combination with the longest last part and the shortest overall
+        # number of parts.
+        possibles.sort(key = lambda x : (len(x[-1]), -len(x)), reverse = True)
+        #if possibles:
+        #    print("SORTED:{}".format(possibles))
+        return possibles[0] if possibles else None
+
+    def valid_combo(combo):
+        # Last part
+        if combo[-1] not in Wordbase._dawg_last:
+            #print("Ekki í dawg_last:{}".format(combo[-1]))
+            return False
+        # Former parts
+        for each in combo[:-1]:
+            if each not in Wordbase._dawg_formers:
+                #print("Ekki í dawg_formers:{}".format(each))
+                return False
+        return True
 
     @staticmethod
     def _load():
         """ Load a main dictionary """
         with Wordbase._lock:
-            if Wordbase._dawg is not None:
+            if Wordbase._dawg_all is not None:
                 # Already loaded: nothing to do
-                return Wordbase._dawg
+                return Wordbase._dawg_all, Wordbase._dawg_formers, Wordbase._dawg_last
             return Wordbase._load_resource("ordalisti") # Main dictionary
-
-    @staticmethod
-    def dawg():
-        """ Return the main dictionary DAWG object, loading it if required """
-        if Wordbase._dawg is None:
-            Wordbase._dawg = Wordbase._load()
-        assert Wordbase._dawg is not None
-        return Wordbase._dawg
 
 
 class Navigation:
