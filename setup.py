@@ -61,7 +61,7 @@ def read(*names, **kwargs):
 
 setup(
     name="reynir",
-    version="1.2.2",
+    version="1.2.3",
     license="GNU GPLv3",
     description="A natural language parser for Icelandic",
     long_description="%s\n%s"
@@ -70,7 +70,7 @@ setup(
             .sub("", read("README.rst")),
         re.sub(":[a-z]+:`~?(.*?)`", r"``\1``", read("CHANGELOG.rst")),
     ),
-    author="Vilhjálmur Þorsteinsson",
+    author="Miðeind ehf",
     author_email="vt@extrada.com",
     url="https://github.com/vthorsteinsson/ReynirPackage",
     packages=find_packages("src"),
@@ -80,19 +80,21 @@ setup(
     zip_safe=True,
     classifiers=[
         # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
         "Operating System :: Unix",
         "Operating System :: POSIX",
         "Operating System :: Microsoft :: Windows",
+        "Operating System :: MacOS",
         "Natural Language :: Icelandic",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Libraries :: Python Modules",
