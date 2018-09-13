@@ -211,9 +211,9 @@ Samtenging →
     # Flóknari samtenging úr mörgum orðum
     "og:st" | "eða:st" | "ellegar:st" | "heldur:st" 
     | "enda:st" | "en:st" | "hvorki:st"
-    | 'það:pfn'_hk_nf_et 'vera:so'_0_gm_fh_et_p3 | 'það_er:ao'  # ERROR -- er þetta inni sem ao liður?
-    | "þar:ao" 'á_meðal:ao'                                     # ERROR -- er þetta inni sem ao liður?
-    | 'auk_þess:ao' "sem:st" "að:st"?                           # ERROR -- að
+    | 'það:pfn'_hk_nf_et 'vera:so'_0_gm_fh_et_p3
+    | "þar:ao" 'á_meðal:ao'
+    | 'auk_þess:ao' "sem:st" "að:st"?               # ERROR -- að
     | 'það_er_að_segja:ao' Tengimerki "að:st"?
     | "svo:st" "sem:st"
     | "eins:ao" "og:st"
@@ -257,8 +257,8 @@ $tag(begin_prep_scope) HreinYfirsetning # Nýtt undirtré fyrir tengingu sagnar 
 Spurnarsetning →
     SpurnarNafnliður/tala/fall/kyn FsMeðFallstjórn? BeygingarliðurSögnFremst? "?"
     | SpurnarForsetningarliður FsMeðFallstjórn? BeygingarliðurSögnFremst? "?"
-    | SpurnarAtviksorð FsMeðFallstjórn? BeygingarliðurSögnFremst?  "?"
-    | SpurnarFrumlag/pers/tala/kyn FsMeðFallstjórn? BlTagl/tala/pers/kyn? '?'
+    | SpurnarAtviksorð FsMeðFallstjórn? BeygingarliðurSögnFremst? "?"
+    | SpurnarFrumlag/pers/tala/kyn FsMeðFallstjórn? BlTagl/tala/pers/kyn? "?"
 
 # Spurnarorðið er frumlag setningarinnar, stendur utan beygingarliðar
 BlTagl/tala/pers/kyn →
@@ -284,7 +284,7 @@ AtvSetning →
 $score(+12) AtvSetning
 
 SamsettSetning →
-    "annaðhvort:st" BeygingarliðurSögnFremst "eða:st" BeygingarliðurÁnUmröðunar
+    "annaðhvort:st" BeygingarliðurSögnFremst "eða:st" BeygingarliðurÁnUmröðunar # ERROR: annað hvort?
     | "bæði:st" BeygingarliðurSögnFremst "og:st" BeygingarliðurÁnUmröðunar
     | "ýmist:st" BeygingarliðurSögnFremst "eða:st" BeygingarliðurÁnUmröðunar
 
@@ -467,7 +467,7 @@ Afleiðingartenging →
     | SvoTenging
 
 Orsakartenging →
-    "fyrst:ao" "að:st"?  # ERROR
+    "fyrst:ao" "að:st"?  # ERROR (bæta við "víst að" hér? ;-) )
     | 'sökum:fs'_ef 'það:pfn'_hk_ef_et "að:st"  # sökum þess að
     | 'sakir:fs'_ef 'það:pfn'_hk_ef_et "að:st"  # sakir þess að
     | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"?  # úr því [að]
@@ -3163,7 +3163,7 @@ NlBæðiHvorki/fall/kyn →
     "bæði:st" Nl/fall/kyn "og:st" Nl/fall/kyn                   # (Við þurftum að lóga) bæði hestinum og kettinum
     | "hvorki:st" Nl/fall/kyn "né:st" Nl/fall/kyn               # Hvorki hestinum né kettinum (var lógað)
     | "annaðhvort:st" Nl/fall/kyn "eða:st" Nl/fall/kyn          # Annaðhvort hestinum eða kettinum (var lógað)
-    | 'annar:fn'_et_hk_nf 'hvor:fn'_et_hk_nf Nl/fall/kyn "eða:st" Nl/fall/kyn    # Annaðhvort hestinum eða kettinum (var lógað)        # ERROR -- virkar þessi regla rétt? Er "annaðhvort" í einu orði?
+    | 'annar:fn'_et_hk_nf 'hvor:fn'_et_hk_nf Nl/fall/kyn "eða:st" Nl/fall/kyn # Annað hvort hestinum eða kettinum (var lógað)
     | "ýmist:st" Nl/fall/kyn "eða:st" Nl/fall/kyn               # Ýmist hestinum eða kettinum (var lógað)
 $score(+4) NlBæðiHvorki/fall/kyn
 
@@ -3711,8 +3711,8 @@ Skýring →
     | "sem:st" 'segja:so'_lhþt_sb_hk_nf_et      # sem sagt
     | 'til:fs'_ef 'dæmi:hk'_ef_et | 'til_dæmis:ao'
     | "þar:ao" 'á_meðal:ao'
-    | "meðal:ao" "annars:ao" | 'meðal_annars:ao'
-    | 'það:pfn'_hk_et_nf 'vera:so'_0_gm_fh_et_p3 | 'það_er:ao'
+    | 'meðal_annars:ao'
+    | 'það:pfn'_hk_et_nf 'vera:so'_0_gm_fh_et_p3
     | 'með:fs'_þgf 'annar:lo'_hk_þgf_ft 'orð:hk'_þgf_ft | 'með_öðrum_orðum:ao'
     | "en:st" "ekki:ao"
     | "þó:st" "ekki:ao"
@@ -3737,8 +3737,8 @@ OgEða →
     "og:st" "jafnframt:ao"?
     | "eða:st" | "ellegar:st" | "eður:st"
     | "svo:st" "og:st" | "sem:st" "og:st" | "né:st"
-    | ÞarÁMeðal | "meðal:ao" "annars:ao" | 'meðal_annars:ao'
-    | 'það:pfn'_hk_et_nf "er:st" | 'það_er:ao'
+    | ÞarÁMeðal | 'meðal_annars:ao'
+    | 'það:pfn'_hk_et_nf 'vera:so'_0_gm_fh_et_p3
     | "eins:ao" "og:st" | "líkt:ao" "og:st"
     | "og:st"? "þar:ao" "með:ao" 'telja:so'_lhþt_sb_hk_nf_et?
     | "svo:st" "sem:st" | "jafnt:ao" "sem:st"
@@ -4083,6 +4083,7 @@ LoSamanbFleiri/fall/tala/kyn →
     | "bæði:st" FsAtv "og:st" LoTengtSögn/tala/fall/kyn
     | "bæði:st" LoTengtSögn/tala/fall/kyn "og:st" FsAtv
     # annaðhvort með fullan maga eða hungurmorða
+    # ERROR á að leyfa 'annað hvort' ?
     | Samanburðarmerki "annaðhvort:st" LoTengtSögn/tala/fall/kyn "eða:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
     | Samanburðarmerki "annaðhvort:st" LoTengtSögn/tala/fall/kyn "eða:st" FsAtv LokatáknEðaKomma
     | Samanburðarmerki "annaðhvort:st" FsAtv "eða:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
@@ -4405,8 +4406,7 @@ FsRunaEftirSögn →
 
 # Forskeyti sem leyfileg eru á undan forsetningarlið innan kommu
 FsForskeyti →
-    "líkt:ao" "og:st" | "eins:ao" "og:st"
-    | 'það_er:ao' | 'það:pfn'_hk_et_nf 'vera:so'_0_gm_fh_p3_et
+    "líkt:ao" "og:st" | "eins:ao" "og:st" | 'það:pfn'_hk_et_nf 'vera:so'_0_gm_fh_p3_et
 
 # Forsetningar þar sem AL á undan gefur vísbendingar um fall í FL
 FsEftir/fall →
