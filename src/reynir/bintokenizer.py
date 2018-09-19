@@ -1477,9 +1477,10 @@ def parse_static_phrases(token_stream, auto_uppercase):
                             # that was not completed: yield them first
                             yield tq.pop(0)
                         w = " ".join([ t.txt for t in tq ])
-                        werr = [ t.error for t in tq ]
+                        # werr = [ t.error for t in tq ]
                         # Add the entire phrase as one 'word' to the token queue
-                        yield TOK.Word(w, map(BIN_Meaning._make, StaticPhrases.get_meaning(ix)), error = werr)
+                        # yield TOK.Word(w, map(BIN_Meaning._make, StaticPhrases.get_meaning(ix)), error = werr)
+                        yield TOK.Word(w, map(BIN_Meaning._make, StaticPhrases.get_meaning(ix)))
                         # Discard the state and start afresh
                         newstate = defaultdict(list)
                         w = wo = ""
