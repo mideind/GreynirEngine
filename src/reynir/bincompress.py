@@ -908,7 +908,8 @@ if __name__ == "__main__":
     b.read(
         [
             os.path.join(_PATH, "resources", "ord.csv"),
-            os.path.join(_PATH, "resources", "ord.add.csv")
+            os.path.join(_PATH, "resources", "ord.add.csv"),
+            os.path.join(_PATH, "resources", "ord.auka.csv")
         ]
     )
     b.print_stats()

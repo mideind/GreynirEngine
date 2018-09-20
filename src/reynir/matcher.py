@@ -1492,7 +1492,12 @@ class SimpleTree:
         def gen2():
             gen = gen1()
             while True:
-                item = next(gen)
+                try:
+                    item = next(gen)
+                except StopIteration:
+                    # Generators should not raise StopIteration,
+                    # so we just break out of the loop normally
+                    break
                 if item.startswith("'") or item.startswith('"'):
                     # String literal item: merge with subsequent items
                     # until we encounter a matching end quote

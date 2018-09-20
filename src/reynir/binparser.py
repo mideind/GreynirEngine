@@ -495,7 +495,7 @@ class BIN_Token(Token):
 
     @staticmethod
     def verb_matches(verb, terminal, form):
-        """ Return True if the verb stem in question matches the verb category,
+        """ Return True if the infinitive in question matches the verb category,
             where the category is one of so_0, so_1, so_2 depending on
             the allowable number of noun phrase arguments """
 
@@ -512,14 +512,14 @@ class BIN_Token(Token):
             # 'Páli þykir þetta vera tóm vitleysa'
             if terminal.is_nh:
                 if "NH" not in form:
-                    # Nominative mode (nafnháttur)
+                    # Infinitive (nafnháttur)
                     return False
             if terminal.is_mm:
-                # Central form of verb ('miðmynd')
+                # Middle voice ('miðmynd')
                 # For subj_mm, we don't care about anything but MM
                 return "MM" in form
             if terminal.is_gm:
-                # Central form of verb ('miðmynd')
+                # Active voice ('germynd')
                 if "GM" not in form:
                     return False
             if terminal.is_singular and "ET" not in form:
@@ -536,7 +536,7 @@ class BIN_Token(Token):
             form_lh = "LHÞT" in form
             if terminal.is_lh:
                 return form_lh and subject_matches("lhþt")
-            # Don't allow lhþt unless explicitly requested in terminal
+            # Don't allow the past participle unless explicitly requested in terminal
             if form_lh:
                 return False
             form_sagnb = "SAGNB" in form
@@ -547,7 +547,7 @@ class BIN_Token(Token):
                     return False
                 return subject_matches("none")
             if form_sagnb and not terminal.is_sagnb:
-                # For regular subj, we don't allow SAGNB form
+                # For regular subj, we don't allow supine (sagnbót)
                 # ('langað', 'þótt')
                 return False
             if terminal.has_variant("op") and "OP" not in form:
@@ -602,9 +602,9 @@ class BIN_Token(Token):
         is_mm = "MM" in form
         nargs = int(terminal.variant(0))
         if is_mm:
-            # For MM forms, do not use the normal stem of the verb
+            # For MM forms, do not use the normal infinitive of the verb
             # for lookup in the VerbObjects.VERBS collection;
-            # instead, use the MM-NH stem.
+            # instead, use the MM-NH infinitive.
             # This means that for instance "eignaðist hest" is not resolved
             # to "eigna" but to "eignast"
             verb = BIN_Token.mm_verb_stem(verb)
@@ -619,12 +619,13 @@ class BIN_Token(Token):
                 # No: we don't need to check further
                 return True
             # The following is not consistent as some verbs take
-            # legitimate arguments in 'miðmynd', such as 'krefjast', 'ábyrgjast'
+            # legitimate arguments in the middle voice, such as 'krefjast', 'ábyrgjast'
             # 'undirgangast', 'minnast'. They are also not consistently
             # annotated in BIN; some of them are marked as MM and some not.
             if nargs > 1 and is_mm:
-                # Temporary compromise: Don't accept verbs in 'miðmynd'
+                # Temporary compromise: Don't accept verbs in the middle voice
                 # if taking >1 arguments
+                # TODO: Change if necessary.
                 return False
             # Check whether the parameters of this verb
             # match up with the requirements of the terminal
@@ -996,7 +997,7 @@ class BIN_Token(Token):
             """ Check preposition. Note that in this exceptional case, we
                 do not use the BÍN annotation of the token at all. Instead
                 we look up the token text in Prepositions.PP which is read
-                from the Main.conf file. """
+                from the Prepositions.conf file. """
             if not terminal.num_variants:
                 return False
             # Note that in the case of abbreviated prepositions,

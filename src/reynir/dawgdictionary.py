@@ -34,7 +34,6 @@
 
 import os
 import threading
-# import logging
 import time
 import struct
 import mmap
@@ -47,12 +46,9 @@ class Wordbase:
 
     """ Container for a singleton instance of the word database """
 
-    # All word forms
-    _dawg = None
-    # Allowed prefixes of compound words
-    _dawg_formers = None
-    # Allowed suffixes of compound words
-    _dawg_last = None
+    _dawg_all = None        # All word forms
+    _dawg_formers = None    # Word forms allowed as former parts of compounds
+    _dawg_last = None       # Word forms allowed as last part of compounds
 
     _lock = threading.Lock()
 
@@ -60,7 +56,6 @@ class Wordbase:
     def _load_resource(resource):
         """ Load a PackedDawgDictionary from a file """
         # Assumes that the appropriate lock has been acquired
-        t0 = time.time()
         pname = os.path.abspath(
             os.path.join(
                 _PATH, "resources", resource + ".dawg.bin"
@@ -68,21 +63,16 @@ class Wordbase:
         )
         dawg = PackedDawgDictionary()
         dawg.load(pname)
-        t1 = time.time()
-        # logging.info(
-        #     "Loaded packed DAWG '{1}' in {0:.2f} seconds"
-        #     .format(t1 - t0, resource)
-        # )
         return dawg
 
     @classmethod
     def dawg(cls):
         """ Load the combined dictionary """
         with cls._lock:
-            if cls._dawg is None:
-                cls._dawg = Wordbase._load_resource("ordalisti-all")
-            assert cls._dawg is not None
-            return cls._dawg
+            if cls._dawg_all is None:
+                cls._dawg_all = Wordbase._load_resource("ordalisti-all")
+            assert cls._dawg_all is not None
+            return cls._dawg_all
 
     @classmethod
     def dawg_formers(cls):
@@ -104,6 +94,30 @@ class Wordbase:
                 cls._dawg_last = Wordbase._load_resource("ordalisti-last")
             assert cls._dawg_last is not None
             return cls._dawg_last
+
+    @classmethod
+    def slice_compound_word(cls, word):
+        """ Get best combination of word parts if such a combination exists """
+        # We get back a list of lists, i.e. all possible compound word combinations
+        # where each combination is a list of word parts. 
+        w = cls.dawg().find_combinations(word)
+        if w:
+            # Sort by (1) longest last part and (2) the lowest overall number of parts
+            w.sort(key=lambda x: (len(x[-1]), -len(x)), reverse=True)
+            prefixes = cls.dawg_formers()
+            suffixes = cls.dawg_last()
+            # Loop over the sorted combinations until we find a legal one,
+            # i.e. where the suffix is a legal suffix and all prefixes are
+            # legal prefixes
+            for combination in w:
+                if (
+                    combination[-1] in suffixes
+                    and all(c in prefixes for c in combination[0:-1])
+                ):
+                    # Valid combination: return it
+                    return combination
+        # No legal combination found
+        return None
 
 
 class FindNavigator:
@@ -257,31 +271,12 @@ class PackedDawgDictionary:
         self.navigate(nav)
         return nav.is_found()
 
-    def slice_compound_word(self, word):
+    def find_combinations(self, word):
         """ Attempt to slice an unknown word into parts, where each part is
             a valid word form in itself, and the parts form a valid compound word. """
         nav = CompoundNavigator(self, word)
         self.navigate(nav)
-        w = nav.result()
-        # We get back a list of lists, i.e. all possible compound word combinations
-        # where each combination is a list of word parts.
-        if w:
-            # Sort by (1) longest last part and (2) the lowest overall number of parts
-            w.sort(key=lambda x: (len(x[-1]), -len(x)), reverse=True)
-            prefixes = Wordbase.dawg_formers()
-            suffixes = Wordbase.dawg_last()
-            # Loop over the sorted combinations until we find a legal one,
-            # i.e. where the suffix is a legal suffix and all prefixes are
-            # legal prefixes
-            for combination in w:
-                if (
-                    combination[-1] in suffixes
-                    and all(c in prefixes for c in combination[0:-1])
-                ):
-                    # Valid combination: return it
-                    return combination
-        # No legal combination found
-        return None
+        return nav.result()
 
     def navigate(self, nav):
         """ A generic function to navigate through the DAWG under
