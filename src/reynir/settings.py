@@ -237,9 +237,10 @@ class Prepositions:
     # Prepositions that can be followed by an infinitive verb phrase
     # 'Beiðnin um að handtaka manninn var send lögreglunni'
     PP_NH = set()
-    # Corresponding dict and set containing errors.
-    PP_ERRORS = defaultdict(set)
-    PP_NH_ERRORS = set()
+    # A dictionary containing information from $error() pragmas associated
+    # with the preposition. Each entry is again a dict of {case: error} specifications,
+    # where each error spec is usually a tuple.
+    PP_ERRORS = defaultdict(dict)
 
     @staticmethod
     def add(prep, case, nh):
@@ -247,13 +248,21 @@ class Prepositions:
         Prepositions.PP[prep].add(case)
         if nh:
             Prepositions.PP_NH.add(prep)
+        # Some compound prepositions may not be present in ord.compressed
+        # or in the Meanings dictionary: hack to make sure that they are
+        # recognized as prepositions
+        if prep not in Meanings.DICT and " " not in prep:
+            from .bindb import BIN_Db
+            with BIN_Db.get_db() as db:
+                m = db.meanings(prep)
+            if not m or not any(mm.ordfl == "fs" for mm in m):
+                Meanings.DICT[prep] = [(prep, 0, "fs", "ob", prep, "-")]
 
     @staticmethod
-    def add_errors(prep, case, nh, corr):
-        """ Add a preposition and its case. Called from the config file handler. """
-        Prepositions.PP_ERRORS[prep].add(case)
-        if nh:
-            Prepositions.PP_NH_ERRORS.add(prep)
+    def add_error(prep, case, corr):
+        """ Add an error correction entry for a preposition and a case.
+            An error correction entry is usually a tuple. """
+        Prepositions.PP_ERRORS[prep][case] = corr
 
 
 class AdjectiveTemplate:
@@ -866,12 +875,17 @@ class Settings:
             # A typical format is $error(FORM-inn_á)
             error = True
             e = s[ix + 7 :].lstrip().rstrip(" )").split("-")
-            if len(e) != 2:
+            if len(e) == 2:
+                # Probably $error(FORM-xxx_xxx)
+                corr = (e[0], " ".join(e[1].split("_")))
+            elif len(e) == 1:
+                # Probably $error(COMPOUND)
+                corr = (e[0], None)
+            else:
                 raise ConfigError(
-                    "$error() pragma should have the form XXX-yyy "
+                    "$error() pragma should have the form XXX[-yyy] "
                     "where XXX is a category and yyy is a phrase"
                 )
-            corr = (e[0], " ".join(e[1].split("_")))
             s = s[:ix].strip()
         a = s.split()
         if len(a) < 2:
@@ -892,7 +906,7 @@ class Settings:
         pp = " ".join(a[:-1])  # Preposition, possibly multi-word
         Prepositions.add(pp, c, nh)
         if error:
-            Prepositions.add_errors(pp, c, nh, corr)
+            Prepositions.add_error(pp, c, corr)
 
     @staticmethod
     def _handle_preferences(s):
