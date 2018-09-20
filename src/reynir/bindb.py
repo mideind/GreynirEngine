@@ -5,7 +5,6 @@
     BIN database access module
 
     Copyright (C) 2018 Miðeind ehf.
-    Author: Vilhjálmur Þorsteinsson
 
        This program is free software: you can redistribute it and/or modify
        it under the terms of the GNU General Public License as published by
@@ -46,31 +45,37 @@ from .bincompress import BIN_Compressed
 
 # Size of LRU/LFU caches for word lookups
 CACHE_SIZE = 512
-CACHE_SIZE_MEANINGS = 2048 # Most common lookup function (meanings of a particular word form)
+# Most common lookup function (meanings of a particular word form)
+CACHE_SIZE_MEANINGS = 2048
 CACHE_SIZE_UNDECLINABLE = 2048
 
 # Named tuple for word meanings fetched from the BÍN database (lexicon)
-BIN_Meaning = namedtuple('BIN_Meaning', ['stofn', 'utg', 'ordfl', 'fl', 'ordmynd', 'beyging'])
+BIN_Meaning = namedtuple(
+    "BIN_Meaning", ["stofn", "utg", "ordfl", "fl", "ordmynd", "beyging"]
+)
 # Compact string representation
-BIN_Meaning.__str__ = BIN_Meaning.__repr__ = lambda self: "(stofn='{0}', {2}/{3}/{1}, ordmynd='{4}' {5})" \
-    .format(self.stofn, self.utg, self.ordfl, self.fl, self.ordmynd, self.beyging)
-
+BIN_Meaning.__str__ = BIN_Meaning.__repr__ = (
+    lambda self: (
+        "(stofn='{0}', {2}/{3}/{1}, ordmynd='{4}' {5})"
+        .format(self.stofn, self.utg, self.ordfl, self.fl, self.ordmynd, self.beyging)
+    )
+)
 
 class BIN_Db:
 
     """ Encapsulates the BÍN database of word forms """
 
     # Adjective endings
-    _ADJECTIVE_TEST = "leg" # Check for adjective if word contains 'leg'
+    _ADJECTIVE_TEST = "leg"  # Check for adjective if word contains 'leg'
 
     # Word categories that are allowed to appear capitalized in the middle of sentences,
     # as a result of compound word construction
     _NOUNS = frozenset(("kk", "kvk", "hk"))
 
-    _OPEN_CATS = frozenset(("so", "kk", "hk", "kvk", "lo")) # Open word categories
+    _OPEN_CATS = frozenset(("so", "kk", "hk", "kvk", "lo"))  # Open word categories
 
     # Singleton LFU caches for word meaning lookup
-    _meanings_cache = LFU_Cache(maxsize = CACHE_SIZE_MEANINGS)
+    _meanings_cache = LFU_Cache(maxsize=CACHE_SIZE_MEANINGS)
 
     # Singleton instance of BIN_Db, returned by get_db()
     _singleton = None
@@ -80,7 +85,6 @@ class BIN_Db:
         """ Return a session object that can be used in a with statement """
 
         class _BIN_Session:
-
             def __init__(self):
                 pass
 
@@ -107,7 +111,9 @@ class BIN_Db:
     def __init__(self):
         """ Initialize BIN database wrapper instance """
         # Cache descriptors for the lookup functions
-        self._meanings_func = lambda key: self._meanings_cache.lookup(key, getattr(self, "meanings"))
+        self._meanings_func = lambda key: (
+            self._meanings_cache.lookup(key, getattr(self, "meanings"))
+        )
         # Compressed BÍN wrapper
         # Throws IOError if the compressed file doesn't exist
         self._compressed_bin = BIN_Compressed()
@@ -140,7 +146,7 @@ class BIN_Db:
             # We have a preferred stem for this word form:
             # cut off meanings based on other stems
             worse, better = StemPreferences.DICT[w]
-            m = [ mm for mm in m if mm.stofn not in worse ]
+            m = [mm for mm in m if mm.stofn not in worse]
             # The better (preferred) stem should still be there somewhere
             # assert any(mm.stofn in better for mm in m)
 
@@ -161,7 +167,7 @@ class BIN_Db:
             prio += 1 if "2P" in m.beyging else 0
             return prio
 
-        m.sort(key = priority)
+        m.sort(key=priority)
         return m
 
     def forms(self, w):
@@ -174,32 +180,32 @@ class BIN_Db:
             This is presently only used in the POS tagger (postagger.py). """
         assert False, "This feature is not supported in the Reynir module"
 
-    def lookup_utg(self, stofn, ordfl, utg, beyging = None):
+    def lookup_utg(self, stofn, ordfl, utg, beyging=None):
         """ Return a list of meanings with the given integer id ('utg' column) """
         assert False, "This feature is not supported in the Reynir module"
 
-    @lru_cache(maxsize = CACHE_SIZE)
+    @lru_cache(maxsize=CACHE_SIZE)
     def lookup_nominative(self, w):
         """ Return meaning tuples for all word forms in nominative
             case for all { kk, kvk, hk, lo } category stems of the given word """
         return list(map(BIN_Meaning._make, self._compressed_bin.nominative(w)))
 
-    def lookup_word(self, w, at_sentence_start, auto_uppercase = False):
+    def lookup_word(self, w, at_sentence_start, auto_uppercase=False):
         """ Given a word form, look up all its possible meanings """
         return self._lookup(w, at_sentence_start, auto_uppercase, self._meanings_func)
 
     def lookup_form(self, w, at_sentence_start):
         """ Given a word root (stem), look up all its forms """
-        assert False,  "This feature is not supported in the Reynir module"
+        assert False, "This feature is not supported in the Reynir module"
 
-    @lru_cache(maxsize = CACHE_SIZE)
+    @lru_cache(maxsize=CACHE_SIZE)
     def lookup_name_gender(self, name):
         """ Given a person name, lookup its gender. """
         if not name:
             return "hk"  # Unknown gender
-        w = name.split(maxsplit = 1)[0]  # First name
+        w = name.split(maxsplit=1)[0]  # First name
         g = self.meanings(w)
-        m = next((x for x in g if x.fl in { "ism", "nafn" }), None)
+        m = next((x for x in g if x.fl in {"ism", "nafn"}), None)
         if m:
             # Found a meaning with fl='ism' or fl='nafn'
             return m.ordfl
@@ -208,22 +214,32 @@ class BIN_Db:
         m = StaticPhrases.lookup(name)
         if m is not None:
             m = BIN_Meaning._make(m)
-            if m.fl in { "ism", "nafn" }:
+            if m.fl in {"ism", "nafn"}:
                 return m.ordfl
         return "hk"  # Unknown gender
 
     @staticmethod
     def prefix_meanings(mlist, prefix):
         """ Return a meaning list with a prefix added to the stofn and ordmynd attributes """
-        return [
-            BIN_Meaning(prefix + "-" + r.stofn, r.utg, r.ordfl, r.fl,
-                prefix + "-" + r.ordmynd, r.beyging)
-            for r in mlist
-        ] if prefix else mlist
+        return (
+            [
+                BIN_Meaning(
+                    prefix + "-" + r.stofn,
+                    r.utg,
+                    r.ordfl,
+                    r.fl,
+                    prefix + "-" + r.ordmynd,
+                    r.beyging,
+                )
+                for r in mlist
+            ]
+            if prefix
+            else mlist
+        )
 
     @staticmethod
     def open_cats(mlist):
-        return [ mm for mm in mlist if mm.ordfl in BIN_Db._OPEN_CATS ]
+        return [mm for mm in mlist if mm.ordfl in BIN_Db._OPEN_CATS]
 
     @staticmethod
     def _lookup(w, at_sentence_start, auto_uppercase, lookup):
@@ -232,17 +248,17 @@ class BIN_Db:
         def lookup_abbreviation(w):
             """ Lookup abbreviation from abbreviation list """
             # Remove brackets, if any, before lookup
-            if w[0] == '[':
+            if w[0] == "[":
                 clean_w = w[1:-1]
                 # Check for abbreviation that also ended a sentence and
                 # therefore had its end period cut off
-                if not clean_w.endswith('.'):
-                    clean_w += '.'
+                if not clean_w.endswith("."):
+                    clean_w += "."
             else:
                 clean_w = w
             # Return a single-entity list with one meaning
             m = Abbreviations.DICT.get(clean_w, None)
-            return None if m is None else [ BIN_Meaning._make(m) ]
+            return None if m is None else [BIN_Meaning._make(m)]
 
         # Start with a straightforward lookup of the word
 
@@ -254,7 +270,7 @@ class BIN_Db:
                 if not m:
                     # If they don't exist in BÍN, treat them as uppercase
                     # abbreviations (probably middle names)
-                    w = w.upper() + '.'
+                    w = w.upper() + "."
             else:
                 # Check whether this word has an uppercase form in the database
                 w_upper = w.capitalize()
@@ -262,7 +278,7 @@ class BIN_Db:
                 if m:
                     # Yes: assume it should be uppercase
                     w = w_upper
-                    at_sentence_start = False # No need for special case here
+                    at_sentence_start = False  # No need for special case here
                 else:
                     # No: go for the regular lookup
                     m = lookup(w)
@@ -283,7 +299,7 @@ class BIN_Db:
                     m = lookup_abbreviation(w)
                     if not m:
                         m = lookup(lower_w)
-                    elif w[0] == '[':
+                    elif w[0] == "[":
                         # Remove brackets from known abbreviations
                         w = w[1:-1]
                 else:
@@ -296,14 +312,14 @@ class BIN_Db:
             # Most common path out of this function
             return (w, m)
 
-        if lower_w != w or w[0] == '[':
+        if lower_w != w or w[0] == "[":
             # Still nothing: check abbreviations
             m = lookup_abbreviation(w)
-            if not m and w[0] == '[':
+            if not m and w[0] == "[":
                 # Could be an abbreviation with periods at the start of a sentence:
                 # Lookup a lowercase version
                 m = lookup_abbreviation(lower_w)
-            if m and w[0] == '[':
+            if m and w[0] == "[":
                 # Remove brackets from known abbreviations
                 w = w[1:-1]
 
@@ -316,7 +332,9 @@ class BIN_Db:
                 if lower_w.endswith(aend) and llw > len(aend):
                     prefix = lower_w[0 : llw - len(aend)]
                     # Construct an adjective descriptor
-                    m.append(BIN_Meaning(prefix + "legur", 0, "lo", "alm", lower_w, beyging))
+                    m.append(
+                        BIN_Meaning(prefix + "legur", 0, "lo", "alm", lower_w, beyging)
+                    )
             if lower_w.endswith("lega") and llw > 4:
                 # For words ending with "lega", add a possible adverb meaning
                 m.append(BIN_Meaning(lower_w, 0, "ao", "ob", lower_w, "-"))
@@ -337,20 +355,31 @@ class BIN_Db:
                     # If this is an uppercase word in the middle of a
                     # sentence, allow only nouns as possible interpretations
                     # (it wouldn't be correct to capitalize verbs, adjectives, etc.)
-                    m = [ mm for mm in m if mm.ordfl in BIN_Db._NOUNS ]
+                    m = [mm for mm in m if mm.ordfl in BIN_Db._NOUNS]
                 m = BIN_Db.prefix_meanings(m, prefix)
-                m = BIN_Db.open_cats(m) # Only allows meanings from open word categories (nouns, verbs, adjectives, adverbs)
+                # Only allows meanings from open word categories
+                # (nouns, verbs, adjectives, adverbs)
+                m = BIN_Db.open_cats(m)
 
-        if not m and lower_w.startswith('ó'):
+        if not m and lower_w.startswith("ó"):
             # Check whether an adjective without the 'ó' prefix is found in BÍN
             # (i.e. create 'óhefðbundinn' from 'hefðbundinn')
             suffix = lower_w[1:]
             if suffix:
                 om = lookup(suffix)
                 if om:
-                    m = [ BIN_Meaning("ó" + r.stofn, r.utg, r.ordfl, r.fl,
-                        "ó" + r.ordmynd, r.beyging)
-                        for r in om if r.ordfl == "lo" ]
+                    m = [
+                        BIN_Meaning(
+                            "ó" + r.stofn,
+                            r.utg,
+                            r.ordfl,
+                            r.fl,
+                            "ó" + r.ordmynd,
+                            r.beyging,
+                        )
+                        for r in om
+                        if r.ordfl == "lo"
+                    ]
 
         if not m and auto_uppercase and w.islower():
             # If no meaning found and we're auto-uppercasing,
@@ -359,4 +388,3 @@ class BIN_Db:
 
         # noinspection PyRedundantParentheses
         return (w, m)
-

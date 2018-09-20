@@ -35,9 +35,6 @@
 import os
 import threading
 import time
-import pickle
-import platform
-import codecs
 import struct
 import mmap
 
