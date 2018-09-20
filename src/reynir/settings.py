@@ -223,10 +223,12 @@ class Prepositions:
 
     # Dictionary of prepositions: preposition -> { set of cases that it controls }
     PP = defaultdict(set)
-    PP_PLURAL = set()
     # Prepositions that can be followed by an infinitive verb phrase
     # 'Beiðnin um að handtaka manninn var send lögreglunni'
     PP_NH = set()
+    # Corresponding dict and set containing errors.
+    PP_ERRORS = defaultdict(set)
+    PP_NH_ERRORS = set()
 
     @staticmethod
     def add(prep, case, nh):
@@ -234,6 +236,13 @@ class Prepositions:
         Prepositions.PP[prep].add(case)
         if nh:
             Prepositions.PP_NH.add(prep)
+
+    @staticmethod
+    def add_errors(prep, case, nh, corr):
+        """ Add a preposition and its case. Called from the config file handler. """
+        Prepositions.PP_ERRORS[prep].add(case)
+        if nh:
+            Prepositions.PP_NH_ERRORS.add(prep)
 
 
 class AdjectiveTemplate:
@@ -795,7 +804,18 @@ class Settings:
     @staticmethod
     def _handle_prepositions(s):
         """ Handle preposition specifications in the settings section """
-        # Format: pw1 pw2... case [nh]
+        # Format: pw1 pw2... case [nh]  [$error(X)]
+        #print(s)
+        # TODO: Only read this in if correction is chosen!
+        error = False
+        corr = []
+        ix = s.rfind("$error(") # Must be at the end
+        if ix >= 0:
+            #print(s[ix:].strip())
+            error = True
+            e = s[ix+7:].strip(")").split("-")
+            corr = (e[0], " ".join(e[1].split("_")))
+            s = s[:ix].strip()
         a = s.split()
         if len(a) < 2:
             raise ConfigError("Preposition must specify a word and a case argument")
@@ -812,6 +832,8 @@ class Settings:
             raise ConfigError("Preposition must have a case argument (nf/þf/þgf/ef)")
         pp = " ".join(a[:-1]) # Preposition, possibly multi-word
         Prepositions.add(pp, c, nh)
+        #if error:
+        #    Prepositions.add_errors(pp, c, nh, corr)
 
     @staticmethod
     def _handle_preferences(s):
