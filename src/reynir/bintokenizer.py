@@ -230,38 +230,36 @@ CURRENCY_GENDERS = {
 }
 
 
-def annotate(token_stream, auto_uppercase):
+def annotate(db, token_stream, auto_uppercase):
     """ Look up word forms in the BIN word database. If auto_uppercase
         is True, change lower case words to uppercase if it looks likely
         that they should be uppercase. """
 
     at_sentence_start = False
 
-    with BIN_Db.get_db() as db:
-
-        # Consume the iterable source in wlist (which may be a generator)
-        for t in token_stream:
-            if t.kind != TOK.WORD:
-                # Not a word: relay the token unchanged
-                yield t
-                if t.kind == TOK.S_BEGIN or (
-                    t.kind == TOK.PUNCTUATION and t.txt == ":"
-                ):
-                    at_sentence_start = True
-                elif t.kind != TOK.PUNCTUATION and t.kind != TOK.ORDINAL:
-                    at_sentence_start = False
-                continue
-            if t.val is None:
-                # Look up word in BIN database
-                w, m = db.lookup_word(t.txt, at_sentence_start, auto_uppercase)
-                # Yield a word tuple with meanings
-                yield TOK.Word(w, m)
-            else:
-                # Already have a meaning, which probably needs conversion
-                # from a bare tuple to a BIN_Meaning
-                yield TOK.Word(t.txt, list(map(BIN_Meaning._make, t.val)))
-            # No longer at sentence start
-            at_sentence_start = False
+    # Consume the iterable source in wlist (which may be a generator)
+    for t in token_stream:
+        if t.kind != TOK.WORD:
+            # Not a word: relay the token unchanged
+            yield t
+            if t.kind == TOK.S_BEGIN or (
+                t.kind == TOK.PUNCTUATION and t.txt == ":"
+            ):
+                at_sentence_start = True
+            elif t.kind != TOK.PUNCTUATION and t.kind != TOK.ORDINAL:
+                at_sentence_start = False
+            continue
+        if t.val is None:
+            # Look up word in BIN database
+            w, m = db.lookup_word(t.txt, at_sentence_start, auto_uppercase)
+            # Yield a word tuple with meanings
+            yield TOK.Word(w, m)
+        else:
+            # Already have a meaning, which probably needs conversion
+            # from a bare tuple to a BIN_Meaning
+            yield TOK.Word(t.txt, list(map(BIN_Meaning._make, t.val)))
+        # No longer at sentence start
+        at_sentence_start = False
 
 
 def match_stem_list(token, stems, filter_func=None):
@@ -364,206 +362,204 @@ def all_genders(token):
     return list(g)
 
 
-def parse_phrases_1(token_stream):
+def parse_phrases_1(db, token_stream):
 
     """ Parse numbers and amounts """
 
-    with BIN_Db.get_db() as db:
+    token = None
+    try:
 
-        token = None
-        try:
+        # Maintain a one-token lookahead
+        token = next(token_stream)
+        while True:
+            next_token = next(token_stream)
 
-            # Maintain a one-token lookahead
-            token = next(token_stream)
-            while True:
-                next_token = next(token_stream)
+            # Logic for numbers that are partially or entirely
+            # written out in words
 
-                # Logic for numbers that are partially or entirely
-                # written out in words
+            def number(tok):
+                """ If the token denotes a number, return that number - or None """
+                if tok.txt.lower() == "áttu":
+                    # Do not accept 'áttu' (stem='átta', no kvk) as a number
+                    return None
+                return match_stem_list(
+                    tok,
+                    MULTIPLIERS,
+                    filter_func=lambda m: m.ordfl in NUMBER_CATEGORIES,
+                )
 
-                def number(tok):
-                    """ If the token denotes a number, return that number - or None """
-                    if tok.txt.lower() == "áttu":
-                        # Do not accept 'áttu' (stem='átta', no kvk) as a number
-                        return None
-                    return match_stem_list(
-                        tok,
-                        MULTIPLIERS,
-                        filter_func=lambda m: m.ordfl in NUMBER_CATEGORIES,
-                    )
+            # Check whether we have an initial number word
+            multiplier = number(token) if token.kind == TOK.WORD else None
 
-                # Check whether we have an initial number word
-                multiplier = number(token) if token.kind == TOK.WORD else None
+            # Check for [number] 'hundred|thousand|million|billion'
+            while (
+                token.kind == TOK.NUMBER or multiplier is not None
+            ) and next_token.kind == TOK.WORD:
 
-                # Check for [number] 'hundred|thousand|million|billion'
-                while (
-                    token.kind == TOK.NUMBER or multiplier is not None
-                ) and next_token.kind == TOK.WORD:
+                multiplier_next = number(next_token)
 
-                    multiplier_next = number(next_token)
-
-                    def convert_to_num(token):
-                        if multiplier is not None:
-                            token = TOK.Number(
-                                token.txt,
-                                multiplier,
-                                all_cases(token),
-                                all_genders(token),
-                            )
-                        return token
-
-                    if multiplier_next is not None:
-                        # Retain the case of the last multiplier, except
-                        # if it is possessive (eignarfall) and the previous
-                        # token had a case ('hundruðum milljarða' is dative,
-                        # not possessive)
-                        next_case = all_cases(next_token)
-                        next_gender = all_genders(next_token)
-                        if "ef" in next_case:
-                            # We may have something like 'hundruðum milljarða':
-                            # use the case and gender of 'hundruðum', not 'milljarða'
-                            next_case = all_cases(token) or next_case
-                            next_gender = all_genders(token) or next_gender
-                        token = convert_to_num(token)
+                def convert_to_num(token):
+                    if multiplier is not None:
                         token = TOK.Number(
-                            token.txt + " " + next_token.txt,
-                            token.val[0] * multiplier_next,
-                            next_case,
-                            next_gender,
+                            token.txt,
+                            multiplier,
+                            all_cases(token),
+                            all_genders(token),
                         )
-                        # Eat the multiplier token
-                        next_token = next(token_stream)
-                    elif next_token.txt in AMOUNT_ABBREV:
-                        # Abbreviations for ISK amounts
-                        # For abbreviations, we do not know the case,
-                        # but we try to retain the previous case information if any
+                    return token
+
+                if multiplier_next is not None:
+                    # Retain the case of the last multiplier, except
+                    # if it is possessive (eignarfall) and the previous
+                    # token had a case ('hundruðum milljarða' is dative,
+                    # not possessive)
+                    next_case = all_cases(next_token)
+                    next_gender = all_genders(next_token)
+                    if "ef" in next_case:
+                        # We may have something like 'hundruðum milljarða':
+                        # use the case and gender of 'hundruðum', not 'milljarða'
+                        next_case = all_cases(token) or next_case
+                        next_gender = all_genders(token) or next_gender
+                    token = convert_to_num(token)
+                    token = TOK.Number(
+                        token.txt + " " + next_token.txt,
+                        token.val[0] * multiplier_next,
+                        next_case,
+                        next_gender,
+                    )
+                    # Eat the multiplier token
+                    next_token = next(token_stream)
+                elif next_token.txt in AMOUNT_ABBREV:
+                    # Abbreviations for ISK amounts
+                    # For abbreviations, we do not know the case,
+                    # but we try to retain the previous case information if any
+                    token = convert_to_num(token)
+                    token = TOK.Amount(
+                        token.txt + " " + next_token.txt,
+                        "ISK",
+                        token.val[0] * AMOUNT_ABBREV[next_token.txt],  # Number
+                        token.val[1],
+                        token.val[2],
+                    )  # Cases and gender
+                    next_token = next(token_stream)
+                else:
+                    # Check for [number] 'percent'
+                    percentage = match_stem_list(next_token, PERCENTAGES)
+                    if percentage is not None:
                         token = convert_to_num(token)
-                        token = TOK.Amount(
+                        token = TOK.Percent(
                             token.txt + " " + next_token.txt,
-                            "ISK",
-                            token.val[0] * AMOUNT_ABBREV[next_token.txt],  # Number
-                            token.val[1],
-                            token.val[2],
-                        )  # Cases and gender
+                            token.val[0],
+                            all_cases(next_token),
+                            all_genders(next_token),
+                        )
+                        # Eat the percentage token
                         next_token = next(token_stream)
                     else:
-                        # Check for [number] 'percent'
-                        percentage = match_stem_list(next_token, PERCENTAGES)
-                        if percentage is not None:
-                            token = convert_to_num(token)
-                            token = TOK.Percent(
+                        break
+
+                multiplier = None
+
+            # Check for currency name doublets, for example
+            # 'danish krona' or 'british pound'
+            if token.kind == TOK.WORD and next_token.kind == TOK.WORD:
+                nat = match_stem_list(token, NATIONALITIES)
+                if nat is not None:
+                    cur = match_stem_list(next_token, CURRENCIES)
+                    if cur is not None:
+                        if (nat, cur) in ISO_CURRENCIES:
+                            # Match: accumulate the possible cases
+                            iso_code = ISO_CURRENCIES[(nat, cur)]
+                            # Filter the possible cases by considering adjectives
+                            # having a strong declination (indefinite form) only
+                            token = TOK.Currency(
                                 token.txt + " " + next_token.txt,
-                                token.val[0],
-                                all_cases(next_token),
-                                all_genders(next_token),
-                            )
-                            # Eat the percentage token
-                            next_token = next(token_stream)
-                        else:
-                            break
-
-                    multiplier = None
-
-                # Check for currency name doublets, for example
-                # 'danish krona' or 'british pound'
-                if token.kind == TOK.WORD and next_token.kind == TOK.WORD:
-                    nat = match_stem_list(token, NATIONALITIES)
-                    if nat is not None:
-                        cur = match_stem_list(next_token, CURRENCIES)
-                        if cur is not None:
-                            if (nat, cur) in ISO_CURRENCIES:
-                                # Match: accumulate the possible cases
-                                iso_code = ISO_CURRENCIES[(nat, cur)]
-                                # Filter the possible cases by considering adjectives
-                                # having a strong declination (indefinite form) only
-                                token = TOK.Currency(
-                                    token.txt + " " + next_token.txt,
-                                    iso_code,
-                                    all_common_cases(
-                                        token,
-                                        next_token,
-                                        lambda m: (
-                                            m.ordfl == "lo" and "SB" in m.beyging
-                                        ),
+                                iso_code,
+                                all_common_cases(
+                                    token,
+                                    next_token,
+                                    lambda m: (
+                                        m.ordfl == "lo" and "SB" in m.beyging
                                     ),
-                                    [CURRENCY_GENDERS[cur]],
-                                )
-                                next_token = next(token_stream)
+                                ),
+                                [CURRENCY_GENDERS[cur]],
+                            )
+                            next_token = next(token_stream)
 
-                # Check for composites:
-                # 'stjórnskipunar- og eftirlitsnefnd'
-                # 'viðskipta- og iðnaðarráðherra'
-                # 'marg-ítrekaðri'
-                if (
-                    token.kind == TOK.WORD
-                    and next_token.kind == TOK.PUNCTUATION
-                    and next_token.txt == COMPOSITE_HYPHEN
+            # Check for composites:
+            # 'stjórnskipunar- og eftirlitsnefnd'
+            # 'viðskipta- og iðnaðarráðherra'
+            # 'marg-ítrekaðri'
+            if (
+                token.kind == TOK.WORD
+                and next_token.kind == TOK.PUNCTUATION
+                and next_token.txt == COMPOSITE_HYPHEN
+            ):
+
+                og_token = next(token_stream)
+                if og_token.kind != TOK.WORD or (
+                    og_token.txt != "og" and og_token.txt != "eða"
                 ):
-
-                    og_token = next(token_stream)
-                    if og_token.kind != TOK.WORD or (
-                        og_token.txt != "og" and og_token.txt != "eða"
-                    ):
-                        # Incorrect prediction: make amends and continue
-                        handled = False
-                        if og_token.kind == TOK.WORD:
-                            composite = token.txt + "-" + og_token.txt
-                            if token.txt.lower() in ADJECTIVE_PREFIXES:
-                                # hálf-opinberri, marg-ítrekaðri
-                                token = TOK.Word(
-                                    composite,
-                                    [
-                                        m
-                                        for m in og_token.val
-                                        if m.ordfl == "lo" or m.ordfl == "ao"
-                                    ],
-                                )
+                    # Incorrect prediction: make amends and continue
+                    handled = False
+                    if og_token.kind == TOK.WORD:
+                        composite = token.txt + "-" + og_token.txt
+                        if token.txt.lower() in ADJECTIVE_PREFIXES:
+                            # hálf-opinberri, marg-ítrekaðri
+                            token = TOK.Word(
+                                composite,
+                                [
+                                    m
+                                    for m in og_token.val
+                                    if m.ordfl == "lo" or m.ordfl == "ao"
+                                ],
+                            )
+                            next_token = next(token_stream)
+                            handled = True
+                        else:
+                            # Check for Vestur-Þýskaland, Suður-Múlasýsla (which are in BÍN in their entirety)
+                            m = db.meanings(composite)
+                            if m:
+                                # Found composite in BÍN: return it as a single token
+                                token = TOK.Word(composite, m)
                                 next_token = next(token_stream)
                                 handled = True
-                            else:
-                                # Check for Vestur-Þýskaland, Suður-Múlasýsla (which are in BÍN in their entirety)
-                                m = db.meanings(composite)
-                                if m:
-                                    # Found composite in BÍN: return it as a single token
-                                    token = TOK.Word(composite, m)
-                                    next_token = next(token_stream)
-                                    handled = True
-                        if not handled:
-                            yield token
-                            # Put a normal hyphen instead of the composite one
-                            token = TOK.Punctuation(HYPHEN)
-                            next_token = og_token
+                    if not handled:
+                        yield token
+                        # Put a normal hyphen instead of the composite one
+                        token = TOK.Punctuation(HYPHEN)
+                        next_token = og_token
+                else:
+                    # We have 'viðskipta- og'
+                    final_token = next(token_stream)
+                    if final_token.kind != TOK.WORD:
+                        # Incorrect: unwind
+                        yield token
+                        yield TOK.Punctuation(HYPHEN)  # Normal hyphen
+                        token = og_token
+                        next_token = final_token
                     else:
-                        # We have 'viðskipta- og'
-                        final_token = next(token_stream)
-                        if final_token.kind != TOK.WORD:
-                            # Incorrect: unwind
-                            yield token
-                            yield TOK.Punctuation(HYPHEN)  # Normal hyphen
-                            token = og_token
-                            next_token = final_token
-                        else:
-                            # We have 'viðskipta- og iðnaðarráðherra'
-                            # Return a single token with the meanings of
-                            # the last word, but an amalgamated token text.
-                            # Note: there is no meaning check for the first
-                            # part of the composition, so it can be an unknown word.
-                            txt = (
-                                token.txt + "- " + og_token.txt + " " + final_token.txt
-                            )
-                            token = TOK.Word(txt, final_token.val)
-                            next_token = next(token_stream)
+                        # We have 'viðskipta- og iðnaðarráðherra'
+                        # Return a single token with the meanings of
+                        # the last word, but an amalgamated token text.
+                        # Note: there is no meaning check for the first
+                        # part of the composition, so it can be an unknown word.
+                        txt = (
+                            token.txt + "- " + og_token.txt + " " + final_token.txt
+                        )
+                        token = TOK.Word(txt, final_token.val)
+                        next_token = next(token_stream)
 
-                # Yield the current token and advance to the lookahead
-                yield token
-                token = next_token
-
-        except StopIteration:
-            pass
-
-        # Final token (previous lookahead)
-        if token:
+            # Yield the current token and advance to the lookahead
             yield token
+            token = next_token
+
+    except StopIteration:
+        pass
+
+    # Final token (previous lookahead)
+    if token:
+        yield token
 
 
 def parse_phrases_2(token_stream):
@@ -1175,39 +1171,96 @@ def disambiguate_phrases(token_stream):
     yield from tq
 
 
-def tokenize(text, auto_uppercase=False, *, correction_func=None):
-    """ Tokenize text in several phases, returning a generator of tokens
-        that processes the text on-demand. If auto_uppercase is True, the tokenizer
-        attempts to correct lowercase words that probably should be uppercase.
-        If correction_func is not None, the given generator function is inserted
-        into the token chain after processing static phrases but before
-        BÍN annotation. This gives an opportunity to perform context-independent
-        spelling corrections and the like. """
+class DefaultPipeline:
 
-    # Thank you Python for enabling this programming pattern ;-)
+    """ A DefaultPipeline encapsulates a sequence of tokenization
+        phases, with each phase being a generator that accepts
+        tokens from its input stream and yields tokens on its
+        output stream. Individual phases in the sequence can
+        easily be overridden in derived classes. """
 
-    token_stream = tokenize_without_annotation(text)
+    def __init__(self, text, auto_uppercase):
+        self._text = text
+        self._auto_uppercase = auto_uppercase
+        self._db = None
+        # Initialize the default tokenizer pipeline.
+        # This sequence of phases can be modified in derived classes.
+        self._phases = [
+            self.tokenize_without_annotation,
+            self.correct,
+            self.parse_static_phrases,
+            self.annotate,
+            self.lookup_unknown_words,
+            self.parse_phrases_1,
+            self.parse_phrases_2,
+            self.disambiguate_phrases
+        ]
 
-    # Static multiword phrases
-    token_stream = parse_static_phrases(token_stream, auto_uppercase)
+    def tokenize_without_annotation(self):
+        """ The basic, raw tokenization from the tokenizer package """
+        return tokenize_without_annotation(self._text)
 
-    # Inject a correction function, if supplied
-    if correction_func is not None:
-        token_stream = correction_func(token_stream)
+    def parse_static_phrases(self, stream):
+        """ Static multiword phrases """
+        return parse_static_phrases(stream, self._auto_uppercase)
 
-    # Lookup meanings from dictionary
-    token_stream = annotate(token_stream, auto_uppercase)
+    def correct(self, stream):
+        """ Token correction can be plugged in here (default stack doesn't do
+            any corrections, but this is overridden in ReynirCorrect) """
+        return stream
 
-    # Numbers and amounts
-    token_stream = parse_phrases_1(token_stream)
+    def annotate(self, stream):
+        """ Lookup meanings from dictionary """
+        return annotate(self._db, stream, self._auto_uppercase)
 
-    # Currencies, person names
-    token_stream = parse_phrases_2(token_stream)
+    def lookup_unknown_words(self, stream):
+        """ Lookup unknown words. Default stack doesn't do anything,
+            but derived classes can override this. """
+        return stream
 
-    # Eliminate very uncommon meanings
-    token_stream = disambiguate_phrases(token_stream)
+    def parse_phrases_1(self, stream):
+        """ Numbers and amounts """
+        return parse_phrases_1(self._db, stream)
 
-    return token_stream
+    def parse_phrases_2(self, stream):
+        """ Currencies, person names """
+        return parse_phrases_2(stream)
+
+    def disambiguate_phrases(self, stream):
+        """ Eliminate very uncommon meanings """
+        return disambiguate_phrases(stream)
+
+    def tokenize(self):
+        """ Tokenize text in several phases, returning a generator of tokens
+            that processes the text on-demand. If auto_uppercase is True, the tokenizer
+            attempts to correct lowercase words that probably should be uppercase.
+            If correction_func is not None, the given generator function is inserted
+            into the token chain after processing static phrases but before
+            BÍN annotation. This gives an opportunity to perform context-independent
+            spelling corrections and the like. """
+
+        # Thank you Python for enabling this programming pattern ;-)
+
+        if self._db is not None:
+            # This should never occur, even in multi-threaded programs, since
+            # each tokenize() call creates its own instance of DefaultPipeline
+            raise ValueError("DefaultPipeline.tokenize() is not re-entrant")
+
+        with BIN_Db.get_db() as db:
+            try:
+                self._db = db
+                token_stream = self._phases[0]()
+                for phase in self._phases[1:]:
+                    token_stream = phase(token_stream)
+                return token_stream
+            finally:
+                self._db = None
+
+
+def tokenize(text, auto_uppercase=False):
+    """ Tokenize text using the default pipeline """
+    pipeline = DefaultPipeline(text, auto_uppercase)
+    return pipeline.tokenize()
 
 
 def stems_of_token(t):
