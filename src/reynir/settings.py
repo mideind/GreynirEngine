@@ -55,7 +55,7 @@ class ConfigError(Exception):
     """ Exception class for configuration errors """
 
     def __init__(self, s):
-        Exception.__init__(self, s)
+        super().__init__(s)
         self.fname = None
         self.line = 0
 

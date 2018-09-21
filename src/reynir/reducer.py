@@ -73,15 +73,9 @@
 import copy
 from collections import defaultdict
 
-# Make imports work both in Reynir and in ReynirPackage
-if not __package__:
-    from fastparser import Node, ParseForestNavigator, ParseForestPrinter
-    from settings import Preferences, NounPreferences, VerbObjects
-    from binparser import BIN_Token
-else:
-    from .fastparser import Node, ParseForestNavigator, ParseForestPrinter
-    from .settings import Preferences, NounPreferences, VerbObjects
-    from .binparser import BIN_Token
+from .fastparser import Node, ParseForestNavigator, ParseForestPrinter
+from .settings import Preferences, NounPreferences, VerbObjects
+from .binparser import BIN_Token
 
 
 _PREP_SCOPE_SET = frozenset(("begin_prep_scope", "purge_prep", "no_prep"))
