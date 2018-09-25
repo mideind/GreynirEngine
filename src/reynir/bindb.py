@@ -124,6 +124,14 @@ class BIN_Db:
             self._compressed_bin.close()
             self._compressed_bin = None
 
+    def contains(self, w):
+        """ Returns True if the given word form is found in BÍN """
+        return self._compressed_bin.contains(w)
+
+    def __contains__(self, w):
+        """ Returns True if the given word form is found in BÍN """
+        return self._compressed_bin.contains(w)
+
     def _meanings(self, w):
         """ Low-level fetch of the BIN meanings of a given word """
         # Route the lookup request to the compressed binary file

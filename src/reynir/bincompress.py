@@ -789,12 +789,12 @@ class BIN_Compressed:
             return 0, b"", b""
         return len(word), word_latin, cword
 
-    def _raw_lookup(self, word):
+    def _mapping(self, word):
         """ Look up the given word form via the radix trie,
-            returning a list of stem and meaning indices """
+            returning the offset of its mapping list, or None if not found """
         word_len, word_latin, cword = self._prepare(word)
         if word_len == 0:
-            return []
+            return None
 
         def _matches(node_offset, hdr, fragment_index):
             """ If the lookup fragment word[fragment_index:] matches the node,
@@ -833,35 +833,45 @@ class BIN_Compressed:
             return 0 if self._b[frag] > word_latin[fragment_index + matched] else -1
 
         def _lookup(node_offset, hdr, fragment_index):
-            if fragment_index >= word_len:
-                # We've arrived at our destination:
-                # return the associated value (unless this is an interim node)
-                value = hdr & 0x007FFFFF
-                return None if value == 0x007FFFFF else value
-            if hdr & 0x40000000:
-                # Childless node: nowhere to go
-                return None
-            num_children = self._UINT(node_offset + 4)
-            child_offset = node_offset + 8
-            # Binary search for a matching child node
-            lo = 0
-            hi = num_children
-            while hi > lo:
-                mid = (lo + hi) // 2
-                mid_loc = child_offset + mid * 4
-                mid_offset = self._UINT(mid_loc)
-                hdr = self._UINT(mid_offset)
-                match_len = _matches(mid_offset, hdr, fragment_index)
-                if match_len > 0:
-                    return _lookup(mid_offset, hdr, fragment_index + match_len)
-                if match_len < 0:
-                    lo = mid + 1
-                else:
-                    hi = mid
-            # No child route matches
-            return None
+            while True:
+                if fragment_index >= word_len:
+                    # We've arrived at our destination:
+                    # return the associated value (unless this is an interim node)
+                    value = hdr & 0x007FFFFF
+                    return None if value == 0x007FFFFF else value
+                if hdr & 0x40000000:
+                    # Childless node: nowhere to go
+                    return None
+                num_children = self._UINT(node_offset + 4)
+                child_offset = node_offset + 8
+                # Binary search for a matching child node
+                lo = 0
+                hi = num_children
+                while True:
+                    if lo >= hi:
+                        # No child route matches
+                        return None
+                    mid = (lo + hi) // 2
+                    mid_loc = child_offset + mid * 4
+                    mid_offset = self._UINT(mid_loc)
+                    hdr = self._UINT(mid_offset)
+                    match_len = _matches(mid_offset, hdr, fragment_index)
+                    if match_len > 0:
+                        # Set a new starting point and restart from the top
+                        node_offset = mid_offset
+                        fragment_index += match_len
+                        break
+                    if match_len < 0:
+                        lo = mid + 1
+                    else:
+                        hi = mid
 
-        mapping = _lookup(self._forms_offset, self._forms_root_hdr, 0)
+        return _lookup(self._forms_offset, self._forms_root_hdr, 0)
+
+    def _raw_lookup(self, word):
+        """ Return a list of stem/meaning tuples for the word, or
+            an empty list if it is not found in the trie """
+        mapping = self._mapping(word)
         if mapping is None:
             # Word not found in trie: return an empty list of meanings
             return []
@@ -878,6 +888,14 @@ class BIN_Compressed:
                 break
             mapping += 1
         return result
+
+    def contains(self, word):
+        """ Returns True if the trie contains the given word form"""
+        return self._mapping(word) is not None
+
+    def __contains__(self, word):
+        """ Returns True if the trie contains the given word form"""
+        return self._mapping(word) is not None
 
     def lookup(self, word):
         """ Returns a list of BÍN meanings for the given word form """
