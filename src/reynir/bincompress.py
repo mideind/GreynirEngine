@@ -59,6 +59,8 @@ import time
 import struct
 from collections import defaultdict
 
+from ._bin import lib as bin, ffi
+
 
 _PATH = os.path.dirname(__file__) or "."
 
@@ -782,7 +784,7 @@ class BIN_Compressed:
         # compact 7-bit-per-character representation
         try:
             word_latin = word.encode('latin-1')
-            cword = bytes(self._alphabet.index(c) + 1 for c in word_latin)
+            cword = bytes([self._alphabet.index(c) + 1 for c in word_latin])
         except (UnicodeEncodeError, ValueError):
             # The word contains a letter that is not in the Latin-1
             # or BÍN alphabets: it can't be in BÍN
