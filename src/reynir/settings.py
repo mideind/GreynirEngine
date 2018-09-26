@@ -541,6 +541,7 @@ class AllowedMultiples:
     def add(word):
         AllowedMultiples.SET.add(word)
 
+
 class WrongCompounds:
     # Dictionary structure: dict { wrong_compound : "right phrase" }
     DICT = {}
@@ -549,16 +550,15 @@ class WrongCompounds:
     def add(split):
         WrongCompounds.DICT[split[0]] = split[1]
 
-class SplitCompounds:
-    # Dictionary structure: dict { "wrong phrase" : right_compound }
-    DICT = {}
-    LIST = []
 
+class SplitCompounds:
+    # Set containing whole phrases
+    SET = set()
+    
     @staticmethod
-    def add(split):
-        wordsplit = split[0].split(" ")
-        SplitCompounds.DICT[split[0]] = split[1]
-        SplitCompounds.LIST.append(split)
+    def add(s):
+        SplitCompounds.SET.add(s)
+
 
 # Magic stuff to change locale context temporarily
 
@@ -1058,6 +1058,7 @@ class Settings:
         AmbigPhrases.add(words, cats)
         if error:
             AmbigPhrases.add_error(s[1:q].strip().lower(), e)
+
     @staticmethod
     def _handle_adjective_template(s):
         """ Handle the template for new adjectives in the settings section """
@@ -1080,19 +1081,21 @@ class Settings:
             )
         DisallowedNames.add(a[0], a[1:])
 
+    @staticmethod
     def _allowed_multiples(s):
         ix = s.rfind(" ")
         if ix >= 0:
             raise ConfigError("Allowed multiples must only contain one word")
         AllowedMultiples.add(s)
 
+    @staticmethod
     def _wrong_compounds(s):
         split = s.strip("\"").split("\", \"")
         WrongCompounds.add(split)
 
+    @staticmethod
     def _split_compounds(s):
-        split = s.strip("\"").split("\", \"")
-        SplitCompounds.add(split)
+        SplitCompounds.add(s)
 
     @staticmethod
     def read(fname):
