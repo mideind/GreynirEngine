@@ -42,11 +42,11 @@ WINDOWS = platform.system() == "Windows"
 
 declarations = """
 
-    typedef unsigned int UINT;
+    typedef uint32_t UINT;
     typedef char CHAR;
     typedef unsigned char BYTE;
 
-    UINT mapping(BYTE* pbMap, CHAR* pszWord);
+    UINT mapping(const BYTE* pbMap, const CHAR* pszWord);
 
 """
 

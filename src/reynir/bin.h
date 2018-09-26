@@ -30,6 +30,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 
 // Assert macro
@@ -40,13 +41,13 @@
 #endif
 
 
-typedef unsigned int UINT;
-typedef int INT;
-typedef char CHAR;
-typedef unsigned char BYTE;
+typedef uint32_t UINT;
+typedef int32_t INT;
+typedef uint8_t CHAR;
+typedef uint8_t BYTE;
 typedef bool BOOL;
 
 
 // Map a word to an offset within the memory mapped buffer
-extern "C" UINT mapping(BYTE* pbMap, CHAR* pszWord);
+extern "C" UINT mapping(const BYTE* pbMap, const CHAR* pszWord);
 

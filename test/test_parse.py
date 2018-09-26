@@ -1176,6 +1176,17 @@ def test_composite_words():
     assert s.lemmas == ['ég', 'borða', 'sykrisaltan', 'fiskinn']
 
 
+def test_compressed_bin():
+    import reynir.bincompress as bc
+    binc = bc.BIN_Compressed()
+    assert "gleraugu" in binc
+    assert "Ísland" in binc
+    assert "Vestur-Þýskaland" in binc
+    assert "glerxaugu" not in binc
+    assert "x" not in binc
+    assert "X" not in binc
+
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -1183,6 +1194,7 @@ def test_finish():
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     test_init()
+    test_compressed_bin()
     test_parse(verbose=True)
     test_properties()
     test_long_parse(verbose=True)
