@@ -560,6 +560,20 @@ class SplitCompounds:
         SplitCompounds.SET.add(s)
 
 
+class AdjectivePredicates:
+    # dict { adjective lemma : argument }
+    ARGUMENTS = {}
+    # dict { adjective lemma : [ (preposition, case) ] }
+    PREPOSITIONS = defaultdict(list)
+
+    @staticmethod
+    def add(adj, arg, prepositions):
+        if arg:
+            AdjectivePredicates.ARGUMENTS[adj] = arg
+        if prepositions:
+            for each in prepositions:
+                AdjectivePredicates.PREPOSITIONS[adj] = (each[0], each[1])
+
 # Magic stuff to change locale context temporarily
 
 
@@ -1098,6 +1112,27 @@ class Settings:
         SplitCompounds.add(s)
 
     @staticmethod
+    def _adjective_predicates(s):
+        # Process preposition arguments, if any
+        prepositions = []
+        ap = s.split("/")
+        s = ap[0]
+        ix = 1
+        while len(ap) > ix:
+            # We expect something like 'af þgf'
+            p = ap[ix].strip()
+            parg = p.split()
+            if len(parg) != 2:
+                raise ConfigError("Preposition should have exactly one argument")
+            if parg[1] not in _ALL_CASES:
+                raise ConfigError("Unknown argument case for preposition")
+            prepositions.append((parg[0], parg[1]))
+            ix += 1
+        a = s.split()
+        adj = a[0]
+        AdjectivePredicates.add(adj, a[1:], prepositions)
+
+    @staticmethod
     def read(fname):
         """ Read configuration file """
 
@@ -1127,6 +1162,7 @@ class Settings:
                 "allowed_multiples": Settings._allowed_multiples,
                 "wrong_compounds": Settings._wrong_compounds,
                 "split_compounds": Settings._split_compounds,
+                "adjective_predicates": Settings._adjective_predicates,
             }
             handler = None  # Current section handler
 
