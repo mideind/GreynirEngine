@@ -319,7 +319,8 @@ class StaticPhrases:
     LIST = []
     # Parsing dictionary keyed by first word of phrase
     DICT = {}
-
+    # Error dictionary, { phrase : (error_code, right_phrase, right_tag_string, right_lemma_string) }
+    ERROR_DICT = {}
     @staticmethod
     def add(spec):
         """ Add a static phrase to the dictionary. Called from the config file handler. """
@@ -377,6 +378,11 @@ class StaticPhrases:
             d[w] = [(wlist[1:], ix)]
 
     @staticmethod
+    def add_errors(words, error):
+        # Dictionary structure : { phrase : (error_code, right_phrase, right_tag_string, right_lemma_string) }
+        StaticPhrases.ERROR_DICT[words] = error
+
+    @staticmethod
     def set_meaning(meaning):
         """ Set the default meaning for static phrases """
         StaticPhrases.MEANING = tuple(meaning)
@@ -422,6 +428,8 @@ class AmbigPhrases:
     LIST = []
     # Parsing dictionary keyed by first word of phrase
     DICT = defaultdict(list)
+    # Error dictionary, { phrase : (error_code, right_phrase, right_parts_of_speech) }
+    ERROR_DICT = defaultdict(list)
 
     @staticmethod
     def add(words, cats):
@@ -435,6 +443,11 @@ class AmbigPhrases:
 
         # Dictionary structure: dict { firstword: [ (restword_list, phrase_index) ] }
         AmbigPhrases.DICT[words[0]].append((words[1:], ix))
+
+    @staticmethod
+    def add_error(words, error):
+        # Dictionary structure: dict { phrase : (error_code, right_phrase, right_parts_of_speech) }
+        AmbigPhrases.ERROR_DICT[words] = error
 
     @staticmethod
     def get_cats(ix):
@@ -519,6 +532,33 @@ class Topics:
         # Add to topic set, after replacing spaces with underscores
         Topics.DICT[Topics._name].add(word.replace(" ", "_"))
 
+
+class AllowedMultiples:
+    # Set of word forms allowed to appear more than once in a row
+    SET = set()
+
+    @staticmethod
+    def add(word):
+        AllowedMultiples.SET.add(word)
+
+class WrongCompounds:
+    # Dictionary structure: dict { wrong_compound : "right phrase" }
+    DICT = {}
+
+    @staticmethod
+    def add(split):
+        WrongCompounds.DICT[split[0]] = split[1]
+
+class SplitCompounds:
+    # Dictionary structure: dict { "wrong phrase" : right_compound }
+    DICT = {}
+    LIST = []
+
+    @staticmethod
+    def add(split):
+        wordsplit = split[0].split(" ")
+        SplitCompounds.DICT[split[0]] = split[1]
+        SplitCompounds.LIST.append(split)
 
 # Magic stuff to change locale context temporarily
 
@@ -728,8 +768,17 @@ class Settings:
     @staticmethod
     def _handle_static_phrases(s):
         """ Handle static phrases in the settings section """
+        error = False
         if "=" not in s:
+            ix = s.rfind("$error(")  # Must be at the end
+            if ix >= 0:
+                error = True
+                # A typical format is $error(error_code, right_phrase, right_parts_of_speech)
+                e = s[ix + 7 :].lstrip().rstrip(" )").split(", ")
+                s = s[:ix].strip()
             StaticPhrases.add(s)
+            if error:
+                StaticPhrases.add_errors(s.split(",")[0], e)
             return
         # Check for a meaning spec
         a = s.split("=", maxsplit=1)
@@ -981,8 +1030,17 @@ class Settings:
     def _handle_ambiguous_phrases(s):
         """ Handle ambiguous phrase guidance in the settings section """
         # Format: "word1 word2..." cat1 cat2...
+        #print(s)
+        error = False
         if s[0] != '"':
             raise ConfigError("Ambiguous phrase must be enclosed in double quotes")
+        #print(s)
+        ix = s.rfind("$error(")  # Must be at the end
+        if ix >= 0:
+            error = True
+            # A typical format is $error(error_code, right_phrase, right_parts_of_speech)
+            e = s[ix + 7 :].lstrip().rstrip(" )").split(", ")
+            s = s[:ix].strip()
         q = s.rfind('"')
         if q <= 0:
             raise ConfigError("Ambiguous phrase must be enclosed in double quotes")
@@ -998,7 +1056,8 @@ class Settings:
         if len(words) < 2:
             raise ConfigError("Ambiguous phrase must contain at least two words")
         AmbigPhrases.add(words, cats)
-
+        if error:
+            AmbigPhrases.add_error(s[1:q].strip().lower(), e)
     @staticmethod
     def _handle_adjective_template(s):
         """ Handle the template for new adjectives in the settings section """
@@ -1020,6 +1079,20 @@ class Settings:
                 "Disallowed names must specify a name and at least one case"
             )
         DisallowedNames.add(a[0], a[1:])
+
+    def _allowed_multiples(s):
+        ix = s.rfind(" ")
+        if ix >= 0:
+            raise ConfigError("Allowed multiples must only contain one word")
+        AllowedMultiples.add(s)
+
+    def _wrong_compounds(s):
+        split = s.strip("\"").split("\", \"")
+        WrongCompounds.add(split)
+
+    def _split_compounds(s):
+        split = s.strip("\"").split("\", \"")
+        SplitCompounds.add(split)
 
     @staticmethod
     def read(fname):
@@ -1048,6 +1121,9 @@ class Settings:
                 "disallowed_names": Settings._handle_disallowed_names,
                 "noindex_words": Settings._handle_noindex_words,
                 "topics": Settings._handle_topics,
+                "allowed_multiples": Settings._allowed_multiples,
+                "wrong_compounds": Settings._wrong_compounds,
+                "split_compounds": Settings._split_compounds,
             }
             handler = None  # Current section handler
 
