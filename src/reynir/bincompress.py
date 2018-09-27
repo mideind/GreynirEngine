@@ -59,7 +59,7 @@ import time
 import struct
 from collections import defaultdict
 
-from ._bin import lib as bin, ffi
+from ._bin import lib as bin_cffi
 
 
 _PATH = os.path.dirname(__file__) or "."
@@ -707,6 +707,7 @@ class BIN_Compressed:
         # Read the alphabet length
         alphabet_length = self._UINT(alphabet_offset)
         self._alphabet = bytes(self._b[alphabet_offset+4:alphabet_offset + 4 + alphabet_length])
+        self._buf = self._b.read()
 
     def close(self):
         """ Close the memory map """
@@ -870,10 +871,14 @@ class BIN_Compressed:
 
         return _lookup(self._forms_offset, self._forms_root_hdr, 0)
 
+    def _mapping_cffi(self, word):
+        m = bin_cffi.mapping(self._buf, word.encode("latin-1"))
+        return None if m == 0xFFFFFFFF else m
+
     def _raw_lookup(self, word):
         """ Return a list of stem/meaning tuples for the word, or
             an empty list if it is not found in the trie """
-        mapping = self._mapping(word)
+        mapping = self._mapping_cffi(word)
         if mapping is None:
             # Word not found in trie: return an empty list of meanings
             return []
@@ -893,11 +898,11 @@ class BIN_Compressed:
 
     def contains(self, word):
         """ Returns True if the trie contains the given word form"""
-        return self._mapping(word) is not None
+        return self._mapping_cffi(word) is not None
 
     def __contains__(self, word):
         """ Returns True if the trie contains the given word form"""
-        return self._mapping(word) is not None
+        return self._mapping_cffi(word) is not None
 
     def lookup(self, word):
         """ Returns a list of BÍN meanings for the given word form """

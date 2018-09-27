@@ -43,10 +43,9 @@ WINDOWS = platform.system() == "Windows"
 declarations = """
 
     typedef uint32_t UINT;
-    typedef uint8_t CHAR;
     typedef uint8_t BYTE;
 
-    UINT mapping(const BYTE* pbMap, const CHAR* pszWord);
+    UINT mapping(const BYTE* pbMap, const BYTE* pszWordLatin);
 
 """
 
@@ -73,3 +72,4 @@ ffibuilder.cdef(declarations)
 
 if __name__ == "__main__":
     ffibuilder.compile(verbose=True)
+

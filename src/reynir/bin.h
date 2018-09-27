@@ -42,12 +42,9 @@
 
 
 typedef uint32_t UINT;
-typedef int32_t INT;
-typedef uint8_t CHAR;
 typedef uint8_t BYTE;
-typedef bool BOOL;
 
 
 // Map a word to an offset within the memory mapped buffer
-extern "C" UINT mapping(const BYTE* pbMap, const CHAR* pszWord);
+extern "C" UINT mapping(const BYTE* pbMap, const BYTE* pbWordLatin);
 
