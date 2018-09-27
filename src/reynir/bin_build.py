@@ -43,8 +43,8 @@ WINDOWS = platform.system() == "Windows"
 declarations = """
 
     typedef uint32_t UINT;
-    typedef char CHAR;
-    typedef unsigned char BYTE;
+    typedef uint8_t CHAR;
+    typedef uint8_t BYTE;
 
     UINT mapping(const BYTE* pbMap, const CHAR* pszWord);
 
