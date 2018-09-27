@@ -617,7 +617,7 @@ class SplitCompounds:
 
 
 class AdjectivePredicates:
-    # dict { adjective lemma : argument }
+    # dict { adjective lemma : argument case }
     ARGUMENTS = {}
     # dict { adjective lemma : [ (preposition, case) ] }
     PREPOSITIONS = defaultdict(list)
@@ -1219,7 +1219,7 @@ class Settings:
         a = s.split()
         adj = a[0]
         AdjectivePredicates.add(adj, a[1:], prepositions)
-        # Not expecting errors here so no corresponding .add_errors().
+        # Not expecting errors here so no AdjectivePredicates.add_errors().
 
     @staticmethod
     def read(fname):
