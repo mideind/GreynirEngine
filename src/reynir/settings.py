@@ -48,6 +48,13 @@ _DEFAULT_SORT_LOCALE = ("IS_is", "UTF-8")
 # A set of all valid argument cases
 _ALL_CASES = frozenset(("nf", "þf", "þgf", "ef"))
 _ALL_GENDERS = frozenset(("kk", "kvk", "hk"))
+_ALL_NUMBERS = frozenset(("et", "ft"))
+_SUBCLAUSES = frozenset(("nh", "falls"))
+_REFLPRN = {
+    "sig" : "sig_hk_et_þf",
+    "sér" : "sig_hk_et_þgf",
+    "sín" : "sig_hk_et_ef",
+    }
 
 
 class ConfigError(Exception):
@@ -158,19 +165,32 @@ class VerbObjects:
     # preposition_case keys, i.e. "frá_þgf"
     PREPOSITIONS = defaultdict(set)
 
+    # dict { verb + argument cases : verb particle}
+    VERB_PARTICLES = defaultdict(set)
+
+    VERBS_ERRORS = [ set(), defaultdict(dict), defaultdict(dict)]
+    VERB_PARTICLES_ERRORS = defaultdict(dict)
+    PREPOSITIONS_ERRORS = defaultdict(dict)
+    WRONG_VERBS = defaultdict(list)
+
     @staticmethod
-    def add(verb, args, prepositions, score):
+    def add(verb, args, prepositions, particle, score):
         """ Add a verb and its objects (arguments). Called from the config file handler. """
         la = len(args)
         if la > 2:
             raise ConfigError("A verb can have 0-2 arguments; {0} given".format(la))
         if la:
-            for case in args:
-                if case not in _ALL_CASES:
-                    raise ConfigError(
-                        "Invalid case for verb argument: '{0}'"
-                        .format(case)
-                    )
+            for kind in args:
+                if kind not in _ALL_CASES and kind not in _SUBCLAUSES:
+                    if kind in _REFLPRN:
+                        kind = _REFLPRN[kind]
+                    else:
+                        spl = kind.split("_")
+                        if spl[-1] not in _ALL_CASES:
+                            raise ConfigError(
+                                "Invalid verb argument: '{0}'"
+                                .format(case)
+                            )
             # Append a possible argument list
             arglists = VerbObjects.VERBS[la][verb]
             if args not in arglists:
@@ -183,14 +203,33 @@ class VerbObjects:
         verb_with_cases = "_".join([verb] + args)
         if score != 0:
             VerbObjects.SCORES[verb_with_cases] = score
-        # prepositions is a list of tuples: (preposition, case), e.g. ("í", "þgf")
+        # prepositions is a list of tuples: (preposition, case/kind), e.g. ("í", "þgf") or ("í", "falls")
         d = VerbObjects.PREPOSITIONS[verb_with_cases]
-        for p, case in prepositions:
-            # Add a generic 'case-less' forms of the preposition, such as "í"
+        for p, kind in prepositions:
+            # Add a "bare" preposition, such as "í"
             d.add(p)
-            # Add a full form with case, such as "í_þgf"
-            d.add(p + "_" + case)
+            # Add a full form with case or argument kind, such as "í_þgf", or "í_nh"
+            d.add(p + "_" + kind)
+        if particle:
+            VerbObjects.VERB_PARTICLES[verb_with_cases] = particle
 
+    @staticmethod
+    def add_error(verb, args, prepositions, particle, corr):
+        corrlist = corr.split(", ")
+        errkind = corrlist[0].split("-")[0]
+        verb_with_cases = "_".join([verb] + args)
+        if errkind == "OBJ":
+            arglists = VerbObjects.VERBS_ERRORS[len(args)][verb]
+            arglists[verb_with_cases] = corr
+        elif errkind == "PP":
+            d = VerbObjects.PREPOSITIONS_ERRORS[verb_with_cases]
+            for p, kind in prepositions:
+                d[p] = corr
+                d[p+ "_" + kind] = corr
+        elif errkind == "PCL":
+            VerbObjects.VERB_PARTICLES_ERRORS[verb_with_cases][particle] = corr
+        elif errkind == "VERB": # Wrong verb, must point to completely different verb + args
+            VerbObjects.WRONG_VERBS[verb_with_cases] = corr
     @staticmethod
     def verb_matches_preposition(verb_with_cases, prep_with_case):
         """ Does the given preposition with the given case fit the verb? """
@@ -205,6 +244,13 @@ class VerbObjects:
             and prep_with_case in VerbObjects.PREPOSITIONS[verb_with_cases]
         )
 
+    @staticmethod
+    def verb_matches_particle(verb_with_cases, particle):
+        return (
+            verb_with_cases in VerbObjects.PARTICLES
+            and particle in VerbObjects.PARTICLES[verb_with_cases]
+        )
+
 
 class VerbSubjects:
 
@@ -214,6 +260,8 @@ class VerbSubjects:
     # Dictionary of verbs and their associated set of subject cases
     VERBS = defaultdict(set)
     _CASE = "þgf"  # Default subject case
+    # dict { verb : (wrong_case, correct_case) }
+    VERBS_ERRORS = defaultdict(set)
 
     @staticmethod
     def set_case(case):
@@ -226,6 +274,14 @@ class VerbSubjects:
     def add(verb):
         """ Add a verb and its arguments. Called from the config file handler. """
         VerbSubjects.VERBS[verb].add(VerbSubjects._CASE)
+
+    @staticmethod
+    def add_error(verb, corr):
+        """ Add a verb and the correct case. Called from the config file handler. """
+        corrlist = corr.split(", ")
+        errkind = corrlist[0].split("-")[0]
+        if errkind == "SUBJECT":
+            VerbSubjects.VERBS_ERRORS[verb].add(VerbSubjects._CASE, corr_case)
 
 
 class Prepositions:
@@ -826,7 +882,8 @@ class Settings:
     def _handle_verb_objects(s):
         """ Handle verb object specifications in the settings section """
         # Format: verb [arg1] [arg2] [/preposition arg]... [$score(sc)]
-
+        # arg can be nf, þf, þgf, ef, nh, falls, sig/sér/sín, bági_kk_ft_þf 
+        error = False
         # Start by handling the $score() pragma, if present
         score = 0
         ix = s.rfind("$score(")  # Must be at the end
@@ -842,6 +899,12 @@ class Settings:
                 score = int(sc)
             except ValueError:
                 raise ConfigError("Invalid score for verb form")
+        # Check for $error
+        ix = s.rfind("$error(")
+        if ix >= 0:
+            e = s[ix + 7:-1]
+            s = s[0:ix]
+            error = True
 
         # Process preposition arguments, if any
         prepositions = []
@@ -854,10 +917,25 @@ class Settings:
             parg = p.split()
             if len(parg) != 2:
                 raise ConfigError("Preposition should have exactly one argument")
-            if parg[1] not in _ALL_CASES:
-                raise ConfigError("Unknown argument case for preposition")
+            if parg[1] not in _ALL_CASES and parg[1] not in _SUBCLAUSES:
+                if parg[1] in _REFLPRN:
+                    parg[1] = _REFLPRN[parg[1]]
+                spl = parg[1].split("_")
+                if spl[-1] not in _ALL_CASES:
+                    raise ConfigError("Unknown argument for preposition")
             prepositions.append((parg[0], parg[1]))
             ix += 1
+
+        # Process particles, should only be one in each line
+        particle = None
+        ix = s.rfind("*")
+        if ix >= 0:
+            particle = s[ix:].strip()
+            s = s[0:ix]
+            if " " in particle:
+                raise ConfigError("Particle should only be one word")
+
+        # Process verb arguments
         a = s.split()
         if len(a) < 1 or len(a) > 3:
             raise ConfigError(
@@ -866,7 +944,9 @@ class Settings:
         verb = a[0]
         if not verb.isidentifier():
             raise ConfigError("Verb '{0}' is not a valid word".format(verb))
-        VerbObjects.add(verb, a[1:], prepositions, score)
+        VerbObjects.add(verb, a[1:], prepositions, particle, score)
+        if error:
+            VerbObjects.add_error(verb, a[1:], prepositions, particle, e)
 
     @staticmethod
     def _handle_verb_subjects(s):
@@ -882,7 +962,17 @@ class Settings:
                 raise ConfigError("Unknown setting '{0}' in verb_subjects".format(par))
             return
         assert len(a) == 1
+        # Check for $error
+        error = False
+        ix = par.rfind("$error(")
+        if ix >= 0:
+            e = par[ix + 7:-1].strip()
+            par = par[0:ix]
+            error = True
+
         VerbSubjects.add(par)
+        if error:
+            VerbSubjects.add_error(par, e)
 
     @staticmethod
     def _handle_undeclinable_adjectives(s):
@@ -1044,11 +1134,9 @@ class Settings:
     def _handle_ambiguous_phrases(s):
         """ Handle ambiguous phrase guidance in the settings section """
         # Format: "word1 word2..." cat1 cat2...
-        #print(s)
         error = False
         if s[0] != '"':
             raise ConfigError("Ambiguous phrase must be enclosed in double quotes")
-        #print(s)
         ix = s.rfind("$error(")  # Must be at the end
         if ix >= 0:
             error = True
@@ -1131,6 +1219,7 @@ class Settings:
         a = s.split()
         adj = a[0]
         AdjectivePredicates.add(adj, a[1:], prepositions)
+        # Not expecting errors here so no corresponding .add_errors().
 
     @staticmethod
     def read(fname):
