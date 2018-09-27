@@ -40,6 +40,7 @@ class BIN_Compressed {
 
 private:
 
+#pragma pack(push, 1)
    struct Header {
       CHAR achSignature[16];
       UINT nMappingsOffset;
@@ -48,13 +49,13 @@ private:
       UINT nMeaningsOffset;
       UINT nAlphabetOffset;
    };
+#pragma pack(pop)
 
    const BYTE* m_pbMap;
    const Header* m_pHeader;
    UINT m_nFormsRootHeader;
    UINT m_nWordLen;
    const CHAR* m_pchWordLatin;
-   CHAR* m_pchWordEncoded;
    UINT m_nAlphabetLength;
    CHAR* m_pchAlphabet;
 
@@ -80,13 +81,17 @@ INT BIN_Compressed::matches(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex)
       (The lexicographical ordering here is actually a comparison
       between the Latin-1 ordinal numbers of characters.)
    */
+   printf("matches(%x, %x, %u)\n", nNodeOffset, nHdr, nFragmentIndex);
    if (nHdr & 0x80000000) {
       // Single-character fragment
-      CHAR chix = (CHAR)((nHdr >> 23) & 0x7F);
-      if (chix == this->m_pchWordEncoded[nFragmentIndex])
+      UINT nIx = (nHdr >> 23) & 0x7F; // Index of character in alphabet
+      CHAR ch = this->m_pchAlphabet[nIx];
+      CHAR chWord = this->m_pchWordLatin[nFragmentIndex];
+      printf("Single-character fragment: comparing %c and %c\n", ch, chWord);
+      if (ch == chWord)
          // Match
          return 1;
-      return (chix > this->m_pchWordEncoded[nFragmentIndex]) ? 0 : -1;
+      return (ch > chWord) ? 0 : -1;
    }
    UINT nFrag;
    if (nHdr & 0x40000000) {
@@ -97,25 +102,28 @@ INT BIN_Compressed::matches(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex)
       UINT nNumChildren = *(UINT*)(this->m_pbMap + nNodeOffset + sizeof(UINT));
       nFrag = nNodeOffset + 2 * sizeof(UINT) + sizeof(UINT) * nNumChildren;
    }
-   UINT nMatched = 0;
+   INT iMatched = 0;
    UINT nWordLen = this->m_nWordLen;
    CHAR* pFrag = (CHAR*)(this->m_pbMap + nFrag);
-   while (*pFrag && (nFragmentIndex + nMatched < nWordLen) &&
-      (*pFrag == this->m_pchWordLatin[nFragmentIndex + nMatched])) {
+   while (*pFrag && (nFragmentIndex + iMatched < nWordLen) &&
+      (*pFrag == this->m_pchWordLatin[nFragmentIndex + iMatched])) {
+      printf("Multi-character fragment: comparing %c and %c\n",
+         *pFrag, this->m_pchWordLatin[nFragmentIndex + iMatched]);
       pFrag++;
-      nMatched++;
+      iMatched++;
    }
    if (!*pFrag)
       // Matched the entire fragment: success
-      return nMatched;
-   if (nFragmentIndex + nMatched >= nWordLen)
+      return iMatched;
+   if (nFragmentIndex + iMatched >= nWordLen)
       // The node is longer and thus greater than the fragment
       return 0;
-   return (*pFrag > this->m_pchWordLatin[nFragmentIndex + nMatched]) ? 0 : -1;
+   return (*pFrag > this->m_pchWordLatin[nFragmentIndex + iMatched]) ? 0 : -1;
 }
 
 UINT BIN_Compressed::lookup(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex)
 {
+   printf("lookup(%u, %u, %u)\n", nNodeOffset, nHdr, nFragmentIndex);
    while (1) {
       if (nFragmentIndex >= this->m_nWordLen) {
          // We've arrived at our destination:
@@ -157,33 +165,27 @@ UINT BIN_Compressed::lookup(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex)
 BIN_Compressed::BIN_Compressed(const BYTE* pbMap)
    : m_pbMap(pbMap), m_pHeader((const Header*)pbMap),
       m_nFormsRootHeader(*(UINT*)(pbMap + m_pHeader->nFormsOffset)),
-      m_pchWordEncoded(NULL),
       m_pchWordLatin(NULL),
       m_nWordLen(0),
       m_nAlphabetLength(*(UINT*)(this->m_pbMap + m_pHeader->nAlphabetOffset)),
       m_pchAlphabet((CHAR*)(this->m_pbMap + m_pHeader->nAlphabetOffset + sizeof(UINT)))
 {
+   printf("BIN_Compressed constructor: m_nAlphabetLength is %u\n", this->m_nAlphabetLength);
 }
 
 BIN_Compressed::~BIN_Compressed()
 {
-   if (this->m_pchWordEncoded)
-      delete [] m_pchWordEncoded;
 }
 
 UINT BIN_Compressed::mapping(const CHAR* pszWordLatin)
 {
-   if (!pszWordLatin)
+   if (!pszWordLatin) {
+      printf("pszWordLatin is NULL, returning\n");
       return 0;
+   }
    this->m_pchWordLatin = pszWordLatin;
    this->m_nWordLen = (UINT)(strlen((const char*)pszWordLatin));
-   this->m_pchWordEncoded = new CHAR[this->m_nWordLen];
-   for (UINT i = 0; i < this->m_nWordLen; i++) {
-      CHAR* p = (CHAR*)memchr(this->m_pchAlphabet, pszWordLatin[i], this->m_nAlphabetLength);
-      if (!p)
-         return 0;
-      this->m_pchWordEncoded[i] = (CHAR)(p - this->m_pchAlphabet);
-   }
+   printf("m_nWordLen is %u\n", this->m_nWordLen);
    return this->lookup(this->m_pHeader->nFormsOffset, this->m_nFormsRootHeader, 0);
 }
 
@@ -193,4 +195,6 @@ UINT mapping(const BYTE* pbMap, const CHAR* pszWordLatin)
    return bc.mapping(pszWordLatin);
 }
 
-
+int main(int argc, char* argv[]) {
+   printf("Welcome to Bin!\n");
+}
