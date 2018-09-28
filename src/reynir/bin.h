@@ -41,7 +41,7 @@
 #endif
 
 
-typedef uint32_t UINT;
+typedef unsigned int UINT;
 typedef uint8_t BYTE;
 
 

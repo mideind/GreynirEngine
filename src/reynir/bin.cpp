@@ -41,6 +41,7 @@
 
 typedef int INT;
 typedef bool BOOL;
+typedef uint32_t UINT32;
 
 
 class BIN_Compressed {
@@ -50,11 +51,11 @@ private:
 #pragma pack(push, 1)
    struct Header {
       BYTE abSignature[16];
-      UINT nMappingsOffset;
-      UINT nFormsOffset;
-      UINT nStemsOffset;
-      UINT nMeaningsOffset;
-      UINT nAlphabetOffset;
+      UINT32 nMappingsOffset;
+      UINT32 nFormsOffset;
+      UINT32 nStemsOffset;
+      UINT32 nMeaningsOffset;
+      UINT32 nAlphabetOffset;
    };
 #pragma pack(pop)
 
@@ -64,7 +65,11 @@ private:
    UINT m_nWordLen;
    const BYTE* m_pbWordLatin;
    UINT m_nAlphabetLength;
-   BYTE* m_pbAlphabet;
+   const BYTE* m_pbAlphabet;
+
+   // Return the UINT32 at the given offset, as a native UINT
+   UINT uintAt(UINT nOffset)
+      { return (UINT)*(UINT32*)(this->m_pbMap + nOffset); }
 
    INT matches(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex);
    UINT lookup(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex);
@@ -114,14 +119,14 @@ INT BIN_Compressed::matches(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex)
    UINT nFrag;
    if (nHdr & 0x40000000) {
       // Childless node
-      nFrag = nNodeOffset + sizeof(UINT);
+      nFrag = nNodeOffset + sizeof(UINT32);
    }
    else {
-      UINT nNumChildren = *(UINT*)(this->m_pbMap + nNodeOffset + sizeof(UINT));
-      nFrag = nNodeOffset + 2 * sizeof(UINT) + sizeof(UINT) * nNumChildren;
+      UINT nNumChildren = this->uintAt(nNodeOffset + sizeof(UINT32));
+      nFrag = nNodeOffset + 2 * sizeof(UINT32) + sizeof(UINT32) * nNumChildren;
    }
    INT iMatched = 0;
-   UINT nWordLen = this->m_nWordLen;
+   UINT nWordLen = (UINT)this->m_nWordLen;
    BYTE* pFrag = (BYTE*)(this->m_pbMap + nFrag);
 #ifdef DEBUG
    printf("Multi-character fragment: initial compare %c and %c\n",
@@ -166,7 +171,7 @@ UINT BIN_Compressed::lookup(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex)
 #ifdef DEBUG
       printf("   head of outer while loop (%08x, %08x, %u)\n", nNodeOffset, nHdr, nFragmentIndex);
 #endif
-      if (nFragmentIndex >= this->m_nWordLen) {
+      if (nFragmentIndex >= (UINT)this->m_nWordLen) {
          // We've arrived at our destination:
          // return the associated value (unless this is an interim node)
          UINT nValue = nHdr & 0x007FFFFF;
@@ -176,8 +181,8 @@ UINT BIN_Compressed::lookup(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex)
          // Childless node: nowhere to go
          return ((UINT)-1);
       }
-      UINT nNumChildren = *(UINT*)(this->m_pbMap + nNodeOffset + sizeof(UINT));
-      UINT nChildOffset = nNodeOffset + 2 * sizeof(UINT);
+      UINT nNumChildren = this->uintAt(nNodeOffset + sizeof(UINT32));
+      UINT nChildOffset = nNodeOffset + 2 * sizeof(UINT32);
       // Binary search for a matching child node
       UINT nLo = 0;
       UINT nHi = nNumChildren;
@@ -191,9 +196,9 @@ UINT BIN_Compressed::lookup(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex)
             return ((UINT)-1);
          }
          UINT nMid = (nLo + nHi) / 2;
-         UINT nMidLoc = nChildOffset + nMid * sizeof(UINT);
-         UINT nMidOffset = *(UINT*)(this->m_pbMap + nMidLoc);
-         nHdr = *(UINT*)(this->m_pbMap + nMidOffset);
+         UINT nMidLoc = nChildOffset + nMid * sizeof(UINT32);
+         UINT nMidOffset = this->uintAt(nMidLoc);
+         nHdr = this->uintAt(nMidOffset);
          INT iMatchLen = this->matches(nMidOffset, nHdr, nFragmentIndex);
          if (iMatchLen > 0) {
              // Set a new starting point and restart from the top
@@ -218,11 +223,11 @@ UINT BIN_Compressed::lookup(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex)
 
 BIN_Compressed::BIN_Compressed(const BYTE* pbMap)
    : m_pbMap(pbMap), m_pHeader((const Header*)pbMap),
-      m_nFormsRootHeader(*(UINT*)(pbMap + m_pHeader->nFormsOffset)),
+      m_nFormsRootHeader(this->uintAt(m_pHeader->nFormsOffset)),
       m_pbWordLatin(NULL),
       m_nWordLen(0),
-      m_nAlphabetLength(*(UINT*)(this->m_pbMap + m_pHeader->nAlphabetOffset)),
-      m_pbAlphabet((BYTE*)(this->m_pbMap + m_pHeader->nAlphabetOffset + sizeof(UINT)))
+      m_nAlphabetLength(this->uintAt(m_pHeader->nAlphabetOffset)),
+      m_pbAlphabet(this->m_pbMap + m_pHeader->nAlphabetOffset + sizeof(UINT32))
 {
 #ifdef DEBUG
    printf("BIN_Compressed constructor: m_nAlphabetLength is %u, sizeof(UINT) is %u\n",
