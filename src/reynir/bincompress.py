@@ -720,6 +720,7 @@ class BIN_Compressed:
             self._alphabet = None
             self._b.close()
             self._b = None
+            self._mmap_buffer = None
 
     def meaning(self, ix):
         """ Find and decode a meaning (ordfl, fl, beyging) tuple,
@@ -849,21 +850,6 @@ if __name__ == "__main__":
         ]
     )
     b.print_stats()
-
-    # print(b.lookup_forms("aðförin"))
-    # print(b.lookup_forms("ekki"))
-    # print(b.lookup_forms("fara"))
-    # print(b.lookup_forms("bíllinn"))
-    # print(b.lookup_forms("stór"))
-    # print(b.lookup_forms("stóri"))
-    # print(b.lookup_forms("ljótan"))
-
-    # Tests
-    # print(f"mín: {b.lookup('mín')}")
-    # print(f"að: {b.lookup('að')}")
-    # print(f"lama: {b.lookup('lama')}")
-    # print(f"búa: {b.lookup('búa')}")
-    # print(f"ekki: {b.lookup('ekki')}")
-    # print(f"aðförin: {b.lookup('aðförin')}")
-    # print(f"einkabílnum: {b.lookup('einkabílnum')}")
-    b.write_binary(os.path.join(_PATH, "resources", "ord.compressed"))
+    filename = os.path.join(_PATH, "resources", "ord.compressed")
+    b.write_binary(filename)
+    print("Done; the compressed vocabulary was written to {0}".format(filename))

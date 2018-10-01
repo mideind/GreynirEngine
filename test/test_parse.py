@@ -1185,6 +1185,10 @@ def test_compressed_bin():
     assert "glerxaugu" not in binc
     assert "x" not in binc
     assert "X" not in binc
+    assert binc.lookup("aðförin") == [('aðför', 123454, 'kvk', 'alm', 'aðförin', 'NFETgr')]
+    assert binc.lookup("einkabílnum") == [('einkabíll', 75579, 'kk', 'alm', 'einkabílnum', 'ÞGFETgr')]
+    nominal_forms = [m[4] for m in binc.nominative("einkabílnum") if m[5] == "NFET"]
+    assert nominal_forms == ['einkabíll']
 
 
 def test_finish():
