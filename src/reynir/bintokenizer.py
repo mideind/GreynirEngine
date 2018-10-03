@@ -251,9 +251,9 @@ def annotate(db, word_token_ctor, token_stream, auto_uppercase):
             continue
         if t.val is None:
             # Look up word in BIN database
-            w, m = db.lookup_word(t.txt, at_sentence_start, auto_uppercase)
+            w, m, error = db.lookup_word(t.txt, at_sentence_start, auto_uppercase) # error is not used in DefaultPipeline
             # Yield a word tuple with meanings
-            yield word_token_ctor(w, m, token=t)
+            yield word_token_ctor(w, m, token=t, error=error)
         else:
             # Already have a meaning, which probably needs conversion
             # from a bare tuple to a BIN_Meaning

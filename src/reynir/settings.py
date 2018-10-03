@@ -1222,6 +1222,18 @@ class Settings:
         # Not expecting errors here so no AdjectivePredicates.add_errors().
 
     @staticmethod
+    def _unique_errors(s):
+        pass
+
+    @staticmethod
+    def _multiword_errors(s):
+        pass
+
+    @staticmethod
+    def _bound_morphemes(s):
+        pass
+
+    @staticmethod
     def read(fname):
         """ Read configuration file """
 
@@ -1252,6 +1264,9 @@ class Settings:
                 "wrong_compounds": Settings._wrong_compounds,
                 "split_compounds": Settings._split_compounds,
                 "adjective_predicates": Settings._adjective_predicates,
+                "unique_errors": Settings._unique_errors,
+                "multiword_errors": Settings._multiword_errors,
+                "bound_morphemes": Settings._bound_morphemes,
             }
             handler = None  # Current section handler
 
