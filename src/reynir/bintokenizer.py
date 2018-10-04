@@ -237,7 +237,7 @@ def annotate(db, word_token_ctor, token_stream, auto_uppercase):
 
     at_sentence_start = False
 
-    # Consume the iterable source in wlist (which may be a generator)
+    # Consume the iterable source in token_stream (which may be a generator)
     for t in token_stream:
         if t.kind != TOK.WORD:
             # Not a word: relay the token unchanged
@@ -1014,7 +1014,6 @@ def parse_static_phrases(token_stream, auto_uppercase):
                         newstate = defaultdict(list)
                         w = wo = ""
                         tq = []
-                        werr = []
                         # Note that it is possible to match even longer phrases
                         # by including a starting phrase in its entirety in
                         # the static phrase dictionary

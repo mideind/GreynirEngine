@@ -6,6 +6,9 @@ __pycache__/
 .vscode/
 *.py[cod]
 *.o
+*.obj
+*.exp
+*.lib
 *.so
 *.exe
 
