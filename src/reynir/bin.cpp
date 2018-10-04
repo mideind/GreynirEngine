@@ -18,9 +18,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see http://www.gnu.org/licenses/.
 
-   This module implements lookup of words in a compressed, memory-mapped
+
+   This module implements lookup of words within a compressed, memory-mapped
    byte buffer containing the Database of Modern Icelandic Inflection
    (Beygingarlýsing íslensks nútímamáls, BÍN).
+
+   The memory layout of the compressed buffer is determined by the
+   BIN_Compressor class in bincompress.py.
 
    See https://greynir.is/doc/copyright.html for important copyright and
    licensing information.
@@ -39,6 +43,8 @@
 #define TRUE 1
 #define FALSE 0
 
+#define NOT_FOUND 0xFFFFFFFF
+
 typedef int INT;
 typedef bool BOOL;
 typedef uint32_t UINT32;
@@ -49,6 +55,7 @@ class BIN_Compressed {
 private:
 
 #pragma pack(push, 1)
+
    struct Header {
       BYTE abSignature[16];
       UINT32 nMappingsOffset;
@@ -57,6 +64,7 @@ private:
       UINT32 nMeaningsOffset;
       UINT32 nAlphabetOffset;
    };
+
 #pragma pack(pop)
 
    const BYTE* m_pbMap;
@@ -79,6 +87,9 @@ public:
    BIN_Compressed(const BYTE* pbMap);
    ~BIN_Compressed();
 
+   // Return the offset of the meanings of the given word within
+   // the memory buffer, or 0xFFFFFFFF if not found (note that 0
+   // is a valid offset). The word is assumed to be Latin-1 encoded.
    UINT mapping(const BYTE* pbWord);
 
 };
@@ -93,27 +104,15 @@ INT BIN_Compressed::matches(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex)
       (The lexicographical ordering here is actually a comparison
       between the Latin-1 ordinal numbers of characters.)
    */
-#ifdef DEBUG
-   printf("matches(%08x, %08x, %u)\n", nNodeOffset, nHdr, nFragmentIndex);
-#endif
    if (nHdr & 0x80000000) {
       // Single-character fragment
       UINT nIx = ((nHdr >> 23) & 0x7F) - 1; // Index of character in alphabet
       BYTE ch = this->m_pbAlphabet[nIx];
       BYTE chWord = this->m_pbWordLatin[nFragmentIndex];
-#ifdef DEBUG
-      printf("Single-character fragment: comparing %c and %c\n", ch, chWord);
-#endif
       if (ch == chWord) {
          // Match
-#ifdef DEBUG
-         printf("Returning match (1)\n");
-#endif
          return 1;
       }
-#ifdef DEBUG
-      printf("Returning no match (%d)\n", (ch > chWord) ? 0 : -1);
-#endif
       return (ch > chWord) ? 0 : -1;
    }
    UINT nFrag;
@@ -128,58 +127,34 @@ INT BIN_Compressed::matches(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex)
    INT iMatched = 0;
    UINT nWordLen = (UINT)this->m_nWordLen;
    BYTE* pFrag = (BYTE*)(this->m_pbMap + nFrag);
-#ifdef DEBUG
-   printf("Multi-character fragment: initial compare %c and %c\n",
-      *pFrag, this->m_pbWordLatin[nFragmentIndex]);
-#endif
    while (*pFrag && (nFragmentIndex + iMatched < nWordLen) &&
       (*pFrag == this->m_pbWordLatin[nFragmentIndex + iMatched])) {
       pFrag++;
       iMatched++;
-#ifdef DEBUG
-      printf("Multi-character fragment: next compare %c and %c\n",
-         *pFrag, (nFragmentIndex + iMatched < nWordLen) ? this->m_pbWordLatin[nFragmentIndex + iMatched] : '\0');
-#endif
    }
    if (!*pFrag) {
       // Matched the entire fragment: success
-#ifdef DEBUG
-      printf("Multi-char fragment returning match (%d)\n", iMatched);
-#endif
       return iMatched;
    }
    if (nFragmentIndex + iMatched >= nWordLen) {
       // The node is longer and thus greater than the fragment
-#ifdef DEBUG
-      printf("Multi-char fragment returning no match (0)\n");
-#endif
       return 0;
    }
-#ifdef DEBUG
-   printf("Multi-char fragment returning no match (%d)\n",
-      (*pFrag > this->m_pbWordLatin[nFragmentIndex + iMatched]) ? 0 : -1);
-#endif
    return (*pFrag > this->m_pbWordLatin[nFragmentIndex + iMatched]) ? 0 : -1;
 }
 
 UINT BIN_Compressed::lookup(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex)
 {
-#ifdef DEBUG
-   printf("lookup(%08x, %08x, %u)\n", nNodeOffset, nHdr, nFragmentIndex);
-#endif
-   while (1) {
-#ifdef DEBUG
-      printf("   head of outer while loop (%08x, %08x, %u)\n", nNodeOffset, nHdr, nFragmentIndex);
-#endif
+   while (TRUE) {
       if (nFragmentIndex >= (UINT)this->m_nWordLen) {
          // We've arrived at our destination:
          // return the associated value (unless this is an interim node)
          UINT nValue = nHdr & 0x007FFFFF;
-         return (nValue == 0x007FFFFF) ? ((UINT)-1) : nValue;
+         return (nValue == 0x007FFFFF) ? NOT_FOUND : nValue;
       }
       if (nHdr & 0x40000000) {
          // Childless node: nowhere to go
-         return ((UINT)-1);
+         return NOT_FOUND;
       }
       UINT nNumChildren = this->uintAt(nNodeOffset + sizeof(UINT32));
       UINT nChildOffset = nNodeOffset + 2 * sizeof(UINT32);
@@ -188,12 +163,9 @@ UINT BIN_Compressed::lookup(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex)
       UINT nHi = nNumChildren;
       BOOL fContinue = TRUE;
       do {
-#ifdef DEBUG
-         printf("   head of inner while loop, nLo %u, nHi %u\n", nLo, nHi);
-#endif
          if (nLo >= nHi) {
             // No child route matches
-            return ((UINT)-1);
+            return NOT_FOUND;
          }
          UINT nMid = (nLo + nHi) / 2;
          UINT nMidLoc = nChildOffset + nMid * sizeof(UINT32);
@@ -215,24 +187,18 @@ UINT BIN_Compressed::lookup(UINT nNodeOffset, UINT nHdr, UINT nFragmentIndex)
          }
       } while (fContinue);
    }
-#ifdef DEBUG
-   printf("Error: should not get here\n");
-#endif
+   // Should never get here
    assert(FALSE);
 }
 
 BIN_Compressed::BIN_Compressed(const BYTE* pbMap)
    : m_pbMap(pbMap), m_pHeader((const Header*)pbMap),
       m_nFormsRootHeader(this->uintAt(m_pHeader->nFormsOffset)),
-      m_pbWordLatin(NULL),
       m_nWordLen(0),
+      m_pbWordLatin(NULL),
       m_nAlphabetLength(this->uintAt(m_pHeader->nAlphabetOffset)),
       m_pbAlphabet(this->m_pbMap + m_pHeader->nAlphabetOffset + sizeof(UINT32))
 {
-#ifdef DEBUG
-   printf("BIN_Compressed constructor: m_nAlphabetLength is %u, sizeof(UINT) is %u\n",
-      this->m_nAlphabetLength, (UINT)sizeof(UINT));
-#endif
 }
 
 BIN_Compressed::~BIN_Compressed()
@@ -241,14 +207,14 @@ BIN_Compressed::~BIN_Compressed()
 
 UINT BIN_Compressed::mapping(const BYTE* pbWordLatin)
 {
+   // Note that calls to mapping() on the same BIN_Compressed instance
+   // are not re-entrant. BIN_Compressed is designed to be instantiated
+   // on the stack, per-thread, for each sequence of mapping calls.
    if (!pbWordLatin) {
-      return 0;
+      return NOT_FOUND;
    }
    this->m_pbWordLatin = pbWordLatin;
-   this->m_nWordLen = (UINT)(strlen((const char*)pbWordLatin));
-#ifdef DEBUG
-   printf("m_nWordLen is %u\n", this->m_nWordLen);
-#endif
+   this->m_nWordLen = (UINT)strlen((const char*)pbWordLatin);
    return this->lookup(this->m_pHeader->nFormsOffset, this->m_nFormsRootHeader, 0);
 }
 

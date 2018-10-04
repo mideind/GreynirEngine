@@ -684,7 +684,7 @@ class BIN_Compressed:
     BIN_COMPRESSED_FILE = os.path.join(_PATH, "resources", "ord.compressed")
 
     def _UINT(self, offset):
-        return UINT32.unpack(self._b[offset:offset+4])[0]
+        return UINT32.unpack_from(self._b, offset)[0]
 
     def __init__(self):
         """ We use a memory map, provided by the mmap module, to
@@ -725,15 +725,15 @@ class BIN_Compressed:
     def meaning(self, ix):
         """ Find and decode a meaning (ordfl, fl, beyging) tuple,
             given its index """
-        off, = UINT32.unpack(self._meanings[ix * 4:ix * 4 + 4])
+        off, = UINT32.unpack_from(self._meanings, ix * 4)
         b = bytes(self._b[off:off+24])
         s = b.decode('latin-1').split(maxsplit=4)
         return tuple(s[0:3])  # ordfl, fl, beyging
 
     def stem(self, ix):
         """ Find and decode a stem (utg, stofn) tuple, given its index """
-        off, = UINT32.unpack(self._stems[ix * 4:ix * 4 + 4])
-        wid, = UINT32.unpack(self._b[off:off+4])
+        off, = UINT32.unpack_from(self._stems, ix * 4)
+        wid, = UINT32.unpack_from(self._b, off)
         # The id (utg) is stored in the lower 31 bits, after adding 1
         wid = (wid & 0x7FFFFFFF) - 1
         p = off + 4
@@ -766,8 +766,8 @@ class BIN_Compressed:
                 last_w = w
             return c
 
-        off, = UINT32.unpack(self._stems[ix * 4:ix * 4 + 4])
-        wid, = UINT32.unpack(self._b[off:off+4])
+        off, = UINT32.unpack_from(self._stems, ix * 4)
+        wid, = UINT32.unpack_from(self._b, off)
         # The id (utg) is stored in the lower 31 bits, after adding 1
         if wid & 0x80000000 == 0:
             # No canonicals associated with this stem
@@ -798,7 +798,7 @@ class BIN_Compressed:
         # Fetch the mapping-to-stem/meaning tuples
         result = []
         while True:
-            stem_meaning, = UINT32.unpack(self._mappings[mapping * 4:mapping * 4 + 4])
+            stem_meaning, = UINT32.unpack_from(self._mappings, mapping * 4)
             stem_index = (stem_meaning >> 11) & (2 ** 20 - 1)
             meaning_index = stem_meaning & (2 ** 11 - 1)
             result.append((stem_index, meaning_index))
