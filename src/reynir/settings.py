@@ -49,7 +49,7 @@ _DEFAULT_SORT_LOCALE = ("IS_is", "UTF-8")
 _ALL_CASES = frozenset(("nf", "þf", "þgf", "ef"))
 _ALL_GENDERS = frozenset(("kk", "kvk", "hk"))
 _ALL_NUMBERS = frozenset(("et", "ft"))
-_SUBCLAUSES = frozenset(("nh", "falls"))
+_SUBCLAUSES = frozenset(("nh", "mnh", "falls"))
 _REFLPRN = {
     "sig" : "sig_hk_et_þf",
     "sér" : "sig_hk_et_þgf",
@@ -189,7 +189,7 @@ class VerbObjects:
                         if spl[-1] not in _ALL_CASES:
                             raise ConfigError(
                                 "Invalid verb argument: '{0}'"
-                                .format(case)
+                                .format(kind)
                             )
             # Append a possible argument list
             arglists = VerbObjects.VERBS[la][verb]
@@ -630,6 +630,21 @@ class AdjectivePredicates:
             for each in prepositions:
                 AdjectivePredicates.PREPOSITIONS[adj] = (each[0], each[1])
 
+class Morphemes:
+    # dict { morpheme : [ preferred PoS ] }
+    BOUND_DICT = {}
+    # dict { morpheme : [ excluded PoS ] }
+    FREE_DICT = {}
+
+    @staticmethod
+    def add(morph, boundlist, freelist):
+        if boundlist:
+            Morphemes.BOUND_DICT[morph] = boundlist
+        else:
+            raise ConfigError("A definition of allowed PoS is necessary with morphemes")
+        if freelist:
+            Morphemes.FREE_DICT[morph] = freelist
+
 # Magic stuff to change locale context temporarily
 
 
@@ -921,6 +936,8 @@ class Settings:
                 if parg[1] in _REFLPRN:
                     parg[1] = _REFLPRN[parg[1]]
                 spl = parg[1].split("_")
+                if spl[-1] == "gr":
+                    spl = spl[:-1]
                 if spl[-1] not in _ALL_CASES:
                     raise ConfigError("Unknown argument for preposition")
             prepositions.append((parg[0], parg[1]))
@@ -1184,23 +1201,23 @@ class Settings:
         DisallowedNames.add(a[0], a[1:])
 
     @staticmethod
-    def _allowed_multiples(s):
+    def handle_allowed_multiples(s):
         ix = s.rfind(" ")
         if ix >= 0:
             raise ConfigError("Allowed multiples must only contain one word")
         AllowedMultiples.add(s)
 
     @staticmethod
-    def _wrong_compounds(s):
+    def handle_wrong_compounds(s):
         split = s.strip("\"").split("\", \"")
         WrongCompounds.add(split)
 
     @staticmethod
-    def _split_compounds(s):
+    def handle_split_compounds(s):
         SplitCompounds.add(s)
 
     @staticmethod
-    def _adjective_predicates(s):
+    def handle_adjective_predicates(s):
         # Process preposition arguments, if any
         prepositions = []
         ap = s.split("/")
@@ -1222,17 +1239,28 @@ class Settings:
         # Not expecting errors here so no AdjectivePredicates.add_errors().
 
     @staticmethod
-    def _unique_errors(s):
+    def handle_unique_errors(s):
         pass
 
     @staticmethod
-    def _multiword_errors(s):
+    def handle_multiword_errors(s):
         pass
 
     @staticmethod
-    def _bound_morphemes(s):
-        pass
-
+    def handle_morphemes(s):
+        freelist = []
+        boundlist = []
+        spl = s.strip().split(" ")
+        m = spl[0]
+        for pos in spl[1:]:
+            if pos:
+                if pos.startswith("<"):
+                    boundlist.append(pos[1:])
+                elif pos.startswith(">"):
+                    freelist.append(pos[1:])
+                else:
+                    raise ConfigError("PoS specification should start with '<' or '>'")
+        Morphemes.add(m, boundlist, freelist)
     @staticmethod
     def read(fname):
         """ Read configuration file """
@@ -1260,13 +1288,13 @@ class Settings:
                 "disallowed_names": Settings._handle_disallowed_names,
                 "noindex_words": Settings._handle_noindex_words,
                 "topics": Settings._handle_topics,
-                "allowed_multiples": Settings._allowed_multiples,
-                "wrong_compounds": Settings._wrong_compounds,
-                "split_compounds": Settings._split_compounds,
-                "adjective_predicates": Settings._adjective_predicates,
-                "unique_errors": Settings._unique_errors,
-                "multiword_errors": Settings._multiword_errors,
-                "bound_morphemes": Settings._bound_morphemes,
+                "allowed_multiples": Settings.handle_allowed_multiples,
+                "wrong_compounds": Settings.handle_wrong_compounds,
+                "split_compounds": Settings.handle_split_compounds,
+                "adjective_predicates": Settings.handle_adjective_predicates,
+                "unique_errors": Settings.handle_unique_errors,
+                "multiword_errors": Settings.handle_multiword_errors,
+                "morphemes": Settings.handle_morphemes,
             }
             handler = None  # Current section handler
 

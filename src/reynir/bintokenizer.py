@@ -234,7 +234,6 @@ def annotate(db, word_token_ctor, token_stream, auto_uppercase):
     """ Look up word forms in the BIN word database. If auto_uppercase
         is True, change lower case words to uppercase if it looks likely
         that they should be uppercase. """
-
     at_sentence_start = False
 
     # Consume the iterable source in wlist (which may be a generator)
@@ -251,7 +250,7 @@ def annotate(db, word_token_ctor, token_stream, auto_uppercase):
             continue
         if t.val is None:
             # Look up word in BIN database
-            w, m, error = db.lookup_word(t.txt, at_sentence_start, auto_uppercase) # error is not used in DefaultPipeline
+            w, m, error = db.lookup_word(t.txt, at_sentence_start, auto_uppercase) # error is not used in DefaultPipeline, needs to be here for CorrectionPipeline
             # Yield a word tuple with meanings
             yield word_token_ctor(w, m, token=t, error=error)
         else:
@@ -1190,13 +1189,14 @@ class DefaultPipeline:
         # This sequence of phases can be modified in derived classes.
         self._phases = [
             self.tokenize_without_annotation,
-            self.correct,
+            self.correct_1,
             self.parse_static_phrases,
             self.annotate,
             self.lookup_unknown_words,
             self.parse_phrases_1,
             self.parse_phrases_2,
-            self.disambiguate_phrases
+            self.disambiguate_phrases,
+            self.correct_2
         ]
 
     def word_token_ctor(self, txt, val=None, token=None):
@@ -1211,14 +1211,14 @@ class DefaultPipeline:
         """ The basic, raw tokenization from the tokenizer package """
         return tokenize_without_annotation(self._text)
 
-    def parse_static_phrases(self, stream):
-        """ Static multiword phrases """
-        return parse_static_phrases(stream, self._auto_uppercase)
-
-    def correct(self, stream):
+    def correct_1(self, stream):
         """ Token correction can be plugged in here (default stack doesn't do
             any corrections, but this is overridden in ReynirCorrect) """
         return stream
+
+    def parse_static_phrases(self, stream):
+        """ Static multiword phrases """
+        return parse_static_phrases(stream, self._auto_uppercase)
 
     def annotate(self, stream):
         """ Lookup meanings from dictionary """
@@ -1240,6 +1240,11 @@ class DefaultPipeline:
     def disambiguate_phrases(self, stream):
         """ Eliminate very uncommon meanings """
         return disambiguate_phrases(stream, self.word_token_ctor)
+
+    def correct_2(self, stream):
+        """ Token correction can be plugged in here (default stack doesn't do
+            any corrections, but this is overridden in ReynirCorrect) """
+        return stream
 
     def tokenize(self):
         """ Tokenize text in several phases, returning a generator of tokens

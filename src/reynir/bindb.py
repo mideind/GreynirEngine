@@ -338,6 +338,7 @@ class BIN_Db:
 
         if m:
             # Most common path out of this function
+            #print("{}-{}".format(w, m)) # TODO bæta hér við skoðun á 'beri', 'gjafi', ... Líka annars staðar? Hjá báðum return-skipununum?
             return (w, m, None)
 
         if lower_w != w or w[0] == "[":
@@ -390,10 +391,11 @@ class BIN_Db:
                 m = BIN_Db.open_cats(m)
                 if m:
                     if cw[0] in NOT_FORMERS: 
-                        m = None
                         error = ["C004", cw[0]]
                     elif cw[0] == "ó" and cw[1] == "tal":
                         error = ["C004", "ótal"]
+                    elif cw[0] in WRONG_FORMERS:
+                        error = ["C005", cw[0], WRONG_FORMERS[cw[0]]] 
         if not m and lower_w.startswith("ó"):
             # Check whether an adjective without the 'ó' prefix is found in BÍN
             # (i.e. create 'óhefðbundinn' from 'hefðbundinn')
