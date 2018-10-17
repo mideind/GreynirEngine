@@ -55,6 +55,8 @@ NOT_FORMERS = frozenset(("allra", "alhliða", "fjölnota", "margnota", "ótal"))
 WRONG_FORMERS = {
     "athugana" : "athugunar",
     "ferminga" : "fermingar",
+    "feykna" : "feikna",
+    "fyrna" : "firna",
     "fjarskiptar" : "fjarskipta",
     "fjárfestinga" : "fjárfestingar",
     "forvarna" : "forvarnar",

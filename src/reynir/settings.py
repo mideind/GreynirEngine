@@ -186,7 +186,7 @@ class VerbObjects:
                         kind = _REFLPRN[kind]
                     else:
                         spl = kind.split("_")
-                        if spl[-1] not in _ALL_CASES:
+                        if spl[-1] not in _ALL_CASES and spl[-1] != "gr":
                             raise ConfigError(
                                 "Invalid verb argument: '{0}'"
                                 .format(kind)
@@ -622,6 +622,12 @@ class AdjectivePredicates:
     # dict { adjective lemma : [ (preposition, case) ] }
     PREPOSITIONS = defaultdict(list)
 
+    # dict { adjective lemma : [ (errorcode, argument case) ] }
+    ERROR_DICT = defaultdict(list)
+
+    # dict { adjective lemma : [ (preposition, case)] }
+    ERROR_PREPOSITIONS = defaultdict(list)
+
     @staticmethod
     def add(adj, arg, prepositions):
         if arg:
@@ -629,6 +635,15 @@ class AdjectivePredicates:
         if prepositions:
             for each in prepositions:
                 AdjectivePredicates.PREPOSITIONS[adj] = (each[0], each[1])
+
+    @staticmethod
+    def add_error(adj, arg, prepositions, error):
+        if arg:
+            AdjectivePredicates.ERROR_DICT[adj] = arg
+        if prepositions:
+            for each in prepositions:
+                AdjectivePredicates.ERROR_PREPOSITIONS[adj] = (each[0], each[1])
+
 
 class Morphemes:
     # dict { morpheme : [ preferred PoS ] }
@@ -921,6 +936,16 @@ class Settings:
             s = s[0:ix]
             error = True
 
+        # Process particles, should only be one in each line
+        particle = None
+        ix = s.rfind("*")
+        if ix >= 0:
+            particle = s[ix:].strip()
+            s = s[0:ix]
+            if " " in particle:
+                raise ConfigError("Particle should only be one word")
+
+
         # Process preposition arguments, if any
         prepositions = []
         ap = s.split("/")
@@ -931,6 +956,7 @@ class Settings:
             p = ap[ix].strip()
             parg = p.split()
             if len(parg) != 2:
+
                 raise ConfigError("Preposition should have exactly one argument")
             if parg[1] not in _ALL_CASES and parg[1] not in _SUBCLAUSES:
                 if parg[1] in _REFLPRN:
@@ -942,15 +968,6 @@ class Settings:
                     raise ConfigError("Unknown argument for preposition")
             prepositions.append((parg[0], parg[1]))
             ix += 1
-
-        # Process particles, should only be one in each line
-        particle = None
-        ix = s.rfind("*")
-        if ix >= 0:
-            particle = s[ix:].strip()
-            s = s[0:ix]
-            if " " in particle:
-                raise ConfigError("Particle should only be one word")
 
         # Process verb arguments
         a = s.split()
@@ -1219,6 +1236,14 @@ class Settings:
     @staticmethod
     def handle_adjective_predicates(s):
         # Process preposition arguments, if any
+        error = False
+        ix = s.rfind("$error(")  # Must be at the end
+        if ix >= 0:
+            error = True
+            # A typical format is $error(error_code, right_phrase, right_parts_of_speech)
+            e = s[ix + 7 :].lstrip().rstrip(" )").split(", ")
+            s = s[:ix].strip()
+
         prepositions = []
         ap = s.split("/")
         s = ap[0]
@@ -1236,7 +1261,8 @@ class Settings:
         a = s.split()
         adj = a[0]
         AdjectivePredicates.add(adj, a[1:], prepositions)
-        # Not expecting errors here so no AdjectivePredicates.add_errors().
+        if error:
+            AdjectivePredicates.add_error(adj, a[1:], prepositions, e)
 
     @staticmethod
     def handle_unique_errors(s):
