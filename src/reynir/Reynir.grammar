@@ -131,7 +131,7 @@ Forskeyti →
     | 'mynd:kvk'_nf_et tala_nf_kvk AfTala? ':'? # Mynd 2 af 10
     | 'dæmi:hk'_et_nf tala_nf_hk? ':'
     | 'sjá:so'_0_gm_nh "einnig:ao"? ':'
-    | "semsagt:ao" ':'                          # ERROR
+    | "semsagt:ao" ':'                          #$error("sem:st" 'segja:so'_lhþt_sb_hk_nf_et ':') # Þarf ekki villureglu, einkvæm villa sem fyrri einingar taka á.
     | "sem:st" 'segja:so'_lhþt_sb_hk_nf_et ':'  # sem sagt
     | 'aðferð:kvk'_nf_et ':'
     | 'með_öðrum_orðum:ao' ':' | 'með:fs'_þgf 'annar:lo'_hk_þgf_ft 'orð:hk'_þgf_ft ':'
@@ -213,7 +213,7 @@ Samtenging →
     | "enda:st" | "en:st" | "hvorki:st"
     | 'það:pfn'_hk_nf_et 'vera:so'_0_gm_fh_et_p3
     | "þar:ao" 'á_meðal:ao'
-    | 'auk_þess:ao' "sem:st" "að:st"?               # ERROR -- að
+    | 'auk_þess:ao' "sem:st" VillaAð?
     | 'það_er_að_segja:ao' Tengimerki "að:st"?
     | "svo:st" "sem:st"
     | "eins:ao" "og:st"
@@ -284,7 +284,8 @@ AtvSetning →
 $score(+12) AtvSetning
 
 SamsettSetning →
-    "annaðhvort:st" BeygingarliðurSögnFremst "eða:st" BeygingarliðurÁnUmröðunar # ERROR: annað hvort?
+    "annaðhvort:st" BeygingarliðurSögnFremst "eða:st" BeygingarliðurÁnUmröðunar
+    | VillaAnnaðhvort BeygingarliðurSögnFremst "eða:st" BeygingarliðurÁnUmröðunar
     | "bæði:st" BeygingarliðurSögnFremst "og:st" BeygingarliðurÁnUmröðunar
     | "ýmist:st" BeygingarliðurSögnFremst "eða:st" BeygingarliðurÁnUmröðunar
 
@@ -356,7 +357,7 @@ SkýringarBotn →
 # Spurnaraukasetningar
 Spurnaraukasetning →
     SpurnarNafnliður/tala/fall/kyn FsMeðFallstjórn? BeygingarliðurÁnUmröðunar?
-    | "hvort:st" "að:st"? BeygingarliðurÁnUmröðunar?    # ERROR - að
+    | "hvort:st" VillaAð? BeygingarliðurÁnUmröðunar?
     | SpurnarForsetningarliður BeygingarliðurÁnUmröðunar?
     | SpurnarAtviksorð FsMeðFallstjórn? BeygingarliðurÁnUmröðunar?
     | SpurnarFrumlag/pers/tala/kyn FsMeðFallstjórn? BlTagl/tala/pers/kyn?
@@ -379,7 +380,7 @@ SpurnarForsetningarliður →
 SpurnarAtviksorð →
     spao | "hvernig:ao" | 'af:fs'_þgf 'hver:fn'_þgf_et_hk | "hví:ao" | "afhverju:ao"
     | 'til:fs'_ef 'hver:fn'_ef_et_hk | 'hver:fn'_ef_et_hk 'vegna:fs'_ef
-    | "hvort:st" "að:st"? # ERROR - að
+    | "hvort:st" VillaAð?
 
 HversuHve →
     "hversu:ao" | "hve:ao"
@@ -427,25 +428,26 @@ BeygingarliðurMeðUmröðun/tala/pers/kyn →
 
 # Mögulegar tengingar í aukasetningum eftir gerð aukasetningar
 Tíðartenging →
-    "löngu:ao"? "áður:ao" "en:st" "að:st"?  # áður en [að]  # ERROR
+    "löngu:ao"? "áður:ao" "en:st" VillaAð?
     | "löngu:ao"? "eftir:ao" "að:st"
     | 'allt:fn'_nf_hk_et? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"
+    | VillaFráÞvíAð # frá því X
     | 'allt:fn'_nf_hk_et? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "er:st"?
-    | 'snemma:ao'_mst "en:st" "að:st"? # fyrr en [að]  # ERROR
-    | 'ótt:ao'_mst "en:st" "að:st"? # óðar en [að]  # ERROR
+    | 'snemma:ao'_mst "en:st" VillaAð?  # fyrr en
+    | 'ótt:ao'_mst "en:st" VillaAð? # óðar en
     | "þá:ao" "er:st"
     | 'um:fs'_þf 'leið:kvk'_þf_et "og:st" # um leið og
     | 'um:fs'_þf 'svipaður:lo'_sb_hk_þf_et 'leyti:hk'_þf_et "og:st" # um svipað leyti og
     | 'um:fs'_þf 'samur:fn'_hk_þf_et 'leyti:hk'_þf_et "og:st" # um sama leyti og
     | 'á_sama_tíma:ao' "og:st"
-    | "síðan:st"
-    | "þegar:st"
+    | "síðan:st" VillaAð?
+    | "þegar:st" VillaAð?
     | "uns:st"
-    | "meðan:st"
-    | 'á_meðan:ao' "að:st"? # á meðan [að]  # ERROR
-    | "þangað:ao" "til:st" "að:st"?  # ERROR
-    | "þar:ao" "til:st" "að:st"?  # ERROR
-    | 'allar_götur_síðan:ao'
+    | "meðan:st" VillaAð?
+    | 'á_meðan:ao' VillaAð? # á meðan
+    | "þangað:ao" "til:st" VillaAð?
+    | "þar:ao" "til:st" VillaAð?
+    | 'allar_götur_síðan:ao' VillaAð?
     | TengiorðEr # "er:stt", líka tilvísunartenging - fær mínus
 
 $tag(apply_length_bonus) Tíðartenging
@@ -456,9 +458,10 @@ Tilgangstenging →
     | SvoTenging
 
 Viðurkenningartenging →
-    "enda:st" "þótt:st" "að:st"?  # ERROR
-    | "jafnvel:ao"? "þótt:st" "að:st"?  # ERROR
-    | "jafnvel:ao"? "þó:st" "að:st"?  # ERROR
+    "enda:st" "þótt:st" VillaAð?
+    | "jafnvel:ao"? "þótt:st" VillaAð?
+    | "jafnvel:ao"? "þó:st" "að:st"
+    | VillaÞóAð
     | 'þrátt_fyrir:ao' 'það:pfn'_hk_þf_et? "að:st"
 
 Afleiðingartenging →
@@ -467,21 +470,22 @@ Afleiðingartenging →
     | SvoTenging
 
 Orsakartenging →
-    "fyrst:ao" "að:st"?  # ERROR (bæta við "víst að" hér? ;-) )
+    "fyrst:ao" VillaAð?
+    | VillaVístAð
     | 'sökum:fs'_ef 'það:pfn'_hk_ef_et "að:st"  # sökum þess að
     | 'sakir:fs'_ef 'það:pfn'_hk_ef_et "að:st"  # sakir þess að
     | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"?  # úr því [að]
     | 'þar_eð:st'
-    | "þar:ao" "sem:st"
+    | "þar:ao" "sem:st" VillaAð?
     | 'af:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"?  # af því [að]
     | "því:st" "að:st"?                         # því [að]
     | 'vegna:fs'_ef 'það:pfn'_hk_ef_et "að:st"  # vegna þess að
     | 'með:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"   # með því að
 
 Skilyrðistenging →
-    "ef:st" "að:st"?  # ERROR
-    | "svo:ao" "framarlega:ao" "sem:st"
-    | "nema:st"
+    "ef:st" VillaAð?
+    | "svo:ao" "framarlega:ao" "sem:st" VillaAð?
+    | "nema:st" VillaAð?
 
 $score(+8) Skilyrðistenging # Skilyrðissetning er með mínus á móti
 
@@ -581,7 +585,12 @@ FrumlagsInnskot/tala/pers/kyn →
 # Þröngt mengi samtenginga sem nota má án kommu í frumlagsinnskoti
 # (sé mengið of vítt eykst margræðni verulega)
 InnskotsSamtenging →
-    "þegar:st" | "meðan:st" | 'á_meðan:ao' | "þar:ao" "sem:st" | 'þrátt_fyrir:ao'
+    "þegar:st" VillaAð? 
+    | "meðan:st" VillaAð? 
+    | 'á_meðan:ao' VillaAð? 
+    | "þar:ao" "sem:st" VillaAð? 
+    | 'þrátt_fyrir:ao'
+    | "þar:ao" "sem:st" VillaAð?
 
 Frumlag/pers/tala/kyn →
     NlFrumlag_nf/tala/pers/kyn
@@ -617,7 +626,7 @@ SamanburðurNl →
     | Samanburðarmerki 'annað:fn'_þgf_et_hk "nær:ao"   # Viðskiptablaðið styður ekki jafnaðarstefnuna; öðru nær.
 
 SamanburðarNlTenging →
-    "heldur:st" "en:st"             # 'Forseti á ekki að gera meiri breytingu á sér heldur en forsætisráðherra'
+    VillaHeldur? "en:st"             # 'Forseti á ekki að gera meiri breytingu á sér (heldur) en forsætisráðherra'
     | ','? "eins:ao" "og:st"        # 'Hann á ekki andstæðinga eins og aðrir kjörnir fulltrúar'
     | ','? "líkt:ao" "og:st"
     | Samanburðarmerki? "þar:ao" "af:ao"  # 'Fjöldi barna var í vélinni, þar af tvö kornabörn'
@@ -813,7 +822,7 @@ SetningSo →
     | "svo:ao"? VirðistSem                                  # [Svo] virðist sem Björn hafi fengið aðsvif
 
 VirðistSem →
-    'virða:so'_op_mm_fh_p3_et "sem:st" HreinYfirsetning     # virtist/virðist sem Björn hafi fengið aðsvif á sviðinu
+    'virða:so'_op_mm_fh_p3_et "sem:st" VillaAð? HreinYfirsetning     # virtist/virðist sem Björn hafi fengið aðsvif á sviðinu
 
 $score(+10) VirðistSem # Sennilega rétt greint
 
@@ -3018,10 +3027,11 @@ Manns/fall →
 # 3p. eintala
 
 NlStak_et_p3/fall/kyn →
-
     NlStak_p3_et/fall/kyn VeikSögnLhÞt_et/fall/kyn? FsRunaEftirNl?  # fulltrúi bankans í nefndinni
     | NlStak_et_p3/fall/kyn "eða:st" NlStak_p3_et/fall              # Þingnefnd eða hluti Alþingismanna getur lagt fram frumvarp
     | 'hver:fn'_et/fall/kyn "og:st" 'einn:fn'_et/fall/kyn FsRunaEftirNl?   # 'hver og einn [í sinni sveit] (ber ábyrgð)'
+    | EinnAf_et_p3/fall/kyn                                         # einn af drengjunum [sem tóku þátt] (vann keppnina)
+
 
 # '(svör við bréfi sínu) dagsettu (13. mars sl.)'
 VeikSögnLhÞt/tala/fall/kyn →
@@ -3031,6 +3041,12 @@ VeikSögnLhÞt/tala/fall/kyn →
 EinVeikSögnLhÞt/tala/fall/kyn → so_lhþt/tala/fall/kyn
 
 $score(-4) EinVeikSögnLhÞt/tala/fall/kyn
+
+EinnAf_et_p3/fall/kyn → 
+    'einn:fn'_et/fall/kyn AfLiður/kyn
+
+
+$score(+12) EinnAf_et_p3/fall/kyn
 
 # Meðhöndla "árið 2012" og "árin 2013 og 2014" með háum forgangi
 
@@ -3148,6 +3164,8 @@ NlStak_p3_et/fall → NlStak_p3_et/fall/kyn # Samtenging tveggja eintöluliða m
 NlStak_ft_p3/fall/kyn →
     NlStak_p3_ft/fall/kyn VeikSögnLhÞt_ft/fall/kyn? FsRunaEftirNl?  # fulltrúar bankans í nefndinni
     | 'allur:fn'_ft/fall/kyn 'sá:fn'_ft/fall/kyn                    # Allir þeir, allar þær, öll þau
+    | VillaEinnAf_ft_p3/fall/kyn        # Einn af mönnunum *gengu á vegg; ein af hverjum fjórum stúlkum stóðu sig vel
+    | VillaFjöldiHluti_ft/fall/kyn  # Mikill fjöldi/meirihluti/minnihluti unglinga reyndust hæfir → reyndist hæfur; 
 
 # Hvorki X né Y
 # Bæði X og Y
@@ -3180,7 +3198,7 @@ NlStak_ft_p3_hk/fall → NlBæðiHvorki_p3_hk/fall
 
 NlBæðiHvorki_p3_hk/fall →
 
-    "bæði:st" Nl_kk/fall "og:st" Nl_kvk/fall        # ERROR -- á 'bæði' ekki að vera fn? Skoða alls staðar!
+    "bæði:st" Nl_kk/fall "og:st" Nl_kvk/fall
     | "bæði:st" Nl_kvk/fall "og:st" Nl_kk/fall
     | "bæði:st" Nl_kk/fall "og:st" Nl_hk/fall
     | "bæði:st" Nl_hk/fall "og:st" Nl_kk/fall
@@ -4083,13 +4101,20 @@ LoSamanbFleiri/fall/tala/kyn →
     | "bæði:st" FsAtv "og:st" LoTengtSögn/tala/fall/kyn
     | "bæði:st" LoTengtSögn/tala/fall/kyn "og:st" FsAtv
     # annaðhvort með fullan maga eða hungurmorða
-    # ERROR á að leyfa 'annað hvort' ?
     | Samanburðarmerki "annaðhvort:st" LoTengtSögn/tala/fall/kyn "eða:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
     | Samanburðarmerki "annaðhvort:st" LoTengtSögn/tala/fall/kyn "eða:st" FsAtv LokatáknEðaKomma
     | Samanburðarmerki "annaðhvort:st" FsAtv "eða:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
     | "annaðhvort:st" LoTengtSögn/tala/fall/kyn "eða:st" LoTengtSögn/tala/fall/kyn
     | "annaðhvort:st" FsAtv "eða:st" LoTengtSögn/tala/fall/kyn
     | "annaðhvort:st" LoTengtSögn/tala/fall/kyn "eða:st" FsAtv
+
+    | Samanburðarmerki VillaAnnaðhvort LoTengtSögn/tala/fall/kyn "eða:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
+    | Samanburðarmerki VillaAnnaðhvort LoTengtSögn/tala/fall/kyn "eða:st" FsAtv LokatáknEðaKomma
+    | Samanburðarmerki VillaAnnaðhvort FsAtv "eða:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
+    | VillaAnnaðhvort LoTengtSögn/tala/fall/kyn "eða:st" LoTengtSögn/tala/fall/kyn
+    | VillaAnnaðhvort FsAtv "eða:st" LoTengtSögn/tala/fall/kyn
+    | VillaAnnaðhvort LoTengtSögn/tala/fall/kyn "eða:st" FsAtv
+
     # hvorki í djúpum þönkum né hugsandi
     | Samanburðarmerki "hvorki:st" LoTengtSögn/tala/fall/kyn "né:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
     | Samanburðarmerki "hvorki:st" LoTengtSögn/tala/fall/kyn "né:st" FsAtv LokatáknEðaKomma
@@ -4613,7 +4638,7 @@ AfstæðDagsetning →
     | ÍByrjunLok TímaÁkvæðisliður_ef_et/kyn? TímaNafnorðStærri_ef_et/kyn # í byrjun/lok dags/viku
 
     | TímaNafnliðurStærri_þgf/tala/kyn ÁðurSíðarSeinna             # (hér um bil) 10 vikum síðar
-    | 'fyrir:fs'_þgf TímaNafnliðurStærri_þgf/tala/kyn 'síðan:ao'?  # fyrir (rúmlega) 10 árum (síðan)
+    | 'fyrir:fs'_þgf TímaNafnliðurStærri_þgf/tala/kyn VillaSíðan?  # fyrir (rúmlega) 10 árum (síðan)
     | 'eftir:fs'_þf TímaNafnliðurStærri_þf/tala/kyn                # eftir tæplega átta daga
 
     | FyrrSíðarSeinna? AfstæðDagsetningFs                          # fyrr á árinu, síðar á árinu
@@ -5267,6 +5292,70 @@ NæstSíðast/fall/tala/kyn →
     'í:fs'_þgf 'byrjun:kvk'_þgf
     | 'í:fs'_þf 'lok:hk'_ft_þf
     | 'undir:fs'_þf 'lok:hk'_ft_þf
+
+# Villureglur // Error rules
+$error(VillaAð, LeiðréttAð)
+VillaAð →
+    "að:st"
+LeiðréttAð → ø      # Eða hvernig sem geri!
+
+$error(VillaAnnaðhvort, LeiðréttAnnaðhvort)
+VillaAnnaðhvort →
+    'annar:fn'_et_nf_hk 'hvort:fn'_et_nf_hk
+LeiðréttAnnaðhvort →
+    "annaðhvort:st"
+
+$error(VillaÞóAð, LeiðréttÞóAð)
+VillaÞóAð →
+    "jafnvel:ao"? "þó:st"
+LeiðréttÞóAð →
+    "jafnvel:ao"? "þó:st" "að:st"
+
+$error(VillaFráÞvíAð, LeiðréttFráÞvíAð)
+VillaFráÞvíAð →
+    'allt:fn'_nf_hk_et? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et
+LeiðréttFráÞvíAð → 
+    'allt:fn'_nf_hk_et? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"
+
+$error(VillaVístAð, LeiðréttVístAð)
+VillaVístAð →
+    "víst:ao" "að:st"  
+LeiðréttVístAð → 
+    "fyrst:ao" VillaAð?
+
+$error(VillaHeldur, LeiðréttHeldur)
+VillaHeldur →
+    "heldur:st"
+LeiðréttHeldur → ø   # Eða hvernig sem geri!
+
+$error(VillaSíðan, LeiðréttSíðan)
+VillaSíðan →
+    'síðan:ao'
+LeiðréttSíðan → ø     # Eða hvernig sem geri!
+
+# Villa í tölu: Einn af drengjunum sem tóku þátt unnu keppnina → vann keppnina
+$error(VillaEinnAf_ft_p3, EinnAf_et_p3)
+VillaEinnAf_ft_p3/fall/kyn →
+    'einn:fn'_et/fall/kyn AfLiður/kyn
+
+# Villa í kyni: Hún er ein af þátttakendum → einn
+# Hef þá kk → kvk, kvk → kk, kk → hk, hk → kk, hk → kvk, kvk → hk
+
+
+$error(VillaFjöldiHluti_ft/fall/kyn, LeiðréttFjöldiHluti_et_kk/fall)
+VillaFjöldiHluti_ft/fall/kyn →
+    'mikill:lo'_et_kk/fall? FjöldiHluti_et_kk/fall EfLiður_ft/kyn
+    | 'stór:lo'_et_kk/fall? 'hluti:kk'_et/fall EfLiður_ft/kyn
+
+FjöldiHluti_et_kk/fall →
+    'fjöldi:kk'_et/fall
+    | 'minnihluti:kk'_et/fall
+    | 'meirihluti:kk'_et/fall
+    | 'helmingur:kk'_et/fall
+
+LeiðréttFjöldiHluti_et_kk/fall →
+    'mikill:lo'_et_kk/fall? FjöldiHluti_et_kk/fall EfLiður_ft/kyn
+    | 'stór:lo'_et_kk/fall? 'hluti:kk'_et/fall EfLiður_ft/kyn
 
 
 # ----------------------------------------------
