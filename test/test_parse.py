@@ -1191,6 +1191,15 @@ def test_compressed_bin():
     assert nominal_forms == ['einkabíll']
 
 
+def test_foreign_names():
+    s = r.parse_single("Aristóteles uppgötvaði þyngdarlögmálið.")
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ person_kk_nf /NP-SUBJ VP so_1_þf_et_fh_gm_p3_þt "
+        "NP-OBJ no_et_gr_hk_þf /NP-OBJ /VP /IP /S-MAIN p /P"
+    )
+
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -1216,4 +1225,5 @@ if __name__ == "__main__":
     test_tree_flat()
     test_noun_lemmas()
     test_composite_words()
+    test_foreign_names()
     test_finish()

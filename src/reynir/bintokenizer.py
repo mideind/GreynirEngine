@@ -229,6 +229,14 @@ CURRENCY_GENDERS = {
     "EUR": "kvk",
 }
 
+# Set of categories (fl fields in BÍN) that denote
+# person names, Icelandic ('ism') or foreign ('erm')
+PERSON_NAME_SET = frozenset(("ism", "erm"))
+
+# Set of categories (fl fields in BÍN) for patronyms
+# and matronyms
+PATRONYM_SET = frozenset(("föð", "móð"))
+
 
 def annotate(db, word_token_ctor, token_stream, auto_uppercase):
     """ Look up word forms in the BIN word database. If auto_uppercase
@@ -694,20 +702,20 @@ def parse_phrases_2(token_stream):
                     return False
                 return any(m.fl in categories for m in tok.val)
 
-            def has_other_meaning(tok, category):
+            def has_other_meaning(tok, category_set):
                 """ Return True if the token can denote something besides a given name """
                 if tok.kind != TOK.WORD or not tok.val:
                     return True
                 # Return True if there is a different meaning, not a given name
-                return any(m.fl != category for m in tok.val)
+                return any(m.fl not in category_set for m in tok.val)
 
             # Check for person names
             def given_names(tok):
-                """ Check for Icelandic person name (category 'ism') """
+                """ Check for Icelandic or foreign person name (category 'ism' or 'erm') """
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
                     # Must be a word starting with an uppercase character
                     return None
-                return stems(tok, {"ism"}, given_name=True)
+                return stems(tok, PERSON_NAME_SET, given_name=True)
 
             # Check for surnames
             def surnames(tok):
@@ -715,7 +723,7 @@ def parse_phrases_2(token_stream):
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
                     # Must be a word starting with an uppercase character
                     return None
-                return stems(tok, {"föð", "móð"})
+                return stems(tok, PATRONYM_SET)
 
             # Check for unknown surnames
             def unknown_surname(tok):
@@ -726,7 +734,7 @@ def parse_phrases_2(token_stream):
                 if not tok.txt[0].isupper():
                     # Must start with capital letter
                     return False
-                if has_category(tok, {"föð", "móð"}):
+                if has_category(tok, PATRONYM_SET):
                     # This is a known surname, not an unknown one
                     return False
                 # Allow single-letter abbreviations, but not multi-letter
@@ -913,7 +921,7 @@ def parse_phrases_2(token_stream):
                     and not patronym
                     and not found_name
                     and (
-                        has_other_meaning(token, "ism") and w not in NamePreferences.SET
+                        has_other_meaning(token, PERSON_NAME_SET) and w not in NamePreferences.SET
                     )
                 )
 
