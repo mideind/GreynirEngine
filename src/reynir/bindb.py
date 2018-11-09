@@ -213,16 +213,16 @@ class BIN_Db:
             return "hk"  # Unknown gender
         w = name.split(maxsplit=1)[0]  # First name
         g = self.meanings(w)
-        m = next((x for x in g if x.fl in {"ism", "nafn"}), None)
+        m = next((x for x in g if x.fl in {"ism", "erm", "nafn"}), None)
         if m:
-            # Found a meaning with fl='ism' or fl='nafn'
+            # Found a name meaning
             return m.ordfl
         # The first name was not found: check whether the full name is
         # in the static phrases
         m = StaticPhrases.lookup(name)
         if m is not None:
             m = BIN_Meaning._make(m)
-            if m.fl in {"ism", "nafn"}:
+            if m.fl in {"ism", "erm", "nafn"}:
                 return m.ordfl
         return "hk"  # Unknown gender
 

@@ -524,7 +524,7 @@ class Reducer:
                     if tokens[i].is_upper and tokens[i].is_word and tokens[i].t2:
                         # Punish connection of normal noun terminal to
                         # an uppercase word that can be a person or entity name
-                        if any(m.fl in { "ism", "föð", "móð", "örn", "fyr" } for m in tokens[i].t2):
+                        if any(m.fl in { "ism", "erm", "föð", "móð", "örn", "fyr" } for m in tokens[i].t2):
                             # logging.info("Punishing connection of {0} with 'no' terminal".format(tokens[i].t1))
                             sc[t] -= 5
                     # Noun priorities, i.e. between different genders

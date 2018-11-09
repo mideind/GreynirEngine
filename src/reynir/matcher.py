@@ -988,22 +988,22 @@ class SimpleTree:
                 for name in txt.split():
                     meanings = db.lookup_nominative(name)
                     try:
-                        # Try to find an 'ism', 'föð' or 'móð' nominative form
-                        # of the correct gender
+                        # Try to find an 'ism', 'erm', 'föð' or 'móð' 
+                        # nominative form of the correct gender
                         result.append(
                             next(
                                 filter(
                                     lambda m: (
                                         m.ordfl == gender
                                         and "FT" not in m.beyging
-                                        and m.fl in {"ism", "föð", "móð"}
+                                        and m.fl in {"ism", "erm", "föð", "móð"}
                                     ),
                                     meanings
                                 )
                             ).ordmynd
                         )
                     except StopIteration:
-                        # No 'ism', 'föð' or 'móð' nominative form
+                        # No nominative form
                         try:
                             # Try the first available nominative form,
                             # regardless of what it is
