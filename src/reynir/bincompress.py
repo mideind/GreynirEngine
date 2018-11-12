@@ -62,6 +62,8 @@ import os
 import io
 import time
 import struct
+import functools
+import mmap
 from collections import defaultdict
 
 if __package__:
@@ -691,15 +693,11 @@ class BIN_Compressed:
 
     BIN_COMPRESSED_FILE = os.path.join(_PATH, "resources", "ord.compressed")
 
-    def _UINT(self, offset):
-        return UINT32.unpack_from(self._b, offset)[0]
-
     def __init__(self):
         """ We use a memory map, provided by the mmap module, to
             directly map the compressed file into memory without
             having to read it into a byte buffer. This also allows
             the same memory map to be shared between processes. """
-        import mmap
         with open(self.BIN_COMPRESSED_FILE, "rb") as stream:
             self._b = mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ)
         assert self._b[0:16] == BIN_Compressor.VERSION
@@ -710,6 +708,9 @@ class BIN_Compressed:
         self._mappings = self._b[mappings_offset:]
         self._stems = self._b[stems_offset:]
         self._meanings = self._b[meanings_offset:]
+        # Create partial unpacking functions for speed
+        self._partial_UINT = functools.partial(UINT32.unpack_from, self._b)
+        self._partial_mappings = functools.partial(UINT32.unpack_from, self._mappings)
         # Cache the trie root header
         self._forms_root_hdr = self._UINT(forms_offset)
         # The alphabet header occupies the next 16 bytes
@@ -718,6 +719,10 @@ class BIN_Compressed:
         self._alphabet = bytes(self._b[alphabet_offset+4:alphabet_offset + 4 + alphabet_length])
         # Create a CFFI buffer object pointing to the memory map
         self._mmap_buffer = ffi.from_buffer(self._b)
+
+    def _UINT(self, offset):
+        """ Return the 32-bit UINT at the indicated offset in the memory-mapped buffer """
+        return self._partial_UINT(offset)[0]
 
     def close(self):
         """ Close the memory map """
@@ -741,7 +746,7 @@ class BIN_Compressed:
     def stem(self, ix):
         """ Find and decode a stem (utg, stofn) tuple, given its index """
         off, = UINT32.unpack_from(self._stems, ix * 4)
-        wid, = UINT32.unpack_from(self._b, off)
+        wid = self._UINT(off)
         # The id (utg) is stored in the lower 31 bits, after adding 1
         wid = (wid & 0x7FFFFFFF) - 1
         p = off + 4
@@ -775,7 +780,7 @@ class BIN_Compressed:
             return c
 
         off, = UINT32.unpack_from(self._stems, ix * 4)
-        wid, = UINT32.unpack_from(self._b, off)
+        wid = self._UINT(off)
         # The id (utg) is stored in the lower 31 bits, after adding 1
         if wid & 0x80000000 == 0:
             # No canonicals associated with this stem
@@ -806,7 +811,7 @@ class BIN_Compressed:
         # Fetch the mapping-to-stem/meaning tuples
         result = []
         while True:
-            stem_meaning, = UINT32.unpack_from(self._mappings, mapping * 4)
+            stem_meaning, = self._partial_mappings(mapping * 4)
             stem_index = (stem_meaning >> 11) & (2 ** 20 - 1)
             meaning_index = stem_meaning & (2 ** 11 - 1)
             result.append((stem_index, meaning_index))
