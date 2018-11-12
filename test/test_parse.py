@@ -1199,6 +1199,35 @@ def test_foreign_names():
         "NP-OBJ no_et_gr_hk_þf /NP-OBJ /VP /IP /S-MAIN p /P"
     )
 
+def test_vocabulary():
+    """ Test words that should be in the vocabulary, coming from
+        ord.auka.csv or ord.add.csv """
+    s = r.parse_single("""
+        Í gær gekk ég út frá ströndum og fékk mér ís.
+        """)
+    assert s.tree is not None
+    assert "strönd" in s.tree.nouns
+    s = r.parse_single("""
+        Rekjanleikinn var enginn þegar ég spurði um hann.
+        """)
+    assert s.tree is not None
+    assert "rekjanleiki" in s.tree.nouns
+    s = r.parse_single("""
+        Jón hafði áhyggjur af seljanleika bréfanna.
+        """)
+    assert s.tree is not None
+    assert "seljanleiki" in s.tree.nouns
+    s = r.parse_single("""
+        Tvískráning bréfanna er á döfinni.
+        """)
+    assert s.tree is not None
+    assert "tvískráning" in s.tree.nouns
+    s = r.parse_single("""
+        Hann vanrækti börnin alla tíð.
+        """)
+    assert s.tree is not None
+    assert "vanrækja" in s.tree.verbs
+
 
 def test_finish():
     r.__class__.cleanup()
@@ -1226,4 +1255,5 @@ if __name__ == "__main__":
     test_noun_lemmas()
     test_composite_words()
     test_foreign_names()
+    test_vocabulary()
     test_finish()

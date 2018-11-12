@@ -32,6 +32,11 @@
     dictionaries or other data structures should be needed. The binary image
     is shared between running processes.
 
+    When invoked from the command line, bincompress.py reads the files
+    ord.csv (original from BÍN), ord.auka.csv (additional vocabulary),
+    and ord.add.csv (generated from config/Vocab.conf by the program utils/vocab.py
+    in the Reynir repository).
+
     ************************************************************************
 
     IMPORTANT NOTE: It is not permitted to reverse engineer this file format
@@ -59,8 +64,11 @@ import time
 import struct
 from collections import defaultdict
 
-# Import the CFFI wrapper for the bin.cpp C++ module (see also build_bin.py)
-from ._bin import lib as bin_cffi, ffi
+if __package__:
+    # Import the CFFI wrapper for the bin.cpp C++ module (see also build_bin.py)
+    # This is not needed for command-line invocation of bincompress.py,
+    # i.e. when generating a new ord.compressed file.
+    from ._bin import lib as bin_cffi, ffi
 
 
 _PATH = os.path.dirname(__file__) or "."
