@@ -55,6 +55,7 @@ author = u"Miðeind ehf."
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
+# !!! Remember to update the version in src/reynir/__init__.py as well
 # The short X.Y version.
 version = "1.3"
 # The full version, including alpha/beta/rc tags.
