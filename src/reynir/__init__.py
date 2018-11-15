@@ -33,7 +33,7 @@ from tokenizer import TOK, Tok, tokenize, correct_spaces
 from tokenizer import TP_LEFT, TP_CENTER, TP_RIGHT, TP_NONE, TP_WORD
 from tokenizer import Abbreviations
 
-__author__ = u"Miðeind ehf"
+__author__ = "Miðeind ehf"
 
 Abbreviations.initialize()
 Settings.read("config/ReynirPackage.conf")
