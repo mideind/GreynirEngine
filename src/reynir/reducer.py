@@ -79,14 +79,14 @@ from .binparser import BIN_Token
 
 
 _PREP_SCOPE_SET = frozenset(("begin_prep_scope", "purge_prep", "no_prep"))
-_PREP_ALL_SET = frozenset(_PREP_SCOPE_SET | { "enable_prep_bonus" })
+_PREP_ALL_SET = frozenset(_PREP_SCOPE_SET | {"enable_prep_bonus"})
 _CASES_SET = frozenset(BIN_Token.CASES)
-_VERB_PREP_BONUS = 7 # Give 7 extra points for a verb/preposition match
-_VERB_PREP_PENALTY = -2 # Subtract 2 points for a non-match
-_LENGTH_BONUS_FACTOR = 10 # For length bonus, multiply number of tokens by this factor
+_VERB_PREP_BONUS = 7  # Give 7 extra points for a verb/preposition match
+_VERB_PREP_PENALTY = -2  # Subtract 2 points for a non-match
+_LENGTH_BONUS_FACTOR = 10  # For length bonus, multiply number of tokens by this factor
 
 # Noun categories set
-_NOUN_SET = BIN_Token.GENDERS_SET # kk, kvk, hk
+_NOUN_SET = BIN_Token.GENDERS_SET  # kk, kvk, hk
 
 
 def copy_node(node):
@@ -129,7 +129,7 @@ class PrepositionUnpacker(ParseForestNavigator):
         preposition scope (SagnInnskot) """
 
     def __init__(self):
-        super().__init__(visit_all = False)
+        super().__init__(visit_all=False)
 
     def _visit_nonterminal(self, level, node):
         """ Create a result object to capture information about
@@ -170,7 +170,7 @@ class ReductionInfo:
     def __init__(self, reducer, node):
         self.reducer = reducer
         self.node = node
-        self.sc = defaultdict(lambda: dict(sc = 0)) # Child tree scores
+        self.sc = defaultdict(lambda: dict(sc=0))  # Child tree scores
         # We are only interested in completed nonterminals
         self.nt = node.nonterminal if node.is_completed else None
         self.name = self.nt.name if self.nt else None
@@ -218,17 +218,18 @@ class ReductionInfo:
 
             csc = self.sc
             if not csc:
-                return dict(sc = 0) # Empty node
+                return dict(sc=0)  # Empty node
             if len(csc) == 1:
                 # Not ambiguous: only one result, do a shortcut
-                [ sc ] = csc.values() # Will raise an exception if not exactly one value
+                [sc] = csc.values()  # Will raise an exception if not exactly one value
             else:
                 # Eliminate all families except the best scoring one
                 # Sort in decreasing order by score, using the family index
                 # as a tie-breaker for determinism
-                s = sorted(csc.items(), key = lambda x: (x[1]["sc"], -x[0]), reverse = True)
+                s = sorted(csc.items(), key=lambda x: (x[1]["sc"], -x[0]), reverse=True)
                 # This is the best scoring family
-                # (and the one with the lowest index if there are many with the same score)
+                # (and the one with the lowest index
+                # if there are many with the same score)
                 ix, sc = s[0]
                 # And now for the key action of the reducer: Eliminate all other families
                 node.reduce_to(ix)
@@ -246,7 +247,10 @@ class ReductionInfo:
                     bonus = (self.node.end - self.node.start - 1) * _LENGTH_BONUS_FACTOR
                     sc["sc"] += bonus
 
-                if self.nt.has_tag("apply_prep_bonus") and self.reducer.get_prep_bonus() is not None:
+                if (
+                    self.nt.has_tag("apply_prep_bonus")
+                    and self.reducer.get_prep_bonus() is not None
+                ):
                     # This is a nonterminal that we like to see in a verb/prep context
                     # An example is Dagsetning which we like to be associated with a verb
                     # rather than a noun phrase
@@ -257,10 +261,11 @@ class ReductionInfo:
                     if verb is not None:
                         sc["sl"] = verb[:]
 
-                if self.nt.has_any_tag({ "begin_prep_scope", "purge_verb" }):
+                if self.nt.has_any_tag({"begin_prep_scope", "purge_verb"}):
                     # Delete information about contained verbs
-                    # SagnRuna, EinSetningÁnF, SagnHluti, NhFyllingAtv and Setning have this tag
-                    sc.pop("so", None) # Simpler than if "so" in sc: del sc["so"]
+                    # SagnRuna, EinSetningÁnF, SagnHluti, NhFyllingAtv
+                    # and Setning have this tag
+                    sc.pop("so", None)  # Simpler than if "so" in sc: del sc["so"]
                     sc.pop("sl", None)
             return sc
 
@@ -282,8 +287,8 @@ class ParseForestReducer(ParseForestNavigator):
         self._scores = scores
         self._grammar = grammar
         self._score_adj = grammar._nt_scores
-        self._prep_bonus_stack = [ None ]
-        self._current_verb_stack = [ None ]
+        self._prep_bonus_stack = [None]
+        self._current_verb_stack = [None]
         self._bonus_cache = dict()
 
     def push_prep_bonus(self, val):
@@ -339,7 +344,7 @@ class ParseForestReducer(ParseForestNavigator):
 
     def _visit_epsilon(self, level):
         """ At Epsilon node """
-        return dict(sc = 0) # Score 0
+        return dict(sc=0)  # Score 0
 
     def _visit_token(self, level, node):
         """ At token node """
@@ -371,7 +376,7 @@ class ParseForestReducer(ParseForestNavigator):
                             final_bonus = max(final_bonus, bonus)
                 if final_bonus is not None:
                     sc += final_bonus
-        elif node.terminal.matches_category("so"): # !!! Was .startswith("so")
+        elif node.terminal.matches_category("so"):  # !!! Was .startswith("so")
             # Verb terminal: pick up the verb
             d["so"] = [(node.terminal, node.token)]
         d["sc"] = sc
@@ -401,24 +406,26 @@ class ParseForestReducer(ParseForestNavigator):
     def _process_results(self, results, node):
         """ Sort scores after visiting children, then prune the child families
             (productions) leaving only the top-scoring family (production) """
-        d = dict(sc = 0) if results is None else results.process(node)
+        d = dict(sc=0) if results is None else results.process(node)
         # node.score = d["sc"]
         return d
 
     def _check_stacks(self):
         """ Runtime sanity check of the reducer stacks """
         assert len(self._prep_bonus_stack) == 1 and self._prep_bonus_stack[0] is None
-        assert len(self._current_verb_stack) == 1 and self._current_verb_stack[0] is None
+        assert (
+            len(self._current_verb_stack) == 1 and self._current_verb_stack[0] is None
+        )
 
     def go(self, root_node):
         """ Perform the reduction, but first split the tree underneath
             nodes that have the enable_prep_bonus tag """
-        self._check_stacks() # !!! DEBUG
+        self._check_stacks()  # !!! DEBUG
         PrepositionUnpacker.navigate(root_node)
         # ParseForestPrinter.print_forest(root_node, skip_duplicates = True)
         # Start normal navigation of the tree after the split
         result = super().go(root_node)
-        self._check_stacks() # !!! DEBUG
+        self._check_stacks()  # !!! DEBUG
         return result
 
 
@@ -469,7 +476,7 @@ class Reducer:
 
             s = finals[i]
             # Initially, each alternative has a score of 0
-            scores[i] = { terminal: 0 for terminal in s }
+            scores[i] = {terminal: 0 for terminal in s}
 
             if len(s) <= 1:
                 # No ambiguity to resolve here
@@ -481,7 +488,7 @@ class Reducer:
             same_first = len(set(terminal.first for terminal in s)) == 1
             txt = tokens[i].lower
             # Get the last part of a composite word (e.g. 'jaðar-áhrifin' -> 'áhrifin')
-            txt_last = txt.rsplit('-', maxsplit = 1)[-1]
+            txt_last = txt.rsplit("-", maxsplit=1)[-1]
             # No need to check preferences if the first parts of all possible terminals are equal
             # Look up the preference ordering from Reynir.conf, if any
             prefs = None if same_first else Preferences.get(txt_last)
@@ -495,7 +502,8 @@ class Reducer:
                             for bt in s:
                                 if wt is not bt and bt.first in better:
                                     if bt.name[0] in "\"'":
-                                        # Literal terminal: be even more aggressive in promoting it
+                                        # Literal terminal:
+                                        # be even more aggressive in promoting it
                                         adj_w = -2 * factor
                                         adj_b = +6 * factor
                                     else:
@@ -524,12 +532,17 @@ class Reducer:
                     if tokens[i].is_upper and tokens[i].is_word and tokens[i].t2:
                         # Punish connection of normal noun terminal to
                         # an uppercase word that can be a person or entity name
-                        if any(m.fl in { "ism", "föð", "móð", "örn", "fyr" } for m in tokens[i].t2):
-                            # logging.info("Punishing connection of {0} with 'no' terminal".format(tokens[i].t1))
+                        if any(
+                            m.fl in {"ism", "erm", "nafn", "föð", "móð", "örn", "fyr"}
+                            for m in tokens[i].t2
+                        ):
+                            # logging.info(
+                            #     "Punishing connection of {0} with 'no' terminal"
+                            #     .format(tokens[i].t1))
                             sc[t] -= 5
                     # Noun priorities, i.e. between different genders
-                    # of the same word form
-                    # (for example "ára" which can refer to three stems with different genders)
+                    # of the same word form (for example "ára" which can refer to
+                    # three stems with different genders)
                     if txt_last in noun_prefs:
                         np = noun_prefs[txt_last].get(t.gender, 0)
                         sc[t] += np
@@ -537,13 +550,16 @@ class Reducer:
                     if t.has_variant("nf"):
                         # Reduce the weight of the 'artificial' nominative prepositions
                         # 'næstum', 'sem', 'um'
-                        sc[t] -= 8 # Make other cases outweigh the Nl_nf bonus of +4 (-2 -3 = -5)
+                        # Make other cases outweigh the Nl_nf bonus of +4 (-2 -3 = -5)
+                        sc[t] -= 8
                     elif txt == "við" and t.has_variant("þgf"):
-                        sc[t] += 1 # Smaller bonus for við + þgf (is rarer than við + þf)
+                        # Smaller bonus for við + þgf (is rarer than við + þf)
+                        sc[t] += 1
                     elif txt == "sem" and t.has_variant("þf"):
                         sc[t] -= 4
                     elif txt == "á" and t.has_variant("þgf"):
-                        sc[t] += 4 # Larger bonus for á + þgf to resolve conflict with verb 'eiga'
+                        # Larger bonus for á + þgf to resolve conflict with verb 'eiga'
+                        sc[t] += 4
                     else:
                         # Else, give a bonus for each matched preposition
                         sc[t] += 2
@@ -553,12 +569,18 @@ class Reducer:
                         # Normally, we give a bonus for verb arguments: the more matched, the better
                         numcases = int(t.variant(0))
                         adj = 2 * numcases
-                        # !!! Logic should be added here to encourage zero arguments for verbs in 'miðmynd'
+                        # !!! TODO: Logic should be added here to encourage zero arguments
+                        # for verbs in the middle voice
                         if numcases == 0:
                             # Zero arguments: we might not like this
                             vo0 = VerbObjects.VERBS[0]
-                            if all((m.stofn not in vo0) and (m.ordmynd not in vo0) and ("MM" not in m.beyging)
-                                for m in tokens[i].t2 if m.ordfl == "so"):
+                            if all(
+                                (m.stofn not in vo0)
+                                and (m.ordmynd not in vo0)
+                                and ("MM" not in m.beyging)
+                                for m in tokens[i].t2
+                                if m.ordfl == "so"
+                            ):
                                 # No meaning where the verb has zero arguments
                                 # print("Subtracting 5 points for 0-arg verb {0}".format(tokens[i].t1))
                                 adj = -5
@@ -586,7 +608,7 @@ class Reducer:
                         else:
                             sc[t] += 3
                     elif t.is_lh_nt:
-                        sc[t] += 12 # Encourage LHNT rather than LO
+                        sc[t] += 12  # Encourage LHNT rather than LO
                     elif t.is_mm:
                         # Encourage mm forms. The encouragement should be better than
                         # the score for matching a single case, so we pick so_0_mm
@@ -603,15 +625,18 @@ class Reducer:
                         else:
                             sc[t] += 1
                     if t.is_nh:
-                        if (i > 0) and any(pt.first == 'nhm' for pt in finals[i - 1]):
+                        if (i > 0) and any(pt.first == "nhm" for pt in finals[i - 1]):
                             # Give a bonus for adjacent nhm + so_nh terminals
-                            sc[t] += 4 # Prop up the verb terminal with the nh variant
+                            sc[t] += 4  # Prop up the verb terminal with the nh variant
                             for pt in scores[i - 1].keys():
-                                if pt.first == 'nhm':
+                                if pt.first == "nhm":
                                     # Prop up the nhm terminal
                                     scores[i - 1][pt] += 2
                                     break
-                        if any(pt.first == "no" and pt.has_variant("ef") and pt.is_plural for pt in s):
+                        if any(
+                            pt.first == "no" and pt.has_variant("ef") and pt.is_plural
+                            for pt in s
+                        ):
                             # If this is a so_nh and an alternative no_ef_ft exists, choose this one
                             # (for example, 'hafa', 'vera', 'gera', 'fara', 'mynda', 'berja', 'borða')
                             sc[t] += 4
@@ -682,4 +707,3 @@ class Reducer:
         """ Return only the reduced forest, without its score """
         w, _ = self.go_with_score(forest)
         return w
-

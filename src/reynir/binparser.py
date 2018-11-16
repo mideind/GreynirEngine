@@ -876,7 +876,7 @@ class BIN_Token(Token):
 
         def matcher_no(m):
             """ Check noun """
-            if BIN_Token.KIND[m.ordfl] != "no":
+            if BIN_Token.KIND.get(m.ordfl, m.ordfl) != "no":
                 return False
             no_info = m.beyging == "-"
             if terminal.is_abbrev:
@@ -907,7 +907,7 @@ class BIN_Token(Token):
             """ Check street name """
             if m.fl != "göt":  # Götuheiti
                 return False
-            if BIN_Token.KIND[m.ordfl] != "no":
+            if BIN_Token.KIND.get(m.ordfl, m.ordfl) != "no":
                 return False
             for v in terminal.variants:
                 if v in BIN_Token.GENDERS_SET:
@@ -1098,7 +1098,7 @@ class BIN_Token(Token):
             # that match the given case
             fbits = BIN_Token.get_fbits(m.beyging) & BIN_Token.VBIT_CASES
             return (
-                BIN_Token.KIND[m.ordfl] in {"no", "lo"} and
+                BIN_Token.KIND.get(m.ordfl, m.ordfl) in {"no", "lo"} and
                 terminal.fbits_match(fbits)
             )
 
@@ -1270,7 +1270,7 @@ class VariantHandler:
         """ Returns True if the first part of the terminal name matches the
             given word category """
         # Convert 'kk', 'kvk', 'hk' to 'no' before doing the compare
-        return self._first == BIN_Token.KIND[t_kind]
+        return self._first == BIN_Token.KIND.get(t_kind, t_kind)
 
     @property
     def first(self):

@@ -1176,6 +1176,59 @@ def test_composite_words():
     assert s.lemmas == ['ég', 'borða', 'sykrisaltan', 'fiskinn']
 
 
+def test_compressed_bin():
+    import reynir.bincompress as bc
+    binc = bc.BIN_Compressed()
+    assert "gleraugu" in binc
+    assert "Ísland" in binc
+    assert "Vestur-Þýskaland" in binc
+    assert "glerxaugu" not in binc
+    assert "x" not in binc
+    assert "X" not in binc
+    assert binc.lookup("aðförin") == [('aðför', 123454, 'kvk', 'alm', 'aðförin', 'NFETgr')]
+    assert binc.lookup("einkabílnum") == [('einkabíll', 75579, 'kk', 'alm', 'einkabílnum', 'ÞGFETgr')]
+    nominal_forms = [m[4] for m in binc.nominative("einkabílnum") if m[5] == "NFET"]
+    assert nominal_forms == ['einkabíll']
+
+
+def test_foreign_names():
+    s = r.parse_single("Aristóteles uppgötvaði þyngdarlögmálið.")
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ person_kk_nf /NP-SUBJ VP so_1_þf_et_fh_gm_p3_þt "
+        "NP-OBJ no_et_gr_hk_þf /NP-OBJ /VP /IP /S-MAIN p /P"
+    )
+
+def test_vocabulary():
+    """ Test words that should be in the vocabulary, coming from
+        ord.auka.csv or ord.add.csv """
+    s = r.parse_single("""
+        Í gær gekk ég út frá ströndum og fékk mér ís.
+        """)
+    assert s.tree is not None
+    assert "strönd" in s.tree.nouns
+    s = r.parse_single("""
+        Rekjanleikinn var enginn þegar ég spurði um hann.
+        """)
+    assert s.tree is not None
+    assert "rekjanleiki" in s.tree.nouns
+    s = r.parse_single("""
+        Jón hafði áhyggjur af seljanleika bréfanna.
+        """)
+    assert s.tree is not None
+    assert "seljanleiki" in s.tree.nouns
+    s = r.parse_single("""
+        Tvískráning bréfanna er á döfinni.
+        """)
+    assert s.tree is not None
+    assert "tvískráning" in s.tree.nouns
+    s = r.parse_single("""
+        Hann vanrækti börnin alla tíð.
+        """)
+    assert s.tree is not None
+    assert "vanrækja" in s.tree.verbs
+
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -1183,6 +1236,7 @@ def test_finish():
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     test_init()
+    test_compressed_bin()
     test_parse(verbose=True)
     test_properties()
     test_long_parse(verbose=True)
@@ -1200,4 +1254,6 @@ if __name__ == "__main__":
     test_tree_flat()
     test_noun_lemmas()
     test_composite_words()
+    test_foreign_names()
+    test_vocabulary()
     test_finish()

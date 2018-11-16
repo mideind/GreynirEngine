@@ -81,6 +81,10 @@ BIN_Meaning.__str__ = BIN_Meaning.__repr__ = (
         .format(self.stofn, self.utg, self.ordfl, self.fl, self.ordmynd, self.beyging)
     )
 )
+# The set of word subcategories (fl) for person names
+# (i.e. first names or complete names)
+PERSON_NAME_FL = frozenset(("ism", "nafn", "erm"))
+
 
 class BIN_Db:
 
@@ -234,16 +238,16 @@ class BIN_Db:
             return "hk"  # Unknown gender
         w = name.split(maxsplit=1)[0]  # First name
         g = self.meanings(w)
-        m = next((x for x in g if x.fl in {"ism", "nafn"}), None)
+        m = next((x for x in g if x.fl in PERSON_NAME_FL), None)
         if m:
-            # Found a meaning with fl='ism' or fl='nafn'
+            # Found a name meaning
             return m.ordfl
         # The first name was not found: check whether the full name is
         # in the static phrases
         m = StaticPhrases.lookup(name)
         if m is not None:
             m = BIN_Meaning._make(m)
-            if m.fl in {"ism", "nafn"}:
+            if m.fl in PERSON_NAME_FL:
                 return m.ordfl
         return "hk"  # Unknown gender
 

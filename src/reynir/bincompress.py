@@ -32,6 +32,11 @@
     dictionaries or other data structures should be needed. The binary image
     is shared between running processes.
 
+    When invoked from the command line, bincompress.py reads the files
+    ord.csv (original from BÍN), ord.auka.csv (additional vocabulary),
+    and ord.add.csv (generated from config/Vocab.conf by the program utils/vocab.py
+    in the Reynir repository).
+
     ************************************************************************
 
     IMPORTANT NOTE: It is not permitted to reverse engineer this file format
@@ -57,9 +62,15 @@ import os
 import io
 import time
 import struct
+import functools
+import mmap
 from collections import defaultdict
 
-from ._bin import lib as bin, ffi
+if __package__:
+    # Import the CFFI wrapper for the bin.cpp C++ module (see also build_bin.py)
+    # This is not needed for command-line invocation of bincompress.py,
+    # i.e. when generating a new ord.compressed file.
+    from ._bin import lib as bin_cffi, ffi
 
 
 _PATH = os.path.dirname(__file__) or "."
@@ -682,15 +693,11 @@ class BIN_Compressed:
 
     BIN_COMPRESSED_FILE = os.path.join(_PATH, "resources", "ord.compressed")
 
-    def _UINT(self, offset):
-        return UINT32.unpack(self._b[offset:offset+4])[0]
-
     def __init__(self):
         """ We use a memory map, provided by the mmap module, to
             directly map the compressed file into memory without
             having to read it into a byte buffer. This also allows
             the same memory map to be shared between processes. """
-        import mmap
         with open(self.BIN_COMPRESSED_FILE, "rb") as stream:
             self._b = mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ)
         assert self._b[0:16] == BIN_Compressor.VERSION
@@ -701,12 +708,21 @@ class BIN_Compressed:
         self._mappings = self._b[mappings_offset:]
         self._stems = self._b[stems_offset:]
         self._meanings = self._b[meanings_offset:]
+        # Create partial unpacking functions for speed
+        self._partial_UINT = functools.partial(UINT32.unpack_from, self._b)
+        self._partial_mappings = functools.partial(UINT32.unpack_from, self._mappings)
         # Cache the trie root header
         self._forms_root_hdr = self._UINT(forms_offset)
         # The alphabet header occupies the next 16 bytes
         # Read the alphabet length
         alphabet_length = self._UINT(alphabet_offset)
         self._alphabet = bytes(self._b[alphabet_offset+4:alphabet_offset + 4 + alphabet_length])
+        # Create a CFFI buffer object pointing to the memory map
+        self._mmap_buffer = ffi.from_buffer(self._b)
+
+    def _UINT(self, offset):
+        """ Return the 32-bit UINT at the indicated offset in the memory-mapped buffer """
+        return self._partial_UINT(offset)[0]
 
     def close(self):
         """ Close the memory map """
@@ -717,19 +733,20 @@ class BIN_Compressed:
             self._alphabet = None
             self._b.close()
             self._b = None
+            self._mmap_buffer = None
 
     def meaning(self, ix):
         """ Find and decode a meaning (ordfl, fl, beyging) tuple,
             given its index """
-        off, = UINT32.unpack(self._meanings[ix * 4:ix * 4 + 4])
+        off, = UINT32.unpack_from(self._meanings, ix * 4)
         b = bytes(self._b[off:off+24])
         s = b.decode('latin-1').split(maxsplit=4)
         return tuple(s[0:3])  # ordfl, fl, beyging
 
     def stem(self, ix):
         """ Find and decode a stem (utg, stofn) tuple, given its index """
-        off, = UINT32.unpack(self._stems[ix * 4:ix * 4 + 4])
-        wid, = UINT32.unpack(self._b[off:off+4])
+        off, = UINT32.unpack_from(self._stems, ix * 4)
+        wid = self._UINT(off)
         # The id (utg) is stored in the lower 31 bits, after adding 1
         wid = (wid & 0x7FFFFFFF) - 1
         p = off + 4
@@ -762,8 +779,8 @@ class BIN_Compressed:
                 last_w = w
             return c
 
-        off, = UINT32.unpack(self._stems[ix * 4:ix * 4 + 4])
-        wid, = UINT32.unpack(self._b[off:off+4])
+        off, = UINT32.unpack_from(self._stems, ix * 4)
+        wid = self._UINT(off)
         # The id (utg) is stored in the lower 31 bits, after adding 1
         if wid & 0x80000000 == 0:
             # No canonicals associated with this stem
@@ -778,102 +795,15 @@ class BIN_Compressed:
         # Read the set of canonicals from the given offset
         return read_set(p)
 
-    def _prepare(self, word):
-        """ Return the latin-1 and compact-encoded forms of the word """
-        # Map the word to Latin-1 as well as a
-        # compact 7-bit-per-character representation
-        try:
-            word_latin = word.encode('latin-1')
-            cword = bytes([self._alphabet.index(c) + 1 for c in word_latin])
-        except (UnicodeEncodeError, ValueError):
-            # The word contains a letter that is not in the Latin-1
-            # or BÍN alphabets: it can't be in BÍN
-            return 0, b"", b""
-        return len(word), word_latin, cword
-
-    def _mapping(self, word):
-        """ Look up the given word form via the radix trie,
-            returning the offset of its mapping list, or None if not found """
-        word_len, word_latin, cword = self._prepare(word)
-        if word_len == 0:
-            return None
-
-        def _matches(node_offset, hdr, fragment_index):
-            """ If the lookup fragment word[fragment_index:] matches the node,
-                return the number of characters matched. Otherwise,
-                return -1 if the node is lexicographically less than the
-                lookup fragment, or 0 if the node is greater than the fragment.
-                (The lexicographical ordering here is actually a comparison
-                between the Latin-1 ordinal numbers of characters.) """
-            if hdr & 0x80000000:
-                # Single-character fragment
-                chix = (hdr >> 23) & 0x7F
-                if chix == cword[fragment_index]:
-                    # Match
-                    return 1
-                return 0 if chix > cword[fragment_index] else -1
-            if hdr & 0x40000000:
-                # Childless node
-                frag = node_offset + 4
-            else:
-                num_children = self._UINT(node_offset + 4)
-                frag = node_offset + 8 + 4 * num_children
-            matched = 0
-            while (
-                self._b[frag] != 0
-                and (fragment_index + matched < word_len)
-                and self._b[frag] == word_latin[fragment_index + matched]
-            ):
-                frag += 1
-                matched += 1
-            if self._b[frag] == 0:
-                # Matched the entire fragment: success
-                return matched
-            if fragment_index + matched >= word_len:
-                # The node is longer and thus greater than the fragment
-                return 0
-            return 0 if self._b[frag] > word_latin[fragment_index + matched] else -1
-
-        def _lookup(node_offset, hdr, fragment_index):
-            while True:
-                if fragment_index >= word_len:
-                    # We've arrived at our destination:
-                    # return the associated value (unless this is an interim node)
-                    value = hdr & 0x007FFFFF
-                    return None if value == 0x007FFFFF else value
-                if hdr & 0x40000000:
-                    # Childless node: nowhere to go
-                    return None
-                num_children = self._UINT(node_offset + 4)
-                child_offset = node_offset + 8
-                # Binary search for a matching child node
-                lo = 0
-                hi = num_children
-                while True:
-                    if lo >= hi:
-                        # No child route matches
-                        return None
-                    mid = (lo + hi) // 2
-                    mid_loc = child_offset + mid * 4
-                    mid_offset = self._UINT(mid_loc)
-                    hdr = self._UINT(mid_offset)
-                    match_len = _matches(mid_offset, hdr, fragment_index)
-                    if match_len > 0:
-                        # Set a new starting point and restart from the top
-                        node_offset = mid_offset
-                        fragment_index += match_len
-                        break
-                    if match_len < 0:
-                        lo = mid + 1
-                    else:
-                        hi = mid
-
-        return _lookup(self._forms_offset, self._forms_root_hdr, 0)
+    def _mapping_cffi(self, word):
+        """ Call the C++ mapping() function that has been wrapped using CFFI"""
+        m = bin_cffi.mapping(self._mmap_buffer, word.encode("latin-1"))
+        return None if m == 0xFFFFFFFF else m
 
     def _raw_lookup(self, word):
         """ Return a list of stem/meaning tuples for the word, or
             an empty list if it is not found in the trie """
-        mapping = self._mapping(word)
+        mapping = self._mapping_cffi(word)
         if mapping is None:
             # Word not found in trie: return an empty list of meanings
             return []
@@ -881,7 +811,7 @@ class BIN_Compressed:
         # Fetch the mapping-to-stem/meaning tuples
         result = []
         while True:
-            stem_meaning, = UINT32.unpack(self._mappings[mapping * 4:mapping * 4 + 4])
+            stem_meaning, = self._partial_mappings(mapping * 4)
             stem_index = (stem_meaning >> 11) & (2 ** 20 - 1)
             meaning_index = stem_meaning & (2 ** 11 - 1)
             result.append((stem_index, meaning_index))
@@ -893,11 +823,11 @@ class BIN_Compressed:
 
     def contains(self, word):
         """ Returns True if the trie contains the given word form"""
-        return self._mapping(word) is not None
+        return self._mapping_cffi(word) is not None
 
     def __contains__(self, word):
         """ Returns True if the trie contains the given word form"""
-        return self._mapping(word) is not None
+        return self._mapping_cffi(word) is not None
 
     def lookup(self, word):
         """ Returns a list of BÍN meanings for the given word form """
@@ -933,21 +863,6 @@ if __name__ == "__main__":
         ]
     )
     b.print_stats()
-
-    # print(b.lookup_forms("aðförin"))
-    # print(b.lookup_forms("ekki"))
-    # print(b.lookup_forms("fara"))
-    # print(b.lookup_forms("bíllinn"))
-    # print(b.lookup_forms("stór"))
-    # print(b.lookup_forms("stóri"))
-    # print(b.lookup_forms("ljótan"))
-
-    # Tests
-    # print(f"mín: {b.lookup('mín')}")
-    # print(f"að: {b.lookup('að')}")
-    # print(f"lama: {b.lookup('lama')}")
-    # print(f"búa: {b.lookup('búa')}")
-    # print(f"ekki: {b.lookup('ekki')}")
-    # print(f"aðförin: {b.lookup('aðförin')}")
-    # print(f"einkabílnum: {b.lookup('einkabílnum')}")
-    b.write_binary(os.path.join(_PATH, "resources", "ord.compressed"))
+    filename = os.path.join(_PATH, "resources", "ord.compressed")
+    b.write_binary(filename)
+    print("Done; the compressed vocabulary was written to {0}".format(filename))

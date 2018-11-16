@@ -61,7 +61,7 @@ def read(*names, **kwargs):
 
 setup(
     name="reynir",
-    version="1.2.3",
+    version="1.3.0",
     license="GNU GPLv3",
     description="A natural language parser for Icelandic",
     long_description="%s\n%s"
@@ -103,7 +103,7 @@ setup(
     ],
     keywords=["nlp", "parser", "icelandic"],
     setup_requires=["cffi>=1.10.0"],
-    install_requires=["cffi>=1.10.0", "tokenizer>=1.0.6"],
+    install_requires=["cffi>=1.10.0", "tokenizer>=1.0.8"],
     cffi_modules=[
         "src/reynir/eparser_build.py:ffibuilder",
         "src/reynir/bin_build.py:ffibuilder"
