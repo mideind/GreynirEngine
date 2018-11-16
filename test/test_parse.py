@@ -1174,6 +1174,8 @@ def test_composite_words():
     # 'sykrisaltan' is not a valid composite word, so this should get parsed
     # as an unknown noun - causing 'fiskinn' to be parsed as an adjective
     assert s.lemmas == ['ég', 'borða', 'sykrisaltan', 'fiskinn']
+    s = r.parse_single("Hann fékk reynslulausn úr fangelsi")
+    assert s.lemmas == ['hann', 'fá', 'reynslu-lausn', 'úr', 'fangelsi']
 
 
 def test_compressed_bin():
@@ -1198,6 +1200,7 @@ def test_foreign_names():
         "P S-MAIN IP NP-SUBJ person_kk_nf /NP-SUBJ VP so_1_þf_et_fh_gm_p3_þt "
         "NP-OBJ no_et_gr_hk_þf /NP-OBJ /VP /IP /S-MAIN p /P"
     )
+
 
 def test_vocabulary():
     """ Test words that should be in the vocabulary, coming from
