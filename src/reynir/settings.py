@@ -253,6 +253,7 @@ class Prepositions:
         # recognized as prepositions
         if prep not in Meanings.DICT and " " not in prep:
             from .bindb import BIN_Db
+
             with BIN_Db.get_db() as db:
                 m = db.meanings(prep)
             if not m or not any(mm.ordfl == "fs" for mm in m):
@@ -574,7 +575,8 @@ class StemPreferences:
         """ Add a preference to the dictionary. Called from the config file handler. """
         if word in StemPreferences.DICT:
             raise ConfigError(
-                "Duplicate stem preference for word form {0}".format(word)
+                "Duplicate stem preference for word form {0}"
+                .format(word)
             )
         StemPreferences.DICT[word] = (worse, better)
 
@@ -680,9 +682,7 @@ class Settings:
     except ValueError:
         raise ConfigError(
             "Invalid environment variable value: SIMSERVER_PORT = {0}"
-            .format(
-                SIMSERVER_PORT
-            )
+            .format(SIMSERVER_PORT)
         )
 
     # Configuration settings from the Reynir.conf file
