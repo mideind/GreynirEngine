@@ -1059,12 +1059,14 @@ class BIN_Token(Token):
 
         def matcher_default(m):
             """ Check other word categories """
+            if not terminal.matches_first(m.ordfl, m.stofn, self.t1_lower):
+                return False
             if m.beyging == "-":
                 if m.ordfl == "lo":
                     # If we have an adjective (lo) with no declination info,
                     # assume it's an abbreviation ("hæstv." for "hæstvirtur")
                     # and thus it matches any lo_X terminal irrespective of variants
-                    return terminal.matches_first(m.ordfl, m.stofn, self.t1_lower)
+                    return True
                 fbits = 0
             else:
                 # If the meaning is a noun, its gender is coded in the ordfl attribute
@@ -1076,9 +1078,7 @@ class BIN_Token(Token):
                 )
             # Check whether variants required by the terminal are present
             # in the meaning string
-            if not terminal.fbits_match(fbits):
-                return False
-            return terminal.matches_first(m.ordfl, m.stofn, self.t1_lower)
+            return terminal.fbits_match(fbits)
 
         def matcher_sérnafn(m):
             # Proper name?
@@ -1765,7 +1765,11 @@ def augment_terminal(terminal, text_lower, beyging):
         # Add it here for completeness
         vset |= _PFN_VARIANTS.get(text_lower, set())
     # Collect the variants from the terminal and from the BÍN 'beyging' string
-    vset |= BIN_Token.bin_variants(beyging)
+    if a[0] != "fs":
+        # For prepositions, the beyging string is not significant and
+        # may contain junk, if the same word form (such as 'á') is found in BÍN.
+        # See comment in matcher_fs() within the BIN_Token class in binparser.py.
+        vset |= BIN_Token.bin_variants(beyging)
     # Additional hygiene to make sure we don't have both _esb and _sb / _evb and _vb
     if "esb" in vset and "sb" in vset:
         vset.remove("sb")
@@ -1787,9 +1791,8 @@ def canonicalize_token(t):
     kind = t.get("k", TOK.WORD)
     t["k"] = TOK.descr[kind]
     if "t" in t:
-        t["t"] = simplify_terminal(
-            t["t"], t["m"][1] if "m" in t else None
-        )  # Fallback category
+        # Use category from "m" (BÍN meaning) field if present, otherwise None
+        t["t"] = simplify_terminal(t["t"], t["m"][1] if "m" in t else None )
     if "m" in t:
         # Flatten the meaning from a tuple/list
         m = t["m"]

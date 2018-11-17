@@ -4209,6 +4209,7 @@ FsMeðFallstjórn →
     | FsAðBaki
     | FsTilÞgf
     | AtvFsSaman    # inn eftir firðinum, fram undan rúminu
+    | FsUmLeið
     # 'hvorki við stjórn spítalans né ráðherrann'
     # 'hvorki til mín né stjórnarinnar'
     | "hvorki:st" fs/fall Nl/fall "né:st" Nl/fall
@@ -4265,6 +4266,11 @@ FsÍGegnUm →
     | "í:ao" 'gegnum:fs'_þf Nl_þf
 
 $score(+6) FsÍGegnUm
+
+FsUmLeið →
+    'um:fs'_þf 'leið:kvk'_þf_et
+
+$score(+6) FsUmLeið
 
 FsAðBaki →
     'að:fs'_þgf 'bak:hk'_þgf_et Nl_þgf # 'að baki hverju bundnu sæti'

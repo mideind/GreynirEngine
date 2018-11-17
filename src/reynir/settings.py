@@ -786,14 +786,15 @@ class Settings:
         s = ap[0]
         ix = 1
         while len(ap) > ix:
-            # We expect something like 'af þgf'
+            # We expect something like 'af þgf', or possibly
+            # 'fyrir_hönd þf' (where the underscore needs to be replaced by a space)
             p = ap[ix].strip()
             parg = p.split()
             if len(parg) != 2:
                 raise ConfigError("Preposition should have exactly one argument")
             if parg[1] not in _ALL_CASES:
                 raise ConfigError("Unknown argument case for preposition")
-            prepositions.append((parg[0], parg[1]))
+            prepositions.append((parg[0].replace("_", " "), parg[1]))
             ix += 1
         a = s.split()
         if len(a) < 1 or len(a) > 3:
