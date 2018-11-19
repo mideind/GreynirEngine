@@ -406,6 +406,12 @@ class BIN_Token(Token):
         self._hash = None  # Cached hash
         self._index = original_index  # Index of original token within sentence
 
+        # Copy error information from the original token, if any
+        try:
+            self._error = t.error
+        except AttributeError:
+            self._error = None
+
         # We store a cached check of whether this is an "eo". An "eo" is an adverb (atviksorð)
         # that cannot also be a preposition ("fs") and is therefore a possible non-ambiguous
         # prefix to a noun ("einkunn")
@@ -427,6 +433,11 @@ class BIN_Token(Token):
     def index(self):
         """ Return the original index of the corresponding token within the sentence """
         return self._index
+
+    @property
+    def error(self):
+        """ Return the error object associated with this token, if any """
+        return self._error
 
     @property
     def dump(self):
