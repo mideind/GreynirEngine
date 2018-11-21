@@ -691,14 +691,21 @@ class BIN_Compressed:
     """ A wrapper for the compressed binary dictionary,
         allowing read-only lookups of word forms """
 
-    BIN_COMPRESSED_FILE = os.path.join(_PATH, "resources", "ord.compressed")
+    if __package__:
+        # Make sure that the ord.compressed filename is
+        # unpacked and ready for use
+        import pkg_resources
+        # Note: the resource path below should NOT use os.path.join()
+        _FNAME = pkg_resources.resource_filename(__name__, "resources/ord.compressed")
+    else:
+        _FNAME = os.path.join(_PATH, "resources", "ord.compressed")
 
     def __init__(self):
         """ We use a memory map, provided by the mmap module, to
             directly map the compressed file into memory without
             having to read it into a byte buffer. This also allows
             the same memory map to be shared between processes. """
-        with open(self.BIN_COMPRESSED_FILE, "rb") as stream:
+        with open(self._FNAME, "rb") as stream:
             self._b = mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ)
         assert self._b[0:16] == BIN_Compressor.VERSION
         mappings_offset, forms_offset, stems_offset, meanings_offset, alphabet_offset = (
