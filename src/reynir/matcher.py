@@ -1347,12 +1347,12 @@ class SimpleTree:
     @property
     def nouns(self):
         """ Returns the lemmas of all nouns in the subtree """
-        return self._list(lambda t: t._cat in _GENDERS)
+        return self._list(lambda t: t.tcat == "no" or t._cat in _GENDERS)
 
     @property
     def verbs(self):
         """ Returns the lemmas of all verbs in the subtree """
-        return self._list(lambda t: t._cat == "so")
+        return self._list(lambda t: t.tcat == "so")
 
     @property
     def persons(self):

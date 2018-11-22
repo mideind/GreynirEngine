@@ -1229,8 +1229,7 @@ class DefaultPipeline:
             self.lookup_unknown_words,
             self.parse_phrases_1,
             self.parse_phrases_2,
-            self.disambiguate_phrases,
-            self.correct_phrases,
+            self.disambiguate_phrases
         ]
 
     _token_ctor = _Bin_TOK

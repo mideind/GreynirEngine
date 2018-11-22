@@ -107,7 +107,9 @@ def test_parse(verbose=False):
         "vatn",
         "gráða",
     ]
-    assert results[5].tree.nouns == []
+    assert results[5].tree.nouns == [
+        "1.000 dollara"
+    ]
     # 'árið 1944' er tímaliður en ekki nafnliður
     assert results[6].tree.nouns == [
         "Þingvellir"
