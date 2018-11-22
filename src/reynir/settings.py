@@ -48,6 +48,13 @@ _DEFAULT_SORT_LOCALE = ("IS_is", "UTF-8")
 # A set of all valid argument cases
 _ALL_CASES = frozenset(("nf", "þf", "þgf", "ef"))
 _ALL_GENDERS = frozenset(("kk", "kvk", "hk"))
+_ALL_NUMBERS = frozenset(("et", "ft"))
+_SUBCLAUSES = frozenset(("nh", "mnh", "falls"))
+_REFLPRN = {
+    "sig" : "sig_hk_et_þf",
+    "sér" : "sig_hk_et_þgf",
+    "sín" : "sig_hk_et_ef",
+    }
 
 
 class ConfigError(Exception):
@@ -158,19 +165,32 @@ class VerbObjects:
     # preposition_case keys, i.e. "frá_þgf"
     PREPOSITIONS = defaultdict(set)
 
+    # dict { verb + argument cases : verb particle}
+    VERB_PARTICLES = defaultdict(set)
+
+    VERBS_ERRORS = [ set(), defaultdict(dict), defaultdict(dict)]
+    VERB_PARTICLES_ERRORS = defaultdict(dict)
+    PREPOSITIONS_ERRORS = defaultdict(dict)
+    WRONG_VERBS = defaultdict(list)
+
     @staticmethod
-    def add(verb, args, prepositions, score):
+    def add(verb, args, prepositions, particle, score):
         """ Add a verb and its objects (arguments). Called from the config file handler. """
         la = len(args)
         if la > 2:
             raise ConfigError("A verb can have 0-2 arguments; {0} given".format(la))
         if la:
-            for case in args:
-                if case not in _ALL_CASES:
-                    raise ConfigError(
-                        "Invalid case for verb argument: '{0}'"
-                        .format(case)
-                    )
+            for kind in args:
+                if kind not in _ALL_CASES and kind not in _SUBCLAUSES:
+                    if kind in _REFLPRN:
+                        kind = _REFLPRN[kind]
+                    else:
+                        spl = kind.split("_")
+                        if spl[-1] not in _ALL_CASES and spl[-1] != "gr":
+                            raise ConfigError(
+                                "Invalid verb argument: '{0}'"
+                                .format(kind)
+                            )
             # Append a possible argument list
             arglists = VerbObjects.VERBS[la][verb]
             if args not in arglists:
@@ -183,14 +203,33 @@ class VerbObjects:
         verb_with_cases = "_".join([verb] + args)
         if score != 0:
             VerbObjects.SCORES[verb_with_cases] = score
-        # prepositions is a list of tuples: (preposition, case), e.g. ("í", "þgf")
+        # prepositions is a list of tuples: (preposition, case/kind), e.g. ("í", "þgf") or ("í", "falls")
         d = VerbObjects.PREPOSITIONS[verb_with_cases]
-        for p, case in prepositions:
-            # Add a generic 'case-less' forms of the preposition, such as "í"
+        for p, kind in prepositions:
+            # Add a "bare" preposition, such as "í"
             d.add(p)
-            # Add a full form with case, such as "í_þgf"
-            d.add(p + "_" + case)
+            # Add a full form with case or argument kind, such as "í_þgf", or "í_nh"
+            d.add(p + "_" + kind)
+        if particle:
+            VerbObjects.VERB_PARTICLES[verb_with_cases] = particle
 
+    @staticmethod
+    def add_error(verb, args, prepositions, particle, corr):
+        corrlist = corr.split(", ")
+        errkind = corrlist[0].split("-")[0]
+        verb_with_cases = "_".join([verb] + args)
+        if errkind == "OBJ":
+            arglists = VerbObjects.VERBS_ERRORS[len(args)][verb]
+            arglists[verb_with_cases] = corr
+        elif errkind == "PP":
+            d = VerbObjects.PREPOSITIONS_ERRORS[verb_with_cases]
+            for p, kind in prepositions:
+                d[p] = corr
+                d[p+ "_" + kind] = corr
+        elif errkind == "PCL":
+            VerbObjects.VERB_PARTICLES_ERRORS[verb_with_cases][particle] = corr
+        elif errkind == "VERB": # Wrong verb, must point to completely different verb + args
+            VerbObjects.WRONG_VERBS[verb_with_cases] = corr
     @staticmethod
     def verb_matches_preposition(verb_with_cases, prep_with_case):
         """ Does the given preposition with the given case fit the verb? """
@@ -205,6 +244,13 @@ class VerbObjects:
             and prep_with_case in VerbObjects.PREPOSITIONS[verb_with_cases]
         )
 
+    @staticmethod
+    def verb_matches_particle(verb_with_cases, particle):
+        return (
+            verb_with_cases in VerbObjects.PARTICLES
+            and particle in VerbObjects.PARTICLES[verb_with_cases]
+        )
+
 
 class VerbSubjects:
 
@@ -214,6 +260,8 @@ class VerbSubjects:
     # Dictionary of verbs and their associated set of subject cases
     VERBS = defaultdict(set)
     _CASE = "þgf"  # Default subject case
+    # dict { verb : (wrong_case, correct_case) }
+    VERBS_ERRORS = defaultdict(set)
 
     @staticmethod
     def set_case(case):
@@ -226,6 +274,14 @@ class VerbSubjects:
     def add(verb):
         """ Add a verb and its arguments. Called from the config file handler. """
         VerbSubjects.VERBS[verb].add(VerbSubjects._CASE)
+
+    @staticmethod
+    def add_error(verb, corr):
+        """ Add a verb and the correct case. Called from the config file handler. """
+        corrlist = corr.split(", ")
+        errkind = corrlist[0].split("-")[0]
+        if errkind == "SUBJECT":
+            VerbSubjects.VERBS_ERRORS[verb].add(VerbSubjects._CASE, corr_case)
 
 
 class Prepositions:
@@ -320,7 +376,8 @@ class StaticPhrases:
     LIST = []
     # Parsing dictionary keyed by first word of phrase
     DICT = {}
-
+    # Error dictionary, { phrase : (error_code, right_phrase, right_tag_string, right_lemma_string) }
+    ERROR_DICT = {}
     @staticmethod
     def add(spec):
         """ Add a static phrase to the dictionary. Called from the config file handler. """
@@ -378,6 +435,11 @@ class StaticPhrases:
             d[w] = [(wlist[1:], ix)]
 
     @staticmethod
+    def add_errors(words, error):
+        # Dictionary structure : { phrase : (error_code, right_phrase, right_tag_string, right_lemma_string) }
+        StaticPhrases.ERROR_DICT[words] = error
+
+    @staticmethod
     def set_meaning(meaning):
         """ Set the default meaning for static phrases """
         StaticPhrases.MEANING = tuple(meaning)
@@ -423,6 +485,8 @@ class AmbigPhrases:
     LIST = []
     # Parsing dictionary keyed by first word of phrase
     DICT = defaultdict(list)
+    # Error dictionary, { phrase : (error_code, right_phrase, right_parts_of_speech) }
+    ERROR_DICT = defaultdict(list)
 
     @staticmethod
     def add(words, cats):
@@ -436,6 +500,11 @@ class AmbigPhrases:
 
         # Dictionary structure: dict { firstword: [ (restword_list, phrase_index) ] }
         AmbigPhrases.DICT[words[0]].append((words[1:], ix))
+
+    @staticmethod
+    def add_error(words, error):
+        # Dictionary structure: dict { phrase : (error_code, right_phrase, right_parts_of_speech) }
+        AmbigPhrases.ERROR_DICT[words] = error
 
     @staticmethod
     def get_cats(ix):
@@ -519,6 +588,116 @@ class Topics:
             )
         # Add to topic set, after replacing spaces with underscores
         Topics.DICT[Topics._name].add(word.replace(" ", "_"))
+
+
+class AllowedMultiples:
+    # Set of word forms allowed to appear more than once in a row
+    SET = set()
+
+    @staticmethod
+    def add(word):
+        AllowedMultiples.SET.add(word)
+
+
+class WrongCompounds:
+    # Dictionary structure: dict { wrong_compound : "right phrase" }
+    DICT = {}
+
+    @staticmethod
+    def add(split):
+        WrongCompounds.DICT[split[0]] = split[1]
+
+
+class SplitCompounds:
+    # Set containing whole phrases
+    SET = set()
+    
+    @staticmethod
+    def add(s):
+        SplitCompounds.SET.add(s)
+
+
+class UniqueErrors:
+    # Dictionary structure: dict { wrong_word : right word }
+    DICT = {}
+
+    @staticmethod
+    def add(split):
+        UniqueErrors.DICT[split[0]] = split[1]
+
+
+class AdjectivePredicates:
+    # dict { adjective lemma : argument case }
+    ARGUMENTS = {}
+    # dict { adjective lemma : [ (preposition, case) ] }
+    PREPOSITIONS = defaultdict(list)
+
+    # dict { adjective lemma : [ (errorcode, argument case) ] }
+    ERROR_DICT = defaultdict(list)
+
+    # dict { adjective lemma : [ (preposition, case)] }
+    ERROR_PREPOSITIONS = defaultdict(list)
+
+    @staticmethod
+    def add(adj, arg, prepositions):
+        if arg:
+            AdjectivePredicates.ARGUMENTS[adj] = arg
+        if prepositions:
+            for each in prepositions:
+                AdjectivePredicates.PREPOSITIONS[adj] = (each[0], each[1])
+
+    @staticmethod
+    def add_error(adj, arg, prepositions, error):
+        if arg:
+            AdjectivePredicates.ERROR_DICT[adj] = arg
+        if prepositions:
+            for each in prepositions:
+                AdjectivePredicates.ERROR_PREPOSITIONS[adj] = (each[0], each[1])
+
+
+class Morphemes:
+    # dict { morpheme : [ preferred PoS ] }
+    BOUND_DICT = {}
+    # dict { morpheme : [ excluded PoS ] }
+    FREE_DICT = {}
+
+    @staticmethod
+    def add(morph, boundlist, freelist):
+        if boundlist:
+            Morphemes.BOUND_DICT[morph] = boundlist
+        else:
+            raise ConfigError("A definition of allowed PoS is necessary with morphemes")
+        if freelist:
+            Morphemes.FREE_DICT[morph] = freelist
+
+
+class ErrorForms:
+    # dict { wrong_word_form : [ lemma, correct_word_form, id, PoS, tag ] }
+    DICT = defaultdict(list)
+
+    @staticmethod
+    def add(split):
+        ErrorForms.DICT[split[0]] = split[1:]
+
+    @staticmethod
+    def get_lemma(wrong_form):
+        return ErrorForms.DICT[wrong_form][0]
+
+    @staticmethod
+    def get_correct_form(wrong_form):
+        return ErrorForms.DICT[wrong_form][1]
+
+    @staticmethod
+    def get_id(wrong_form):
+        return ErrorForms.DICT[wrong_form][2]
+
+    @staticmethod
+    def get_pos(wrong_form):
+        return ErrorForms.DICT[wrong_form][3]
+
+    @staticmethod
+    def get_tag(wrong_form):
+        return ErrorForms.DICT[wrong_form][4]
 
 
 # Magic stuff to change locale context temporarily
@@ -728,8 +907,17 @@ class Settings:
     @staticmethod
     def _handle_static_phrases(s):
         """ Handle static phrases in the settings section """
+        error = False
         if "=" not in s:
+            ix = s.rfind("$error(")  # Must be at the end
+            if ix >= 0:
+                error = True
+                # A typical format is $error(error_code, right_phrase, right_parts_of_speech)
+                e = s[ix + 7 :].lstrip().rstrip(" )").split(", ")
+                s = s[:ix].strip()
             StaticPhrases.add(s)
+            if error:
+                StaticPhrases.add_errors(s.split(",")[0], e)
             return
         # Check for a meaning spec
         a = s.split("=", maxsplit=1)
@@ -763,7 +951,8 @@ class Settings:
     def _handle_verb_objects(s):
         """ Handle verb object specifications in the settings section """
         # Format: verb [arg1] [arg2] [/preposition arg]... [$score(sc)]
-
+        # arg can be nf, þf, þgf, ef, nh, falls, sig/sér/sín, bági_kk_ft_þf 
+        error = False
         # Start by handling the $score() pragma, if present
         score = 0
         ix = s.rfind("$score(")  # Must be at the end
@@ -779,6 +968,22 @@ class Settings:
                 score = int(sc)
             except ValueError:
                 raise ConfigError("Invalid score for verb form")
+        # Check for $error
+        ix = s.rfind("$error(")
+        if ix >= 0:
+            e = s[ix + 7:-1]
+            s = s[0:ix]
+            error = True
+
+        # Process particles, should only be one in each line
+        particle = None
+        ix = s.rfind("*")
+        if ix >= 0:
+            particle = s[ix:].strip()
+            s = s[0:ix]
+            if " " in particle:
+                raise ConfigError("Particle should only be one word")
+
 
         # Process preposition arguments, if any
         prepositions = []
@@ -791,11 +996,20 @@ class Settings:
             p = ap[ix].strip()
             parg = p.split()
             if len(parg) != 2:
+
                 raise ConfigError("Preposition should have exactly one argument")
-            if parg[1] not in _ALL_CASES:
-                raise ConfigError("Unknown argument case for preposition")
+            if parg[1] not in _ALL_CASES and parg[1] not in _SUBCLAUSES:
+                if parg[1] in _REFLPRN:
+                    parg[1] = _REFLPRN[parg[1]]
+                spl = parg[1].split("_")
+                if spl[-1] == "gr":
+                    spl = spl[:-1]
+                if spl[-1] not in _ALL_CASES:
+                    raise ConfigError("Unknown argument for preposition")
             prepositions.append((parg[0].replace("_", " "), parg[1]))
             ix += 1
+
+        # Process verb arguments
         a = s.split()
         if len(a) < 1 or len(a) > 3:
             raise ConfigError(
@@ -804,7 +1018,9 @@ class Settings:
         verb = a[0]
         if not verb.isidentifier():
             raise ConfigError("Verb '{0}' is not a valid word".format(verb))
-        VerbObjects.add(verb, a[1:], prepositions, score)
+        VerbObjects.add(verb, a[1:], prepositions, particle, score)
+        if error:
+            VerbObjects.add_error(verb, a[1:], prepositions, particle, e)
 
     @staticmethod
     def _handle_verb_subjects(s):
@@ -820,7 +1036,17 @@ class Settings:
                 raise ConfigError("Unknown setting '{0}' in verb_subjects".format(par))
             return
         assert len(a) == 1
+        # Check for $error
+        error = False
+        ix = par.rfind("$error(")
+        if ix >= 0:
+            e = par[ix + 7:-1].strip()
+            par = par[0:ix]
+            error = True
+
         VerbSubjects.add(par)
+        if error:
+            VerbSubjects.add_error(par, e)
 
     @staticmethod
     def _handle_undeclinable_adjectives(s):
@@ -982,8 +1208,15 @@ class Settings:
     def _handle_ambiguous_phrases(s):
         """ Handle ambiguous phrase guidance in the settings section """
         # Format: "word1 word2..." cat1 cat2...
+        error = False
         if s[0] != '"':
             raise ConfigError("Ambiguous phrase must be enclosed in double quotes")
+        ix = s.rfind("$error(")  # Must be at the end
+        if ix >= 0:
+            error = True
+            # A typical format is $error(error_code, right_phrase, right_parts_of_speech)
+            e = s[ix + 7 :].lstrip().rstrip(" )").split(", ")
+            s = s[:ix].strip()
         q = s.rfind('"')
         if q <= 0:
             raise ConfigError("Ambiguous phrase must be enclosed in double quotes")
@@ -999,6 +1232,8 @@ class Settings:
         if len(words) < 2:
             raise ConfigError("Ambiguous phrase must contain at least two words")
         AmbigPhrases.add(words, cats)
+        if error:
+            AmbigPhrases.add_error(s[1:q].strip().lower(), e)
 
     @staticmethod
     def _handle_adjective_template(s):
@@ -1021,6 +1256,92 @@ class Settings:
                 "Disallowed names must specify a name and at least one case"
             )
         DisallowedNames.add(a[0], a[1:])
+
+    @staticmethod
+    def handle_allowed_multiples(s):
+        ix = s.rfind(" ")
+        if ix >= 0:
+            raise ConfigError("Allowed multiples must only contain one word")
+        AllowedMultiples.add(s)
+
+    @staticmethod
+    def handle_wrong_compounds(s):
+        split = s.strip("\"").split("\", \"")
+        WrongCompounds.add(split)
+
+    @staticmethod
+    def handle_split_compounds(s):
+        SplitCompounds.add(s)
+
+    @staticmethod
+    def handle_adjective_predicates(s):
+        # Process preposition arguments, if any
+        error = False
+        ix = s.rfind("$error(")  # Must be at the end
+        if ix >= 0:
+            error = True
+            # A typical format is $error(error_code, right_phrase, right_parts_of_speech)
+            e = s[ix + 7 :].lstrip().rstrip(" )").split(", ")
+            s = s[:ix].strip()
+
+        prepositions = []
+        ap = s.split("/")
+        s = ap[0]
+        ix = 1
+        while len(ap) > ix:
+            # We expect something like 'af þgf'
+            p = ap[ix].strip()
+            parg = p.split()
+            if len(parg) != 2:
+                raise ConfigError("Preposition should have exactly one argument")
+            if parg[1] not in _ALL_CASES:
+                raise ConfigError("Unknown argument case for preposition")
+            prepositions.append((parg[0], parg[1]))
+            ix += 1
+        a = s.split()
+        adj = a[0]
+        AdjectivePredicates.add(adj, a[1:], prepositions)
+        if error:
+            AdjectivePredicates.add_error(adj, a[1:], prepositions, e)
+
+    @staticmethod
+    def handle_unique_errors(s):
+        split = s.strip("\"").split("\", \"")
+        UniqueErrors.add(split)
+
+    @staticmethod
+    def handle_multiword_errors(s):
+        pass
+
+    @staticmethod
+    def handle_morphemes(s):
+        freelist = []
+        boundlist = []
+        spl = s.strip().split(" ")
+        m = spl[0]
+        for pos in spl[1:]:
+            if pos:
+                if pos.startswith("<"):
+                    boundlist.append(pos[1:])
+                elif pos.startswith(">"):
+                    freelist.append(pos[1:])
+                else:
+                    raise ConfigError("PoS specification should start with '<' or '>'")
+        Morphemes.add(m, boundlist, freelist)
+
+    @staticmethod
+    def handle_capitalization_errors(s):
+        pass
+
+    @staticmethod
+    def handle_taboo_words(s):
+        pass
+
+    @staticmethod
+    def handle_error_forms(s):
+        split = s.strip().split(";")
+        ErrorForms.add(split)
+
 
     @staticmethod
     def read(fname):
@@ -1049,6 +1370,16 @@ class Settings:
                 "disallowed_names": Settings._handle_disallowed_names,
                 "noindex_words": Settings._handle_noindex_words,
                 "topics": Settings._handle_topics,
+                "allowed_multiples": Settings.handle_allowed_multiples,
+                "wrong_compounds": Settings.handle_wrong_compounds,
+                "split_compounds": Settings.handle_split_compounds,
+                "adjective_predicates": Settings.handle_adjective_predicates,
+                "unique_errors": Settings.handle_unique_errors,
+                "multiword_errors": Settings.handle_multiword_errors,
+                "morphemes": Settings.handle_morphemes,
+                "capitalization_errors": Settings.handle_capitalization_errors,
+                "taboo_words": Settings.handle_taboo_words,
+                "error_forms": Settings.handle_error_forms,
             }
             handler = None  # Current section handler
 

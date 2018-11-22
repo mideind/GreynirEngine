@@ -259,7 +259,7 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
             continue
         if t.val is None:
             # Look up word in BIN database
-            w, m = db.lookup_word(t.txt, at_sentence_start, auto_uppercase)
+            w, m, error = db.lookup_word(t.txt, at_sentence_start, auto_uppercase) # error is not used in DefaultPipeline, needs to be here for CorrectionPipeline
             # Yield a word tuple with meanings
             yield token_ctor.Word(w, m, token=t)
         else:
@@ -1430,4 +1430,3 @@ def describe_token(t, terminal, meaning):
         else:
             d["v"] = t.val
     return d
-

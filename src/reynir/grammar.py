@@ -682,7 +682,7 @@ class Grammar:
                 s = s.strip()
                 if not s:
                     raise GrammarError("Invalid syntax for production", fname, line)
-
+                
                 tokens = s.split()
 
                 # rhs is a list of tuples, one for each token, as follows:
@@ -956,6 +956,7 @@ class Grammar:
                 PRAGMA_SCORE = "$score("
                 PRAGMA_ROOT = "$root("
                 PRAGMA_TAG = "$tag("
+                PRAGMA_ERROR = "$error("
                 if s.startswith(PRAGMA_SCORE):
                     # Pragma $score(int) Nonterminal/var1/var2 ...
                     s = s[len(PRAGMA_SCORE) :]
@@ -989,6 +990,11 @@ class Grammar:
                     # Add an implicit reference to the root
                     nonterminals[root_nt].add_ref()
                     self._secondary_roots.append(nonterminals[root_nt])
+                elif s.startswith(PRAGMA_ERROR):
+                    # Pragma $error(error_rule, correct_rule)
+                    s = s[len(PRAGMA_ERROR) :]
+                    # TODO do something with error pragma
+
                 else:
                     raise GrammarError("Unknown pragma '{0}'".format(s), fname, line)
             else:

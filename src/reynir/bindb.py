@@ -49,6 +49,27 @@ CACHE_SIZE = 512
 CACHE_SIZE_MEANINGS = 2048
 CACHE_SIZE_UNDECLINABLE = 2048
 
+NOT_FORMERS = frozenset(("allra", "alhliða", "fjölnota", "margnota", "ótal"))
+
+# Context free forms were added in compmaker.py, dealt with here
+WRONG_FORMERS = {
+    "athugana" : "athugunar",
+    "ferminga" : "fermingar",
+    "feykna" : "feikna",
+    "fyrna" : "firna",
+    "fjarskiptar" : "fjarskipta",
+    "fjárfestinga" : "fjárfestingar",
+    "forvarna" : "forvarnar",
+    "heyrna" : "heyrnar",
+    "kvartana" : "kvörtunar",
+    "kvenn" : "kven",
+    "loftlags" : "loftslags",
+    "pantana" : "pöntunar",
+    "ráðninga" : "ráðningar",
+    "skráninga" : "skráningar",
+    "ábendinga" : "ábendingar",
+}
+
 # Named tuple for word meanings fetched from the BÍN database (lexicon)
 BIN_Meaning = namedtuple(
     "BIN_Meaning", ["stofn", "utg", "ordfl", "fl", "ordmynd", "beyging"]
@@ -272,6 +293,7 @@ class BIN_Db:
             m = Abbreviations.DICT.get(clean_w, None)
             return None if m is None else [BIN_Meaning._make(m)]
 
+        error = ""
         # Start with a straightforward lookup of the word
 
         if auto_uppercase and w.islower():
@@ -322,7 +344,8 @@ class BIN_Db:
 
         if m:
             # Most common path out of this function
-            return (w, m)
+            #print("{}-{}".format(w, m)) # TODO bæta hér við skoðun á 'beri', 'gjafi', ... Líka annars staðar? Hjá báðum return-skipununum?
+            return (w, m, None)
 
         if lower_w != w or w[0] == "[":
             # Still nothing: check abbreviations
@@ -372,7 +395,13 @@ class BIN_Db:
                 # Only allows meanings from open word categories
                 # (nouns, verbs, adjectives, adverbs)
                 m = BIN_Db.open_cats(m)
-
+                if m:
+                    if cw[0] in NOT_FORMERS: 
+                        error = ["C004", cw[0]]
+                    elif cw[0] == "ó" and cw[1] == "tal":
+                        error = ["C004", "ótal"]
+                    elif cw[0] in WRONG_FORMERS:
+                        error = ["C005", cw[0], WRONG_FORMERS[cw[0]]] 
         if not m and lower_w.startswith("ó"):
             # Check whether an adjective without the 'ó' prefix is found in BÍN
             # (i.e. create 'óhefðbundinn' from 'hefðbundinn')
@@ -397,6 +426,5 @@ class BIN_Db:
             # If no meaning found and we're auto-uppercasing,
             # convert this to upper case (could be an entity name)
             w = w.capitalize()
-
         # noinspection PyRedundantParentheses
-        return (w, m)
+        return (w, m, error)
