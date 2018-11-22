@@ -859,7 +859,10 @@ if __name__ == "__main__":
         [
             os.path.join(_PATH, "resources", "ord.csv"),
             os.path.join(_PATH, "resources", "ord.add.csv"),
-            os.path.join(_PATH, "resources", "ord.auka.csv")
+            os.path.join(_PATH, "resources", "ord.auka.csv"),
+            os.path.join(_PATH, "resources", "systematic_additions.csv"),
+            #os.path.join(_PATH, "resources", "other_errors.csv"),
+            #os.path.join(_PATH, "resources", "systematic_errors.csv"),
         ]
     )
     b.print_stats()

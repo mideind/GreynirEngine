@@ -242,6 +242,7 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
     """ Look up word forms in the BIN word database. If auto_uppercase
         is True, change lower case words to uppercase if it looks likely
         that they should be uppercase. """
+
     at_sentence_start = False
 
     # Consume the iterable source in token_stream (which may be a generator)
@@ -1222,14 +1223,14 @@ class DefaultPipeline:
         # This sequence of phases can be modified in derived classes.
         self._phases = [
             self.tokenize_without_annotation,
-            self.correct_1,
+            self.correct,
             self.parse_static_phrases,
             self.annotate,
             self.lookup_unknown_words,
             self.parse_phrases_1,
             self.parse_phrases_2,
             self.disambiguate_phrases,
-            self.correct_2
+            self.correct_phrases,
         ]
 
     _token_ctor = _Bin_TOK
@@ -1238,14 +1239,14 @@ class DefaultPipeline:
         """ The basic, raw tokenization from the tokenizer package """
         return tokenize_without_annotation(self._text)
 
-    def correct_1(self, stream):
+    def parse_static_phrases(self, stream):
+        """ Static multiword phrases """
+        return parse_static_phrases(stream, self._token_ctor, self._auto_uppercase)
+
+    def correct(self, stream):
         """ Token correction can be plugged in here (default stack doesn't do
             any corrections, but this is overridden in ReynirCorrect) """
         return stream
-
-    def parse_static_phrases(self, stream):
-        """ Static multiword phrases """
-        return parse_static_phrases(stream, self._auto_uppercase)
 
     def annotate(self, stream):
         """ Lookup meanings from dictionary """
@@ -1267,11 +1268,6 @@ class DefaultPipeline:
     def disambiguate_phrases(self, stream):
         """ Eliminate very uncommon meanings """
         return disambiguate_phrases(stream, self._token_ctor)
-
-    def correct_2(self, stream):
-        """ Token correction can be plugged in here (default stack doesn't do
-            any corrections, but this is overridden in ReynirCorrect) """
-        return stream
 
     def tokenize(self):
         """ Tokenize text in several phases, returning a generator of tokens
@@ -1435,4 +1431,3 @@ def describe_token(t, terminal, meaning):
         else:
             d["v"] = t.val
     return d
-

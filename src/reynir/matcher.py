@@ -767,7 +767,7 @@ class SimpleTree:
                 # These may be number prefixes ('sautján'), adjectives ('norskar'),
                 # and nouns ('krónur')
                 with BIN_Db.get_db() as db:
-                    _, m = db.lookup_word(tok_lower, at_sentence_start=False)
+                    _, m, _ = db.lookup_word(tok_lower, at_sentence_start=False)
                     # We only consider to, töl, lo, currency names or
                     # declinable multipliers ('þúsund', 'milljónir', 'milljarðar')
                     m = list(

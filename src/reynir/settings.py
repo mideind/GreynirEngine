@@ -616,6 +616,15 @@ class SplitCompounds:
         SplitCompounds.SET.add(s)
 
 
+class UniqueErrors:
+    # Dictionary structure: dict { wrong_word : right word }
+    DICT = {}
+
+    @staticmethod
+    def add(split):
+        UniqueErrors.DICT[split[0]] = split[1]
+
+
 class AdjectivePredicates:
     # dict { adjective lemma : argument case }
     ARGUMENTS = {}
@@ -659,6 +668,36 @@ class Morphemes:
             raise ConfigError("A definition of allowed PoS is necessary with morphemes")
         if freelist:
             Morphemes.FREE_DICT[morph] = freelist
+
+
+class ErrorForms:
+    # dict { wrong_word_form : [ lemma, correct_word_form, id, PoS, tag ] }
+    DICT = defaultdict(list)
+
+    @staticmethod
+    def add(split):
+        ErrorForms.DICT[split[0]] = split[1:]
+
+    @staticmethod
+    def get_lemma(wrong_form):
+        return ErrorForms.DICT[wrong_form][0]
+
+    @staticmethod
+    def get_correct_form(wrong_form):
+        return ErrorForms.DICT[wrong_form][1]
+
+    @staticmethod
+    def get_id(wrong_form):
+        return ErrorForms.DICT[wrong_form][2]
+
+    @staticmethod
+    def get_pos(wrong_form):
+        return ErrorForms.DICT[wrong_form][3]
+
+    @staticmethod
+    def get_tag(wrong_form):
+        return ErrorForms.DICT[wrong_form][4]
+
 
 # Magic stuff to change locale context temporarily
 
@@ -1266,7 +1305,8 @@ class Settings:
 
     @staticmethod
     def handle_unique_errors(s):
-        pass
+        split = s.strip("\"").split("\", \"")
+        UniqueErrors.add(split)
 
     @staticmethod
     def handle_multiword_errors(s):
@@ -1287,6 +1327,21 @@ class Settings:
                 else:
                     raise ConfigError("PoS specification should start with '<' or '>'")
         Morphemes.add(m, boundlist, freelist)
+
+    @staticmethod
+    def handle_capitalization_errors(s):
+        pass
+
+    @staticmethod
+    def handle_taboo_words(s):
+        pass
+
+    @staticmethod
+    def handle_error_forms(s):
+        split = s.strip().split(";")
+        ErrorForms.add(split)
+
+
     @staticmethod
     def read(fname):
         """ Read configuration file """
@@ -1321,6 +1376,9 @@ class Settings:
                 "unique_errors": Settings.handle_unique_errors,
                 "multiword_errors": Settings.handle_multiword_errors,
                 "morphemes": Settings.handle_morphemes,
+                "capitalization_errors": Settings.handle_capitalization_errors,
+                "taboo_words": Settings.handle_taboo_words,
+                "error_forms": Settings.handle_error_forms,
             }
             handler = None  # Current section handler
 
