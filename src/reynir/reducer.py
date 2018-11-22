@@ -482,13 +482,17 @@ class Reducer:
                 # No ambiguity to resolve here
                 continue
 
+            token = tokens[i]
             # More than one terminal in the option set for the token at index i
             # Calculate the relative scores
             # Find out whether the first part of all the terminals are the same
             same_first = len(set(terminal.first for terminal in s)) == 1
-            txt = tokens[i].lower
+            txt = txt_last = token.lower
+            composite = False
             # Get the last part of a composite word (e.g. 'jaðar-áhrifin' -> 'áhrifin')
-            txt_last = txt.rsplit("-", maxsplit=1)[-1]
+            if token.is_word and token.t2 and "-" in token.t2[0].ordmynd:
+                composite = True
+                txt_last = token.t2[0].ordmynd.rsplit("-", maxsplit=1)[-1]
             # No need to check preferences if the first parts of all possible terminals are equal
             # Look up the preference ordering from Reynir.conf, if any
             prefs = None if same_first else Preferences.get(txt_last)
@@ -529,12 +533,12 @@ class Reducer:
                     elif t.is_abbrev:
                         # Punish abbreviations in favor of other more specific terminals
                         sc[t] -= 1
-                    if tokens[i].is_upper and tokens[i].is_word and tokens[i].t2:
+                    if token.is_word and token.is_upper and token.t2:
                         # Punish connection of normal noun terminal to
                         # an uppercase word that can be a person or entity name
                         if any(
                             m.fl in {"ism", "erm", "nafn", "föð", "móð", "örn", "fyr"}
-                            for m in tokens[i].t2
+                            for m in token.t2
                         ):
                             # logging.info(
                             #     "Punishing connection of {0} with 'no' terminal"
@@ -563,6 +567,11 @@ class Reducer:
                     else:
                         # Else, give a bonus for each matched preposition
                         sc[t] += 2
+                elif tfirst == "lo":
+                    if composite:
+                        # If this is a composite word, it's less likely
+                        # to be an adjective, so give it a penalty
+                        sc[t] -= 3
                 elif tfirst == "so":
                     if t.num_variants > 0 and t.variant(0) in "012":
                         # Consider verb arguments
@@ -578,7 +587,7 @@ class Reducer:
                                 (m.stofn not in vo0)
                                 and (m.ordmynd not in vo0)
                                 and ("MM" not in m.beyging)
-                                for m in tokens[i].t2
+                                for m in token.t2
                                 if m.ordfl == "so"
                             ):
                                 # No meaning where the verb has zero arguments
@@ -589,7 +598,7 @@ class Reducer:
                         # In the (rare) cases where there are conflicting scores,
                         # apply the most positive adjustment
                         adjmax = 0
-                        for m in tokens[i].t2:
+                        for m in token.t2:
                             if m.ordfl == "so":
                                 key = m.stofn + t.verb_cases
                                 score = VerbObjects.SCORES.get(key)
@@ -640,7 +649,7 @@ class Reducer:
                             # If this is a so_nh and an alternative no_ef_ft exists, choose this one
                             # (for example, 'hafa', 'vera', 'gera', 'fara', 'mynda', 'berja', 'borða')
                             sc[t] += 4
-                    if (i > 0) and tokens[i].is_upper:
+                    if (i > 0) and token.is_upper:
                         # The token is uppercase and not at the start of a sentence:
                         # discourage it from being a verb
                         sc[t] -= 4
@@ -653,7 +662,7 @@ class Reducer:
                         # Prefer person names in the nominative case
                         sc[t] += 2
                 elif tfirst == "sérnafn":
-                    if not tokens[i].t2:
+                    if not token.t2:
                         # If there are no BÍN meanings, we had no choice but to use sérnafn,
                         # so alleviate some of the penalty given by the grammar
                         sc[t] += 4
