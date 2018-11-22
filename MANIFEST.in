@@ -1,7 +1,5 @@
 graft src
 prune src/reynir/__pycache__
-prune src/reynir/resources
-prune src/reynir/config
 include src/reynir/Reynir.grammar
 include src/reynir/Reynir.grammar.bin
 include src/reynir/eparser.h
@@ -11,5 +9,6 @@ include src/reynir/resources/ordalisti-all.dawg.bin
 include src/reynir/resources/ordalisti-formers.dawg.bin
 include src/reynir/resources/ordalisti-last.dawg.bin
 include src/reynir/resources/ord.compressed
+exclude src/reynir/resources/*.csv
 exclude src/reynir/*.o
 exclude src/reynir/*.so

@@ -6,8 +6,8 @@
 # Stop execution upon error; show executed commands
 set -e -x
 
-# Compile wheels for Python 3.5 and 3.6
-for PYBIN in cp34 cp35 cp36
+# Compile wheels for Python 3.4-3.7
+for PYBIN in cp34 cp35 cp36 cp37
 do
 #    "${PYBIN}/pip" install -r /io/dev-requirements.txt
     "/opt/python/${PYBIN}-${PYBIN}m/bin/pip" wheel /io/ -w wheelhouse/

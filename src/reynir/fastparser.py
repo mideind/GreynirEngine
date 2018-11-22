@@ -836,13 +836,13 @@ class ParseForestDumper(ParseForestNavigator):
     # The format is as follows:
     # (n indicates a nesting level, >= 0)
     # R1 -- start indicator and version number
+    # Cn -- the sentence's parse tree score
+    # Ln -- the sentence length in tokens
     # Pn -- Epsilon node
     # Tn terminal token -- Token/terminal node
     # Nn nonterminal -- Nonterminal node
     # On index -- Option with index >= 0
     # Q0 -- end indicator (not followed by newline)
-
-    VERSION = "Reynir/1.00"
 
     def __init__(self, token_dicts):
         super().__init__(visit_all=True)  # Visit all nodes

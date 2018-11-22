@@ -309,6 +309,7 @@ class Prepositions:
         # recognized as prepositions
         if prep not in Meanings.DICT and " " not in prep:
             from .bindb import BIN_Db
+
             with BIN_Db.get_db() as db:
                 m = db.meanings(prep)
             if not m or not any(mm.ordfl == "fs" for mm in m):
@@ -753,7 +754,8 @@ class StemPreferences:
         """ Add a preference to the dictionary. Called from the config file handler. """
         if word in StemPreferences.DICT:
             raise ConfigError(
-                "Duplicate stem preference for word form {0}".format(word)
+                "Duplicate stem preference for word form {0}"
+                .format(word)
             )
         StemPreferences.DICT[word] = (worse, better)
 
@@ -859,9 +861,7 @@ class Settings:
     except ValueError:
         raise ConfigError(
             "Invalid environment variable value: SIMSERVER_PORT = {0}"
-            .format(
-                SIMSERVER_PORT
-            )
+            .format(SIMSERVER_PORT)
         )
 
     # Configuration settings from the Reynir.conf file
@@ -991,7 +991,8 @@ class Settings:
         s = ap[0]
         ix = 1
         while len(ap) > ix:
-            # We expect something like 'af þgf'
+            # We expect something like 'af þgf', or possibly
+            # 'fyrir_hönd þf' (where the underscore needs to be replaced by a space)
             p = ap[ix].strip()
             parg = p.split()
             if len(parg) != 2:
@@ -1005,7 +1006,7 @@ class Settings:
                     spl = spl[:-1]
                 if spl[-1] not in _ALL_CASES:
                     raise ConfigError("Unknown argument for preposition")
-            prepositions.append((parg[0], parg[1]))
+            prepositions.append((parg[0].replace("_", " "), parg[1]))
             ix += 1
 
         # Process verb arguments

@@ -792,7 +792,10 @@ SetningSo →
     # Búist er við að Sigmundur Davíð segi af sér
     | Sagnliður_sagnb
 
-    | So_1_sagnb/fall HjSögnLhÞtSM_et_p3 FsAtv? Nl/fall AtvFsAuka?  # Horft hefur verið [til hennar] lostafullum augum
+    # Horft hefur verið [til hennar] lostafullum augum
+    | So_1_sagnb/fall HjSögnLhÞtSM_et_p3 FsAtv? NlBeintAndlag/fall AtvFsAuka?
+    # Er/var/hefur verið [í þessu tilviki] spáð betra veðri [á morgun]
+    | HjSögnLhÞtSM_et_p3 FsAtv? So_1_sagnb/fall NlBeintAndlag/fall AtvFsAuka?
 
     | so_0_mm_nh HjSögnMegiSkuliÞurfi_et_p3 SagnInnskot             # Búast má/skal/þarf/hefur mátt við töfum á veginum
 
@@ -800,7 +803,8 @@ SetningSo →
 
     | FsAtv? SagnliðurÁnF                                           # [Með lögum] skal tryggja rétt almennings til að fara um landið
 
-    | VeraSkulu_et_p3 FsRuna LoTengtSögn_nf/tala/kyn NlFrumlag_nf/tala/kyn AtvFsAuka? # Skal í frumvarpinu fólgin greinargerð um tekjur ríkisins og gjöld
+    # Skal í frumvarpinu fólgin greinargerð um tekjur ríkisins og gjöld
+    | VeraSkulu_et_p3 FsRuna LoTengtSögn_nf/tala/kyn NlFrumlag_nf/tala/kyn AtvFsAuka?
 
     # !!! Ath.: So_1_nh leyfir miðmynd nafnháttar, sem ætti ekki að vera leyfilegur hér
     # !!! sbr. '?Endurnýjast á leigusamninginn í ár'
@@ -4234,6 +4238,7 @@ FsMeðFallstjórn →
     | FsAðBaki
     | FsTilÞgf
     | AtvFsSaman    # inn eftir firðinum, fram undan rúminu
+    | FsUmLeið
     # 'hvorki við stjórn spítalans né ráðherrann'
     # 'hvorki til mín né stjórnarinnar'
     | "hvorki:st" fs/fall Nl/fall "né:st" Nl/fall
@@ -4290,6 +4295,11 @@ FsÍGegnUm →
     | "í:ao" 'gegnum:fs'_þf Nl_þf
 
 $score(+6) FsÍGegnUm
+
+FsUmLeið →
+    'um:fs'_þf 'leið:kvk'_þf_et
+
+$score(+6) FsUmLeið
 
 FsAðBaki →
     'að:fs'_þgf 'bak:hk'_þgf_et Nl_þgf # 'að baki hverju bundnu sæti'
