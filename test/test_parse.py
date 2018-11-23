@@ -1193,6 +1193,8 @@ def test_compressed_bin():
     assert binc.lookup("einkabílnum") == [('einkabíll', 75579, 'kk', 'alm', 'einkabílnum', 'ÞGFETgr')]
     nominal_forms = [m[4] for m in binc.nominative("einkabílnum") if m[5] == "NFET"]
     assert nominal_forms == ['einkabíll']
+    # Test non-latin-1 code point (should not throw an exception)
+    assert "Domino’s" not in binc
 
 
 def test_foreign_names():
