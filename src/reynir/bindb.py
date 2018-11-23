@@ -225,7 +225,13 @@ class BIN_Db:
 
     def lookup_word(self, w, at_sentence_start, auto_uppercase=False):
         """ Given a word form, look up all its possible meanings """
-        return self._lookup(w, at_sentence_start, auto_uppercase, self._meanings_func)
+        w, m, _ = self._lookup(w, at_sentence_start, auto_uppercase, self._meanings_func)
+        return w, m
+
+    def lookup_word_with_error(self, w, at_sentence_start, auto_uppercase=False):
+        """ Given a word form, look up all its possible meanings """
+        w, m, error = self._lookup(w, at_sentence_start, auto_uppercase, self._meanings_func)
+        return w, m, error
 
     def lookup_form(self, w, at_sentence_start):
         """ Given a word root (stem), look up all its forms """
@@ -293,7 +299,6 @@ class BIN_Db:
             m = Abbreviations.DICT.get(clean_w, None)
             return None if m is None else [BIN_Meaning._make(m)]
 
-        error = ""
         # Start with a straightforward lookup of the word
 
         if auto_uppercase and w.islower():
@@ -344,8 +349,9 @@ class BIN_Db:
 
         if m:
             # Most common path out of this function
-            #print("{}-{}".format(w, m)) # TODO bæta hér við skoðun á 'beri', 'gjafi', ... Líka annars staðar? Hjá báðum return-skipununum?
-            return (w, m, None)
+            return w, m, None
+
+        error = None
 
         if lower_w != w or w[0] == "[":
             # Still nothing: check abbreviations
@@ -397,11 +403,12 @@ class BIN_Db:
                 m = BIN_Db.open_cats(m)
                 if m:
                     if cw[0] in NOT_FORMERS: 
-                        error = ["C004", cw[0]]
+                        error = ("C004", cw[0])
                     elif cw[0] == "ó" and cw[1] == "tal":
-                        error = ["C004", "ótal"]
+                        error = ("C004", "ótal")
                     elif cw[0] in WRONG_FORMERS:
-                        error = ["C005", cw[0], WRONG_FORMERS[cw[0]]] 
+                        error = ("C005", cw[0], WRONG_FORMERS[cw[0]])
+
         if not m and lower_w.startswith("ó"):
             # Check whether an adjective without the 'ó' prefix is found in BÍN
             # (i.e. create 'óhefðbundinn' from 'hefðbundinn')
@@ -426,5 +433,5 @@ class BIN_Db:
             # If no meaning found and we're auto-uppercasing,
             # convert this to upper case (could be an entity name)
             w = w.capitalize()
-        # noinspection PyRedundantParentheses
-        return (w, m, error)
+
+        return w, m, error
