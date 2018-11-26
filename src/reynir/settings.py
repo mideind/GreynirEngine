@@ -50,11 +50,29 @@ _ALL_CASES = frozenset(("nf", "þf", "þgf", "ef"))
 _ALL_GENDERS = frozenset(("kk", "kvk", "hk"))
 _ALL_NUMBERS = frozenset(("et", "ft"))
 _SUBCLAUSES = frozenset(("nh", "mnh", "falls"))
-_REFLPRN = {
-    "sig" : "sig_hk_et_þf",
-    "sér" : "sig_hk_et_þgf",
-    "sín" : "sig_hk_et_ef",
-    }
+_REFLPRN = {"sig": "sig_hk_et_þf", "sér": "sig_hk_et_þgf", "sín": "sig_hk_et_ef"}
+
+
+# Magic stuff to change locale context temporarily
+
+
+@contextmanager
+def changedlocale(new_locale=None):
+    """ Change locale for collation temporarily within a context (with-statement) """
+    # The newone locale parameter should be a tuple: ('is_IS', 'UTF-8')
+    old_locale = locale.getlocale(locale.LC_COLLATE)
+    try:
+        locale.setlocale(locale.LC_COLLATE, new_locale or _DEFAULT_SORT_LOCALE)
+        yield locale.strxfrm  # Function to transform string for sorting
+    finally:
+        locale.setlocale(locale.LC_COLLATE, old_locale)
+
+
+def sort_strings(strings, loc=None):
+    """ Sort a list of strings using the specified locale's collation order """
+    # Change locale temporarily for the sort
+    with changedlocale(loc) as strxfrm:
+        return sorted(strings, key=strxfrm)
 
 
 class ConfigError(Exception):
@@ -81,6 +99,7 @@ class ConfigError(Exception):
 
 
 class LineReader:
+
     """ Read lines from a text file, recognizing $include directives """
 
     def __init__(self, fname, outer_fname=None, outer_line=0):
@@ -91,9 +110,11 @@ class LineReader:
         self._outer_line = outer_line
 
     def fname(self):
+        """ The name of the file being read """
         return self._fname if self._inner_rdr is None else self._inner_rdr.fname()
 
     def line(self):
+        """ The number of the current line within the file """
         return self._line if self._inner_rdr is None else self._inner_rdr.line()
 
     def lines(self):
@@ -101,7 +122,7 @@ class LineReader:
         self._line = 0
         try:
             with resource_stream(__name__, self._fname) as inp:
-                # Read config file line-by-line
+                # Read config file line-by-line from the package resources
                 for b in inp:
                     # We get byte strings; convert from utf-8 to strings
                     s = b.decode("utf-8")
@@ -126,15 +147,17 @@ class LineReader:
             if self._outer_fname:
                 # This is an include file within an outer config file
                 c = ConfigError(
-                    "Error while opening or reading include file '{0}'"
-                    .format(self._fname)
+                    "Error while opening or reading include file '{0}'".format(
+                        self._fname
+                    )
                 )
                 c.set_pos(self._outer_fname, self._outer_line)
             else:
                 # This is an outermost config file
                 c = ConfigError(
-                    "Error while opening or reading config file '{0}'"
-                    .format(self._fname)
+                    "Error while opening or reading config file '{0}'".format(
+                        self._fname
+                    )
                 )
             raise c
 
@@ -168,7 +191,7 @@ class VerbObjects:
     # dict { verb + argument cases : verb particle}
     VERB_PARTICLES = defaultdict(set)
 
-    VERBS_ERRORS = [ set(), defaultdict(dict), defaultdict(dict)]
+    VERBS_ERRORS = [set(), defaultdict(dict), defaultdict(dict)]
     VERB_PARTICLES_ERRORS = defaultdict(dict)
     PREPOSITIONS_ERRORS = defaultdict(dict)
     WRONG_VERBS = defaultdict(list)
@@ -188,8 +211,7 @@ class VerbObjects:
                         spl = kind.split("_")
                         if spl[-1] not in _ALL_CASES and spl[-1] != "gr":
                             raise ConfigError(
-                                "Invalid verb argument: '{0}'"
-                                .format(kind)
+                                "Invalid verb argument: '{0}'".format(kind)
                             )
             # Append a possible argument list
             arglists = VerbObjects.VERBS[la][verb]
@@ -225,11 +247,14 @@ class VerbObjects:
             d = VerbObjects.PREPOSITIONS_ERRORS[verb_with_cases]
             for p, kind in prepositions:
                 d[p] = corr
-                d[p+ "_" + kind] = corr
+                d[p + "_" + kind] = corr
         elif errkind == "PCL":
             VerbObjects.VERB_PARTICLES_ERRORS[verb_with_cases][particle] = corr
-        elif errkind == "VERB": # Wrong verb, must point to completely different verb + args
+        elif (
+            errkind == "VERB"
+        ):  # Wrong verb, must point to completely different verb + args
             VerbObjects.WRONG_VERBS[verb_with_cases] = corr
+
     @staticmethod
     def verb_matches_preposition(verb_with_cases, prep_with_case):
         """ Does the given preposition with the given case fit the verb? """
@@ -378,6 +403,7 @@ class StaticPhrases:
     DICT = {}
     # Error dictionary, { phrase : (error_code, right_phrase, right_tag_string, right_lemma_string) }
     ERROR_DICT = {}
+
     @staticmethod
     def add(spec):
         """ Add a static phrase to the dictionary. Called from the config file handler. """
@@ -394,8 +420,7 @@ class StaticPhrases:
 
         if phrase in StaticPhrases.MAP:
             raise ConfigError(
-                "Static phrase '{0}' is defined more than once"
-                .format(phrase)
+                "Static phrase '{0}' is defined more than once".format(phrase)
             )
 
         # First add to phrase list
@@ -590,43 +615,8 @@ class Topics:
         Topics.DICT[Topics._name].add(word.replace(" ", "_"))
 
 
-class AllowedMultiples:
-    # Set of word forms allowed to appear more than once in a row
-    SET = set()
-
-    @staticmethod
-    def add(word):
-        AllowedMultiples.SET.add(word)
-
-
-class WrongCompounds:
-    # Dictionary structure: dict { wrong_compound : "right phrase" }
-    DICT = {}
-
-    @staticmethod
-    def add(split):
-        WrongCompounds.DICT[split[0]] = split[1]
-
-
-class SplitCompounds:
-    # Set containing whole phrases
-    SET = set()
-    
-    @staticmethod
-    def add(s):
-        SplitCompounds.SET.add(s)
-
-
-class UniqueErrors:
-    # Dictionary structure: dict { wrong_word : right word }
-    DICT = {}
-
-    @staticmethod
-    def add(split):
-        UniqueErrors.DICT[split[0]] = split[1]
-
-
 class AdjectivePredicates:
+
     # dict { adjective lemma : argument case }
     ARGUMENTS = {}
     # dict { adjective lemma : [ (preposition, case) ] }
@@ -656,6 +646,7 @@ class AdjectivePredicates:
 
 
 class Morphemes:
+
     # dict { morpheme : [ preferred PoS ] }
     BOUND_DICT = {}
     # dict { morpheme : [ excluded PoS ] }
@@ -669,57 +660,6 @@ class Morphemes:
             raise ConfigError("A definition of allowed PoS is necessary with morphemes")
         if freelist:
             Morphemes.FREE_DICT[morph] = freelist
-
-
-class ErrorForms:
-    # dict { wrong_word_form : [ lemma, correct_word_form, id, PoS, tag ] }
-    DICT = defaultdict(list)
-
-    @staticmethod
-    def add(split):
-        ErrorForms.DICT[split[0]] = split[1:]
-
-    @staticmethod
-    def get_lemma(wrong_form):
-        return ErrorForms.DICT[wrong_form][0]
-
-    @staticmethod
-    def get_correct_form(wrong_form):
-        return ErrorForms.DICT[wrong_form][1]
-
-    @staticmethod
-    def get_id(wrong_form):
-        return ErrorForms.DICT[wrong_form][2]
-
-    @staticmethod
-    def get_pos(wrong_form):
-        return ErrorForms.DICT[wrong_form][3]
-
-    @staticmethod
-    def get_tag(wrong_form):
-        return ErrorForms.DICT[wrong_form][4]
-
-
-# Magic stuff to change locale context temporarily
-
-
-@contextmanager
-def changedlocale(new_locale=None):
-    """ Change locale for collation temporarily within a context (with-statement) """
-    # The newone locale parameter should be a tuple: ('is_IS', 'UTF-8')
-    old_locale = locale.getlocale(locale.LC_COLLATE)
-    try:
-        locale.setlocale(locale.LC_COLLATE, new_locale or _DEFAULT_SORT_LOCALE)
-        yield locale.strxfrm  # Function to transform string for sorting
-    finally:
-        locale.setlocale(locale.LC_COLLATE, old_locale)
-
-
-def sort_strings(strings, loc=None):
-    """ Sort a list of strings using the specified locale's collation order """
-    # Change locale temporarily for the sort
-    with changedlocale(loc) as strxfrm:
-        return sorted(strings, key=strxfrm)
 
 
 class Preferences:
@@ -754,8 +694,7 @@ class StemPreferences:
         """ Add a preference to the dictionary. Called from the config file handler. """
         if word in StemPreferences.DICT:
             raise ConfigError(
-                "Duplicate stem preference for word form {0}"
-                .format(word)
+                "Duplicate stem preference for word form {0}".format(word)
             )
         StemPreferences.DICT[word] = (worse, better)
 
@@ -824,8 +763,7 @@ class Settings:
         DB_PORT = int(DB_PORT)
     except ValueError:
         raise ConfigError(
-            "Invalid environment variable value: DB_PORT = {0}"
-            .format(DB_PORT)
+            "Invalid environment variable value: DB_PORT = {0}".format(DB_PORT)
         )
 
     BIN_DB_HOSTNAME = os.environ.get("GREYNIR_BIN_DB_HOST", DB_HOSTNAME)
@@ -835,8 +773,7 @@ class Settings:
         BIN_DB_PORT = int(BIN_DB_PORT)
     except ValueError:
         raise ConfigError(
-            "Invalid environment variable value: BIN_DB_PORT = {0}"
-            .format(BIN_DB_PORT)
+            "Invalid environment variable value: BIN_DB_PORT = {0}".format(BIN_DB_PORT)
         )
 
     # Flask server host and port
@@ -846,8 +783,7 @@ class Settings:
         PORT = int(PORT)
     except ValueError:
         raise ConfigError(
-            "Invalid environment variable value: GREYNIR_PORT = {0}"
-            .format(PORT)
+            "Invalid environment variable value: GREYNIR_PORT = {0}".format(PORT)
         )
 
     # Flask debug parameter
@@ -860,8 +796,9 @@ class Settings:
         SIMSERVER_PORT = int(SIMSERVER_PORT)
     except ValueError:
         raise ConfigError(
-            "Invalid environment variable value: SIMSERVER_PORT = {0}"
-            .format(SIMSERVER_PORT)
+            "Invalid environment variable value: SIMSERVER_PORT = {0}".format(
+                SIMSERVER_PORT
+            )
         )
 
     # Configuration settings from the Reynir.conf file
@@ -931,8 +868,7 @@ class Settings:
                 raise ConfigError("Meaning in static_phrases should have 3 arguments")
         else:
             raise ConfigError(
-                "Unknown configuration parameter '{0}' in static_phrases"
-                .format(par)
+                "Unknown configuration parameter '{0}' in static_phrases".format(par)
             )
 
     @staticmethod
@@ -951,7 +887,7 @@ class Settings:
     def _handle_verb_objects(s):
         """ Handle verb object specifications in the settings section """
         # Format: verb [arg1] [arg2] [/preposition arg]... [$score(sc)]
-        # arg can be nf, þf, þgf, ef, nh, falls, sig/sér/sín, bági_kk_ft_þf 
+        # arg can be nf, þf, þgf, ef, nh, falls, sig/sér/sín, bági_kk_ft_þf
         error = False
         # Start by handling the $score() pragma, if present
         score = 0
@@ -971,7 +907,7 @@ class Settings:
         # Check for $error
         ix = s.rfind("$error(")
         if ix >= 0:
-            e = s[ix + 7:-1]
+            e = s[ix + 7 : -1]
             s = s[0:ix]
             error = True
 
@@ -983,7 +919,6 @@ class Settings:
             s = s[0:ix]
             if " " in particle:
                 raise ConfigError("Particle should only be one word")
-
 
         # Process preposition arguments, if any
         prepositions = []
@@ -1040,7 +975,7 @@ class Settings:
         error = False
         ix = par.rfind("$error(")
         if ix >= 0:
-            e = par[ix + 7:-1].strip()
+            e = par[ix + 7 : -1].strip()
             par = par[0:ix]
             error = True
 
@@ -1054,8 +989,7 @@ class Settings:
         s = s.lower().strip()
         if not s.isalpha():
             raise ConfigError(
-                "Expected word but got '{0}' in undeclinable_adjectives"
-                .format(s)
+                "Expected word but got '{0}' in undeclinable_adjectives".format(s)
             )
         UndeclinableAdjectives.add(s)
 
@@ -1226,8 +1160,9 @@ class Settings:
         cats = s[q + 1 :].strip().lower().split()
         if len(words) != len(cats):
             raise ConfigError(
-                "Ambiguous phrase has {0} words but {1} categories"
-                .format(len(words), len(cats))
+                "Ambiguous phrase has {0} words but {1} categories".format(
+                    len(words), len(cats)
+                )
             )
         if len(words) < 2:
             raise ConfigError("Ambiguous phrase must contain at least two words")
@@ -1258,23 +1193,7 @@ class Settings:
         DisallowedNames.add(a[0], a[1:])
 
     @staticmethod
-    def handle_allowed_multiples(s):
-        ix = s.rfind(" ")
-        if ix >= 0:
-            raise ConfigError("Allowed multiples must only contain one word")
-        AllowedMultiples.add(s)
-
-    @staticmethod
-    def handle_wrong_compounds(s):
-        split = s.strip("\"").split("\", \"")
-        WrongCompounds.add(split)
-
-    @staticmethod
-    def handle_split_compounds(s):
-        SplitCompounds.add(s)
-
-    @staticmethod
-    def handle_adjective_predicates(s):
+    def _handle_adjective_predicates(s):
         # Process preposition arguments, if any
         error = False
         ix = s.rfind("$error(")  # Must be at the end
@@ -1305,43 +1224,22 @@ class Settings:
             AdjectivePredicates.add_error(adj, a[1:], prepositions, e)
 
     @staticmethod
-    def handle_unique_errors(s):
-        split = s.strip("\"").split("\", \"")
-        UniqueErrors.add(split)
-
-    @staticmethod
-    def handle_multiword_errors(s):
-        pass
-
-    @staticmethod
-    def handle_morphemes(s):
+    def _handle_morphemes(s):
         freelist = []
         boundlist = []
         spl = s.strip().split(" ")
         m = spl[0]
         for pos in spl[1:]:
             if pos:
-                if pos.startswith("<"):
+                if pos.startswith("+"):
                     boundlist.append(pos[1:])
-                elif pos.startswith(">"):
+                elif pos.startswith("-"):
                     freelist.append(pos[1:])
                 else:
-                    raise ConfigError("PoS specification should start with '<' or '>'")
+                    raise ConfigError(
+                        "Attachment specification should start with '+' or '-'"
+                    )
         Morphemes.add(m, boundlist, freelist)
-
-    @staticmethod
-    def handle_capitalization_errors(s):
-        pass
-
-    @staticmethod
-    def handle_taboo_words(s):
-        pass
-
-    @staticmethod
-    def handle_error_forms(s):
-        split = s.strip().split(";")
-        ErrorForms.add(split)
-
 
     @staticmethod
     def read(fname):
@@ -1370,16 +1268,8 @@ class Settings:
                 "disallowed_names": Settings._handle_disallowed_names,
                 "noindex_words": Settings._handle_noindex_words,
                 "topics": Settings._handle_topics,
-                "allowed_multiples": Settings.handle_allowed_multiples,
-                "wrong_compounds": Settings.handle_wrong_compounds,
-                "split_compounds": Settings.handle_split_compounds,
-                "adjective_predicates": Settings.handle_adjective_predicates,
-                "unique_errors": Settings.handle_unique_errors,
-                "multiword_errors": Settings.handle_multiword_errors,
-                "morphemes": Settings.handle_morphemes,
-                "capitalization_errors": Settings.handle_capitalization_errors,
-                "taboo_words": Settings.handle_taboo_words,
-                "error_forms": Settings.handle_error_forms,
+                "adjective_predicates": Settings._handle_adjective_predicates,
+                "morphemes": Settings._handle_morphemes,
             }
             handler = None  # Current section handler
 

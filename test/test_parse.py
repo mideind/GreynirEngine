@@ -301,7 +301,7 @@ def test_consistency(verbose=False):
         scores = defaultdict(int)
         ptime = 0.0
 
-        ITERATIONS = 100
+        ITERATIONS = 60
         if verbose:
             print(
                 "Consistency test, {0} iterations:\n   {1}\n   {2}".format(
@@ -337,7 +337,7 @@ def test_consistency(verbose=False):
         assert cnt[2] == ITERATIONS
 
         # The sum of all counts should be the number of iterations
-        assert sum(scores.values()) == 100
+        assert sum(scores.values()) == ITERATIONS
         if verbose:
             print(
                 "There are {0} different scores in consistency check".format(
@@ -843,8 +843,8 @@ def test_attachment(verbose=False):
     """ Test attachment of prepositions to nouns and verbs """
     if verbose:
         print("Testing attachment of prepositions")
-    for _ in range(50):
-        # Test consistency for 50 iterations
+    for _ in range(20):
+        # Test consistency for 20 iterations
         s = r.parse_single("Ég setti dæmi um þetta í bókina mína.")
         assert (
             s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ "  # Ég
@@ -1234,6 +1234,12 @@ def test_vocabulary():
         """)
     assert s.tree is not None
     assert "vanrækja" in s.tree.verbs
+    s = r.parse_single("""
+        Milli deildanna voru kínamúrar en starfsandi var góður.
+        """)
+    assert s.tree is not None
+    assert "kínamúr" in s.tree.nouns
+    assert "starfsandi" in s.tree.nouns
 
 
 def test_finish():
