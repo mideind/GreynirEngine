@@ -53,34 +53,34 @@ NOT_FORMERS = frozenset(("allra", "alhliða", "fjölnota", "margnota", "ótal"))
 
 # Context free forms were added in compmaker.py, dealt with here
 WRONG_FORMERS = {
-    "athugana" : "athugunar",
-    "ferminga" : "fermingar",
-    "feykna" : "feikna",
-    "fyrna" : "firna",
-    "fjarskiptar" : "fjarskipta",
-    "fjárfestinga" : "fjárfestingar",
-    "forvarna" : "forvarnar",
-    "heyrna" : "heyrnar",
-    "kvartana" : "kvörtunar",
-    "kvenn" : "kven",
-    "loftlags" : "loftslags",
-    "pantana" : "pöntunar",
-    "ráðninga" : "ráðningar",
-    "skráninga" : "skráningar",
-    "ábendinga" : "ábendingar",
+    "athugana": "athugunar",
+    "ferminga": "fermingar",
+    "feykna": "feikna",
+    "fyrna": "firna",
+    "fjarskiptar": "fjarskipta",
+    "fjárfestinga": "fjárfestingar",
+    "forvarna": "forvarnar",
+    "heyrna": "heyrnar",
+    "kvartana": "kvörtunar",
+    "kvenn": "kven",
+    "loftlags": "loftslags",
+    "pantana": "pöntunar",
+    "ráðninga": "ráðningar",
+    "skráninga": "skráningar",
+    "ábendinga": "ábendingar",
 }
 
 # Named tuple for word meanings fetched from the BÍN database (lexicon)
 BIN_Meaning = namedtuple(
     "BIN_Meaning", ["stofn", "utg", "ordfl", "fl", "ordmynd", "beyging"]
 )
+
 # Compact string representation
-BIN_Meaning.__str__ = BIN_Meaning.__repr__ = (
-    lambda self: (
-        "(stofn='{0}', {2}/{3}/{1}, ordmynd='{4}' {5})"
-        .format(self.stofn, self.utg, self.ordfl, self.fl, self.ordmynd, self.beyging)
-    )
+BIN_Meaning.__str__ = BIN_Meaning.__repr__ = lambda self: (
+    "(stofn='{0}', {2}/{3}/{1}, ordmynd='{4}' {5})"
+    .format(self.stofn, self.utg, self.ordfl, self.fl, self.ordmynd, self.beyging)
 )
+
 # The set of word subcategories (fl) for person names
 # (i.e. first names or complete names)
 PERSON_NAME_FL = frozenset(("ism", "nafn", "erm"))
@@ -225,12 +225,16 @@ class BIN_Db:
 
     def lookup_word(self, w, at_sentence_start, auto_uppercase=False):
         """ Given a word form, look up all its possible meanings """
-        w, m, _ = self._lookup(w, at_sentence_start, auto_uppercase, self._meanings_func)
+        w, m, _ = self._lookup(
+            w, at_sentence_start, auto_uppercase, self._meanings_func
+        )
         return w, m
 
     def lookup_word_with_error(self, w, at_sentence_start, auto_uppercase=False):
         """ Given a word form, look up all its possible meanings """
-        w, m, error = self._lookup(w, at_sentence_start, auto_uppercase, self._meanings_func)
+        w, m, error = self._lookup(
+            w, at_sentence_start, auto_uppercase, self._meanings_func
+        )
         return w, m, error
 
     def lookup_form(self, w, at_sentence_start):
@@ -278,6 +282,7 @@ class BIN_Db:
 
     @staticmethod
     def open_cats(mlist):
+        """ Return a list of meanings filtered down to open (extensible) word categories """
         return [mm for mm in mlist if mm.ordfl in BIN_Db._OPEN_CATS]
 
     @staticmethod
@@ -402,7 +407,7 @@ class BIN_Db:
                 # (nouns, verbs, adjectives, adverbs)
                 m = BIN_Db.open_cats(m)
                 if m:
-                    if cw[0] in NOT_FORMERS: 
+                    if cw[0] in NOT_FORMERS:
                         error = ("C004", cw[0])
                     elif cw[0] == "ó" and cw[1] == "tal":
                         error = ("C004", "ótal")
