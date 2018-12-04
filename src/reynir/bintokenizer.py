@@ -970,7 +970,7 @@ def parse_static_phrases(token_stream, token_ctor, auto_uppercase):
         while True:
 
             token = next(token_stream)
-            if token.txt is None:  # token.kind != TOK.WORD:
+            if token.txt is None:
                 # Not a word: no match; discard state
                 if tq:
                     yield from tq
@@ -1087,108 +1087,173 @@ def parse_static_phrases(token_stream, token_ctor, auto_uppercase):
     yield from tq
 
 
+class MatchingStream:
+
+    """ This class parses a stream of tokens while looking for
+        multi-token matching sequences described in a phrase dictionary,
+        and calling a matching function whenever those sequences
+        occur in the stream, providing an opportunity to
+        replace or modify these sequences.
+    """
+
+    def __init__(self, phrase_dictionary):
+        self._pdict = phrase_dictionary
+
+    def key(self, token):
+        """ Generate a phrase key from the given token """
+        return token.txt.lower()
+
+    def match(self, tq, ix):
+        """ Called when we have found a match for the entire
+            token queue tq, using the index ix """
+        return tq
+
+    def length(self, ix):
+        """ Override this to provide the length of the actual
+            phrase that matches at index ix """
+        return 0
+
+    def generate(self, token_stream):
+        """ Generate an output stream from the input token stream """
+        tq = []  # Token queue
+        state = defaultdict(list)  # Phrases we're considering
+        pdict = self._pdict  # The phrase dictionary
+
+        try:
+
+            while True:
+
+                token = next(token_stream)
+
+                if token.txt is None:
+                    # Not a word: no match; yield the token queue
+                    if tq:
+                        yield from tq
+                        tq = []
+                    # Discard the previous state, if any
+                    if state:
+                        state = defaultdict(list)
+                    # ...and yield the non-matching token
+                    yield token
+                    continue
+
+                # Look for matches in the current state and build a new state
+                newstate = defaultdict(list)
+                key = self.key(token)
+
+                def add_to_state(slist, index):
+                    """ Add the list of subsequent words to the new parser state """
+                    next_key = slist[0]
+                    rest = slist[1:]
+                    newstate[next_key].append((rest, index))
+
+                def accept(state):
+                    """ The current token matches the given state, either as
+                        a continuation of a previous state or as an initiation
+                        of a new phrase """
+                    nonlocal token, newstate, tq
+                    if token:
+                        tq.append(token)
+                        token = None
+                    # sl is the continuation list (possible next tokens)
+                    # for each state
+                    for sl, ix in state:
+                        if not sl:
+                            # No continuation token from this state:
+                            # this is a complete match
+                            phrase_length = self.length(ix)
+                            while len(tq) > phrase_length:
+                                # We have extra queued tokens in the token queue
+                                # that belong to a previously seen partial phrase
+                                # that was not completed: yield them first
+                                yield tq.pop(0)
+                            if not tq:
+                                # If there is no token queue, we can't
+                                # match anything, so ignore this and
+                                # try something else
+                                continue
+                            # Let the match function decide what to yield
+                            # from this matched state
+                            yield from self.match(tq, ix)
+                            tq = []
+                            # Make sure that we start from a fresh state and
+                            # a fresh token queue when processing the next token
+                            if newstate:
+                                newstate = defaultdict(list)
+                            # Note that it is possible to match even longer phrases
+                            # by including a starting phrase in its entirety in
+                            # the static phrase dictionary
+                            break
+                        # Nonempty continuation: add it to the next state
+                        add_to_state(sl, ix)
+
+                if key in state:
+                    # This matches an expected token:
+                    # go through potential continuations
+                    yield from accept(state[key])
+                elif tq:
+                    # This does not continue a started phrase:
+                    # yield the accumulated token queue
+                    yield from tq
+                    tq = []
+
+                if key in pdict:
+                    # This word potentially starts a new phrase
+                    yield from accept(pdict[key])
+                elif token:
+                    # Not starting a new phrase: pass the token through
+                    yield token
+
+                # Transition to the new state
+                state = newstate
+
+        except StopIteration:
+            # Token stream is exhausted
+            pass
+
+        # Yield any tokens remaining in queue
+        yield from tq
+
+
+class DisambiguationStream(MatchingStream):
+
+    def __init__(self, token_ctor):
+        super().__init__(AmbigPhrases.DICT)
+        self._token_ctor = token_ctor
+
+    def length(self, ix):
+        return len(AmbigPhrases.get_cats(ix))
+
+    def match(self, tq, ix):
+        """ We have a phrase match: return the tokens in the token
+            queue, but with their meanings filtered down to only
+            the word categories specified in the phrase configration """
+        cats = AmbigPhrases.get_cats(ix)
+        token_ctor = self._token_ctor
+        for t, cat in zip(tq, cats):
+            # Yield a new token with fewer meanings for each original token in the queue
+            if cat == "fs":
+                # Handle prepositions specially, since we may have additional
+                # preps defined in Main.conf that don't have fs meanings in BÍN
+                w = t.txt.lower()
+                yield token_ctor.Word(
+                    t.txt, [BIN_Meaning(w, 0, "fs", "alm", w, "-")], token=t
+                )
+            else:
+                yield token_ctor.Word(
+                    t.txt, [m for m in t.val if m.ordfl == cat], token=t
+                )
+
+
 def disambiguate_phrases(token_stream, token_ctor):
 
     """ Parse a stream of tokens looking for common ambiguous multiword phrases
         (i.e. phrases that have a well known very likely interpretation but
         other extremely uncommon ones are also grammatically correct).
-        The algorithm implements N-token lookahead where N is the
-        length of the longest phrase.
     """
 
-    tq = []  # Token queue
-    state = defaultdict(list)  # Phrases we're considering
-    pdict = AmbigPhrases.DICT  # The phrase dictionary
-
-    try:
-
-        while True:
-
-            token = next(token_stream)
-
-            if token.kind != TOK.WORD:
-                # Not a word: no match; yield the token queue
-                if tq:
-                    yield from tq
-                    tq = []
-                # Discard the previous state, if any
-                if state:
-                    state = defaultdict(list)
-                # ...and yield the non-matching token
-                yield token
-                continue
-
-            # Look for matches in the current state and build a new state
-            newstate = defaultdict(list)
-            w = token.txt.lower()
-
-            def add_to_state(slist, index):
-                """ Add the list of subsequent words to the new parser state """
-                wrd = slist[0]
-                rest = slist[1:]
-                newstate[wrd].append((rest, index))
-
-            if w in state:
-                # This matches an expected token:
-                # go through potential continuations
-                tq.append(token)  # Add to lookahead token queue
-                token = None
-                for sl, ix in state[w]:
-                    if not sl:
-                        # No subsequent word: this is a complete match
-                        # Discard meanings of words in the token queue that are not
-                        # compatible with the category list specified
-                        cats = AmbigPhrases.get_cats(ix)
-                        for t, cat in zip(tq, cats):
-                            # Yield a new token with fewer meanings for each original token in the queue
-                            if cat == "fs":
-                                # Handle prepositions specially, since we may have additional
-                                # preps defined in Main.conf that don't have fs meanings in BÍN
-                                w = t.txt.lower()
-                                yield token_ctor.Word(
-                                    t.txt, [BIN_Meaning(w, 0, "fs", "alm", w, "-")], token=t
-                                )
-                            else:
-                                yield token_ctor.Word(
-                                    t.txt, [m for m in t.val if m.ordfl == cat], token=t
-                                )
-
-                        # Discard the state and start afresh
-                        if newstate:
-                            newstate = defaultdict(list)
-                        w = ""
-                        tq = []
-                        # Note that it is possible to match even longer phrases
-                        # by including a starting phrase in its entirety in
-                        # the static phrase dictionary
-                        break
-                    add_to_state(sl, ix)
-            elif tq:
-                # This does not continue a started phrase:
-                # yield the accumulated token queue
-                yield from tq
-                tq = []
-
-            if w in pdict:
-                # This word potentially starts a new phrase
-                for sl, ix in pdict[w]:
-                    # assert sl
-                    add_to_state(sl, ix)
-                if token:
-                    tq.append(token)  # Start a lookahead queue with this token
-            elif token:
-                # Not starting a new phrase: pass the token through
-                yield token
-
-            # Transition to the new state
-            state = newstate
-
-    except StopIteration:
-        # Token stream is exhausted
-        pass
-
-    # Yield any tokens remaining in queue
-    yield from tq
+    ds = DisambiguationStream(token_ctor)
+    yield from ds.generate(token_stream)
 
 
 class _Bin_TOK(TOK):
