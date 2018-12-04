@@ -235,8 +235,12 @@ PERSON_NAME_SET = frozenset(("ism", "erm"))
 
 # Set of categories (fl fields in BÍN) for patronyms
 # and matronyms
-PATRONYM_SET = frozenset(("föð", "móð"))
+PATRONYM_SET = frozenset(("föð", "móð", "ætt"))
 
+# Set of foreign middle names that start with a lower case letter
+# ('Louis de Broglie', 'Jan van Eyck')
+# 'of' was also here but caused problems
+FOREIGN_MIDDLE_NAME_SET = frozenset(("van", "de", "den", "der", "el", "al"))
 
 def annotate(db, token_ctor, token_stream, auto_uppercase):
     """ Look up word forms in the BIN word database. If auto_uppercase
@@ -725,7 +729,8 @@ def parse_phrases_2(token_stream, token_ctor):
 
             # Check for surnames
             def surnames(tok):
-                """ Check for Icelandic patronym (category 'föð') or matronym (category 'móð') """
+                """ Check for Icelandic patronym (category 'föð'),
+                    matronym (category 'móð') or family names (category 'ætt') """
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
                     # Must be a word starting with an uppercase character
                     return None
@@ -763,15 +768,8 @@ def parse_phrases_2(token_stream, token_ctor):
                         # This is probably a C. which had its period cut off as a sentence ending...
                         wrd = wrd[1:-1]
                 if len(wrd) > 2 or not wrd[0].isupper():
-                    if wrd not in {
-                        "van",
-                        "de",
-                        "den",
-                        "der",
-                        "el",
-                        "al",
-                    }:  # "of" was here
-                        # Accept "Thomas de Broglie", "Ruud van Nistelroy"
+                    if wrd not in FOREIGN_MIDDLE_NAME_SET:
+                        # Accept "Thomas de Broglie", "Ruud van Nistelrooy"
                         return None
                 # One or two letters, capitalized: accept as middle name abbrev,
                 # all genders and cases possible
@@ -779,7 +777,9 @@ def parse_phrases_2(token_stream, token_ctor):
 
             def compatible(pn, npn):
                 """ Return True if the next PersonName (np) is compatible with the one we have (p) """
-                if npn.gender and (npn.gender != pn.gender):
+                # The neutral gender (hk) is used for family names and is
+                # compatible with both masculine and feminine given names
+                if npn.gender and npn.gender != "hk" and (npn.gender != pn.gender):
                     return False
                 if npn.case and (npn.case != pn.case):
                     return False
@@ -846,10 +846,14 @@ def parse_phrases_2(token_stream, token_ctor):
                         for p in gn:
                             for np in sn:
                                 if compatible(p, np):
+                                    gender = (
+                                        np.gender if (np.gender and np.gender != "hk")
+                                        else p.gender
+                                    )
                                     r.append(
                                         PersonName(
                                             name=p.name + " " + np.name,
-                                            gender=np.gender,
+                                            gender=gender,
                                             case=np.case,
                                         )
                                     )
@@ -955,138 +959,6 @@ def parse_phrases_2(token_stream, token_ctor):
         yield token
 
 
-def parse_static_phrases(token_stream, token_ctor, auto_uppercase):
-
-    """ Parse a stream of tokens looking for static multiword phrases
-        (i.e. phrases that are not affected by inflection).
-        The algorithm implements N-token lookahead where N is the
-        length of the longest phrase.
-    """
-    tq = []  # Token queue
-    state = defaultdict(list)  # Phrases we're considering
-    pdict = StaticPhrases.DICT  # The phrase dictionary
-    try:
-
-        while True:
-
-            token = next(token_stream)
-            if token.txt is None:
-                # Not a word: no match; discard state
-                if tq:
-                    yield from tq
-                    tq = []
-                if state:
-                    state = defaultdict(list)
-                yield token
-                continue
-
-            # Look for matches in the current state and build a new state
-            newstate = defaultdict(list)
-            wo = token.txt  # Original word
-            w = wo.lower()  # Lower case
-            if wo == w:
-                wo = w
-
-            def add_to_state(slist, index):
-                """ Add the list of subsequent words to the new parser state """
-                wrd = slist[0]
-                rest = slist[1:]
-                newstate[wrd].append((rest, index))
-
-            # First check for original (uppercase) word in the state, if any;
-            # if that doesn't match, check the lower case
-            wm = None
-            if wo is not w and wo in state:
-                wm = wo
-            elif w in state:
-                wm = w
-
-            if wm:
-                # This matches an expected token:
-                # go through potential continuations
-                tq.append(token)  # Add to lookahead token queue
-                token = None
-                for sl, ix in state[wm]:
-                    if not sl:
-                        # No subsequent word: this is a complete match
-                        # Reconstruct original text behind phrase
-                        plen = StaticPhrases.get_length(ix)
-                        while len(tq) > plen:
-                            # We have extra queued tokens in the token queue
-                            # that belong to a previously seen partial phrase
-                            # that was not completed: yield them first
-                            yield tq.pop(0)
-                        w = " ".join([t.txt for t in tq])
-                        # Add the entire phrase as one 'word' to the token queue.
-                        # Note that the StaticPhrases meaning list will be converted
-                        # to BIN_Meaning tuples in the annotate() pass.
-                        # Also note that the entire token queue is sent in as
-                        # the token paramter, as any token in the queue may
-                        # contain error information.
-                        yield token_ctor.Word(
-                            w,
-                            StaticPhrases.get_meaning(ix),
-                            token=tq
-                        )
-                        # Discard the state and start afresh
-                        newstate = defaultdict(list)
-                        w = wo = ""
-                        tq = []
-                        # Note that it is possible to match even longer phrases
-                        # by including a starting phrase in its entirety in
-                        # the static phrase dictionary
-                        break
-                    add_to_state(sl, ix)
-            elif tq:
-                yield from tq
-                tq = []
-
-            wm = None
-            if auto_uppercase and len(wo) == 1 and w is wo:
-                # If we are auto-uppercasing, leave single-letter lowercase
-                # phrases alone, i.e. 'g' for 'gram' and 'm' for 'meter'
-                pass
-            elif wo is not w and wo in pdict:
-                wm = wo
-            elif w in pdict:
-                wm = w
-
-            # Add all possible new states for phrases that could be starting
-            if wm:
-                # This word potentially starts a phrase
-                for sl, ix in pdict[wm]:
-                    if not sl:
-                        # Simple replace of a single word
-                        if tq:
-                            yield from tq
-                            tq = []
-                        # Yield the replacement token
-                        # Note that the StaticPhrases meaning tuples will be
-                        # converted to BIN_Meaning tuples in annotate()
-                        yield token_ctor.Word(
-                            token.txt, StaticPhrases.get_meaning(ix),
-                            token=token
-                        )
-                        newstate = defaultdict(list)
-                        token = None
-                        break
-                    add_to_state(sl, ix)
-                if token:
-                    tq.append(token)
-            elif token:
-                yield token
-
-            # Transition to the new state
-            state = newstate
-
-    except StopIteration:
-        # Token stream is exhausted
-        pass
-
-    # Yield any tokens remaining in queue
-    yield from tq
-
-
 class MatchingStream:
 
     """ This class parses a stream of tokens while looking for
@@ -1103,6 +975,13 @@ class MatchingStream:
         """ Generate a phrase key from the given token """
         return token.txt.lower()
 
+    def match_state(self, key, state):
+        """ Called to see if the current token's key matches
+            the given state. Returns the value that should be
+            used to look up the key within the state, or None
+            if there is no match. """
+        return key if key in state else None
+
     def match(self, tq, ix):
         """ Called when we have found a match for the entire
             token queue tq, using the index ix """
@@ -1113,7 +992,7 @@ class MatchingStream:
             phrase that matches at index ix """
         return 0
 
-    def generate(self, token_stream):
+    def process(self, token_stream):
         """ Generate an output stream from the input token stream """
         tq = []  # Token queue
         state = defaultdict(list)  # Phrases we're considering
@@ -1187,19 +1066,21 @@ class MatchingStream:
                         # Nonempty continuation: add it to the next state
                         add_to_state(sl, ix)
 
-                if key in state:
+                skey = self.match_state(key, state)
+                if skey is not None:
                     # This matches an expected token:
                     # go through potential continuations
-                    yield from accept(state[key])
+                    yield from accept(state[skey])
                 elif tq:
                     # This does not continue a started phrase:
                     # yield the accumulated token queue
                     yield from tq
                     tq = []
 
-                if key in pdict:
+                skey = self.match_state(key, pdict)
+                if skey is not None:
                     # This word potentially starts a new phrase
-                    yield from accept(pdict[key])
+                    yield from accept(pdict[skey])
                 elif token:
                     # Not starting a new phrase: pass the token through
                     yield token
@@ -1213,6 +1094,68 @@ class MatchingStream:
 
         # Yield any tokens remaining in queue
         yield from tq
+
+
+class StaticPhraseStream(MatchingStream):
+
+    """ Process a stream of tokens looking for static multiword phrases
+        (i.e. phrases that are not affected by inflection).
+        The algorithm implements N-token lookahead where N is the
+        length of the longest phrase.
+    """
+
+    def __init__(self, token_ctor, auto_uppercase):
+        super().__init__(StaticPhrases.DICT)
+        self._token_ctor = token_ctor
+        self._auto_uppercase = auto_uppercase
+
+    def length(self, ix):
+        return StaticPhrases.get_length(ix)
+
+    def key(self, token):
+        """ We allow both the original token text and a lowercase
+            version of it to match """
+        wo = token.txt  # Original word
+        w = wo.lower()  # Lower case
+        if w is not wo and (w == wo):
+            wo = w
+        return wo, w
+
+    def match_state(self, key, state):
+        """ First check for original (uppercase) word in the state, if any;
+            if that doesn't match, check the lower case """
+        wm = None
+        wo, w = key
+        if self._auto_uppercase and len(wo) == 1 and w is wo:
+            # If we are auto-uppercasing, leave single-letter lowercase
+            # phrases alone, i.e. 'g' for 'gram' and 'm' for 'meter'
+            pass
+        elif wo is not w and wo in state:
+            wm = wo  # Original word
+        elif w in state:
+            wm = w   # Lowercase version
+        return wm
+
+    def match(self, tq, ix):
+        w = " ".join([t.txt for t in tq])
+        # Add the entire phrase as one 'word' to the token queue.
+        # Note that the StaticPhrases meaning list will be converted
+        # to BIN_Meaning tuples in the annotate() pass.
+        # Also note that the entire token queue is sent in as
+        # the token paramter, as any token in the queue may
+        # contain error information.
+        yield self._token_ctor.Word(
+            w,
+            StaticPhrases.get_meaning(ix),
+            token=tq
+        )
+
+
+def parse_static_phrases(token_stream, token_ctor, auto_uppercase):
+    """ Use the StaticPhraseStream class to process the token stream
+        and replace static phrases with single tokens """
+    sps = StaticPhraseStream(token_ctor, auto_uppercase)
+    return sps.process(token_stream)
 
 
 class DisambiguationStream(MatchingStream):
@@ -1253,7 +1196,7 @@ def disambiguate_phrases(token_stream, token_ctor):
     """
 
     ds = DisambiguationStream(token_ctor)
-    yield from ds.generate(token_stream)
+    yield from ds.process(token_stream)
 
 
 class _Bin_TOK(TOK):

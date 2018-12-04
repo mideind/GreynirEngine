@@ -400,7 +400,7 @@ class StaticPhrases:
     # List of all static phrases and their meanings
     LIST = []
     # Parsing dictionary keyed by first word of phrase
-    DICT = {}
+    DICT = defaultdict(list)
     # Error dictionary, { phrase : (error_code, right_phrase, right_tag_string, right_lemma_string) }
     ERROR_DICT = {}
 
@@ -450,14 +450,7 @@ class StaticPhrases:
         # Split phrase into words
         wlist = phrase.split()
         # Dictionary is keyed by first word
-        w = wlist[0]
-        d = StaticPhrases.DICT
-        if w in d:
-            # First word already there: add a subsequent list
-            d[w].append((wlist[1:], ix))
-        else:
-            # Create a new entry for this first word
-            d[w] = [(wlist[1:], ix)]
+        StaticPhrases.DICT[wlist[0]].append((wlist[1:], ix))
 
     @staticmethod
     def add_errors(words, error):
