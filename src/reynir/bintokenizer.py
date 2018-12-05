@@ -40,7 +40,7 @@ from .bindb import BIN_Db, BIN_Meaning
 
 
 # Person names that are not recognized at the start of sentences
-NOT_NAME_AT_SENTENCE_START = {"Annar", "Kalla"}
+NOT_NAME_AT_SENTENCE_START = {"Annar", "Kalla", "Sanna"}
 
 # Set of all cases (nominative, accusative, dative, possessive)
 ALL_CASES = frozenset(["nf", "þf", "þgf", "ef"])
@@ -232,6 +232,9 @@ CURRENCY_GENDERS = {
 # Set of categories (fl fields in BÍN) that denote
 # person names, Icelandic ('ism') or foreign ('erm')
 PERSON_NAME_SET = frozenset(("ism", "erm"))
+
+# Set that also allows family names ('Hafstein', 'Hafstað'...)
+PERSON_OR_FAMILY_NAME_SET = frozenset(("ism", "erm", "ætt"))
 
 # Set of categories (fl fields in BÍN) for patronyms
 # and matronyms
@@ -720,11 +723,13 @@ def parse_phrases_2(token_stream, token_ctor):
                 return any(m.fl not in category_set for m in tok.val)
 
             # Check for person names
-            def given_names(tok):
+            def given_names(tok, allow_family_name=False):
                 """ Check for Icelandic or foreign person name (category 'ism' or 'erm') """
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
                     # Must be a word starting with an uppercase character
                     return None
+                if allow_family_name:
+                    return stems(tok, PERSON_OR_FAMILY_NAME_SET, given_name=True)
                 return stems(tok, PERSON_NAME_SET, given_name=True)
 
             # Check for surnames
@@ -754,7 +759,7 @@ def parse_phrases_2(token_stream, token_ctor):
 
             def given_names_or_middle_abbrev(tok):
                 """ Check for given name or middle abbreviation """
-                gnames = given_names(tok)
+                gnames = given_names(tok, allow_family_name=True)
                 if gnames is not None:
                     return gnames
                 if tok.kind != TOK.WORD:

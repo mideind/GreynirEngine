@@ -1204,6 +1204,21 @@ def test_foreign_names():
         "P S-MAIN IP NP-SUBJ person_kk_nf /NP-SUBJ VP so_1_þf_et_fh_gm_p3_þt "
         "NP-OBJ no_et_gr_hk_þf /NP-OBJ /VP /IP /S-MAIN p /P"
     )
+    # Test to check whether 'Hafstein' works as a family name in nominative case
+    s = r.parse_single("Þetta voru Ólafur Ísleifsson, Júlíus Hafstein og Ingibjörg Sólrún Gísladóttir.")
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP so_1_nf_fh_ft_gm_p3_þt NP-PRD "
+        "person_kk_nf person_kk_nf p person_kk_nf person_kk_nf st person_kvk_nf person_kvk_nf person_kvk_nf "
+        "/NP-PRD /VP /IP /S-MAIN p /P"
+    )
+    s = r.parse_single("Þetta voru Ólafur Ísleifsson, Bára Hafstein og Ingibjörg Sólrún Gísladóttir.")
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP so_1_nf_fh_ft_gm_p3_þt NP-PRD "
+        "person_kk_nf person_kk_nf p person_kvk_nf person_kvk_nf st person_kvk_nf person_kvk_nf person_kvk_nf "
+        "/NP-PRD /VP /IP /S-MAIN p /P"
+    )
 
 
 def test_vocabulary():
