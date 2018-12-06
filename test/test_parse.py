@@ -720,7 +720,7 @@ def test_year_range():
     check_terminal(
         t[3], text="árin", lemma="ár", category="no", variants=["hk", "gr", "ft", "þf"]
     ),
-    check_terminal(t[4], text="1944", lemma="1944", category="tala", variants=[]),
+    check_terminal(t[4], text="1944", lemma="1944", category="ártal", variants=[]),
     check_terminal(t[5], text="–", lemma="–", category="", variants=[]),
     check_terminal(t[6], text="50", lemma="50", category="tala", variants=[]),
     check_terminal(t[7], text=".", lemma=".", category="", variants=[])

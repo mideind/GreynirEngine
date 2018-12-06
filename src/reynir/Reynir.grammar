@@ -98,6 +98,7 @@
 /fall = nf þf þgf ef
 /aukafall = þf þgf ef # All cases except nominative
 /afall = nf þf þgf ef # Second case (andlagsfall) for dual argument verbs
+/sfall = sþf sþgf sef # Adjective subject case
 
 # Number (singular/plural) variant
 /tala = et ft
@@ -1330,14 +1331,6 @@ SögnErLo/tala/pers/kyn →
 SögnErLoBotn/tala/kyn →
     LoTengtSögn_nf/tala/kyn AðLiður?            # (Guðrún er) snögg [að svara fyrir sig] / (Það er) torsótt [að Siggi fari einn í skólann]
     | eo* Aldur 'gamall:lo'_sb_nf/tala/kyn?     # (Páll var) [rúmlega] tíu ára [gamall]
-    | LoMeðÞf_nf/tala/kyn Nl_þf                 # (Jón var) viðstaddur blaðamannafundinn
-
-# Lýsingarorð sem taka með sér þolfall
-
-LoMeðÞf_nf/tala/kyn →
-    'viðstaddur:lo'_sb_nf/tala/kyn      # viðstaddur fundinn
-    | 'viðriðinn:lo'_sb_nf/tala/kyn     # viðriðinn málið
-    | 'viðloðandi:lo'_sb_nf/tala/kyn    # viðloðandi kommúnistaflokka
 
 # Hvetja til 'er/var/hefur verið...' + lýsingarorð í nefnifalli og sterkri beygingu
 $score(+10) SögnErLo/tala/pers/kyn
@@ -1405,21 +1398,22 @@ $score(+2) Sögn_nh/tala/pers/kyn
 # Miðmynd + nafnháttur
 # TODO skgr. hvaða sagnir ganga sem "hjálparsagnir" hér?
 Sögn_nh_mm/tala/pers/kyn →
-    so_mm/tala/pers OgSögn_mm/tala/pers* FsAtv? Botn_nh_mm/tala/kyn
+    so_mm/tala/pers OgSögn_mm/tala/pers* Botn_nh_mm/tala/kyn
     # Hann segist munu borða kökuna
     # Ég telst vilja kjósa flokkinn
     # Þau segjast geta látið henda Jóni út
     | So_1_þf_mm HjSögnNh_ft_p3 HreinSögn_nh/tala/kyn
 
 Botn_nh_mm/tala/kyn →
-     HreinSögn_nh/tala/kyn      # (Páll hyggst/þykist/telst) skrifa söguna
-     | HreinSögn_lhþt/tala/kyn  # (Kvennalistakonur virðast [ekki]) taldar sigurstranglegar
+     FsAtv? HreinSögn_nh/tala/kyn      # (Páll hyggst/þykist/telst) skrifa söguna
+     | FsAtv? HreinSögn_lhþt/tala/kyn  # (Kvennalistakonur virðast [ekki]) taldar sigurstranglegar
+     | AtvFs? HjSögnVera? LoTengtSögn_nf/tala/kyn  # Þær segjast [[ekki] vera] samþykkar málinu
      # (Jón sagðist) þeirrar skoðunar [að múslimar væru óalandi og óferjandi]
      # (Maðurinn reyndist) þeirrar innréttingar að ekki var á hann treystandi
      | Botn_nh_ef
 
 Botn_nh_ef →
-     'sá:fn'_ef/tala/kyn Nl_ef/tala/kyn Útskýring?
+     FsAtv? 'sá:fn'_ef/tala/kyn Nl_ef/tala/kyn Útskýring?
 
 # Hvetja til samhengis með miðmynd: (hún) segist ekki ætla (að fara í framboð)
 $score(+4) Sögn_nh_mm/tala/pers/kyn
@@ -2165,11 +2159,13 @@ HjSögnEkkiVera →
     | 'vilja:so'_nh 'hafa:so'_nh 'vera:so'_sagnb    # (Mér sýndist Anna) vilja hafa verið (ein)
     | 'mega:so'_nh 'hafa:so'_nh 'vera:so'_sagnb     # (Mér sýndist Anna) mega hafa verið (ánægð)
     | 'þykja:so'_nh 'hafa:so'_nh 'vera:so'_sagnb    # (Félögin) þykja hafa verið (illa rekin)
+    | 'hafa:so'_nh 'vilja:so'_sagnb 'vera:so'_nh    # (Mér virtist Anna) hafa viljað vera (á staðnum)
     | 'vilja:so'_nh 'verða:so'_nh
     | 'mega:so'_nh 'verða:so'_nh
     | 'hafa:so'_nh 'verða:so'_sagnb
     | 'geta:so'_nh 'hafa:so'_nh? 'verða:so'_sagnb
     | 'vilja:so'_nh 'hafa:so'_nh 'verða:so'_sagnb
+    | 'hafa:so'_nh 'vilja:so'_sagnb 'verða:so'_nh
     | 'mega:so'_nh 'hafa:so'_nh 'verða:so'_sagnb
     | 'þykja:so'_nh 'hafa:so'_nh 'verða:so'_sagnb # (Félögin) þykja hafa orðið (illa rekin)
 
@@ -3977,10 +3973,14 @@ LoAtviksliður →
 # Lýsingarorð í sterkri beygingu
 # ('Hún fór frjáls skoðana sinna í útlegð')
 
-Lo_sb/tala/fall/kyn → LoAtviksliðir? lo_sb/tala/fall/kyn LoViðhengi?
+Lo_sb/tala/fall/kyn →
+    LoAtviksliðir? lo_sb/tala/fall/kyn
+    | LoAtviksliðir? lo_sb/sfall/tala/fall/kyn LoViðhengi/sfall
 
 Lo_sb_nf/tala/kyn →
-    LoAtviksliðir? lo_sb_nf/tala/kyn LoViðhengi?
+    LoAtviksliðir? lo_sb_nf/tala/kyn
+    | LoAtviksliðir? lo_sb_nf/sfall/tala/kyn LoViðhengi/sfall
+
 Lo_sb_nf_ft/kyn →
     'margur:lo'_sb_nf_ft/kyn 'hver:fn'_nf_ft/kyn # margir hverjir, mörg hver, margar hverjar
 
@@ -3999,18 +3999,22 @@ $score(+2) OgLo_sb_nf/tala/kyn
 
 # Miðstig
 Lo_mst/tala/fall/kyn →
-    LoAtviksliðir? lo_mst/tala/fall/kyn LoViðhengi? # Miðstig
+    LoAtviksliðir? lo_mst/tala/fall/kyn # Miðstig
+    | LoAtviksliðir? lo_mst/sfall/tala/fall/kyn LoViðhengi/sfall # Miðstig
+
 Lo_mst_nf/tala/kyn →
-    LoAtviksliðir? lo_mst_nf/tala/kyn LoViðhengi? # Miðstig
+    LoAtviksliðir? lo_mst_nf/tala/kyn # Miðstig
+    | LoAtviksliðir? lo_mst_nf/sfall/tala/kyn LoViðhengi/sfall # Miðstig
 
-# Lýsingarorð sem stendur með sögn getur haft eignarfalls- eða
-# þágufalls-viðhengi, sbr.:
-# ef.: 'Þau voru frjáls skoðana sinna'
+# Lýsingarorð sem stendur með sögn getur viðhengi í aukafalli, sbr.:
+# þf.: 'Hann var viðstaddur fundinn'
 # þgf.: 'Sýningin var opin almenningi'
-LoViðhengi →
-    EfLiður | Nl_þgf
+# ef.: 'Þau voru frjáls ferða sinna'
+LoViðhengi_sþf → Nl_þf
+LoViðhengi_sþgf → Nl_þgf
+LoViðhengi_sef → Nl_ef
 
-$score(-10) LoViðhengi
+$score(+8) LoViðhengi/sfall
 
 # Lýsingarorð sem einkunn með nafnlið
 
@@ -5050,17 +5054,24 @@ AfstættTímabil →
     | 'út:fs'_þf ártal
     | 'yfir:fs'_þf TímaMagnNafnliðurStærri_þf/tala/kyn              # yfir mánuðinn
     | PunkturFs/aukafall AfsPunkturTNL/aukafall
-    | 'milli:fs'_ef AfsPunkturTNL_ef 'og:st' AfsPunkturTNL_ef
+    | TímaNafnorðStærri_þf/tala/kyn ÁðurEftir
+    | TímaNafnorðStærri_þgf_ft/kyn "saman:ao"                       # Nefndin fundaði ekki mánuðum saman
+    | "svo:ao" TímaNafnorðStærri_þgf_ft/kyn 'skipta:so'_1_þgf_gm_fh_et_p3 # svo mánuðum skiptir/skipti
+    | ÞegarLíðaTekurÁ
+    | AfstættTímabilTvöfalt
+
+AfstættTímabilTvöfalt →
+    'milli:fs'_ef AfsPunkturTNL_ef 'og:st' AfsPunkturTNL_ef
     | 'frá:fs'_þgf AfsPunkturTNL_þgf 'til:fs'_ef AfsPunkturTNL_ef
     | 'milli:fs'_ef FasturPunkturTNL 'og:st' AfsPunkturTNL_ef
     | 'frá:fs'_þgf FasturPunkturTNL 'til:fs'_ef AfsPunkturTNL_ef
     | 'milli:fs'_ef AfsPunkturTNL_ef 'og:st' FasturPunkturTNL
     | 'frá:fs'_þgf AfsPunkturTNL_þgf 'til:fs'_ef FasturPunkturTNL
     | 'milli:fs'_ef TímiPunkturTNL 'og:st' tímapunkturafs
-    | TímaNafnorðStærri_þf/tala/kyn ÁðurEftir
-    | TímaNafnorðStærri_þgf_ft/kyn "saman:ao"                       # Nefndin fundaði ekki mánuðum saman
-    | "svo:ao" TímaNafnorðStærri_þgf_ft/kyn 'skipta:so'_1_þgf_gm_fh_et_p3 # svo mánuðum skiptir/skipti
-    | ÞegarLíðaTekurÁ
+    | 'frá:fs'_þgf ártal Til tala                                   # frá 2011 til og með 2014
+    | 'ár:hk'_þf_ft_gr ártal Til tala                               # árin 2017-20
+
+$score(+16) AfstættTímabilTvöfalt
 
 TímabilTími →
     FráTilTími 

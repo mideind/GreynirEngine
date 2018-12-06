@@ -610,32 +610,31 @@ class Topics:
 
 class AdjectivePredicates:
 
-    # dict { adjective lemma : argument case }
-    ARGUMENTS = {}
-    # dict { adjective lemma : [ (preposition, case) ] }
-    PREPOSITIONS = defaultdict(list)
+    # dict { adjective lemma : set of possible argument cases }
+    ARGUMENTS = defaultdict(set)
+    # dict { adjective lemma : set of (preposition, case) }
+    PREPOSITIONS = defaultdict(set)
 
-    # dict { adjective lemma : [ (errorcode, argument case) ] }
+    # dict { adjective lemma : [ (argument case, error code) ] }
     ERROR_DICT = defaultdict(list)
 
-    # dict { adjective lemma : [ (preposition, case)] }
-    ERROR_PREPOSITIONS = defaultdict(list)
+    # dict { adjective lemma : set of (preposition, case) }
+    ERROR_PREPOSITIONS = defaultdict(set)
 
     @staticmethod
     def add(adj, arg, prepositions):
         if arg:
-            AdjectivePredicates.ARGUMENTS[adj] = arg
+            AdjectivePredicates.ARGUMENTS[adj].update(arg)
         if prepositions:
-            for each in prepositions:
-                AdjectivePredicates.PREPOSITIONS[adj] = (each[0], each[1])
+            AdjectivePredicates.PREPOSITIONS[adj].update(prepositions)
 
     @staticmethod
     def add_error(adj, arg, prepositions, error):
-        if arg:
-            AdjectivePredicates.ERROR_DICT[adj] = arg
+        if arg and error:
+            for a in arg:
+                AdjectivePredicates.ERROR_DICT[adj].append((a, error))
         if prepositions:
-            for each in prepositions:
-                AdjectivePredicates.ERROR_PREPOSITIONS[adj] = (each[0], each[1])
+            AdjectivePredicates.ERROR_PREPOSITIONS[adj].update(prepositions)
 
 
 class Morphemes:
@@ -651,8 +650,8 @@ class Morphemes:
             Morphemes.BOUND_DICT[morph] = boundlist
         else:
             raise ConfigError("A definition of allowed PoS is necessary with morphemes")
-        if freelist:
-            Morphemes.FREE_DICT[morph] = freelist
+        # The freelist may be empty
+        Morphemes.FREE_DICT[morph] = freelist
 
 
 class Preferences:
@@ -1193,7 +1192,7 @@ class Settings:
         if ix >= 0:
             error = True
             # A typical format is $error(error_code, right_phrase, right_parts_of_speech)
-            e = s[ix + 7 :].lstrip().rstrip(" )").split(", ")
+            e = s[ix + 7 :].lstrip().rstrip(" )").split(",")
             s = s[:ix].strip()
 
         prepositions = []
@@ -1212,15 +1211,21 @@ class Settings:
             ix += 1
         a = s.split()
         adj = a[0]
-        AdjectivePredicates.add(adj, a[1:], prepositions)
         if error:
             AdjectivePredicates.add_error(adj, a[1:], prepositions, e)
+        else:
+            AdjectivePredicates.add(adj, a[1:], prepositions)
 
     @staticmethod
     def _handle_morphemes(s):
+        """ Process the contents of the [morphemes] section """
         freelist = []
         boundlist = []
-        spl = s.strip().split(" ")
+        spl = s.split()
+        if len(spl) < 2:
+            raise ConfigError(
+                "Expected at least a prefix and an attachment specification"
+            )
         m = spl[0]
         for pos in spl[1:]:
             if pos:

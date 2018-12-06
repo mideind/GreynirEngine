@@ -324,17 +324,16 @@ def add_cases(cases, bin_spec, default="nf"):
 def all_cases(token, filter_func=None):
     """ Return a list of all cases that the token can be in """
     cases = set()
-    if token.kind == TOK.WORD:
+    if token.kind == TOK.WORD and token.val:
         # Roll through the potential meanings and extract the cases therefrom
-        if token.val:
-            for m in token.val:
-                if filter_func is not None and not filter_func(m):
-                    continue
-                if m.fl == "ob":
-                    # One of the meanings is an undeclined word: all cases apply
-                    cases = ALL_CASES
-                    break
-                add_cases(cases, m.beyging, None)
+        for m in token.val:
+            if filter_func is not None and not filter_func(m):
+                continue
+            if m.fl == "ob":
+                # One of the meanings is an undeclined word: all cases apply
+                cases = ALL_CASES
+                break
+            add_cases(cases, m.beyging, None)
     return list(cases)
 
 
