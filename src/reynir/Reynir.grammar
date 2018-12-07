@@ -480,15 +480,15 @@ Afleiðingartenging →
 Orsakartenging →
     "fyrst:ao" VillaAð?
     | VillaVístAð
-    | 'sökum:fs'_ef 'það:pfn'_hk_ef_et "að:st"  # sökum þess að
-    | 'sakir:fs'_ef 'það:pfn'_hk_ef_et "að:st"  # sakir þess að
-    | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"?  # úr því [að]
+    | 'sökum:fs'_ef 'það:pfn'_hk_ef_et "að:st"      # sökum þess að
+    | 'sakir:fs'_ef 'það:pfn'_hk_ef_et "að:st"      # sakir þess að
+    | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"?      # úr því [að]
     | 'þar_eð:st'
     | "þar:ao" "sem:st" VillaAð?
-    | 'af:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"?  # af því [að]
-    | "því:st" "að:st"?                         # því [að]
-    | 'vegna:fs'_ef 'það:pfn'_hk_ef_et "að:st"  # vegna þess að
-    | 'með:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"   # með því að
+    | 'af:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"?      # af því [að]
+    | "því:st" "að:st"?                             # því [að]
+    | 'vegna:fs'_ef 'það:pfn'_hk_ef_et "að:st"      # vegna þess að
+    | 'með:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"      # með því að
 
 Skilyrðistenging →
     "ef:st" VillaAð?
@@ -634,19 +634,19 @@ SamanburðurNl →
     | Samanburðarmerki 'annað:fn'_þgf_et_hk "nær:ao"   # Viðskiptablaðið styður ekki jafnaðarstefnuna; öðru nær.
 
 SamanburðarNlTenging →
-    VillaHeldur? "en:st"             # 'Forseti á ekki að gera meiri breytingu á sér (heldur) en forsætisráðherra'
-    | ','? "eins:ao" "og:st"        # 'Hann á ekki andstæðinga eins og aðrir kjörnir fulltrúar'
+    VillaHeldur? "en:st"                # 'Forseti á ekki að gera meiri breytingu á sér (heldur) en forsætisráðherra'
+    | ','? "eins:ao" "og:st"            # 'Hann á ekki andstæðinga eins og aðrir kjörnir fulltrúar'
     | ','? "líkt:ao" "og:st"
     | Samanburðarmerki? "þar:ao" "af:ao"  # 'Fjöldi barna var í vélinni, þar af tvö kornabörn'
     | Samanburðarmerki? "þar:ao" 'á_meðal:ao'
     | Samanburðarmerki? 'þar_með_talið:ao' # Skammstöfunin 'þ.m.t.'
-    | Samanburðarmerki? "nema:st"   # Allir vita það, nema ég.
-    | ','? "enda:st"                # 'Réttindi í almennum sjóðum breyttust, enda lægri fjárhæð en áður'
+    | Samanburðarmerki? "nema:st"       # Allir vita það, nema ég.
+    | ','? "enda:st"                    # 'Réttindi í almennum sjóðum breyttust, enda lægri fjárhæð en áður'
     | "sem:st"
     | SamanburðarTengingOg
 
 SamanburðarTengingOg →
-    ','? "og:st"               # Erfitt fjarskiptasamband er á staðnum og mikil snjóþyngsli
+    ','? "og:st"                        # Erfitt fjarskiptasamband er á staðnum og mikil snjóþyngsli
 
 $score(+4) SamanburðarNlTenging
 $score(-14) SamanburðarTengingOg
@@ -3172,7 +3172,7 @@ NlStak_ft_p3/fall/kyn →
     NlStak_p3_ft/fall/kyn VeikSögnLhÞt_ft/fall/kyn? FsRunaEftirNl?  # fulltrúar bankans í nefndinni
     | 'allur:fn'_ft/fall/kyn 'sá:fn'_ft/fall/kyn                    # Allir þeir, allar þær, öll þau
     | VillaEinnAf_ft_p3/fall/kyn        # Einn af mönnunum *gengu á vegg; ein af hverjum fjórum stúlkum stóðu sig vel
-    | VillaFjöldiHluti_ft/fall/kyn  # Mikill fjöldi/meirihluti/minnihluti unglinga reyndust hæfir → reyndist hæfur; 
+    | VillaFjöldiHluti_ft/fall/kyn      # Mikill fjöldi/meirihluti/minnihluti unglinga reyndust hæfir → reyndist hæfur; 
 
 # Hvorki X né Y
 # Bæði X og Y
@@ -5368,7 +5368,6 @@ VillaEinnAf_ft_p3/fall/kyn →
 
 # Villa í kyni: Hún er ein af þátttakendum → einn
 # Hef þá kk → kvk, kvk → kk, kk → hk, hk → kk, hk → kvk, kvk → hk
-
 
 $error(VillaFjöldiHluti_ft/fall/kyn, LeiðréttFjöldiHluti_et_kk/fall)
 VillaFjöldiHluti_ft/fall/kyn →

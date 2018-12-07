@@ -1257,6 +1257,36 @@ def test_vocabulary():
     assert "starfsandi" in s.tree.nouns
 
 
+def test_adjective_predicates():
+    """ Test adjectives with an associated predicate """
+
+    # Accusative case (þolfall)
+    s = r.parse_single("""
+        Hundurinn var viðstaddur sýninguna sem fjallaði um hann.
+        """)
+    assert "ADJP lo_sb_nf_sþf_et_kk NP no_et_þf_kvk" in s.tree.flat
+
+    # Dative case (þágufall)
+    s = r.parse_single("""
+        Hundurinn var málkunnugur kettinum frá fyrri tíð.
+        """)
+    assert "ADJP lo_sb_nf_sþgf_et_kk NP no_et_þgf_kk /NP /ADJP" in s.tree.flat
+
+    # Possessive case (eignarfall)
+    s = r.parse_single("""
+        Kötturinn þóttist vera frjáls ferða sinna.
+        """)
+    assert "NP-PRD ADJP lo_sb_nf_sef_et_kk NP no_ft_ef_kvk fn_ft_ef_kvk /NP /ADJP" in s.tree.flat
+    s = r.parse_single("""
+        Kötturinn hafði verið fullur sjálfstrausts.
+        """)
+    assert "ADJP lo_sb_nf_sef_et_kk NP no_et_ef_hk /NP /ADJP" in s.tree.flat
+    s = r.parse_single("""
+        Verkamaðurinn er verður launa sinna.
+        """)
+    assert "ADJP lo_sb_nf_sef_et_kk NP no_ft_ef_hk fn_ft_ef_hk /NP /ADJP" in s.tree.flat
+
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -1284,4 +1314,5 @@ if __name__ == "__main__":
     test_composite_words()
     test_foreign_names()
     test_vocabulary()
+    test_adjective_predicates()
     test_finish()
