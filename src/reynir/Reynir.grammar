@@ -880,14 +880,25 @@ VeraSkulu_et_p3 →
 # 'Mér sýnist að öllu sé óhætt' (? Það sýnist mér að öllu sé óhætt),
 # 'Helmingi ungmenna finnst skólinn skemmtilegur' (? Það finnst helmingi ungmenna skólinn skemmtilegur)
 
-SetningAukafall →    # ERROR -- hér mætti auðvitað tengja í villureglur, t.d. fyrir þágufallshneigð
+SetningAukafall →
 
-    # Manninn langaði mjög í ferðina / að fara til útlanda strax
-    # Köttum í landinu fjölgar
+    # Manninn langaði [mjög í ferðina / að fara til útlanda strax]
+    # Köttum [í landinu] fjölgar
     NlFrumlag/aukafall so_subj_op/aukafall MiðmyndarBotn?
-    # Mér blöskraði [af öllu hjarta] [mjög] vitleysan (í Páli), Mig þraut örendið
+
+    # Mig/Þig/Hann/Mennina hefur [lengi] langað [til útlanda]
+    | NlFrumlag/aukafall HjSögn_et_p3 FsAtv? so_subj_sagnb/aukafall MiðmyndarBotn?
+
+    # Mér hafa ofboðið lætin í hundinum [alla daga]
+    | NlFrumlag/aukafall HjSögn/tala/pers FsAtv? so_subj_sagnb/aukafall
+        NlBeintAndlag_nf/tala/pers AtvFsAuka?
+
+    # Mér [algjörlega] blöskraði [af öllu hjarta] vitleysan (í Páli), Mig þraut örendið
     | NlFrumlag/aukafall Atviksliður? so_subj_op/tala/aukafall
         FsRunaEftirSögn? NlBeintAndlag_nf_þf/tala AtvFsAuka?
+
+    # Þann auð ber okkur að nýta (til góðra verka)
+    | NlBeintAndlag/aukafall so_subj_op/fall NlFrumlag/fall AtvFs? nhm So_1_nh/aukafall FsAtv?
 
     # Öfug orðaröð: 'Eignarrétti fylgja [í auknum mæli] skyldur' (í stað 'Skyldur fylgja eignarrétti')
     # 'Þetta skrifar Bjarni á Facebook-síðu sinni og bendir [galvaskur] á frammistöðu stjórnarinnar'
@@ -899,12 +910,8 @@ SetningAukafall →    # ERROR -- hér mætti auðvitað tengja í villureglur, 
     | NlBeintAndlag/aukafall HjSögn/tala/pers NlFrumlag_nf/tala/pers/kyn
         AtvFs? So_1_sagnb/aukafall FsAtv?
 
-    # Köttum hefur [ekki] fjölgað á árinu
+    # Köttum hefur [ekki] fjölgað á árinu (= ?Það hefur ekki fjölgað köttum á árinu)
     | NlFrumlag/aukafall HjSögn_et_p3 FsAtv? So_1_sagnb/aukafall FsAtv?
-
-    # Mér hafa ofboðið lætin í hundinum [alla daga]
-    | NlFrumlag/aukafall HjSögn/tala/pers FsAtv? so_subj_sagnb/aukafall
-        NlBeintAndlag_nf/tala/pers AtvFsAuka?
 
     # Hælisleitendum fer/hefur farið fækkandi
     | NlFrumlag_þgf HjSögnLhNt so_1_þgf_lh_nt FsAtv?
@@ -966,9 +973,6 @@ SetningAukafall →    # ERROR -- hér mætti auðvitað tengja í villureglur, 
 
     # Þann auð munum/skulum við [ekki] nýta (í þágu lands og þjóðar)
     | NlBeintAndlag/aukafall HjSögnNh/tala/pers NlFrumlag_nf/tala/pers AtvFs? So_1_nh/aukafall FsAtv?
-
-    # Þann auð ber okkur að nýta (til góðra verka)
-    | NlBeintAndlag/aukafall so_subj_op/fall NlFrumlag/fall AtvFs? nhm So_1_nh/aukafall FsAtv?
 
     # Nöfn ráðherra var [ekki] að finna [í Panamaskjölunum]
     | NlBeintAndlag_þf 'vera:so'_0_gm_fh_p3_et FsAtv? nhm 'finna:so'_0_gm_nh FsAtv?
@@ -2556,7 +2560,7 @@ Hundruð → 'hundrað:hk'_nf_ft | 'þúsund:hk'_nf_ft # hundruð, þúsund
 
 NlViðbót/tala/fall/kyn →
     LoEftirNl/tala/fall/kyn     # (Jón) sterki / (Jón), sultuslakur eftir gufubaðið,
-    | EfLiður LoEftirNlMeðÞgf/fall/tala/kyn? # (forstöðumenn) fræðaseturs [sunnlendinga] [tengdir flokknum]
+    | EfLiður LoEftirNlMeðAndlagi/fall/tala/kyn? # (forstöðumenn) fræðaseturs [sunnlendinga] [tengdir flokknum]
 
 # Eintala
 
@@ -3972,14 +3976,30 @@ LoAtviksliður →
 
 # Lýsingarorð í sterkri beygingu
 # ('Hún fór frjáls skoðana sinna í útlegð')
+# 'Hún taldi mig tengdan Framsóknarflokknum'
+
+# Öfug orðaröð leyfist í einhverjum tilvikm:
+
+# 'Hann var málinu efnislega hlynntur en hafði efasemdir um formið.'
+# 'Rithöfundurinn er heiðursins svo sannarlega verður.'
+# 'Páll er alls góðs maklegur en þetta var of mikið.'
+
+# Öfug orðaröð virðist ekki leyfileg í þolfalli:
+# '?Hann var sýninguna viðstaddur'
 
 Lo_sb/tala/fall/kyn →
     LoAtviksliðir? lo_sb/tala/fall/kyn
+    # Hún taldi mig hlynntan Framsóknarflokknum
     | LoAtviksliðir? lo_sb/sfall/tala/fall/kyn LoViðhengi/sfall
 
 Lo_sb_nf/tala/kyn →
     LoAtviksliðir? lo_sb_nf/tala/kyn
+    # Jón hefur verið hlynntur málinu
     | LoAtviksliðir? lo_sb_nf/sfall/tala/kyn LoViðhengi/sfall
+    # Hann er málinu [efnislega] hlynntur
+    | LoViðhengi_sþgf LoAtviksliðir? lo_sb_nf_sþgf/tala/kyn
+    # Hann er heiðursins [svo sannarlega] verður
+    | LoViðhengi_sef LoAtviksliðir? lo_sb_nf_sef/tala/kyn
 
 Lo_sb_nf_ft/kyn →
     'margur:lo'_sb_nf_ft/kyn 'hver:fn'_nf_ft/kyn # margir hverjir, mörg hver, margar hverjar
@@ -4005,6 +4025,8 @@ Lo_mst/tala/fall/kyn →
 Lo_mst_nf/tala/kyn →
     LoAtviksliðir? lo_mst_nf/tala/kyn # Miðstig
     | LoAtviksliðir? lo_mst_nf/sfall/tala/kyn LoViðhengi/sfall # Miðstig
+    | LoViðhengi_sþgf LoAtviksliðir? lo_mst_nf_sþgf/tala/kyn
+    | LoViðhengi_sef LoAtviksliðir? lo_mst_nf_sef/tala/kyn
 
 # Lýsingarorð sem stendur með sögn getur viðhengi í aukafalli, sbr.:
 # þf.: 'Hann var viðstaddur fundinn'
@@ -4025,8 +4047,8 @@ $score(+8) LoViðhengi/sfall
 LoEftirNl/tala/fall/kyn →
     StaktLoEftirNl/tala/fall/kyn
     | ',' LoLiður/tala/fall/kyn FsAtv? LokatáknEðaKomma
-    | LoEftirNlMeðÞgf/fall/tala/kyn
-    | ',' LoEftirNlMeðÞgf/fall/tala/kyn LokatáknEðaKomma
+    | LoEftirNlMeðAndlagi/fall/tala/kyn
+    | ',' LoEftirNlMeðAndlagi/fall/tala/kyn LokatáknEðaKomma
 
 # '(Stjórnmálaflokkarnir), hver um sig, (lýstu andstöðu við málið)'
 LoEftirNl_ft/fall/kyn →
@@ -4056,10 +4078,10 @@ $score(-6) StaktLoEftirNl/tala/fall/kyn
 # !!! ATH: Til eru listar yfir slík orð
 
 # '[sterklega] tengdur Framsóknarflokknum'
-LoEftirNlMeðÞgf/fall/tala/kyn →
-    AtviksliðurEinkunn* lo_sb/fall/tala/kyn Nl_þgf
+LoEftirNlMeðAndlagi/fall/tala/kyn →
+    LoAtviksliðir? lo_sb/sfall/tala/fall/kyn LoViðhengi/sfall
 
-$score(+4) LoEftirNlMeðÞgf/fall/tala/kyn
+$score(+4) LoEftirNlMeðAndlagi/fall/tala/kyn
 
 # '(Ég drakk) hvítu, volgu og feitu mjólkina' / '(Ég sá) hvíta, volga og feita mjólk'
 # '(Íslendingar fluttu fé til annarra) og [í sumum tilvikum] öruggari landa'

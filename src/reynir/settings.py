@@ -45,7 +45,8 @@ from pkg_resources import resource_stream
 
 # The sorting locale used by default in the changedlocale function
 _DEFAULT_SORT_LOCALE = ("IS_is", "UTF-8")
-# A set of all valid argument cases
+
+# A set of all valid verb argument cases
 _ALL_CASES = frozenset(("nf", "þf", "þgf", "ef"))
 _ALL_GENDERS = frozenset(("kk", "kvk", "hk"))
 _ALL_NUMBERS = frozenset(("et", "ft"))
@@ -237,8 +238,10 @@ class VerbObjects:
 
     @staticmethod
     def add_error(verb, args, prepositions, particle, corr):
-        corrlist = corr.split(", ")
-        errkind = corrlist[0].split("-")[0]
+        """ Take note of a verb object specification with an $error pragma """
+        corrlist = corr.split(",")
+        errlist = corrlist[0].split("-")
+        errkind = errlist[0].strip()
         verb_with_cases = "_".join([verb] + args)
         if errkind == "OBJ":
             arglists = VerbObjects.VERBS_ERRORS[len(args)][verb]
@@ -248,12 +251,28 @@ class VerbObjects:
             for p, kind in prepositions:
                 d[p] = corr
                 d[p + "_" + kind] = corr
-        elif errkind == "PCL":
+        elif errkind == "PRTCL":
+            # !!! TODO: Parse the corr string
             VerbObjects.VERB_PARTICLES_ERRORS[verb_with_cases][particle] = corr
-        elif (
-            errkind == "VERB"
-        ):  # Wrong verb, must point to completely different verb + args
-            VerbObjects.WRONG_VERBS[verb_with_cases] = corr
+        elif errkind == "ALL":
+            # !!! TODO: Implement this (store specification of a
+            # !!! TODO: replacement of the entire construct)
+            pass
+        elif errkind == "PREDS":
+            # !!! TODO: Implement this
+            pass
+        elif errkind == "WRONG":
+            wrong_kind = errlist[1].strip()
+            if wrong_kind == "VERB":
+                # Wrong verb, must point to completely different verb + args
+                VerbObjects.WRONG_VERBS[verb_with_cases] = corr
+            elif wrong_kind == "OBJ":
+                # !!! TODO: Implement this
+                pass
+            else:
+                raise ConfigError("Unknown type of WRONG-XXX in $error pragma")
+        else:
+            raise ConfigError("Unknown error type in $error pragma: '{0}'".format(errkind))
 
     @staticmethod
     def verb_matches_preposition(verb_with_cases, prep_with_case):
@@ -286,7 +305,7 @@ class VerbSubjects:
     VERBS = defaultdict(set)
     _CASE = "þgf"  # Default subject case
     # dict { verb : (wrong_case, correct_case) }
-    VERBS_ERRORS = defaultdict(set)
+    VERBS_ERRORS = defaultdict(dict)
 
     @staticmethod
     def set_case(case):
@@ -303,10 +322,26 @@ class VerbSubjects:
     @staticmethod
     def add_error(verb, corr):
         """ Add a verb and the correct case. Called from the config file handler. """
-        corrlist = corr.split(", ")
-        errkind = corrlist[0].split("-")[0]
-        if errkind == "SUBJECT":
-            VerbSubjects.VERBS_ERRORS[verb].add(VerbSubjects._CASE, corr_case)
+        corrlist = corr.split(",")
+        errlist = corrlist[0].split("-")
+        errkind = errlist[0].strip()
+        if errkind == "SUBJ":
+            if len(errlist) != 2:
+                raise ConfigError("Expected $error(SUBJ-XXX, ...)")
+            subj_type = errlist[1].strip()
+            if subj_type == "CASE":
+                corr_case = corrlist[1].strip()
+                VerbSubjects.VERBS_ERRORS[verb][VerbSubjects._CASE] = corr_case
+            else:
+                raise ConfigError("Unknown subject specification: 'SUBJ-{0}'".format(subj_type))
+        else:
+            raise ConfigError("Unknown error type in $error pragma: '{0}'".format(errkind))
+
+    @staticmethod
+    def is_impersonal(verb):
+        """ Returns True if the given verb is impersonal, i.e. if it appears
+            with an $error() pragma in the subject = nf section of verb_subjects """
+        return "nf" in VerbSubjects.VERBS_ERRORS.get(verb, dict())
 
 
 class Prepositions:
@@ -570,7 +605,10 @@ class Topics:
         Topics._name = tname = a[0].strip()
         identifier = a[1].strip() if len(a) > 1 else None
         if identifier is not None and not identifier.isidentifier():
-            raise ConfigError("Topic identifier must be a valid Python identifier")
+            raise ConfigError(
+                "Topic identifier ('{0}') must be a valid Python identifier"
+                .format(identifier)
+            )
         try:
             threshold = float(a[2].strip()) if len(a) > 2 else None
         except ValueError:
@@ -880,37 +918,44 @@ class Settings:
         """ Handle verb object specifications in the settings section """
         # Format: verb [arg1] [arg2] [/preposition arg]... [$score(sc)]
         # arg can be nf, þf, þgf, ef, nh, falls, sig/sér/sín, bági_kk_ft_þf
-        error = False
+        error = None
+
         # Start by handling the $score() pragma, if present
         score = 0
         ix = s.rfind("$score(")  # Must be at the end
         if ix >= 0:
-            sc = s[ix:].strip()
-            s = s[0:ix]
+            sc = s[ix:]
+            s = s[0:ix].strip()
             if not sc.endswith(")"):
                 raise ConfigError("Invalid score pragma; form should be $score(n)")
             # There is an associated score with this verb form, to be taken
             # into consideration by the reducer
-            sc = sc[7:-1]
+            sc = sc[7:-1].strip()
             try:
                 score = int(sc)
             except ValueError:
-                raise ConfigError("Invalid score for verb form")
+                raise ConfigError("Invalid score ('{0}') for verb form".format(sc))
+
         # Check for $error
         ix = s.rfind("$error(")
         if ix >= 0:
-            e = s[ix + 7 : -1]
-            s = s[0:ix]
-            error = True
+            if not s.endswith(")"):
+                raise ConfigError("Invalid error pragma; form should be $error(...)")
+            error = s[ix + 7 : -1].strip()
+            s = s[0:ix].strip()
+            if not error:
+                raise ConfigError("Expected error specification in $error(...)")
 
         # Process particles, should only be one in each line
         particle = None
         ix = s.rfind("*")
         if ix >= 0:
             particle = s[ix:].strip()
-            s = s[0:ix]
+            s = s[0:ix].strip()
             if " " in particle:
                 raise ConfigError("Particle should only be one word")
+            elif len(particle) < 2:
+                raise ConfigError("Particle should be at least one letter")
 
         # Process preposition arguments, if any
         prepositions = []
@@ -923,7 +968,6 @@ class Settings:
             p = ap[ix].strip()
             parg = p.split()
             if len(parg) != 2:
-
                 raise ConfigError("Preposition should have exactly one argument")
             if parg[1] not in _ALL_CASES and parg[1] not in _SUBCLAUSES:
                 if parg[1] in _REFLPRN:
@@ -943,19 +987,22 @@ class Settings:
                 "Verb should have zero, one or two arguments and an optional score"
             )
         verb = a[0]
-        if not verb.isidentifier():
+        if not verb.isalpha():
             raise ConfigError("Verb '{0}' is not a valid word".format(verb))
-        VerbObjects.add(verb, a[1:], prepositions, particle, score)
+
+        # Add to verb database
         if error:
-            VerbObjects.add_error(verb, a[1:], prepositions, particle, e)
+            VerbObjects.add_error(verb, a[1:], prepositions, particle, error)
+        else:
+            VerbObjects.add(verb, a[1:], prepositions, particle, score)
 
     @staticmethod
     def _handle_verb_subjects(s):
         """ Handle verb subject specifications in the settings section """
         # Format: subject = [case] followed by verb list
         a = s.lower().split("=", maxsplit=1)
-        par = a[0].strip()
         if len(a) == 2:
+            par = a[0].strip()
             val = a[1].strip()
             if par == "subject":
                 VerbSubjects.set_case(val)
@@ -963,17 +1010,20 @@ class Settings:
                 raise ConfigError("Unknown setting '{0}' in verb_subjects".format(par))
             return
         assert len(a) == 1
+        par = s.strip()
         # Check for $error
-        error = False
+        e = None
         ix = par.rfind("$error(")
         if ix >= 0:
+            if par[-1] != ")":
+                raise ConfigError("Missing right parenthesis in $error()")
             e = par[ix + 7 : -1].strip()
-            par = par[0:ix]
-            error = True
+            par = par[0:ix].strip()
 
-        VerbSubjects.add(par)
-        if error:
+        if e is not None:
             VerbSubjects.add_error(par, e)
+        else:
+            VerbSubjects.add(par)
 
     @staticmethod
     def _handle_undeclinable_adjectives(s):

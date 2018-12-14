@@ -587,6 +587,10 @@ class BIN_Token(Token):
             # Make sure that the subject case (last variant) matches the terminal
             return subject_matches(terminal.variant(-1))
 
+        # Not a _subj terminal: no match of strictly impersonal verbs
+        if VerbSubjects.is_impersonal(verb):
+            return False
+
         if terminal.is_singular and "FT" in form:
             # Can't use plural verb if singular terminal
             return False
