@@ -1287,6 +1287,43 @@ def test_adjective_predicates():
     assert "ADJP lo_sb_nf_sef_et_kk NP no_ft_ef_hk fn_ft_ef_hk /NP /ADJP" in s.tree.flat
 
 
+def test_subj_op():
+    """ Test impersonal verbs """
+    # langa
+    s = r.parse_single("hestinn langaði í brauð")
+    assert s.tree is not None
+    assert s.tree.nouns == ["hestur", "brauð"]
+    assert s.tree.verbs == ["langa"]
+    s = r.parse_single("hesturinn langaði í brauð")
+    assert s.tree is None
+    s = r.parse_single("hestinum langaði í brauð")
+    assert s.tree is None
+    s = r.parse_single("hestsins langaði í brauð")
+    assert s.tree is None
+    # dreyma e-ð
+    s = r.parse_single("hestinn dreymdi köttinn")
+    assert s.tree is not None
+    assert s.tree.nouns == ["hestur", "köttur"]
+    assert s.tree.verbs == ["dreyma"]
+    s = r.parse_single("hesturinn dreymdi köttinn")
+    assert s.tree is None
+    s = r.parse_single("hestinum dreymdi köttinn")
+    assert s.tree is None
+    s = r.parse_single("hestsins dreymdi köttinn")
+    assert s.tree is None
+    # hraka
+    s = r.parse_single("hestinum hrakaði hratt")
+    assert s.tree is not None
+    assert s.tree.nouns == ["hestur"]
+    assert s.tree.verbs == ["hraka"]
+    s = r.parse_single("hesturinn hrakaði hratt")
+    assert s.tree is None
+    s = r.parse_single("hestinn hrakaði hratt")
+    assert s.tree is None
+    s = r.parse_single("hestsins hrakaði hratt")
+    assert s.tree is None
+
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -1315,4 +1352,5 @@ if __name__ == "__main__":
     test_foreign_names()
     test_vocabulary()
     test_adjective_predicates()
+    test_subj_op()
     test_finish()
