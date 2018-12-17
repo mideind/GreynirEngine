@@ -304,7 +304,6 @@ class _Job:
             score of the best tree """
         num = 0
         score = 0
-        tree = None
         t0 = time.time()
         try:
             forest = self.parser.go(tokens)  # May raise ParseError
@@ -313,8 +312,8 @@ class _Job:
                 if num > 1:
                     # Reduce the parse forest to a single
                     # "best" (highest-scoring) parse tree
-                    tree, score = self.reduce(forest)
-            return tree, num, score
+                    forest, score = self.reduce(forest)
+            return forest, num, score
         finally:
             # Accumulate statistics in the job object
             self._add_sentence(tokens, num, time.time() - t0)
