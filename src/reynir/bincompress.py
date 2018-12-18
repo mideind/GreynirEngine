@@ -72,11 +72,14 @@ if __package__:
     # i.e. when generating a new ord.compressed file.
     from ._bin import lib as bin_cffi, ffi
 
-
 _PATH = os.path.dirname(__file__) or "."
 
 INT32 = struct.Struct("<i")
 UINT32 = struct.Struct("<I")
+
+# A dictionary of BÍN errata, loaded from Phrases.conf if
+# bincompress.py is invoked as a main program
+_BIN_FIXES = None
 
 
 class _Node:
@@ -329,8 +332,8 @@ class BIN_Compressor:
         self._stems = Indexer()     # stofn
         self._meanings = Indexer()  # beyging
         self._alphabet = set()
-        # map form index -> [ (stem, cat, tcat, meaning) ]
-        self._lookup_form = defaultdict(list)
+        # map form index -> { (stem, meaning) }
+        self._lookup_form = defaultdict(set)
         # map stem index -> { form }
         self._lookup_stem = defaultdict(set)
         # Count of stem word categories
@@ -338,6 +341,8 @@ class BIN_Compressor:
         self._canonical_count = 0
 
     def read(self, fnames):
+        """ Read the given .csv text files in turn and add them to the
+            compressed data structures """
         cnt = 0
         stem_cnt = -1
         start_time = time.time()
@@ -350,6 +355,9 @@ class BIN_Compressor:
                         continue
                     t = line.split(";")
                     stem, wid, ordfl, fl, form, meaning = t
+                    # Apply a fix if we have one for this
+                    # particular (stem, ordfl) combination
+                    fl = _BIN_FIXES.get((stem, ordfl), fl)
                     stem = stem.encode("latin-1")
                     ordfl = ordfl.encode("latin-1")
                     fl = fl.encode("latin-1")
@@ -370,7 +378,7 @@ class BIN_Compressor:
                         stem_cnt = six
                     fix = self._forms.add(form)  # Add to a trie
                     mix = self._meanings.add((ordfl, fl, meaning))
-                    self._lookup_form[fix].append((six, mix))
+                    self._lookup_form[fix].add((six, mix))
                     if "NF" in m:
                         # Nominative case: store with the stem as a canonical form
                         if form not in self._lookup_stem[six]:
@@ -866,6 +874,11 @@ class BIN_Compressed:
 if __name__ == "__main__":
     # When run as a main program, generate a compressed binary file
     print("Welcome to the Reynir compressed vocabulary file generator")
+
+    from settings import Settings, BinFixes
+    Settings.read(os.path.join(_PATH, "config", "BinErrata.conf"))
+    _BIN_FIXES = BinFixes.DICT
+
     b = BIN_Compressor()
     b.read(
         [
@@ -873,11 +886,12 @@ if __name__ == "__main__":
             os.path.join(_PATH, "resources", "ord.add.csv"),
             os.path.join(_PATH, "resources", "ord.auka.csv"),
             os.path.join(_PATH, "resources", "systematic_additions.csv"),
-            #os.path.join(_PATH, "resources", "other_errors.csv"),
-            #os.path.join(_PATH, "resources", "systematic_errors.csv"),
+            # os.path.join(_PATH, "resources", "other_errors.csv"),
+            # os.path.join(_PATH, "resources", "systematic_errors.csv"),
         ]
     )
     b.print_stats()
     filename = os.path.join(_PATH, "resources", "ord.compressed")
     b.write_binary(filename)
     print("Done; the compressed vocabulary was written to {0}".format(filename))
+

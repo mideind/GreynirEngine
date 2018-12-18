@@ -648,6 +648,10 @@ class Topics:
 
 class AdjectivePredicates:
 
+    """ A set of arguments and prepositions associated with
+        adjectives, for instance 'tengdur þgf', typically read from
+        the [adjective_predicates] section of AdjectivePredicates.conf """
+
     # dict { adjective lemma : set of possible argument cases }
     ARGUMENTS = defaultdict(set)
     # dict { adjective lemma : set of (preposition, case) }
@@ -662,8 +666,10 @@ class AdjectivePredicates:
     @staticmethod
     def add(adj, arg, prepositions):
         if arg:
+            # Add a case that is associated with an adjective
             AdjectivePredicates.ARGUMENTS[adj].update(arg)
         if prepositions:
+            # Add a (preposition, case) tuple that is associated with an adjective
             AdjectivePredicates.PREPOSITIONS[adj].update(prepositions)
 
     @staticmethod
@@ -775,6 +781,19 @@ class NamePreferences:
     def add(name):
         """ Add a preference to the dictionary. Called from the config file handler. """
         NamePreferences.SET.add(name)
+
+
+class BinFixes:
+
+    """ Wrapper around BÍN errata, initialized from the config file """
+
+    DICT = dict()
+
+    @staticmethod
+    def add(stem, ordfl, fl):
+        """ Add a BÍN fix. Used by bincompress.py when generating a new
+            compressed vocabulary file. """
+        BinFixes.DICT[(stem, ordfl)] = fl
 
 
 # Global settings
@@ -1181,6 +1200,17 @@ class Settings:
         NamePreferences.add(s)
 
     @staticmethod
+    def _handle_bin_fixes(s):
+        """ Handle changes to BÍN categories ('fl') """
+        a = s.split()
+        if len(a) != 3:
+            raise ConfigError("Expected 'stem ordfl fl' fields in bin_fixes section")
+        stem, ordfl, fl = a[:3]
+        if not ordfl.islower() or not fl.islower():
+            raise ConfigError("Expected lowercase ordfl and fl fields in bin_fixes section")
+        BinFixes.add(stem, ordfl, fl)
+
+    @staticmethod
     def _handle_ambiguous_phrases(s):
         """ Handle ambiguous phrase guidance in the settings section """
         # Format: "word1 word2..." cat1 cat2...
@@ -1318,6 +1348,7 @@ class Settings:
                 "topics": Settings._handle_topics,
                 "adjective_predicates": Settings._handle_adjective_predicates,
                 "morphemes": Settings._handle_morphemes,
+                "bin_fixes": Settings._handle_bin_fixes,
             }
             handler = None  # Current section handler
 

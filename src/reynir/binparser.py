@@ -180,7 +180,7 @@ class BIN_Token(Token):
 
     CASES = ["nf", "þf", "þgf", "ef"]
     GENDERS = ["kk", "kvk", "hk"]
-    GENDERS_SET = frozenset(GENDERS)
+    GENDERS_SET = NOUNS_SET = frozenset(GENDERS)
     GENDERS_MAP = {"kk": "KK", "kvk": "KVK", "hk": "HK"}
 
     VBIT_CASES = VBIT["nf"] | VBIT["þf"] | VBIT["þgf"] | VBIT["ef"]
@@ -210,6 +210,13 @@ class BIN_Token(Token):
     ]
     # Pre-calculate a dictionary of associated BIN forms
     _VERB_FORMS = None  # Initialized later
+
+    # Cache the dictionary of verb objects from settings.py
+    _VERB_OBJECTS = VerbObjects.VERBS
+    # Cache the dictionary of verb subjects from settings.py
+    _VERB_SUBJECTS = VerbSubjects.VERBS
+    # Cache the dictionary of adjective predicates/arguments from settings.py
+    _ADJ_ARGUMENTS = AdjectivePredicates.ARGUMENTS
 
     # Set of adverbs that cannot be an "eo" (prepositions and pronouns are already excluded)
     _NOT_EO = frozenset(["og", "eða", "sem", "ekkert"])
@@ -525,17 +532,10 @@ class BIN_Token(Token):
         # nominal form (unless it already ends with "st").
         return verb if verb.endswith("st") else verb + "st"
 
-    @staticmethod
-    def verb_matches(verb, terminal, form):
+    def verb_matches(self, verb, terminal, form):
         """ Return True if the infinitive in question matches the verb category,
             where the category is one of so_0, so_1, so_2 depending on
             the allowable number of noun phrase arguments """
-
-        # If this is an unknown but potentially composite verb,
-        # it will contain one or more hyphens. In this case, use only
-        # the last part in lookups in the internal verb lexicons.
-        if "-" in verb:
-            verb = verb.split("-")[-1]
 
         if terminal.is_subj:
             # Verb subject in non-nominative case
@@ -563,7 +563,7 @@ class BIN_Token(Token):
 
             def subject_matches(subj):
                 """ Look up the verb in the subjects list loaded from Verbs.conf """
-                return subj in VerbSubjects.VERBS.get(verb, set())
+                return subj in self._VERB_SUBJECTS.get(verb, set())
 
             form_lh = "LHÞT" in form
             if terminal.is_lh:
@@ -639,12 +639,12 @@ class BIN_Token(Token):
         nargs = int(terminal.variant(0))
         if is_mm:
             # For MM forms, do not use the normal infinitive of the verb
-            # for lookup in the VerbObjects.VERBS collection;
+            # for lookup in the BIN_Token._VERB_OBJECTS collection;
             # instead, use the MM-NH infinitive.
             # This means that for instance "eignaðist hest" is not resolved
             # to "eigna" but to "eignast"
-            verb = BIN_Token.mm_verb_stem(verb)
-        if verb in VerbObjects.VERBS[nargs]:
+            verb = self.mm_verb_stem(verb)
+        if verb in self._VERB_OBJECTS[nargs]:
             # Seems to take the correct number of arguments:
             # do a further check on the supported cases
             if nargs == 0:
@@ -666,7 +666,7 @@ class BIN_Token(Token):
             # Check whether the parameters of this verb
             # match up with the requirements of the terminal
             # as specified in its variants at indices 1 and onward
-            for argspec in VerbObjects.VERBS[nargs][verb]:
+            for argspec in self._VERB_OBJECTS[nargs][verb]:
                 if all(terminal.variant(1 + ix) == c for ix, c in enumerate(argspec)):
                     # All variants match this spec: we're fine
                     return True
@@ -675,7 +675,7 @@ class BIN_Token(Token):
         # It's not there with the correct number of arguments:
         # see if it definitely has fewer ones
         for i in range(0, nargs):
-            if verb in VerbObjects.VERBS[i]:
+            if verb in self._VERB_OBJECTS[i]:
                 # Prevent verb from matching a terminal if it
                 # doesn't have all the arguments that the terminal requires
                 return False
@@ -907,11 +907,19 @@ class BIN_Token(Token):
             # so_1 for verbs having a single noun argument, and
             # so_2 for verbs with two noun arguments. A verb may
             # match more than one argument number category.
-            return self.verb_matches(m.stofn, terminal, m.beyging)
+
+            # If this is an unknown but potentially composite verb,
+            # it will contain one or more hyphens. In this case, use only
+            # the last part in lookups in the internal verb lexicons.
+            verb = m.stofn
+            if "-" in verb:
+                verb = verb.rsplit("-", maxsplit=1)[-1]
+            return self.verb_matches(verb, terminal, m.beyging)
 
         def matcher_no(m):
             """ Check noun """
-            if BIN_Token.KIND.get(m.ordfl, m.ordfl) != "no":
+            if m.ordfl not in BIN_Token.NOUNS_SET:
+                # Not kk, kvk, hk
                 return False
             no_info = m.beyging == "-"
             if terminal.is_abbrev:
@@ -956,7 +964,7 @@ class BIN_Token(Token):
                     assert False, "Unknown subject case for adjective"
                 # Decompose compound word
                 lastpart = m.stofn.rsplit("-", maxsplit=1)[-1]
-                scases = AdjectivePredicates.ARGUMENTS.get(lastpart, set())
+                scases = self._ADJ_ARGUMENTS.get(lastpart, set())
                 if scase not in scases:
                     # This adjective cannot take an argument in the given case
                     return False
@@ -1149,7 +1157,8 @@ class BIN_Token(Token):
                 if m.ordfl == "lo":
                     # If we have an adjective (lo) with no declination info,
                     # assume it's an abbreviation ("hæstv." for "hæstvirtur")
-                    # and thus it matches any lo_X terminal irrespective of variants
+                    # and thus it matches any lo_X terminal irrespective of variants.
+                    # Don't delete this if you don't know what you're doing ;-)
                     return True
                 fbits = 0
             else:
@@ -1175,16 +1184,17 @@ class BIN_Token(Token):
 
         # Unknown word, i.e. no meanings in BÍN (might be foreign, unknown name, etc.)
         if self.is_upper:
-            # Starts in upper case: We allow this to match a named entity terminal ('sérnafn')
+            # Starts in upper case: We allow this to match
+            # a named entity terminal ('sérnafn')
             if (
                 terminal.startswith("sérnafn")
                 and terminal.num_variants == 0
-                and " " not in self.t1_lower
+                and " " not in self.t1_lower  # !!! Arguable?
             ):
                 return True
 
-        # Not upper case: allow it to match a singular, neutral noun in all cases,
-        # but without the definite article ('greinir')
+        # The word is not in upper case: allow it to match a singular,
+        # neutral noun in all cases, but without the definite article ('greinir')
         return (
             terminal.startswith("no")
             and terminal.has_vbits(BIN_Token.VBIT_ET | BIN_Token.VBIT_HK)
