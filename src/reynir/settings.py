@@ -783,7 +783,7 @@ class NamePreferences:
         NamePreferences.SET.add(name)
 
 
-class BinFixes:
+class BinErrata:
 
     """ Wrapper around BÍN errata, initialized from the config file """
 
@@ -793,7 +793,7 @@ class BinFixes:
     def add(stem, ordfl, fl):
         """ Add a BÍN fix. Used by bincompress.py when generating a new
             compressed vocabulary file. """
-        BinFixes.DICT[(stem, ordfl)] = fl
+        BinErrata.DICT[(stem, ordfl)] = fl
 
 
 # Global settings
@@ -1200,15 +1200,15 @@ class Settings:
         NamePreferences.add(s)
 
     @staticmethod
-    def _handle_bin_fixes(s):
+    def _handle_bin_errata(s):
         """ Handle changes to BÍN categories ('fl') """
         a = s.split()
         if len(a) != 3:
-            raise ConfigError("Expected 'stem ordfl fl' fields in bin_fixes section")
+            raise ConfigError("Expected 'stem ordfl fl' fields in bin_errata section")
         stem, ordfl, fl = a[:3]
         if not ordfl.islower() or not fl.islower():
-            raise ConfigError("Expected lowercase ordfl and fl fields in bin_fixes section")
-        BinFixes.add(stem, ordfl, fl)
+            raise ConfigError("Expected lowercase ordfl and fl fields in bin_errata section")
+        BinErrata.add(stem, ordfl, fl)
 
     @staticmethod
     def _handle_ambiguous_phrases(s):
@@ -1348,7 +1348,7 @@ class Settings:
                 "topics": Settings._handle_topics,
                 "adjective_predicates": Settings._handle_adjective_predicates,
                 "morphemes": Settings._handle_morphemes,
-                "bin_fixes": Settings._handle_bin_fixes,
+                "bin_errata": Settings._handle_bin_errata,
             }
             handler = None  # Current section handler
 

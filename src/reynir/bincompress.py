@@ -77,9 +77,9 @@ _PATH = os.path.dirname(__file__) or "."
 INT32 = struct.Struct("<i")
 UINT32 = struct.Struct("<I")
 
-# A dictionary of BÍN errata, loaded from Phrases.conf if
+# A dictionary of BÍN errata, loaded from BinErrata.conf if
 # bincompress.py is invoked as a main program
-_BIN_FIXES = None
+_BIN_ERRATA = None
 
 
 class _Node:
@@ -357,7 +357,7 @@ class BIN_Compressor:
                     stem, wid, ordfl, fl, form, meaning = t
                     # Apply a fix if we have one for this
                     # particular (stem, ordfl) combination
-                    fl = _BIN_FIXES.get((stem, ordfl), fl)
+                    fl = _BIN_ERRATA.get((stem, ordfl), fl)
                     stem = stem.encode("latin-1")
                     ordfl = ordfl.encode("latin-1")
                     fl = fl.encode("latin-1")
@@ -875,9 +875,10 @@ if __name__ == "__main__":
     # When run as a main program, generate a compressed binary file
     print("Welcome to the Reynir compressed vocabulary file generator")
 
-    from settings import Settings, BinFixes
+    # Read BÍN errata from BinErrata.conf
+    from settings import Settings, BinErrata
     Settings.read(os.path.join(_PATH, "config", "BinErrata.conf"))
-    _BIN_FIXES = BinFixes.DICT
+    _BIN_ERRATA = BinErrata.DICT
 
     b = BIN_Compressor()
     b.read(

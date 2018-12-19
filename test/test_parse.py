@@ -1189,12 +1189,23 @@ def test_compressed_bin():
     assert "glerxaugu" not in binc
     assert "x" not in binc
     assert "X" not in binc
-    assert binc.lookup("aðförin") == [('aðför', 123454, 'kvk', 'alm', 'aðförin', 'NFETgr')]
-    assert binc.lookup("einkabílnum") == [('einkabíll', 75579, 'kk', 'alm', 'einkabílnum', 'ÞGFETgr')]
+    assert (
+        binc.lookup("aðförin") ==
+        [('aðför', 123454, 'kvk', 'alm', 'aðförin', 'NFETgr')]
+    )
+    assert (
+        binc.lookup("einkabílnum") ==
+        [('einkabíll', 75579, 'kk', 'alm', 'einkabílnum', 'ÞGFETgr')]
+    )
     nominal_forms = [m[4] for m in binc.nominative("einkabílnum") if m[5] == "NFET"]
     assert nominal_forms == ['einkabíll']
     # Test non-latin-1 code point (should not throw an exception)
     assert "Domino’s" not in binc
+    # Test errata (BinErrata.conf)
+    assert (
+        binc.lookup("Hafnarfjörður") ==
+        [('Hafnarfjörður', 303729, 'kk', 'örn', 'Hafnarfjörður', 'NFET')]
+    )
 
 
 def test_foreign_names():
