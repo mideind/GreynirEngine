@@ -245,6 +245,7 @@ PATRONYM_SET = frozenset(("föð", "móð", "ætt"))
 # 'of' was also here but caused problems
 FOREIGN_MIDDLE_NAME_SET = frozenset(("van", "de", "den", "der", "el", "al"))
 
+
 def annotate(db, token_ctor, token_stream, auto_uppercase):
     """ Look up word forms in the BIN word database. If auto_uppercase
         is True, change lower case words to uppercase if it looks likely

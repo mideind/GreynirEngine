@@ -414,6 +414,7 @@ class BIN_Token(Token):
     _MEANING_CACHE = {}
     _VARIANT_CACHE = {}
 
+
     def __init__(self, t, original_index):
 
         # Here, we convert a token coming from the Tokenizer (TOK class)
@@ -1185,7 +1186,7 @@ class BIN_Token(Token):
         # Unknown word, i.e. no meanings in BÍN (might be foreign, unknown name, etc.)
         if self.is_upper:
             # Starts in upper case: We allow this to match
-            # a named entity terminal ('sérnafn')
+            # a proper name terminal ('sérnafn')
             if (
                 terminal.startswith("sérnafn")
                 and terminal.num_variants == 0
@@ -1235,8 +1236,9 @@ class BIN_Token(Token):
         """ Return True if this token matches the given terminal """
         # If the terminal already knows it doesn't match this token,
         # bail out quickly
-        if terminal.shortcut_match is not None and terminal.shortcut_match(
-            self.t1_lower
+        if (
+            terminal.shortcut_match is not None
+            and terminal.shortcut_match(self.t1_lower)
         ):
             return False
         # Otherwise, dispatch the token matching according to the dispatch table in _MATCHING_FUNC
@@ -1247,8 +1249,9 @@ class BIN_Token(Token):
             otherwise True or the actual meaning tuple that matched """
         # If the terminal already knows it doesn't match this token,
         # bail out quickly
-        if terminal.shortcut_match is not None and terminal.shortcut_match(
-            self.t1_lower
+        if (
+            terminal.shortcut_match is not None
+            and terminal.shortcut_match(self.t1_lower)
         ):
             # Strong literal terminals (those in double quotes) implement this feature
             return False
@@ -1628,7 +1631,8 @@ class BIN_Parser(Base_Parser):
     # BIN_Parser version - change when logic is modified so that it
     # affects the parse tree
     _VERSION = "1.0"
-    _GRAMMAR_FILE = os.path.join(_PATH, "Reynir.grammar")
+    _GRAMMAR_NAME = "Reynir.grammar"
+    _GRAMMAR_FILE = os.path.join(_PATH, _GRAMMAR_NAME)
 
     def __init__(self, verbose=False):
         """ Load the shared BIN grammar if not already there, then initialize

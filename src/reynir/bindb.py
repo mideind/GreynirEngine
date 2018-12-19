@@ -49,27 +49,6 @@ CACHE_SIZE = 512
 CACHE_SIZE_MEANINGS = 2048
 CACHE_SIZE_UNDECLINABLE = 2048
 
-NOT_FORMERS = frozenset(("allra", "alhliða", "fjölnota", "margnota", "ótal"))
-
-# Context free forms were added in compmaker.py, dealt with here
-WRONG_FORMERS = {
-    "athugana": "athugunar",
-    "ferminga": "fermingar",
-    "feykna": "feikna",
-    "fyrna": "firna",
-    "fjarskiptar": "fjarskipta",
-    "fjárfestinga": "fjárfestingar",
-    "forvarna": "forvarnar",
-    "heyrna": "heyrnar",
-    "kvartana": "kvörtunar",
-    "kvenn": "kven",
-    "loftlags": "loftslags",
-    "pantana": "pöntunar",
-    "ráðninga": "ráðningar",
-    "skráninga": "skráningar",
-    "ábendinga": "ábendingar",
-}
-
 # Named tuple for word meanings fetched from the BÍN database (lexicon)
 BIN_Meaning = namedtuple(
     "BIN_Meaning", ["stofn", "utg", "ordfl", "fl", "ordmynd", "beyging"]
@@ -225,17 +204,9 @@ class BIN_Db:
 
     def lookup_word(self, w, at_sentence_start, auto_uppercase=False):
         """ Given a word form, look up all its possible meanings """
-        w, m, _ = self._lookup(
+        return self._lookup(
             w, at_sentence_start, auto_uppercase, self._meanings_func
         )
-        return w, m
-
-    def lookup_word_with_error(self, w, at_sentence_start, auto_uppercase=False):
-        """ Given a word form, look up all its possible meanings """
-        w, m, error = self._lookup(
-            w, at_sentence_start, auto_uppercase, self._meanings_func
-        )
-        return w, m, error
 
     def lookup_form(self, w, at_sentence_start):
         """ Given a word root (stem), look up all its forms """
@@ -354,9 +325,7 @@ class BIN_Db:
 
         if m:
             # Most common path out of this function
-            return w, m, None
-
-        error = None
+            return w, m
 
         if lower_w != w or w[0] == "[":
             # Still nothing: check abbreviations
@@ -402,17 +371,11 @@ class BIN_Db:
                     # sentence, allow only nouns as possible interpretations
                     # (it wouldn't be correct to capitalize verbs, adjectives, etc.)
                     m = [mm for mm in m if mm.ordfl in BIN_Db._NOUNS]
-                m = BIN_Db.prefix_meanings(m, prefix)
                 # Only allows meanings from open word categories
                 # (nouns, verbs, adjectives, adverbs)
                 m = BIN_Db.open_cats(m)
-                if m:
-                    if cw[0] in NOT_FORMERS:
-                        error = ("C004", cw[0])
-                    elif cw[0] == "ó" and cw[1] == "tal":
-                        error = ("C004", "ótal")
-                    elif cw[0] in WRONG_FORMERS:
-                        error = ("C005", cw[0], WRONG_FORMERS[cw[0]])
+                # Add the prefix to the remaining word stems
+                m = BIN_Db.prefix_meanings(m, prefix)
 
         if not m and lower_w.startswith("ó"):
             # Check whether an adjective without the 'ó' prefix is found in BÍN
@@ -439,4 +402,4 @@ class BIN_Db:
             # convert this to upper case (could be an entity name)
             w = w.capitalize()
 
-        return w, m, error
+        return w, m

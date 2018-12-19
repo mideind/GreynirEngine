@@ -61,7 +61,9 @@ def read(*names, **kwargs):
 
 setup(
     name="reynir",
-    version="1.3.3",
+    # Remember to modify version numbers in
+    # doc/conf.py and src/reynir/__init__.py as well
+    version="1.4.0",
     license="GNU GPLv3",
     description="A natural language parser for Icelandic",
     long_description="%s\n%s"

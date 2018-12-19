@@ -39,7 +39,6 @@ import threading
 from contextlib import contextmanager, closing
 from collections import defaultdict
 from threading import Lock
-
 from pkg_resources import resource_stream
 
 
