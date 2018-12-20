@@ -446,7 +446,7 @@ class SimpleTree:
 
     def __str__(self):
         """ Return a pretty-printed representation of the contained trees """
-        return pformat(self._sents)
+        return pformat(self._head if self.is_terminal else self._sents)
 
     def __repr__(self):
         """ Return a compact representation of this subtree """
@@ -454,10 +454,11 @@ class SimpleTree:
         if len_self == 0:
             if self._head.get("k") == "PUNCTUATION":
                 x = self._head.get("x")
-                return "<SimpleTree object for punctuation '{0}'>".format(x)
-            return "<SimpleTree object for terminal {0}>".format(self.terminal)
-        return "<SimpleTree object with tag {0} and length {1}>".format(
-            self.tag, len_self
+                return "<SimpleTree for punctuation '{0}'>".format(x)
+            return "<SimpleTree for terminal {0}>".format(self.terminal)
+        return (
+            "<SimpleTree with tag {0} and length {1}>"
+            .format(self.tag, len_self)
         )
 
     @property
@@ -477,6 +478,13 @@ class SimpleTree:
     def tag(self):
         """ The simplified tag of this subtree, i.e. P, S, NP, VP, ADVP... """
         return self._head.get("i")
+
+    @property
+    def kind(self):
+        """ The kind of token associated with this subtree, for example
+            'WORD', 'MEASUREMENT' or 'PUNCTUATION', if the subtree is
+            a terminal node, or None otherwise """
+        return self._head.get("k")
 
     @property
     def ifd_tags(self):
@@ -731,7 +739,7 @@ class SimpleTree:
                 # 1981
                 result.append("ártal")
                 continue
-            if re.match(r"^[\+\-]?\d+(\.\d\d\d)*(,\d+)?$", tok):
+            if re.match(r"^[+\-]?\d+(\.\d\d\d)*(,\d+)?$", tok):
                 # 12, 1.234 or 1.234,56
                 result.append("tala")
                 continue
@@ -1216,6 +1224,18 @@ class SimpleTree:
         # category. The terminal category is available in the .tcat property)
         return self._head.get("c")
 
+    @property
+    def cat(self):
+        """ Return the word category of this node, if it is a terminal,
+            or an empty string otherwise """
+        return self._head.get("c") or ""
+
+    @property
+    def fl(self):
+        """ Return the BÍN 'fl' field of this node, if it is a terminal,
+            or an empty string otherwise """
+        return self._head.get("f") or ""
+
     @cached_property
     def text(self):
         """ Return the original text contained within this subtree """
@@ -1345,6 +1365,15 @@ class SimpleTree:
         return []
 
     @property
+    def leaves(self):
+        """ Generate all descendant leaf (terminal) nodes of this node,
+            returning a dict with the canonical representation of
+            each token/terminal match """
+        for ch in self.descendants:
+            if ch.is_terminal:
+                yield ch
+
+    @property
     def nouns(self):
         """ Returns the lemmas of all nouns in the subtree """
         return self._list(lambda t: t.tcat == "no" or t._cat in _GENDERS)
@@ -1422,6 +1451,7 @@ class SimpleTree:
                 yield from child._top_matches(items)
 
     class _NestedList(list):
+
         def __init__(self, kind, content):
             self._kind = kind
             super().__init__()

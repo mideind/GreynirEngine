@@ -204,9 +204,7 @@ class BIN_Db:
 
     def lookup_word(self, w, at_sentence_start, auto_uppercase=False):
         """ Given a word form, look up all its possible meanings """
-        return self._lookup(
-            w, at_sentence_start, auto_uppercase, self._meanings_func
-        )
+        return self._lookup(w, at_sentence_start, auto_uppercase, self._meanings_func)
 
     def lookup_form(self, w, at_sentence_start):
         """ Given a word root (stem), look up all its forms """
@@ -277,6 +275,7 @@ class BIN_Db:
 
         # Start with a straightforward lookup of the word
 
+        lower_w = w
         if auto_uppercase and w.islower():
             if len(w) == 1:
                 # Special case for single letter words:
@@ -321,7 +320,14 @@ class BIN_Db:
                     # Be careful to make a new list here, not extend m
                     # in place, as it may be a cached value from the LFU
                     # cache and we don't want to mess the original up
-                    m = m + lookup(lower_w)
+                    # Note: the lowercase lookup result is intentionally put
+                    # in front of the uppercase one, as we want go give
+                    # 'regular' lowercase meanings priority when matching
+                    # tokens to terminals. For example, 'Maður' and 'maður'
+                    # are both in BÍN, the former as a place name ('örn'),
+                    # but we want to give the regular, common lower case form
+                    # priority.
+                    m = lookup(lower_w) + m
 
         if m:
             # Most common path out of this function

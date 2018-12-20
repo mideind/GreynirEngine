@@ -82,8 +82,8 @@ class ParseJob:
         self.tokens = tokens
         self.terminals = terminals
         self.grammar = grammar
-        self.c_dict = dict() # Node pointer conversion dictionary
-        self.matching_cache = matching_cache # Token/terminal matching buffers
+        self.c_dict = dict()  # Node pointer conversion dictionary
+        self.matching_cache = matching_cache  # Token/terminal matching buffers
 
     def matches(self, token, terminal):
         """ Convert the token reference from a 0-based token index
@@ -93,7 +93,7 @@ class ParseJob:
 
     def alloc_cache(self, token, size):
         """ Allocate a token/terminal matching cache buffer for the given token """
-        key = self.tokens[token].key # Obtain the (hashable) key of the BIN_Token
+        key = self.tokens[token].key  # Obtain the (hashable) key of the BIN_Token
         try:
             # Do we already have a token/terminal cache match buffer for this key?
             b = self.matching_cache.get(key)
@@ -213,14 +213,14 @@ class Node:
         self._start = start
         self._end = end
         self._families = None
-        self._highest_prio = 0 # Priority of highest-priority child family
+        self._highest_prio = 0  # Priority of highest-priority child family
         self._nonterminal = None
         self._terminal = None
         self._token = None
         self._completed = True
 
     @classmethod
-    def from_c_node(cls, job, c_node, parent = None, index = 0):
+    def from_c_node(cls, job, c_node, parent=None, index=0):
         """ Initialize a Python node from a C++ SPPF node structure """
         if c_node == ffi.NULL:
             return None
@@ -231,13 +231,13 @@ class Node:
             # we never use these nodes anyway except as fillers
             # to help in matching children with the parent production
             return None
-        node = cls(lb.nI, lb.nJ) # Start token index, end token index
+        node = cls(lb.nI, lb.nJ)  # Start token index, end token index
         if lb.iNt < 0:
             # Nonterminal node
             nt = lb.iNt
             node._nonterminal = job.grammar.lookup(nt)
             node._completed = lb.pProd == ffi.NULL
-            job.c_dict[c_node] = node # Re-use nonterminal nodes if identical
+            job.c_dict[c_node] = node  # Re-use nonterminal nodes if identical
             fe = c_node.pHead
 
             # Loop through the families of children of this node
@@ -248,7 +248,7 @@ class Node:
                 # nonterminal. Nodes can be coalesced while they
                 # refer to the same nonterminal, are interior,
                 # and not ambiguous.
-                ch = [ ]
+                ch = []
 
                 def push_pair(p1, p2):
                     """ Push a pair of child nodes onto the child list """
@@ -272,9 +272,9 @@ class Node:
                                     # Add placeholders for the part of the production
                                     # that is missing from the front since we abandon
                                     # the recursion here
-                                    ch.extend([ ffi.NULL ] * (p.label.nDot - 2))
+                                    ch.extend([ffi.NULL] * (p.label.nDot - 2))
                                 ch.append(p)
-                                ch.append(ffi.NULL) # Placeholder
+                                ch.append(ffi.NULL)  # Placeholder
                         else:
                             # Terminal, epsilon or unrelated nonterminal
                             ch.append(p)
@@ -295,7 +295,7 @@ class Node:
             # Token node: find the corresponding terminal
             tix = parent.pList[index]
             node._terminal = job.grammar.lookup(tix)
-            assert isinstance(node._terminal, Terminal) # !!! DEBUG
+            # assert isinstance(node._terminal, Terminal)  # !!! DEBUG
             node._token = job.tokens[lb.iNt]
         return node
 
@@ -327,11 +327,14 @@ class Node:
             # Lower priority than a family we already have: don't bother adding it
             return
         # Recreate the pc tuple from the production index
-        pc = (prod, [
-            # Convert child node from C++ form to Python form
-            job.c_dict.get(ch) or Node.from_c_node(job, ch, c_prod, ix)
-            for ix, ch in enumerate(c_children)
-        ])
+        pc = (
+            prod,
+            [
+                # Convert child node from C++ form to Python form
+                job.c_dict.get(ch) or Node.from_c_node(job, ch, c_prod, ix)
+                for ix, ch in enumerate(c_children)
+            ],
+        )
         if self._families is None or prio < self._highest_prio:
             # First family of children, or highest priority so far: add as the only family
             self._families = [pc]
@@ -431,9 +434,9 @@ class Node:
     def reduce_to(self, child_ix):
         """ Eliminate all child families except the given one """
         if child_ix != 0 or len(self._families) != 1:
-            f = self._families[child_ix] # The survivor
+            f = self._families[child_ix]  # The survivor
             # Collapse the list to one option
-            self._families = [ f ]
+            self._families = [f]
 
     def __hash__(self):
         """ Make this node hashable """
@@ -455,16 +458,20 @@ class Node:
             def child_rep(children):
                 if not children:
                     return ""
-                return "\n".join(ch._repr(indent + 1) for ch in children if ch is not None)
+                return "\n".join(
+                    ch._repr(indent + 1) for ch in children if ch is not None
+                )
+
             if len(self._families) == 1:
                 if not self._families[0][1]:
                     families_rep = ""
                 else:
                     families_rep = "\n" + child_rep(self._families[0][1])
             else:
-                families_rep = "\n" + "\n".join(istr +
-                    "Option " + str(ix + 1) + ":\n" + child_rep(child)
-                    for ix, (prod, child) in enumerate(self._families))
+                families_rep = "\n" + "\n".join(
+                    istr + "Option " + str(ix + 1) + ":\n" + child_rep(child)
+                    for ix, (prod, child) in enumerate(self._families)
+                )
         return istr + label_rep + families_rep
 
     def __repr__(self):
@@ -481,7 +488,7 @@ class ParseError(Exception):
 
     """ Exception class for parser errors """
 
-    def __init__(self, txt, token_index = None, info = None):
+    def __init__(self, txt, token_index=None, info=None):
         """ Store an information object with the exception,
             containing the parser state immediately before the error """
         Exception.__init__(self, txt)
@@ -517,7 +524,7 @@ class Fast_Parser(BIN_Parser):
     """
 
     GRAMMAR_BINARY_FILE = os.path.join(_PATH, "Reynir.grammar.bin")
-    GRAMMAR_BINARY_FILE_BYTES = GRAMMAR_BINARY_FILE.encode('ascii')
+    GRAMMAR_BINARY_FILE_BYTES = GRAMMAR_BINARY_FILE.encode("ascii")
 
     _c_grammar = None
     _c_grammar_ts = None
@@ -529,8 +536,10 @@ class Fast_Parser(BIN_Parser):
         try:
             ts = os.path.getmtime(fname)
         except os.error:
-            raise GrammarError("Binary grammar file {0} not found"
-                .format(cls.GRAMMAR_BINARY_FILE))
+            raise GrammarError(
+                "Binary grammar file {0} not found"
+                .format(cls.GRAMMAR_BINARY_FILE)
+            )
         if cls._c_grammar is None or cls._c_grammar_ts != ts:
             # Need to load or reload the grammar
             if cls._c_grammar is not None:
@@ -540,23 +549,27 @@ class Fast_Parser(BIN_Parser):
             cls._c_grammar = eparser.newGrammar(fname)
             cls._c_grammar_ts = ts
             if cls._c_grammar is None or cls._c_grammar == ffi.NULL:
-                raise GrammarError("Unable to load binary grammar file " +
-                    cls.GRAMMAR_BINARY_FILE)
+                raise GrammarError(
+                    "Unable to load binary grammar file {0}"
+                    .format(cls.GRAMMAR_BINARY_FILE)
+                )
         return cls._c_grammar
 
-    def __init__(self, verbose = False, root = None):
+    def __init__(self, verbose=False, root=None):
 
         # Only one initialization at a time, since we don't want a race
         # condition between threads with regards to reading and parsing the grammar file
         # vs. writing the binary grammar
-        with GlobalLock('grammar'):
-            super().__init__(verbose) # Reads and parses the grammar text file
+        with GlobalLock("grammar"):
+            super().__init__(verbose)  # Reads and parses the grammar text file
             # Create instances of the C++ Grammar and Parser classes
             c_grammar = Fast_Parser._load_binary_grammar()
             # Create a C++ parser object for the grammar
             self._c_parser = eparser.newParser(c_grammar, matching_func, alloc_func)
             # Find the index of the root nonterminal for this parser instance
-            self._root_index = 0 if root is None else self.grammar.nonterminals[root].index
+            self._root_index = (
+                0 if root is None else self.grammar.nonterminals[root].index
+            )
             # Maintain a token/terminal matching cache for the duration
             # of this parser instance. Note that this cache will grow with use,
             # as it includes an entry (about 2K bytes) for every distinct token that the parser
@@ -584,21 +597,31 @@ class Fast_Parser(BIN_Parser):
         # Use the context manager protocol to guarantee that the parse job
         # handle will be properly deleted even if an exception is thrown
 
-        with ParseJob.make(self.grammar, wrapped_tokens, self._terminals, self._matching_cache) as job:
+        with ParseJob.make(
+            self.grammar, wrapped_tokens, self._terminals, self._matching_cache
+        ) as job:
 
-            node = eparser.earleyParse(self._c_parser, lw, self._root_index, job.handle, err)
+            node = eparser.earleyParse(
+                self._c_parser, lw, self._root_index, job.handle, err
+            )
 
             if node == ffi.NULL:
                 ix = err[0]  # Token index
                 if ix >= 1:
                     # Find the error token index in the original (unwrapped) token list
                     orig_ix = wrapped_tokens[ix].index if ix < lw else ix
-                    raise ParseError("No parse available at token {0} ({1})"
-                        .format(orig_ix, wrapped_tokens[ix-1]), orig_ix - 1)
+                    raise ParseError(
+                        "No parse available at token {0} ({1})"
+                        .format(orig_ix, wrapped_tokens[ix - 1]),
+                        orig_ix - 1,
+                    )
                 else:
                     # Not a normal parse error, but report it anyway
-                    raise ParseError("No parse available at token {0} ({1} tokens in input)"
-                        .format(ix, len(wrapped_tokens)), 0)
+                    raise ParseError(
+                        "No parse available at token {0} ({1} tokens in input)"
+                        .format(ix, len(wrapped_tokens)),
+                        0,
+                    )
 
             # eparser.dumpForest(node, Fast_Parser._c_grammar) # !!! DEBUG
             # Create a new Python-side node forest corresponding to the C++ one
@@ -646,7 +669,9 @@ class Fast_Parser(BIN_Parser):
             # millions)
             cnt = nc.get(w)
             if cnt is not None:
-                assert cnt is not NotImplemented, "Loop in node tree at {0}".format(str(w))
+                assert cnt is not NotImplemented, (
+                    "Loop in node tree at {0}".format(w)
+                )
                 return cnt
             nc[w] = NotImplemented  # Special marker for an unassigned cache entry
             comb = 0
@@ -663,7 +688,7 @@ class ParseForestNavigator:
     """ Base class for navigating parse forests. Override the underscored
         methods to perform actions at the corresponding points of navigation. """
 
-    def __init__(self, visit_all = False):
+    def __init__(self, visit_all=False):
         """ If visit_all is False, we only visit each packed node once.
             If True, we visit the entire tree in order. """
         self._visit_all = visit_all
@@ -707,7 +732,11 @@ class ParseForestNavigator:
 
         def _nav_helper(w, index, level):
             """ Navigate from w """
-            if not self._visit_all and w in visited and not self._force_visit(w, visited):
+            if (
+                not self._visit_all
+                and w in visited
+                and not self._force_visit(w, visited)
+            ):
                 # Already seen: return the previously calculated result
                 return visited[w]
             if w is None:
@@ -741,7 +770,9 @@ class ParseForestNavigator:
                             if len(children) > 1:
                                 child_ix -= len(children) - 1
                             for ch in children:
-                                self._add_result(results, ix, _nav_helper(ch, child_ix, child_level))
+                                self._add_result(
+                                    results, ix, _nav_helper(ch, child_ix, child_level)
+                                )
                                 child_ix += 1
                     v = self._process_results(results, w)
             if not self._visit_all:
@@ -756,12 +787,18 @@ class ParseForestPrinter(ParseForestNavigator):
 
     """ Print a parse forest to stdout or a file """
 
-    def __init__(self, detailed=False, file=None,
-        show_scores=False, show_ids=False, visit_all=True,
-        skip_duplicates=False):
+    def __init__(
+        self,
+        detailed=False,
+        file=None,
+        show_scores=False,
+        show_ids=False,
+        visit_all=True,
+        skip_duplicates=False,
+    ):
 
         # Normally, we visit all nodes, also those we've seen before
-        super().__init__(visit_all = visit_all)
+        super().__init__(visit_all=visit_all)
         self._detailed = detailed
         self._file = file
         self._show_scores = show_scores
@@ -777,18 +814,20 @@ class ParseForestPrinter(ParseForestNavigator):
 
     def _visit_epsilon(self, level):
         """ Epsilon (null) node """
-        indent = "  " * level # Two spaces per indent level
-        print(indent + "(empty)", file = self._file)
+        indent = "  " * level  # Two spaces per indent level
+        print(indent + "(empty)", file=self._file)
         return None
 
     def _visit_token(self, level, w):
         """ Token matching a terminal """
-        indent = "  " * level # Two spaces per indent level
+        indent = "  " * level  # Two spaces per indent level
         h = str(w.token)
         if self._show_ids:
             h += " @ {0:x}".format(id(w))
-        print(indent + "{0}: {1}{2}".format(w.terminal, h, self._score(w)),
-            file = self._file)
+        print(
+            indent + "{0}: {1}{2}".format(w.terminal, h, self._score(w)),
+            file=self._file,
+        )
         return None
 
     def _visit_nonterminal(self, level, w):
@@ -803,12 +842,12 @@ class ParseForestPrinter(ParseForestNavigator):
             indent = "  " * level  # Two spaces per indent level
             if self._show_ids:
                 h += " @ {0:x}".format(id(w))
-            print(indent + h + self._score(w), file = self._file)
+            print(indent + h + self._score(w), file=self._file)
             if self._skip_duplicates:
                 # We don't want to redisplay entire subtrees that we've
                 # seen before
                 if w in self._visited:
-                    print(indent + "  <Seen before>", file = self._file)
+                    print(indent + "  <Seen before>", file=self._file)
                     return NotImplemented  # Don't visit child nodes
                 self._visited.add(w)
         return None  # No results required, but visit children
@@ -820,12 +859,25 @@ class ParseForestPrinter(ParseForestNavigator):
             print(indent + "Option " + str(ix + 1) + ":", file=self._file)
 
     @classmethod
-    def print_forest(cls, root_node, detailed=False, file=None,
-        show_scores=False, show_ids=False, visit_all=True,
-        skip_duplicates=False):
+    def print_forest(
+        cls,
+        root_node,
+        detailed=False,
+        file=None,
+        show_scores=False,
+        show_ids=False,
+        visit_all=True,
+        skip_duplicates=False,
+    ):
         """ Print a parse forest to the given file, or stdout if none """
-        cls(detailed, file, show_scores, show_ids, visit_all,
-            skip_duplicates=skip_duplicates).go(root_node)
+        cls(
+            detailed,
+            file,
+            show_scores,
+            show_ids,
+            visit_all,
+            skip_duplicates=skip_duplicates,
+        ).go(root_node)
 
 
 class ParseForestDumper(ParseForestNavigator):
@@ -866,13 +918,16 @@ class ParseForestDumper(ParseForestNavigator):
                 if td["t"] != w.terminal.name:
                     assert False
                 ta = simplify_terminal(td["t"], td["m"][1])  # Fallback category
-                ta = augment_terminal(ta, td["x"].lower(), td["m"][3])  # The m(3) field is 'beyging'
+                # The m(3) field is 'beyging'
+                ta = augment_terminal(ta, td["x"].lower(), td["m"][3])
                 if w.terminal.name == ta:
                     ta = ""  # No need to repeat augmented terminal if it is identical
                 else:
                     ta = " " + ta
 
-        self._result.append("T{0} {1} {2}{3}".format(level, w.terminal.name, w.token.dump, ta))
+        self._result.append(
+            "T{0} {1} {2}{3}".format(level, w.terminal.name, w.token.dump, ta)
+        )
         return None
 
     def _visit_nonterminal(self, level, w):
@@ -905,14 +960,13 @@ class ParseForestFlattener(ParseForestNavigator):
     """ Create a simpler, flatter version of an already disambiguated parse tree """
 
     class Node:
-
         def __init__(self, p):
             self._p = p
             self._children = None
 
         def add_child(self, child):
             if self._children is None:
-                self._children = [ child ]
+                self._children = [child]
             else:
                 self._children.append(child)
 
@@ -934,16 +988,20 @@ class ParseForestFlattener(ParseForestNavigator):
 
         def _to_str(self, indent):
             if self.has_children:
-                return "{0}{1}{2}".format(" " * indent,
+                return "{0}{1}{2}".format(
+                    " " * indent,
                     self._p,
-                    "".join("\n" + child._to_str(indent+1) for child in self._children))
+                    "".join(
+                        "\n" + child._to_str(indent + 1) for child in self._children
+                    ),
+                )
             return "{0}{1}".format(" " * indent, self._p)
 
         def __str__(self):
             return self._to_str(0)
 
     def __init__(self):
-        super().__init__(visit_all = True) # Visit all nodes
+        super().__init__(visit_all=True)  # Visit all nodes
         self._stack = None
 
     def go(self, root_node):
@@ -974,19 +1032,19 @@ class ParseForestFlattener(ParseForestNavigator):
         if not w.is_interior:
             if w.is_empty and w.nonterminal.is_optional:
                 # Skip optional nodes that don't contain anything
-                return NotImplemented # Signal: Don't visit child nodes
+                return NotImplemented  # Signal: Don't visit child nodes
             # Identify this as a nonterminal
             node = ParseForestFlattener.Node(w.nonterminal)
             if level == 0:
                 # New root (must be the only one)
                 assert self._stack is None
-                self._stack = [ node ]
+                self._stack = [node]
             else:
                 # New child of the parent node
                 self._stack = self._stack[0:level]
                 self._stack[-1].add_child(node)
                 self._stack.append(node)
-        return None # No results required, but visit children
+        return None  # No results required, but visit children
 
     def _visit_family(self, results, level, w, ix, prod):
         """ Visit different subtree options within a parse forest """
@@ -999,4 +1057,3 @@ class ParseForestFlattener(ParseForestNavigator):
         dumper = cls()
         dumper.go(root_node)
         return dumper.root
-

@@ -81,6 +81,19 @@ head (top) node, as well as about its children and contained subtrees.
         subtree, e.g. ``no`` for nouns or ``dags`` for dates. If this subtree does not
         correspond to a terminal, an empty string is returned.
 
+    .. py:attribute:: cat
+
+        Returns a ``str`` with the BÍN word category (*orðflokkur*, ``ordfl``) corresponding to this
+        subtree, e.g. ``kk``, ``kvk`` or ``hk`` for masculine, feminine or neutral nouns,
+        respectively, ``so`` for verbs, etc. If this subtree does not correspond to a terminal,
+        an empty string is returned.
+
+    .. py:attribute:: fl
+
+        Returns a ``str`` with the BÍN word subcategory (*flokkur*, ``fl``) corresponding to this
+        subtree, e.g. ``alm`` for general words, ``örn`` for place names, etc.
+        If this subtree does not correspond to a terminal, an empty string is returned.
+
     .. py:method:: match_tag(self, item : str) -> bool
 
         Checks whether the root nonterminal of the tree matches the given
@@ -95,14 +108,24 @@ head (top) node, as well as about its children and contained subtrees.
     .. py:attribute:: children
 
         Returns a generator for the (immediate) child subtrees of this tree.
-        The generator returns a :py:class:`SimpleTree` instance for
+        The generator yields a :py:class:`SimpleTree` instance for
         every child.
 
     .. py:attribute:: descendants
 
-        Returns a generator for all descendants of this tree. This returns
-        a :py:class:`SimpleTree` instance for every child, recursively,
+        Returns a generator of all descendants of this tree. The generator
+        yields a :py:class:`SimpleTree` instance for every child, recursively,
         using left-first traversal.
+
+    .. py:attribute:: leaves
+
+        Returns a generator of all leaf (terminal) descendants of this tree.
+        The generator yields a :py:class:`SimpleTree` instance for every leaf,
+        in left-first traversal order. The output of the ``leaves`` generator
+        can for instance be zipped with the ``tokens`` list of
+        the parsed sentence, to obtain token-terminal matches,
+        as both have the same number of
+        elements: ``zip(sentence.tokens, sentence.tree.leaves)``
 
     .. py:attribute:: view
 
@@ -300,7 +323,7 @@ head (top) node, as well as about its children and contained subtrees.
         within this subtree. For terminals that correspond to non-word tokens,
         the original token text is included in the list.
 
-        Lemmas of composite words include hyphens ``-`` at the component boundaries.
+        Lemmas of compound words include hyphens ``-`` at the component boundaries.
         Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
 
     .. py:attribute:: lemma
@@ -310,7 +333,7 @@ head (top) node, as well as about its children and contained subtrees.
         to non-word tokens, the original token text is included in the string. The
         lemmas are separated by spaces.
 
-        Lemmas of composite words include hyphens ``-`` at the component boundaries.
+        Lemmas of compound words include hyphens ``-`` at the component boundaries.
         Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
 
     .. py:attribute:: own_lemma
@@ -318,7 +341,7 @@ head (top) node, as well as about its children and contained subtrees.
         Returns a ``str`` containing the word lemma corresponding to the root
         of this subtree only. For nonterminal roots, this returns an empty string.
 
-        Lemmas of composite words include hyphens ``-`` at the component boundaries.
+        Lemmas of compound words include hyphens ``-`` at the component boundaries.
         Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
 
     .. py:attribute:: nominative
@@ -454,7 +477,7 @@ head (top) node, as well as about its children and contained subtrees.
         root and all its descendants, recursively. The list is in left-traversal
         order.
 
-        Lemmas of composite words include hyphens ``-`` at the component boundaries.
+        Lemmas of compound words include hyphens ``-`` at the component boundaries.
         Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
 
     .. py:attribute:: verbs
@@ -463,7 +486,7 @@ head (top) node, as well as about its children and contained subtrees.
         root and all its descendants, recursively. The list is in left-traversal
         order.
 
-        Lemmas of composite words include hyphens ``-`` at the component boundaries.
+        Lemmas of compound words include hyphens ``-`` at the component boundaries.
         Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
 
     .. py:attribute:: persons
