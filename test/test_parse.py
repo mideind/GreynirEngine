@@ -1159,6 +1159,18 @@ def test_noun_lemmas():
     sent = "Schengen rekur mun öflugri gagnagrunn en Ísland gæti gert."
     s = r.parse_single(sent)
     assert s.tree.nouns == ["Schengen", "munur", "gagnagrunnur", "Ísland"]
+    s = r.parse_single("Maður kom út úr húsinu.")
+    leaves = list(s.tree.leaves)
+    assert len(leaves) == len(s.tokens)
+    assert leaves[0].fl == "alm"  # Not örn
+    s = r.parse_single("Húsið var til sölu.")
+    leaves = list(s.tree.leaves)
+    assert len(leaves) == len(s.tokens)
+    assert leaves[0].fl == "alm"  # Not göt
+    s = r.parse_single("Ég keypti Húsið.")
+    leaves = list(s.tree.leaves)
+    assert len(leaves) == len(s.tokens)
+    assert leaves[2].fl == "göt"  # In this case it's not alm
 
 
 def test_composite_words():
@@ -1205,6 +1217,18 @@ def test_compressed_bin():
     assert (
         binc.lookup("Hafnarfjörður") ==
         [('Hafnarfjörður', 303729, 'kk', 'örn', 'Hafnarfjörður', 'NFET')]
+    )
+    assert (
+        binc.lookup("Gamli-Oddhóll") ==
+        [('Gamli-Oddhóll', 430106, 'kk', 'örn', 'Gamli-Oddhóll', 'NFET')]
+    )
+    assert (
+        binc.lookup("Árbæjarkirkja") ==
+        [('Árbæjarkirkja', 453313, 'kvk', 'örn', 'Árbæjarkirkja', 'NFET')]
+    )
+    assert (
+        binc.lookup("Litlihjalli") ==
+        [('Litlihjalli', 282316, 'kk', 'göt', 'Litlihjalli', 'NFET')]
     )
 
 
