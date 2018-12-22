@@ -330,6 +330,9 @@ Afleiðingarsetning →
 Orsakarsetning →
     Orsakartenging BeygingarliðurÁnUmröðunar
     | Orsakartenging BeygingarliðurÁnF
+    | OrsakartengingUmröðun BeygingarliðurÁnUmröðunar
+    | OrsakartengingUmröðun BeygingarliðurÁnF
+    | OrsakartengingUmröðun BeygingarliðurMeðUmröðun
 Samanburðarsetning → 
     Samanburðartenging BeygingarliðurÁnUmröðunar # Bara vh.
     | Samanburðartenging BeygingarliðurÁnF
@@ -480,15 +483,23 @@ Afleiðingartenging →
 Orsakartenging →
     "fyrst:ao" VillaAð?
     | VillaVístAð
-    | 'sökum:fs'_ef 'það:pfn'_hk_ef_et "að:st"      # sökum þess að
-    | 'sakir:fs'_ef 'það:pfn'_hk_ef_et "að:st"      # sakir þess að
-    | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"?      # úr því [að]
+    | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et      # úr því
+    | 'af:fs'_þgf 'það:pfn'_hk_þgf_et      # af því
     | 'þar_eð:st'
     | "þar:ao" "sem:st" VillaAð?
-    | 'af:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"?      # af því [að]
-    | "því:st" "að:st"?                             # því [að]
-    | 'vegna:fs'_ef 'það:pfn'_hk_ef_et "að:st"      # vegna þess að
+    | "því:st"
+
+# Orsakartengingar sem leyfa umröðun eftirfarandi beygingarliðar,
+# t.d. "Kettir elta mýs vegna þess að í rauninni finnst þeim það skemmtilegt",
+# "Jón taldist giftur Gunnu, með því að í kirkjubók fannst færsla því til sönnunar"
+OrsakartengingUmröðun →
+    'vegna:fs'_ef 'það:pfn'_hk_ef_et "að:st"        # vegna þess að
+    | 'sökum:fs'_ef 'það:pfn'_hk_ef_et "að:st"      # sökum þess að
+    | 'sakir:fs'_ef 'það:pfn'_hk_ef_et "að:st"      # sakir þess að
     | 'með:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"      # með því að
+    | 'af:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"       # af því að
+    | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"       # úr því að
+    | "því:st" "að:st"                              # því [að]
 
 Skilyrðistenging →
     "ef:st" VillaAð?

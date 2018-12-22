@@ -1,0 +1,2 @@
+src/reynir/resources/ordalisti-*.bin filter=lfs diff=lfs merge=lfs -text
+src/reynir/resources/ord.compressed filter=lfs diff=lfs merge=lfs -text
