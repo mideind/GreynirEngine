@@ -2381,11 +2381,15 @@ AðLiður →
 
 # Nafnháttarliður
 # 'að lenda snarlega á flugvellinum'
-# 'að sigla skipinu í land strax'
+# 'að [láta strax] sigla skipinu í land'
+# 'að [láta í snarheitum] bera þangað mat og drykk'
 NhLiður →
-    nhm NhRuna
+    nhm NhLáta? NhRuna
 
 $score(+2) NhLiður
+
+NhLáta →
+    'láta:so'_0_nh FsAtv?
 
 NhLiðurFrh →
     SagnInnskot? NhLiður
