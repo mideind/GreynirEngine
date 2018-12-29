@@ -32,63 +32,13 @@ from collections import namedtuple
 
 from tokenizer import correct_spaces, paragraphs
 
-from .bintokenizer import tokenize, describe_token
-from .binparser import canonicalize_token
-from .fastparser import Fast_Parser, ParseError, ParseForestNavigator
+from .bintokenizer import tokenize
+from .fastparser import Fast_Parser, ParseError
 from .reducer import Reducer
-from .matcher import SimpleTreeBuilder
 from .cache import cached_property
-
+from .matcher import Simplifier
 
 Terminal = namedtuple("Terminal", ("text", "lemma", "category", "variants"))
-
-
-class _Simplifier(ParseForestNavigator):
-
-    """ Local utility subclass to navigate a parse forest and return a
-        simplified, condensed representation of it in a nested dictionary
-        structure """
-
-    def __init__(self, tokens):
-        super().__init__(visit_all=True)
-        self._tokens = tokens
-        self._builder = SimpleTreeBuilder()
-
-    def _visit_token(self, level, node):
-        """ At terminal node, matching a token """
-        meaning = node.token.match_with_meaning(node.terminal)
-        d = describe_token(
-            self._tokens[node.token.index],
-            node.terminal,
-            None if isinstance(meaning, bool) else meaning,
-        )
-        # Convert from compact form to external (more verbose and descriptive) form
-        canonicalize_token(d)
-        self._builder.push_terminal(d)
-        return None
-
-    def _visit_nonterminal(self, level, node):
-        """ Entering a nonterminal node """
-        if node.is_interior or node.nonterminal.is_optional:
-            nt_base = None
-        else:
-            nt_base = node.nonterminal.first
-        self._builder.push_nonterminal(nt_base)
-        return None
-
-    def _process_results(self, results, node):
-        """ Exiting a nonterminal node """
-        self._builder.pop_nonterminal()
-
-    @property
-    def tree(self):
-        """ Return a SimpleTree object """
-        return self._builder.tree
-
-    @property
-    def result(self):
-        """ Return nested dictionaries """
-        return self._builder.result
 
 
 class _Sentence:
@@ -135,7 +85,7 @@ class _Sentence:
             self._simplified_tree = None
         else:
             # Create a simplified tree as well
-            s = _Simplifier(self._s)
+            s = Simplifier(self._s)
             s.go(tree)
             self._simplified_tree = s.tree
         self._num = num

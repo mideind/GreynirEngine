@@ -97,8 +97,10 @@ from itertools import chain
 
 from .cache import cached_property
 from .settings import StaticPhrases
-from .binparser import BIN_Token, augment_terminal
+from .binparser import BIN_Token, augment_terminal, canonicalize_token
+from .fastparser import ParseForestNavigator
 from .bintokenizer import (
+    describe_token,
     CURRENCIES,
     CURRENCY_GENDERS,
     MULTIPLIERS,
@@ -1905,3 +1907,50 @@ class SimpleTreeBuilder:
     @property
     def tree(self):
         return SimpleTree([[self.result]])
+
+
+class Simplifier(ParseForestNavigator):
+
+    """ Utility class to construct a simplified, condensed representation of
+        a parse tree in a nested dictionary structure """
+
+    def __init__(self, tokens, nt_map=None, id_map=None, terminal_map=None):
+        super().__init__(visit_all=True)
+        self._tokens = tokens
+        self._builder = SimpleTreeBuilder(nt_map, id_map, terminal_map)
+
+    def _visit_token(self, level, node):
+        """ At terminal node, matching a token """
+        meaning = node.token.match_with_meaning(node.terminal)
+        d = describe_token(
+            self._tokens[node.token.index],
+            node.terminal,
+            None if isinstance(meaning, bool) else meaning,
+        )
+        # Convert from compact form to external (more verbose and descriptive) form
+        canonicalize_token(d)
+        self._builder.push_terminal(d)
+        return None
+
+    def _visit_nonterminal(self, level, node):
+        """ Entering a nonterminal node """
+        if node.is_interior or node.nonterminal.is_optional:
+            nt_base = None
+        else:
+            nt_base = node.nonterminal.first
+        self._builder.push_nonterminal(nt_base)
+        return None
+
+    def _process_results(self, results, node):
+        """ Exiting a nonterminal node """
+        self._builder.pop_nonterminal()
+
+    @property
+    def tree(self):
+        """ Return a SimpleTree object """
+        return self._builder.tree
+
+    @property
+    def result(self):
+        """ Return nested dictionaries """
+        return self._builder.result

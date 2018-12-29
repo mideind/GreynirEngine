@@ -71,6 +71,9 @@ if __package__:
     # This is not needed for command-line invocation of bincompress.py,
     # i.e. when generating a new ord.compressed file.
     from ._bin import lib as bin_cffi, ffi
+elif __name__ != "__main__":
+    from _bin import lib as bin_cffi, ffi
+
 
 _PATH = os.path.dirname(__file__) or "."
 

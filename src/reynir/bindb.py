@@ -37,10 +37,16 @@ from collections import namedtuple
 
 from tokenizer import Abbreviations
 
-from .settings import AdjectiveTemplate, Meanings, StemPreferences, StaticPhrases
-from .cache import LFU_Cache
-from .dawgdictionary import Wordbase
-from .bincompress import BIN_Compressed
+if __package__:
+    from .settings import AdjectiveTemplate, Meanings, StemPreferences, StaticPhrases
+    from .cache import LFU_Cache
+    from .dawgdictionary import Wordbase
+    from .bincompress import BIN_Compressed
+else:
+    from settings import AdjectiveTemplate, Meanings, StemPreferences, StaticPhrases
+    from cache import LFU_Cache
+    from dawgdictionary import Wordbase
+    from bincompress import BIN_Compressed
 
 
 # Size of LRU/LFU caches for word lookups

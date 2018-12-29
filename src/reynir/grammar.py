@@ -61,7 +61,10 @@ from collections import defaultdict, OrderedDict
 
 from tokenizer import Abbreviations
 
-from .settings import Settings, StaticPhrases, changedlocale
+if __package__:
+    from .settings import Settings, StaticPhrases, changedlocale
+else:
+    from settings import Settings, StaticPhrases, changedlocale, ConfigError
 
 
 class GrammarError(Exception):
@@ -171,6 +174,7 @@ class Nonterminal:
 
     @property
     def has_tags(self):
+        """ Return True if this nonterminal has a tag associated with it """
         return bool(self._tags)
 
     def has_tag(self, tag):
@@ -182,7 +186,7 @@ class Nonterminal:
         return False if self._tags is None else not self._tags.isdisjoint(tagset)
 
     def add_tag(self, tag):
-        """ Check whether this nonterminal has been tagged with the given tag """
+        """ Add a tag to this nonterminal """
         if self._tags is None:
             self._tags = {tag}
         else:
@@ -256,9 +260,10 @@ class LiteralTerminal(Terminal):
             phrase = phrase.replace("_", " ")
             lit = q + phrase + q + lit[ix + 1 :]
             phrase = phrase.split(":")[0]  # Remove :cat, if present
-            if StaticPhrases.lookup(
-                phrase
-            ) is None and not Abbreviations.has_abbreviation(phrase):
+            if (
+                StaticPhrases.lookup(phrase) is None
+                and not Abbreviations.has_abbreviation(phrase)
+            ):
                 # Check that a multi-phrase literal terminal exists in the StaticPhrases
                 # dictionary (normally defined in Phrases.conf)
                 raise GrammarError(
@@ -438,6 +443,12 @@ class Production:
     def __str__(self):
         """ Return a representation of this production """
         return " ".join([str(t) for t in self._rhs]) if self._rhs else "0"
+
+
+_PRAGMA_SCORE = "$score("
+_PRAGMA_ROOT = "$root("
+_PRAGMA_TAG = "$tag("
+_PRAGMA_ERROR = "$error("
 
 
 class Grammar:
@@ -696,7 +707,7 @@ class Grammar:
 
                 for r in tokens:
 
-                    if r == "0":
+                    if r in {"0", "ø", "∅"}:
                         # Empty (epsilon) production
                         if len(tokens) != 1:
                             raise GrammarError(
@@ -892,7 +903,7 @@ class Grammar:
             def apply_to_nonterminals(s, func):
                 """ Parse a nonterminal/var list from string s, then apply func(nt, p) to
                     all nonterminals, where p is the parameter of the pragma """
-                ix = s.find(")")
+                ix = s.rfind(")")
                 if ix < 0:
                     raise GrammarError(
                         "Expected right parenthesis in pragma",
@@ -901,6 +912,7 @@ class Grammar:
                 param = s[0:ix].strip()
                 s = s[ix + 1 :]
                 nts = s.split()
+                cnt = 0
                 for nt_name in nts:
                     ntv = nt_name.split("/")
                     # if not ntv[0].isidentifier():
@@ -921,12 +933,20 @@ class Grammar:
                                 fname, line
                             )
                         try:
+                            # Found a nonterminal to which this pragma applies
                             func(nonterminals[vname], param)
+                            cnt += 1
                         except:
                             raise GrammarError(
                                 "Invalid pragma argument '{0}'".format(param),
                                 fname, line
                             )
+                if cnt == 0:
+                    # This pragma has no effect
+                    raise GrammarError(
+                        "Pragma does not affect any nonterminal",
+                        fname, line
+                    )
 
             if s.startswith("/"):
                 # Definition of variant
@@ -953,25 +973,21 @@ class Grammar:
             elif s.startswith("$"):
                 # Pragma
                 s = s.strip()
-                PRAGMA_SCORE = "$score("
-                PRAGMA_ROOT = "$root("
-                PRAGMA_TAG = "$tag("
-                PRAGMA_ERROR = "$error("
-                if s.startswith(PRAGMA_SCORE):
+                if s.startswith(_PRAGMA_SCORE):
                     # Pragma $score(int) Nonterminal/var1/var2 ...
-                    s = s[len(PRAGMA_SCORE) :]
+                    s = s[len(_PRAGMA_SCORE) :]
 
                     def set_score(nt, score):
                         self._nt_scores[nt] = int(score)
 
                     apply_to_nonterminals(s, set_score)
 
-                elif s.startswith(PRAGMA_TAG):
+                elif s.startswith(_PRAGMA_TAG):
                     # Pragma $tag(tagstring) Nonterminal/var1/var2 ...
-                    s = s[len(PRAGMA_TAG) :]
+                    s = s[len(_PRAGMA_TAG) :]
                     apply_to_nonterminals(s, lambda nt, tag: nt.add_tag(tag))
 
-                elif s.startswith(PRAGMA_ROOT):
+                elif s.startswith(_PRAGMA_ROOT):
                     # Pragma $root(Nonterminal)
                     # Identify a nonterminal as a secondary parse root
                     if s[-1] != ")":
@@ -979,7 +995,7 @@ class Grammar:
                             "Expected right parenthesis in $root() pragma",
                             fname, line
                         )
-                    root_nt = s[len(PRAGMA_ROOT) : -1].strip()
+                    root_nt = s[len(_PRAGMA_ROOT) : -1].strip()
                     if not root_nt.isidentifier():
                         raise GrammarError(
                             "Invalid nonterminal name '{0}'".format(root_nt),
@@ -990,11 +1006,10 @@ class Grammar:
                     # Add an implicit reference to the root
                     nonterminals[root_nt].add_ref()
                     self._secondary_roots.append(nonterminals[root_nt])
-                elif s.startswith(PRAGMA_ERROR):
+                elif s.startswith(_PRAGMA_ERROR):
                     # Pragma $error(error_rule, correct_rule)
-                    s = s[len(PRAGMA_ERROR) :]
-                    # TODO do something with error pragma
-
+                    s = s[len(_PRAGMA_ERROR) :]
+                    # TODO: do something with error pragma
                 else:
                     raise GrammarError("Unknown pragma '{0}'".format(s), fname, line)
             else:
@@ -1020,9 +1035,8 @@ class Grammar:
                 for vname in current_variants:
                     if vname not in variants:
                         raise GrammarError(
-                            "Unknown variant '{0}' for nonterminal '{1}'".format(
-                                vname, nt
-                            ),
+                            "Unknown variant '{0}' for nonterminal '{1}'"
+                            .format(vname, nt),
                             fname, line
                         )
                 var_names = variant_names(nt, current_variants)
@@ -1318,10 +1332,14 @@ if __name__ == "__main__":
     try:
         # Read configuration file
         basepath, _ = os.path.split(os.path.realpath(__file__))
-        Settings.read(os.path.join(basepath, "config", "Reynir.conf"))
+        Settings.read(os.path.join(basepath, "config", "ReynirPackage.conf"))
     except ConfigError as e:
         print("Configuration error: {0}".format(e))
         quit()
+
+    # Make sure that the tokenizer has loaded its abbreviations
+    # before we parse the grammar, since they are used in error checking
+    Abbreviations.initialize()
 
     fname = "Reynir.grammar"
     args = sys.argv

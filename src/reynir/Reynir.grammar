@@ -151,7 +151,7 @@ Tilvitnun →
     | ',' 'að:fs'_þgf 'sögn:kvk'_et_þgf Nl_ef AtvFsAuka?
 
 AðÞvíEr →
-    'að:fs'_þgf 'það:pfn'_hk_þgf_et 'er:stt' # að því er [segir í tilkynningu]
+    'að:fs'_þgf 'það:pfn'_hk_þgf_et "er:stt" # að því er [segir í tilkynningu]
 
 SögnSegja/tala/pers →
     'segja:so'_0_gm_fh/tala/pers
@@ -383,7 +383,7 @@ SpurnarNafnliður/tala/fall/kyn →
     | 'hver:fn'_ef_et_kk 'konar:kk'_ef_et Nl/fall/tala
     | HversuHve Lo/fall/tala/kyn Nl/fall/tala
     | HversuHve Lo/fall/tala/kyn AfLiður/kyn?
-    | 'hvernig:ao' Nl/fall/tala     # Hægt að nota hliðstætt með nafnlið
+    | "hvernig:ao" Nl/fall/tala     # Hægt að nota hliðstætt með nafnlið
 
 SpurnarForsetningarliður →
     fs/fall SpurnarNafnliður/tala/fall/kyn
@@ -505,6 +505,8 @@ Skilyrðistenging →
     "ef:st" VillaAð?
     | "svo:ao" "framarlega:ao" "sem:st" VillaAð?
     | "nema:st" VillaAð?
+    | 'koma:so'_0_gm_vh_p3_et 'til:fs'_ef 'það:pfn'_hk_ef_et "að:st" # komi til þess að
+    | 'fara:so'_0_gm_vh_p3_et "svo:ao" "að:st" # fari svo að
 
 $score(+8) Skilyrðistenging # Skilyrðissetning er með mínus á móti
 
@@ -1174,7 +1176,8 @@ HreinSögnAtv_nh →
 
 # Sagnliður sem hefst á viðtengingarhætti:
 # 'Haldi þessi þróun áfram er voðinn vís / þarf að grípa til aðgerða'
-    # TODO hér þyrfti að leyfa að setja "þá" á milli, mætti merkja sem óþarft samt. Komma þarf líka að leyfast, s.s. í aðalreglunni. Finna hvar þetta er notað.
+# !!! TODO: hér þyrfti að leyfa að setja "þá" á milli, mætti merkja sem óþarft samt.
+# Komma þarf líka að leyfast, s.s. í aðalreglunni. Finna hvar þetta er notað.
 SagnliðurVh →
 
     # Haldir þú [áfram að borða] (er voðinn vís)
@@ -2612,7 +2615,7 @@ Fyrirbæri_ft/fall/kyn →
     | Skst? no_ft_gr/fall/kyn Fjöldi_ft/fall/kyn    # Mennina tíu / félögin tvö
     | FyrirbæriMeðGreini_ft/fall/kyn
 
-Númer → 'númer:hk' tala
+Númer → "númer:hk" tala
 
 Fjöldi_ft/fall/kyn → to_ft/fall/kyn | töl_ft/fall/kyn
 
@@ -3058,7 +3061,6 @@ NlStak_et_p3/fall/kyn →
     | 'hver:fn'_et/fall/kyn "og:st" 'einn:fn'_et/fall/kyn FsRunaEftirNl?   # 'hver og einn [í sinni sveit] (ber ábyrgð)'
     | EinnAf_et_p3/fall/kyn                                         # einn af drengjunum [sem tóku þátt] (vann keppnina)
 
-
 # '(svör við bréfi sínu) dagsettu (13. mars sl.)'
 VeikSögnLhÞt/tala/fall/kyn →
     Atviksliður? EinVeikSögnLhÞt/tala/fall/kyn                      # (Stúlkan sá pabba sinn) [vel og snyrtilega] rakaðan
@@ -3070,7 +3072,6 @@ $score(-4) EinVeikSögnLhÞt/tala/fall/kyn
 
 EinnAf_et_p3/fall/kyn → 
     'einn:fn'_et/fall/kyn AfLiður/kyn
-
 
 $score(+12) EinnAf_et_p3/fall/kyn
 
@@ -3209,6 +3210,7 @@ NlBæðiHvorki/fall/kyn →
     | "annaðhvort:st" Nl/fall/kyn "eða:st" Nl/fall/kyn          # Annaðhvort hestinum eða kettinum (var lógað)
     | 'annar:fn'_et_hk_nf 'hvor:fn'_et_hk_nf Nl/fall/kyn "eða:st" Nl/fall/kyn # Annað hvort hestinum eða kettinum (var lógað)
     | "ýmist:st" Nl/fall/kyn "eða:st" Nl/fall/kyn               # Ýmist hestinum eða kettinum (var lógað)
+
 $score(+4) NlBæðiHvorki/fall/kyn
 
 NlStak_ft_p3_nf_hk → NlStak_ft_p3_hk_nf
@@ -3844,7 +3846,7 @@ KommuSamtenging/fall/kyn → ',' KommuStForskeyti? NlEind/fall/kyn
 
 KommuEndir/fall/kyn →
     Atviksliður? KommaOgEða KommuStForskeyti? NlEind/fall/kyn AtvKomma?
-    | 'og_fleira:Ao' ','?
+    | 'og_fleira:ao' ','?
     | 'og_margt_fleira:ao' ','?
     | 'og_svo_framvegis:ao' ','?
     | 'og_þess_háttar:ao' ','?
@@ -4647,7 +4649,7 @@ AtviksliðurAuka →
 
 # [tæpra] 29 ára, [rúmlega] eins árs, tveggja vikna, margra ára
 Aldur →
-    TöluorðForskeyti_ef/tala/kyn? Töluorð_ef/tala/kyn TímaNafnorðStærri_ef/tala/kyn
+    TöluorðForskeyti_ef/tala/kyn? Töluorð_ef/tala/kyn AldurBotn/tala/kyn
     | 'margur:lo'_sb_ef_ft/kyn TímaNafnorðStærri_ef_ft/kyn
     | 'allmargur:lo'_sb_ef_ft/kyn TímaNafnorðStærri_ef_ft/kyn
     | 'fjölmargur:lo'_sb_ef_ft/kyn TímaNafnorðStærri_ef_ft/kyn
@@ -4657,6 +4659,10 @@ Aldur →
 # Gefa plús fyrir aldur
 $score(+6) Aldur
 
+AldurBotn/tala/kyn →
+    TímaNafnorðStærri_ef/tala/kyn
+    # eins og hálfs árs, tveggja og hálfrar aldar
+    | "og:st" 'hálfur:lo'_sb_et_ef/kyn TímaNafnorðStærri_ef_et/kyn
 
 # Dagsetning og tími
 
@@ -4730,7 +4736,7 @@ VísiDagsetning →
     | 'í_gær:ao'                        # í gær
     | 'í_fyrradag:ao'                   # í fyrradag
     | 'í:fs'_þf 'fyrri:lo'_þf_et_mst    # í fyrra
-    | 'dagur:kk'_þf_et_gr 'eftir:ao'    # daginn eftir
+    | 'dagur:kk'_þf_et_gr "eftir:ao"    # daginn eftir
     | 'annar:fn'_et_þf_hk 'kvöld:hk'_et_þf # annað kvöld
     | 'annar:fn'_et_þf_kvk 'nótt:kvk'_et_þf # aðra nótt
     | 'á:fs'_þf Vikudagur_gr_þf_et 'koma:so'_0_gm_fh_et_p3          # á sunnudaginn kemur
@@ -4815,7 +4821,7 @@ FasturTími →
 
 AfstæðurTími →
     TímaNafnliðurMinni_þgf/tala/kyn ÁðurSíðarSeinna               # um það bil tæpum 10 sekúndum síðar
-    | 'fyrir:fs'_þgf TímaNafnliðurMinni_þgf/tala/kyn 'síðan:ao'?  # fyrir hér um bil rúmum 10 klukkustundum síðan
+    | 'fyrir:fs'_þgf TímaNafnliðurMinni_þgf/tala/kyn "síðan:ao"?  # fyrir hér um bil rúmum 10 klukkustundum síðan
     | 'eftir:fs'_þf TímaNafnliðurMinni_þf/tala/kyn
 
 ÓfullkominnTími →
@@ -4880,14 +4886,14 @@ Mínútutala/tala →
     Klukkutala_þf/tala
 
 Mínútutala_ft → 
-    'þrettán:töl'
-    | 'fjórtán:töl'
-    | 'fimmtán:töl'
-    | 'sextán:töl'
-    | 'sautján:töl'
-    | 'átján:töl'
-    | 'nítján:töl'
-    | 'tuttugu:töl'
+    "þrettán:töl"
+    | "fjórtán:töl"
+    | "fimmtán:töl"
+    | "sextán:töl"
+    | "sautján:töl"
+    | "átján:töl"
+    | "nítján:töl"
+    | "tuttugu:töl"
 
 # Útskrifaðar tölur til að tákna tímasetningu
 Klukkutala_þf_et → 
@@ -4897,22 +4903,22 @@ Klukkutala_þf_ft →
     'tveir:to'_ft_hk_þf         # tvö
     | 'þrír:to'_ft_hk_þf        # þrjú
     | 'fjórir:to'_ft_hk_þf      # fjögur
-    | 'fimm:töl'
-    | 'sex:töl'
-    | 'sjö:töl'
-    | 'átta:töl'
-    | 'níu:töl'
-    | 'tíu:töl'
-    | 'ellefu:töl'
-    | 'tólf:töl'
+    | "fimm:töl"
+    | "sex:töl"
+    | "sjö:töl"
+    | "átta:töl"
+    | "níu:töl"
+    | "tíu:töl"
+    | "ellefu:töl"
+    | "tólf:töl"
 
 YfirÍ_þf → 'yfir:fs'_þf | 'í:fs'_þf
 
 # Liðir sem geta staðið einir og sér en eru minni eining en dagur
 Dagspartur →
-    'árdegis:ao'
-    | 'miðdegis:ao'
-    | 'síðdegis:ao'
+    "árdegis:ao"
+    | "miðdegis:ao"
+    | "síðdegis:ao"
     | FyrirEftirÁ/fall HádegiMiðnætti/fall
     | 'við:fs'_þf Sól_þf
     | 'við:fs'_þf DagsByrjunLok_þf
@@ -5018,18 +5024,18 @@ Tíðni →
     | 'ótt_og_títt:ao'
     | 'sí_og_æ:ao'
     | 'í_sífellu:ao'
-    | 'aldrei:ao'
-    | 'alltaf:ao'
-    | 'árlega:ao'
-    | 'daglega:ao'
-    | 'dagsdaglega:ao'
-    | 'mánaðarlega:ao'
-    | 'oft:ao'
-    | 'reglulega:ao'
-    | 'sjaldan:ao'
-    | 'stundum:ao'
-    | 'títt:ao'
-    | 'vikulega:ao'
+    | "aldrei:ao"
+    | "alltaf:ao"
+    | "árlega:ao"
+    | "daglega:ao"
+    | "dagsdaglega:ao"
+    | "mánaðarlega:ao"
+    | "oft:ao"
+    | "reglulega:ao"
+    | "sjaldan:ao"
+    | "stundum:ao"
+    | "títt:ao"
+    | "vikulega:ao"
     | TíðniNafnliðurStærri
     | TíðniNafnliðurMinni
     | TíðniForsetningarliðurStærri
@@ -5077,9 +5083,9 @@ Tímabil →
 FastTímabil →
     DaganaTímabilFast
     | PunkturFs/aukafall FasturPunkturTNL
-    | 'milli:fs'_ef FasturPunkturTNL 'og:st' FasturPunkturTNL
+    | 'milli:fs'_ef FasturPunkturTNL "og:st" FasturPunkturTNL
     | 'frá:fs'_þgf FasturPunkturTNL 'til:fs'_ef FasturPunkturTNL
-    | 'milli:fs'_ef TímiPunkturTNL 'og:st' tímapunkturfast          # milli kl. 14:00 og 17:00 14. nóvember 2017
+    | 'milli:fs'_ef TímiPunkturTNL "og:st" tímapunkturfast          # milli kl. 14:00 og 17:00 14. nóvember 2017
 
 AfstættTímabil → 
     DaganaTímabilAfstætt
@@ -5098,13 +5104,13 @@ AfstættTímabil →
     | AfstættTímabilTvöfalt
 
 AfstættTímabilTvöfalt →
-    'milli:fs'_ef AfsPunkturTNL_ef 'og:st' AfsPunkturTNL_ef
+    'milli:fs'_ef AfsPunkturTNL_ef "og:st" AfsPunkturTNL_ef
     | 'frá:fs'_þgf AfsPunkturTNL_þgf 'til:fs'_ef AfsPunkturTNL_ef
-    | 'milli:fs'_ef FasturPunkturTNL 'og:st' AfsPunkturTNL_ef
+    | 'milli:fs'_ef FasturPunkturTNL "og:st" AfsPunkturTNL_ef
     | 'frá:fs'_þgf FasturPunkturTNL 'til:fs'_ef AfsPunkturTNL_ef
-    | 'milli:fs'_ef AfsPunkturTNL_ef 'og:st' FasturPunkturTNL
+    | 'milli:fs'_ef AfsPunkturTNL_ef "og:st" FasturPunkturTNL
     | 'frá:fs'_þgf AfsPunkturTNL_þgf 'til:fs'_ef FasturPunkturTNL
-    | 'milli:fs'_ef TímiPunkturTNL 'og:st' tímapunkturafs
+    | 'milli:fs'_ef TímiPunkturTNL "og:st" tímapunkturafs
     | 'frá:fs'_þgf ártal Til tala                                   # frá 2011 til og með 2014
     | 'ár:hk'_þf_ft_gr ártal Til tala                               # árin 2017-20
 
@@ -5116,7 +5122,7 @@ TímabilTími →
     | TímaMagnNafnliðurMinni/fall/tala/kyn                          # næstu 8 mínútur
     | MagnFs/aukafall TímaMagnNafnliðurMinni/aukafall/tala/kyn      # á 20 sekúndum, innan 6 sekúndna, í 30 millisekúndur
     | PunkturFs/aukafall TímiPunkturTNL                             # eftir kl. 14:00
-    | 'milli:fs'_ef TímiPunkturTNL 'og:st' TímiPunkturTNL
+    | 'milli:fs'_ef TímiPunkturTNL "og:st" TímiPunkturTNL
     | 'frá:fs'_þgf TímiPunkturTNL 'til:fs'_ef TímiPunkturTNL
     | TímaNafnorðMinni_þf/tala/kyn ÁðurEftir
     | TímaNafnorðMinni_þgf_ft/kyn "saman:ao"                        # Hann kom ekki heim klukkutímunum saman
@@ -5177,12 +5183,12 @@ FráTilTími →
     | 'frá:fs'_þgf? tími TímabilTil tími HinnSá_þf? dagsföst       # kl. 14:00 til 17:00 hinn 14. nóvember 2017
     | 'frá:fs'_þgf? tími TímabilTil tími HinnSá_þf? dagsafs        # kl. 14:00 til 17:00 þann 14. nóvember
 
-TímabilTil → 'til:fs' | '-:en'
+TímabilTil → "til:fs" | '-:en'
 
 ÞegarLíðaTekurÁ →
     "þegar:st" 'líða:so'_0_nh 'taka:so'_0_gm_p3_et 'á:fs'_þf TímaNafnorðStærri_þf/tala/kyn
 
-OgMeð → 'og:st' 'með:fs'_þgf    # (frá) og með, (til) og með
+OgMeð → "og:st" 'með:fs'_þgf    # (frá) og með, (til) og með
 
 # Tímanafnliðir
 TímaNafnliðurStærri/fall/tala/kyn →
@@ -5261,17 +5267,17 @@ TímaNafnorðStærri_hk/fall/tala →
     | 'sumar:hk'/fall/tala
 
 TímaAtviksEinkunn →
-    'rétt:ao' TímaAtviksEinkunn
-    | 'rúmlega:ao'
-    | 'næstum:ao'
-    | 'innan_við:ao'
-    | 'tæplega:ao'
-    | 'nákvæmlega:ao'
-    | 'hér_um_bil:ao'
-    | 'ríflega:ao'
-    | 'næstum:ao' 'það:fn'_þgf?     # næstum, næstum því
-    | 'um:ao' 
-    | 'um:fs'_þf 'sá:fn'_þf_et_hk 'bil:hk'_þf_et
+    "rétt:ao" TímaAtviksEinkunn
+    | "rúmlega:ao"
+    | "næstum:ao"
+    | "innan_við:ao"
+    | "tæplega:ao"
+    | "nákvæmlega:ao"
+    | "hér_um_bil:ao"
+    | "ríflega:ao"
+    | "næstum:ao" 'það:fn'_þgf?     # næstum, næstum því
+    | "um:ao"
+    | 'um:fs'_þf 'sá:fn'_þf_et_hk 'bil:hk'_þf_et # um það bil
 
 Tímatala/fall/tala/kyn →
     tala/fall/tala/kyn
@@ -5283,7 +5289,7 @@ Tímatala/fall/tala/kyn →
     | 'örfár:lo'_sb/fall/tala/kyn # örfáum vikum síðar
     | 'margur:lo'_sb/fall/tala/kyn # mörgum vikum síðar
     | 'allmargur:lo'_sb/fall/tala/kyn # allmörgum vikum síðar
-    | Tímatala/fall/tala/kyn 'til:ao' Tímatala/fall/tala/kyn
+    | Tímatala/fall/tala/kyn "til:ao" Tímatala/fall/tala/kyn
     | Tímatala/fall/tala/kyn '-:en' Tímatala/fall/tala/kyn
 
 TímaLo/fall/tala/kyn → 'rúmur:lo'/fall/tala/kyn | 'tæpur:lo'/fall/tala/kyn
@@ -5316,12 +5322,12 @@ Vikudagur_gr/fall/tala →
 
 FyrrSíðarSeinna →
     'snemma:ao'_mst     # fyrr
-    | 'síðar:ao'        # síðar
+    | "síðar:ao"        # síðar
     | 'seint:ao'_mst    # seinna
 
 ÁðurSíðarSeinna →
-    'áður:ao' 
-    | 'síðar:ao'
+    "áður:ao" 
+    | "síðar:ao"
     | 'seint:ao'_mst
     | 'snemma:ao'_mst # fyrr
 
@@ -5348,8 +5354,8 @@ NæstSíðast/fall/tala/kyn →
     | 'síðastliðinn:lo'/fall/tala/kyn
 
 ÁðurEftir →
-    'áður:ao'
-    | 'eftir:ao'
+    "áður:ao"
+    | "eftir:ao"
     | 'á_undan:ao'
     | 'á_eftir:ao'
 
@@ -5359,49 +5365,59 @@ NæstSíðast/fall/tala/kyn →
     | 'undir:fs'_þf 'lok:hk'_ft_þf
 
 # Villureglur // Error rules
+# !!! TODO: Útfæra nánar
+
 $error(VillaAð, LeiðréttAð)
 VillaAð →
     "að:st"
-LeiðréttAð → ø      # Eða hvernig sem geri!
+LeiðréttAð → ∅
+$tag(error) VillaAð
 
 $error(VillaAnnaðhvort, LeiðréttAnnaðhvort)
 VillaAnnaðhvort →
     'annar:fn'_et_nf_hk 'hvort:fn'_et_nf_hk
 LeiðréttAnnaðhvort →
     "annaðhvort:st"
+$tag(error) VillaAnnaðhvort
 
 $error(VillaÞóAð, LeiðréttÞóAð)
 VillaÞóAð →
     "jafnvel:ao"? "þó:st"
 LeiðréttÞóAð →
     "jafnvel:ao"? "þó:st" "að:st"
+$tag(error) VillaÞóAð
 
 $error(VillaFráÞvíAð, LeiðréttFráÞvíAð)
 VillaFráÞvíAð →
     'allt:fn'_nf_hk_et? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et
 LeiðréttFráÞvíAð → 
     'allt:fn'_nf_hk_et? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"
+$tag(error) VillaFráÞvíAð
 
 $error(VillaVístAð, LeiðréttVístAð)
 VillaVístAð →
     "víst:ao" "að:st"  
 LeiðréttVístAð → 
     "fyrst:ao" VillaAð?
+$tag(error) VillaVístAð
 
 $error(VillaHeldur, LeiðréttHeldur)
 VillaHeldur →
     "heldur:st"
-LeiðréttHeldur → ø   # Eða hvernig sem geri!
+LeiðréttHeldur → ∅
+$tag(error) VillaHeldur
 
 $error(VillaSíðan, LeiðréttSíðan)
 VillaSíðan →
-    'síðan:ao'
-LeiðréttSíðan → ø     # Eða hvernig sem geri!
+    "síðan:ao"
+LeiðréttSíðan → ∅
+$tag(error) VillaSíðan
 
 # Villa í tölu: Einn af drengjunum sem tóku þátt unnu keppnina → vann keppnina
-$error(VillaEinnAf_ft_p3, EinnAf_et_p3)
+$error(VillaEinnAf_ft_p3/fall/kyn, EinnAf_et_p3/fall/kyn)
 VillaEinnAf_ft_p3/fall/kyn →
     'einn:fn'_et/fall/kyn AfLiður/kyn
+$tag(error) VillaEinnAf_ft_p3/fall/kyn
 
 # Villa í kyni: Hún er ein af þátttakendum → einn
 # Hef þá kk → kvk, kvk → kk, kk → hk, hk → kk, hk → kvk, kvk → hk
@@ -5420,6 +5436,8 @@ FjöldiHluti_et_kk/fall →
 LeiðréttFjöldiHluti_et_kk/fall →
     'mikill:lo'_et_kk/fall? FjöldiHluti_et_kk/fall EfLiður_ft/kyn
     | 'stór:lo'_et_kk/fall? 'hluti:kk'_et/fall EfLiður_ft/kyn
+
+$tag(error) VillaFjöldiHluti_ft/fall/kyn
 
 
 # ----------------------------------------------

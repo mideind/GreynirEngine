@@ -71,5 +71,5 @@ ffibuilder.set_source(
 ffibuilder.cdef(declarations)
 
 if __name__ == "__main__":
-    ffibuilder.compile(verbose=True)
+    ffibuilder.compile(verbose=False)
 

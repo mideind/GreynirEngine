@@ -74,6 +74,7 @@ class IncrementalParser:
             assert self._len > 0 # Input should be already sanitized
             self._err_index = None
             self._tree = None
+            self._score = 0
 
         def __len__(self):
             return self._len
@@ -92,7 +93,8 @@ class IncrementalParser:
                 forest = None
                 self._err_index = e.token_index
             self._tree = forest
-            self._ip._add_sentence(self, num, score)
+            self._score = score
+            self._ip._add_sentence(self, num)
             return num > 0
 
         @property
@@ -103,6 +105,10 @@ class IncrementalParser:
         def tree(self):
             return self._tree
 
+        @property
+        def score(self):
+            return self._score
+        
         @property
         def err_index(self):
             return self._len - 1 if self._err_index is None else self._err_index
@@ -146,7 +152,7 @@ class IncrementalParser:
         self._verbose = verbose
         self._toklist = toklist
         
-    def _add_sentence(self, s, num, score):
+    def _add_sentence(self, s, num):
         """ Add a processed sentence to the statistics """
         slen = len(s)
         self._num_sent += 1
@@ -158,12 +164,16 @@ class IncrementalParser:
             ambig_factor = num ** (1 / slen)
             self._total_ambig += ambig_factor * slen
             self._total_tokens += slen
-            self._total_score += score
+            self._total_score += s.score
         # Debugging output, if requested and enabled
         if self._verbose and Settings.DEBUG:
-            print("Parsed sentence of length {0} with {1} combinations{2}"
-                .format(slen, num,
-                    ("\n" + s.text) if num >= _VERBOSE_AMBIGUITY_THRESHOLD else ""))
+            print("Parsed sentence of length {0} with {1} combinations{3}{2}"
+                .format(
+                    slen, num,
+                    ("\n" + s.text) if num >= _VERBOSE_AMBIGUITY_THRESHOLD else "",
+                    " and score " + str(s.score) if num >= 1 else ""
+                )
+            )
 
     def paragraphs(self):
         """ Yield the paragraphs from the token stream """

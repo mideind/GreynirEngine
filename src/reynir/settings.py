@@ -121,7 +121,11 @@ class LineReader:
         """ Generator yielding lines from a text file """
         self._line = 0
         try:
-            with resource_stream(__name__, self._fname) as inp:
+            if __package__:
+                stream = resource_stream(__name__, self._fname)
+            else:
+                stream = open(self._fname, "rb")
+            with stream as inp:
                 # Read config file line-by-line from the package resources
                 for b in inp:
                     # We get byte strings; convert from utf-8 to strings
@@ -367,7 +371,10 @@ class Prepositions:
         # or in the Meanings dictionary: hack to make sure that they are
         # recognized as prepositions
         if prep not in Meanings.DICT and " " not in prep:
-            from .bindb import BIN_Db
+            if __package__:
+                from .bindb import BIN_Db
+            else:
+                from bindb import BIN_Db
 
             with BIN_Db.get_db() as db:
                 m = db.meanings(prep)
