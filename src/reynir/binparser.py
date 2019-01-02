@@ -613,7 +613,7 @@ class BIN_Token(Token):
                 return False
         if terminal.is_lh:
             if "VB" in form and not terminal.has_variant("vb"):
-                # We want only the strong declinations ("SB") of lhþt, not the weak ones,
+                # We want only the strong declensions ("SB") of lhþt, not the weak ones,
                 # unless explicitly requested
                 return False
         if terminal.has_variant("bh") and "ST" in form:
@@ -903,6 +903,11 @@ class BIN_Token(Token):
             """ Check verb """
             if m.ordfl != "so":
                 return False
+            if m.beyging == "-":
+                # Abbreviated verb (such as 'dags.' for 'dagsetja/dagsett',
+                # or 'ath.' for 'athuga'):
+                # match all forms except present participle (lh.nt.)
+                return not terminal.is_lh_nt
             # Special case for verbs: match only the appropriate
             # argument number, i.e. so_0 for verbs having no noun argument,
             # so_1 for verbs having a single noun argument, and
@@ -1156,11 +1161,20 @@ class BIN_Token(Token):
                 return False
             if m.beyging == "-":
                 if m.ordfl == "lo":
-                    # If we have an adjective (lo) with no declination info,
+                    # If we have an adjective (lo) with no declension info,
                     # assume it's an abbreviation ("hæstv." for "hæstvirtur")
                     # and thus it matches any lo_X terminal irrespective of variants.
                     # Don't delete this if you don't know what you're doing ;-)
                     return True
+                if m.ordfl in BIN_Token.GENDERS_SET:
+                    # This is a noun with no declension info (probably an
+                    # abbreviation such as 'hr.' that is matching the literal
+                    # terminal 'herra:kk'_et/fall): only look at the gender,
+                    # and permit singular forms only
+                    fbits = BIN_Token.VBIT[m.ordfl] | BIN_Token.VBIT["et"]
+                    return terminal.fbits_match_mask(
+                        BIN_Token.VBIT_GENDERS | BIN_Token.VBIT_NUMBER, fbits
+                    )
                 fbits = 0
             else:
                 # If the meaning is a noun, its gender is coded in the ordfl attribute
@@ -1874,7 +1888,7 @@ def canonicalize_token(t):
         # s = stofn (lemma)
         # c = ordfl (category)
         # f = fl (class)
-        # b = beyging (declination)
+        # b = beyging (declension)
         # For abbreviations (fl='skst'), we include the original token text as the
         # lemma, instead of the abbreviation meaning (which is stored in m[0])
         fl = m[2]

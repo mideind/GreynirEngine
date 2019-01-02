@@ -820,22 +820,39 @@ def test_abbreviations():
     )
     assert (
         s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ VP-SEQ VP "
-        "so_1_þf_et_p1 NP-OBJ no_et_þf_kvk NP-POSS no_et_ef_hk PP fs_þgf "
-        "NP no_et_þgf_kk /NP /PP /NP-POSS /NP-OBJ /VP ADVP ADVP-DATE-REL "
-        "fs_þgf dagsafs lo_þgf_et_kk /ADVP-DATE-REL /ADVP st VP so_et_p1 "
-        "so_1_nf_nh NP-OBJ pfn_kvk_et_nf /NP-OBJ /VP ADJP lo_sb_nf_et_kvk "
-        "/ADJP /VP-SEQ /IP /S-MAIN p /P"
+        "so_1_þf_et_p1 NP-OBJ no_et_þf_kvk NP-POSS no_et_ef_hk /NP-POSS "
+        "/NP-OBJ /VP ADVP ADVP-DATE-REL fs_þf no_kk_þf_et /ADVP-DATE-REL "
+        "ADVP-DATE-REL fs_þgf dagsafs lo_þgf_et_kk /ADVP-DATE-REL /ADVP "
+        "st VP so_et_p1 so_1_nf_nh NP-OBJ pfn_kvk_et_nf /NP-OBJ /VP ADJP "
+        "lo_sb_nf_et_kvk /ADJP /VP-SEQ /IP /S-MAIN p /P"
     )
     # The following also tests augmented variants for personal pronouns,
     # i.e. pfn_et_nf_p1 for 'ég' and pfn_et_kvk_nf_p3 for 'hún'
     # (the person is added; it's not included in BÍN)
     assert (
-        s.tree.flat_with_all_variants == "P S-MAIN IP NP-SUBJ pfn_et_nf_p1 /NP-SUBJ "
-        "VP-SEQ VP so_1_þf_et_fh_gm_nt_p1 NP-OBJ no_et_kvk_þf NP-POSS no_ef_et_hk "
-        "PP fs_þgf NP no_et_kk_þgf /NP /PP /NP-POSS /NP-OBJ /VP "
-        "ADVP ADVP-DATE-REL fs_þgf dagsafs lo_et_kk_þgf /ADVP-DATE-REL /ADVP st "
-        "VP so_et_fh_gm_nt_p1 so_1_nf_gm_nh NP-OBJ pfn_et_kvk_nf_p3 /NP-OBJ /VP "
-        "ADJP lo_et_kvk_nf_sb /ADJP /VP-SEQ /IP /S-MAIN p /P"
+        s.tree.flat_with_all_variants == "P S-MAIN IP NP-SUBJ pfn_et_nf_p1 "
+        "/NP-SUBJ VP-SEQ VP so_1_þf_et_fh_gm_nt_p1 NP-OBJ no_et_kvk_þf "
+        "NP-POSS no_ef_et_hk /NP-POSS /NP-OBJ /VP ADVP ADVP-DATE-REL "
+        "fs_þf no_et_kk_þf /ADVP-DATE-REL ADVP-DATE-REL fs_þgf dagsafs "
+        "lo_et_kk_þgf /ADVP-DATE-REL /ADVP st VP so_et_fh_gm_nt_p1 "
+        "so_1_nf_gm_nh NP-OBJ pfn_et_kvk_nf_p3 /NP-OBJ /VP ADJP "
+        "lo_et_kvk_nf_sb /ADJP /VP-SEQ /IP /S-MAIN p /P"
+    )
+    s = r.parse_single(
+        "T.d. var bréfið til KPMG dags. 10. júlí en hr. Friðgeir vildi senda það "
+        "til ASÍ eða SÁÁ o.s.frv. áður en það birtist á mbl.is."
+    )
+    assert (
+        s.tree.flat_with_all_variants == "P S-MAIN IP ADVP ao /ADVP VP-SEQ "
+        "VP so_et_fh_gm_p3_þt NP-SUBJ no_et_gr_hk_nf PP fs_ef NP no_ef_et_hk "
+        "/NP /PP /NP-SUBJ so_0_et_hk_lhþt /VP ADVP ADVP-DATE-REL "
+        "raðnr no_et_kk_þf /ADVP-DATE-REL /ADVP /VP-SEQ /IP /S-MAIN st "
+        "S-MAIN IP NP-SUBJ no_et_kk_nf person_kk_nf /NP-SUBJ VP-SEQ "
+        "VP so_et_fh_gm_p3_þt so_1_þf_gm_nh NP-OBJ pfn_et_hk_p3_þf /NP-OBJ "
+        "/VP PP fs_ef NP no_ef_et_hk st no_ef_et_hk ao /NP /PP /VP-SEQ "
+        "S-ADV-TEMP ao st IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ VP-SEQ "
+        "VP so_0_et_fh_mm_nt_p3 /VP PP fs_þgf NP no_et_hk_þgf /NP /PP "
+        "/VP-SEQ /IP /S-ADV-TEMP /IP /S-MAIN p /P"
     )
 
 

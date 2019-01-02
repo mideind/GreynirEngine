@@ -3442,12 +3442,11 @@ $score(-6) Ávarp/nkyn/fall
 
 ÞekktÁvarp_kk/fall →
     'herra:kk'_et/fall | 'séra:kk'_et/fall | 'hann:pfn'_kk_et/fall
-    | 'doktor:kk'_et/fall
-    | 'prófessor:kk'_et/fall
+    | 'doktor:kk'_et/fall | 'prófessor:kk'_et/fall
+
 ÞekktÁvarp_kvk/fall →
     'frú:kvk'_et/fall | 'séra:kk'_et/fall | 'hún:pfn'_kvk_et/fall
-    | 'doktor:kk'_et/fall
-    | 'prófessor:kk'_et/fall
+    | 'doktor:kk'_et/fall | 'prófessor:kk'_et/fall | 'maddama:kvk'_et/fall
 
 $score(+10) ÞekktÁvarp/nkyn/fall
 
@@ -3979,9 +3978,6 @@ $score(-16) LoSemSo/fall/tala/kyn
 
 $score(+6) LoSemLo/fall/tala/kyn  # Tilbrigði 3.1, eina sem þarf að toggla.
 
-LoAtviksliðir →
-    LoAtviksliður+ | "og:ao" # 'honum er og heimilt að merkja við fleiri en einn frambjóðanda'
-
 # 'Ég vaknaði ekkert alltof fersk'
 # 'Atburðarásin var nokkuð skýr'
 # Ath.: 'nokkuð' er ekki leyft sem eo þar sem það er einnig fornafn.
@@ -3990,6 +3986,11 @@ LoAtviksliðir →
 # rekast á fornafnið.
 LoAtviksliður →
     eo | tao | 'enginn:fn'_hk_et_nf | "nokkuð:ao"
+
+$score(+2) LoAtviksliður
+
+LoAtviksliðir →
+    LoAtviksliður+ | "og:ao" # 'honum er og heimilt að merkja við fleiri en einn frambjóðanda'
 
 # Lýsingarorð í sterkri beygingu
 # ('Hún fór frjáls skoðana sinna í útlegð')

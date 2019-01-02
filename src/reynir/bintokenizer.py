@@ -177,7 +177,6 @@ NUMBER_CATEGORIES = frozenset(["töl", "to", "kk", "kvk", "hk", "lo"])
 CURRENCIES = {
     "króna": "ISK",
     "ISK": "ISK",
-    "[kr.]": "ISK",
     "kr.": "ISK",
     "kr": "ISK",
     "DKK": "DKK",
@@ -286,16 +285,9 @@ def match_stem_list(token, stems, filter_func=None):
     if token.val:
         for m in token.val:
             # If a filter function is given, pass candidates to it
-            try:
-                lower_stofn = m.stofn.lower()
-                if lower_stofn in stems and (filter_func is None or filter_func(m)):
-                    return stems[lower_stofn]
-            except Exception as e:
-                print(
-                    "Exception {0} in match_stem_list\nToken: {1}\nStems: {2}"
-                    .format(e, token, stems)
-                )
-                raise
+            lower_stofn = m.stofn.lower()
+            if lower_stofn in stems and (filter_func is None or filter_func(m)):
+                return stems[lower_stofn]
     # No meanings found: this might be a foreign or unknown word
     # However, if it is still in the stems list we return True
     return stems.get(token.txt.lower(), None)
@@ -492,7 +484,7 @@ def parse_phrases_1(db, token_ctor, token_stream):
                             # Match: accumulate the possible cases
                             iso_code = ISO_CURRENCIES[(nat, cur)]
                             # Filter the possible cases by considering adjectives
-                            # having a strong declination (indefinite form) only
+                            # having a strong declension (indefinite form) only
                             token = token_ctor.Currency(
                                 token.txt + " " + next_token.txt,
                                 iso_code,
@@ -765,13 +757,6 @@ def parse_phrases_2(token_stream, token_ctor):
                 if tok.kind != TOK.WORD:
                     return None
                 wrd = tok.txt
-                if wrd.startswith("["):
-                    # Abbreviation: Cut off the brackets & trailing period, if present
-                    if wrd.endswith(".]"):
-                        wrd = wrd[1:-2]
-                    else:
-                        # This is probably a C. which had its period cut off as a sentence ending...
-                        wrd = wrd[1:-1]
                 if len(wrd) > 2 or not wrd[0].isupper():
                     if wrd not in FOREIGN_MIDDLE_NAME_SET:
                         # Accept "Thomas de Broglie", "Ruud van Nistelrooy"
@@ -830,9 +815,7 @@ def parse_phrases_2(token_stream, token_ctor):
                         break
                     # Success: switch to new given name list
                     gn = r
-                    w += " " + (
-                        ngn[0].name if next_token.txt[0] == "[" else next_token.txt
-                    )
+                    w += " " + next_token.txt
                     next_token = next(token_stream)
 
                 # Check whether the sequence of given names is followed

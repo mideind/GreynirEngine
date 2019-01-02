@@ -35,8 +35,6 @@
 from functools import lru_cache
 from collections import namedtuple
 
-from tokenizer import Abbreviations
-
 if __package__:
     from .settings import AdjectiveTemplate, Meanings, StemPreferences, StaticPhrases
     from .cache import LFU_Cache
@@ -264,21 +262,6 @@ class BIN_Db:
     def _lookup(w, at_sentence_start, auto_uppercase, lookup):
         """ Lookup a simple or compound word in the database and return its meaning(s) """
 
-        def lookup_abbreviation(w):
-            """ Lookup abbreviation from abbreviation list """
-            # Remove brackets, if any, before lookup
-            if w[0] == "[":
-                clean_w = w[1:-1]
-                # Check for abbreviation that also ended a sentence and
-                # therefore had its end period cut off
-                if not clean_w.endswith("."):
-                    clean_w += "."
-            else:
-                clean_w = w
-            # Return a single-entity list with one meaning
-            m = Abbreviations.DICT.get(clean_w, None)
-            return None if m is None else [BIN_Meaning._make(m)]
-
         # Start with a straightforward lookup of the word
 
         lower_w = w
@@ -313,15 +296,9 @@ class BIN_Db:
                 # Do another lookup, this time for lowercase only
                 if not m:
                     # This is a word that contains uppercase letters
-                    # and was not found in BÍN in its original form
-                    # Try an abbreviation before doing a lowercase lookup
-                    # (since some abbreviations are also words, i.e. LÍN)
-                    m = lookup_abbreviation(w)
-                    if not m:
-                        m = lookup(lower_w)
-                    elif w[0] == "[":
-                        # Remove brackets from known abbreviations
-                        w = w[1:-1]
+                    # and was not found in BÍN in its original form:
+                    # try the all-lowercase version
+                    m = lookup(lower_w)
                 else:
                     # Be careful to make a new list here, not extend m
                     # in place, as it may be a cached value from the LFU
@@ -338,17 +315,6 @@ class BIN_Db:
         if m:
             # Most common path out of this function
             return w, m
-
-        if lower_w != w or w[0] == "[":
-            # Still nothing: check abbreviations
-            m = lookup_abbreviation(w)
-            if not m and w[0] == "[":
-                # Could be an abbreviation with periods at the start of a sentence:
-                # Lookup a lowercase version
-                m = lookup_abbreviation(lower_w)
-            if m and w[0] == "[":
-                # Remove brackets from known abbreviations
-                w = w[1:-1]
 
         if not m and BIN_Db._ADJECTIVE_TEST in lower_w:
             # Not found: Check whether this might be an adjective

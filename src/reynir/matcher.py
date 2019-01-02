@@ -1153,7 +1153,7 @@ class SimpleTree:
                             return False
                 else:
                     # 'indefinite' or 'canonical':
-                    # Only return strong declinations since we only want
+                    # Only return strong declension since we only want
                     # indefinite forms
                     if "mst" in self._vset:
                         # For comparative degree, no change is required
