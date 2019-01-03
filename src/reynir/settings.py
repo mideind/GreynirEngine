@@ -293,9 +293,10 @@ class VerbObjects:
 
     @staticmethod
     def verb_matches_particle(verb_with_cases, particle):
+        """ Does the given particle fit the verb? """
         return (
-            verb_with_cases in VerbObjects.PARTICLES
-            and particle in VerbObjects.PARTICLES[verb_with_cases]
+            verb_with_cases in VerbObjects.VERB_PARTICLES
+            and particle in VerbObjects.VERB_PARTICLES[verb_with_cases]
         )
 
 

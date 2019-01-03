@@ -53,7 +53,8 @@ if sys.version_info < (3, 4):
 def read(*names, **kwargs):
     try:
         return io.open(
-            join(dirname(__file__), *names), encoding=kwargs.get("encoding", "utf8")
+            join(dirname(__file__), *names),
+            encoding=kwargs.get("encoding", "utf8")
         ).read()
     except (IOError, OSError):
         return ""
@@ -66,8 +67,7 @@ setup(
     version="1.4.0",
     license="GNU GPLv3",
     description="A natural language parser for Icelandic",
-    long_description="%s\n%s"
-    % (
+    long_description="{0}\n{1}".format(
         re.compile("^.. start-badges.*^.. end-badges", re.M | re.S)
             .sub("", read("README.rst")),
         re.sub(":[a-z]+:`~?(.*?)`", r"``\1``", read("CHANGELOG.rst")),

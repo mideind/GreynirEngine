@@ -412,6 +412,7 @@ def parse_phrases_1(db, token_ctor, token_stream):
                             multiplier,
                             all_cases(token),
                             all_genders(token),
+                            token=token
                         )
                     return token
 
@@ -428,7 +429,7 @@ def parse_phrases_1(db, token_ctor, token_stream):
                         next_case = all_cases(token) or next_case
                         next_gender = all_genders(token) or next_gender
                     token = convert_to_num(token)
-                    # We send error information, if any, from next_token
+                    # We send error information, if any, from the token
                     # into the freshly constructed composite token via
                     # the token parameter. This ensures that "fimmhundruð"
                     # is correctly marked with an error resulting from
@@ -438,7 +439,7 @@ def parse_phrases_1(db, token_ctor, token_stream):
                         token.val[0] * multiplier_next,
                         next_case,
                         next_gender,
-                        token=next_token
+                        token=token
                     )
                     # Eat the multiplier token
                     next_token = next(token_stream)

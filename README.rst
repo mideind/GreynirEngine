@@ -11,7 +11,8 @@ Reynir: A fast, efficient natural language parser for Icelandic
 Overview
 ********
 
-**Reynir** is a Python 3.x package for **parsing Icelandic text into sentence trees**.
+**Reynir** is a Python 3.x package for
+**parsing Icelandic text into sentence trees**.
 The trees can then be used to extract information from the text, for instance
 about people, titles, entities, facts, actions and opinions.
 
@@ -21,7 +22,8 @@ Along the way, Reynir tokenizes the text, finds **lemmas** and assigns
 Full documentation for Reynir is `available here <https://greynir.is/doc/>`_.
 
 Reynir is the engine of `Greynir.is <https://greynir.is>`_, a natural-language
-front end for a database of 6 million sentences parsed from Icelandic news articles.
+front end for a database of 6 million sentences parsed from Icelandic
+news articles.
 
 Reynir uses the `Tokenizer <https://pypi.org/project/tokenizer/>`_ package,
 by the same authors, to tokenize text.
@@ -49,12 +51,16 @@ P                             # Root
 >>> sent.tree.verbs
 ['sjá']
 >>> sent.tree.flat
-'P S-MAIN IP NP-SUBJ no_et_nf_kvk /NP-SUBJ VP so_1_þf_et_p3 NP-OBJ no_et_þf_kvk /NP-OBJ /VP /IP /S-MAIN p /P'
->>> sent.tree.S.IP.NP_SUBJ.lemmas # The subject noun phrase (S.IP.NP also works)
+'P S-MAIN IP NP-SUBJ no_et_nf_kvk /NP-SUBJ VP so_1_þf_et_p3
+    NP-OBJ no_et_þf_kvk /NP-OBJ /VP /IP /S-MAIN p /P'
+>>> # The subject noun phrase (S.IP.NP also works)
+>>> sent.tree.S.IP.NP_SUBJ.lemmas
 ['Ása']
->>> sent.tree.S.IP.VP.lemmas # The verb phrase
+>>> # The verb phrase
+>>> sent.tree.S.IP.VP.lemmas
 ['sjá', 'sól']
->>> sent.tree.S.IP.VP.NP_OBJ.lemmas # The object within the verb phrase (S.IP.VP.NP also works)
+>>> # The object within the verb phrase (S.IP.VP.NP also works)
+>>> sent.tree.S.IP.VP.NP_OBJ.lemmas
 ['sól']
 
 *************
@@ -63,10 +69,11 @@ Prerequisites
 
 This package runs on CPython 3.4 or newer, and on PyPy 3.5 or newer.
 
-If a binary wheel package isn't available on `PyPi <https://pypi.org>`_ for your system,
-you may need to have the ``python3-dev`` and/or potentially ``python3.6-dev`` packages
-(or their Windows equivalents) installed on your system to set up Reynir successfully.
-This is because a source distribution install requires a C++ compiler and linker::
+If a binary wheel package isn't available on `PyPi <https://pypi.org>`_
+for your system, you may need to have the ``python3-dev`` and/or potentially
+``python3.6-dev`` packages (or their Windows equivalents) installed on your
+system to set up Reynir successfully. This is because a source distribution
+install requires a C++ compiler and linker::
 
     # Debian or Ubuntu:
     sudo apt-get install python3-dev
@@ -93,8 +100,9 @@ The package source code is now in ``ReynirPackage/src/reynir``.
 Tests
 *****
 
-To run the built-in tests, install `pytest <https://docs.pytest.org/en/latest/>`_, ``cd`` to your
-``ReynirPackage`` subdirectory (and optionally activate your virtualenv), then run::
+To run the built-in tests, install `pytest <https://docs.pytest.org/en/latest/>`_,
+``cd`` to your ``ReynirPackage`` subdirectory (and optionally activate your
+virtualenv), then run::
 
     $ python -m pytest
 
