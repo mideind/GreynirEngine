@@ -451,10 +451,10 @@ def parse_phrases_1(db, token_ctor, token_stream):
                     token = token_ctor.Amount(
                         token.txt + " " + next_token.txt,
                         "ISK",
-                        token.val[0] * AMOUNT_ABBREV[next_token.txt],  # Number
+                        token.val[0] * AMOUNT_ABBREV[next_token.txt],
                         token.val[1],
                         token.val[2],
-                    )  # Cases and gender
+                    )
                     next_token = next(token_stream)
                 else:
                     # Check for [number] 'percent'
@@ -920,7 +920,8 @@ def parse_phrases_2(token_stream, token_ctor):
                     and not patronym
                     and not found_name
                     and (
-                        has_other_meaning(token, PERSON_NAME_SET) and w not in NamePreferences.SET
+                        has_other_meaning(token, PERSON_NAME_SET)
+                        and w not in NamePreferences.SET
                     )
                 )
 

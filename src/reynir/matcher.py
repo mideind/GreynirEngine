@@ -1909,6 +1909,28 @@ class SimpleTreeBuilder:
         return SimpleTree([[self.result]])
 
 
+class Annotator(ParseForestNavigator):
+
+    """ Utility class to navigate a parse forest and annotate the
+        original token list with the corresponding terminal matches """
+
+    def __init__(self, tmap):
+        super().__init__()
+        self._tmap = tmap
+
+    def _visit_token(self, level, node):
+        """ At token node """
+        ix = node.token.index  # Index into original sentence
+        assert ix not in self._tmap
+        meaning = node.token.match_with_meaning(node.terminal)
+        # Map from original token to matched terminal
+        self._tmap[ix] = (
+            node.terminal,
+            None if isinstance(meaning, bool) else meaning,
+        )
+        return None
+
+
 class Simplifier(ParseForestNavigator):
 
     """ Utility class to construct a simplified, condensed representation of

@@ -406,7 +406,7 @@ class Node:
 
     @property
     def token(self):
-        """ Return the terminal associated with a token node, or None if none """
+        """ Return the token associated with a token node, or None if none """
         return self._token
 
     @property

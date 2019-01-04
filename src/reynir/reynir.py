@@ -32,7 +32,7 @@ from collections import namedtuple
 
 from tokenizer import correct_spaces, paragraphs
 
-from .bintokenizer import tokenize
+from .bintokenizer import tokenize as bin_tokenize
 from .fastparser import Fast_Parser, ParseError
 from .reducer import Reducer
 from .cache import cached_property
@@ -186,6 +186,9 @@ class _Sentence:
 
 
 class _Paragraph:
+
+    """ Encapsulates a paragraph that contains sentences """
+
     def __init__(self, job, p):
         self._job = job
         self._p = p
@@ -370,14 +373,18 @@ class Reynir:
                 Reynir._parser = Fast_Parser()
                 Reynir._reducer = Reducer(Reynir._parser.grammar)
 
+    def tokenize(self, text):
+        """ Call the tokenizer (overridable in child classes) """
+        return bin_tokenize(text)
+
     @property
     def parser(self):
-        """ Return the singleton parser instance """
+        """ Return the parser instance to be used """
         return Reynir._parser
 
     @property
     def reducer(self):
-        """ Return the singleton reducer instance """
+        """ Return the reducer instance to be used """
         return Reynir._reducer
 
     def submit(self, text, parse=False):
@@ -388,13 +395,13 @@ class Reynir:
             Otherwise, they need to be explicitly parsed by calling
             sent.parse(). This is a more incremental, asynchronous
             approach than Reynir.parse(). """
-        tokens = tokenize(text)
+        tokens = self.tokenize(text)
         return _Job(self, tokens, parse=parse)
 
     def parse(self, text):
         """ Convenience function to parse text synchronously and return
             a summary of all contained sentences. """
-        tokens = tokenize(text)
+        tokens = self.tokenize(text)
         job = _Job(self, tokens, parse=True)
         return dict(
             sentences=[sent for sent in job],
@@ -406,7 +413,7 @@ class Reynir:
 
     def parse_single(self, sentence):
         """ Convenience function to parse a single sentence only """
-        tokens = tokenize(sentence)
+        tokens = self.tokenize(sentence)
         job = _Job(self, tokens, parse=True)
         # Raises StopIteration if no sentence was parsed
         return next(iter(job))

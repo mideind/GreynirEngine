@@ -29,7 +29,7 @@ from .settings import Settings
 
 # Expose the tokenizer API
 
-from tokenizer import TOK, Tok, tokenize, correct_spaces
+from tokenizer import TOK, Tok, tokenize, correct_spaces, mark_paragraphs
 from tokenizer import TP_LEFT, TP_CENTER, TP_RIGHT, TP_NONE, TP_WORD
 from tokenizer import Abbreviations
 
