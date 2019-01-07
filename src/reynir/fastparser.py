@@ -423,6 +423,7 @@ class Node:
 
     @property
     def num_families(self):
+        """ Return the number of families of children of this node """
         return len(self._families) if self._families is not None else 0
 
     def enum_children(self):

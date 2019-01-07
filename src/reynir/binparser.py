@@ -533,6 +533,16 @@ class BIN_Token(Token):
         # nominal form (unless it already ends with "st").
         return verb if verb.endswith("st") else verb + "st"
 
+    @staticmethod
+    def verb_is_impersonal(verb):
+        """ Return True if the given verb is strictly impersonal,
+            i.e. never appears with a nominative subject """
+        return VerbSubjects.is_impersonal(verb)
+
+    def verb_subject_matches(self, verb, subj):
+        """ Returns True if the given subject type/case is allowed for this verb """
+        return subj in self._VERB_SUBJECTS.get(verb, set())
+
     def verb_matches(self, verb, terminal, form):
         """ Return True if the infinitive in question matches the verb category,
             where the category is one of so_0, so_1, so_2 depending on
@@ -561,14 +571,9 @@ class BIN_Token(Token):
             if terminal.is_plural and "FT" not in form:
                 # Require plural
                 return False
-
-            def subject_matches(subj):
-                """ Look up the verb in the subjects list loaded from Verbs.conf """
-                return subj in self._VERB_SUBJECTS.get(verb, set())
-
             form_lh = "LHÞT" in form
             if terminal.is_lh:
-                return form_lh and subject_matches("lhþt")
+                return form_lh and self.verb_subject_matches(verb, "lhþt")
             # Don't allow the past participle unless explicitly requested in terminal
             if form_lh:
                 return False
@@ -578,7 +583,7 @@ class BIN_Token(Token):
                 # subject list in Verbs.conf
                 if terminal.is_sagnb != form_sagnb:
                     return False
-                return subject_matches("none")
+                return self.verb_subject_matches(verb, "none")
             if form_sagnb and not terminal.is_sagnb:
                 # For regular subj, we don't allow supine (sagnbót)
                 # ('langað', 'þótt')
@@ -586,10 +591,10 @@ class BIN_Token(Token):
             if terminal.has_variant("op") and "OP" not in form:
                 return False
             # Make sure that the subject case (last variant) matches the terminal
-            return subject_matches(terminal.variant(-1))
+            return self.verb_subject_matches(verb, terminal.variant(-1))
 
         # Not a _subj terminal: no match of strictly impersonal verbs
-        if VerbSubjects.is_impersonal(verb):
+        if self.verb_is_impersonal(verb):
             return False
 
         if terminal.is_singular and "FT" in form:
@@ -1686,9 +1691,13 @@ class BIN_Parser(Base_Parser):
         return ftime + "/" + BIN_Parser._VERSION + "/" + super()._VERSION
 
     @staticmethod
-    def _wrap(tokens):
+    def _create_wrapped_token(t, ix):
+        """ Create an instance of a wrapped token """
+        return BIN_Token(t, ix)
+
+    def _wrap(self, tokens):
         """ Sanitize the 'raw' tokens and wrap them in BIN_Token() wrappers """
-        return wrap_tokens(tokens, wrap_func=lambda t, ix: BIN_Token(t, ix))
+        return wrap_tokens(tokens, wrap_func=self._create_wrapped_token)
 
     def go(self, tokens):
         """ Parse the token list after wrapping

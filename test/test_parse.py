@@ -853,6 +853,17 @@ def test_abbreviations():
         "S-ADV-TEMP ao st IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ VP-SEQ "
         "VP so_0_et_fh_mm_nt_p3 /VP PP fs_þgf NP no_et_hk_þgf /NP /PP "
         "/VP-SEQ /IP /S-ADV-TEMP /IP /S-MAIN p /P"
+    ) or (
+        s.tree.flat_with_all_variants == "P S-MAIN IP ADVP ao /ADVP VP-SEQ "
+        "VP so_et_fh_gm_p3_þt NP-SUBJ no_et_gr_hk_nf PP fs_ef NP no_ef_et_hk "
+        "/NP /PP /NP-SUBJ so_0_et_hk_lhþt /VP ADVP ADVP-DATE-REL "
+        "raðnr no_et_kk_þf /ADVP-DATE-REL /ADVP /VP-SEQ /IP /S-MAIN st "
+        "S-MAIN IP NP-SUBJ no_et_kk_nf person_kk_nf /NP-SUBJ VP-SEQ "
+        "VP so_et_fh_gm_p3_þt so_1_þf_gm_nh NP-OBJ pfn_et_hk_p3_þf /NP-OBJ "
+        "/VP PP fs_ef NP no_ef_et_hk st no_ef_et_hk ao /NP /PP "
+        "S-ADV-TEMP ao st IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ VP-SEQ "
+        "VP so_0_et_fh_mm_nt_p3 /VP PP fs_þgf NP no_et_hk_þgf /NP /PP "
+        "/VP-SEQ /IP /S-ADV-TEMP /VP-SEQ /IP /S-MAIN p /P"
     )
 
 
