@@ -196,7 +196,7 @@ class _Paragraph:
     def sentences(self):
         """ Yield the sentences within the paragraph, nicely wrapped """
         for _, sent in self._p:
-            yield _Sentence(self._job, sent)
+            yield self._job._create_sentence(sent)
 
     def __iter__(self):
         """ Allow easy iteration of sentences within this paragraph """
@@ -211,6 +211,8 @@ class _Job:
 
     def __init__(self, reynir, tokens, parse):
         self._r = reynir
+        self._parser = self._r.parser
+        self._reducer = self._r.reducer
         self._tokens = tokens
         self._parse_time = 0.0
         self._parse = parse
@@ -235,6 +237,10 @@ class _Job:
             self._total_tokens += slen
         # Accumulate the time spent on parsing
         self._parse_time += parse_time
+
+    def _create_sentence(self, s):
+        """ Create a fresh _Sentence object """
+        return self._r.create_sentence(self, s)
 
     @property
     def parse_immediately(self):
@@ -282,12 +288,12 @@ class _Job:
     @property
     def parser(self):
         """ The job's associated parser object """
-        return self._r.parser
+        return self._parser
 
     @property
     def reducer(self):
         """ The job's associated reducer object """
-        return self._r.reducer
+        return self._reducer
 
     @property
     def num_tokens(self):
@@ -366,25 +372,33 @@ class Reynir:
     _lock = Lock()
 
     def __init__(self):
-        """ Initialize a singleton instance of the parser and the reducer.
-            Both classes are re-entrant and thread safe. """
-        with Reynir._lock:
-            if Reynir._parser is None:
-                Reynir._parser = Fast_Parser()
-                Reynir._reducer = Reducer(Reynir._parser.grammar)
+        pass
 
     def tokenize(self, text):
-        """ Call the tokenizer (overridable in child classes) """
+        """ Call the tokenizer (overridable in derived classes) """
         return bin_tokenize(text)
+
+    def create_sentence(self, job, s):
+        """ Override this in derived classes to modify how sentences
+            are created or postprocessed """
+        return _Sentence(job, s)
 
     @property
     def parser(self):
         """ Return the parser instance to be used """
-        return Reynir._parser
+        with self._lock:
+            if Reynir._parser is None:
+                # Initialize a singleton instance of the parser and the reducer.
+                # Both classes are re-entrant and thread safe.
+                Reynir._parser = Fast_Parser()
+                Reynir._reducer = Reducer(Reynir._parser.grammar)
+            return Reynir._parser
 
     @property
     def reducer(self):
         """ Return the reducer instance to be used """
+        # Should always retrieve the parser attribute first
+        assert Reynir._reducer is not None
         return Reynir._reducer
 
     def submit(self, text, parse=False):
