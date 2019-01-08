@@ -95,6 +95,8 @@ import re
 from pprint import pformat
 from itertools import chain
 
+from tokenizer import correct_spaces
+
 from .cache import cached_property
 from .settings import StaticPhrases
 from .binparser import BIN_Token, augment_terminal, canonicalize_token
@@ -609,6 +611,11 @@ class SimpleTree:
         t = self.terminal
         return "" if t is None else t.split("_")[0]
 
+    @property
+    def index(self):
+        """ Return the associated token index, if this is a terminal, otherwise None """
+        return self._head.get("ix") if self.is_terminal else None
+    
     @cached_property
     def sentences(self):
         """ A list of the contained sentences """
@@ -1246,6 +1253,16 @@ class SimpleTree:
             return self._text
         # Concatenate the text from the children
         return " ".join([ch.text for ch in self.children if ch.text])
+
+    @cached_property
+    def tidy_text(self):
+        """ Return the text contained within this subtree
+            after correcting its spacing """
+        if self.is_terminal:
+            # Terminal node: return own text
+            return self._text
+        # Correct the spaced text coming from the self.text attribute
+        return correct_spaces(self.text)
 
     def _np_form(self, prop_func):
         """ Return a nominative form of the noun phrase (or noun/adjective terminal)
@@ -1945,6 +1962,7 @@ class Simplifier(ParseForestNavigator):
         """ At terminal node, matching a token """
         meaning = node.token.match_with_meaning(node.terminal)
         d = describe_token(
+            node.token.index,
             self._tokens[node.token.index],
             node.terminal,
             None if isinstance(meaning, bool) else meaning,

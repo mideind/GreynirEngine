@@ -38,7 +38,13 @@ from .reducer import Reducer
 from .cache import cached_property
 from .matcher import Simplifier
 
-Terminal = namedtuple("Terminal", ("text", "lemma", "category", "variants"))
+
+# The Sentence.terminals attribute returns a list of Terminal objects
+
+Terminal = namedtuple(
+    "Terminal",
+    ("text", "lemma", "category", "variants", "index")
+)
 
 
 class _Sentence:
@@ -157,13 +163,22 @@ class _Sentence:
             # Must parse the sentence first, without errors
             return None
         if self._terminals is not None:
+            # Already calculated and cached
             return self._terminals
+        # Generate the terminal list from the parse tree
         self._terminals = [
-            Terminal(d.text, d.lemma, d.tcat, d.all_variants)
-            for d in self.tree.descendants
-            if d.is_terminal
+            Terminal(d.text, d.lemma, d.tcat, d.all_variants, d.index)
+            for d in self.terminal_nodes
         ]
         return self._terminals
+
+    @cached_property
+    def terminal_nodes(self):
+        """ Return a list of the terminal nodes within the parse tree
+            for this sentence """
+        if self.tree is None:
+            return None
+        return [d for d in self.tree.descendants if d.is_terminal]
 
     @property
     def lemmas(self):
