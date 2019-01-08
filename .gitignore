@@ -32,6 +32,8 @@ doc/_build/
 
 # Various resource files
 src/reynir/resources/*.csv
+!src/reynir/resources/ord.auka.csv
+!src/reynir/resources/systematic_additions.csv
 
 # Scratch work files
 *.bin
