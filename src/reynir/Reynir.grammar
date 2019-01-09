@@ -97,6 +97,7 @@
 # Case (nom, acc, dat, poss) variant
 /fall = nf þf þgf ef
 /aukafall = þf þgf ef # All cases except nominative
+/aukafall2 = þf þgf ef
 /afall = nf þf þgf ef # Second case (andlagsfall) for dual argument verbs
 /sfall = sþf sþgf sef # Adjective subject case
 
@@ -907,11 +908,11 @@ SetningAukafall →
         NlBeintAndlag_nf/tala/pers AtvFsAuka?
 
     # Mér [algjörlega] blöskraði [af öllu hjarta] vitleysan (í Páli), Mig þraut örendið
-    | NlFrumlag/aukafall Atviksliður? so_subj_op/tala/aukafall
+    | NlFrumlag/aukafall Atviksliður? so_subj_op/aukafall
         FsRunaEftirSögn? NlBeintAndlag_nf_þf/tala AtvFsAuka?
 
     # Þann auð ber okkur að nýta (til góðra verka)
-    | NlBeintAndlag/aukafall so_subj_op/fall NlFrumlag/fall AtvFs? nhm So_1_nh/aukafall FsAtv?
+    | NlBeintAndlag/aukafall2 so_subj_op/aukafall NlFrumlag/aukafall AtvFs? nhm So_1_nh/aukafall2 FsAtv?
 
     # Öfug orðaröð: 'Eignarrétti fylgja [í auknum mæli] skyldur' (í stað 'Skyldur fylgja eignarrétti')
     # 'Þetta skrifar Bjarni á Facebook-síðu sinni og bendir [galvaskur] á frammistöðu stjórnarinnar'

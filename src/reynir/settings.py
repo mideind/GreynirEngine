@@ -342,10 +342,11 @@ class VerbSubjects:
             raise ConfigError("Unknown error type in $error pragma: '{0}'".format(errkind))
 
     @staticmethod
-    def is_impersonal(verb):
-        """ Returns True if the given verb is impersonal, i.e. if it appears
-            with an $error() pragma in the subject = nf section of verb_subjects """
-        return "nf" in VerbSubjects.VERBS_ERRORS.get(verb, dict())
+    def is_strictly_impersonal(verb):
+        """ Returns True if the given verb is only impersonal, i.e. if it appears
+            with an $error() pragma in the subject = nf section of verb_subjects
+            and cannot be used with a nominative subject: ?'ég dreymdi þig' """
+        return "nf" in VerbSubjects.VERBS_ERRORS.get(verb, set())
 
 
 class Prepositions:

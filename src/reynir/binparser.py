@@ -534,10 +534,15 @@ class BIN_Token(Token):
         return verb if verb.endswith("st") else verb + "st"
 
     @staticmethod
-    def verb_is_impersonal(verb):
+    def verb_is_strictly_impersonal(verb):
         """ Return True if the given verb is strictly impersonal,
             i.e. never appears with a nominative subject """
-        return VerbSubjects.is_impersonal(verb)
+        return VerbSubjects.is_strictly_impersonal(verb)
+
+    @staticmethod
+    def verb_cannot_be_impersonal(verb, form):
+        """ Return True if this verb cannot match an so_xxx_op terminal """
+        return "OP" not in form
 
     def verb_subject_matches(self, verb, subj):
         """ Returns True if the given subject type/case is allowed for this verb """
@@ -588,13 +593,14 @@ class BIN_Token(Token):
                 # For regular subj, we don't allow supine (sagnbót)
                 # ('langað', 'þótt')
                 return False
-            if terminal.has_variant("op") and "OP" not in form:
+            if terminal.has_variant("op") and self.verb_cannot_be_impersonal(verb, form):
+                # This can't work, as the verb can't be impersonal
                 return False
             # Make sure that the subject case (last variant) matches the terminal
             return self.verb_subject_matches(verb, terminal.variant(-1))
 
         # Not a _subj terminal: no match of strictly impersonal verbs
-        if self.verb_is_impersonal(verb):
+        if self.verb_is_strictly_impersonal(verb):
             return False
 
         if terminal.is_singular and "FT" in form:

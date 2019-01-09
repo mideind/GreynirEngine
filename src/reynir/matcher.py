@@ -95,6 +95,8 @@ import re
 from pprint import pformat
 from itertools import chain
 
+from tokenizer import correct_spaces
+
 from .cache import cached_property
 from .settings import StaticPhrases
 from .binparser import BIN_Token, augment_terminal, canonicalize_token
@@ -141,6 +143,7 @@ _DEFAULT_NT_MAP = {
     "Skýringarsetning": "S-THT",
     "Spurnaraukasetning": "S-QUE",
     "Spurnarsetning": "S-QUE",
+    "Fyrirsögn": "S-HEADING",
     "BeygingarliðurÁnF": "IP",
     "BeygingarliðurÁnUmröðunar": "IP",
     "BeygingarliðurMeðUmröðun": "IP",
@@ -165,7 +168,7 @@ _DEFAULT_NT_MAP = {
     # "SagnFramhald" : "VP",
     "NhLiðir": "VP",
     "SagnliðurÁnF": "VP",
-    "ÖfugurSagnliður": "VP",
+    "ÖfugurSagnliður": "VP-REV",
     "SagnliðurVh": "VP",
     "SögnLhNt": "VP-PP",  # Present participle, lýsingarháttur nútíðar
     "SagnHluti": "VP-SEQ",
@@ -202,6 +205,7 @@ _DEFAULT_ID_MAP = {
     "P": dict(name="Málsgrein"),
     "S-MAIN": dict(name="Setning", overrides="S", subject_to={"S-MAIN"}),
     "S": dict(name="Setning", subject_to={"S", "S-EXPLAIN", "S-REF", "IP"}),
+    "S-HEADING": dict(name="Fyrirsögn", overrides="S"),
     # Condition
     "S-COND": dict(name="Skilyrði", overrides="S"),
     # Consequence
@@ -222,6 +226,7 @@ _DEFAULT_ID_MAP = {
     "S-THT": dict(name="Skýringarsetning"),  # Complement clause
     "S-QUE": dict(name="Spurnarsetning"),  # Question clause
     "VP-SEQ": dict(name="Sagnliður"),
+    "VP-REV": dict(name="Öfugur sagnliður"),
     "VP": dict(name="Sögn", overrides="VP-SEQ", subject_to={"VP"}),
     "VP-PP": dict(name="Sögn", overrides="PP"),
     "NP": dict(name="Nafnliður", subject_to={"NP-SUBJ", "NP-OBJ", "NP-IOBJ", "NP-PRD"}),
@@ -426,14 +431,17 @@ class SimpleTree:
 
     _pattern_cache = dict()
 
-    def __init__(self, pgs, stats=None, register=None, parent=None):
-        # Keep a link to the original parent SimpleTree
-        self._parent = parent
-        if parent is not None:
+    def __init__(self, pgs, stats=None, register=None, parent=None, root=None):
+        # Keep a link to the original root SimpleTree
+        self._root = root
+        if root is not None:
             assert stats is None
             assert register is None
-        self._stats = stats
-        self._register = register
+        else:
+            # Only store stats and register in root nodes
+            self._stats = stats
+            self._register = register
+        self._parent = parent
         # Flatten the paragraphs into a sentence array
         sents = []
         if pgs:
@@ -464,17 +472,24 @@ class SimpleTree:
         )
 
     @property
+    def root(self):
+        """ The original topmost root of this subtree """
+        return self if self._root is None else self._root
+
+    @property
     def parent(self):
-        """ The original topmost parent of this subtree """
-        return self if self._parent is None else self._parent
+        """ Return the parent of this subtree, or None if it is a root """
+        return self._parent
 
     @property
     def stats(self):
-        return self.parent._stats
+        """ Return the parse statistics, if any, for the root of this subtree """
+        return self.root._stats
 
     @property
     def register(self):
-        return self.parent._register
+        """ Return the name register, if any, for the root of this subtree """
+        return self.root._register
 
     @property
     def tag(self):
@@ -554,6 +569,15 @@ class SimpleTree:
             raise ValueError("Argument to match_tag() must be a string or a list")
         return tags[0 : len(item)] == item
 
+    def enclosing_tag(self, item):
+        """ Return the closest parent node having a tag
+            that matches the given item, if such a node exists,
+            or None otherwise """
+        p = self.parent
+        while p is not None and not p.match_tag(item):
+            p = p.parent
+        return p
+
     @property
     def terminal(self):
         """ The terminal matched by this subtree """
@@ -609,10 +633,18 @@ class SimpleTree:
         t = self.terminal
         return "" if t is None else t.split("_")[0]
 
+    @property
+    def index(self):
+        """ Return the associated token index, if this is a terminal, otherwise None """
+        return self._head.get("ix") if self.is_terminal else None
+    
     @cached_property
     def sentences(self):
         """ A list of the contained sentences """
-        return [SimpleTree([[sent]], parent=self.parent) for sent in self._sents]
+        return [
+            SimpleTree([[sent]], root=self.root, parent=self)
+            for sent in self._sents
+        ]
 
     @property
     def has_children(self):
@@ -633,7 +665,7 @@ class SimpleTree:
         elif self._children:
             # Proper children: yield'em
             for child in self._children:
-                yield SimpleTree([[child]], parent=self.parent)
+                yield SimpleTree([[child]], root=self.root, parent=self)
 
     @property
     def children(self):
@@ -952,9 +984,9 @@ class SimpleTree:
         if self._children_cache is not None:
             return self._children_cache[index]
         if self._len > 1:
-            return SimpleTree([[self._sents[index]]], parent=self.parent)
+            return SimpleTree([[self._sents[index]]], root=self.root, parent=self)
         if self._children:
-            return SimpleTree([[self._children[index]]], parent=self.parent)
+            return SimpleTree([[self._children[index]]], root=self.root, parent=self)
         raise IndexError("Subtree has no children")
 
     def __len__(self):
@@ -1247,6 +1279,16 @@ class SimpleTree:
         # Concatenate the text from the children
         return " ".join([ch.text for ch in self.children if ch.text])
 
+    @cached_property
+    def tidy_text(self):
+        """ Return the text contained within this subtree
+            after correcting its spacing """
+        if self.is_terminal:
+            # Terminal node: return own text
+            return self._text
+        # Correct the spaced text coming from the self.text attribute
+        return correct_spaces(self.text)
+
     def _np_form(self, prop_func):
         """ Return a nominative form of the noun phrase (or noun/adjective terminal)
             contained within this subtree. Prop is a property accessor that returns
@@ -1361,9 +1403,8 @@ class SimpleTree:
                 t.extend(ch._list(filter_func))
             return t
         # Terminal node: return own lemma if it matches the given category
-        if filter_func(self):
-            lemma = self._lemma
-            return [lemma] if lemma else []
+        if self._lemma and filter_func(self):
+            return [self._lemma]
         return []
 
     @property
@@ -1374,6 +1415,25 @@ class SimpleTree:
         for ch in self.descendants:
             if ch.is_terminal:
                 yield ch
+
+    @property
+    def span(self):
+        """ Returns a (start, end) tuple of token indices pointing
+            to the first and the last token spanned by this subtree """
+        ix = self.index
+        if ix is not None:
+            # This is a terminal: return its token index
+            return (ix, ix)
+        # Nonterminal: navigate its leaves and retrieve token indices
+        start = end = None
+        for t in self.leaves:
+            ix = t.index
+            if start is None or ix < start:
+                start = ix
+            if end is None or ix > end:
+                end = ix
+        assert start is not None and end is not None
+        return (start, end)
 
     @property
     def nouns(self):
@@ -1906,6 +1966,8 @@ class SimpleTreeBuilder:
 
     @property
     def tree(self):
+        """ Create and return a SimpleTree instance rooted with the
+            result of this builder """
         return SimpleTree([[self.result]])
 
 
@@ -1945,6 +2007,7 @@ class Simplifier(ParseForestNavigator):
         """ At terminal node, matching a token """
         meaning = node.token.match_with_meaning(node.terminal)
         d = describe_token(
+            node.token.index,
             self._tokens[node.token.index],
             node.terminal,
             None if isinstance(meaning, bool) else meaning,

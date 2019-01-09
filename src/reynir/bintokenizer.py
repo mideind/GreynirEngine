@@ -1373,10 +1373,11 @@ def choose_full_name(val, case, gender):
     return fn[0], fn[1] if gender is None else gender
 
 
-def describe_token(t, terminal, meaning):
+def describe_token(index, t, terminal, meaning):
     """ Return a compact dictionary describing the token t,
+        at the given index within its sentence,
         which matches the given terminal with the given meaning """
-    d = dict(x=t.txt)
+    d = dict(x=t.txt, ix=index)
     if terminal is not None:
         # There is a token-terminal match
         if t.kind == TOK.PUNCTUATION:
