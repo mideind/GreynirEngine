@@ -30,7 +30,7 @@ import time
 from threading import Lock
 from collections import namedtuple
 
-from tokenizer import correct_spaces, paragraphs
+from tokenizer import correct_spaces, paragraphs, mark_paragraphs
 
 from .bintokenizer import tokenize as bin_tokenize
 from .fastparser import Fast_Parser, ParseError
@@ -80,11 +80,11 @@ class _Sentence:
         job = self._job
         num = 0
         score = 0
+        tree = None
         try:
             # Invoke the parser on the sentence tokens
             tree, num, score = job.parse(self._s)
         except ParseError as e:
-            tree = None
             self._err_index = self._len - 1 if e.token_index is None else e.token_index
         self._tree = tree
         if tree is None:
@@ -416,7 +416,7 @@ class Reynir:
         assert Reynir._reducer is not None
         return Reynir._reducer
 
-    def submit(self, text, parse=False):
+    def submit(self, text, parse=False, *, split_paragraphs=False):
         """ Submit a text to the tokenizer and parser, yielding a job object.
             The paragraphs and sentences of the text can then be iterated
             through via the job object. If parse is set to True, the
@@ -424,6 +424,10 @@ class Reynir:
             Otherwise, they need to be explicitly parsed by calling
             sent.parse(). This is a more incremental, asynchronous
             approach than Reynir.parse(). """
+        if split_paragraphs:
+            # Original text consists of paragraphs separated by newlines:
+            # insert paragraph separators before tokenization
+            text = mark_paragraphs(text)
         tokens = self.tokenize(text)
         return _Job(self, tokens, parse=parse)
 
@@ -432,10 +436,14 @@ class Reynir:
             a summary of all contained sentences. """
         tokens = self.tokenize(text)
         job = _Job(self, tokens, parse=True)
+        # Iterating through the sentences in the job causes
+        # them to be parsed and their statistics collected
+        sentences = [sent for sent in job]
         return dict(
-            sentences=[sent for sent in job],
+            sentences=sentences,
             num_sentences=job.num_sentences,
             num_parsed=job.num_parsed,
+            num_tokens=job.num_tokens,
             ambiguity=job.ambiguity,
             parse_time=job.parse_time,
         )
