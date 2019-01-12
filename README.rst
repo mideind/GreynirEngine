@@ -12,7 +12,7 @@ Overview
 ********
 
 **Reynir** is a Python 3.x package for
-**parsing Icelandic text into sentence trees**.
+**parsing Icelandic text into sentence trees** (i.e. full constituency parse trees).
 The trees can then be used to extract information from the text, for instance
 about people, titles, entities, facts, actions and opinions.
 

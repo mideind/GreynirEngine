@@ -168,7 +168,7 @@ LokatáknEðaKomma → Lokatákn | ','
 
 Spurningarmerki → '?'
 
-# Til að gera spurnarsetningum hátt undir höfði.
+# Til að gera spurnarsetningum hátt undir höfði
 $score(-12) Spurningarmerki
 
 
@@ -1100,6 +1100,8 @@ $tag(begin_prep_scope) EinSetningÁnF/tala/pers/kyn # Nýtt undirtré fyrir teng
 
 ÖfugtFramhald/tala/pers/kyn →
     KommaOgEðaEn ÖfugurSagnliður/tala/pers/kyn LoTengtSögn_nf/tala/kyn? SagnInnskotAtv?
+
+$score(-3) ÖfugtFramhald/tala/pers/kyn
 
 FramhaldÁnF/tala/pers/kyn →
     FramhaldÁnFMeðKommu/tala/pers/kyn
@@ -3294,6 +3296,7 @@ Fyrirbæri/fall/kyn →
     Skst? no_et/fall/kyn        # Microsoft-hugbúnaðarrisinn, Nikon myndavél
     | FyrirbæriMeðGreini/fall/kyn
     | Úrslit/fall/kyn
+    | FyrirbæriMeðEignarfornafni/fall/kyn
 
 # Raðnúmer
 
@@ -3348,6 +3351,17 @@ FyrirbæriMeðGreini/fall/kyn →
 
 FyrirbæriMeðGreini/aukafall/kyn →
     ÓsamstættFall/aukafall/kyn
+
+# Hún skaust fram á sjónarsviðið með vefsíðu sinni Gulir miðar
+# (ef kommur eru notaðar þá er liðurinn innan þeirra þáttaður sem NlSkýring)
+FyrirbæriMeðEignarfornafni/fall/kyn →
+    Skst? no_et/fall/kyn 'sinn:fn'_et/fall/kyn EignarfornafnsBotn/fall
+
+EignarfornafnsBotn/fall →
+    SérnafnEðaManneskja
+    | SérnafnEðaManneskja/fall
+
+$score(+2) FyrirbæriMeðEignarfornafni/fall/kyn
 
 # !!! ATH: Ef þessu er breytt gæti þurft að breyta processors/entities.py
 SamstættFall/fall/kyn →
