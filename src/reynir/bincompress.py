@@ -83,6 +83,8 @@ UINT32 = struct.Struct("<I")
 # A dictionary of BÍN errata, loaded from BinErrata.conf if
 # bincompress.py is invoked as a main program
 _BIN_ERRATA = None
+# A set of BÍN deletions, loaded from BinErrata.conf
+_BIN_DELETIONS = None
 
 
 class _Node:
@@ -358,6 +360,13 @@ class BIN_Compressor:
                         continue
                     t = line.split(";")
                     stem, wid, ordfl, fl, form, meaning = t
+                    # Skip this if present in _BIN_DELETIONS
+                    if (stem, ordfl, fl) in _BIN_DELETIONS:
+                        print("Skipping {stem} {wid} {ordfl} {fl} {form} {meaning}"
+                            .format(stem=stem, wid=wid, ordfl=ordfl, fl=fl,
+                                form=form, meaning=meaning)
+                        )
+                        continue
                     # Apply a fix if we have one for this
                     # particular (stem, ordfl) combination
                     fl = _BIN_ERRATA.get((stem, ordfl), fl)
@@ -878,10 +887,11 @@ if __name__ == "__main__":
     # When run as a main program, generate a compressed binary file
     print("Welcome to the Reynir compressed vocabulary file generator")
 
-    # Read BÍN errata from BinErrata.conf
-    from settings import Settings, BinErrata
+    # Read BÍN errata and deletions from BinErrata.conf
+    from settings import Settings, BinErrata, BinDeletions
     Settings.read(os.path.join(_PATH, "config", "BinErrata.conf"))
     _BIN_ERRATA = BinErrata.DICT
+    _BIN_DELETIONS = BinDeletions.SET
 
     b = BIN_Compressor()
     b.read(

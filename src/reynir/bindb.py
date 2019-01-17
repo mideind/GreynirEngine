@@ -36,12 +36,12 @@ from functools import lru_cache
 from collections import namedtuple
 
 if __package__:
-    from .settings import AdjectiveTemplate, Meanings, StemPreferences, StaticPhrases
+    from .settings import AdjectiveTemplate, StemPreferences, StaticPhrases
     from .cache import LFU_Cache
     from .dawgdictionary import Wordbase
     from .bincompress import BIN_Compressed
 else:
-    from settings import AdjectiveTemplate, Meanings, StemPreferences, StaticPhrases
+    from settings import AdjectiveTemplate, StemPreferences, StaticPhrases
     from cache import LFU_Cache
     from dawgdictionary import Wordbase
     from bincompress import BIN_Compressed
@@ -120,7 +120,7 @@ class BIN_Db:
         """ Initialize BIN database wrapper instance """
         # Cache descriptors for the lookup functions
         self._meanings_func = lambda key: (
-            self._meanings_cache.lookup(key, getattr(self, "meanings"))
+            self._meanings_cache.lookup(key, self.meanings)
         )
         # Compressed BÍN wrapper
         # Throws IOError if the compressed file doesn't exist
@@ -149,19 +149,37 @@ class BIN_Db:
         # Otherwise, map the query results to a BIN_Meaning tuple
         return list(map(BIN_Meaning._make, g)) if g else g
 
+    @staticmethod
+    def _priority(m):
+        """ Return a relative priority for the word meaning tuple
+            in m. A lower number means more priority, a higher number
+            means less priority. """
+        # Order "VH" verbs (viðtengingarháttur) after other forms
+        # Also order past tense ("ÞT") after present tense
+        # plural after singular and 2p after 3p
+        if m.ordfl != "so":
+            # Prioritize forms with non-NULL utg
+            return 1 if m.utg is None else 0
+        prio = 4 if "VH" in m.beyging else 0
+        prio += 2 if "ÞT" in m.beyging else 0
+        prio += 1 if "FT" in m.beyging else 0
+        prio += 1 if "2P" in m.beyging else 0
+        return prio
+
     def meanings(self, w):
-        """ Return a list of all possible grammatical meanings of the given word """
+        """ Return a list of all possible grammatical meanings of the given word.
+            Note that this is a low-level lookup in BÍN, or rather in ord.compressed,
+            meaning that no upper/lower case conversion is applied, no abbreviations
+            are recognized, static phrases are not looked up, etc.
+            Also note that this is not a cached function. """
         m = self._meanings(w)
         if m is None:
             return None
-        if w in Meanings.DICT:
-            # There are additional word meanings in the Meanings dictionary,
-            # coming from the settings file: append them
-            m.extend(map(BIN_Meaning._make, Meanings.DICT[w]))
-        if w in StemPreferences.DICT:
+        stem_prefs = StemPreferences.DICT.get(w)
+        if stem_prefs is not None:
             # We have a preferred stem for this word form:
             # cut off meanings based on other stems
-            worse, better = StemPreferences.DICT[w]
+            worse, better = stem_prefs
             m = [mm for mm in m if mm.stofn not in worse]
             # The better (preferred) stem should still be there somewhere
             # assert any(mm.stofn in better for mm in m)
@@ -169,21 +187,7 @@ class BIN_Db:
         # Order the meanings by priority, so that the most
         # common/likely ones are first in the list and thus
         # matched more readily than the less common ones
-
-        def priority(m):
-            # Order "VH" verbs (viðtengingarháttur) after other forms
-            # Also order past tense ("ÞT") after present tense
-            # plural after singular and 2p after 3p
-            if m.ordfl != "so":
-                # Prioritize forms with non-NULL utg
-                return 1 if m.utg is None else 0
-            prio = 4 if "VH" in m.beyging else 0
-            prio += 2 if "ÞT" in m.beyging else 0
-            prio += 1 if "FT" in m.beyging else 0
-            prio += 1 if "2P" in m.beyging else 0
-            return prio
-
-        m.sort(key=priority)
+        m.sort(key=self._priority)
         return m
 
     def forms(self, w):
@@ -255,12 +259,15 @@ class BIN_Db:
 
     @staticmethod
     def open_cats(mlist):
-        """ Return a list of meanings filtered down to open (extensible) word categories """
+        """ Return a list of meanings filtered down to
+            open (extensible) word categories """
         return [mm for mm in mlist if mm.ordfl in BIN_Db._OPEN_CATS]
 
     @staticmethod
     def _lookup(w, at_sentence_start, auto_uppercase, lookup):
-        """ Lookup a simple or compound word in the database and return its meaning(s) """
+        """ Lookup a simple or compound word in the database and
+            return its meaning(s). This function checks for abbreviations,
+            upper/lower case variations, etc. """
 
         # Start with a straightforward lookup of the word
 

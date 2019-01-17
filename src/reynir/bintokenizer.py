@@ -40,7 +40,7 @@ from .bindb import BIN_Db, BIN_Meaning
 
 
 # Person names that are not recognized at the start of sentences
-NOT_NAME_AT_SENTENCE_START = {"Annar", "Kalla", "Sanna"}
+NOT_NAME_AT_SENTENCE_START = {"Annar", "Annars", "Kalla", "Sanna", "Gamli", "Gamla"}
 
 # Set of all cases (nominative, accusative, dative, possessive)
 ALL_CASES = frozenset(["nf", "þf", "þgf", "ef"])
@@ -532,7 +532,8 @@ def parse_phrases_1(db, token_ctor, token_stream):
                             next_token = next(token_stream)
                             handled = True
                         else:
-                            # Check for Vestur-Þýskaland, Suður-Múlasýsla (which are in BÍN in their entirety)
+                            # Check for Vestur-Þýskaland, Suður-Múlasýsla
+                            # (which are in BÍN in their entirety)
                             m = db.meanings(composite)
                             if m:
                                 # Found composite in BÍN: return it as a single token

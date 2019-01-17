@@ -166,15 +166,6 @@ class LineReader:
             raise c
 
 
-class Meanings:
-
-    """ Wrapper around list of additional word meanings, initialized from the config file """
-
-    # Dictionary of additional words and their meanings
-    DICT = defaultdict(list)  # Keyed by word form
-    ROOT = defaultdict(list)  # Keyed by word root (stem)
-
-
 class VerbObjects:
 
     """ Wrapper around dictionary of verbs and their objects,
@@ -369,19 +360,6 @@ class Prepositions:
         Prepositions.PP[prep].add(case)
         if nh:
             Prepositions.PP_NH.add(prep)
-        # Some compound prepositions may not be present in ord.compressed
-        # or in the Meanings dictionary: hack to make sure that they are
-        # recognized as prepositions
-        if prep not in Meanings.DICT and " " not in prep:
-            if __package__:
-                from .bindb import BIN_Db
-            else:
-                from bindb import BIN_Db
-
-            with BIN_Db.get_db() as db:
-                m = db.meanings(prep)
-            if not m or not any(mm.ordfl == "fs" for mm in m):
-                Meanings.DICT[prep] = [(prep, 0, "fs", "ob", prep, "-")]
 
     @staticmethod
     def add_error(prep, case, corr):
@@ -804,6 +782,19 @@ class BinErrata:
         BinErrata.DICT[(stem, ordfl)] = fl
 
 
+class BinDeletions:
+
+    """ Wrapper around BÍN deletions, initialized from the config file """
+
+    SET = set()
+
+    @staticmethod
+    def add(stem, ordfl, fl):
+        """ Add a BÍN fix. Used by bincompress.py when generating a new
+            compressed vocabulary file. """
+        BinDeletions.SET.add((stem, ordfl, fl))
+
+
 # Global settings
 
 
@@ -932,13 +923,15 @@ class Settings:
     def _handle_abbreviations(s):
         """ Handle abbreviations in the settings section """
         # Not required in the ReynirPackage module
-        pass
+        # and should not occur in its settings files
+        assert False
 
     @staticmethod
     def _handle_meanings(s):
         """ Handle additional word meanings in the settings section """
         # Not required in the ReynirPackage module
-        pass
+        # and should not occur in its settings files
+        assert False
 
     @staticmethod
     def _handle_verb_objects(s):
@@ -1213,10 +1206,21 @@ class Settings:
         a = s.split()
         if len(a) != 3:
             raise ConfigError("Expected 'stem ordfl fl' fields in bin_errata section")
-        stem, ordfl, fl = a[:3]
+        stem, ordfl, fl = a
         if not ordfl.islower() or not fl.islower():
             raise ConfigError("Expected lowercase ordfl and fl fields in bin_errata section")
         BinErrata.add(stem, ordfl, fl)
+
+    @staticmethod
+    def _handle_bin_deletions(s):
+        """ Handle deletions from BÍN, given as stem/ordfl/fl triples """
+        a = s.split()
+        if len(a) != 3:
+            raise ConfigError("Expected 'stem ordfl fl' fields in bin_deletions section")
+        stem, ordfl, fl = a
+        if not ordfl.islower() or not fl.islower():
+            raise ConfigError("Expected lowercase ordfl and fl fields in bin_deletions section")
+        BinDeletions.add(stem, ordfl, fl)
 
     @staticmethod
     def _handle_ambiguous_phrases(s):
@@ -1357,6 +1361,7 @@ class Settings:
                 "adjective_predicates": Settings._handle_adjective_predicates,
                 "morphemes": Settings._handle_morphemes,
                 "bin_errata": Settings._handle_bin_errata,
+                "bin_deletions": Settings._handle_bin_deletions,
             }
             handler = None  # Current section handler
 

@@ -1387,6 +1387,19 @@ def test_subj_op():
     assert s.tree is None
 
 
+def test_names():
+    s = r.parse_single("Sýningarnar voru í Gamla bíói á þriðjudagskvöldum.")
+    assert s.tree is not None
+    assert s.tree.persons == []
+    assert s.tree.nouns == ["sýning", "bíó", "þriðjudagskvöld"]
+
+
+def test_prepositions():
+    s = r.parse_single("Ég fór niðrá bryggjuna.")
+    assert s.tree is not None
+    assert s.tree.match("P >> { VP > { PP > { fs_þf } } }")
+
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -1416,4 +1429,6 @@ if __name__ == "__main__":
     test_vocabulary()
     test_adjective_predicates()
     test_subj_op()
+    test_names()
+    test_prepositions()
     test_finish()
