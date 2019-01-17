@@ -525,7 +525,7 @@ class Fast_Parser(BIN_Parser):
     """
 
     GRAMMAR_BINARY_FILE = os.path.join(_PATH, "Reynir.grammar.bin")
-    GRAMMAR_BINARY_FILE_BYTES = GRAMMAR_BINARY_FILE.encode("ascii")
+    GRAMMAR_BINARY_FILE_BYTES = GRAMMAR_BINARY_FILE.encode("utf-8")
 
     _c_grammar = None
     _c_grammar_ts = None
