@@ -174,6 +174,7 @@ _DEFAULT_NT_MAP = {
     "SagnHluti": "VP-SEQ",
     "SagnRuna": "VP-SEQ",
     "SetningSo": "VP-SEQ",
+    "FsLiður": "PP",
     "FsMeðFallstjórn": "PP",
     "LoTengtSögn": "ADJP",
     "SagnInnskot": "ADVP",

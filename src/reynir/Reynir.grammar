@@ -996,6 +996,8 @@ SetningAukafall →
 SetningAukafallForgangur →
     # Öllum er [í meginatriðum] frjálst/fyrir bestu að ákveða snarlega að flytja úr landi
     NlFrumlag_þgf HjSögnLhÞt_et_p3 FsRunaEftirSögn? LhÞtÞgfEinkunn AðLiður?
+    # Mér sýndist [eftir íhugun] að málið hefði fengið eðlilega meðferð
+    | NlFrumlag_þgf so_0_mm FsAtv? Skýringarsetning
 
 FinnstÞað/tala/kyn →
     'það:pfn'_hk_nf_et LoÞgf/tala/kyn       # Bílstjórum finnst það mörgum leiðinlegt
@@ -1070,10 +1072,12 @@ MiðmyndarBotn →
     # (Páli fyrirgefst) örugglega á morgun
     | FsAtv
 
+$score(+14) MiðmyndarBotn
+
 MiðmyndarBotnLo →
     Nl_nf/tala/pers/kyn AtvFs? HjSögnVera? LoTengtSögn_nf/tala/kyn FsAtv?
 
-$score(+4) MiðmyndarBotnLo # Gefa plús fyrir heildstætt samhengi lýsingarorðs
+$score(+2) MiðmyndarBotnLo # Gefa plús fyrir heildstætt samhengi lýsingarorðs
 
 VeraInnskot →
     HjSögnVera nhm    # vera að / geta hafa verið að / verðir að / hafa orðið að...    # ERROR
@@ -1349,12 +1353,28 @@ SögnErLo/tala/pers/kyn →
     # (Jón er orðinn) duglegur / tólf ára
     HjSögnLhÞt/tala/pers SögnErLoBotn/tala/kyn
 
+# Hvetja til 'er/var/hefur verið...' + lýsingarorð í nefnifalli og sterkri beygingu
+$score(+10) SögnErLo/tala/pers/kyn
+
 SögnErLoBotn/tala/kyn →
     LoTengtSögn_nf/tala/kyn AðLiður?            # (Guðrún er) snögg [að svara fyrir sig] / (Það er) torsótt [að Siggi fari einn í skólann]
     | eo* Aldur 'gamall:lo'_sb_nf/tala/kyn?     # (Páll var) [rúmlega] tíu ára [gamall]
+    | SögnLhÞt_nf/tala/kyn NlBeintAndlag_nf/tala/pers # (Jón hefur verið) ráðinn [sem] bæjarstjóri Ísafjarðarbæjar
 
-# Hvetja til 'er/var/hefur verið...' + lýsingarorð í nefnifalli og sterkri beygingu
-$score(+10) SögnErLo/tala/pers/kyn
+SögnLhÞt_nf/tala/kyn →
+    'kalla:so'_lhþt_sb_nf/tala/kyn                  # kallaður
+    | 'nefna:so'_lhþt_sb_nf/tala/kyn "sem:ao"?      # nefndur
+    | 'tilnefna:so'_lhþt_sb_nf/tala/kyn "sem:ao"?   # tilnefndur
+    | 'útnefna:so'_lhþt_sb_nf/tala/kyn "sem:ao"?    # útnefndur
+    | 'skíra:so'_lhþt_sb_nf/tala/kyn                # skírður
+    | 'setja:so'_lhþt_sb_nf/tala/kyn "sem:ao"?      # settur
+    | 'skipa:so'_lhþt_sb_nf/tala/kyn "sem:ao"?      # skipaður
+    | 'ráða:so'_lhþt_sb_nf/tala/kyn "sem:ao"?       # ráðinn
+    | 'velja:so'_lhþt_sb_nf/tala/kyn "sem:ao"?      # valinn
+    | 'álíta:so'_lhþt_sb_nf/tala/kyn                # álitinn
+    | 'telja:so'_lhþt_sb_nf/tala/kyn                # talinn
+
+$score(+10) SögnLhÞt_nf/tala/kyn
 
 LhÞtÞgfBotn → 'fyrir:fs'_þgf 'góður:lo'_esb_hk_þgf_et  # Það sem er börnum fyrir bestu
 
@@ -2369,6 +2389,8 @@ NhFylling →
 NhFyllingAtv →
     NhFylling SagnInnskot?
 
+$score(+2) NhFyllingAtv
+
 NhFyllingÁnAtv →
     NhLiðir SagnInnskot? # Getur ekki byrjað á FsAtv
 
@@ -3090,7 +3112,7 @@ NlStak_et_p3_ef_hk → Árið_ef
     | 'rekstrarár:hk'_gr_et/fall tala
     | 'skólaár:hk'_gr_et/fall tala
 
-$score(+16) Árið/fall
+$score(+6) Árið/fall
 
 NlStak_ft_p3_nf_hk → Árin_nf
 NlStak_ft_p3_þf_hk → Árin_þf
@@ -3571,7 +3593,7 @@ EfLiðurForskeytiKjarni_ft/kyn → no_ef_ft/kyn
 # Ef hægt er að nota t.d. fornafn í stað eignarfalls-forskeytis er það betra
 $score(-1) EfLiðurForskeyti
 # Eignarfalls-forskeyti sem eru ekki tölur eða fornöfn eru sjaldgæf
-$score(-4) EfLiðurForskeytiKjarni/tala/kyn
+$score(-5) EfLiðurForskeytiKjarni/tala/kyn
 
 # Leyfa 'okkar'/'ykkar' í eignarfallsforskeyti (er aðeins kynlaust pfn í BÍN)
 Fornafn_ft_ef/kyn → OkkarYkkar
@@ -3986,12 +4008,16 @@ $score(+4) LoSem/fall/tala/kyn
 # (_vb leyfir veika beygingu ásamt sterkri)
 # ('Við litum til bókfærðs hagnaðar')
 LoSemSo/fall/tala/kyn →
-    LoAtviksliður* so_lhþt/fall/tala/kyn
-    | LoAtviksliður* so_lh_nt
+    LoAtviksliður* LoSemSoBotn/fall/tala/kyn
+    # '(hvort það gæfi vísbendingu um) hina [nýlega] eyddu (tölvupósta)'
+    | 'hinn:fn'/fall/tala/kyn LoAtviksliður* so_lhþt_vb/fall/tala/kyn
+
+LoSemSoBotn/fall/tala/kyn →
+    so_lhþt/fall/tala/kyn | so_lh_nt    # bráðlega verðandi brúður
 
 $score(-16) LoSemSo/fall/tala/kyn
 
-$score(+6) LoSemLo/fall/tala/kyn  # Tilbrigði 3.1, eina sem þarf að toggla.
+$score(+6) LoSemLo/fall/tala/kyn    # Tilbrigði 3.1, eina sem þarf að toggla.
 
 # 'Ég vaknaði ekkert alltof fersk'
 # 'Atburðarásin var nokkuð skýr'
@@ -4077,6 +4103,7 @@ $score(+8) LoViðhengi/sfall
 # '(Maður) alvarlega háður eiturlyfjum (bað mig um peninga)'
 # '(Stjórnmálamaður) tengdur Framsóknarflokknum (hringdi í mig)'
 # '(Ég ræddi við) konu tengda verkefninu'
+# 'Skýrsla varðandi málið (kom út í gær)'
 LoEftirNl/tala/fall/kyn →
     StaktLoEftirNl/tala/fall/kyn
     | ',' LoLiður/tala/fall/kyn FsAtv? LokatáknEðaKomma
@@ -4382,7 +4409,11 @@ FsHvaðVarðar →
 
 $score(+4) FsHvaðVarðar
 
-FsLiður → AtviksliðurAuka? FsMeðFallstjórn # snarlega í bæinn
+FsLiður →
+    AtviksliðurOg? FsMeðFallstjórn # [síðastliðið sumar [og]] í flýti
+
+AtviksliðurOg →
+    AtviksliðurAuka+ "og:st"?
 
 # FsAtv getur verið runa af forsetningarliðum með atviksliðum inn á milli,
 # á undan og í lok - eða einungis atviksliðir.
@@ -4449,9 +4480,9 @@ $score(+18) AtvFsSaman
 # Taka sérstaklega á runu forsetningarliða sem er afmörkuð milli komma;
 # það minnkar tvíræðni
 
-FsLiðurMeðKommu →
+FsLiðirMeðKommu →
     FsLiður
-    | FsLiður KommaOgEðaEn? AtviksliðurAuka? FsLiðurMeðKommu
+    | FsLiðirMeðKommu KommaOgEðaEn? FsLiður
 
 # FsRuna er runa forsetninga og atviksliða, sem getur þó ekki
 # endað á atvikslið. Hún er því rétti kosturinn á undan
@@ -4476,11 +4507,10 @@ FsLiðurMeðKommu →
 # FsRuna getur ekki endað á atvikslið, nema innan kommu
 # 'var, líkt og í búsáhaldabyltingunni, byggð á óánægju'
 FsRuna →
-    FsInnanKommu
-    | FsLiðurMeðKommu
+    FsInnanKommu | FsLiðirMeðKommu
 
 FsInnanKommu →
-    ',' FsForskeyti? FsLiðurMeðKommu AtviksliðurAuka? LokatáknEðaKomma
+    ',' FsForskeyti? FsLiðirMeðKommu LokatáknEðaKomma
 
 $score(+4) FsInnanKommu
 
@@ -4501,9 +4531,16 @@ $tag(purge_prep) FsRunaEftirNl # Ekki senda innifaldar forsetningar upp tréð
 # Hins vegar eru til dæmis tímaliðir ekki leyfðir í AtviksliðurEinkunn
 # og verða því að vera leyfðir hér - enda rökréttara að þeir fylgi
 # sögninni fremur en andlaginu.
+# Ath: Í tilviki tímaliðar þarf FsRunaEftirSögn ekki að enda á
+# forsetningarlið.
 FsRunaEftirSögn →
-    FsRuna
-    | Tímaliður  # (Kjarninn birti) í lok janúar (úttekt á málinu)
+    FsRuna AtvTímaliður?    # (Jón ítrekaði) á Alþingi síðastliðinn vetur (beiðni sína)
+    | AtvTímaliður          # (Kjarninn birti) í lok janúar (úttekt á málinu)
+
+AtvTímaliður →
+    Atviksliður? Tímaliður  # strax síðastliðið sumar
+
+$tag(apply_length_bonus) FsRunaEftirSögn
 
 # Forskeyti sem leyfileg eru á undan forsetningarlið innan kommu
 FsForskeyti →
@@ -4845,7 +4882,7 @@ AfstæðurTími →
     | Dagspartur
     | ParturHluti_þf_et Vikudagur_ef_et             # fyrri part sunnudags / seinni helming mánudags
     | 'aðfaranótt:kvk'_et_þf AfstæðDagsetning
-    | 'aðfaranótt:kvk'_et_þf Vikudagur_ef_et
+    | 'aðfaranótt:kvk'_et_þf TímaÁkvæðisLo_ef_et_kk? Vikudagur_ef_et
     | TímaVísiNafnliðurMinni_þf_et/kyn              # sömu mínútu, sama klukkutíma
     | TímaVísiNafnliðurStærri_þf/tala/kyn           # undanfarið ár / undanfarna áratugi
     | FyrrSíðarSeinna? TímaÁkvæðisliður_þf_et/kyn 
@@ -5348,8 +5385,7 @@ FyrrSíðarSeinna →
     | 'snemma:ao'_mst # fyrr
 
 TímaÁkvæðisliður/fall/tala/kyn →
-    SáÞessi/fall/tala/kyn TímaÁkvæðisLo/fall/tala/kyn?
-    | TímaÁkvæðisLo/fall/tala/kyn
+    SáÞessi/fall/tala/kyn? TímaÁkvæðisLo/fall/tala/kyn
 
 TímaÁkvæðisLo/fall/tala/kyn →
     'næstur:lo'/fall/tala/kyn
@@ -5362,7 +5398,8 @@ TímaÁkvæðisLo/fall/tala/kyn →
     | 'undanfarinn:lo'/fall/tala/kyn
     | 'undangenginn:lo'/fall/tala/kyn
 
-SáÞessi/fall/tala/kyn → 'sá:fn'/fall/tala/kyn | 'þessi:fn'/fall/tala/kyn
+SáÞessi/fall/tala/kyn →
+    'sá:fn'/fall/tala/kyn | 'þessi:fn'/fall/tala/kyn
 
 # Lýsingarorð sem ganga á eftir dagsetningum
 NæstSíðast/fall/tala/kyn →
