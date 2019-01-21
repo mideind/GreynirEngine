@@ -1222,13 +1222,15 @@ class DefaultPipeline:
         # This sequence of phases can be modified in derived classes.
         self._phases = [
             self.tokenize_without_annotation,
-            self.correct,
+            self.correct_tokens,
             self.parse_static_phrases,
             self.annotate,
             self.lookup_unknown_words,
+            self.recognize_entities,
+            self.check_spelling,
             self.parse_phrases_1,
             self.parse_phrases_2,
-            self.disambiguate_phrases
+            self.disambiguate_phrases,
         ]
 
     _token_ctor = _Bin_TOK
@@ -1241,8 +1243,8 @@ class DefaultPipeline:
         """ Static multiword phrases """
         return parse_static_phrases(stream, self._token_ctor, self._auto_uppercase)
 
-    def correct(self, stream):
-        """ Token correction can be plugged in here (default stack doesn't do
+    def correct_tokens(self, stream):
+        """ Token-level correction can be plugged in here (default stack doesn't do
             any corrections, but this is overridden in ReynirCorrect) """
         return stream
 
@@ -1253,6 +1255,16 @@ class DefaultPipeline:
     def lookup_unknown_words(self, stream):
         """ Lookup unknown words. Default stack doesn't do anything,
             but derived classes can override this. """
+        return stream
+
+    def recognize_entities(self, stream):
+        """ Recognize named entities. Default stack doesn't do anything,
+            but derived classes can override this. """
+        return stream
+
+    def check_spelling(self, stream):
+        """ Spelling correction can be plugged in here (default stack doesn't do
+            any corrections, but this is overridden in ReynirCorrect) """
         return stream
 
     def parse_phrases_1(self, stream):

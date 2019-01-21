@@ -29,10 +29,11 @@ from .reynir import Reynir, Terminal
 from .fastparser import ParseForestPrinter, ParseForestDumper, ParseForestFlattener
 from .fastparser import ParseError, ParseForestNavigator
 from .settings import Settings
+from .bintokenizer import tokenize
 
 # Expose the tokenizer API
 
-from tokenizer import TOK, Tok, tokenize, correct_spaces, mark_paragraphs
+from tokenizer import TOK, Tok, correct_spaces, mark_paragraphs
 from tokenizer import TP_LEFT, TP_CENTER, TP_RIGHT, TP_NONE, TP_WORD
 from tokenizer import Abbreviations
 

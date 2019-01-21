@@ -227,6 +227,7 @@ Samtenging →
     | "svo:st" "sem:st"
     | "eins:ao" "og:st"
     | "því:st" "að:st"
+    | "þannig:ao" "að:st"
 
 $score(+2) Samtenging
 $tag(apply_length_bonus) Samtenging
@@ -807,6 +808,8 @@ SetningSo →
     # Búist er við að Sigmundur Davíð segi af sér
     | Sagnliður_sagnb
 
+    | Sagnliður_lhþt
+
     # Horft hefur verið [til hennar] lostafullum augum
     | So_1_sagnb/fall HjSögnLhÞtSM_et_p3 FsAtv? NlBeintAndlag/fall AtvFsAuka?
     # Er/var/hefur verið [í þessu tilviki] spáð betra veðri [á morgun]
@@ -828,13 +831,11 @@ SetningSo →
     | So_1_nh/fall HjSögnNhMeðSo/tala/pers NlFrumlag_nf/tala/pers/kyn
         NlBeintAndlag/fall AtvFsAuka?  # Gæta eiga/skulu/verða þeir þingskapa
 
-    | Sagnliður_lhþt
-
     | Sögn_bh SögnFrh_bh?                                           # Farðu galvaskur að sækja kaffi strax
 
     | HjSögnMegiSkuli_et_p3 FsAtv? EinSögn_nh_et_hk SagnInnskot?    # Má með sanni segja (að þeir hafi sloppið með skrekkinn)
 
-    | 'þurfa:so'_1_þf_gm_et_p3 FsRuna? NlBeintAndlag_þf AðLiður?    # Þarf til þess lagafyrirmæli að svipta mann réttindum
+    | 'þurfa:so'_1_þf_gm_et_p3 FsAtv? NlBeintAndlag_þf AðLiður?     # Þarf til þess lagafyrirmæli að svipta mann réttindum
 
     | SagnliðurVh ","? "þá:st"? BeygingarliðurMeðUmröðun FsAtv?     # Haldi þessi þróun áfram er voðinn vís
 
@@ -5439,6 +5440,7 @@ VillaÞóAð →
 LeiðréttÞóAð →
     "jafnvel:ao"? "þó:st" "að:st"
 $tag(error) VillaÞóAð
+$score(-1) VillaÞóAð
 
 $error(VillaFráÞvíAð, LeiðréttFráÞvíAð)
 VillaFráÞvíAð →
