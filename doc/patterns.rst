@@ -45,10 +45,10 @@ Simple matches
   ``NP-OBJ`` and subcategories thereof.
 
 * A ``terminal`` identifier in lower case matches nodes associated with
-  the specified category of terminal, and having at least the variants given, if any.
-  ``no`` thus matches all noun terminals, while ``no_nf_et`` only matches
-  noun terminals in nominative case, singular (but any gender, since a gender
-  variant is not specified).
+  the specified category of terminal, and having at least the variants given,
+  if any. ``no`` thus matches all noun terminals, while ``no_nf_et``
+  only matches noun terminals in nominative case, singular (but any
+  gender, since a gender variant is not specified).
 
 Wildcard match
 --------------
@@ -70,7 +70,8 @@ Sequence matches
 
 * ``Any+`` matches one or more sequential instances of the given ``Any`` match.
 
-* ``Any*`` matches zero or more sequential instances of the given ``Any`` match.
+* ``Any*`` matches zero or more sequential instances of the
+  given ``Any`` match.
 
 * ``Any?`` matches zero or one instances of the given ``Any`` match.
 
@@ -79,9 +80,9 @@ Sequence matches
 * ``[ Any1 Any2 ]`` matches any node sequence that starts with the two given
   matches. It does not matter whether the sequence contains more nodes.
 
-* ``[ Any1 Any2 $ ]`` matches any node sequence where ``Any1`` and ``Any2`` match
-  and there are no further nodes in the sequence. The ``$`` sign is an
-  end-of-sequence marker.
+* ``[ Any1 Any2 $ ]`` matches any node sequence where ``Any1``
+  and ``Any2`` match and there are no further nodes in the sequence.
+  The ``$`` sign is an end-of-sequence marker.
 
 * ``[ Any1 .* Any2 $ ]`` matches only sequences that start with ``Any1`` and
   end with ``Any2``.

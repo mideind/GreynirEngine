@@ -21,7 +21,8 @@ interpreter) installed on your system:
 
 On Windows, you may need the latest
 `Visual Studio Build Tools <https://www.visualstudio.com/downloads/?q=build+tools+for+visual+studio>`_,
-specifically the Visual C++ build tools, installed on your PC along with the Windows 10 SDK.
+specifically the Visual C++ build tools, installed on your PC along
+with the Windows 10 SDK.
 
 Install with pip
 ----------------
@@ -50,8 +51,9 @@ and perhaps submit pull requests (welcome!) to the project's
     $ cd ReynirPackage
     $ python setup.py develop
 
-On the most common Linux x86_64/amd64 systems, ``pip`` will download and install a binary wheel.
-On other systems, a source distribution will be downloaded and compiled to binary.
+On the most common Linux x86_64/amd64 systems, ``pip`` will download and
+install a binary wheel. On other systems, a source distribution will be
+downloaded and compiled to binary.
 
 
 Install into a virtualenv
@@ -95,4 +97,5 @@ On Windows:
     REM Leave the virtual environment
     (venv) C:\MyProject> deactivate
 
-More information about *virtualenv* is `available here <https://virtualenv.pypa.io/en/stable/>`_.
+More information about *virtualenv* is `available
+here <https://virtualenv.pypa.io/en/stable/>`_.

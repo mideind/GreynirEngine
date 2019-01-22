@@ -53,8 +53,9 @@ Here is a short example of what can be done with Reynir::
     >>> sent.tree.S.IP.VP.NP_OBJ.lemmas
     ['sól']
 
-Here, ``S`` stands for sentence *(málsgrein)*, ``IP`` for inflected phrase *(beygingarliður)*,
-``VP`` is a verb phrase *(sagnliður)*, ``NP_SUBJ`` is a subject noun phrase *(frumlag)* and
+Here, ``S`` stands for sentence *(málsgrein)*, ``IP`` for inflected
+phrase *(beygingarliður)*, ``VP`` is a verb phrase *(sagnliður)*,
+``NP_SUBJ`` is a subject noun phrase *(frumlag)* and
 ``NP_OBJ`` is an object noun phrase *(andlag)*.
 Nonterminal names are listed in the :ref:`nonterminals` section.
 
@@ -68,19 +69,19 @@ same authors, which is automatically installed with Reynir.
 
 After tokenization, Reynir proceeds to **parse** the text according to a
 `context-free grammar <https://github.com/vthorsteinsson/ReynirPackage/blob/master/src/reynir/Reynir.grammar>`_
-for the modern Icelandic language. This grammar contains rules describing how sentences and
-the various subparts thereof can be validly constructed.
+for the modern Icelandic language. This grammar contains rules describing
+how sentences and the various subparts thereof can be validly constructed.
 
-Almost all sentences are **ambiguous**. This means that there are multiple parse trees
-that can validly describe the sentence according to the grammar rules. Reynir thus has
-to choose a single best tree from the forest of possible trees. It does this with a scoring
-heuristic which assigns higher scores to common word forms and grammatical constructs, and lower
-scores to rare word forms and uncommon constructs. The parse tree with the highest overall
+Almost all sentences are **ambiguous**. This means that there are multiple
+parse trees that can validly describe the sentence according to the grammar
+rules. Reynir thus has to choose a single best tree from the forest of possible
+trees. It does this with a scoring heuristic which assigns higher scores to
+common word forms and grammatical constructs, and lower scores to rare word
+forms and uncommon constructs. The parse tree with the highest overall
 score wins and is returned from the :py:meth:`Reynir.parse_single()` function.
 
-Once the best parse tree has been found, it is available for various kinds of **queries**.
-You can access word lemmas, extract noun and verb phrases as shown above, look for
-patterns via wildcard matching, and much more. This is described in detail in the
-:ref:`reference`.
-
+Once the best parse tree has been found, it is available for various kinds
+of **queries**. You can access word lemmas, extract noun and verb phrases
+as shown above, look for patterns via wildcard matching, and much more.
+This is described in detail in the :ref:`reference`.
 
