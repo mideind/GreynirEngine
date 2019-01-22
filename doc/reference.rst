@@ -3,7 +3,8 @@
 Reference
 =========
 
-The following sections describe the available classes, methods and properties of Reynir.
+The following sections describe the available classes, methods
+and properties of Reynir.
 
 Separate sections describe grammar :ref:`nonterminals` and :ref:`terminals`.
 
@@ -18,14 +19,16 @@ The following classes are documented herein:
 Initializing Reynir
 -------------------
 
-After installing the ``reynir`` package (see :ref:`installation`), use the following
-code to import it and initialize an instance of the :py:class:`Reynir` class::
+After installing the ``reynir`` package (see :ref:`installation`),
+use the following code to import it and initialize an instance of
+the :py:class:`Reynir` class::
 
     from reynir import Reynir
     r = Reynir()
 
-Now you can use the ``r`` instance to parse text, by calling the :py:meth:`Reynir.submit()`,
-:py:meth:`Reynir.parse()` and/or :py:meth:`Reynir.parse_single()` methods on it.
+Now you can use the ``r`` instance to parse text, by calling
+the :py:meth:`Reynir.submit()`, :py:meth:`Reynir.parse()` and/or
+:py:meth:`Reynir.parse_single()` methods on it.
 
 .. topic:: The Reynir instance
 
@@ -46,13 +49,19 @@ The Reynir class
 
         Initializes the :py:class:`Reynir` instance.
 
-    .. py:method:: submit(self, text : string, parse : bool = False) -> _Job
+    .. py:method:: submit(self, text : string, parse : bool = False,
+            *, split_paragraphs = False) -> _Job
 
-        Submits a text string to Reynir for parsing and returns a :py:class:`_Job` object.
+        Submits a text string to Reynir for parsing and returns
+        a :py:class:`_Job` object.
 
-        :param str text: The text to parse. Can be a single sentence or multiple sentences.
-        :param bool parse: Controls whether the text is parsed immediately or upon demand.
-            Defaults to ``False``.
+        :param str text: The text to parse. Can be a single sentence
+            or multiple sentences.
+        :param bool parse: Controls whether the text is parsed immediately or
+            upon demand. Defaults to ``False``.
+        :param bool split_paragraphs: Indicates that the text should be
+            split into paragraps, with paragraph breaks at newline
+            characters (``\n``). Defaults to ``False``.
         :return: A fresh :py:class:`_Job` object.
 
         The given text string is tokenized and split into paragraphs and sentences.
@@ -63,13 +72,15 @@ The Reynir class
 
         Returns a :py:class:`_Job` object which supports iteration through
         the paragraphs (via :py:meth:`_Job.paragraphs()`) and sentences
-        (via :py:meth:`_Job.sentences()` or :py:meth:`_Job.__iter__()`) of the parse job.
+        (via :py:meth:`_Job.sentences()` or :py:meth:`_Job.__iter__()`) of
+        the parse job.
 
     .. py:method:: parse(self, text : string) -> dict
 
         Parses a text string and returns a dictionary with the parse job results.
 
-        :param str text: The text to parse. Can be a single sentence or multiple sentences.
+        :param str text: The text to parse. Can be a single sentence
+            or multiple sentences.
         :return: A dictionary containing the parse results as well as statistics
             from the parse job.
 
@@ -94,6 +105,7 @@ The Reynir class
 
         * ``parse_time``: A ``float`` with the wall clock time, in seconds,
             spent on tokenizing and parsing the sentences.
+
 
         Example *(try it!)*::
 
@@ -132,6 +144,7 @@ The Reynir class
             print("The parse tree for '{0}' is:\n{1}"
                 .format(sent.tidy_text, sent.tree.view))
 
+
         Output::
 
             The parse tree for 'Litla gula hænan fann fræ' is:
@@ -154,7 +167,8 @@ The Reynir class
 
         If your code has finished using Reynir and you want to free up the
         memory allocated for its resources, including the 60 megabytes for the
-        *Database of Modern Icelandic Inflection (BÍN)*, call :py:meth:`Reynir.cleanup()`.
+        *Database of Modern Icelandic Inflection (BÍN)*,
+        call :py:meth:`Reynir.cleanup()`.
 
         After calling :py:meth:`Reynir.cleanup()` the functionality of Reynir is
         no longer available via existing instances of :py:class:`Reynir`.
@@ -189,6 +203,7 @@ in the class name.
                 for sent in pg:
                     print(sent.tidy_text)
                 print()
+
 
         Output::
 
@@ -240,7 +255,8 @@ in the class name.
 
     .. py:attribute:: ambiguity
 
-        Returns a ``float`` with the weighted average ambiguity factor of the sentences that
+        Returns a ``float`` with the weighted average ambiguity factor of
+        the sentences that
         have been successfully parsed via this job. The ambiguity factor
         of a sentence is defined as the *n*-th root of the total number
         of parse tree combination for the sentence, where *n* is the number
@@ -309,9 +325,11 @@ hence the leading underscore in the class name.
                 "af landinu árin 1944-1950.")
             print(s.text)
 
+
         Output (note the intervening spaces, also before the period at the end)::
 
             Jón - faðir Ásgeirs - átti 2/3 hluta af landinu árin 1944 - 1950 .
+
 
     .. py:method:: __str__(self) -> str
 
@@ -333,9 +351,11 @@ hence the leading underscore in the class name.
                 "af landinu árin 1944-1950.")
             print(s.tidy_text)
 
+
         Output (note the dashes and the period at the end)::
 
             Jón — faðir Ásgeirs — átti 2/3 hluta af landinu árin 1944–1950.
+
 
     .. py:attribute:: tokens
 
@@ -350,6 +370,7 @@ hence the leading underscore in the class name.
             for t in s.tokens:
                 print(TOK.descr[t.kind], t.txt)
 
+
         outputs::
 
             DATE 5. janúar
@@ -358,6 +379,7 @@ hence the leading underscore in the class name.
             NUMBER 5
             WORD sólir
             PUNCTUATION .
+
 
     .. py:method:: parse(self) -> bool
 
@@ -412,6 +434,7 @@ hence the leading underscore in the class name.
             s = r.parse_single("Ása sá sól.")
             print(repr(s.deep_tree))
 
+
         Output:
 
         .. code-block:: none
@@ -449,6 +472,7 @@ hence the leading underscore in the class name.
                     Lokatákn
                       '.' -> '.'
 
+
     .. py:attribute:: flat_tree
 
         Returns the best (highest-scoring) parse tree for the sentence,
@@ -467,22 +491,25 @@ hence the leading underscore in the class name.
         Returns a ``list`` of the terminals in the best parse tree for the
         sentence, in the order in which they occur in the sentence (token order).
         Each terminal corresponds to a token in the sentence. The entry for each
-        terminal is a ``namedtuple`` called ``Terminal``, having four fields:
+        terminal is a ``namedtuple`` called ``Terminal``, having five fields:
 
         0. **text**: The token text.
 
         1. **lemma**: The lemma of the word, if the token is a word, otherwise
-           it is the text of the token. Lemmas of composite words include hyphens
-           ``-`` at the component boundaries. Examples: ``borgar-stjórnarmál``,
-           ``skugga-kosning``.
+            it is the text of the token. Lemmas of composite words include hyphens
+            ``-`` at the component boundaries. Examples: ``borgar-stjórnarmál``,
+            ``skugga-kosning``.
 
         2. **category**: The word :ref:`category <categories>` (``no`` for noun, ``so`` for verb, etc.)
 
         3. **variants**: A list of the :ref:`grammatical variants <variants>` for
-           the word or token, or an empty list if not applicable. The variants include
-           the case (``nf``, ``þf``, ``þgf``, ``ef``), gender (``kvk``, ``kk``, ``hk``),
-           person, verb form, adjective degree, etc. This list identical to the one returned
-           from :py:attr:`SimpleTree.all_variants` for the terminal in question.
+            the word or token, or an empty list if not applicable. The variants include
+            the case (``nf``, ``þf``, ``þgf``, ``ef``), gender (``kvk``, ``kk``, ``hk``),
+            person, verb form, adjective degree, etc. This list identical to the one returned
+            from :py:attr:`SimpleTree.all_variants` for the terminal in question.
+
+        4. **index**: The index of the token that corresponds to this terminal.
+            The index is 0-based.
 
         If the sentence has not yet been parsed, or no parse tree was found
         for it, this property is ``None``.
@@ -497,6 +524,7 @@ hence the leading underscore in the class name.
                     .format(t.text, t.lemma, t.category,
                         ", ".join(t.variants)))
 
+
         outputs:
 
         .. code-block:: none
@@ -509,6 +537,7 @@ hence the leading underscore in the class name.
             sér      sig      abfn     þgf
             ís       ís       no       et, þf, kk
             .        .
+
 
         (The line for *sá* means that this is the verb (``so``) *sjá*,
         in the third person (``p3``), singular (``et``), having one argument (``1``)
@@ -524,3 +553,8 @@ hence the leading underscore in the class name.
         Lemmas of composite words include hyphens ``-`` at the component boundaries.
         Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
 
+    .. py:attribute:: terminal_nodes
+
+        Returns a ``list`` of the subtrees (:py:class:`SimpleTree` instances)
+        that correspond to terminals in the parse tree for this
+        sentence, in the order in which they occur (token order).

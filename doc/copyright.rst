@@ -3,7 +3,7 @@
 Copyright and licensing
 =======================
 
-Reynir is *copyright © 2018 Miðeind ehf.*
+Reynir is *copyright © 2019 Miðeind ehf.*
 
 The project's original author is **Vilhjálmur Þorsteinsson**.
 
@@ -17,7 +17,8 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.*
 
-The full text of the GNU GPLv3 license can be found at https://www.gnu.org/licenses/gpl-3.0.en.html.
+The full text of the GNU GPLv3 license can be found
+at https://www.gnu.org/licenses/gpl-3.0.en.html.
 
 .. note::
 

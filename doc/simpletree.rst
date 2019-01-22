@@ -96,14 +96,26 @@ head (top) node, as well as about its children and contained subtrees.
 
     .. py:method:: match_tag(self, item : str) -> bool
 
-        Checks whether the root nonterminal of the tree matches the given
-        :ref:`nonterminal identifier <nonterminals>`.
+        Checks whether the nonterminal corresponding to this subtree
+        matches the given :ref:`nonterminal identifier <nonterminals>`.
+
+        :param str item: The nonterminal tag to match. The match can
+            be partial, i.e. the item ``NP`` matches the nonterminals
+            ``NP-OBJ`` and ``NP-SUBJ`` as well as plain ``NP``.
+
+        :return: ``True`` if the nonterminal matches, or ``False`` if not.
+
+    .. py:method:: enclosing_tag(self, item : str) -> SimpleTree
+
+        Returns the innermost enclosing subtree that matches
+        the given nonterminal tag, or ``None`` if no such tree is found.
 
         :param str item: The nonterminal identifier to match. The match can
-            be partial, i.e. the item ``NP`` matches the roots ``NP-OBJ`` and
-            ``NP-SUBJ`` as well as plain ``NP``.
+            be partial, i.e. the item ``NP`` matches the nonterminals
+            ``NP-OBJ`` and ``NP-SUBJ`` as well as plain ``NP``.
 
-        :return: ``True`` if the root nonterminal matches, or ``False`` if not.
+        :return: A :py:class:`SimpleTree` instance that corresponds to a
+            nonterminal having a matching tag, or ``None``.
 
     .. py:attribute:: children
 
@@ -117,9 +129,29 @@ head (top) node, as well as about its children and contained subtrees.
         yields a :py:class:`SimpleTree` instance for every child, recursively,
         using left-first traversal.
 
+    .. py:attribute:: span
+
+        Returns a ``(start, end)`` tuple of token indices, pointing to
+        the first and the last token spanned by this subtree.
+
+    .. py:attribute:: index
+
+        Returns the index of the associated token, if this subtree
+        corresponds to a :ref:`terminal <terminals>`, or ``None`` otherwise.
+
+    .. py:attribute:: parent
+
+        Returns the parent of this subtree, or ``None`` if this is the root.
+
+    .. py:attribute:: root
+
+        Returns the root of this subtree, or the subtree itself if it is
+        the root.
+
     .. py:attribute:: leaves
 
-        Returns a generator of all leaf (terminal) descendants of this tree.
+        Returns a generator of all leaf (:ref:`terminal <terminals>`)
+        descendants of this tree.
         The generator yields a :py:class:`SimpleTree` instance for every leaf,
         in left-first traversal order. The output of the ``leaves`` generator
         can for instance be zipped with the ``tokens`` list of
@@ -276,6 +308,12 @@ head (top) node, as well as about its children and contained subtrees.
 
         Returns a ``str`` with the raw text corresponding to this subtree,
         including its children, with spaces between tokens.
+
+    .. py:attribute:: tidy_text
+
+        Returns a ``str`` with the text corresponding to this subtree,
+        including its children, spaced correctly by
+        the ``tokenizer.correct_spaces()`` function.
 
     .. py:attribute:: own_text
 

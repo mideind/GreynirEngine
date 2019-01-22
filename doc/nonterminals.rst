@@ -3,9 +3,10 @@
 Nonterminals
 ============
 
-This section lists the nonterminals that can occur within simplified sentence trees,
-i.e. instances of the :py:class:`SimpleTree` class. The nonterminal name of a tree
-node can be read from the :py:attr:`SimpleTree.tag` property.
+This section lists the nonterminals that can occur within simplified
+sentence trees, i.e. instances of the :py:class:`SimpleTree` class.
+The nonterminal name of a tree node can be read from the
+:py:attr:`SimpleTree.tag` property.
 
 Sentences and paragraphs
 ------------------------
@@ -18,6 +19,8 @@ Sentences and paragraphs
 | S          | Sentence                                          |
 +------------+---------------------------------------------------+
 | S-MAIN     | Sentence-main                                     |
++------------+---------------------------------------------------+
+| S-HEADING  | Sentence-heading (fyrirsögn)                      |
 +------------+---------------------------------------------------+
 | S-REF      | Sentence-referential (*sem Páll sá í dag*)        |
 +------------+---------------------------------------------------+
@@ -108,6 +111,9 @@ Verb phrases
 
 +------------+---------------------------------------------------+
 | VP         | Verb phrase                                       |
++------------+---------------------------------------------------+
+| VP-REV     | Verb phrase, reversed order                       |
+|            | (*þá sótti Páll skófluna*)                        |
 +------------+---------------------------------------------------+
 | VP-SEQ     | Sequence of verb phrases                          |
 |            | (Páll *gekk út og sótti skófluna*)                |

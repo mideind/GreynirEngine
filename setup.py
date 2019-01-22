@@ -6,7 +6,7 @@
 
     Setup.py
 
-    Copyright (C) 2018 Miðeind ehf.
+    Copyright (C) 2019 Miðeind ehf.
     Author: Vilhjálmur Þorsteinsson
 
         This program is free software: you can redistribute it and/or modify
@@ -64,7 +64,7 @@ setup(
     name="reynir",
     # Remember to modify version numbers in
     # doc/conf.py and src/reynir/__init__.py as well
-    version="1.4.1",
+    version="1.5.0",
     license="GNU GPLv3",
     description="A natural language parser for Icelandic",
     long_description="{0}\n{1}".format(

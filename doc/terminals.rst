@@ -3,13 +3,15 @@
 Terminals
 =========
 
-This section lists the terminals that can occur within simplified sentence trees,
-i.e. instances of the :py:class:`SimpleTree` class. The terminal associated
-with a tree node is available in the :py:attr:`SimpleTree.terminal` property.
+This section lists the terminals that can occur within simplified
+sentence trees, i.e. instances of the :py:class:`SimpleTree` class. The
+terminal associated with a tree node is available in the
+:py:attr:`SimpleTree.terminal` property.
 
 A terminal node always corresponds to a single token from the input text.
 
-A typical terminal string looks like this (for instance matching the word *hestur*)::
+A typical terminal string looks like this (for instance matching
+the word *hestur*)::
 
     'no_kk_nf_et'   # Noun, masculine, nominative case, singular
 
