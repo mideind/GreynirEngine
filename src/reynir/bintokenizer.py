@@ -40,7 +40,14 @@ from .bindb import BIN_Db, BIN_Meaning
 
 
 # Person names that are not recognized at the start of sentences
-NOT_NAME_AT_SENTENCE_START = {"Annar", "Annars", "Kalla", "Sanna", "Gamli", "Gamla"}
+NOT_NAME_AT_SENTENCE_START = {
+    "Annar", "Annars",
+    "Kalla", "Sanna",
+    "Gamli", "Gamla",
+    "Vinni", "Vinna",
+    "Vilji", "Vilja",
+    "Ljótur", "Ljót", "Ljóti", "Ljóts"
+}
 
 # Set of all cases (nominative, accusative, dative, possessive)
 ALL_CASES = frozenset(["nf", "þf", "þgf", "ef"])
