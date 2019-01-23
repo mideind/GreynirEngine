@@ -273,8 +273,8 @@ Spurnarsetning →
 # Spurnarorðið er frumlag setningarinnar, stendur utan beygingarliðar
 BlTagl/tala/pers/kyn →
     FrumlagsInnskot/tala/pers/kyn? AtviksliðurEinkunn*
-        SagnRuna/tala/pers/kyn Sjálfur/tala/kyn? KommaTilvísunarsetning/tala/pers/kyn?
-        Upptalning/tala?
+        SagnRuna/tala/pers/kyn Sjálfur/tala/kyn?
+        KommaTilvísunarsetning/tala/pers/kyn? Upptalning/tala?
 
 SpurnarFrumlag/pers/tala/kyn →
     SpurnarNafnliður/tala/fall/kyn
@@ -1976,9 +1976,6 @@ Sögn_2/tala/pers/kyn →
     # Þágufall + þolfall ('að gefa einhverjum kött')
     so_2_þgf_þf/tala/pers Andlög_þgf_þf/tala/kyn     # Konurnar gáfu Páli [sjálfar] gjöfina / dýrari gjöf en mér
 
-    # gera + lo ('að gera einhverjum kleift að fara út')
-    | 'gera:so'_1_þgf/tala/pers NlÓbeintAndlag_þgf LoTengtSögn_nf_et_hk NhFyllingAtv # Konurnar gerðu Páli kleift að matast með reisn
-
     # Þolfall + eignarfall ('að spyrja einhvern einhvers')
     | so_2_þf_ef/tala/pers Andlög_þf_ef/tala/kyn     # Konurnar kröfðu Pál [herskáar] svars / ítarlegri svara en mig
 
@@ -1996,6 +1993,10 @@ Sögn_2/tala/pers/kyn →
 
     # Þolfall + þágufall ('að kalla einhvern illum nöfnum')
     | so_2_þf_þgf/tala/pers Andlög_þf_þgf/tala/kyn   # Konurnar kölluðu Pál [æstar] illum nöfnum / verri nöfnum en mig
+
+    # gera + lo ('að gera einhverjum kleift að fara út')
+    | 'gera:so'_1_þgf/tala/pers NlÓbeintAndlag_þgf LoTengtSögn_nf_et_hk NhFyllingAtv # Konurnar gerðu Páli kleift að matast með reisn
+
 
 # Sögn með tveimur viðföngum sem stendur í undirsetningu
 # ('Konan sem gaf Páli gjöfina')
@@ -3662,6 +3663,36 @@ $score(-8) TengiorðEr # Sjaldgæft - ekki velja nema það þurfi
 Tengisetning/tala/pers/kyn →
     TengiYfirsetning                    # (Maðurinn sem) konan kyssti í gær / konurnar kysstu í gær
     | BeygingarliðurÁnF/tala/pers/kyn   # (Maðurinn sem) kyssti konuna í gær / (Maðurinn sem) var fallegur
+    | BeygingarliðurStýftAndlag
+
+# Beygingarliður þar sem eitt andlag er stýft af sögn
+# vegna þess að það er komið fram í nafnliðnum sem vísað er til:
+# "bréfið sem maðurinn sendi ráðuneytinu [galvaskur] [í dag]"
+# (þarna er sem sagt verið að nota 'senda e-m e-ð', þ.e. so_2_þgf_þf,
+# en aðeins með einu andlagi í þágufalli)
+BeygingarliðurStýftAndlag →
+    Frumlag/pers/tala/kyn FrumlagsInnskot/tala/pers/kyn? AtviksliðurEinkunn*
+        SagnRunaStýfð/tala/pers LoTengtSögn_nf/tala/kyn? SagnInnskotAtv?
+
+SagnRunaStýfð/tala/pers →
+    # Í bréfinu sem maðurinn sendi ráðuneytinu
+    # (maðurinn sendi ráðuneytinu bréf)
+    so_2_þgf_þf/tala/pers NlBeintAndlag_þgf
+    # Í spurningunni sem maðurinn spurði ráðuneytið
+    # (maðurinn spurði ráðuneytið spurningar)
+    | so_2_þf_ef/tala/pers NlBeintAndlag_þf
+    # Í batanum sem maðurinn óskaði kettinum
+    # (maðurinn óskaði kettinum bata)
+    | so_2_þgf_ef/tala/pers NlBeintAndlag_þgf
+    # Í bókinni sem maðurinn skilaði safninu
+    # (maðurinn skilaði safninu bókinni)
+    | so_2_þgf_þgf/tala/pers NlBeintAndlag_þgf
+    # Í útgjöldunum sem maðurinn kostaði skattborgara
+    # (maðurinn kostaði skattborgara útgjöld)
+    | so_2_þf_þf/tala/pers NlBeintAndlag_þf
+    # Í nöfnunum sem konurnar kölluðu Pál
+    # (konurnar kölluðu Pál nöfnum)
+    | so_2_þf_þgf/tala/pers NlBeintAndlag_þf
 
 # (Nokkurra ára niðursveiflur) sem þessar (eru óþekktar)
 Tengisetning_et_p3/kyn →

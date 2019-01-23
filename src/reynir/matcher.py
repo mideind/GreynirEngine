@@ -173,6 +173,7 @@ _DEFAULT_NT_MAP = {
     "SögnLhNt": "VP-PP",  # Present participle, lýsingarháttur nútíðar
     "SagnHluti": "VP-SEQ",
     "SagnRuna": "VP-SEQ",
+    "SagnRunaStýfð": "VP-SEQ",
     "SetningSo": "VP-SEQ",
     "FsLiður": "PP",
     "FsMeðFallstjórn": "PP",
