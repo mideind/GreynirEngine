@@ -36,6 +36,7 @@ src/reynir/resources/*.csv
 !src/reynir/resources/systematic_additions.csv
 
 # Scratch work files
+src/reynir/_eparser.cpp
 *.bin
 !ordalisti-*.dawg.bin
 
