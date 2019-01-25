@@ -833,14 +833,14 @@ class Grammar:
                         # If the production item can be repeated,
                         # create a new production and substitute.
                         # A -> B C* D becomes:
-                        # A -> B C_new_* D
-                        # C_new_* -> C_new_* C | 0
+                        # A -> B C_new_star D
+                        # C_new_star -> C_new_star C | 0
                         # A -> B C+ D becomes:
-                        # A -> B C_new_+ D
-                        # C_new_+ -> C_new_+ C | C
+                        # A -> B C_new_plus D
+                        # C_new_plus -> C_new_plus C | C
                         # A -> B C? D becomes:
-                        # A -> B C_new_? D
-                        # C_new_? -> C | 0
+                        # A -> B C_new_q D
+                        # C_new_q -> C | 0
 
                         if repeat is not None:
                             if n is None:
