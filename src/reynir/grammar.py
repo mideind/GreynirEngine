@@ -4,7 +4,7 @@
 
     Grammar module
 
-    Copyright (C) 2018 Miðeind ehf.
+    Copyright (C) 2019 Miðeind ehf.
     Author: Vilhjálmur Þorsteinsson
 
        This program is free software: you can redistribute it and/or modify
@@ -43,13 +43,15 @@
     Nonterminal_B ->
         terminal_Z | terminal_W+ | Nonterminal_C
 
-    # Literal terminals; 'x' matches words with stem 'x'; "y" matches the token 'y' exactly
+    # Literal terminals:
+    # 'x' matches words with stem 'x'
+    # "y" matches the token 'y' exactly (after conversion to lower case)
     Nonterminal_C ->
         Nonterminal_D | 'literal_1'* | "exact_literal_2"+
 
     # Epsilon
     Nonterminal_D ->
-        'literal_2' | 0     # 0 means epsilon (in this case equivalent to 'literal_2'?)
+        'literal_2' | 0   # 0 means epsilon (in this case equivalent to 'literal_2'?)
 
 """
 
@@ -636,15 +638,14 @@ class Grammar:
         if Settings.DEBUG:
             print("Writing of binary grammar file completed")
             print(
-                "num_terminals was {0}, num_nonterminals {1}".format(
-                    self.num_terminals, num_nt
-                )
+                "num_terminals was {0}, num_nonterminals {1}"
+                .format(self.num_terminals, num_nt)
             )
 
     def read(self, fname, verbose=False, write_binary=True):
-        """ Read grammar from a text file. Set verbose = True to get diagnostic messages
+        """ Read grammar from a text file. Set verbose=True to get diagnostic messages
             about unused nonterminals and nonterminals that are unreachable from the root.
-            Set write_binary = False to avoid writing a fresh binary file if the
+            Set write_binary=False to avoid writing a fresh binary file if the
             grammar text file is newer than the existing binary file. """
 
         # Clear previous file info, if any
@@ -823,31 +824,42 @@ class Grammar:
                                         sym, fname, line
                                     )
                                 n = nonterminals[sym]
-                                n.add_ref()  # Note that the nonterminal has been referenced
+                                # Note that the nonterminal has been referenced
+                                n.add_ref()
                             else:
                                 # Identifier of terminal
                                 if sym not in terminals:
                                     terminals[sym] = self._make_terminal(sym)
                                 n = terminals[sym]
 
-                        # If the production item can be repeated,
+                        # Convert Enhanced Backus-Naur Format (EBNF)
+                        # to plain old BNF
+
+                        # If the production item can be repeated or is optional,
                         # create a new production and substitute.
+
                         # A -> B C* D becomes:
-                        # A -> B C_new_star D
-                        # C_new_star -> C_new_star C | 0
+                        # A -> B C_star D
+                        # C_star -> C_star C | 0
+
                         # A -> B C+ D becomes:
-                        # A -> B C_new_plus D
-                        # C_new_plus -> C_new_plus C | C
+                        # A -> B C_plus D
+                        # C_plus -> C_plus C | C
+
                         # A -> B C? D becomes:
-                        # A -> B C_new_q D
-                        # C_new_q -> C | 0
+                        # A -> B C_opt D
+                        # C_opt -> C | 0
+
+                        # (The new productions are actually called
+                        # C*, C+ and C? respectively, not C_star, C_plus, C_opt)
 
                         if repeat is not None:
                             if n is None:
                                 raise GrammarError(
-                                    "Epsilon (0) cannot be repeated with * or +",
+                                    "Epsilon (0) cannot be suffixed with ?, * or +",
                                     fname, line
                                 )
+                            # Create C*, C+ or C?
                             new_nt_id = sym + repeat
                             # Make the new nonterminal and production if not already there
                             if new_nt_id not in nonterminals:
@@ -1351,9 +1363,8 @@ if __name__ == "__main__":
         print("Unable to read grammar file {0}".format(fname))
     else:
         print(
-            "Reading grammar file {0} with timestamp {1:%Y-%m-%d %H:%M:%S}\n".format(
-                fname, datetime.fromtimestamp(ts)
-            )
+            "Reading grammar file {0} with timestamp {1:%Y-%m-%d %H:%M:%S}\n"
+            .format(fname, datetime.fromtimestamp(ts))
         )
         import time
 
@@ -1362,7 +1373,8 @@ if __name__ == "__main__":
         try:
             g.read(fname, verbose=True)
             print(
-                "Grammar parsed and loaded in {0:.2f} seconds".format(time.time() - t0)
+                "Grammar parsed and loaded in {0:.2f} seconds"
+                .format(time.time() - t0)
             )
         except GrammarError as err:
             print(str(err))
