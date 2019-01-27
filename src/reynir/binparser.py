@@ -4,7 +4,8 @@
 
     BIN parser module
 
-    Copyright (C) 2018 Miðeind ehf.
+    Copyright (C) 2019 Miðeind ehf.
+    Original author: Vilhjálmur Þorsteinsson
 
        This program is free software: you can redistribute it and/or modify
        it under the terms of the GNU General Public License as published by
@@ -40,10 +41,11 @@ from datetime import datetime
 from functools import reduce
 import json
 
-from tokenizer import TOK
+from tokenizer import TOK, Abbreviations
 
 from .settings import (
     Settings,
+    StaticPhrases,
     VerbObjects,
     VerbSubjects,
     Prepositions,
@@ -1329,7 +1331,29 @@ class VariantHandler:
         super().__init__(name)
         # Do a bit of pre-calculation to speed up various
         # checks against this terminal
-        parts = self._name.split("_")
+        q = self._name[0]
+        if q in "\"'":
+            # Literal terminal: be careful since the first (literal)
+            # part, within quotes, may contain underscores
+            ix = self._name.rfind(q)
+            if ix < 0:
+                raise GrammarError(
+                    "Malformed literal terminal name '{0}'"
+                    .format(name)
+                )
+            lit = self._name[0:ix+1]
+            assert lit[0] == q and lit[-1] == q
+            rest = self._name[ix+1:]
+            parts = [lit]
+            if rest:
+                if rest[0] != '_' or len(rest) < 2:
+                    raise GrammarError(
+                        "Malformed literal terminal name '{0}'"
+                        .format(name)
+                    )
+                parts += rest[1:].split("_")
+        else:
+            parts = self._name.split("_")
         self._first = parts[0]
         # The variant set for this terminal, i.e.
         # tname_var1_var2_var3 -> { 'var1', 'var2', 'var3' }
@@ -1511,11 +1535,12 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
         assert len(self._first) >= 2  # The string can be ""
         assert self._first[0] == self._first[-1]
         self._first = self._first[1:-1]
+        self._check_first()
+        # Handle word category specification, 
+        # i.e. "sem:st", "að:fs", 'vera:so'_gm_nt
         self._cat = None
         self._match_cat = None
         if len(self._first) > 1:
-            # Check for a word category specification,
-            # i.e. "sem:st", "að:fs", 'vera:so'_gm_nt
             a = self._first.split(":")
             if len(a) > 2:
                 raise GrammarError(
@@ -1558,6 +1583,27 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
             self.shortcut_match = lambda t_lit: self._first != t_lit
         else:
             self.shortcut_match = None
+
+    def _check_first(self):
+        """ Replace underscores in the terminal's first part with spaces
+            and check whether the resulting phrase occurs in StaticPhrases
+            or is an abbreviation (because otherwise it will never match) """
+        phrase = self._first
+        if "_" in phrase:
+            # Replace underscores within the literal with spaces
+            phrase = phrase.replace("_", " ")
+            self._first = phrase
+            phrase = phrase.split(":")[0]  # Remove :cat, if present
+            if (
+                StaticPhrases.lookup(phrase) is None
+                and not Abbreviations.has_abbreviation(phrase)
+            ):
+                # Check that a multi-phrase literal terminal exists in the StaticPhrases
+                # dictionary (normally defined in Phrases.conf)
+                raise GrammarError(
+                    "Multi-phrase literal '{0}' not found "
+                    "in static phrases or abbreviations".format(phrase)
+                )
 
     @property
     def colon_cat(self):
@@ -1652,43 +1698,54 @@ class BIN_Parser(Base_Parser):
     # A singleton instance of the parsed Reynir.grammar
     _grammar = None
     _grammar_ts = None
+    _grammar_class = BIN_Grammar
 
     # BIN_Parser version - change when logic is modified so that it
     # affects the parse tree
     _VERSION = "1.0"
     _GRAMMAR_NAME = "Reynir.grammar"
     _GRAMMAR_FILE = os.path.join(_PATH, _GRAMMAR_NAME)
+    _GRAMMAR_BINARY_FILE = _GRAMMAR_FILE + ".bin"
 
     def __init__(self, verbose=False):
-        """ Load the shared BIN grammar if not already there, then initialize
-            the Base_Parser parent class """
-        g = BIN_Parser._grammar
-        ts = os.path.getmtime(BIN_Parser._GRAMMAR_FILE)
-        if g is None or BIN_Parser._grammar_ts != ts:
+        g = self._load_grammar(verbose)
+        # Initialize the Base_Parser parent class
+        super().__init__(g)
+
+    @classmethod
+    def _load_grammar(cls, verbose):
+        """ Load the shared BIN grammar if not already there """
+        g = cls._grammar
+        ts = os.path.getmtime(cls._GRAMMAR_FILE)
+        if g is None or cls._grammar_ts != ts:
             # Grammar not loaded, or its timestamp has changed: load it
             t0 = time.time()
-            g = BIN_Grammar()
+            g = cls._grammar_class()
             if Settings.DEBUG:
                 print(
                     "Loading grammar file {0} with timestamp {1}".format(
-                        BIN_Parser._GRAMMAR_FILE, datetime.fromtimestamp(ts)
+                        cls._GRAMMAR_FILE, datetime.fromtimestamp(ts)
                     )
                 )
-            g.read(BIN_Parser._GRAMMAR_FILE, verbose=verbose)
-            BIN_Parser._grammar = g
-            BIN_Parser._grammar_ts = ts
+            g.read(
+                cls._GRAMMAR_FILE,
+                verbose=verbose,
+                binary_fname=cls._GRAMMAR_BINARY_FILE
+            )
+            cls._grammar = g
+            cls._grammar_ts = ts
             if Settings.DEBUG:
                 print(
                     "Grammar parsed and loaded in {0:.2f} seconds".format(
                         time.time() - t0
                     )
                 )
-        super().__init__(g)
+        return g
 
     @property
     def grammar(self):
         """ Return the grammar loaded from Reynir.grammar """
-        return BIN_Parser._grammar
+        return self._grammar
 
     @property
     def version(self):

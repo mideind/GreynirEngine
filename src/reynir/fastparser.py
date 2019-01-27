@@ -524,22 +524,19 @@ class Fast_Parser(BIN_Parser):
         after using the fast_p parser instance, preferably in a try/finally block.
     """
 
-    GRAMMAR_BINARY_FILE = os.path.join(_PATH, "Reynir.grammar.bin")
-    GRAMMAR_BINARY_FILE_BYTES = GRAMMAR_BINARY_FILE.encode("utf-8")
-
     _c_grammar = None
     _c_grammar_ts = None
 
     @classmethod
     def _load_binary_grammar(cls):
         """ Load the binary grammar file into memory, if required """
-        fname = cls.GRAMMAR_BINARY_FILE_BYTES
+        fname = cls._GRAMMAR_BINARY_FILE
         try:
             ts = os.path.getmtime(fname)
         except os.error:
             raise GrammarError(
                 "Binary grammar file {0} not found"
-                .format(cls.GRAMMAR_BINARY_FILE)
+                .format(fname)
             )
         if cls._c_grammar is None or cls._c_grammar_ts != ts:
             # Need to load or reload the grammar
@@ -547,12 +544,12 @@ class Fast_Parser(BIN_Parser):
                 # Delete previous grammar instance, if any
                 eparser.deleteGrammar(cls._c_grammar)
                 cls._c_grammar = None
-            cls._c_grammar = eparser.newGrammar(fname)
+            cls._c_grammar = eparser.newGrammar(fname.encode("utf-8"))
             cls._c_grammar_ts = ts
             if cls._c_grammar is None or cls._c_grammar == ffi.NULL:
                 raise GrammarError(
                     "Unable to load binary grammar file {0}"
-                    .format(cls.GRAMMAR_BINARY_FILE)
+                    .format(fname)
                 )
         return cls._c_grammar
 
@@ -562,9 +559,10 @@ class Fast_Parser(BIN_Parser):
         # condition between threads with regards to reading and parsing the grammar file
         # vs. writing the binary grammar
         with GlobalLock("grammar"):
-            super().__init__(verbose)  # Reads and parses the grammar text file
+            # Read and parse the grammar text file
+            super().__init__(verbose)
             # Create instances of the C++ Grammar and Parser classes
-            c_grammar = Fast_Parser._load_binary_grammar()
+            c_grammar = self._load_binary_grammar()
             # Create a C++ parser object for the grammar
             self._c_parser = eparser.newParser(c_grammar, matching_func, alloc_func)
             # Find the index of the root nonterminal for this parser instance

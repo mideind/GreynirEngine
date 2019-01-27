@@ -5,7 +5,7 @@
     Grammar module
 
     Copyright (C) 2019 Miðeind ehf.
-    Author: Vilhjálmur Þorsteinsson
+    Original author: Vilhjálmur Þorsteinsson
 
        This program is free software: you can redistribute it and/or modify
        it under the terms of the GNU General Public License as published by
@@ -61,12 +61,10 @@ import struct
 from datetime import datetime
 from collections import defaultdict, OrderedDict
 
-from tokenizer import Abbreviations
-
 if __package__:
-    from .settings import Settings, StaticPhrases, changedlocale
+    from .settings import Settings, changedlocale
 else:
-    from settings import Settings, StaticPhrases, changedlocale, ConfigError
+    from settings import Settings, changedlocale, ConfigError
 
 
 class GrammarError(Exception):
@@ -251,27 +249,8 @@ class LiteralTerminal(Terminal):
         the exact source text (except for a conversion to lowercase). """
 
     def __init__(self, lit):
-        # Replace any underscores within the literal with spaces, allowing literals
-        # to match tokens with spaces in them
         q = lit[0]
         assert q in "'\""
-        ix = lit[1:].index(q) + 1  # Find closing quote
-        # Replace underscores within the literal with spaces
-        phrase = lit[1:ix]
-        if "_" in phrase:
-            phrase = phrase.replace("_", " ")
-            lit = q + phrase + q + lit[ix + 1 :]
-            phrase = phrase.split(":")[0]  # Remove :cat, if present
-            if (
-                StaticPhrases.lookup(phrase) is None
-                and not Abbreviations.has_abbreviation(phrase)
-            ):
-                # Check that a multi-phrase literal terminal exists in the StaticPhrases
-                # dictionary (normally defined in Phrases.conf)
-                raise GrammarError(
-                    "Multi-phrase literal '{0}' not found "
-                    "in static phrases or abbreviations".format(phrase)
-                )
         super().__init__(lit)
         # If a double quote was used, this is a 'strong' literal
         # that matches an exact terminal string as it appeared in the source
@@ -358,18 +337,6 @@ class Production:
     def reset(cls):
         """ Reset the production index sequence to zero """
         cls._INDEX = 0
-
-    def __hash__(self):
-        """ Use the index of this production as a basis for the hash """
-        return id(self).__hash__()
-
-    def __eq__(self, other):
-        # return isinstance(other, Production) and self._index == other._index
-        return id(self) == id(other)
-
-    def __ne__(self, other):
-        # return not isinstance(other, Production) or self._index != other._index
-        return id(self) != id(other)
 
     def append(self, t):
         """ Append a terminal or nonterminal to this production """
@@ -584,10 +551,12 @@ class Grammar:
         return self._nt_dict[nt]
 
     def __str__(self):
+        """ Return a string representation of this grammar """
+
         def to_str(plist):
             return " | ".join([str(p) for p in plist])
 
-        return "".join(
+        return "\n".join(
             [str(nt) + " → " + to_str(pp[1]) + "\n" for nt, pp in self._nt_dict.items()]
         )
 
@@ -611,7 +580,7 @@ class Grammar:
 
     def _write_binary(self, fname):
         """ Write grammar to binary file. Called after reading a grammar text file
-            that is newer than the corresponding binary file, unless write_binary is False. """
+            that is newer than the corresponding binary file. """
         with open(fname, "wb") as f:
             if Settings.DEBUG:
                 print("Writing binary grammar file {0}".format(fname))
@@ -642,10 +611,10 @@ class Grammar:
                 .format(self.num_terminals, num_nt)
             )
 
-    def read(self, fname, verbose=False, write_binary=True):
+    def read(self, fname, verbose=False, binary_fname=None):
         """ Read grammar from a text file. Set verbose=True to get diagnostic messages
             about unused nonterminals and nonterminals that are unreachable from the root.
-            Set write_binary=False to avoid writing a fresh binary file if the
+            Pass a file name in binary_fname to write a fresh binary file if the
             grammar text file is newer than the existing binary file. """
 
         # Clear previous file info, if any
@@ -1277,22 +1246,28 @@ class Grammar:
         self._file_name = fname
         self._file_time = datetime.fromtimestamp(os.path.getmtime(fname))
 
-        if write_binary:
+        if binary_fname is not None:
             # Check whether to write a fresh binary file
-            fname += ".bin"  # By default Reynir.grammar.bin
             try:
-                binary_file_time = datetime.fromtimestamp(os.path.getmtime(fname))
+                binary_file_time = datetime.fromtimestamp(
+                    os.path.getmtime(binary_fname)
+                )
             except os.error:
                 binary_file_time = None
             if binary_file_time is None or binary_file_time < self._file_time:
                 # No binary file or older than text file: write a fresh one
-                self._write_binary(fname)
+                self._write_binary(binary_fname)
 
     def follow_set(self, nonterminal):
+        """ Return the set of terminals that can follow
+            the given nonterminal, as a dictionary keyed
+            by terminal, containing a list of productions
+            by which the terminal follows the nonterminal """
 
         nullable = set()
 
         def is_nullable(nt):
+
             def is_nullable_prod(p):
                 return p.is_empty or all(s in nullable for s in p)
 
@@ -1348,6 +1323,8 @@ if __name__ == "__main__":
     except ConfigError as e:
         print("Configuration error: {0}".format(e))
         quit()
+
+    from tokenizer import Abbreviations
 
     # Make sure that the tokenizer has loaded its abbreviations
     # before we parse the grammar, since they are used in error checking
