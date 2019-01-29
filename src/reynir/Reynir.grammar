@@ -126,7 +126,7 @@ Málsgrein →
 MgrInnihald → Forskeyti? Yfirsetning StLiður* Tilvitnun? Lokatákn?
 
 Forskeyti →
-    "-:em"? Samtenging "bara:ao"? "-:em"?       # 'En - þegar allt er skoðað, var þetta fínt.'
+    "-:em"? Samtenging "bara:ao"? StrikEðaKomma?       # 'En - þegar allt er skoðað, var þetta fínt.'
     | Samtenging? uh TengimerkiVh Samtenging?   # Og já, þetta var ekki gott / Nei - en hann átti ekkert svar
     | raðnr_nf_kvk                              # Raðnúmer málsgreinar
     | "-:em"                                    # Þankastrik á undan setningu (allar gerðir strika varpast í '-')
@@ -140,6 +140,8 @@ Forskeyti →
     | Greinarnúmer ':'
 
 AfTala → 'af:fs'_þgf tala_þgf_kvk
+
+StrikEðaKomma → "-:em" | ','
 
 $score(-6) Forskeyti # Ekki freistast í forskeyti ef annað er í boði
 
@@ -4616,6 +4618,7 @@ EinnAl →
     | "sem:ao" "fyrst:ao"
     | 'vinsamlegur:lo'_esb_hk_nf_et     # (Þátttakendur eru) vinsamlegast (beðnir að fylla út eyðublað)
     | 'náðarsamlegur:lo'_esb_hk_nf_et   # (Þátttakendur eru) náðarsamlegast (beðnir að fylla út eyðublað)
+    | 'allur:fn'_et_þf_kk 'tími:kk'_gr_et_þf # Allan tímann var mér ljóst að þetta var vonlaust
     | 'allur:fn'_ft_þf_kk "jafna:ao"    # Alla jafna eru menn rólegir yfir þessu
 
 $tag(no_prep) EinnAl        # Engar forsetningar hér inni - óþarfi að skoða dótturgreinar
