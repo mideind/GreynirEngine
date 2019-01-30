@@ -479,6 +479,8 @@ Viðurkenningartenging →
     | VillaÞóAð
     | 'þrátt_fyrir:ao' 'það:pfn'_hk_þf_et? "að:st"
 
+$score(+6) Viðurkenningartenging
+
 Afleiðingartenging →
     "þannig:ao" "að:st"
     | "svo:st" "að:st"   # Líka tilgangstenging
@@ -5474,7 +5476,7 @@ VillaÞóAð →
 LeiðréttÞóAð →
     "jafnvel:ao"? "þó:st" "að:st"
 $tag(error) VillaÞóAð
-$score(-1) VillaÞóAð
+$score(-2) VillaÞóAð
 
 $error(VillaFráÞvíAð, LeiðréttFráÞvíAð)
 VillaFráÞvíAð →
@@ -5489,6 +5491,7 @@ VillaVístAð →
 LeiðréttVístAð → 
     "fyrst:ao" VillaAð?
 $tag(error) VillaVístAð
+$score(-2) VillaVístAð
 
 $error(VillaHeldur, LeiðréttHeldur)
 VillaHeldur →

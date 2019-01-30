@@ -239,11 +239,8 @@ CURRENCY_GENDERS = {
 # person names, Icelandic ('ism') or foreign ('erm')
 PERSON_NAME_SET = frozenset(("ism", "erm"))
 
-# Set that also allows family names ('Hafstein', 'Hafstað'...)
-PERSON_OR_FAMILY_NAME_SET = frozenset(("ism", "erm", "ætt"))
-
 # Set of categories (fl fields in BÍN) for patronyms
-# and matronyms
+# and matronyms, as well as gender-neutral family names
 PATRONYM_SET = frozenset(("föð", "móð", "ætt"))
 
 # Set of foreign middle names that start with a lower case letter
@@ -698,11 +695,11 @@ def parse_phrases_2(token_stream, token_ctor):
                 # Look through the token meanings
                 result = []
                 for m in tok.val:
-                    if m.fl in categories and "ET" in m.beyging:
+                    if m.fl in categories and ("ET" in m.beyging or m.beyging == "-"):
                         # If this is a given name, we cut out name forms
                         # that are frequently ambiguous and wrong, i.e. "Frá" as accusative
                         # of the name "Frár", and "Sigurð" in the nominative.
-                        c = case(m.beyging)
+                        c = case(m.beyging, default="-")
                         if m.stofn not in dstems or c not in dstems[m.stofn]:
                             # Note the stem ('stofn') and the gender from the word type ('ordfl')
                             result.append(
@@ -724,13 +721,11 @@ def parse_phrases_2(token_stream, token_ctor):
                 return any(m.fl not in category_set for m in tok.val)
 
             # Check for person names
-            def given_names(tok, allow_family_name=False):
+            def given_names(tok):
                 """ Check for Icelandic or foreign person name (category 'ism' or 'erm') """
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
                     # Must be a word starting with an uppercase character
                     return None
-                if allow_family_name:
-                    return stems(tok, PERSON_OR_FAMILY_NAME_SET, given_name=True)
                 return stems(tok, PERSON_NAME_SET, given_name=True)
 
             # Check for surnames
@@ -760,7 +755,7 @@ def parse_phrases_2(token_stream, token_ctor):
 
             def given_names_or_middle_abbrev(tok):
                 """ Check for given name or middle abbreviation """
-                gnames = given_names(tok, allow_family_name=True)
+                gnames = given_names(tok)
                 if gnames is not None:
                     return gnames
                 if tok.kind != TOK.WORD:
@@ -775,12 +770,13 @@ def parse_phrases_2(token_stream, token_ctor):
                 return [PersonName(name=wrd, gender=None, case=None)]
 
             def compatible(pn, npn):
-                """ Return True if the next PersonName (np) is compatible with the one we have (p) """
+                """ Return True if the next PersonName (npn) is compatible
+                    with the one we have (pn) """
                 # The neutral gender (hk) is used for family names and is
                 # compatible with both masculine and feminine given names
                 if npn.gender and npn.gender != "hk" and (npn.gender != pn.gender):
                     return False
-                if npn.case and (npn.case != pn.case):
+                if npn.case and npn.case != "-" and (npn.case != pn.case):
                     return False
                 return True
 
@@ -847,11 +843,12 @@ def parse_phrases_2(token_stream, token_ctor):
                                         np.gender if (np.gender and np.gender != "hk")
                                         else p.gender
                                     )
+                                    case = np.case if np.case != "-" else p.case
                                     r.append(
                                         PersonName(
                                             name=p.name + " " + np.name,
                                             gender=gender,
-                                            case=np.case,
+                                            case=case,
                                         )
                                     )
                         if not r:

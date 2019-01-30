@@ -210,11 +210,11 @@ class BIN_Db:
             case for all { kk, kvk, hk, lo } category stems of the given word """
         return list(map(BIN_Meaning._make, self._compressed_bin.nominative(w)))
 
-    def lookup_word(self, w, at_sentence_start, auto_uppercase=False):
+    def lookup_word(self, w, at_sentence_start=False, auto_uppercase=False):
         """ Given a word form, look up all its possible meanings """
         return self._lookup(w, at_sentence_start, auto_uppercase, self._meanings_func)
 
-    def lookup_form(self, w, at_sentence_start):
+    def lookup_form(self, w, at_sentence_start=False):
         """ Given a word root (stem), look up all its forms """
         assert False, "This feature is not supported in the Reynir module"
 
