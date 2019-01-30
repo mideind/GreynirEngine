@@ -248,6 +248,9 @@ PATRONYM_SET = frozenset(("föð", "móð", "ætt"))
 # 'of' was also here but caused problems
 FOREIGN_MIDDLE_NAME_SET = frozenset(("van", "de", "den", "der", "el", "al"))
 
+# Given names that can also be family names (and thus gender- and caseless as such)
+BOTH_GIVEN_AND_FAMILY_NAMES = frozenset(("Hafstein",))
+
 
 def annotate(db, token_ctor, token_stream, auto_uppercase):
     """ Look up word forms in the BIN word database. If auto_uppercase
@@ -682,7 +685,7 @@ def parse_phrases_2(token_stream, token_ctor):
             def stems(tok, categories, given_name=False):
                 """ If the token denotes a given name, return its possible
                     interpretations, as a list of PersonName tuples (name, case, gender).
-                    If first_name is True, we omit from the list all name forms that
+                    If given_name is True, we omit from the list all name forms that
                     occur in the disallowed_names section in the configuration file. """
                 if tok.kind != TOK.WORD or not tok.val:
                     return None
@@ -757,6 +760,13 @@ def parse_phrases_2(token_stream, token_ctor):
                 """ Check for given name or middle abbreviation """
                 gnames = given_names(tok)
                 if gnames is not None:
+                    if tok.txt in BOTH_GIVEN_AND_FAMILY_NAMES:
+                        # For instance "Hafstein" which can be both a given
+                        # name and a family name: prepend the family name as
+                        # an genderless and caseless option to the list
+                        gnames = [
+                            PersonName(name=tok.txt, gender=None, case=None)
+                        ] + gnames
                     return gnames
                 if tok.kind != TOK.WORD:
                     return None
