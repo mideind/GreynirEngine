@@ -1187,10 +1187,12 @@ class DisambiguationStream(MatchingStream):
                 yield token_ctor.Word(
                     t.txt, [BIN_Meaning(w, 0, "fs", "alm", w, "-")], token=t
                 )
-            else:
+            elif t.kind == TOK.WORD:
                 yield token_ctor.Word(
                     t.txt, [m for m in t.val if m.ordfl == cat], token=t
                 )
+            else:
+                yield t
 
 
 def disambiguate_phrases(token_stream, token_ctor):
