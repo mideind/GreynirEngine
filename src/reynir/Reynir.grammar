@@ -5530,6 +5530,7 @@ LeiðréttFjöldiHluti_et_kk/fall →
     | 'stór:lo'_et_kk/fall? 'hluti:kk'_et/fall EfLiður_ft/kyn
 
 $tag(error) VillaFjöldiHluti_ft/fall/kyn
+$score(-4) VillaFjöldiHluti_ft/fall/kyn
 
 
 # ----------------------------------------------
