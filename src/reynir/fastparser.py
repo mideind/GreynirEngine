@@ -386,7 +386,10 @@ class Node:
         while p._token is None:
             assert len(p._families) == 1
             _, f = p._families[0]
-            p = f[0]
+            ix = 0
+            while f[ix] is None:
+                ix += 1
+            p = f[ix]
         return p._token
 
     def _last_token(self):
@@ -395,7 +398,10 @@ class Node:
         while p._token is None:
             assert len(p._families) == 1
             _, f = p._families[0]
-            p = f[-1]
+            ix = -1
+            while f[ix] is None:
+                ix -= 1
+            p = f[ix]
         return p._token
 
     @property
