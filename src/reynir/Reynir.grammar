@@ -4056,15 +4056,15 @@ $score(-16) LoSemSo/fall/tala/kyn
 $score(+6) LoSemLo/fall/tala/kyn    # Tilbrigði 3.1, eina sem þarf að toggla.
 
 # 'Ég vaknaði ekkert alltof fersk'
-# 'Atburðarásin var nokkuð skýr'
+# 'Atburðarásin var [þó] nokkuð skýr'
 # Ath.: 'nokkuð' er ekki leyft sem eo þar sem það er einnig fornafn.
 # Þess vegna er það sértilvik hér. Ekki er hins vegar ráðlegt að
 # leyfa atviksorðið almennt sem einkunn með nafnliðum; það myndi
 # rekast á fornafnið.
 LoAtviksliður →
-    eo | tao | 'enginn:fn'_hk_et_nf | "nokkuð:ao"
+    eo | tao | 'enginn:fn'_hk_et_nf | "þó:ao"? "nokkuð:ao"
 
-$score(+2) LoAtviksliður
+$score(+3) LoAtviksliður
 
 LoAtviksliðir →
     LoAtviksliður+ | "og:ao" # 'honum er og heimilt að merkja við fleiri en einn frambjóðanda'
@@ -5476,7 +5476,7 @@ VillaÞóAð →
 LeiðréttÞóAð →
     "jafnvel:ao"? "þó:st" "að:st"
 $tag(error) VillaÞóAð
-$score(-2) VillaÞóAð
+$score(-48) VillaÞóAð  # Nægur mínus til að núlla út plús fyrir ViðurkenningarTenging
 
 $error(VillaFráÞvíAð, LeiðréttFráÞvíAð)
 VillaFráÞvíAð →

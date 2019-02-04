@@ -208,8 +208,14 @@ class Node:
 
     """
 
+    # Note: __slots__ are not really required on PyPy,
+    # but they are beneficial on CPython
+    __slots__ = (
+        "_start", "_end", "_families", "_highest_prio",
+        "_nonterminal", "_terminal", "_token", "_completed"
+    )
+
     def __init__(self, start, end):
-        self._hash = id(self).__hash__()
         self._start = start
         self._end = end
         self._families = None
@@ -374,6 +380,29 @@ class Node:
         """ Returns True if the node spans one or more tokens """
         return self._end > self._start
 
+    def _first_token(self):
+        """ Return the first token within the span of this node """
+        p = self
+        while p._token is None:
+            assert len(p._families) == 1
+            _, f = p._families[0]
+            p = f[0]
+        return p._token
+
+    def _last_token(self):
+        """ Return the last token within the span of this node """
+        p = self
+        while p._token is None:
+            assert len(p._families) == 1
+            _, f = p._families[0]
+            p = f[-1]
+        return p._token
+
+    @property
+    def token_span(self):
+        """ Return the first and last tokens under this node """
+        return (self._first_token(), self._last_token())
+
     @property
     def nonterminal(self):
         """ Return the nonterminal associated with this node """
@@ -438,10 +467,6 @@ class Node:
             f = self._families[child_ix]  # The survivor
             # Collapse the list to one option
             self._families = [f]
-
-    def __hash__(self):
-        """ Make this node hashable """
-        return self._hash
 
     def _repr(self, indent):
         if hasattr(self, "score"):
