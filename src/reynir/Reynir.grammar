@@ -296,8 +296,7 @@ AtvSetning →
 $score(+12) AtvSetning
 
 SamsettSetning →
-    "annaðhvort:st" BeygingarliðurSögnFremst "eða:st" BeygingarliðurÁnUmröðunar
-    | VillaAnnaðhvort BeygingarliðurSögnFremst "eða:st" BeygingarliðurÁnUmröðunar
+    AnnaðhvortSt BeygingarliðurSögnFremst "eða:st" BeygingarliðurÁnUmröðunar
     | "bæði:st" BeygingarliðurSögnFremst "og:st" BeygingarliðurÁnUmröðunar
     | "ýmist:st" BeygingarliðurSögnFremst "eða:st" BeygingarliðurÁnUmröðunar
 
@@ -540,7 +539,7 @@ SagnRuna_p3_ft/kyn → SagnRuna_ft_p3/kyn
 
 SagnRuna/tala/pers/kyn →
     SagnRunaKnöpp/tala/pers/kyn SagnFramhald/tala/pers/kyn*
-    | "annaðhvort:st" SagnRunaKnöpp/tala/pers/kyn SagnKomma/tala/pers/kyn* 
+    | AnnaðhvortSt SagnRunaKnöpp/tala/pers/kyn SagnKomma/tala/pers/kyn* 
         "eða:st" FsAtv? SagnRunaKnöpp/tala/pers/kyn
     | "bæði:st" SagnRunaKnöpp/tala/pers/kyn SagnKomma/tala/pers/kyn* 
         "og:st" FsAtv? SagnRunaKnöpp/tala/pers/kyn
@@ -2797,6 +2796,7 @@ OkkarFornafn/fall/kyn →
     'hvorugur:fn'_et/fall/kyn | 'enginn:fn'_et/fall/kyn | 'einhver:fn'_et/fall/kyn
     | 'einn:fn'_et/fall/kyn | 'sérhver:fn'_et/fall/kyn
     | 'annar:fn'_et/fall/kyn 'hvor:fn'_et/fall/kyn?
+    | VillaAnnaðhvort  # 'annaðhvort systkinanna'
 
 # Eignarfornöfn standa með nafnlið í sama falli og hann,
 # þannig að gera þarf undantekningu fyrir þau þegar þau
@@ -2901,6 +2901,7 @@ NlStak_p3/tala/fall/kyn →
 
 Magn/fall/tala/kyn →
     TöluorðForskeyti/tala/fall/kyn* mælieining # rúmlega 690 MW
+    | tala "-:en" mælieining # 100-400 g
     | TöluorðForskeyti/tala/fall/kyn* Töluorð/tala/fall/kyn Mælieining/kyn/tala/fall # tæplega fjögurra tonna
 
 Mælieining_hk/tala/fall →
@@ -3236,11 +3237,10 @@ NlStak_ft_p3/fall/kyn →
 NlStak_ft_p3/fall/kyn → NlBæðiHvorki/fall/kyn
 
 NlBæðiHvorki/fall/kyn →
-    "bæði:st" Nl/fall/kyn "og:st" Nl/fall/kyn                   # (Við þurftum að lóga) bæði hestinum og kettinum
-    | "hvorki:st" Nl/fall/kyn "né:st" Nl/fall/kyn               # Hvorki hestinum né kettinum (var lógað)
-    | "annaðhvort:st" Nl/fall/kyn "eða:st" Nl/fall/kyn          # Annaðhvort hestinum eða kettinum (var lógað)
-    | 'annar:fn'_et_hk_nf 'hvor:fn'_et_hk_nf Nl/fall/kyn "eða:st" Nl/fall/kyn # Annað hvort hestinum eða kettinum (var lógað)
-    | "ýmist:st" Nl/fall/kyn "eða:st" Nl/fall/kyn               # Ýmist hestinum eða kettinum (var lógað)
+    "bæði:st" Nl/fall/kyn "og:st" Nl/fall/kyn       # (Við þurftum að lóga) bæði hestinum og kettinum
+    | "hvorki:st" Nl/fall/kyn "né:st" Nl/fall/kyn   # Hvorki hestinum né kettinum (var lógað)
+    | AnnaðhvortSt Nl/fall/kyn "eða:st" Nl/fall/kyn   # Annaðhvort hestinum eða kettinum (var lógað)
+    | "ýmist:st" Nl/fall/kyn "eða:st" Nl/fall/kyn   # Ýmist hestinum eða kettinum (var lógað)
 
 $score(+4) NlBæðiHvorki/fall/kyn
 
@@ -3271,19 +3271,12 @@ NlBæðiHvorki_p3_hk/fall →
     | "hvorki:st" Nl_kvk/fall "né:st" Nl_hk/fall
     | "hvorki:st" Nl_hk/fall "né:st" Nl_kvk/fall
 
-    | "annaðhvort:st" Nl_kk/fall "eða:st" Nl_kvk/fall
-    | "annaðhvort:st" Nl_kvk/fall "eða:st" Nl_kk/fall
-    | "annaðhvort:st" Nl_kk/fall "eða:st" Nl_hk/fall
-    | "annaðhvort:st" Nl_hk/fall "eða:st" Nl_kk/fall
-    | "annaðhvort:st" Nl_kvk/fall "eða:st" Nl_hk/fall
-    | "annaðhvort:st" Nl_hk/fall "eða:st" Nl_kvk/fall
-
-    | 'annar:fn'_nf_et_hk 'hvor:fn'_nf_et_hk Nl_kk/fall "eða:st" Nl_kvk/fall
-    | 'annar:fn'_nf_et_hk 'hvor:fn'_nf_et_hk Nl_kvk/fall "eða:st" Nl_kk/fall
-    | 'annar:fn'_nf_et_hk 'hvor:fn'_nf_et_hk Nl_kk/fall "eða:st" Nl_hk/fall
-    | 'annar:fn'_nf_et_hk 'hvor:fn'_nf_et_hk Nl_hk/fall "eða:st" Nl_kk/fall
-    | 'annar:fn'_nf_et_hk 'hvor:fn'_nf_et_hk Nl_kvk/fall "eða:st" Nl_hk/fall
-    | 'annar:fn'_nf_et_hk 'hvor:fn'_nf_et_hk Nl_hk/fall "eða:st" Nl_kvk/fall
+    | AnnaðhvortSt Nl_kk/fall "eða:st" Nl_kvk/fall
+    | AnnaðhvortSt Nl_kvk/fall "eða:st" Nl_kk/fall
+    | AnnaðhvortSt Nl_kk/fall "eða:st" Nl_hk/fall
+    | AnnaðhvortSt Nl_hk/fall "eða:st" Nl_kk/fall
+    | AnnaðhvortSt Nl_kvk/fall "eða:st" Nl_hk/fall
+    | AnnaðhvortSt Nl_hk/fall "eða:st" Nl_kvk/fall
 
     | "ýmist:st" Nl_kk/fall "eða:st" Nl_kvk/fall
     | "ýmist:st" Nl_kvk/fall "eða:st" Nl_kk/fall
@@ -3299,12 +3292,10 @@ NlStak_ft_p1/fall/kyn → NlBæðiHvorki_p1_hk/fall
 NlBæðiHvorki_p1_hk/fall →
     "bæði:st" Nl_p1/fall/kyn "og:st" Nl_p2/fall/kyn             # bæði mér og þér þykir þetta óásættanlegt
     | "hvorki:st" Nl_p1/fall/kyn "né:st" Nl_p2/fall/kyn         # hvorki ég né þú höfum vit á þessu
-    | "annaðhvort:st" Nl_p1/fall/kyn "eða:st" Nl_p2/fall/kyn    # annaðhvort ég eða þú þurfum að fara
-    | 'annar:fn'_nf_et_hk 'hvor:fn'_nf_et_hk Nl_p1/fall/kyn "eða:st" Nl_p2/fall/kyn # annað hvort ég eða þú þurfum að fara
+    | AnnaðhvortSt Nl_p1/fall/kyn "eða:st" Nl_p2/fall/kyn       # annaðhvort ég eða þú þurfum að fara
     | "bæði:st" Nl_p2/fall/kyn "og:st" Nl_p1/fall/kyn           # bæði þér og mér þykir þetta óásættanlegt
-    | "hvorki:st" Nl_p2/fall/kyn "né:st" Nl_p1/fall/kyn            # hvorki þú né ég erum fallegar/falleg/fallegir
-    | "annaðhvort:st" Nl_p2/fall/kyn "eða:st" Nl_p1/fall/kyn    # annaðhvort þú eða ég erum fallegar/falleg/fallegir
-    | 'annar:fn'_nf_et_hk 'hvor:fn'_nf_et_hk Nl_p2/fall/kyn "eða:st" Nl_p1/fall/kyn # annað hvort þú eða ég erum fallegar/falleg/fallegir
+    | "hvorki:st" Nl_p2/fall/kyn "né:st" Nl_p1/fall/kyn         # hvorki þú né ég erum fallegar/falleg/fallegir
+    | AnnaðhvortSt Nl_p2/fall/kyn "eða:st" Nl_p1/fall/kyn       # annaðhvort þú eða ég erum fallegar/falleg/fallegir
     | "ýmist:st" Nl_p2/fall/kyn "eða:st" Nl_p1/fall/kyn         # ýmist þú eða ég erum fallegar/falleg/fallegir
 
 $score(+4) NlBæðiHvorki_p1_hk/fall
@@ -4226,6 +4217,7 @@ LoSamanbFleiri/fall/tala/kyn →
     | "ýmist:st" LoTengtSögn/tala/fall/kyn "eða:st" LoTengtSögn/tala/fall/kyn
     | "ýmist:st" FsAtv "eða:st" LoTengtSögn/tala/fall/kyn
     | "ýmist:st" LoTengtSögn/tala/fall/kyn "eða:st" FsAtv
+    
     # bæði skjálfandi og í svitabaði
     | Samanburðarmerki "bæði:st" LoTengtSögn/tala/fall/kyn "og:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
     | Samanburðarmerki "bæði:st" LoTengtSögn/tala/fall/kyn "og:st" FsAtv LokatáknEðaKomma
@@ -4233,20 +4225,14 @@ LoSamanbFleiri/fall/tala/kyn →
     | "bæði:st" LoTengtSögn/tala/fall/kyn "og:st" LoTengtSögn/tala/fall/kyn
     | "bæði:st" FsAtv "og:st" LoTengtSögn/tala/fall/kyn
     | "bæði:st" LoTengtSögn/tala/fall/kyn "og:st" FsAtv
-    # annaðhvort með fullan maga eða hungurmorða
-    | Samanburðarmerki "annaðhvort:st" LoTengtSögn/tala/fall/kyn "eða:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
-    | Samanburðarmerki "annaðhvort:st" LoTengtSögn/tala/fall/kyn "eða:st" FsAtv LokatáknEðaKomma
-    | Samanburðarmerki "annaðhvort:st" FsAtv "eða:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
-    | "annaðhvort:st" LoTengtSögn/tala/fall/kyn "eða:st" LoTengtSögn/tala/fall/kyn
-    | "annaðhvort:st" FsAtv "eða:st" LoTengtSögn/tala/fall/kyn
-    | "annaðhvort:st" LoTengtSögn/tala/fall/kyn "eða:st" FsAtv
 
-    | Samanburðarmerki VillaAnnaðhvort LoTengtSögn/tala/fall/kyn "eða:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
-    | Samanburðarmerki VillaAnnaðhvort LoTengtSögn/tala/fall/kyn "eða:st" FsAtv LokatáknEðaKomma
-    | Samanburðarmerki VillaAnnaðhvort FsAtv "eða:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
-    | VillaAnnaðhvort LoTengtSögn/tala/fall/kyn "eða:st" LoTengtSögn/tala/fall/kyn
-    | VillaAnnaðhvort FsAtv "eða:st" LoTengtSögn/tala/fall/kyn
-    | VillaAnnaðhvort LoTengtSögn/tala/fall/kyn "eða:st" FsAtv
+    # annaðhvort með fullan maga eða hungurmorða
+    | Samanburðarmerki AnnaðhvortSt LoTengtSögn/tala/fall/kyn "eða:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
+    | Samanburðarmerki AnnaðhvortSt LoTengtSögn/tala/fall/kyn "eða:st" FsAtv LokatáknEðaKomma
+    | Samanburðarmerki AnnaðhvortSt FsAtv "eða:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
+    | AnnaðhvortSt LoTengtSögn/tala/fall/kyn "eða:st" LoTengtSögn/tala/fall/kyn
+    | AnnaðhvortSt FsAtv "eða:st" LoTengtSögn/tala/fall/kyn
+    | AnnaðhvortSt LoTengtSögn/tala/fall/kyn "eða:st" FsAtv
 
     # hvorki í djúpum þönkum né hugsandi
     | Samanburðarmerki "hvorki:st" LoTengtSögn/tala/fall/kyn "né:st" LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
@@ -4470,10 +4456,8 @@ EinFsAtv →
 SamsettFsAtv →
     # 'hvorki í Frakklandi né annars staðar í Evrópusambandinu'
     "hvorki:st" EinEinföldFsAtv+ "né:st" EinEinföldFsAtv+
-    # 'annað hvort í Breiðholti eða við World Class'
-    | 'annar:fn'_nf_et_hk "hvort:st" EinEinföldFsAtv+ "eða:st" EinEinföldFsAtv+
     # 'annaðhvort í Breiðholti eða við World Class'
-    | "annaðhvort:st" EinEinföldFsAtv+ "eða:st" EinEinföldFsAtv+
+    | AnnaðhvortSt EinEinföldFsAtv+ "eða:st" EinEinföldFsAtv+
     # 'bæði við handavinnu og í viðgerðum'
     | "bæði:st" EinEinföldFsAtv+ ','? "og:st" EinEinföldFsAtv+
     # 'ýmist að fullu eða til hálfs'
@@ -5454,6 +5438,10 @@ NæstSíðast/fall/tala/kyn →
     | 'í:fs'_þf 'lok:hk'_ft_þf
     | 'undir:fs'_þf 'lok:hk'_ft_þf
 
+# 'annaðhvort' í samtengingum (hér er 'annað hvort' álitið villa)
+AnnaðhvortSt →
+    "annaðhvort:st" | VillaAnnaðHvort
+
 # Villureglur // Error rules
 # !!! TODO: Útfæra nánar
 
@@ -5463,12 +5451,19 @@ VillaAð →
 LeiðréttAð → ∅
 $tag(error) VillaAð
 
-$error(VillaAnnaðhvort, LeiðréttAnnaðhvort)
+# 'annað hvort' í tveimur orðum en á að vera eitt
+$error(VillaAnnaðHvort, LeiðréttAnnaðHvort)
+VillaAnnaðHvort →
+    'annar:fn'_et_nf_hk 'hvor:fn'_et_nf_hk
+LeiðréttAnnaðHvort →
+    "annaðhvort:st"
+$tag(error) VillaAnnaðHvort
+
+# 'annaðhvort' í einu orði en á að vera í tveimur
 VillaAnnaðhvort →
-    'annar:fn'_et_nf_hk 'hvort:fn'_et_nf_hk
-LeiðréttAnnaðhvort →
     "annaðhvort:st"
 $tag(error) VillaAnnaðhvort
+$score(-2) VillaAnnaðhvort
 
 $error(VillaÞóAð, LeiðréttÞóAð)
 VillaÞóAð →
