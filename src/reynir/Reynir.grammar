@@ -444,9 +444,9 @@ BeygingarliðurMeðUmröðun/tala/pers/kyn →
 Tíðartenging →
     "löngu:ao"? "áður:ao" "en:st" VillaAð?
     | "löngu:ao"? "eftir:ao" "að:st"
-    | 'allt:fn'_nf_hk_et? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"
+    | Allt? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"
     | VillaFráÞvíAð # frá því X
-    | 'allt:fn'_nf_hk_et? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "er:st"?
+    | Allt? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "er:st"?
     | 'snemma:ao'_mst "en:st" VillaAð?  # fyrr en
     | 'ótt:ao'_mst "en:st" VillaAð? # óðar en
     | "þá:ao" "er:st"
@@ -465,6 +465,10 @@ Tíðartenging →
     | TengiorðEr # "er:stt", líka tilvísunartenging - fær mínus
 
 $tag(apply_length_bonus) Tíðartenging
+
+Allt → 'allur:fn'_nf_hk_et
+$score(+4) Allt
+
 
 Tilgangstenging → 
     'til:fs'_ef 'það:pfn'_hk_ef_et "að:st"
@@ -488,8 +492,8 @@ Afleiðingartenging →
 Orsakartenging →
     "fyrst:ao" VillaAð?
     | VillaVístAð
-    | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et      # úr því
-    | 'af:fs'_þgf 'það:pfn'_hk_þgf_et      # af því
+    | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et   # úr því ('að' er höndlað neðar)
+    | 'af:fs'_þgf 'það:pfn'_hk_þgf_et   # af því ('að' er höndlað neðar)
     | 'þar_eð:st'
     | "þar:ao" "sem:st" VillaAð?
     | "því:st"
@@ -504,7 +508,9 @@ OrsakartengingUmröðun →
     | 'með:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"      # með því að
     | 'af:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"       # af því að
     | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"       # úr því að
-    | "því:st" "að:st"                              # því [að]
+    | "því:st" "að:st"                              # því að
+
+$score(+2) OrsakartengingUmröðun
 
 Skilyrðistenging →
     "ef:st" VillaAð?
@@ -2707,11 +2713,18 @@ NlStak_ft_ef/kyn → NlStak_ft_p1_ef/kyn | NlStak_ft_p2_ef/kyn | NlStak_ft_p3_ef
 # Nafnliðir
 
 NlStak_et_p1/fall/kyn →
-    'ég:pfn'_et/fall 'sjálfur:fn'_et/fall/kyn? FsRunaEftirNl? # Ég í öllu mínu veldi / (Hvað) mig sjálfan (varðar)
-    | 'sjálfur:fn'_et/fall/kyn 'ég:pfn'_et/fall FsRunaEftirNl? # Sjálfan mig hef ég aldrei þolað
+    'ég:pfn'_et/fall 'sjálfur:fn'_et/fall/kyn? FsRunaEftirNl?   # Ég í öllu mínu veldi / (Hvað) mig sjálfan (varðar)
+    | 'sjálfur:fn'_et/fall/kyn 'ég:pfn'_et/fall FsRunaEftirNl?  # Sjálfan mig hef ég aldrei þolað
+
+# Gefa lægra skor fyrir 'ég' í hvorugkyni
+# ('ég er reitt', 'ég fór sjálft út í búð')
+$score(-4) NlStak_et_p1_nf_hk
+$score(-4) NlStak_et_p1_þf_hk
+$score(-4) NlStak_et_p1_þgf_hk
+$score(-4) NlStak_et_p1_ef_hk
 
 NlStak_et_p2/fall/kyn →
-    'þú:pfn'_et/fall 'sjálfur:fn'_et/fall/kyn? FsRunaEftirNl? # Þú [sjálfur] ert ekki sem verstur
+    'þú:pfn'_et/fall 'sjálfur:fn'_et/fall/kyn? FsRunaEftirNl?   # Þú [sjálfur] ert ekki sem verstur
 
 NlStak_p1_ft/fall/kyn →
     'ég:pfn'_ft/fall NlStakViðbót/fall/kyn?     # Við gömlu hjónin, við Sigmundur, við flest, við sjálfar
@@ -4331,7 +4344,7 @@ FsMeðFallstjórn →
     | "innan:ao" 'við:fs'_þf Nl_þf
     | "innan:ao" "sem:st" 'utan:fs'_ef Nl_ef
     | "hvað:ao" FsHvaðVarðar
-    | 'allt:fn'_nf_hk_et 'frá:fs'_þgf Nl_þgf        # allt frá hruni, allt frá börnum til fullorðinna
+    | 'allur:fn'_nf_hk_et 'frá:fs'_þgf Nl_þgf        # allt frá hruni, allt frá börnum til fullorðinna
     # 'um að lög um endurupptökunefnd standist ekki stjórnarskrá' - Ath: 'um það að' er höndlað í ÞaðTenging
     | 'um:fs'_þf "að:st" HreinYfirsetning ','?
     # 'um hvort/hvenær/af hverju/til hvers/hví Jón kaus Framsóknarflokkinn'
@@ -5471,28 +5484,30 @@ VillaÞóAð →
 LeiðréttÞóAð →
     "jafnvel:ao"? "þó:st" "að:st"
 $tag(error) VillaÞóAð
-$score(-48) VillaÞóAð  # Nægur mínus til að núlla út plús fyrir ViðurkenningarTenging
+$score(-64) VillaÞóAð  # Nægur mínus til að núlla út plús fyrir ViðurkenningarTenging
 
 $error(VillaFráÞvíAð, LeiðréttFráÞvíAð)
 VillaFráÞvíAð →
-    'allt:fn'_nf_hk_et? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et
+    Allt? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et
 LeiðréttFráÞvíAð → 
-    'allt:fn'_nf_hk_et? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"
+    Allt? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"
 $tag(error) VillaFráÞvíAð
+$score(+2) VillaFráÞvíAð
 
 $error(VillaVístAð, LeiðréttVístAð)
 VillaVístAð →
     "víst:ao" "að:st"  
 LeiðréttVístAð → 
-    "fyrst:ao" VillaAð?
+    "fyrst:ao" "að:st"?
 $tag(error) VillaVístAð
-$score(-2) VillaVístAð
+$score(-24) VillaVístAð
 
 $error(VillaHeldur, LeiðréttHeldur)
 VillaHeldur →
     "heldur:st"
 LeiðréttHeldur → ∅
 $tag(error) VillaHeldur
+$score(+4) VillaHeldur
 
 $error(VillaSíðan, LeiðréttSíðan)
 VillaSíðan →

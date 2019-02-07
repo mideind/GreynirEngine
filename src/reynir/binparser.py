@@ -1708,38 +1708,55 @@ class BIN_Parser(Base_Parser):
     _GRAMMAR_BINARY_FILE = _GRAMMAR_FILE + ".bin"
 
     def __init__(self, verbose=False):
-        g = self._load_grammar(verbose)
-        # Initialize the Base_Parser parent class
-        super().__init__(g)
+        super().__init__()
+        modified, ts = self.is_grammar_modified()
+        if modified:
+            # Grammar not loaded, or its timestamp has changed: load it
+            g = self._load_grammar(verbose, ts)
+        else:
+            # Use the existing grammar from the class attribute
+            g = self.grammar
+        # In any case, initialize the Base_Parser
+        # instance data from the grammar
+        self.init_from_grammar(g)
 
     @classmethod
-    def _load_grammar(cls, verbose):
-        """ Load the shared BIN grammar if not already there """
-        g = cls._grammar
+    def is_grammar_modified(cls):
+        """ Returns True if the grammar file has been modified
+            since it was last loaded, as well as the grammar
+            file timestamp if it is known """
+        if cls._grammar_ts is None:
+            # No grammar, so it must need loading
+            return (True, None)
+        # If we have a grammar, check whether the timestamp is
+        # still the same as it was when loaded
         ts = os.path.getmtime(cls._GRAMMAR_FILE)
-        if g is None or cls._grammar_ts != ts:
-            # Grammar not loaded, or its timestamp has changed: load it
-            t0 = time.time()
-            g = cls._grammar_class()
-            if Settings.DEBUG:
-                print(
-                    "Loading grammar file {0} with timestamp {1}".format(
-                        cls._GRAMMAR_FILE, datetime.fromtimestamp(ts)
-                    )
-                )
-            g.read(
-                cls._GRAMMAR_FILE,
-                verbose=verbose,
-                binary_fname=cls._GRAMMAR_BINARY_FILE
+        return (cls._grammar_ts != ts, ts)
+
+    @classmethod
+    def _load_grammar(cls, verbose, ts):
+        """ Load the shared BIN grammar if not already there """
+        if ts is None:
+            ts = os.path.getmtime(cls._GRAMMAR_FILE)
+        t0 = time.time()
+        g = cls._grammar_class()
+        if Settings.DEBUG:
+            print(
+                "Loading grammar file {0} with timestamp {1}"
+                .format(cls._GRAMMAR_FILE, datetime.fromtimestamp(ts))
             )
-            cls._grammar = g
-            cls._grammar_ts = ts
-            if Settings.DEBUG:
-                print(
-                    "Grammar parsed and loaded in {0:.2f} seconds".format(
-                        time.time() - t0
-                    )
-                )
+        g.read(
+            cls._GRAMMAR_FILE,
+            verbose=verbose,
+            binary_fname=cls._GRAMMAR_BINARY_FILE
+        )
+        cls._grammar = g
+        cls._grammar_ts = ts
+        if Settings.DEBUG:
+            print(
+                "Grammar parsed and loaded in {0:.2f} seconds"
+                .format(time.time() - t0)
+            )
         return g
 
     @property

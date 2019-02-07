@@ -50,8 +50,6 @@ class Base_Parser:
             self._ix_list = production.prod
             # Cache the length
             self._len = len(self._ix_list)
-            # Cache the hash
-            self._hash = production.__hash__()
 
         @property
         def production(self):
@@ -61,25 +59,23 @@ class Base_Parser:
         def priority(self):
             return self._priority
 
-        def __hash__(self):
-            return self._hash
-
         def __getitem__(self, index):
             return self._ix_list[index] if index < self._len else 0
 
         def __len__(self):
             return self._len
 
-        def __eq__(self, other):
-            return id(self) == id(other)
-
         def __iter__(self):
             return iter(self._ix_list)
 
-    def __init__(self, g):
+    def __init__(self):
+        self._root = None
+        self._nt_dict = { }
+        self._nonterminals = None
+        self._terminals = None
 
-        """ Initialize a parser for a given grammar """
-
+    def init_from_grammar(self, g):
+        """ Initialize the parser with the given grammar """
         nt_d = g.nt_dict
         r = g.root
         assert nt_d is not None
@@ -99,10 +95,15 @@ class Base_Parser:
     @classmethod
     def for_grammar(cls, g):
         """ Create a parser for the Grammar in g """
-        return cls(g)
+        p = cls()
+        p.init_from_grammar(g)
+        return p
 
     def _lookup(self, ix):
         """ Convert a production item from an index to an object reference """
+        # Terminals have positive indices
+        # Nonterminals have negative indices
+        # A zero index is not allowed
         assert ix != 0
         return self._nonterminals[ix] if ix < 0 else self._terminals[ix]
 
