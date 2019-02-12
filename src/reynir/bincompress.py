@@ -212,12 +212,6 @@ class _Node:
         c = ["   {0}".format(child) for child in self.children] if self.children else []
         return s + "\n".join(c)
 
-    def __hash__(self):
-        return id(self).__hash__()
-
-    def __eq__(self, other):
-        return id(self) == id(other)
-
 
 class Trie:
 
