@@ -5,8 +5,8 @@
 
     BÍN compressor module
 
-    Copyright (C) 2018 Miðeind ehf.
-    Author: Vilhjálmur Þorsteinsson
+    Copyright (C) 2019 Miðeind ehf.
+    Original author: Vilhjálmur Þorsteinsson
 
        This program is free software: you can redistribute it and/or modify
        it under the terms of the GNU General Public License as published by
