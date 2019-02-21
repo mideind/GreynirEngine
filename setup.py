@@ -7,7 +7,7 @@
     Setup.py
 
     Copyright (C) 2019 Miðeind ehf.
-    Author: Vilhjálmur Þorsteinsson
+    Original Author: Vilhjálmur Þorsteinsson
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
     parameter, available in recent versions of setuptools, to
     automatically compile the eparser.cpp module to eparser.*.so/.pyd
     and build the required CFFI Python wrapper via eparser_build.py.
+    The same applies to bin.cpp -> bin.*.so and bin_build.py.
 
     Note that installing under PyPy >= 3.5 is supported.
 

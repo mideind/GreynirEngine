@@ -4,8 +4,8 @@
 
     CFFI builder for _bin module
 
-    Copyright (C) 2018 Miðeind ehf.
-    Author: Vilhjálmur Þorsteinsson
+    Copyright (C) 2019 Miðeind ehf.
+    Original Author: Vilhjálmur Þorsteinsson
 
        This program is free software: you can redistribute it and/or modify
        it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@ import os
 import platform
 import cffi
 
+
 # Don't change the name of this variable unless you
 # change it in setup.py as well
 ffibuilder = cffi.FFI()
@@ -50,8 +51,8 @@ declarations = """
 """
 
 # Do the magic CFFI incantations necessary to get CFFI and setuptools
-# to compile eparser.cpp at setup time, generate a .so library and
-# wrap it so that it is callable from Python and PyPy as _eparser
+# to compile bin.cpp at setup time, generate a .so library and
+# wrap it so that it is callable from Python and PyPy as _bin
 
 if WINDOWS:
     extra_compile_args = ["/Zc:offsetof-"]
