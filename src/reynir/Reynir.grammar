@@ -3221,11 +3221,13 @@ $score(-12) LangtSérnafnNf
 $score(+6) LangtSérnafn
 $score(+10) LangtSérnafn/fall
 
-# Heimilisfang (götuheiti + tala)
+# Heimilisfang (götuheiti + húsnúmer)
 
 NlStak_et_p3/fall/kyn → Heimilisfang/fall/kyn
 
-Heimilisfang/fall/kyn → gata/fall/kyn tala # !!! TODO: húsnúmer (7a, 13C)
+Heimilisfang/fall/kyn → gata/fall/kyn Húsnúmer
+
+Húsnúmer → tala | talameðbókstaf
 
 $score(+4) Heimilisfang/fall/kyn
 

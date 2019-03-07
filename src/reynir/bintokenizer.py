@@ -744,9 +744,7 @@ def parse_phrases_2(token_stream, token_ctor):
             def unknown_surname(tok):
                 """ Check for unknown (non-Icelandic) surnames """
                 # Accept (most) upper case words as a surnames
-                if tok.kind != TOK.WORD:
-                    return False
-                if not tok.txt[0].isupper():
+                if tok.kind != TOK.WORD or not tok.txt[0].isupper():
                     # Must start with capital letter
                     return False
                 if has_category(tok, PATRONYM_SET):
