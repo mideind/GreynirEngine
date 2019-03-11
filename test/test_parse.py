@@ -1319,6 +1319,18 @@ def test_vocabulary():
     assert "kínamúr" in s.tree.nouns
     assert "starfsandi" in s.tree.nouns
 
+    j = r.submit(
+        "Ég fór í Landmannalaugar. Það var gaman í Landmannalaugum.",
+        parse=True
+    )
+    cnt = 0
+    for sent in j:
+        assert sent.tree is not None
+        lemma_set = set([lemma.replace("-", "") for lemma in sent.lemmas])
+        assert "Landmannalaug" in lemma_set
+        cnt += 1
+    assert cnt == 2
+
 
 def test_adjective_predicates():
     """ Test adjectives with an associated predicate """

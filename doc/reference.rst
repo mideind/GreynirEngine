@@ -92,7 +92,9 @@ The Reynir class
         The result dictionary contains the following items:
 
         * ``sentences``: A list of :py:class:`_Sentence` objects corresponding
-            to the sentences found in the text.
+            to the sentences found in the text. If a sentence could
+            not be parsed, the corresponding object's
+            ``tree`` property will be ``None``.
 
         * ``num_sentences``: The number of sentences found in the text.
 
@@ -116,7 +118,11 @@ The Reynir class
             print("{0} sentences were parsed".format(d["num_parsed"]))
             for sent in d["sentences"]:
                 print("The parse tree for '{0}' is:\n{1}"
-                    .format(sent.tidy_text, sent.tree.flat))
+                    .format(
+                        sent.tidy_text,
+                        "[Null]" if sent.tree is None else sent.tree.flat
+                    )
+                )
 
 
     .. py:method:: parse_single(self, sentence : string) -> _Sentence
@@ -132,8 +138,8 @@ The Reynir class
         job is created and the first sentence found in the string is parsed.
         Paragraph markers are ignored.
         A single :py:class:`_Sentence` object is returned. If the sentence
-        was successfully parsed, :py:attr:`_Sentence.tree` is not ``None`` and
-        :py:attr:`_Sentence.combinations` is greater than zero.
+        could not be parsed, :py:attr:`_Sentence.tree` is ``None`` and
+        :py:attr:`_Sentence.combinations` is zero.
 
         Example::
 
@@ -141,8 +147,11 @@ The Reynir class
             r = Reynir()
             my_text = "Litla gula hænan fann fræ"
             sent = r.parse_single(my_text)
-            print("The parse tree for '{0}' is:\n{1}"
-                .format(sent.tidy_text, sent.tree.view))
+            if sent.tree is None:
+                print("The sentence could not be parsed.")
+            else:
+                print("The parse tree for '{0}' is:\n{1}"
+                    .format(sent.tidy_text, sent.tree.view))
 
 
         Output::
@@ -553,8 +562,16 @@ hence the leading underscore in the class name.
         Lemmas of composite words include hyphens ``-`` at the component boundaries.
         Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
 
+        If the sentence has not yet been parsed, or no parse tree was found
+        for it, this property is ``None``.
+
     .. py:attribute:: terminal_nodes
 
         Returns a ``list`` of the subtrees (:py:class:`SimpleTree` instances)
         that correspond to terminals in the parse tree for this
         sentence, in the order in which they occur (token order).
+
+        If the sentence has not yet been parsed, or no parse tree was found
+        for it, this property is ``None``.
+
+
