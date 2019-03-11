@@ -810,6 +810,9 @@ class BIN_Token(Token):
                     return False
         return True
 
+    def matches_NUMWLETTER(self, terminal):
+        return terminal.startswith("talameðbókstaf")
+
     def matches_AMOUNT(self, terminal):
         """ An amount token matches a noun terminal """
         if not terminal.startswith("no"):
@@ -1236,6 +1239,7 @@ class BIN_Token(Token):
         TOK.PUNCTUATION: matches_PUNCTUATION,
         TOK.CURRENCY: matches_CURRENCY,
         TOK.AMOUNT: matches_AMOUNT,
+        TOK.NUMWLETTER: matches_NUMWLETTER,
         TOK.NUMBER: matches_NUMBER,
         TOK.PERCENT: matches_PERCENT,
         TOK.ORDINAL: matches_ORDINAL,
