@@ -1344,7 +1344,6 @@ if __name__ == "__main__":
             .format(fname, datetime.fromtimestamp(ts))
         )
         import time
-
         t0 = time.time()
         g = Grammar()
         try:
@@ -1352,6 +1351,10 @@ if __name__ == "__main__":
             print(
                 "Grammar parsed and loaded in {0:.2f} seconds"
                 .format(time.time() - t0)
+            )
+            print(
+                "Grammar has {0:,} terminals, {1:,} nonterminals and {2:,} productions"
+                .format(g.num_terminals, g.num_nonterminals, g.num_productions)
             )
         except GrammarError as err:
             print(str(err))

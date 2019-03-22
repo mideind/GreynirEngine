@@ -564,7 +564,7 @@ SagnKomma/tala/pers/kyn →
     ',' SagnRunaKnöpp/tala/pers/kyn
 
 # Hvetja til framhalds sömu sagnrunu, fremur en að skipta niður í fleiri setningar
-$score(+5) SagnFramhald/tala/pers/kyn
+$score(+8) SagnFramhald/tala/pers/kyn
 $score(+2) SagnKomma/tala/pers/kyn
 
 $tag(begin_prep_scope) SagnRunaKnöpp/tala/pers/kyn
@@ -1256,6 +1256,8 @@ OgVeraVerða_gm_p3/tala →
 
 SagnliðurMeðF/tala/pers/kyn →
     SögnMeðF/tala/pers/kyn Tilvísunarsetning/tala/pers/kyn?
+
+$score(-2) SagnliðurMeðF/tala/pers/kyn
 
 SögnMeðF/tala/pers/kyn →
     SögnMeðF_0/tala/pers/kyn   # Sögn með engu viðfangi: (Í dag) skánaði veðrið
