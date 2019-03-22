@@ -918,6 +918,7 @@ SetningAukafall →
         NlBeintAndlag_nf/tala/pers AtvFsAuka?
 
     # Mér [algjörlega] blöskraði [af öllu hjarta] vitleysan (í Páli), Mig þraut örendið
+    # !!! ATH: Sumar sagnir ættu ekki að geta tekið andlag hér, til dæmis 'langa', 'svengja'
     | NlFrumlag/aukafall Atviksliður? so_subj_op/aukafall
         FsRunaEftirSögn? NlBeintAndlag_nf_þf/tala AtvFsAuka?
 
@@ -2579,7 +2580,7 @@ NlSagnfylling_ef_et_p3_hk → NlSkýringarsetning
 $score(+1) NlBeintAndlag/fall
 $score(+1) NlBeintAndlag/fall/tala/pers
 $score(+1) NlBeintAndlag/fall/tala/pers/kyn
-$score(+1) NlBeintAndlag_nf_þf/tala
+$score(-2) NlBeintAndlag_nf_þf/tala
 $score(+1) NlFrumlag/fall
 $score(+1) NlFrumlag/fall/tala
 $score(+1) NlFrumlag/fall/tala/kyn
