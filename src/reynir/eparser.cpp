@@ -277,7 +277,7 @@ Nonterminal::Nonterminal(const WCHAR* pwzName)
    : m_pwzName(NULL), m_pProd(NULL)
 {
    Nonterminal::ac++;
-   this->m_pwzName = pwzName ? ::wcsdup(pwzName) : NULL;
+   this->m_pwzName = pwzName ? ::_wcsdup(pwzName) : NULL;
 }
 
 Nonterminal::~Nonterminal(void)
