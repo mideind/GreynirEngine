@@ -564,7 +564,7 @@ SagnKomma/tala/pers/kyn →
     ',' SagnRunaKnöpp/tala/pers/kyn
 
 # Hvetja til framhalds sömu sagnrunu, fremur en að skipta niður í fleiri setningar
-$score(+5) SagnFramhald/tala/pers/kyn
+$score(+8) SagnFramhald/tala/pers/kyn
 $score(+2) SagnKomma/tala/pers/kyn
 
 $tag(begin_prep_scope) SagnRunaKnöpp/tala/pers/kyn
@@ -918,6 +918,7 @@ SetningAukafall →
         NlBeintAndlag_nf/tala/pers AtvFsAuka?
 
     # Mér [algjörlega] blöskraði [af öllu hjarta] vitleysan (í Páli), Mig þraut örendið
+    # !!! ATH: Sumar sagnir ættu ekki að geta tekið andlag hér, til dæmis 'langa', 'svengja'
     | NlFrumlag/aukafall Atviksliður? so_subj_op/aukafall
         FsRunaEftirSögn? NlBeintAndlag_nf_þf/tala AtvFsAuka?
 
@@ -1256,6 +1257,8 @@ OgVeraVerða_gm_p3/tala →
 
 SagnliðurMeðF/tala/pers/kyn →
     SögnMeðF/tala/pers/kyn Tilvísunarsetning/tala/pers/kyn?
+
+$score(-2) SagnliðurMeðF/tala/pers/kyn
 
 SögnMeðF/tala/pers/kyn →
     SögnMeðF_0/tala/pers/kyn   # Sögn með engu viðfangi: (Í dag) skánaði veðrið
@@ -2577,7 +2580,7 @@ NlSagnfylling_ef_et_p3_hk → NlSkýringarsetning
 $score(+1) NlBeintAndlag/fall
 $score(+1) NlBeintAndlag/fall/tala/pers
 $score(+1) NlBeintAndlag/fall/tala/pers/kyn
-$score(+1) NlBeintAndlag_nf_þf/tala
+$score(-2) NlBeintAndlag_nf_þf/tala
 $score(+1) NlFrumlag/fall
 $score(+1) NlFrumlag/fall/tala
 $score(+1) NlFrumlag/fall/tala/kyn
