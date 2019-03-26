@@ -512,7 +512,7 @@ def parse_phrases_1(db, token_ctor, token_stream):
             # 'viðskipta- og iðnaðarráðherra'
             # 'marg-ítrekaðri'
             if (
-                token.kind == TOK.WORD
+                (token.kind == TOK.WORD or token.kind == TOK.ENTITY)
                 and next_token.kind == TOK.PUNCTUATION
                 and next_token.txt == COMPOSITE_HYPHEN
             ):
