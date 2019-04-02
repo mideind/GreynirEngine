@@ -1066,16 +1066,15 @@ AukafallsBotn →
 
 MiðmyndarBotn →
     MiðmyndarBotnFlókinn
-
-    # (Mér leyfist) vonandi að fara út
-    | NhFyllingAtv
-
     # (Páli fyrirgefst) örugglega á morgun
     | FsAtv
 
 MiðmyndarBotnFlókinn →
     # (Mér sýndist) kötturinn [ekki] [vera að] lepja mjólkina og borða matinn í gær
     Nl_nf AtvFs? VeraInnskot? NhRuna FsAtv?
+
+    # (Mér leyfist) vonandi að fara út
+    | NhFyllingAtv
 
     # (Mér finnst) kettirnir [ekki] [vera] fallegir
     | MiðmyndarBotnLo
