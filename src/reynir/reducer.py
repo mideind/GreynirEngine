@@ -525,6 +525,12 @@ class Reducer:
 
             # Apply heuristics to each terminal that potentially matches this token
             for t in s:
+
+                if t.is_literal:
+                    # Give a bonus for exact or semi-exact matches with
+                    # literal terminals
+                    sc[t] += 2
+
                 tfirst = t.first
                 if tfirst == "ao" or tfirst == "eo":
                     # Subtract from the score of all ao and eo
@@ -695,9 +701,6 @@ class Reducer:
                 elif tfirst == "gr":
                     # Encourage separate definite article rather than pronoun
                     sc[t] += 2
-                elif t.name[0] in "\"'":
-                    # Give a bonus for exact or semi-exact matches
-                    sc[t] += 1
 
         return scores
 

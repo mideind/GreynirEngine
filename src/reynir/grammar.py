@@ -230,6 +230,12 @@ class Terminal:
         """ Return the (positive) sequence number of this terminal """
         return self._index
 
+    @property
+    def is_literal(self):
+        """ Return True if this is a literal terminal, i.e. one enclosed
+            within single or double quotes """
+        return False
+
     def set_index(self, ix):
         """ Set a new sequence number for this nonterminal """
         assert ix > 0
@@ -257,6 +263,12 @@ class LiteralTerminal(Terminal):
         # - no stemming or other canonization should be applied,
         # although the string will be converted to lowercase
         self._strong = q == '"'
+
+    @property
+    def is_literal(self):
+        """ Return True if this is a literal terminal, i.e. one enclosed
+            within single or double quotes """
+        return True
 
     def matches(self, t_kind, t_val, t_lit):
         """ A literal terminal matches a token if the token text is

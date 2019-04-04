@@ -157,6 +157,7 @@ _DEFAULT_NT_MAP = {
     "Titill": "NP-TITLE",
     "Frumlag": "NP-SUBJ",
     "NlFrumlag": "NP-SUBJ",
+    "NlFrumlagÞað": "NP-SUBJ",
     "NlBeintAndlag": "NP-OBJ",
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
@@ -171,7 +172,10 @@ _DEFAULT_NT_MAP = {
     "SagnliðurÁnF": "VP",
     "ÖfugurSagnliður": "VP-REV",
     "SagnliðurVh": "VP",
-    "SögnLhNt": "VP-PP",  # Present participle, lýsingarháttur nútíðar
+    "SögnLhNt": "VP-PP",  # Present participle, lýsingarháttur nútíðar ('reykjandi sígarettu')
+    "SögnSagnbBreyting": "VP", # 'hefur versnað'
+    "SögnLhNtBreyting": "VP", # 'hefur farið fækkandi'
+    "SögnNhBreyting": "VP", # 'mun fækka'
     "SagnHluti": "VP-SEQ",
     "SagnRuna": "VP-SEQ",
     "SagnRunaStýfð": "VP-SEQ",
