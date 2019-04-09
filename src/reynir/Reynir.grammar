@@ -4431,7 +4431,7 @@ FsMeðFallstjórn →
 $score(+1) FsMeðFallstjórn
 
 FsAð →
-    NhLiðir SagnInnskot?    # Þörfin fyrir að læra spænsku í skólum
+    NhLiðir SagnInnskot?    # Þörfin fyrir að læra spænsku [í skólum]
     | Skýringarsetning      # Þörfin fyrir að Jón seldi bílinn
 
 $score(+4) FsAð
