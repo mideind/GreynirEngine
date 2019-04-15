@@ -28,7 +28,7 @@ Reynir has been used to parse text from Icelandic news websites since 2015,
 processing 6 million sentences in 300.000 articles. Its optimized C++ parsing
 core is fast and efficient enough to parse real-world text according to a
 `context-free grammar for the Icelandic
-language <https://github.com/vthorsteinsson/ReynirPackage/blob/master/src/reynir/Reynir.grammar>`_
+language <https://github.com/mideind/ReynirPackage/blob/master/src/reynir/Reynir.grammar>`_
 with over 16,000 productions.
 
 To get acquainted with Reynir, we recommend that you start with
@@ -58,7 +58,7 @@ infer what the most likely lemmas are, how they are inflected in the
 parsed text, and where they fit in the overall sentence structure.
 
 Reynir is thoroughly documented, and its source code is of course
-`available on GitHub <https://github.com/vthorsteinsson/ReynirPackage>`_.
+`available on GitHub <https://github.com/mideind/ReynirPackage>`_.
 
 Enabling your application
 -------------------------

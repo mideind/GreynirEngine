@@ -99,7 +99,7 @@ html_theme_options = {
     "logo_name": False,
     "logo_text_align": "center",
     "description": "Natural Language Processing for Icelandic",
-    "github_user": "vthorsteinsson",
+    "github_user": "mideind",
     "github_repo": "ReynirPackage",
     "github_button": True,
     "sidebar_collapse": False,

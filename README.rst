@@ -2,10 +2,10 @@
 Reynir: A fast, efficient natural language parser for Icelandic
 ===============================================================
 
-.. image:: https://github.com/vthorsteinsson/ReynirPackage/blob/master/doc/_static/ReynirLogo216.png
+.. image:: https://github.com/mideind/ReynirPackage/blob/master/doc/_static/ReynirLogo216.png
 
-.. image:: https://travis-ci.org/vthorsteinsson/ReynirPackage.svg?branch=master
-    :target: https://travis-ci.org/vthorsteinsson/ReynirPackage
+.. image:: https://travis-ci.org/mideind/ReynirPackage.svg?branch=master
+    :target: https://travis-ci.org/mideind/ReynirPackage
 
 ********
 Overview
@@ -89,7 +89,7 @@ To install this package::
 
 If you want to be able to edit the source, do like so (assuming you have **git** installed)::
 
-    $ git clone https://github.com/vthorsteinsson/ReynirPackage
+    $ git clone https://github.com/mideind/ReynirPackage
     $ cd ReynirPackage
     $ # [ Activate your virtualenv here if you have one ]
     $ python setup.py develop
