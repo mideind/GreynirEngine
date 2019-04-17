@@ -615,7 +615,10 @@ class Reducer:
                                     adjmax = score
                                     break
                         sc[t] += adj + adjmax
-                    if t.is_sagnb:
+                    if t.is_bh:
+                        # Discourage 'boðháttur'
+                        sc[t] -= 4
+                    elif t.is_sagnb:
                         # We like sagnb and lh, it means that more
                         # than one piece clicks into place
                         sc[t] += 6

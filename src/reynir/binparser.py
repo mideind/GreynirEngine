@@ -166,6 +166,7 @@ class BIN_Token(Token):
     VBIT_HK = VBIT["hk"]
     VBIT_NH = VBIT["nh"]
     VBIT_VH = VBIT["vh"]
+    VBIT_BH = VBIT["bh"]
     VBIT_LH = VBIT["lhþt"]
     VBIT_MM = VBIT["mm"]
     VBIT_GM = VBIT["gm"]
@@ -1514,6 +1515,10 @@ class VariantHandler:
     @property
     def is_vh(self):
         return (self._vbits & BIN_Token.VBIT_VH) != 0
+
+    @property
+    def is_bh(self):
+        return (self._vbits & BIN_Token.VBIT_BH) != 0
 
 
 class BIN_Terminal(VariantHandler, Terminal):
