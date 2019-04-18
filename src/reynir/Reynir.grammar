@@ -4864,15 +4864,16 @@ OgÁratugum →
 
 ÓfullkominDagsetning →
     Vikudagur_þf_et? dagsafs NæstSíðast_þf_et_kk?
-    | HinnSá_þf dagsafs NæstSíðast_þf_et_kk?                       # hinn/þann 14. nóvember sl.
+    | HinnSá_þf dagsafs NæstSíðast_þf_et_kk?                # hinn/þann 14. nóvember sl.
     | ártal
-    | Árstíð_þf_et/kyn ártal_þf_et                                 # haustið 2016, veturinn 1998
-    | HinnSá_þf raðnr SáÞessi_ef_et_kk 'mánuður:kk'_ef_et          # þann/hinn 23. þess/þessa mánaðar
-    | Mánaðamót                                                    # mánaðamótin mars-apríl
-    | DaganaAfs                                                    # dagana 14. og 15. október 
-    | ÁrinAfs                                                      # árin 1938 og 1967
-    | TímaÁkvæðisliður_þf_et_kk Vikudagur_et_þf                    # næsta fimmtudag
-    | TímaÁkvæðisliður_þf_et/kyn Árstíð_þf_et/kyn                  # næsta haust, þann sama vetur
+    | Árstíð_þf_et/kyn ártal_þf_et                          # haustið 2016, veturinn 1998
+    | HinnSá_þf raðnr SáÞessi_ef_et_kk 'mánuður:kk'_ef_et   # þann/hinn 23. þess/þessa mánaðar
+    | Mánaðamót                                             # mánaðamótin mars-apríl
+    | DaganaAfs                                             # dagana 14. og 15. október
+    | ÁrinAfs                                               # árin 1938 og 1967
+    | TímaÁkvæðisliður_þf_et_kk Vikudagur_et_þf             # næsta fimmtudag
+    | TímaÁkvæðisliður_þf_et/kyn Árstíð_þf_et/kyn           # næsta haust, þann sama vetur
+    | TímaNafnorðStærri_gr_þf/tala FsFyrirEftir             # daginn fyrir útskriftina, mánuðina eftir jarðskjálftann
 
 VísiDagsetning → 
     'á:fs'_þf Vikudagur_et_þf           # á föstudag
@@ -4908,6 +4909,12 @@ Mánuður_et/fall →
 DaganaAfs → 
     'dagur:kk'_gr_ft_þf? dagsafs Til dagsafs       # (dagana) 13. október og/til/- 14. nóvember
     | 'dagur:kk'_gr_ft_þf? raðnr Til dagsafs       # (dagana) 13. og/til/- 14. nóvember 
+
+FsFyrirEftir →
+    FyrirEftir Nl_þf
+
+FyrirEftir →
+    'fyrir:fs'_þf | 'eftir:fs'_þf
 
 ÁrinAfs →
     ártal ÁraRuna* Til tala                        # 2016-2017, 2016 til 17
@@ -5413,6 +5420,24 @@ TímaNafnorðStærri_hk/fall/tala →
     | 'árhundrað:hk'/fall/tala
     | 'árþúsund:hk'/fall/tala
     | 'sumar:hk'/fall/tala
+
+TímaNafnorðStærri_gr/fall/tala →
+    'dagur:kk'_gr/fall/tala
+    | 'sólarhringur:kk'_gr/fall/tala
+    | 'mánuður:kk'_gr/fall/tala
+    | 'ársfjórðungur:kk'_gr/fall/tala
+    | 'áratugur:kk'_gr/fall/tala
+    | 'aldarfjórðungur:kk'_gr/fall/tala
+    | 'vetur:kk'_gr/fall/tala
+    | 'vika:kvk'_gr/fall/tala
+    | 'önn:kvk'_gr/fall/tala
+    | 'öld:kvk'_gr/fall/tala
+    | 'þúsöld:kvk'_gr/fall/tala
+    | 'misseri:hk'_gr/fall/tala
+    | 'ár:hk'_gr/fall/tala
+    | 'árhundrað:hk'_gr/fall/tala
+    | 'árþúsund:hk'_gr/fall/tala
+    | 'sumar:hk'_gr/fall/tala
 
 TímaAtviksEinkunn →
     "rétt:ao" TímaAtviksEinkunn

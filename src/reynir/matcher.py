@@ -182,6 +182,7 @@ _DEFAULT_NT_MAP = {
     "SetningSo": "VP-SEQ",
     "FsLiður": "PP",
     "FsMeðFallstjórn": "PP",
+    "FsFyrirEftir": "PP",
     "LoTengtSögn": "ADJP",
     "SagnInnskot": "ADVP",
     "FsAtv": "ADVP",
