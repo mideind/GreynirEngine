@@ -3628,8 +3628,10 @@ Töluorð/tala/fall/kyn → to/tala/fall/kyn | tala/tala/fall/kyn
 # Talnabil eru líka alltaf í fleirtölu
 Töluorð_ft/fall/kyn → töl_ft/fall/kyn | Talnabil
 
-Talnabil → tala "-:en" tala
+Talnabil → tala Bil tala
 $score(+4) Talnabil
+
+Bil → "-:en"
 
 Töluorð/fall/tala/kyn → Töluorð/tala/fall/kyn
 
@@ -3898,7 +3900,7 @@ $score(-8) KommaOgEðaStrik
 # (Í gær börðu strákarnir ekki Guðmund), heldur (stríddu Páli)
 
 OgEðaEn →
-    "og:st" | "svo:st" "og:st" | "eða:st" | "ellegar:st" | "heldur:st"
+    'og:st' | "svo:st" "og:st" | "eða:st" | "ellegar:st" | "heldur:st"
     | "eins:ao" "og:st" | En
 
 En → "en:st"
@@ -4872,13 +4874,17 @@ Mánaðamót →
 # (í viku (Tímabil), á ári (Tíðni), í mánuð (Tímabil), ...)
 # á árinu, í vikunni, í mánuðinum
 AfstæðDagsetningFs → 
-    'á:fs'_þgf 'ár:hk'_þgf_et_gr                                # á árinu
-    | 'á:fs'_þgf TímaÁkvæðisliður_þgf_et_hk 'ár:hk'_þgf_et      # á næsta ári
-    | 'í:fs'_þgf 'mánuður:kk'_þgf_et_gr                         # í mánuðinum
-    | 'í:fs'_þgf TímaÁkvæðisliður_þgf_et_kk 'mánuður:kk'_þgf_et # í síðasta mánuði
-    | 'í:fs'_þgf 'vika:kvk'_þgf_et_gr                           # í vikunni
-    | 'í:fs'_þgf TímaÁkvæðisliður_þgf_et_kvk 'vika:kvk'_þgf_et  # í sömu viku
-    | 'í:fs'_þf Árstíð_þf_et/kyn                                # í haust, í vetur, í vor, í sumar
+    ÁFs_þgf 'ár:hk'_þgf_et_gr                                # á árinu
+    | ÁFs_þgf TímaÁkvæðisliður_þgf_et_hk 'ár:hk'_þgf_et      # á næsta ári
+    | ÍFs_þgf 'mánuður:kk'_þgf_et_gr                         # í mánuðinum
+    | ÍFs_þgf TímaÁkvæðisliður_þgf_et_kk 'mánuður:kk'_þgf_et # í síðasta mánuði
+    | ÍFs_þgf 'vika:kvk'_þgf_et_gr                           # í vikunni
+    | ÍFs_þgf TímaÁkvæðisliður_þgf_et_kvk 'vika:kvk'_þgf_et  # í sömu viku
+    | ÍFs_þf Árstíð_þf_et/kyn                                # í haust, í vetur, í vor, í sumar
+
+# Nauðsynlegar reglur til að einangra liði í úttaki
+ÍFs/fall → 'í:fs'/fall
+ÁFs/fall → 'á:fs'/fall
 
 # Aðalliður: Fastur tímapunktur 
 FasturTímapunktur →

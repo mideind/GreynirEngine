@@ -610,7 +610,6 @@ def parse_phrases_2(token_stream, token_ctor):
             if token.kind == TOK.NUMBER and (
                 next_token.kind == TOK.WORD or next_token.kind == TOK.CURRENCY
             ):
-
                 # Preserve the case of the number, if available
                 # (milljónir, milljóna, milljónum)
                 cases = token.val[1]
@@ -655,7 +654,6 @@ def parse_phrases_2(token_stream, token_ctor):
                     )
                     # Eat the currency token
                     next_token = next(token_stream)
-
             # Check for [time] [date] (absolute)
             if token.kind == TOK.TIME and next_token.kind == TOK.DATEABS:
                 # Create a time stamp
