@@ -930,7 +930,7 @@ SetningAukafall →
         NlBeintAndlag_nf/tala/pers AtvFsAuka?
 
     # Mér [algjörlega] blöskraði [af öllu hjarta] vitleysan (í Páli), Mig þraut örendið
-    | NlFrumlag/aukafall SögnÓp/aukafall AtvFsAuka?
+    | NlFrumlag/aukafall SögnÓp/aukafall
 
     # Þann auð ber okkur að nýta (til góðra verka)
     | NlBeintAndlag/aukafall2 so_subj_op/aukafall NlFrumlag/aukafall AtvFs? nhm So_1_nh/aukafall2 FsAtv?
@@ -1025,7 +1025,11 @@ SetningAukafallForgangur →
 SögnÓp/aukafall →
     # (Mér) [algjörlega] blöskraði [af öllu hjarta] vitleysan
     # (Mig) þraut örendið
-    Atviksliður? So_subj_op/fall/aukafall FsRunaEftirSögn? NlBeintAndlag/fall
+    Atviksliður? So_subj_op/fall/aukafall SögnÓpBotn/fall
+
+SögnÓpBotn/fall →
+    FsRunaEftirSögn? NlBeintAndlag/fall AtvFsAuka?
+    | NhFyllingAtv  # Landinu bar [blátt áfram] að bjarga flóttamönnum í neyð
 
 FinnstÞað/tala/kyn →
     'það:pfn'_hk_nf_et LoÞgf/tala/kyn       # Bílstjórum finnst það mörgum leiðinlegt
