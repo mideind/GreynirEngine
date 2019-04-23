@@ -159,6 +159,7 @@ _DEFAULT_NT_MAP = {
     "NlFrumlag": "NP-SUBJ",
     "NlFrumlagÞað": "NP-SUBJ",
     "NlBeintAndlag": "NP-OBJ",
+    "NlEnginnAndlag" : "NP-OBJ",  # 'hann getur enga samninga gert'
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
     "SögnErLoBotn": "NP-PRD",  # Show '(Hann er) góður / 18 ára' as a predicate argument
@@ -173,9 +174,13 @@ _DEFAULT_NT_MAP = {
     "ÖfugurSagnliður": "VP-REV",
     "SagnliðurVh": "VP",
     "SögnLhNt": "VP-PP",  # Present participle, lýsingarháttur nútíðar ('reykjandi sígarettu')
-    "SögnSagnbBreyting": "VP", # 'hefur versnað'
-    "SögnLhNtBreyting": "VP", # 'hefur farið fækkandi'
-    "SögnNhBreyting": "VP", # 'mun fækka'
+    "SögnSagnbBreyting": "VP",  # 'hefur versnað'
+    "SögnLhNtBreyting": "VP",  # 'hefur farið fækkandi'
+    "SögnNhBreyting": "VP",  # 'mun fækka'
+    "SögnÞað": "VP",  # '(það) verður að segjast að...'
+    "SögnÓp": "VP",  # '(mig) þraut örendið'
+    "SögnAukafallÞgf": "VP",
+    "SögnAukafallEf": "VP",
     "SagnHluti": "VP-SEQ",
     "SagnRuna": "VP-SEQ",
     "SagnRunaStýfð": "VP-SEQ",

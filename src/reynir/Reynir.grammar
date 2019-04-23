@@ -222,7 +222,7 @@ Samtenging →
     # Flóknari samtenging úr mörgum orðum
     "og:st" | "eða:st" | "ellegar:st" | "heldur:st" 
     | "enda:st" | "en:st" | "hvorki:st"
-    | 'það:pfn'_hk_nf_et 'vera:so'_0_gm_fh_et_p3
+    | 'það:pfn'_hk_nf_et 'vera:so'_0_gm_fh_et_p3        # það er
     | "þar:ao" 'á_meðal:ao'
     | 'auk_þess:ao' "sem:st" VillaAð?
     | 'það_er_að_segja:ao' Tengimerki "að:st"?
@@ -469,7 +469,6 @@ $tag(apply_length_bonus) Tíðartenging
 Allt → 'allur:fn'_nf_hk_et
 $score(+4) Allt
 
-
 Tilgangstenging → 
     'til:fs'_ef 'það:pfn'_hk_ef_et "að:st"
     | "svo:st" "að:st"    # Líka afleiðingartenging
@@ -708,15 +707,25 @@ Setning_et_p3_hk →
     # Um er/var að ræða þriggja ára stelpu
     # (-> Það er um að ræða þriggja ára stelpu)
     | SetningUmAðRæða
-    # 'Það/nú/alltaf er/var/væri verið að reka fólk burt af jörðum sínum'
+    # 'Nú/þá/alltaf er/var/væri verið að reka fólk burt af jörðum sínum'
     # ('verið' er ekki til sem LHÞT, en það er hins vegar 'búið' o.fl.)    # ERROR -- bæta við í bín? og/eða er þetta villa?
     | SetningForskeyti 'vera:so'_0_gm_p3_et 'vera:so'_sagnb NhFyllingAtv
-    | NlFrumlagÞað 'vera:so'_0_gm_p3_et 'vera:so'_sagnb NhFyllingAtv
-    # 'Það tekur mig tvö ár að eignast bílinn'
-    # 'Það kostaði mig blóð, svita og tár [í gær] að standa í þessu'
-    |  NlFrumlagÞað so_2_þf_þf_gm_p3_et NlBeintAndlag_þf NlÓbeintAndlag_þf NhFyllingAtv
+    # Það (var verið að eyðileggja menningarverðmæti)
+    # Það (tekur mig þrjú ár að eignast bílinn)
+    # Það (verður að viðurkennast að Jón er fær á sínu sviði)
+    | NlFrumlagÞað SögnÞað
 
-$tag(begin_prep_scope) Setning/tala/pers/kyn # Nýtt undirtré fyrir tengingu sagnar og forsetningar
+SögnÞað →
+    # (Það) var verið að eyðileggja menningarverðmæti
+    'vera:so'_0_gm_p3_et 'vera:so'_sagnb NhFyllingAtv
+    # (Það) tekur mig tvö ár að eignast bílinn
+    # (Það) kostaði mig blóð, svita og tár [í gær] að standa í þessu
+    | so_2_þf_þf_gm_p3_et NlBeintAndlag_þf NlÓbeintAndlag_þf NhFyllingAtv
+    # (Það) verður [strax] að segjast/viðurkennast að Jón er fær á sínu sviði
+    | 'verða:so'_0_gm_p3_et FsAtv? nhm so_0_mm_nh Skýringarsetning
+
+# Nýtt undirtré fyrir tengingu sagnar og forsetningar
+$tag(begin_prep_scope) Setning/tala/pers/kyn
 
 # Setning þar sem frumlagið 'það' er falið
 SetningÞað →
@@ -911,19 +920,17 @@ SetningAukafall →
 
     # Manninn langaði [mjög í ferðina / að fara til útlanda strax]
     # Köttum [í landinu] fjölgar
-    NlFrumlag/aukafall so_subj_op/aukafall MiðmyndarBotn?
+    NlFrumlag/aukafall so_subj_op/aukafall ÓpSagnarBotn?
 
     # Mig/Þig/Hann/Mennina hefur [lengi] langað [til útlanda]
-    | NlFrumlag/aukafall HjSögn_et_p3 FsAtv? so_subj_sagnb/aukafall MiðmyndarBotn?
+    | NlFrumlag/aukafall HjSögn_et_p3 FsAtv? so_subj_sagnb/aukafall ÓpSagnarBotn?
 
     # Mér hafa ofboðið lætin í hundinum [alla daga]
     | NlFrumlag/aukafall HjSögn/tala/pers FsAtv? so_subj_sagnb/aukafall
         NlBeintAndlag_nf/tala/pers AtvFsAuka?
 
     # Mér [algjörlega] blöskraði [af öllu hjarta] vitleysan (í Páli), Mig þraut örendið
-    # !!! ATH: Sumar sagnir ættu ekki að geta tekið andlag hér, til dæmis 'langa', 'svengja'
-    | NlFrumlag/aukafall Atviksliður? so_subj_op/aukafall
-        FsRunaEftirSögn? NlBeintAndlag_nf_þf/tala AtvFsAuka?
+    | NlFrumlag/aukafall SögnÓp/aukafall AtvFsAuka?
 
     # Þann auð ber okkur að nýta (til góðra verka)
     | NlBeintAndlag/aukafall2 so_subj_op/aukafall NlFrumlag/aukafall AtvFs? nhm So_1_nh/aukafall2 FsAtv?
@@ -964,11 +971,11 @@ SetningAukafall →
         AtvFs? so_2_þgf_þf_lhþt/tala/kyn FsAtv?
 
     # Hjónunum var [í fyrra] [báðum] (falið að stýra rannsóknaverkefni)
-    | NlFrumlag_þgf/tala/kyn HjSögnLhÞtSM_et_p3 FsAtv? LoÞgf/tala/kyn? AukafallÞgfAndlag
+    | NlFrumlag_þgf/tala/kyn SögnAukafallÞgf/tala/kyn
 
     # Þess skal [ekki] gætt (að fara varlega með sprengiefnið)
     # Nánari upplýsinga er [ekki] að vænta
-    | NlFrumlag_ef HjSögnLhÞtSM_et_p3 FsAtv? AukafallEfAndlag
+    | NlFrumlag_ef SögnAukafallEf
 
     # Þá ályktun má strax draga í dag (að Páll sé ekki með öllum mjalla)
     # Engan má skylda til að láta eign sína af hendi
@@ -1015,6 +1022,11 @@ SetningAukafallForgangur →
     # Mér sýndist [eftir íhugun] að málið hefði fengið eðlilega meðferð
     | NlFrumlag_þgf so_0_mm FsAtv? Skýringarsetning
 
+SögnÓp/aukafall →
+    # (Mér) [algjörlega] blöskraði [af öllu hjarta] vitleysan
+    # (Mig) þraut örendið
+    Atviksliður? So_subj_op/fall/aukafall FsRunaEftirSögn? NlBeintAndlag/fall
+
 FinnstÞað/tala/kyn →
     'það:pfn'_hk_nf_et LoÞgf/tala/kyn       # Bílstjórum finnst það mörgum leiðinlegt
     | LoÞgf/tala/kyn 'það:pfn'_hk_nf_et?    # Bílstjórum finnst mörgum [það] leiðinlegt
@@ -1023,7 +1035,10 @@ FinnstAndlag →
     LoTengtSögn_nf_et_hk    # skemmtilegt
     | ao* so_lh_nt          # mjög endurnærandi, afskaplega frískandi
 
-AukafallÞgfAndlag →
+SögnAukafallÞgf/tala/kyn →
+    HjSögnLhÞtSM_et_p3 FsAtv? LoÞgf/tala/kyn? SögnAukafallÞgfBotn
+
+SögnAukafallÞgfBotn →
     # (Stóru skipunum hefur verið/skal/mun) stýrt (í land)
     # (Hannesi var í fyrra) falið að stýra rannsóknaverkefni
     # (Mér var strax) sagt að Friðgeir væri farinn að drekka aftur
@@ -1039,12 +1054,17 @@ AukafallÞgfAndlag →
     # (Öllum hefur verið/skal/mun) skilað [í flýti] bílunum
     | so_2_þgf_þgf_sagnb FsRunaInnskot? NlBeintAndlag_þgf AtvFsAuka?
 
-AukafallEfAndlag →
-    # Þess skal [ekki] gætt að fara varlega með sprengiefnið
+SögnAukafallEf →
+    HjSögnLhÞtSM_et_p3 FsAtv? SögnAukafallEfBotn
+
+SögnAukafallEfBotn →
+    # (Þess skal [ekki]) gætt að fara varlega með sprengiefnið
     so_1_ef_sagnb AðLiður?
 
     # Ákvörðunar var/er/verður/hefur verið/mun [ekki] að vænta [strax í dag]
     | nhm so_1_ef_nh FsAtv?
+
+$score(+3) SögnAukafallEfBotn
 
 AukafallÖfugSögn →
     NlBeintAndlag/fall AtvFs? So_1_nh/fall         # (skal) engum gera
@@ -1064,13 +1084,20 @@ AukafallsBotn →
     | FsRuna? NlFrumlag_nf AtvFsAuka? # (Mér virtist ykkur ekki falla) [í geð] ræðan í kvöld
     | NhFyllingAtv                    # (Mér sýndist ykkur langa) gríðarlega að fara til útlanda strax
 
+ÓpSagnarBotn →
+    FsAtv                             # (Mér líkaði) vel við Jón
+    | NhFyllingAtv                    # (Okkur langaði) gríðarlega að fara til útlanda strax
+    | FsAtv? HjSögnVantaSkorta NlBeintAndlag_þf AtvFsAuka? # (Okkur þótti) [algjörlega] vanta broddinn í ræðuna
+    | Nl_nf AtvFs? VeraInnskot? NhRuna FsAtv? # (Okkur þótti) hún teygja lopann gríðarlega
+    | MiðmyndarBotnLo                  # (Okkur þótti) kettirnir [ekk] [vera] fallegir
+
 MiðmyndarBotn →
     MiðmyndarBotnFlókinn
     # (Páli fyrirgefst) örugglega á morgun
     | FsAtv
 
 MiðmyndarBotnFlókinn →
-    # (Mér sýndist) kötturinn [ekki] [vera að] lepja mjólkina og borða matinn í gær
+    # (Mér sýndist) kötturinn [ekki] [vera [skyndilega] að] lepja mjólkina og borða matinn í gær
     Nl_nf AtvFs? VeraInnskot? NhRuna FsAtv?
 
     # (Mér leyfist) vonandi að fara út
@@ -1084,7 +1111,7 @@ MiðmyndarBotnFlókinn →
 
     # (Mér finnst) [ekki / í meginatriðum] vanta blíðu [í söng Ara]
     # !!! ATH: Hvaða sagnir geta staðið hér? Aðeins 'vanta' og 'skorta'?
-    | FsAtv? So_1_nh/aukafall NlBeintAndlag/aukafall FsAtv?
+    | FsAtv? HjSögnVantaSkorta NlBeintAndlag_þf AtvFsAuka?
 
     # (Mér virtist) þeim [ekki] sýnast börnin vera falleg
     | Nl_þgf AtvFs? so_nh_mm MiðmyndarBotn
@@ -1094,12 +1121,10 @@ $score(+14) MiðmyndarBotnFlókinn
 MiðmyndarBotnLo →
     Nl_nf/tala/pers/kyn AtvFs? HjSögnVera? LoTengtSögn_nf/tala/kyn FsAtv?
 
-$score(+2) MiðmyndarBotnLo # Gefa plús fyrir heildstætt samhengi lýsingarorðs
+$score(+24) MiðmyndarBotnLo # Gefa plús fyrir heildstætt samhengi lýsingarorðs
 
 VeraInnskot →
-    HjSögnVera nhm    # vera að / geta hafa verið að / verðir að / hafa orðið að...    # ERROR
-
-Nl_nf_þf/tala → Nl_nf/tala | Nl_þf/tala
+    HjSögnVera FsAtv? nhm  # vera [stöðugt] að / geta hafa verið [alltaf] að / verðir [í snatri] að / hafa orðið að...
 
 # Setningar án frumlags (notaðar t.d. í tengisetningum eftir 'sem').
 # Í setningum án frumlags getur sagnliðurinn verið "öfugur",
@@ -1721,6 +1746,15 @@ So_1_p3_þf/tala → so_1_þf_p3/tala
 So_1_p3_þgf/tala → so_1_þgf_p3/tala
 So_1_p3_ef/tala → so_1_ef_p3/tala
 
+# Ópersónulegar sagnir sem standa með frumlagi í aukafalli og hafa jafnframt
+# andlag, t.d. 'Mig dreymdi hest', þar sem 'dreymdi'
+# hefur bæði frumlag í þolfalli og andlag í þolfalli;
+# 'Mér blöskraði vitleysan'; 'Mig þraut örendið'
+So_subj_op_nf/aukafall → so_1_nf_subj_op/aukafall
+So_subj_op_þf/aukafall → so_1_þf_subj_op/aukafall
+So_subj_op_þgf/aukafall → so_1_þgf_subj_op/aukafall
+So_subj_op_ef/aukafall → so_1_ef_subj_op/aukafall
+
 # Sagnbót með einu viðfangi
 
 Sögn_1_sagnb →
@@ -1728,7 +1762,10 @@ Sögn_1_sagnb →
     So_1_sagnb_nf FsRunaEftirSögn? NlSagnfylling_nf
     # Þingmenn geta/hafa lagt [fyrir Alþingi] frumvörp (til laga)
     | So_1_sagnb/aukafall FsRunaEftirSögn? NlBeintAndlag/aukafall
-    | 'enginn:fn'/fall/tala/kyn Nl/fall/tala/kyn So_1_sagnb/fall # (Þó getur hann) enga samninga gert
+    | NlEnginnAndlag/fall So_1_sagnb/fall # (Þó getur hann) enga samninga gert
+
+NlEnginnAndlag/fall →
+    'enginn:fn'/fall/tala/kyn Nl/fall/tala/kyn
 
 # Sögn í nafnhætti með einu viðfangi
 
@@ -2392,12 +2429,12 @@ $score(+16) HjSögnLhNt
 # 'Íslandsbanka hefur tekist að halda í horfinu'
 
 HjSögnMM →
-    'hafa:so'_gm_p3_et FsAtv?               # hefur [ekki] tekist
-    | 'geta:so'_gm_p3_et FsAtv? 'hafa:so'_nh?  # getur [ekki] [hafa] tekist
-    | 'munu:so'_gm_p3_et FsAtv? 'hafa:so'_nh   # mun [ekki] hafa tekist
-    | 'skulu:so'_gm_p3_et FsAtv? 'hafa:so'_nh  # skal [ekki] hafa tekist
-    | 'þykja:so'_gm_p3_et FsAtv? 'hafa:so'_nh  # þykir [ekki] hafa tekist
-    | 'mega:so'_gm_p3_et FsAtv? 'hafa:so'_nh   # má [ekki] hafa tekist
+    'hafa:so'_gm_p3_et FsAtv?                   # hefur [ekki] tekist
+    | 'geta:so'_gm_p3_et FsAtv? 'hafa:so'_nh?   # getur [ekki] [hafa] tekist
+    | 'munu:so'_gm_p3_et FsAtv? 'hafa:so'_nh    # mun [ekki] hafa tekist
+    | 'skulu:so'_gm_p3_et FsAtv? 'hafa:so'_nh   # skal [ekki] hafa tekist
+    | 'þykja:so'_gm_p3_et FsAtv? 'hafa:so'_nh   # þykir [ekki] hafa tekist
+    | 'mega:so'_gm_p3_et FsAtv? 'hafa:so'_nh    # má [ekki] hafa tekist
 
 HjSögnFinnst →
     'finna:so'_mm_p3_et      # Okkur finnst/fannst skemmtilegt
@@ -2406,8 +2443,13 @@ HjSögnFinnst →
     | 'þykja:so'_gm_vh_p3_et # Okkur þyki/þætti skemmtilegt
 
 HjSögnFinnst_sagnb →
-    'finna:so'_mm_sagnb    # Okkur hefur fundist skemmtilegt
-    | 'þykja:so'_gm_sagnb  # Okkur hefur þótt skemmtilegt
+    'finna:so'_mm_sagnb     # Okkur hefur fundist skemmtilegt
+    | 'þykja:so'_gm_sagnb   # Okkur hefur þótt skemmtilegt
+
+HjSögnVantaSkorta →
+    'vanta:so'_nh           # Okkur þykir/þótti vanta mýkt í rödd Pálínu
+    | 'skorta:so'_nh        # Páli þykir/þótti skorta samkvæmni í málflutningi Jóns
+
 
 # HjSögnÞaðLo_et_p3 →
 #     'vera:so'_gm_p3_et 'verða:so'_sagnb? # Það er [orðið] brýnt að...
@@ -2624,7 +2666,6 @@ NlBeintAndlag_nf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
 NlBeintAndlag_þf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
 NlBeintAndlag_þgf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
 NlBeintAndlag_ef_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
-NlBeintAndlag_nf_þf/tala → Nl_nf_þf/tala | NlSpurnaraukasetning | NlSkýringarsetning
 NlÓbeintAndlag/fall → Nl/fall | NlSkýringarsetning
 NlSagnfylling/fall → Nl/fall | NlSkýringarsetning
 NlSagnfylling/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
@@ -2636,7 +2677,6 @@ NlSagnfylling_ef_et_p3_hk → NlSkýringarsetning
 $score(+1) NlBeintAndlag/fall
 $score(+1) NlBeintAndlag/fall/tala/pers
 $score(+1) NlBeintAndlag/fall/tala/pers/kyn
-$score(-2) NlBeintAndlag_nf_þf/tala
 $score(+1) NlFrumlag/fall
 $score(+1) NlFrumlag/fall/tala
 $score(+1) NlFrumlag/fall/tala/kyn
