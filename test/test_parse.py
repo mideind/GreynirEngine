@@ -746,6 +746,7 @@ def test_complex(verbose=False):
         "ákæran var þingfest en fréttastofu er kunnugt um að maðurinn "
         "játaði þar sem þinghaldið er lokað"
     )
+    assert d["num_parsed"] == 1
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 2", end="")
@@ -755,6 +756,7 @@ def test_complex(verbose=False):
         "hvers vegna ákveðið var að segja að vefjunum væri haldið úti af "
         "stuðningsmönnum Sigmundar."
     )
+    assert d["num_parsed"] == 1
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 3", end="")
@@ -763,6 +765,7 @@ def test_complex(verbose=False):
         "en fréttastofu er ekki kunnugt um hvort maðurinn játaði eða neitaði "
         "sök þar sem þinghaldið í málinu er lokað."
     )
+    assert d["num_parsed"] == 1
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 4", end="")
@@ -771,6 +774,7 @@ def test_complex(verbose=False):
         "prófessornum kom búlduleitur beljaki sem þess vegna hefði getað verið "
         "trökkdræver að norðan."
     )
+    assert d["num_parsed"] == 1
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 5", end="")
@@ -781,6 +785,7 @@ def test_complex(verbose=False):
         "fremur innri mann fyrirmyndarinnar en þá ásjónu sem daglega blasti við "
         "samferðamönnum."
     )
+    assert d["num_parsed"] == 1
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 6", end="")
@@ -794,6 +799,7 @@ def test_complex(verbose=False):
         "í hnattrænu samfélagi, og takast á við ólík viðhorf, skoðanir og gildi — svo "
         "fátt eitt sé nefnt."
     )
+    assert d["num_parsed"] == 1
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
 
@@ -1386,6 +1392,10 @@ def test_subj_op():
     assert s.tree is None
     s = r.parse_single("hestsins dreymdi köttinn")
     assert s.tree is None
+    s = r.parse_single("hestinn dreymdi kettinum")
+    assert s.tree is None
+    s = r.parse_single("hestinn dreymdi kattarins")
+    assert s.tree is None
     # hraka
     s = r.parse_single("hestinum hrakaði hratt")
     assert s.tree is not None
@@ -1396,6 +1406,23 @@ def test_subj_op():
     s = r.parse_single("hestinn hrakaði hratt")
     assert s.tree is None
     s = r.parse_single("hestsins hrakaði hratt")
+    assert s.tree is None
+    # blöskra e-ð
+    s = r.parse_single("mér blöskraði vitleysan í Páli")
+    assert s.tree is not None
+    assert s.tree.nouns == ["vitleysa", "Páll"]
+    assert s.tree.verbs == ["blöskra"]
+    s = r.parse_single("ég blöskraði vitleysan í Páli")
+    assert s.tree is None
+    s = r.parse_single("mig blöskraði vitleysan í Páli")
+    assert s.tree is None
+    s = r.parse_single("mín blöskraði vitleysan í Páli")
+    assert s.tree is None
+    s = r.parse_single("mér blöskraði vitleysuna í Páli")
+    assert s.tree is None
+    s = r.parse_single("mér blöskraði vitleysunni í Páli")
+    assert s.tree is None
+    s = r.parse_single("mér blöskraði vitleysunnar í Páli")
     assert s.tree is None
 
 
