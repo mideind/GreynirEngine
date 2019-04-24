@@ -171,6 +171,7 @@ class BIN_Token(Token):
     VBIT_MM = VBIT["mm"]
     VBIT_GM = VBIT["gm"]
     VBIT_GR = VBIT["gr"]
+    VBIT_OP = VBIT["op"]
     VBIT_SAGNB = VBIT["sagnb"]
     VBIT_LHNT = VBIT["lh"] | VBIT["nt"]
     VBIT_SUBJ = VBIT["subj"]
@@ -1524,6 +1525,10 @@ class VariantHandler:
     @property
     def is_sagnb(self):
         return (self._vbits & BIN_Token.VBIT_SAGNB) != 0
+
+    @property
+    def is_op(self):
+        return (self._vbits & BIN_Token.VBIT_OP) != 0
 
     @property
     def is_lh(self):

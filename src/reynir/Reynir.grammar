@@ -454,6 +454,7 @@ Tíðartenging →
     | 'um:fs'_þf 'svipaður:lo'_sb_hk_þf_et 'leyti:hk'_þf_et "og:st" # um svipað leyti og
     | 'um:fs'_þf 'samur:fn'_hk_þf_et 'leyti:hk'_þf_et "og:st" # um sama leyti og
     | 'á_sama_tíma:ao' "og:st"
+    | 'í_sömu_andrá:ao' "og:st"
     | "síðan:st" VillaAð?
     | "þegar:st" VillaAð?
     | "uns:st"
@@ -462,6 +463,9 @@ Tíðartenging →
     | "þangað:ao" "til:st" VillaAð?
     | "þar:ao" "til:st" VillaAð?
     | 'allar_götur_síðan:ao' VillaAð?
+    | 'í_fyrsta_sinn:ao' "sem:st" VillaAð?
+    | 'í_síðasta_sinn:ao' "sem:st" VillaAð?
+    | 'í_allra_síðasta_sinn:ao' "sem:st" VillaAð?
     | TengiorðEr # "er:stt", líka tilvísunartenging - fær mínus
 
 $tag(apply_length_bonus) Tíðartenging
@@ -4920,17 +4924,17 @@ OgÁratugum →
     | TímaNafnorðStærri_gr_þf/tala FsFyrirEftir             # daginn fyrir útskriftina, mánuðina eftir jarðskjálftann
 
 VísiDagsetning → 
-    'á:fs'_þf Vikudagur_et_þf           # á föstudag
-    | 'um:fs'_þf 'helgi:kvk'_þf_et_gr   # um helgina
-    | 'um:fs'_þf 'mánaðamót:hk'_þf_ft_gr # um mánaðamótin
-    | 'um:fs'_þf 'áramót:hk'_þf_ft_gr   # um áramótin
-    | 'á_morgun:ao'                     # á morgun
-    | 'í:fs'_þf 'dagur:kk'_þf_et        # í dag
-    | 'í_gær:ao'                        # í gær
-    | 'í_fyrradag:ao'                   # í fyrradag
-    | 'í:fs'_þf 'fyrri:lo'_þf_et_mst    # í fyrra
-    | 'dagur:kk'_þf_et_gr "eftir:ao"    # daginn eftir
-    | 'annar:fn'_et_þf_hk 'kvöld:hk'_et_þf # annað kvöld
+    'á:fs'_þf Vikudagur_et_þf               # á föstudag
+    | 'um:fs'_þf 'helgi:kvk'_þf_et_gr       # um helgina
+    | 'um:fs'_þf 'mánaðamót:hk'_þf_ft_gr    # um mánaðamótin
+    | 'um:fs'_þf 'áramót:hk'_þf_ft_gr       # um áramótin
+    | 'á_morgun:ao'                         # á morgun
+    | 'í:fs'_þf 'dagur:kk'_þf_et            # í dag
+    | 'í_gær:ao'                            # í gær
+    | 'í_fyrradag:ao'                       # í fyrradag
+    | 'í:fs'_þf 'fyrri:lo'_þf_et_mst        # í fyrra
+    | 'dagur:kk'_þf_et_gr "eftir:ao"        # daginn eftir
+    | 'annar:fn'_et_þf_hk 'kvöld:hk'_et_þf  # annað kvöld
     | 'annar:fn'_et_þf_kvk 'nótt:kvk'_et_þf # aðra nótt
     | 'á:fs'_þf Vikudagur_gr_þf_et 'koma:so'_0_gm_fh_et_p3          # á sunnudaginn kemur
     | 'á:fs'_þf VikuMorgunnKvöld_gr_þf_et 'koma:so'_0_gm_fh_et_p3   # á laugardagskvöldið kemur
