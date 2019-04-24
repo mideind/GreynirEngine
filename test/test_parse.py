@@ -1216,8 +1216,8 @@ def test_composite_words():
     # 'sykrisaltan' is not a valid composite word, so this should get parsed
     # as an unknown noun - causing 'fiskinn' to be parsed as an adjective
     assert s.lemmas == ['ég', 'borða', 'sykrisaltan', 'fiskinn']
-    s = r.parse_single("Hann fékk reynslulausn úr fangelsi")
-    assert s.lemmas == ['hann', 'fá', 'reynslu-lausn', 'úr', 'fangelsi']
+    s = r.parse_single("Hann hjólaði kattspenntur á kvenbretti niður brekkuna")
+    assert s.lemmas == ['hann', 'hjóla', 'katt-spenntur', 'á', 'kven-bretti', 'niður', 'brekka']
 
 
 def test_compressed_bin():
