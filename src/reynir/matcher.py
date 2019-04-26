@@ -940,7 +940,10 @@ class SimpleTree:
         if tokentype in _MULTIWORD_TOKENS:
             # Use a special handler for these multiword tokens
             return self._multiword_token(self._text, tokentype, terminal)
-        # Fallback: Repeat the terminal name for each component word
+        # Fallback: Repeat the terminal name for each component word,
+        # except that we use 'st' for conjunctions. Note that the component
+        # words may have trailing hyphens and commas, as in
+        # 'dómsmála-, ferðamála- og nýsköpunarráðherra'
         words = self._text.split()
         return " ".join("st" if word in _CONJUNCTIONS else terminal for word in words)
 

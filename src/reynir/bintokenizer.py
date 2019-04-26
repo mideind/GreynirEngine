@@ -59,7 +59,7 @@ COMPOSITE_HYPHEN = "–"  # en dash
 HYPHEN = "-"  # Normal hyphen
 
 # Prefixes that can be applied to adjectives with an intervening hyphen
-ADJECTIVE_PREFIXES = frozenset(["hálf", "marg", "semí"])
+ADJECTIVE_PREFIXES = frozenset(["hálf", "marg", "semí", "full"])
 
 # Recognize words that multiply numbers
 MULTIPLIERS = {
@@ -509,34 +509,71 @@ def parse_phrases_1(db, token_ctor, token_stream):
 
             # Check for composites:
             # 'stjórnskipunar- og eftirlitsnefnd'
-            # 'viðskipta- og iðnaðarráðherra'
+            # 'dómsmála-, viðskipta- og iðnaðarráðherra'
             # 'marg-ítrekaðri'
-            if (
+            tq = []
+            while (
                 (token.kind == TOK.WORD or token.kind == TOK.ENTITY)
                 and next_token.kind == TOK.PUNCTUATION
                 and next_token.txt == COMPOSITE_HYPHEN
             ):
+                # Accumulate the prefix in tq
+                tq.append(token)
+                tq.append(token_ctor.Punctuation(HYPHEN))
+                # Check for optional comma after the prefix
+                comma_token = next(token_stream)
+                if comma_token.kind == TOK.PUNCTUATION and comma_token.txt == ',':
+                    # A comma is present: append it to the queue
+                    # and skip to the next token
+                    tq.append(comma_token)
+                    comma_token = next(token_stream)
+                # Reset our two lookahead tokens
+                token = comma_token
+                next_token = next(token_stream)
 
-                og_token = next(token_stream)
-                if og_token.kind != TOK.WORD or (
-                    og_token.txt != "og" and og_token.txt != "eða"
+            if tq:
+                # We have accumulated one or more prefixes
+                # ('dómsmála-, viðskipta-')
+                if token.kind == TOK.WORD and (
+                    token.txt == "og" or token.txt == "eða"
                 ):
+                    # We have 'viðskipta- og'
+                    if next_token.kind != TOK.WORD:
+                        # Incorrect: yield the accumulated token
+                        # queue and keep the current token and the
+                        # next_token lookahead unchanged
+                        for t in tq:
+                            yield t
+                    else:
+                        # We have 'viðskipta- og iðnaðarráðherra'
+                        # Return a single token with the meanings of
+                        # the last word, but an amalgamated token text.
+                        # Note: there is no meaning check for the first
+                        # part of the composition, so it can be an unknown word.
+                        txt = " ".join(t.txt for t in tq + [token, next_token])
+                        txt = txt.replace(" -", "-").replace(" ,", ",")
+                        token = token_ctor.Word(txt, next_token.val, token=next_token)
+                        next_token = next(token_stream)
+                else:
                     # Incorrect prediction: make amends and continue
                     handled = False
-                    if og_token.kind == TOK.WORD:
-                        composite = token.txt + "-" + og_token.txt
-                        if token.txt.lower() in ADJECTIVE_PREFIXES:
+                    if (
+                        (token.kind == TOK.WORD or token.kind == TOK.ENTITY) and
+                        len(tq) == 2 and tq[1].txt == HYPHEN
+                    ):
+                        # Two words with a hyphen in between
+                        composite = tq[0].txt + "-" + token.txt
+                        if tq[0].txt.lower() in ADJECTIVE_PREFIXES:
                             # hálf-opinberri, marg-ítrekaðri
                             token = token_ctor.Word(
                                 composite,
                                 [
                                     m
-                                    for m in og_token.val
+                                    for m in token.val
                                     if m.ordfl == "lo" or m.ordfl == "ao"
                                 ],
-                                token=og_token
+                                token=token
                             )
-                            next_token = next(token_stream)
                             handled = True
                         else:
                             # Check for Vestur-Þýskaland, Suður-Múlasýsla
@@ -544,34 +581,11 @@ def parse_phrases_1(db, token_ctor, token_stream):
                             m = db.meanings(composite)
                             if m:
                                 # Found composite in BÍN: return it as a single token
-                                token = token_ctor.Word(composite, m)
-                                next_token = next(token_stream)
+                                token = token_ctor.Word(composite, m, token=token)
                                 handled = True
                     if not handled:
-                        yield token
-                        # Put a normal hyphen instead of the composite one
-                        token = token_ctor.Punctuation(HYPHEN)
-                        next_token = og_token
-                else:
-                    # We have 'viðskipta- og'
-                    final_token = next(token_stream)
-                    if final_token.kind != TOK.WORD:
-                        # Incorrect: unwind
-                        yield token
-                        yield token_ctor.Punctuation(HYPHEN)  # Normal hyphen
-                        token = og_token
-                        next_token = final_token
-                    else:
-                        # We have 'viðskipta- og iðnaðarráðherra'
-                        # Return a single token with the meanings of
-                        # the last word, but an amalgamated token text.
-                        # Note: there is no meaning check for the first
-                        # part of the composition, so it can be an unknown word.
-                        txt = (
-                            token.txt + "- " + og_token.txt + " " + final_token.txt
-                        )
-                        token = token_ctor.Word(txt, final_token.val, token=final_token)
-                        next_token = next(token_stream)
+                        for t in tq:
+                            yield t
 
             # Yield the current token and advance to the lookahead
             yield token

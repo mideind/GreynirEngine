@@ -1214,6 +1214,27 @@ def test_composite_words():
         "P S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP so_1_nf_et_fh_gm_p3_þt "
         "NP-PRD no_et_kk_nf st no_et_kk_nf /NP-PRD /VP /IP /S-MAIN p /P"
     )
+    s = r.parse_single("Hann var dómsmála-, mennta- og menningarmálaráðherra.")
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP so_1_nf_et_fh_gm_p3_þt "
+        "NP-PRD no_et_kk_nf no_et_kk_nf st no_et_kk_nf /NP-PRD /VP /IP /S-MAIN p /P"
+    )
+    s = r.parse_single("Hann var dómsmála- ferðamála- mennta- og menningarmálaráðherra.")
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP so_1_nf_et_fh_gm_p3_þt "
+        "NP-PRD no_et_kk_nf no_et_kk_nf no_et_kk_nf st no_et_kk_nf /NP-PRD /VP /IP /S-MAIN p /P"
+    )
+    s = r.parse_single("Hann var hálf-þýskur og fæddist í Vestur-Þýskalandi.")
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP-SEQ VP so_et_fh_gm_p3_þt "
+        "NP-PRD ADJP lo_et_kk_nf_sb /ADJP /NP-PRD /VP st VP so_0_et_fh_mm_p3_þt /VP "
+        "PP fs_þgf NP no_et_hk_þgf /NP /PP /VP-SEQ /IP /S-MAIN p /P"
+    )
+    # Note that 'hálf - þýskur' is not the same as 'hálf-þýskur'
+    # and 'Vestur  -  Þýskaland' is not the same as 'Vestur-Þýskaland'
     s = r.parse_single("Ég borðaði sykursaltan fiskinn")
     assert s.lemmas == ['ég', 'borða', 'sykur-saltur', 'fiskur']
     s = r.parse_single("Ég borðaði sykurinnsaltan fiskinn")
