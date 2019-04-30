@@ -1779,7 +1779,7 @@ NlEnginnAndlag/fall →
 
 Sögn_1_nh →
     So_1_nh/fall FsRunaInnskot? NlBeintAndlag/fall
-    # sjá/láta Pál breyta [í snarheitum] sér (í kött)
+    # sjá/láta/'horfa á' Pál breyta [í snarheitum] sér (í kött)
     | So_1_þf_nh Nl_þf So_1_nh/fall FsRunaInnskot? Nl/fall
 
 # Gefa forsetningarliðum milli sagnar og andlags mínus
@@ -1908,6 +1908,14 @@ So_1_þf_nh/tala/pers →
     | 'sjá:so'_1_þf_gm/tala/pers
     | 'kveða:so'_1_þf_gm/tala/pers
     | 'sýna:so'_1_þf_gm/tala/pers
+    | SoHorfaÁ/tala/pers
+
+SoHorfaÁ/tala/pers →
+    # 'Við horfðum á strákinn vaxa úr grasi'
+    'horfa:so'_0_gm/tala/pers 'á:fs'_þf
+
+$score(+16) SoHorfaÁ/tala/pers
+$tag(purge_verb) SoHorfaÁ/tala/pers
 
 So_1_þf_nh →
     'segja:so'_1_þf_gm_nh
@@ -1917,6 +1925,14 @@ So_1_þf_nh →
     | 'sjá:so'_1_þf_gm_nh
     | 'kveða:so'_1_þf_gm_nh
     | 'sýna:so'_1_þf_gm_nh
+    | SoHorfaÁ
+
+SoHorfaÁ →
+    # 'Við munum horfa á strákinn vaxa úr grasi'
+    'horfa:so'_0_gm_nh 'á:fs'_þf
+
+$score(+16) SoHorfaÁ
+$tag(purge_verb) SoHorfaÁ
 
 # segist munu/vilja borða kökuna
 # telst munu/vilja kjósa flokkinn
@@ -2821,6 +2837,7 @@ NlStak_ft_ef/kyn → NlStak_ft_p1_ef/kyn | NlStak_ft_p2_ef/kyn | NlStak_ft_p3_ef
 
 NlStak_et_p1/fall/kyn →
     'ég:pfn'_et/fall 'sjálfur:fn'_et/fall/kyn? FsRunaEftirNl?   # Ég í öllu mínu veldi / (Hvað) mig sjálfan (varðar)
+    | 'ég:pfn'_et/fall 'persónulega:ao'                         # Mér persónulega hefur aldrei þótt smjör gott
     | 'sjálfur:fn'_et/fall/kyn 'ég:pfn'_et/fall FsRunaEftirNl?  # Sjálfan mig hef ég aldrei þolað
 
 # Gefa lægra skor fyrir 'ég' í hvorugkyni
@@ -2832,6 +2849,7 @@ $score(-4) NlStak_et_p1_ef_hk
 
 NlStak_et_p2/fall/kyn →
     'þú:pfn'_et/fall 'sjálfur:fn'_et/fall/kyn? FsRunaEftirNl?   # Þú [sjálfur] ert ekki sem verstur
+    | 'þú:pfn'_et/fall 'persónulega:ao'                         # Ég meinti ekki þig persónulega
 
 NlStak_p1_ft/fall/kyn →
     'ég:pfn'_ft/fall NlStakViðbót/fall/kyn?     # Við gömlu hjónin, við Sigmundur, við flest, við sjálfar
@@ -2875,7 +2893,7 @@ NlStak_p3/tala/fall/kyn →
     NlKjarni/tala/fall/kyn Fornafn/tala/fall/kyn*           # (stjórnarframkvæmdum) þessum öllum
     | NlKjarni/tala/fall/kyn EignarFornafn/tala/fall/kyn KommaOgEðaEn EfLiður # skattskýrslur mínar og eiginkonu minnar
     | NlFornafn/tala/fall/kyn
-    | Pfn/kyn/tala/fall to/tala/fall/kyn?                   # 'þið tvær', 'við fjögur', 'hann einn'
+    | Pfn/kyn/tala/fall to/tala/fall/kyn? 'persónulega:ao'? # 'þið tvær', 'við fjögur', 'hann einn'
     | LoTöluorð_ef 'konar:kk'_ef_et NlKjarni/tala/fall/kyn  # 'tvenns/þrenns/ferns konar innstungur'
     | Raðnr/fall/kyn NlKjarni/tala/fall/kyn Fornafn/tala/fall/kyn*   # 1. verðlaunin öll, 1.-3. sætið, 10. og 12. árið
 
@@ -3300,9 +3318,12 @@ LangtSérnafn →
     | sérnafn+ "-"? entity+ sérnafn* tala?  # Eining með nafni sem þekkt er úr gagnagrunni eða runu slíkra
     | entity+ "-"? sérnafn+ tala?           # Eining með nafni sem þekkt er úr gagnagrunni eða runu slíkra
     | entity "-" entity tala?               # Villeneuve-Loubet
-    | entity+ "-"? sérnafn* tala? fyrirtæki # Standard Oil Corp.
-    | sérnafn+ tala? fyrirtæki              # Ísgerð Dísu ehf.
     | entity entity+ tala?                  # !!! Til prófunar
+    | SérnafnFyrirtæki
+
+SérnafnFyrirtæki →
+    entity+ "-"? sérnafn* tala? fyrirtæki   # Standard Oil Corp.
+    | sérnafn+ tala? fyrirtæki              # Ísgerð Dísu ehf.
 
 Sérnafn/fall →
     sérnafn/fall tala? | LangtSérnafn/fall tala?
@@ -3965,7 +3986,7 @@ Skýringarliður →
 # !!! (hópurinn, þar á meðal ég, var... / Össur, ekki síður en þingflokkurinn, var...)
 
 OgEða →
-    "og:st" "jafnframt:ao"?
+    "og:st" OgAo?
     | "eða:st" | "ellegar:st" | "eður:st"
     | "svo:st" "og:st" | "sem:st" "og:st" | "né:st"
     | ÞarÁMeðal | 'meðal_annars:ao'
@@ -3979,6 +4000,9 @@ EnÍOgEða →
     "en:st"
 
 $score(-24) EnÍOgEða # Frekar að líta á 'en' sem samtengingu ef það er hægt
+
+OgAo →
+    "jafnframt:ao" | "síðar:ao" | "síðan:ao" | "þá:ao"? "einnig:ao" | "líka:ao"
 
 OgSem →
     "og:st" "sem:stt"? | "eða:st" "sem:stt"? | "ellegar:st" | "en:st" "sem:stt"?
@@ -4281,7 +4305,7 @@ StaktLoEftirNl/tala/fall/kyn →
     ','? LoLiður/tala/fall/kyn
 
 # Stakt lýsingarorð eftir nafnorði gæti líklega tilheyrt næsta nafnorði
-$score(-6) StaktLoEftirNl/tala/fall/kyn
+$score(-8) StaktLoEftirNl/tala/fall/kyn
 
 # Lýsingarorð sem getur tekið með sér þágufall
 # !!! ATH: Til eru listar yfir slík orð
@@ -4461,6 +4485,7 @@ FsMeðFallstjórn →
     # 'er bjartsýnn á að Alfreð komi aftur í liðið' - Ath: 'á það/því að' er höndlað í ÞaðTenging
     | 'á:fs'_þf "að:st" HreinYfirsetning ','?
     | 'að:fs'_þgf 'nafn:hk'_þgf_et person_nf  # Ég ræddi við konu að nafni Aðalbjörg Jónsdóttir
+    | 'að:fs'_þgf Nl_þgf/tala/kyn lo_sb/fall/tala/kyn  # 'að virðisaukaskatti meðtöldum'
     | 'af:fs'_þgf Nl_þgf nhm so_0_nh  # Af fyrstu fregnum að dæma (virðist veiðitímabilið byrja vel)
     | FsMiðaðVið
     | FsÍGegnUm

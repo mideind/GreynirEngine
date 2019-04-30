@@ -210,6 +210,10 @@ class _Paragraph:
 
     def sentences(self):
         """ Yield the sentences within the paragraph, nicely wrapped """
+        # self._p is a generator that yields (ix, toklist) tuples,
+        # where ix is a starting index of the sentence within the
+        # token stream, and toklist is the list of tokens in the sentence,
+        # not including S_BEGIN and S_END tokens.
         for _, sent in self._p:
             yield self._job._create_sentence(sent)
 

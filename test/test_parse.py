@@ -64,6 +64,8 @@ def test_parse(verbose=False):
         "Löngu áður en Jón borðaði ísinn sem hafði bráðnað hratt "
         "í hádeginu fór ég á veitingastaðinn á horninu og keypti mér rauðvín "
         "með hamborgaranum sem ég borðaði í gær með mikilli ánægju.",
+        # 12
+        "Ég horfði á Pál borða kökuna"
     ]
     job = r.submit(" ".join(sentences))
 
@@ -128,6 +130,7 @@ def test_parse(verbose=False):
         "hamborgari",
         "ánægja",
     ]
+    assert results[12].tree.nouns == ["Páll", "kaka"]
 
     # Test that the parser finds the correct verbs
     assert results[0].tree.verbs == ["vera", "vera", "gera"]
@@ -149,6 +152,7 @@ def test_parse(verbose=False):
         "kaupa",
         "borða",
     ]
+    assert results[12].tree.verbs == ["horfa", "borða"]
 
     # Test that the parser finds the correct word lemmas
     assert results[0].tree.lemmas == [
@@ -269,6 +273,7 @@ def test_parse(verbose=False):
         "ánægja",
         ".",
     ]
+    assert results[12].tree.lemmas == ["ég", "horfa", "á", "Páll", "borða", "kaka"]
 
     def num_pp(s):
         """ Count the prepositional phrases in the parse tree for sentence s """
@@ -279,6 +284,7 @@ def test_parse(verbose=False):
     assert num_pp(results[9]) == 1
     assert num_pp(results[10]) == 1
     assert num_pp(results[11]) == 4
+    assert num_pp(results[12]) == 0
 
 
 def test_consistency(verbose=False):
@@ -1460,6 +1466,56 @@ def test_prepositions():
     assert s.tree.match("P >> { VP > { PP > { fs_þf } } }")
 
 
+def test_personally():
+    s = r.parse_single("Mér persónulega þótti þetta ekki flott.")
+    assert s.tree is not None
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ pfn_et_p1_þgf ao /NP-SUBJ so_subj_et_fh_gm_op_þgf_þt "
+        "NP fn_et_hk_nf /NP ADJP ADVP eo /ADVP lo_et_hk_nf_sb /ADJP /IP /S-MAIN p /P"
+    )
+    s = r.parse_single("Þetta mál varðar þig persónulega.")
+    assert s.tree is not None
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ fn_et_hk_nf no_et_hk_nf /NP-SUBJ VP "
+        "so_1_þf_et_fh_gm_nt_p3 NP-OBJ pfn_et_p2_þf ao /NP-OBJ /VP /IP /S-MAIN p /P"
+    )
+    s = r.parse_single("Þetta kom illa við þær persónulega.")
+    assert s.tree is not None
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP-SEQ VP so_0_et_fh_gm_p3_þt /VP "
+        "ADVP ao PP fs_þf NP pfn_ft_kvk_p3_þf ao /NP /PP /ADVP /VP-SEQ /IP /S-MAIN p /P"
+    )
+
+
+def test_company():
+    s = r.parse_single("Hann réðst inn á skrifstofu Samherja hf. og rændi gögnum.")
+    assert s.tree is not None
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP-SEQ VP so_0_et_fh_mm_p3_þt "
+        "/VP PP ao fs_þf NP no_et_kvk_þf NP-POSS NP-COMPANY sérnafn_ef_et "
+        "fyrirtæki /NP-COMPANY /NP-POSS /NP /PP st VP so_1_þgf_et_fh_gm_p3_þt "
+        "NP-OBJ no_ft_hk_þgf /NP-OBJ /VP /VP-SEQ /IP /S-MAIN p /P"
+    )
+    # !!! Note that lemmas of words found in BÍN are in lower case
+    assert [t.lemma for t in s.tree.all_matches("NP-COMPANY")] == ["samherji hf."]
+    s = r.parse_single("Hands ASA er dótturfyrirtæki Celestial Inc.")
+    assert s.tree is not None
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ NP-COMPANY sérnafn fyrirtæki /NP-COMPANY /NP-SUBJ "
+        "VP so_1_nf_et_fh_gm_nt_p3 NP-PRD no_et_hk_nf NP-POSS "
+        "NP-COMPANY sérnafn fyrirtæki /NP-COMPANY /NP-POSS /NP-PRD /VP /IP /S-MAIN p /P"
+    )
+    assert (
+        [t.lemma for t in s.tree.all_matches("NP-COMPANY")] ==
+        ['Hands Allmennaksjeselskap', 'Celestial Incorporated']
+    )
+
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -1491,4 +1547,6 @@ if __name__ == "__main__":
     test_subj_op()
     test_names()
     test_prepositions()
+    test_personally()
+    test_company()
     test_finish()
