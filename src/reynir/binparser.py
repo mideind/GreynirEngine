@@ -646,7 +646,7 @@ class BIN_Token(Token):
                 return False
         # Check restrictive variants, i.e. we don't accept meanings
         # that have those unless they are explicitly present in the terminal
-        for v in ("sagnb", "lhþt", "bh"):  # Be careful with "lh" here - !!! add mm?
+        for v in ("sagnb", "lhþt", "bh", "op"):  # Be careful with "lh" here - !!! add mm?
             if BIN_Token.VARIANT[v] in form and not terminal.has_variant(v):
                 return False
         if terminal.is_lh:

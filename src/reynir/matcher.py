@@ -162,6 +162,7 @@ _DEFAULT_NT_MAP = {
     "NlFrumlagÞað": "NP-SUBJ",
     "NlBeintAndlag": "NP-OBJ",
     "NlEnginnAndlag" : "NP-OBJ",  # 'hann getur enga samninga gert'
+    "NlAnnar": "NP-OBJ",  # '[Jón hefur] aðra sögu [að segja]'
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
     "SögnErLoBotn": "NP-PRD",  # Show '(Hann er) góður / 18 ára' as a predicate argument
@@ -187,6 +188,7 @@ _DEFAULT_NT_MAP = {
     "SagnRuna": "VP-SEQ",
     "SagnRunaStýfð": "VP-SEQ",
     "SetningSo": "VP-SEQ",
+    "SetningSoÞað": "VP-SEQ",
     "FsLiður": "PP",
     "FsMeðFallstjórn": "PP",
     "FsFyrirEftir": "PP",
@@ -240,7 +242,7 @@ _DEFAULT_ID_MAP = {
     "S-ADV-COND": dict(name="Skilyrðissetning"),  # Adverbial conditional phrase
     "S-THT": dict(name="Skýringarsetning"),  # Complement clause
     "S-QUE": dict(name="Spurnarsetning"),  # Question clause
-    "VP-SEQ": dict(name="Sagnliður"),
+    "VP-SEQ": dict(name="Sagnliður", subject_to={"VP-SEQ"}),
     "VP-REV": dict(name="Öfugur sagnliður"),
     "VP": dict(name="Sögn", overrides="VP-SEQ", subject_to={"VP"}),
     "VP-PP": dict(name="Sögn", overrides="PP"),
