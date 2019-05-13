@@ -153,12 +153,16 @@ _DEFAULT_NT_MAP = {
     "OkkarFramhald": "NP-POSS",
     "LoEftirNlMeðÞgf": "NP-DAT",
     "Heimilisfang": "NP-ADDR",
+    "Fyrirtæki": "NP-COMPANY",
+    "SérnafnFyrirtæki": "NP-COMPANY",
     "Magn": "NP-MEASURE",
     "Titill": "NP-TITLE",
     "Frumlag": "NP-SUBJ",
     "NlFrumlag": "NP-SUBJ",
     "NlFrumlagÞað": "NP-SUBJ",
     "NlBeintAndlag": "NP-OBJ",
+    "NlEnginnAndlag" : "NP-OBJ",  # 'hann getur enga samninga gert'
+    "NlAnnar": "NP-OBJ",  # '[Jón hefur] aðra sögu [að segja]'
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
     "SögnErLoBotn": "NP-PRD",  # Show '(Hann er) góður / 18 ára' as a predicate argument
@@ -173,15 +177,21 @@ _DEFAULT_NT_MAP = {
     "ÖfugurSagnliður": "VP-REV",
     "SagnliðurVh": "VP",
     "SögnLhNt": "VP-PP",  # Present participle, lýsingarháttur nútíðar ('reykjandi sígarettu')
-    "SögnSagnbBreyting": "VP", # 'hefur versnað'
-    "SögnLhNtBreyting": "VP", # 'hefur farið fækkandi'
-    "SögnNhBreyting": "VP", # 'mun fækka'
+    "SögnSagnbBreyting": "VP",  # 'hefur versnað'
+    "SögnLhNtBreyting": "VP",  # 'hefur farið fækkandi'
+    "SögnNhBreyting": "VP",  # 'mun fækka'
+    "SögnÞað": "VP",  # '(það) verður að segjast að...'
+    "SögnÓp": "VP",  # '(mig) þraut örendið'
+    "SögnAukafallÞgf": "VP",
+    "SögnAukafallEf": "VP",
     "SagnHluti": "VP-SEQ",
     "SagnRuna": "VP-SEQ",
     "SagnRunaStýfð": "VP-SEQ",
     "SetningSo": "VP-SEQ",
+    "SetningSoÞað": "VP-SEQ",
     "FsLiður": "PP",
     "FsMeðFallstjórn": "PP",
+    "FsFyrirEftir": "PP",
     "LoTengtSögn": "ADJP",
     "SagnInnskot": "ADVP",
     "FsAtv": "ADVP",
@@ -232,7 +242,7 @@ _DEFAULT_ID_MAP = {
     "S-ADV-COND": dict(name="Skilyrðissetning"),  # Adverbial conditional phrase
     "S-THT": dict(name="Skýringarsetning"),  # Complement clause
     "S-QUE": dict(name="Spurnarsetning"),  # Question clause
-    "VP-SEQ": dict(name="Sagnliður"),
+    "VP-SEQ": dict(name="Sagnliður", subject_to={"VP-SEQ"}),
     "VP-REV": dict(name="Öfugur sagnliður"),
     "VP": dict(name="Sögn", overrides="VP-SEQ", subject_to={"VP"}),
     "VP-PP": dict(name="Sögn", overrides="PP"),
@@ -240,6 +250,7 @@ _DEFAULT_ID_MAP = {
     "NP-POSS": dict(name="Eignarfallsliður", overrides="NP"),
     "NP-DAT": dict(name="Þágufallsliður", overrides="NP"),
     "NP-ADDR": dict(name="Heimilisfang", overrides="NP"),
+    "NP-COMPANY": dict(name="Fyrirtæki", overrides="NP"),
     "NP-TITLE": dict(name="Titill", overrides="NP"),
     "NP-AGE": dict(name="Aldur"),
     "NP-MEASURE": dict(name="Mæling", overrides="NP"),
@@ -934,7 +945,10 @@ class SimpleTree:
         if tokentype in _MULTIWORD_TOKENS:
             # Use a special handler for these multiword tokens
             return self._multiword_token(self._text, tokentype, terminal)
-        # Fallback: Repeat the terminal name for each component word
+        # Fallback: Repeat the terminal name for each component word,
+        # except that we use 'st' for conjunctions. Note that the component
+        # words may have trailing hyphens and commas, as in
+        # 'dómsmála-, ferðamála- og nýsköpunarráðherra'
         words = self._text.split()
         return " ".join("st" if word in _CONJUNCTIONS else terminal for word in words)
 

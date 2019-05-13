@@ -166,10 +166,12 @@ class BIN_Token(Token):
     VBIT_HK = VBIT["hk"]
     VBIT_NH = VBIT["nh"]
     VBIT_VH = VBIT["vh"]
+    VBIT_BH = VBIT["bh"]
     VBIT_LH = VBIT["lhþt"]
     VBIT_MM = VBIT["mm"]
     VBIT_GM = VBIT["gm"]
     VBIT_GR = VBIT["gr"]
+    VBIT_OP = VBIT["op"]
     VBIT_SAGNB = VBIT["sagnb"]
     VBIT_LHNT = VBIT["lh"] | VBIT["nt"]
     VBIT_SUBJ = VBIT["subj"]
@@ -181,6 +183,7 @@ class BIN_Token(Token):
     FBIT_MASK = VBIT_ABBREV | VBIT_SUBJ | VBIT_SCASES
 
     CASES = ["nf", "þf", "þgf", "ef"]
+    CASES_SET = set(CASES)
     GENDERS = ["kk", "kvk", "hk"]
     GENDERS_SET = NOUNS_SET = frozenset(GENDERS)
     GENDERS_MAP = {"kk": "KK", "kvk": "KVK", "hk": "HK"}
@@ -598,7 +601,29 @@ class BIN_Token(Token):
             if terminal.has_variant("op") and self.verb_cannot_be_impersonal(verb, form):
                 # This can't work, as the verb can't be impersonal
                 return False
-            # Make sure that the subject case (last variant) matches the terminal
+            if terminal.variant(0) in "012":
+                # The terminal has the form so_1_þf_subj_obj_þgf
+                # where þgf is the subject case and þf is the object case
+                nargs = int(terminal.variant(0))
+                # We only need support one argument for subj_op verbs
+                # ('dreyma' + þf, 'vanta' + þf, etc.)
+                assert nargs == 1
+                if nargs != 1:
+                    return False
+                # Point to dict of single-argument verbs
+                verb_objects = self._VERB_OBJECTS[nargs]
+                if verb not in verb_objects:
+                    # Verb does not allow a single argument: we're done
+                    return False
+                # The case of the argument is in the second variant,
+                # immediately following the nargs
+                arg_case = terminal.variant(1)
+                assert arg_case in BIN_Token.CASES_SET
+                if all(arg_case != argspec[0] for argspec in verb_objects[verb]):
+                    # This verb does not allow an argument in the specified case
+                    return False
+            # Finally, make sure that the subject case (which is always
+            # in the last variant) matches the terminal
             return self.verb_subject_matches(verb, terminal.variant(-1))
 
         # Not a _subj terminal: no match of strictly impersonal verbs
@@ -621,7 +646,7 @@ class BIN_Token(Token):
                 return False
         # Check restrictive variants, i.e. we don't accept meanings
         # that have those unless they are explicitly present in the terminal
-        for v in ("sagnb", "lhþt", "bh"):  # Be careful with "lh" here - !!! add mm?
+        for v in ("sagnb", "lhþt", "bh", "op"):  # Be careful with "lh" here - !!! add mm?
             if BIN_Token.VARIANT[v] in form and not terminal.has_variant(v):
                 return False
         if terminal.is_lh:
@@ -1502,6 +1527,10 @@ class VariantHandler:
         return (self._vbits & BIN_Token.VBIT_SAGNB) != 0
 
     @property
+    def is_op(self):
+        return (self._vbits & BIN_Token.VBIT_OP) != 0
+
+    @property
     def is_lh(self):
         # Lýsingarháttur þátíðar ("LHÞT")
         return (self._vbits & BIN_Token.VBIT_LH) != 0
@@ -1514,6 +1543,10 @@ class VariantHandler:
     @property
     def is_vh(self):
         return (self._vbits & BIN_Token.VBIT_VH) != 0
+
+    @property
+    def is_bh(self):
+        return (self._vbits & BIN_Token.VBIT_BH) != 0
 
 
 class BIN_Terminal(VariantHandler, Terminal):
