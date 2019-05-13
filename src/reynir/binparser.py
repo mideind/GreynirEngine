@@ -431,9 +431,13 @@ class BIN_Token(Token):
         self.t0 = t[0]  # Token type (TOK.WORD, etc.)
         self.t1 = t[1]  # Token text
         self.t1_lower = t[1].lower()  # Token text, lower case
+        self.is_compound = False
         # t2 contains auxiliary token information, such as part-of-speech annotation, numbers, etc.
         if isinstance(t[2], list):
             self.t2 = tuple(t[2])
+            if self.t0 == TOK.WORD:
+                # Note whether the word is constructed by compounding
+                self.is_compound = any("-" in m.stofn for m in self.t2)
         else:
             self.t2 = t[2]
         self.is_upper = self.t1[0] != self.t1_lower[0]  # True if starts with upper case
@@ -793,9 +797,15 @@ class BIN_Token(Token):
             # Whole number (integer): may be singular
             i = abs(i) % 100
             singular = (i != 11) and (i % 10) == 1
+        elif self.t1[-1] in "¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞":
+            # For numbers ending with fractions, we allow
+            # singular if the integer part is singular or
+            # if the fractional part has a numerator of 1
+            i = abs(i) % 100
+            singular = ((i != 11) and (i % 10) == 1) or self.t1[-1] in "¼½⅐⅑⅒⅓⅕⅙⅛"
         if terminal.is_singular and not singular:
             # Terminal is singular but number is plural
-            return True if orig_i in BIN_Token._SINGULAR_SPECIAL_CASES else False
+            return orig_i in BIN_Token._SINGULAR_SPECIAL_CASES
         if terminal.is_plural and singular:
             # Terminal is plural but number is singular
             return False
@@ -1187,7 +1197,9 @@ class BIN_Token(Token):
             if " " in self.t1_lower:
                 return False
             if terminal.num_variants == 0:
-                return True
+                # For bare 'sérnafn' terminals, we don't allow
+                # tokens that have BÍN matches
+                return not bool(self.t2)
             # The terminal is sérnafn_case: We only accept nouns or adjectives
             # that match the given case
             fbits = BIN_Token.get_fbits(m.beyging) & BIN_Token.VBIT_CASES

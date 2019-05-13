@@ -216,8 +216,12 @@ StLiður →
 Tengimerki →
     ':' | ';' | ',' | "-:em"
 
+$score(+4) Tengimerki
+
 TengimerkiVh →
     ';' | ',' | "-:em"
+
+$score(+4) TengimerkiVh
 
 Samtenging →
     # Flóknari samtenging úr mörgum orðum
@@ -231,6 +235,7 @@ Samtenging →
     | "eins:ao" "og:st"
     | "því:st" "að:st"
     | "þannig:ao" "að:st"
+    | "og:st" "loks:ao" "að:st"
 
 $score(+2) Samtenging
 $tag(apply_length_bonus) Samtenging
@@ -734,7 +739,7 @@ SögnÞað →
     # (Það) kostaði mig blóð, svita og tár [í gær] að standa í þessu
     | so_2_þf_þf_gm_p3_et NlBeintAndlag_þf NlÓbeintAndlag_þf NhFyllingAtv
     # (Það) verður [strax] að segjast/viðurkennast að Jón er fær á sínu sviði
-    | 'verða:so'_0_gm_p3_et FsAtv? nhm so_0_mm_nh Skýringarsetning
+    | 'verða:so'_0_gm_p3_et FsAtv? NhEinfaldur_mm Skýringarsetning
 
 # Nýtt undirtré fyrir tengingu sagnar og forsetningar
 $tag(begin_prep_scope) Setning/tala/pers/kyn
@@ -757,20 +762,22 @@ SetningAðHugsaSér →
 
 $score(+2) SetningAðHugsaSér
 
+# !!! ATH: Við lítum á nafnliðinn í "um að ræða" sem andlag (viðfang)
+# !!! forsetningarinnar 'um', ekki sagnarinnar 'ræða'
 SetningUmAðRæða →
     # Um væri að ræða
     # Um hafi verið að ræða
     # Um yrði að ræða
     # Um gæti hafa verið að ræða
     # ...o.s.frv.
-    'um:fs'_þf HjSögnLhÞt_et_p3 nhm 'ræða:so'_0_gm_nh FsRunaInnskot? NlBeintAndlag_þf AtvFsAuka?
+    'um:fs'_þf SögnUmAðRæða Nl_þf AtvFsAuka?
     # Í dag hafi verið um að ræða skipulegt undanhald
-    | SetningForskeyti HjSögnLhÞt_et_p3 'um:fs'_þf nhm 'ræða:so'_0_gm_nh NlBeintAndlag_þf AtvFsAuka?
+    | SetningForskeyti SögnVarUmAðRæða AtvFsAuka?
 
-$score(+30) SetningUmAðRæða # Mjög líklega réttur skilningur á þessari orðaröð
+$score(+64) SetningUmAðRæða # Mjög líklega réttur skilningur á þessari orðaröð
 
 SetningForskeyti →
-    FsAtv | SamanburðarForskeyti
+    FsAtv ","? | SamanburðarForskeyti ","?
 
 SamanburðarForskeyti →
     "eins:ao" "og:st" Nl_nf       # 'Eins og Páll borða ég ekki smjör'
@@ -1683,9 +1690,9 @@ SögnMeðF_0/tala/pers/kyn →
     # (Í dag) skulu mennirnir látnir lausir
     | HjSögnLhÞtSM/tala/pers NlFrumlag_nf/tala/pers/kyn HreinSögn_lhþt/tala/kyn
 
-    # (Hér) væri [ennfremur] komin mikil framleiðsluspenna
+    # (Í dag) væri [ennfremur] komin mikil framleiðsluspenna
     # Ath: Hjálparsögnin er í 3p þótt frumlagið sé það ekki, sbr.
-    # 'Hér er ennfremur kominn þú' (ekki 'ert')
+    # '(Í dag) er ennfremur kominn þú' (ekki 'ert')
     | HjSögnLhÞtSM_p3/tala FsAtv? so_0_lhþt/tala/kyn NlFrumlag_nf/tala/kyn
 
     # (Í ár) hefur krönunum [í borginni] fjölgað
@@ -1707,8 +1714,11 @@ SögnMeðF_0/tala/pers/kyn →
     | 'hafa:so'_0_et_p3 NlFrumlag_ef/tala/pers/kyn AtvFs?
         'vera:so'_sagnb FsAtv? so_1_ef_sagnb NhFylling/tala/kyn?
 
-    # Skal sú ákvörðun [vera] rökstudd og tilkynnt forseta Alþingis
+    # (Í dag) skal sú ákvörðun [vera] rökstudd og tilkynnt forseta Alþingis
     | HjSögnSkuluMunu/tala/pers NlFrumlag_nf/tala/pers/kyn VeraVerðaAtv? HreinSögn_lhþt/tala/kyn
+
+    # (Í svarinu) segir [jafnframt] að Jón sé ómögulegur
+    | 'segja:so'_0_gm_et_p3 FsAtv? Skýringarsetning
 
 SögnMeðF_nh/tala/pers/kyn →
     HjSögnNh/tala/pers NlFrumlag_nf/tala/pers/kyn Atviksliður? SögnMeðFNhBotn/tala/pers/kyn
@@ -2297,6 +2307,15 @@ HjSögnHafaNh/tala/pers →
     | 'skulu:so'_gm/tala/pers FsAtv? 'hafa:so'_nh 'hafa:so'_sagnb? # skyldi [ekki] hafa sögu að segja
     | 'munu:so'_gm/tala/pers FsAtv? 'hafa:so'_nh 'hafa:so'_sagnb? # myndi [ekki] hafa sögu að segja
 
+HjSögnVeraNh →
+    'vera:so'_0_gm_et_p3 'vera:so'_sagnb?       # er/var/væri [verið] að ræða
+    | 'hafa:so'_0_gm_vh_et_p3 'vera:so'_sagnb   # hafi/hefði verið að ræða
+    | 'geta:so'_0_gm_et_p3 FsAtv? 'hafa:so'_nh? 'vera:so'_sagnb # getur/gat/gæti [hafa] verið að ræða
+    | 'skulu:so'_0_gm_et_p3 FsAtv? 'vera:so'_nh # skuli/skyldi [ekki] vera að ræða
+    | 'skulu:so'_0_gm_et_p3 FsAtv? 'hafa:so'_nh 'vera:so'_sagnb # skuli/skyldi [ekki] hafa verið að ræða
+    | 'munu:so'_0_gm_et_p3 FsAtv? 'vera:so'_nh  # mun/myndi [ekki] vera að ræða
+    | 'munu:so'_0_gm_et_p3 FsAtv? 'hafa:so'_nh 'vera:so'_sagnb # mun/myndi [ekki] hafa verið að ræða
+
 # Sögnin stendur í nafnhætti með annarri nafnháttarsögn,
 # sbr. 'Gæta verða/skulu/eiga/vilja þeir þingskapa'
 HjSögnNhMeðSo/tala/pers →
@@ -2411,7 +2430,7 @@ HjSögnVera →
 
 # Lýsingarháttur þátíðar: vera farinn, hafa verið farinn, skal vera farinn, mun vera farinn
 HjSögnLhÞt/tala/pers →
-    'vera:so'/tala/pers                            # eru farnar
+    'vera:so'/tala/pers                               # eru farnar
     | 'vilja:so'/tala/pers FsAtv? 'vera:so'_nh        # vildu [ekki] vera farnar
     | 'þykja:so'/tala/pers FsAtv? 'vera:so'_nh        # þóttu [ekki] vera farnar
     | 'mega:so'/tala/pers FsAtv? 'vera:so'_nh         # máttu [ekki] vera farnar
@@ -2575,7 +2594,7 @@ EinNhFylling/fall/tala/kyn →
     # 'að þykja og vera fallegt'
     | SagnInnskot? nhm so_1_nf_nh OgNhSögn_nf* LoTengtSögn/tala/fall/kyn
     # 'að sýnast og þykjast fallegt'
-    | SagnInnskot? nhm so_mm_nh OgSögn_mm_nh* LoTengtSögn/tala/fall/kyn
+    | SagnInnskot? NhEinfaldur_mm OgSögn_mm_nh* LoTengtSögn/tala/fall/kyn
 
 OgNhFylling/fall/tala/kyn →
     OgEða EinNhFylling/fall/tala/kyn
@@ -2614,6 +2633,12 @@ NhLiður →
     nhm NhLáta? NhRuna
 
 $score(+2) NhLiður
+
+NhEinfaldur →
+    nhm so_0_nh
+
+NhEinfaldur_mm →
+    nhm so_0_nh_mm
 
 NhLáta →
     'láta:so'_0_nh FsAtv?
@@ -3102,6 +3127,18 @@ NlStak_p3_ft/fall/kyn →
 NlStak_p3/tala/fall/kyn →
     Magn/fall/tala/kyn
 
+# Í uppskriftum má segja "fjórir bollar hveiti", "einn desilítri sítrónusafi",
+# "hálft kíló ólífur", en bara í nefnifalli
+
+NlStak_p3_et_nf/kyn →
+    KynlaustMagn Nl_nf_et/kyn
+
+NlStak_p3_ft_nf/kyn →
+    KynlaustMagn Nl_nf_ft/kyn
+
+KynlaustMagn →
+    Magn_nf/tala/kyn
+
 Magn/fall/tala/kyn →
     TöluorðForskeyti/tala/fall/kyn* mælieining # rúmlega 690 MW
     | tala "-:en" mælieining # 100-400 g
@@ -3109,9 +3146,13 @@ Magn/fall/tala/kyn →
 
 Mælieining_hk/tala/fall →
     MælieiningÞyngd_hk/tala/fall
+    | MælieiningLengd_hk/tala/fall
 
 Mælieining_kvk/tala/fall →
-    MælieiningHiti_kvk/tala/fall
+    MælieiningÞyngd_kvk/tala/fall
+    | MælieiningHiti_kvk/tala/fall
+    | MælieiningLengd_kvk/tala/fall
+    | MælieiningRúmmál_kvk/tala/fall
 
 Mælieining_kk/tala/fall →
     MælieiningLengd_kk/tala/fall
@@ -3127,6 +3168,9 @@ MælieiningÞyngd_hk/tala/fall →
     | 'milligramm:hk'/tala/fall
     | 'millígramm:hk'/tala/fall
 
+MælieiningÞyngd_kvk/tala/fall →
+    'lest:kvk'/tala/fall
+
 MælieiningHiti_kvk/tala/fall →
     'gráða:kvk'/tala/fall
 
@@ -3137,6 +3181,13 @@ MælieiningLengd_kk/tala/fall →
     | 'millímetri:kk'/tala/fall
     | 'sentimetri:kk'/tala/fall
     | 'sentímetri:kk'/tala/fall
+    | 'faðmur:kk'/tala/fall
+
+MælieiningLengd_kvk/tala/fall →
+    'alin:kvk'/tala/fall
+
+MælieiningLengd_hk/tala/fall →
+    'fet:hk'/tala/fall
 
 MælieiningRúmmál_kk/tala/fall →
     'rúmmetri:kk'/tala/fall
@@ -3150,11 +3201,17 @@ MælieiningRúmmál_kk/tala/fall →
     | 'sentílítri:kk'/tala/fall
     | 'millilítri:kk'/tala/fall
     | 'millílítri:kk'/tala/fall
+    | 'bolli:kk'/tala/fall
+
+MælieiningRúmmál_kvk/tala/fall →
+    'rúmlest:kvk'/tala/fall
 
 MælieiningFlatarmál_kk/tala/fall →
     'fermetri:kk'/tala/fall
     | 'fersentímetri:kk'/tala/fall
     | 'fersentimetri:kk'/tala/fall
+    | 'ferkílómetri:kk'/tala/fall
+    | 'hektari:kk'/tala/fall
 
 $score(+8) Magn_nf/tala/kyn
 $score(+8) Magn_þf/tala/kyn
@@ -3992,11 +4049,17 @@ NlSkýring/tala/pers/fall/kyn →
     '(' SvigaForskeyti? SvigaInnihald/tala/pers/fall/kyn ')'
     | '[' SvigaForskeyti? SvigaInnihald/tala/pers/fall/kyn ']'
     | "-:em" SvigaForskeyti? SvigaInnihald/tala/pers/fall/kyn "-:em"
-    | ',' SvigaInnihald/tala/pers/fall/kyn LokatáknEðaKomma
     | ',' Skýring Skýringarliður LokatáknEðaKomma
     # (Verslunin þjónar fjölbreyttum markhópi), allt frá börnum til aldraðra, (og er vinsæl í hverfinu)
     | Samanburðarmerki 'allur:fn'_et_nf_hk 'frá:fs'_þgf Nl_þgf
         'til:fs'_ef Nl_ef LokatáknEðaKomma
+    | NlSkýringKomma/tala/pers/fall/kyn
+
+NlSkýringKomma/tala/pers/fall/kyn →
+    ',' SvigaInnihald/tala/pers/fall/kyn LokatáknEðaKomma
+
+# Draga úr skýringum sem eru ekki auðkenndar betur en með einfaldri kommu
+$score(-10) NlSkýringKomma/tala/pers/fall/kyn
 
 # Gefa aukastig fyrir skýringar á nafnliðum
 $score(+6) NlSkýring/tala/pers/fall/kyn
@@ -4068,7 +4131,7 @@ OgEða →
 EnÍOgEða →
     "en:st"
 
-$score(-24) EnÍOgEða # Frekar að líta á 'en' sem samtengingu ef það er hægt
+$score(-26) EnÍOgEða # Frekar að líta á 'en' sem samtengingu ef það er hægt
 
 OgAo →
     "jafnframt:ao" | "síðar:ao" | "síðan:ao" | "þá:ao"? "einnig:ao" | "líka:ao"
@@ -4146,6 +4209,14 @@ KommuEndir/fall →
     | 'og_margt_fleira:ao' ','?
     | 'og_svo_framvegis:ao' ','?
     | 'og_þess_háttar:ao' ','?
+
+# Runa af nafnliðum í tilteknu falli sem endar á "eða X"
+
+NlRunaEða/fall →
+    NlEind/fall KommuSamtenging/fall* EðaEndir/fall
+
+EðaEndir/fall →
+    Atviksliður? "eða:st" KommuStForskeyti? NlEind/fall
 
 # Hvetja til eins langra lista og mögulegt er
 $score(+6) KommuSamtenging/fall
@@ -4546,16 +4617,18 @@ FsMeðFallstjórn →
     | "innan:ao" 'við:fs'_þf Nl_þf
     | "innan:ao" "sem:st" 'utan:fs'_ef Nl_ef
     | "hvað:ao" FsHvaðVarðar
-    | 'allur:fn'_nf_hk_et 'frá:fs'_þgf Nl_þgf        # allt frá hruni, allt frá börnum til fullorðinna
+    # allt frá hruni, allt frá börnum til fullorðinna
+    | 'allur:fn'_nf_hk_et 'frá:fs'_þgf Nl_þgf
     # 'um að lög um endurupptökunefnd standist ekki stjórnarskrá' - Ath: 'um það að' er höndlað í ÞaðTenging
     | 'um:fs'_þf "að:st" HreinYfirsetning ','?
     # 'um hvort/hvenær/af hverju/til hvers/hví Jón kaus Framsóknarflokkinn'
     | 'um:fs'_þf SpurnarAtviksorð HreinYfirsetning ','?
     # 'er bjartsýnn á að Alfreð komi aftur í liðið' - Ath: 'á það/því að' er höndlað í ÞaðTenging
     | 'á:fs'_þf "að:st" HreinYfirsetning ','?
-    | 'að:fs'_þgf 'nafn:hk'_þgf_et person_nf  # Ég ræddi við konu að nafni Aðalbjörg Jónsdóttir
-    | 'að:fs'_þgf Nl_þgf/tala/kyn lo_sb/fall/tala/kyn  # 'að virðisaukaskatti meðtöldum'
-    | 'af:fs'_þgf Nl_þgf nhm so_0_nh  # Af fyrstu fregnum að dæma (virðist veiðitímabilið byrja vel)
+    | 'að:fs'_þgf 'nafn:hk'_þgf_et person_nf            # Ég ræddi við konu að nafni Aðalbjörg Jónsdóttir
+    | 'að:fs'_þgf Nl_þgf/tala/kyn lo_sb/fall/tala/kyn   # 'að virðisaukaskatti meðtöldum'
+    | 'af:fs'_þgf Nl_þgf NhEinfaldur                    # Af fyrstu fregnum að dæma (virðist veiðitímabilið byrja vel)
+    | 'með:fs'_þgf "eða:st" 'án:fs'_ef Nl_ef            # 'með eða án greindarskerðingar'
     | FsMiðaðVið
     | FsÍGegnUm
     | FsUmOgEftir
@@ -4642,13 +4715,13 @@ So_1_gm_fh_p3_et_þgf → so_1_þgf_gm_fh_p3_et
 So_1_gm_fh_p3_et_ef → so_1_ef_gm_fh_p3_et
 
 FsHvaðVarðar →
-    Nl/fall So_1_gm_fh_p3_et/fall  # '(hvað) Pál varðar/Páli viðvíkur'
+    Nl/fall So_1_gm_fh_p3_et/fall   # '(hvað) Pál varðar/Páli viðvíkur'
     | So_1_gm_fh_p3_et/fall Nl/fall # '(hvað) varðar Pál/viðvíkur Páli'
 
 $score(+4) FsHvaðVarðar
 
 FsLiður →
-    AtviksliðurOg? FsMeðFallstjórn # [síðastliðið sumar [og]] í flýti
+    AtviksliðurOg? FsMeðFallstjórn  # [síðastliðið sumar [og]] í flýti
 
 AtviksliðurOg →
     AtviksliðurAuka+ "og:st"?
@@ -4811,6 +4884,7 @@ EinnAl →
     | Sinnum
     | Úrslit                # KR sigraði Val 6:0
     | AlMiðstig             # [mun] hraðar en augað sér
+    | AlHvortSemUmErAðRæða  # Hvort sem um er að ræða X eða Y
     # Fjölyrtir atviksliðir sem ekki er unnt að búa til fasta frasa úr
     | 'einn:fn'_kvk_et_þf 'ferð:kvk'_þf_et_gr "enn:ao"  # eina ferðina enn
     | "heima:ao" "fyrir:ao"
@@ -4864,6 +4938,29 @@ TalaOg →
     töl_ft_hk_þgf "og:st"
 
 $score(+24) Sinnum
+
+# Hvort sem um er að ræða nýja byggingu, timburhús eða eldra mannvirki
+AlHvortSemUmErAðRæða →
+    "hvort:st" "sem:st" FsUmAðRæða
+
+FsUmAðRæða →
+    'um:fs'_þf SögnUmAðRæða NlRunaEða_þf
+
+SögnUmAðRæða →
+    HjSögnVeraNh nhm 'ræða:so'_0_gm_nh FsRunaInnskot?
+
+SögnVarUmAðRæða →
+    HjSögnVeraNh FsVarUmAðRæða
+
+FsVarUmAðRæða →
+    'um:fs'_þf SögnAðRæða Nl_þf
+
+SögnAðRæða →
+    nhm 'ræða:so'_0_gm_nh
+
+# Þessu virðist þurfa að gefa mjög hátt skor svo það sigri stigagjöf
+# annarra mögulegra trjáa
+$score(+240) AlHvortSemUmErAðRæða
 
 Atviksliður →
     Al OgAtviksliður*
