@@ -1198,8 +1198,10 @@ class BIN_Token(Token):
                 return False
             if terminal.num_variants == 0:
                 # For bare 'sérnafn' terminals, we don't allow
-                # tokens that have BÍN matches
-                return not bool(self.t2)
+                # tokens that have absolute BÍN matches
+                # (an absolute match being a match that does not
+                # require compounding)
+                return not bool(self.t2) or ("-" in self.t2[0].stofn)
             # The terminal is sérnafn_case: We only accept nouns or adjectives
             # that match the given case
             fbits = BIN_Token.get_fbits(m.beyging) & BIN_Token.VBIT_CASES
