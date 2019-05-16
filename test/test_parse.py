@@ -703,7 +703,7 @@ def test_amounts():
 
 
 def test_year_range():
-    s = r.parse_single("Jón var formaður árin 1944-50.")
+    s = r.parse_single("Jón var Íslandsmeistari árin 1944-50.")
     t = s.terminals
     assert len(t) == 8
     check_terminal(
@@ -718,8 +718,8 @@ def test_year_range():
     ),
     check_terminal(
         t[2],
-        text="formaður",
-        lemma="formaður",
+        text="Íslandsmeistari",
+        lemma="Íslandsmeistari",
         category="no",
         variants=["et", "nf", "kk"],
     ),
@@ -1250,7 +1250,7 @@ def test_composite_words():
     # as an unknown noun - causing 'fiskinn' to be parsed as an adjective
     assert s.lemmas == ['ég', 'borða', 'sykrisaltan', 'fiskinn']
     s = r.parse_single("Hann hjólaði kattspenntur á kvenbretti niður brekkuna")
-    assert s.lemmas == ['hann', 'hjóla', 'katt-spenntur', 'á', 'kven-bretti', 'niður', 'brekka']
+    assert s.lemmas == ['hann', 'hjóla', 'katt-spenna', 'á', 'kven-bretti', 'niður', 'brekka']
 
 
 def test_compressed_bin():
@@ -1490,6 +1490,55 @@ def test_personally():
     )
 
 
+def test_adjectives():
+    sents = [
+        "Páll er skemmtilegur.",
+        "Páll varð skemmtilegur.",
+        "Páll hefur verið skemmtilegur.",
+        "Páll hefur orðið skemmtilegur.",
+        "Páll gæti hafa verið skemmtilegur.",
+        "Páll gæti hafa orðið skemmtilegur.",
+        "Páll ætti að vera skemmtilegur.",
+        "Páll ætti að hafa verið skemmtilegur.",
+        "Páll átti að verða skemmtilegur.",
+        "Páll á að hafa orðið skemmtilegur.",
+        "Páll gæti hafa átt að vera skemmtilegur.",
+        "Páll getur hafa átt að verða skemmtilegur.",
+    ]
+    for sent in sents:
+        s = r.parse_single(sent)
+        assert s.tree is not None
+        assert s.tree.nouns == ["Páll"]
+        assert s.tree.S_MAIN.IP.VP.NP_PRD.ADJP.lemmas == ["skemmtilegur"]
+
+
+def test_all_mine():
+    s = r.parse_single("Ég setti allt mitt í hlutabréfin.")
+    assert s.tree is not None
+    assert s.tree.nouns == ["hlutabréf"]
+    assert s.tree.S_MAIN.IP.VP_SEQ.VP.NP_OBJ.lemmas == ["allur", "minn"]
+    s = r.parse_single("Ég tapaði öllu mínu í spilakössum.")
+    assert s.tree is not None
+    assert s.tree.nouns == ["spilakassi"]
+    assert s.tree.S_MAIN.IP.VP_SEQ.VP.NP_OBJ.lemmas == ["allur", "minn"]
+    s = r.parse_single("Þú settir allt þitt í hlutabréfin.")
+    assert s.tree is not None
+    assert s.tree.nouns == ["hlutabréf"]
+    assert s.tree.S_MAIN.IP.VP_SEQ.VP.NP_OBJ.lemmas == ["allur", "þinn"]
+    s = r.parse_single("Þú tapaðir öllu þínu í spilakössum.")
+    assert s.tree is not None
+    assert s.tree.nouns == ["spilakassi"]
+    assert s.tree.S_MAIN.IP.VP_SEQ.VP.NP_OBJ.lemmas == ["allur", "þinn"]
+    s = r.parse_single("Hann setti allt sitt í hlutabréfin.")
+    assert s.tree is not None
+    assert s.tree.nouns == ["hlutabréf"]
+    assert s.tree.S_MAIN.IP.VP_SEQ.VP.NP_OBJ.lemmas == ["allur", "sinn"]
+    s = r.parse_single("Hún tapaði öllu sínu í spilakössum.")
+    assert s.tree is not None
+    assert s.tree.nouns == ["spilakassi"]
+    assert s.tree.S_MAIN.IP.VP_SEQ.VP.NP_OBJ.lemmas == ["allur", "sinn"]
+
+
 def test_company():
     s = r.parse_single("Hann réðst inn á skrifstofu Samherja hf. og rændi gögnum.")
     assert s.tree is not None
@@ -1549,4 +1598,6 @@ if __name__ == "__main__":
     test_prepositions()
     test_personally()
     test_company()
+    test_adjectives()
+    test_all_mine()
     test_finish()
