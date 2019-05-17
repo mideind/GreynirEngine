@@ -2455,6 +2455,8 @@ HjSögnLhÞt/tala/pers →
     | 'vilja:so'/tala/pers FsAtv? 'hafa:so'_nh 'vera:so'_sagnb # vildu [ekki] hafa verið farnar
     | 'hafa:so'/tala/pers FsAtv? 'vera:so'_sagnb        # hafa [ekki] verið farnar
     | 'hafa:so'/tala/pers FsAtv? 'eiga:so'_sagnb nhm 'vera:so'_nh # hafa [ekki] átt að vera farnar
+    | 'hafa:so'/tala/pers FsAtv? 'vilja:so'_sagnb 'vera:so'_nh # hafa [ekki] viljað vera farnar
+    | 'hafa:so'/tala/pers FsAtv? 'geta:so'_sagnb 'vera:so'_sagnb # hafa [ekki] getað verið farnar
     | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh? 'vera:so'_sagnb # geta [ekki] verið farnar / geta hafa verið farnar
     | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh? 'eiga:so'_sagnb nhm 'vera:so'_nh # geta [ekki] [hafa] átt að vera farnar
     | 'skulu:so'/tala/pers FsAtv? 'vera:so'_nh          # skulu [ekki] vera farnar
@@ -2466,19 +2468,23 @@ HjSögnLhÞt/tala/pers →
     | 'eiga:so'/tala/pers FsAtv? nhm 'hafa:so'_nh 'vera:so'_sagnb # eiga [ekki] að hafa verið farnar
 
     | 'verða:so'/tala/pers                              # verða farnar
-    | 'vilja:so'/tala/pers FsAtv? 'verða:so'_nh         # vildu [ekki] verða farnar
-    | 'hafa:so'/tala/pers FsAtv? 'verða:so'_sagnb       # hafa [ekki] orðið farnar
-    | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh? 'verða:so'_sagnb # geta [ekki] orðið farnar / geta hafa orðið farnar
-    | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh? 'eiga:so'_sagnb nhm 'verða:so'_nh # geta [ekki] [hafa] átt að verða farnar
-    | 'vilja:so'/tala/pers FsAtv? 'hafa:so'_nh 'verða:so'_sagnb # vildu [ekki] hafa orðið farnar
     | 'þykja:so'/tala/pers FsAtv? 'verða:so'_nh         # þóttu [ekki] verða farnar
     | 'þykja:so'/tala/pers FsAtv? 'hafa:so'_nh 'verða:so'_sagnb # þóttu [ekki] hafa orðið farnar
     | 'mega:so'/tala/pers FsAtv? 'verða:so'_nh          # máttu [ekki] verða farnar
     | 'mega:so'/tala/pers FsAtv? 'hafa:so'_nh 'verða:so'_sagnb  # máttu [ekki] hafa orðið farnar
+    | 'vilja:so'/tala/pers FsAtv? 'verða:so'_nh         # vildu [ekki] verða farnar
+    | 'vilja:so'/tala/pers FsAtv? 'hafa:so'_nh 'verða:so'_sagnb # vildu [ekki] hafa orðið farnar
+    | 'hafa:so'/tala/pers FsAtv? 'verða:so'_sagnb       # hafa [ekki] orðið farnar
+    | 'hafa:so'/tala/pers FsAtv? 'eiga:so'_sagnb nhm 'verða:so'_nh # hafa [ekki] átt að verða farnar
+    | 'hafa:so'/tala/pers FsAtv? 'vilja:so'_sagnb 'verða:so'_nh # hafa [ekki] viljað verða farnar
+    | 'hafa:so'/tala/pers FsAtv? 'geta:so'_sagnb 'verða:so'_sagnb # hafa [ekki] getað orðið farnar
+    | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh? 'verða:so'_sagnb # geta [ekki] orðið farnar / geta hafa orðið farnar
+    | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh? 'eiga:so'_sagnb nhm 'verða:so'_nh # geta [ekki] [hafa] átt að verða farnar
     | 'skulu:so'/tala/pers FsAtv? 'verða:so'_nh         # skulu [ekki] verða farnar
     | 'skulu:so'/tala/pers FsAtv? 'hafa:so'_nh 'verða:so'_sagnb # skulu [ekki] hafa orðið farnar
     | 'munu:so'/tala/pers FsAtv? 'verða:so'_nh          # munu [ekki] verða farnar
     | 'munu:so'/tala/pers FsAtv? 'hafa:so'_nh 'verða:so'_sagnb  # munu [ekki] hafa orðið farnar
+    | 'munu:so'/tala/pers FsAtv? 'eiga:so'_nh nhm 'verða:so'_nh # munu [ekki] eiga að verða farnar
     | 'eiga:so'/tala/pers FsAtv? nhm 'verða:so'_nh      # áttu [ekki] að verða farnar
     | 'eiga:so'/tala/pers FsAtv? nhm 'hafa:so'_nh 'verða:so'_sagnb  # eiga [ekki] að hafa orðið farnar
 
