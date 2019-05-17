@@ -732,7 +732,11 @@ class BIN_Token(Token):
                 # Must be capitalized and a single name
                 return False
             if not terminal.num_variants:
-                return True
+                # There must be a case associated with the 'sérnafn' terminal.
+                # Note that allowing a person name to bind with a caseless
+                # 'sérnafn' enables a number of erroneous parses, so only change
+                # this if you know what you're doing.
+                return False
             case = terminal.variant(0)
             return any(m.case == case for m in self.t2)
         if not terminal.startswith("person"):
