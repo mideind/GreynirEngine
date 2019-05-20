@@ -271,7 +271,8 @@ class PackedDawgDictionary:
         )
 
     def find(self, word):
-        """ Look for a word in the graph, returning True if it is found or False if not """
+        """ Look for a word in the graph, returning True
+            if it is found or False if not """
         return self.__contains__(word)
 
     def __contains__(self, word):
@@ -300,7 +301,8 @@ class PackedDawgDictionary:
             def accepts(newchar)
                 returns True if the navigator will accept and 'eat' the new character
             def accept(matched, final)
-                called to inform the navigator of a match and whether it is a final word
+                called to inform the navigator of a match and whether
+                it is a final word
             def pop_edge()
                 called when leaving an edge that has been navigated; returns False
                 if there is no need to visit other edges
@@ -397,7 +399,8 @@ class PackedNavigation:
             # So far, we have a match: add a letter to the matched path
             matched += prefix[j]
             j += 1
-            # Check whether the next prefix character is a vertical bar, denoting finality
+            # Check whether the next prefix character is a vertical bar,
+            # denoting finality
             final = False
             if j < lenp:
                 if prefix[j] == "|":
@@ -405,7 +408,8 @@ class PackedNavigation:
                     j += 1
             elif nextnode == 0 or b[nextnode] & 0x80:
                 # If we're at the final char of the prefix and the next node is final,
-                # set the final flag as well (there is no trailing vertical bar in this case)
+                # set the final flag as well (there is no trailing
+                # vertical bar in this case)
                 final = True
             # Tell the navigator where we are
             nav.accept(matched, final)

@@ -602,8 +602,9 @@ class Fast_Parser(BIN_Parser):
             )
             # Maintain a token/terminal matching cache for the duration
             # of this parser instance. Note that this cache will grow with use,
-            # as it includes an entry (about 2K bytes) for every distinct token that the parser
-            # encounters.
+            # as it includes an entry (consisting of one byte per terminal in the
+            # grammar, or currently about 5K bytes for Reynir.grammar) for every
+            # distinct token that the parser encounters.
             self._matching_cache = dict()
 
     def __enter__(self):

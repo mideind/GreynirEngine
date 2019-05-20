@@ -277,6 +277,7 @@ class BIN_Token(Token):
             "af",
             "fyrir",
             "því",
+            "saman"
         ]
     )
 
@@ -1728,17 +1729,20 @@ class BIN_Grammar(Grammar):
 
     @staticmethod
     def _make_terminal(name):
-        """ Make BIN_Terminal instances instead of plain-vanilla Terminals """
+        """ Make BIN_Terminal instances instead of
+            plain-vanilla Terminals """
         return BIN_Terminal(name)
 
     @staticmethod
     def _make_literal_terminal(name):
-        """ Make BIN_LiteralTerminal instances instead of plain-vanilla LiteralTerminals """
+        """ Make BIN_LiteralTerminal instances instead of
+            plain-vanilla LiteralTerminals """
         return BIN_LiteralTerminal(name)
 
     @staticmethod
     def _make_nonterminal(name, fname, line):
-        """ Make BIN_Terminal instances instead of plain-vanilla Terminals """
+        """ Make BIN_Terminal instances instead of
+            plain-vanilla Terminals """
         return BIN_Nonterminal(name, fname, line)
 
 
@@ -1867,7 +1871,8 @@ def wrap_tokens(tokens, wrap_func=None):
             if tok[0] == TOK.PUNCTUATION and tok[1] == ")":
                 # Check the contents of the token list from left+1 to right-1
 
-                # Skip parentheses starting with "e." (English), "þ." (German) or "d." (Danish)
+                # Skip parentheses starting with "e." (English),
+                # "þ." (German) or "d." (Danish)
                 foreign = right > left + 1 and tlist[left + 1][1] in _SKIP_PARENTHESIS
 
                 def is_unknown(t):

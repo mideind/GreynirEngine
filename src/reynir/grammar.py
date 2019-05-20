@@ -429,7 +429,6 @@ class Production:
 _PRAGMA_SCORE = "$score("
 _PRAGMA_ROOT = "$root("
 _PRAGMA_TAG = "$tag("
-_PRAGMA_ERROR = "$error("
 
 
 class Grammar:
@@ -750,7 +749,8 @@ class Grammar:
                 # Generate productions for all variants
 
                 def variant_values(vlist):
-                    """ Returns a list of names with all applicable variant options appended """
+                    """ Returns a list of names with all applicable
+                        variant options appended """
                     if not vlist:
                         yield [""]
                         return
@@ -842,14 +842,16 @@ class Grammar:
                                 )
                             # Create C*, C+ or C?
                             new_nt_id = sym + repeat
-                            # Make the new nonterminal and production if not already there
+                            # Make the new nonterminal and production,
+                            # if not already there
                             if new_nt_id not in nonterminals:
                                 new_nt = nonterminals[
                                     new_nt_id
                                 ] = self._make_nonterminal(new_nt_id, fname, line)
                                 new_nt.add_ref()
-                                # Note that the Earley algorithm is more efficient on left recursion
-                                # than middle or right recursion. Therefore it is better to generate
+                                # Note that the Earley algorithm is more efficient
+                                # on left recursion than middle or right recursion.
+                                # Therefore it is better to generate
                                 # Cx -> Cx C than Cx -> C Cx.
                                 # First production: Cx C
                                 new_p = Production(fname, line)
@@ -883,7 +885,8 @@ class Grammar:
                     _add_rhs(nt_id_full, result, priority)
 
             def variant_names(nt, vts):
-                """ Returns a list of names with all applicable variant options appended """
+                """ Returns a list of names with all applicable
+                    variant options appended """
                 result = [nt]
                 for v in vts:
                     newresult = []
@@ -894,8 +897,9 @@ class Grammar:
                 return result
 
             def apply_to_nonterminals(s, func):
-                """ Parse a nonterminal/var list from string s, then apply func(nt, p) to
-                    all nonterminals, where p is the parameter of the pragma """
+                """ Parse a nonterminal/var list from string s,
+                    then apply func(nt, p) to all nonterminals,
+                    where p is the parameter of the pragma """
                 ix = s.rfind(")")
                 if ix < 0:
                     raise GrammarError(
@@ -908,8 +912,6 @@ class Grammar:
                 cnt = 0
                 for nt_name in nts:
                     ntv = nt_name.split("/")
-                    # if not ntv[0].isidentifier():
-                    #    raise GrammarError("Invalid nonterminal name '{0}'".format(ntv[0]), fname, line)
                     for vname in ntv[1:]:
                         if vname not in variants:
                             raise GrammarError(
@@ -999,10 +1001,6 @@ class Grammar:
                     # Add an implicit reference to the root
                     nonterminals[root_nt].add_ref()
                     self._secondary_roots.append(nonterminals[root_nt])
-                elif s.startswith(_PRAGMA_ERROR):
-                    # Pragma $error(error_rule, correct_rule)
-                    s = s[len(_PRAGMA_ERROR) :]
-                    # TODO: do something with error pragma
                 else:
                     raise GrammarError("Unknown pragma '{0}'".format(s), fname, line)
             else:
@@ -1058,7 +1056,8 @@ class Grammar:
                         )
                     sep = ">"
                 for priority, prod in enumerate(rule[1].split(sep)):
-                    # Add the productions on the right hand side, delimited by '|' or '>'
+                    # Add the productions on the right hand side,
+                    # delimited by '|' or '>'
                     _parse_rhs(
                         current_NT,
                         current_variants,
@@ -1107,7 +1106,6 @@ class Grammar:
             if verbose and not nt.has_ref:
                 # Emit a warning message if verbose=True
                 print("Nonterminal {0} is never referenced in a production".format(nt))
-                # raise GrammarError("Nonterminal {0} is never referenced in a production".format(nt), nt.fname(), nt.line())
             if nt not in grammar:
                 raise GrammarError(
                     "Nonterminal {0} is referenced but not defined".format(nt),
@@ -1153,7 +1151,8 @@ class Grammar:
                 0
             )
 
-        # Short-circuit nonterminals that point directly and uniquely to other nonterminals.
+        # Short-circuit nonterminals that point directly and uniquely
+        # to other nonterminals.
         # Becausee this creates a gap between the original grammar
         # and the resulting trees, we only do this for nonterminals with variants
         # that do not have a $score pragma
@@ -1170,7 +1169,8 @@ class Grammar:
                 and len(plist[0][1]) == 1
                 and isinstance(plist[0][1][0], Nonterminal)
             ):
-                # This nonterminal has only one production, with only one nonterminal item
+                # This nonterminal has only one production,
+                # with only one nonterminal item
                 target = plist[0][1][0]
                 assert target != nt
                 while target in shortcuts:
@@ -1192,7 +1192,8 @@ class Grammar:
                         #        .format(s, target, nt))
                         p[ix] = target
 
-        # Now, after applying shortcuts, check that all nonterminals are reachable from the root
+        # Now, after applying shortcuts, check that all nonterminals
+        # are reachable from the root
         unreachable = {nt for nt in nonterminals.values()}
 
         def _remove(nt):

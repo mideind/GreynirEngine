@@ -116,6 +116,7 @@
 
 # Merkið > gefur til kynna forgangsröðun.
 # Ef báðar koma til greina er Málsgrein alltaf tekin fram yfir Grein o.s.frv.
+
 S0 → Málsgrein > Grein > Fyrirsögn
 
 Málsgrein →
@@ -126,15 +127,15 @@ Málsgrein →
 MgrInnihald → Forskeyti? Yfirsetning StLiður* Tilvitnun? Lokatákn?
 
 Forskeyti →
-    "-:em"? Samtenging "bara:ao"? StrikEðaKomma?       # 'En - þegar allt er skoðað, var þetta fínt.'
-    | Samtenging? uh TengimerkiVh Samtenging?   # Og já, þetta var ekki gott / Nei - en hann átti ekkert svar
-    | raðnr_nf_kvk                              # Raðnúmer málsgreinar
-    | "-:em"                                    # Þankastrik á undan setningu (allar gerðir strika varpast í '-')
-    | 'mynd:kvk'_nf_et tala_nf_kvk AfTala? ':'? # Mynd 2 af 10
+    "-:em"? Samtenging "bara:ao"? StrikEðaKomma?    # 'En - þegar allt er skoðað, var þetta fínt.'
+    | Samtenging? uh TengimerkiVh Samtenging?       # Og já, þetta var ekki gott / Nei - en hann átti ekkert svar
+    | raðnr_nf_kvk                                  # Raðnúmer málsgreinar
+    | "-:em"                                        # Þankastrik á undan setningu (allar gerðir strika varpast í '-')
+    | 'mynd:kvk'_nf_et tala_nf_kvk AfTala? ':'?     # Mynd 2 af 10
     | 'dæmi:hk'_et_nf tala_nf_hk? ':'
     | 'sjá:so'_0_gm_nh "einnig:ao"? ':'
-    | "semsagt:ao" ':'                          #$error("sem:st" 'segja:so'_lhþt_sb_hk_nf_et ':') # Þarf ekki villureglu, einkvæm villa sem fyrri einingar taka á.
-    | "sem:st" 'segja:so'_lhþt_sb_hk_nf_et ':'  # sem sagt
+    | "semsagt:ao" ':'
+    | "sem:st" 'segja:so'_lhþt_sb_hk_nf_et ':'      # sem sagt
     | 'aðferð:kvk'_nf_et ':'
     | 'með_öðrum_orðum:ao' ':' | 'með:fs'_þgf 'annar:lo'_hk_þgf_ft 'orð:hk'_þgf_ft ':'
     | Greinarnúmer ':'
@@ -2746,27 +2747,27 @@ $score(+8) NhSögnHafaGetaFá
 # Samtengingar sagna
 
 OgNhSögn →
-    OgEða so_0_nh so_0_gm_vh_p3_et?
+    OgEðaHeldur so_0_nh so_0_gm_vh_p3_et?
 OgNhSögn_þf →
-    OgEða so_1_þf_nh so_0_gm_vh_p3_et?
+    OgEðaHeldur so_1_þf_nh so_0_gm_vh_p3_et?
 OgNhSögn_þgf →
-    OgEða so_1_þgf_nh so_0_gm_vh_p3_et?
+    OgEðaHeldur so_1_þgf_nh so_0_gm_vh_p3_et?
 OgNhSögn_ef →
-    OgEða so_1_ef_nh so_0_gm_vh_p3_et?
+    OgEðaHeldur so_1_ef_nh so_0_gm_vh_p3_et?
 OgNhSögn_nf →
-    OgEða so_1_nf_nh so_0_gm_vh_p3_et?
+    OgEðaHeldur so_1_nf_nh so_0_gm_vh_p3_et?
 OgNhSögn_þgf_þf →
-    OgEða so_2_þgf_þf_nh so_0_gm_vh_p3_et?
+    OgEðaHeldur so_2_þgf_þf_nh so_0_gm_vh_p3_et?
 OgNhSögn_þf_ef →
-    OgEða so_2_þf_ef_nh so_0_gm_vh_p3_et?
+    OgEðaHeldur so_2_þf_ef_nh so_0_gm_vh_p3_et?
 OgNhSögn_þf_þgf →
-    OgEða so_2_þf_þgf_nh so_0_gm_vh_p3_et?
+    OgEðaHeldur so_2_þf_þgf_nh so_0_gm_vh_p3_et?
 OgNhSögn_þgf_ef →
-    OgEða so_2_þgf_ef_nh so_0_gm_vh_p3_et?
+    OgEðaHeldur so_2_þgf_ef_nh so_0_gm_vh_p3_et?
 OgNhSögn_þgf_nf →
-    OgEða so_2_þgf_nf_nh so_0_gm_vh_p3_et?
+    OgEðaHeldur so_2_þgf_nf_nh so_0_gm_vh_p3_et?
 OgNhSögn_lhþt/tala/kyn →
-    OgEða so_0_lhþt/tala/kyn
+    OgEðaHeldur so_0_lhþt/tala/kyn
 
 # Gefa til kynna hvar lesa á upp sagnir til að nota í
 # tengingu sagna og forsetninga
@@ -3372,7 +3373,8 @@ Prósentubil → TöluorðForskeyti* tala "-:en" prósenta
 $score(+4) Prósentubil
 
 TöluorðForskeyti →
-    'að_minnsta_kosti:ao' | "um:ao" | "minnst:ao" | "einungis:ao" | "aðeins:ao" | "ekki:ao"
+    "um:ao" | "minnst:ao" | "einungis:ao" | "aðeins:ao" | "ekki:ao"
+    | 'að_minnsta_kosti:ao' | 'um_það_bil:ao'
     | "tæplega:ao" | "rúmlega:ao" | "ríflega:ao" | "einnig:ao" | "samtals:ao"
     | "næstum:ao" | "nálægt:ao" | "yfir:ao"
     # Fleiryrt forskeyti
@@ -4070,6 +4072,16 @@ NlEind/tala/pers/fall/kyn →
 NlEind_et_p3/fall/kyn → NlEkkiHeldur_et/fall/kyn
 NlEind_ft_p3/fall/kyn → NlEkkiHeldur_ft/fall/kyn
 
+# (Hún á) þrjú/fjölmörg gæludýr: svarta kisu, grænt kamelljón og feitan naggrís
+NlEind_ft_p3/fall/kyn →
+    Nl_ft_p3/fall/kyn ":" Nl/fall KommaNl/fall* OgNl/fall
+
+KommaNl/fall →
+    "," Nl/fall
+
+OgNl/fall →
+    ","? "og:st" Nl/fall
+
 # (Hann málaði) ekki girðinguna, heldur staurana (, sem voru bláir)
 NlEkkiHeldur/tala/fall/kyn →
     "ekki:ao" Nl/fall ","? "heldur:st" Nl/fall/tala/kyn
@@ -4206,6 +4218,9 @@ OgEða →
     | "svo:st" "sem:st" | "jafnt:ao" "sem:st"
     | EnÍOgEða
 
+# Við þurfum að hætta að meta fólk út frá aldri heldur meta það út frá hæfileikum
+OgEðaHeldur → OgEða | "heldur:st"
+
 EnÍOgEða →
     "en:st"
 
@@ -4250,6 +4265,7 @@ OgEðaEnAtv → OgEðaEn FsAtv?
 
 KommaOgEðaEn → ',' | ','? OgEðaEn | "-:em" OgEðaEn
 KommaOgEðaEnNema → ',' | ';' | ','? OgEðaEnNema
+KommaSemíkomma → ',' | ';'
 
 # Allir liðir af sama kyni
 
@@ -4261,14 +4277,14 @@ KommuStForskeyti →
     FsRunaEftirNl
     | "þar:ao" "af:ao"    # fjórir þingmenn, þar af einn nýútskrifaður, 
 
-KommuSamtenging/fall/kyn → ',' KommuStForskeyti? NlEind/fall/kyn
+KommuSamtenging/fall/kyn → KommaSemíkomma KommuStForskeyti? NlEind/fall/kyn
 
 KommuEndir/fall/kyn →
     Atviksliður? KommaOgEða KommuStForskeyti? NlEind/fall/kyn AtvKomma?
-    | 'og_fleira:ao' ','?
-    | 'og_margt_fleira:ao' ','?
-    | 'og_svo_framvegis:ao' ','?
-    | 'og_þess_háttar:ao' ','?
+    | 'og_fleira:ao' KommaSemíkomma?
+    | 'og_margt_fleira:ao' KommaSemíkomma?
+    | 'og_svo_framvegis:ao' KommaSemíkomma?
+    | 'og_þess_háttar:ao' KommaSemíkomma?
 
 # Hvetja til eins langra lista og mögulegt er
 $score(+6) KommuSamtenging/fall/kyn
@@ -4279,14 +4295,14 @@ NlRuna/fall →
     KommuSamtenging/fall* KommuEndir/fall
     | ',' KommuStForskeyti? NlEind/fall AtvKomma # Þingmenn, sérstaklega Jóhanna, voru óánægðir
 
-KommuSamtenging/fall → ',' KommuStForskeyti? NlEind/fall
+KommuSamtenging/fall → KommaSemíkomma KommuStForskeyti? NlEind/fall
 
 KommuEndir/fall →
     Atviksliður? KommaOgEða KommuStForskeyti? NlEind/fall AtvKomma?
-    | 'og_fleira:ao' ','?
-    | 'og_margt_fleira:ao' ','?
-    | 'og_svo_framvegis:ao' ','?
-    | 'og_þess_háttar:ao' ','?
+    | 'og_fleira:ao' KommaSemíkomma?
+    | 'og_margt_fleira:ao' KommaSemíkomma?
+    | 'og_svo_framvegis:ao' KommaSemíkomma?
+    | 'og_þess_háttar:ao' KommaSemíkomma?
 
 # Runa af nafnliðum í tilteknu falli sem endar á "eða X"
 
@@ -4337,7 +4353,8 @@ Nl/tala/pers/fall/kyn →
 $score(+4) Nl_nf
 
 # Fleirtölu-nafnliður í 3p sem leyfir runu í sama falli og kyni
-# Leyfir einnig 'þeir Jón og Gunnar [sendu bréfið]' eða 'þær Elísabet og mamma hennar [byggðu húsið]'
+# Leyfir einnig 'þeir Jón og Gunnar [sendu bréfið]' eða
+# 'þær Elísabet og mamma hennar [byggðu húsið]'
 Nl_ft_p3/fall/kyn →
     NlSamaKyn/fall/kyn
 
@@ -4710,6 +4727,7 @@ FsMeðFallstjórn →
     | 'að:fs'_þgf Nl_þgf/tala/kyn lo_sb/fall/tala/kyn   # 'að virðisaukaskatti meðtöldum'
     | 'af:fs'_þgf Nl_þgf NhEinfaldur                    # Af fyrstu fregnum að dæma (virðist veiðitímabilið byrja vel)
     | 'með:fs'_þgf "eða:st" 'án:fs'_ef Nl_ef            # 'með eða án greindarskerðingar'
+    | FsÚtFrá
     | FsMiðaðVið
     | FsÍGegnUm
     | FsUmOgEftir
@@ -4778,6 +4796,13 @@ FsUmLeið →
     'um:fs'_þf 'leið:kvk'_þf_et
 
 $score(+6) FsUmLeið
+
+# Sérregla fyrir "út frá" vegna þess að "út frá því að S" er
+# algengt mynstur sem annars þáttast sem Tíðarsetning
+FsÚtFrá →
+    "út:ao" 'frá:fs'_þgf Nl_þgf
+
+$score(+24) FsÚtFrá
 
 FsAðBaki →
     'að:fs'_þgf 'bak:hk'_þgf_et Nl_þgf # 'að baki hverju bundnu sæti'
@@ -5868,67 +5893,54 @@ AnnaðhvortSt →
     "annaðhvort:st" | VillaAnnaðHvort
 
 # Villureglur // Error rules
-# !!! TODO: Útfæra nánar
 
-$error(VillaAð, LeiðréttAð)
 VillaAð →
     "að:st"
-LeiðréttAð → ∅
+
 $tag(error) VillaAð
 
 # 'annað hvort' í tveimur orðum en á að vera eitt
-$error(VillaAnnaðHvort, LeiðréttAnnaðHvort)
 VillaAnnaðHvort →
     'annar:fn'_et_nf_hk 'hvor:fn'_et_nf_hk
-LeiðréttAnnaðHvort →
-    "annaðhvort:st"
+
 $tag(error) VillaAnnaðHvort
 
 # 'annaðhvort' í einu orði en á að vera í tveimur
 VillaAnnaðhvort →
     "annaðhvort:st"
+
 $tag(error) VillaAnnaðhvort
 $score(-2) VillaAnnaðhvort
 
-$error(VillaÞóAð, LeiðréttÞóAð)
 VillaÞóAð →
     "jafnvel:ao"? "þó:st"
-LeiðréttÞóAð →
-    "jafnvel:ao"? "þó:st" "að:st"
+
 $tag(error) VillaÞóAð
 $score(-64) VillaÞóAð  # Nægur mínus til að núlla út plús fyrir ViðurkenningarTenging
 
-$error(VillaFráÞvíAð, LeiðréttFráÞvíAð)
 VillaFráÞvíAð →
     Allt? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et
-LeiðréttFráÞvíAð → 
-    Allt? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"
+
 $tag(error) VillaFráÞvíAð
 $score(+2) VillaFráÞvíAð
 
-$error(VillaVístAð, LeiðréttVístAð)
 VillaVístAð →
     "víst:ao" "að:st"  
-LeiðréttVístAð → 
-    "fyrst:ao" "að:st"?
+
 $tag(error) VillaVístAð
 $score(-24) VillaVístAð
 
-$error(VillaHeldur, LeiðréttHeldur)
 VillaHeldur →
     "heldur:st"
-LeiðréttHeldur → ∅
+
 $tag(error) VillaHeldur
 $score(+4) VillaHeldur
 
-$error(VillaSíðan, LeiðréttSíðan)
 VillaSíðan →
     "síðan:ao"
-LeiðréttSíðan → ∅
 $tag(error) VillaSíðan
 
 # Villa í tölu: Einn af drengjunum sem tóku þátt unnu keppnina → vann keppnina
-$error(VillaEinnAf_ft_p3/fall/kyn, EinnAf_et_p3/fall/kyn)
 VillaEinnAf_ft_p3/fall/kyn →
     'einn:fn'_et/fall/kyn AfLiður/kyn
 $tag(error) VillaEinnAf_ft_p3/fall/kyn
@@ -5936,7 +5948,6 @@ $tag(error) VillaEinnAf_ft_p3/fall/kyn
 # Villa í kyni: Hún er ein af þátttakendum → einn
 # Hef þá kk → kvk, kvk → kk, kk → hk, hk → kk, hk → kvk, kvk → hk
 
-$error(VillaFjöldiHluti_ft/fall/kyn, LeiðréttFjöldiHluti_et_kk/fall)
 VillaFjöldiHluti_ft/fall/kyn →
     'mikill:lo'_et_kk/fall? FjöldiHluti_et_kk/fall EfLiður_ft/kyn
     | 'stór:lo'_et_kk/fall? 'hluti:kk'_et/fall EfLiður_ft/kyn
@@ -5946,10 +5957,6 @@ FjöldiHluti_et_kk/fall →
     | 'minnihluti:kk'_et/fall
     | 'meirihluti:kk'_et/fall
     | 'helmingur:kk'_et/fall
-
-LeiðréttFjöldiHluti_et_kk/fall →
-    'mikill:lo'_et_kk/fall? FjöldiHluti_et_kk/fall EfLiður_ft/kyn
-    | 'stór:lo'_et_kk/fall? 'hluti:kk'_et/fall EfLiður_ft/kyn
 
 $tag(error) VillaFjöldiHluti_ft/fall/kyn
 $score(-4) VillaFjöldiHluti_ft/fall/kyn
