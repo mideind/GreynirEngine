@@ -1434,8 +1434,8 @@ EinSögn_lhþt/tala/kyn →
     > so_subj_lhþt_ft/kyn Nl_nf_et                  # (Þau voru) valin efnilegasta sundfólkið
 
 EinSögnFrh_lhþt/tala/kyn →
-    EinSögn_lhþt/tala/kyn                   # (Mennirnir) eru lentir og byrjaðir að grilla
-    > NlFrumlag_nf/tala/kyn so_0_lhþt/tala/kyn     # veð tekið / veðin tekin / kötturinn kembdur
+    EinSögn_lhþt/tala/kyn                           # (Mennirnir) eru lentir og byrjaðir að grilla
+    > NlFrumlag_nf/tala/kyn so_0_lhþt/tala/kyn      # veð tekið / veðin tekin / kötturinn kembdur
     > EinSögnFrh_lhþt_sagnb
 
 # Framhald lýsingarháttar þátíðar sem fer yfir í sagnbót
@@ -3554,6 +3554,24 @@ Húsnúmer → tala | talameðbókstaf
 
 $score(+4) Heimilisfang/fall/kyn
 
+# Lén
+
+NlStak_p3_et_nf_hk → Lén_nf
+NlStak_p3_et_þf_hk → Lén_þf
+NlStak_p3_et_þgf_hk → Lén_þgf
+NlStak_p3_et_ef_hk → Lén_ef
+
+Lén/fall → lén/fall
+
+# Myllumerki
+
+NlStak_p3_et_nf_hk → Myllumerki_nf
+NlStak_p3_et_þf_hk → Myllumerki_þf
+NlStak_p3_et_þgf_hk → Myllumerki_þgf
+NlStak_p3_et_ef_hk → Myllumerki_ef
+
+Myllumerki/fall → myllumerki/fall
+
 NlStak_p3_et/fall → NlStak_p3_et/fall/kyn # Samtenging tveggja eintöluliða með 'eða' krefst ekki sama kyns báðum megin
 
 # 3p. fleirtala
@@ -3643,11 +3661,18 @@ $score(+4) NlBæðiHvorki_p1_hk/fall
 Skst →
     Skst_abbrev
     | Sérnafn "-"?              # Barclays-bankann, Al Thani-málið
+    | Myllumerki_abbrev         # #metoo-umræðan, #eurovision tístin
+
+$score(+8) Skst
 
 Skst_abbrev → no_abbrev "-"?    # FIH bankann
 
-$score(+8) Skst
-$score(+4) Skst_abbrev
+$score(+8) Skst_abbrev
+
+Myllumerki_abbrev →
+    myllumerki "-"?             # #metoo-umræðan, #eurovision tístin
+
+$score(+24) Myllumerki_abbrev
 
 Fyrirbæri/fall/kyn →
     Skst? no_et/fall/kyn        # Microsoft-hugbúnaðarrisinn, Nikon myndavél
@@ -6184,3 +6209,27 @@ QSearchToken →
     > dags > dagsafs > dagsföst
     > tímapunkturafs > tímapunkturfast > tími
     > raðnr > to > töl > ártal > tala > sérnafn
+
+$if(include_errors)
+
+FsMeðFallstjórn →
+    VillaFsMeðFallstjórn
+
+VillaFsMeðFallstjórn →
+    fs_nf Nl_þf
+    | fs_nf Nl_þgf
+    | fs_nf Nl_ef
+    | fs_þf Nl_nf
+    | fs_þf Nl_þgf
+    | fs_þf Nl_ef
+    | fs_þgf Nl_nf
+    | fs_þgf Nl_þf
+    | fs_þgf Nl_ef
+    | fs_ef Nl_nf
+    | fs_ef Nl_þf
+    | fs_ef Nl_þgf
+
+$tag(error) VillaFsMeðFallstjórn
+$score(-100) VillaFsMeðFallstjórn
+
+$endif(include_errors)

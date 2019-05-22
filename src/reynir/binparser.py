@@ -951,6 +951,14 @@ class BIN_Token(Token):
         """ A measurement token matches a measurement (mælieining) terminal """
         return terminal.startswith("mælieining")
 
+    def matches_DOMAIN(self, terminal):
+        """ A domain token matches a domain (lén) terminal """
+        return terminal.startswith("lén")
+
+    def matches_HASHTAG(self, terminal):
+        """ A hashtag token matches a hashtag (myllumerki) terminal """
+        return terminal.startswith("myllumerki")
+
     def matches_WORD(self, terminal):
         """ Match a word token, having the potential part-of-speech meanings
             from the BIN database, with the terminal """
@@ -1296,6 +1304,8 @@ class BIN_Token(Token):
         TOK.TIMESTAMPREL: matches_TIMESTAMPREL,
         TOK.TIMESTAMPABS: matches_TIMESTAMPABS,
         TOK.MEASUREMENT: matches_MEASUREMENT,
+        TOK.DOMAIN: matches_DOMAIN,
+        TOK.HASHTAG: matches_HASHTAG,
         TOK.WORD: matches_WORD,
     }
 
@@ -1987,26 +1997,36 @@ def augment_terminal(terminal, text_lower, beyging):
     a = terminal.split("_")
     cases = []
     vstart = 1
+    vset_remove = set()
     if a[0] == "so" and len(a) > 1:
         # Special case for verb arguments: keep them in order
         if a[1] in "012":
             args = int(a[1])
             cases = a[1 : 2 + args]
             vstart = 2 + args
-        elif a[1] == "subj":
-            cases = a[1:2]
-            vstart = 2
+        # If a '_subj_xx' tail follows, keep it intact in its entirety
+        if a[vstart] == "subj":
+            cases += a[vstart:]
+            # In this case, we don't pick up any other variants from the terminal
+            vstart = len(a)
+            # Make sure we don't duplicate variants that are already in the cases string
+            vset_remove = set(cases)
     vset = set(a[vstart:])
     if a[0] == "pfn":
         # For personal pronouns, BÍN is missing gender and person information
         # Add it here for completeness
         vset |= _PFN_VARIANTS.get(text_lower, set())
     # Collect the variants from the terminal and from the BÍN 'beyging' string
-    if a[0] != "fs":
+    if a[0] != "fs" and a[0] != "sérnafn":
         # For prepositions, the beyging string is not significant and
         # may contain junk, if the same word form (such as 'á') is found in BÍN.
         # See comment in matcher_fs() within the BIN_Token class in binparser.py.
+        # For proper names ('sérnafn'), the matched token may be almost
+        # any word in BÍN, and the inflection data is not significant.
         vset |= BIN_Token.bin_variants(beyging)
+    if a[0] == "gata":
+        # No need for number specifier for street names
+        vset -= {"et", "ft"}
     # Additional hygiene to make sure we don't have both _esb and _sb / _evb and _vb
     if "esb" in vset and "sb" in vset:
         vset.remove("sb")
@@ -2016,6 +2036,11 @@ def augment_terminal(terminal, text_lower, beyging):
         # For impersonal verbs, all three persons are identical
         # and not required
         vset -= {"p1", "p2", "p3"}
+    elif "lh" in vset and "þt" in vset:
+        # Change _lh_þt to _lhþt
+        vset -= {"lh", "þt"}
+        vset.add("lhþt")
+    vset -= vset_remove
     return "_".join(a[0:1] + cases + sorted(list(vset)))
 
 

@@ -483,6 +483,10 @@ class Grammar:
         self._file_name = None
         self._file_time = None
 
+        # Grammar parsing conditions, checkable with $if()...$endif()
+        # This should be a set of strings
+        self._conditions = set()
+
     @property
     def nt_dict(self):
         """ Return the raw grammar dictionary, Nonterminal -> [ Productions ] """
@@ -556,6 +560,11 @@ class Grammar:
     def file_time(self):
         """ Return the timestamp of the grammar file, or None """
         return self._file_time
+
+    def set_conditions(self, cond_set):
+        """ Set the parsing conditions for this grammar,
+            checkable with $if()...$endif() """
+        self._conditions = cond_set
 
     def __getitem__(self, nt):
         """ Look up a nonterminal, yielding a list of (priority, production) tuples """
@@ -634,15 +643,11 @@ class Grammar:
         terminals = self._terminals
         nonterminals = self._nonterminals
         grammar = self._nt_dict
-        # The number of the current line in the grammar file
-        line = 0
         # Reset the sequence of production indices
         Production.reset()
-
         # Dictionary of variants, keyed by variant name
         # where the values are lists of variant options (strings)
         variants = OrderedDict()
-        current_line = ""
 
         def parse_line(s):
 
@@ -1067,6 +1072,14 @@ class Grammar:
 
         # Main parse loop
 
+        # The number of the current line in the grammar file
+        line = 0
+        # The current logical line, eventually amalgamated from
+        # multiple physical lines via continuation
+        current_line = ""
+        # Stack of conditional sections
+        cond_stack = [("", True)]
+
         try:
             with open(fname, "r", encoding="utf-8") as inp:
                 # Read grammar file line-by-line
@@ -1088,12 +1101,43 @@ class Grammar:
                         current_line += s
                         continue
 
-                    # New item starting: parse the previous one and start a new
-                    parse_line(current_line)
+                    if cond_stack[-1][1]:
+                        # New item starting: parse the previous one and start a new
+                        parse_line(current_line)
+
+                    # Check conditional section
+                    if s.startswith("$if(") and s.endswith(")"):
+                        cond = s[4:-1].strip()
+                        if not cond.isidentifier():
+                            raise GrammarError(
+                                "$if() condition must be a valid identifier"
+                            )
+                        # Establish whether we want to parse the conditional
+                        # section or not
+                        new_cond = cond_stack[-1][1] and cond in self._conditions
+                        cond_stack.append((cond, new_cond))
+                        s = ""
+                    elif s.startswith("$endif(") and s.endswith(")"):
+                        cond = s[7:-1].strip()
+                        if not cond.isidentifier():
+                            raise GrammarError(
+                                "$endif() condition must be a valid identifier"
+                            )
+                        if len(cond_stack) < 2:
+                            raise GrammarError("$endif() with no matching $if()")
+                        if cond != cond_stack[-1][0]:
+                            raise GrammarError(
+                                "$endif({0}) does not match $if({1})"
+                                .format(cond, cond_stack[-1][0])
+                            )
+                        del cond_stack[-1]
+                        s = ""
+
                     current_line = s
 
                 # Parse the final chunk
-                parse_line(current_line)
+                if current_line:
+                    parse_line(current_line)
 
         except (IOError, OSError):
             raise GrammarError("Unable to open or read grammar file", fname, 0)

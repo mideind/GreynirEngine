@@ -856,26 +856,16 @@ def test_abbreviations():
     )
     assert (
         s.tree.flat_with_all_variants == "P S-MAIN IP ADVP ao /ADVP VP-SEQ "
-        "VP so_et_fh_gm_p3_þt NP-SUBJ no_et_gr_hk_nf PP fs_ef NP no_ef_et_hk "
-        "/NP /PP /NP-SUBJ so_0_et_hk_lhþt /VP ADVP ADVP-DATE-REL "
-        "raðnr no_et_kk_þf /ADVP-DATE-REL /ADVP /VP-SEQ /IP /S-MAIN st "
-        "S-MAIN IP NP-SUBJ no_et_kk_nf person_kk_nf /NP-SUBJ VP-SEQ "
-        "VP so_et_fh_gm_p3_þt so_1_þf_gm_nh NP-OBJ pfn_et_hk_p3_þf /NP-OBJ "
-        "/VP PP fs_ef NP no_ef_et_hk st no_ef_et_hk ao /NP /PP /VP-SEQ "
-        "S-ADV-TEMP ao st IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ VP-SEQ "
-        "VP so_0_et_fh_mm_nt_p3 /VP PP fs_þgf NP no_et_hk_þgf /NP /PP "
-        "/VP-SEQ /IP /S-ADV-TEMP /IP /S-MAIN p /P"
-    ) or (
-        s.tree.flat_with_all_variants == "P S-MAIN IP ADVP ao /ADVP VP-SEQ "
-        "VP so_et_fh_gm_p3_þt NP-SUBJ no_et_gr_hk_nf PP fs_ef NP no_ef_et_hk "
-        "/NP /PP /NP-SUBJ so_0_et_hk_lhþt /VP ADVP ADVP-DATE-REL "
-        "raðnr no_et_kk_þf /ADVP-DATE-REL /ADVP /VP-SEQ /IP /S-MAIN st "
-        "S-MAIN IP NP-SUBJ no_et_kk_nf person_kk_nf /NP-SUBJ VP-SEQ "
-        "VP so_et_fh_gm_p3_þt so_1_þf_gm_nh NP-OBJ pfn_et_hk_p3_þf /NP-OBJ "
-        "/VP PP fs_ef NP no_ef_et_hk st no_ef_et_hk ao /NP /PP "
-        "S-ADV-TEMP ao st IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ VP-SEQ "
-        "VP so_0_et_fh_mm_nt_p3 /VP PP fs_þgf NP no_et_hk_þgf /NP /PP "
-        "/VP-SEQ /IP /S-ADV-TEMP /VP-SEQ /IP /S-MAIN p /P"
+        "VP so_et_fh_gm_p3_þt NP-SUBJ no_et_gr_hk_nf PP fs_ef NP "
+        "no_ef_et_hk /NP /PP /NP-SUBJ so_0_et_hk_lhþt /VP ADVP "
+        "ADVP-DATE-REL raðnr no_et_kk_þf /ADVP-DATE-REL /ADVP "
+        "/VP-SEQ /IP /S-MAIN st S-MAIN IP NP-SUBJ no_et_kk_nf "
+        "person_kk_nf /NP-SUBJ VP-SEQ VP so_et_fh_gm_p3_þt "
+        "so_1_þf_gm_nh NP-OBJ pfn_et_hk_p3_þf /NP-OBJ /VP PP "
+        "fs_ef NP no_ef_et_hk st no_ef_et_hk ao /NP /PP /VP-SEQ "
+        "S-ADV-TEMP ao st IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ "
+        "VP-SEQ VP so_0_et_fh_mm_nt_p3 /VP PP fs_þgf NP lén_þgf "
+        "/NP /PP /VP-SEQ /IP /S-ADV-TEMP /IP /S-MAIN p /P"
     )
 
 
@@ -1471,7 +1461,7 @@ def test_personally():
     assert s.tree is not None
     assert (
         s.tree.flat_with_all_variants ==
-        "P S-MAIN IP NP-SUBJ pfn_et_p1_þgf ao /NP-SUBJ so_subj_et_fh_gm_op_þgf_þt "
+        "P S-MAIN IP NP-SUBJ pfn_et_p1_þgf ao /NP-SUBJ so_subj_op_þgf_et_fh_gm_þt "
         "NP fn_et_hk_nf /NP ADJP ADVP eo /ADVP lo_et_hk_nf_sb /ADJP /IP /S-MAIN p /P"
     )
     s = r.parse_single("Þetta mál varðar þig persónulega.")
@@ -1560,7 +1550,7 @@ def test_company():
     assert (
         s.tree.flat_with_all_variants ==
         "P S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP-SEQ VP so_0_et_fh_mm_p3_þt "
-        "/VP PP ao fs_þf NP no_et_kvk_þf NP-POSS NP-COMPANY sérnafn_ef_et "
+        "/VP PP ao fs_þf NP no_et_kvk_þf NP-POSS NP-COMPANY sérnafn_ef "
         "fyrirtæki /NP-COMPANY /NP-POSS /NP /PP st VP so_1_þgf_et_fh_gm_p3_þt "
         "NP-OBJ no_ft_hk_þgf /NP-OBJ /VP /VP-SEQ /IP /S-MAIN p /P"
     )
