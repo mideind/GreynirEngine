@@ -429,6 +429,8 @@ class Production:
 _PRAGMA_SCORE = "$score("
 _PRAGMA_ROOT = "$root("
 _PRAGMA_TAG = "$tag("
+_PRAGMA_IF = "$if("
+_PRAGMA_ENDIF = "$endif("
 
 
 class Grammar:
@@ -656,11 +658,20 @@ class Grammar:
                 # Blank line: ignore
                 return
 
-            def _parse_rhs(nt_id, vts, s, priority):
+            def highest_priority(nt_id):
+                """ Return the highest priority index for a production
+                    of the given nonterminal """
+                try:
+                    nt = nonterminals[nt_id]
+                    return max(prio for prio, _ in grammar[nt])
+                except (KeyError, ValueError):
+                    return 0
+
+            def parse_rhs(nt_id, vts, s, priority):
                 """ Parse a right-hand side sequence, eventually with relative priority
                     within the nonterminal """
 
-                def _add_rhs(nt_id, rhs, priority=0):
+                def add_rhs(nt_id, rhs, priority=0):
                     """ Add a fully expanded right-hand-side production to a nonterminal rule """
                     nt = nonterminals[nt_id]
                     if nt not in grammar:
@@ -679,7 +690,7 @@ class Grammar:
                 s = s.strip()
                 if not s:
                     raise GrammarError("Invalid syntax for production", fname, line)
-                
+
                 tokens = s.split()
 
                 # rhs is a list of tuples, one for each token, as follows:
@@ -863,12 +874,12 @@ class Grammar:
                                 if repeat != "?":
                                     new_p.append(new_nt)  # C* / C+
                                 new_p.append(n)  # C
-                                _add_rhs(new_nt_id, new_p)  # Default priority 0
+                                add_rhs(new_nt_id, new_p)  # Default priority 0
                                 # Second production: epsilon(*, ?) or C(+)
                                 new_p = Production(fname, line)
                                 if repeat == "+":
                                     new_p.append(n)
-                                _add_rhs(new_nt_id, new_p)  # Default priority 0
+                                add_rhs(new_nt_id, new_p)  # Default priority 0
                             # Substitute the Cx in the original production
                             n = nonterminals[new_nt_id]
 
@@ -887,7 +898,7 @@ class Grammar:
                             "Nonterminal {0} deriving itself".format(nt_id_full),
                             fname, line
                         )
-                    _add_rhs(nt_id_full, result, priority)
+                    add_rhs(nt_id_full, result, priority)
 
             def variant_names(nt, vts):
                 """ Returns a list of names with all applicable
@@ -1052,6 +1063,7 @@ class Grammar:
                         grammar[cnt] = []
 
                 sep = "|"  # Default production separator
+                priority = 0  # Default production priority
                 if ">" in rule[1]:
                     # Looks like a priority specification between productions
                     if "|" in rule[1]:
@@ -1060,15 +1072,35 @@ class Grammar:
                             fname, line
                         )
                     sep = ">"
-                for priority, prod in enumerate(rule[1].split(sep)):
+                    # In the case of a prioritized list of productions,
+                    # start with a priority index equal to the highest priority
+                    # of the existing productions plus one, ensuring that
+                    # additional productions always have less priority
+                    # (higher index) than the pre-existing ones
+                    priority = highest_priority(current_NT) + 1
+
+                for prod in rule[1].split(sep):
                     # Add the productions on the right hand side,
                     # delimited by '|' or '>'
-                    _parse_rhs(
-                        current_NT,
-                        current_variants,
-                        prod,
-                        priority if sep == ">" else 0,
-                    )
+                    # Note: we explicitly tolerate extra separators without error;
+                    # this can be used to attach lower-priority productions
+                    # to nonterminals, for instance fallback rules to be used
+                    # for grammar error checking.
+                    prod = prod.strip()
+                    if prod:
+                        if priority > 0:
+                            print("Parsing RHS of {0} using priority of {1}".format(current_NT, priority))
+                        parse_rhs(
+                            current_NT,
+                            current_variants,
+                            prod,
+                            priority,
+                        )
+                        # If productions are separated by the > sign, we increase
+                        # the priority number (which lowers the priority) by one
+                        # for each production
+                        if sep == ">":
+                            priority += 1
 
         # Main parse loop
 
@@ -1106,7 +1138,7 @@ class Grammar:
                         parse_line(current_line)
 
                     # Check conditional section
-                    if s.startswith("$if(") and s.endswith(")"):
+                    if s.startswith(_PRAGMA_IF) and s.endswith(")"):
                         cond = s[4:-1].strip()
                         if not cond.isidentifier():
                             raise GrammarError(
@@ -1117,7 +1149,7 @@ class Grammar:
                         new_cond = cond_stack[-1][1] and cond in self._conditions
                         cond_stack.append((cond, new_cond))
                         s = ""
-                    elif s.startswith("$endif(") and s.endswith(")"):
+                    elif s.startswith(_PRAGMA_ENDIF) and s.endswith(")"):
                         cond = s[7:-1].strip()
                         if not cond.isidentifier():
                             raise GrammarError(
@@ -1153,8 +1185,7 @@ class Grammar:
             if nt not in grammar:
                 raise GrammarError(
                     "Nonterminal {0} is referenced but not defined".format(nt),
-                    nt.fname,
-                    nt.line
+                    nt.fname, nt.line
                 )
         for nt, plist in grammar.items():
             if len(plist) == 0:
@@ -1167,8 +1198,7 @@ class Grammar:
                     if len(p) == 1 and p[0] == nt:
                         raise GrammarError(
                             "Nonterminal {0} produces itself".format(nt),
-                            p.fname,
-                            p.line
+                            p.fname, p.line
                         )
 
         # Check that all nonterminals derive terminal strings
@@ -1188,11 +1218,9 @@ class Grammar:
             agenda = [nt for nt in nonterminals.values() if nt not in der_t]
         if agenda:
             raise GrammarError(
-                "Nonterminals {0} do not derive terminal strings".format(
-                    ", ".join([str(nt) for nt in agenda])
-                ),
-                fname,
-                0
+                "Nonterminals {0} do not derive terminal strings"
+                .format(", ".join([str(nt) for nt in agenda])),
+                fname, 0
             )
 
         # Short-circuit nonterminals that point directly and uniquely

@@ -5,7 +5,7 @@
 #
 # Reynir - a natural language processor for Icelandic
 #
-# Copyright (C) 2018 Miðeind ehf.
+# Copyright (C) 2019 Miðeind ehf.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -84,8 +84,9 @@
 #
 # For the Sublime Text editor, a syntax highlighting specification
 # for .grammar files, grammar.YAML-tmLanguage, is available.
-# It can be found in the ./resources directory and its
-# use is highly recommended.
+# It can be found in the GitHub repo subdirectory
+# https://github.com/mideind/Reynir/tree/master/resources
+# and its use is highly recommended.
 
 
 # VARIANT DEFINITIONS
@@ -174,7 +175,6 @@ Spurningarmerki → '?'
 
 # Til að gera spurnarsetningum hátt undir höfði
 $score(-12) Spurningarmerki
-
 
 Fyrirsögn →
     Forskeyti? FyrirsögnInnihald
@@ -368,7 +368,7 @@ $score(-14) Skilyrðissetning_vh # Draga enn úr skilyrðissetningum sem byggja 
 # Fallsetningar - skýringarsetningar og spurnaraukasetningar
 
 Skýringarsetning → 
-    Skýringartenging SkýringarBotn
+    Skýringartenging SkýringarBotn SkýringarFramhald*
 
 $tag(begin_prep_scope) Skýringarsetning
 
@@ -381,6 +381,10 @@ SkýringarBotn →
     | SetningUmAðRæða           # Ég taldi að um hefði verið að ræða mistök af hans hálfu
     | SetningÞað                # Ég taldi að ætíð yrði að gæta hagsmuna almennings
     | SetningSoÞað              # Ég taldi að farið hefði verið ofan í saumana á málinu
+
+# (Þess er krafist að Jón borgi bílinn) [,] og að Guðrún greiði kostnaðinn
+SkýringarFramhald →
+    ","? "og:st" Skýringartenging SkýringarBotn
 
 # Spurnaraukasetningar
 Spurnaraukasetning →
@@ -427,9 +431,16 @@ BeygingarliðurÁnUmröðunar →
     | SetningAukafallForgangur
 
 BeygingarliðurÁnUmröðunar/tala/pers/kyn →
-    Frumlag/pers/tala/kyn FrumlagsInnskot/tala/pers/kyn? AtviksliðurEinkunn*
-        SagnRuna/tala/pers/kyn Sjálfur/tala/kyn? KommaTilvísunarsetning/tala/pers/kyn?
-        SamanburðurNl? Upptalning/tala? KommaAtvikssetning?
+    Frumlag/pers/tala/kyn BeygingarliðurMegin/tala/pers/kyn
+
+BeygingarliðurMegin/tala/pers/kyn →
+    FrumlagsInnskot/tala/pers/kyn? AtviksliðurEinkunn*
+    SagnRuna/tala/pers/kyn Sjálfur/tala/kyn? KommaTilvísunarsetning/tala/pers/kyn?
+    SamanburðurNl? Upptalning/tala? KommaAtvikssetning?
+
+# Það er alls ekki víst, sem Jón hélt fram, að flokkurinn muni tapa í kosningunum
+BeygingarliðurÁnUmröðunar_et_p3_hk →
+    NlFrumlagÞað BeygingarliðurMegin_et_p3_hk VillaKomma? Skýringarsetning
 
 # Sögn kemur fremst, svo frumlag. Enginn annar liður leyfist fremst, tengingin situr þar.
 BeygingarliðurSögnFremst →
@@ -675,14 +686,14 @@ SamanburðurNl →
     | Samanburðarmerki 'annað:fn'_þgf_et_hk "nær:ao"   # Viðskiptablaðið styður ekki jafnaðarstefnuna; öðru nær.
 
 SamanburðarNlTenging →
-    VillaHeldur? "en:st"                # 'Forseti á ekki að gera meiri breytingu á sér (heldur) en forsætisráðherra'
-    | ','? "eins:ao" "og:st"            # 'Hann á ekki andstæðinga eins og aðrir kjörnir fulltrúar'
+    VillaHeldur? "en:st"                    # 'Forseti á ekki að gera meiri breytingu á sér (heldur) en forsætisráðherra'
+    | ','? "eins:ao" "og:st"                # 'Hann á ekki andstæðinga eins og aðrir kjörnir fulltrúar'
     | ','? "líkt:ao" "og:st"
-    | Samanburðarmerki? "þar:ao" "af:ao"  # 'Fjöldi barna var í vélinni, þar af tvö kornabörn'
+    | Samanburðarmerki? "þar:ao" "af:ao"    # 'Fjöldi barna var í vélinni, þar af tvö kornabörn'
     | Samanburðarmerki? "þar:ao" 'á_meðal:ao'
-    | Samanburðarmerki? 'þar_með_talið:ao' # Skammstöfunin 'þ.m.t.'
-    | Samanburðarmerki? "nema:st"       # Allir vita það, nema ég.
-    | ','? "enda:st"                    # 'Réttindi í almennum sjóðum breyttust, enda lægri fjárhæð en áður'
+    | Samanburðarmerki? 'þar_með_talið:ao'  # Skammstöfunin 'þ.m.t.'
+    | Samanburðarmerki? "nema:st"           # Allir vita það, nema ég.
+    | ','? "enda:st"                        # 'Réttindi í almennum sjóðum breyttust, enda lægri fjárhæð en áður'
     | "sem:st"
     | SamanburðarTengingOg
 
@@ -740,7 +751,7 @@ SögnÞað →
     # (Það) kostaði mig blóð, svita og tár [í gær] að standa í þessu
     | so_2_þf_þf_gm_p3_et NlBeintAndlag_þf NlÓbeintAndlag_þf NhFyllingAtv
     # (Það) verður [strax] að segjast/viðurkennast að Jón er fær á sínu sviði
-    | 'verða:so'_0_gm_p3_et FsAtv? NhEinfaldur_mm Skýringarsetning
+    | 'verða:so'_0_gm_p3_et FsAtv? NhEinfaldur_mm ","? Skýringarsetning
 
 # Nýtt undirtré fyrir tengingu sagnar og forsetningar
 $tag(begin_prep_scope) Setning/tala/pers/kyn
@@ -949,7 +960,7 @@ Sagnliður_sagnb →
 SagnliðurBotn_sagnb →
     NhFylling
     | SagnInnskot
-    | Skýringarsetning
+    | VillaKomma? Skýringarsetning
 
 $tag(begin_prep_scope) Sagnliður_sagnb
 $score(+240) Sagnliður_sagnb
@@ -1074,7 +1085,7 @@ SetningAukafallForgangur →
     # Öllum er [í meginatriðum] frjálst/fyrir bestu að ákveða snarlega að flytja úr landi
     NlFrumlag_þgf HjSögnLhÞt_et_p3 FsRunaEftirSögn? LhÞtÞgfEinkunn AðLiður?
     # Mér sýndist [eftir íhugun] að málið hefði fengið eðlilega meðferð
-    | NlFrumlag_þgf so_0_mm FsAtv? Skýringarsetning
+    | NlFrumlag_þgf so_0_mm FsAtv? VillaKomma? Skýringarsetning
 
 # Öfug orðaröð: 'Eignarrétti fylgja [í auknum mæli] skyldur' (í stað 'Skyldur fylgja eignarrétti')
 # 'Þetta skrifar Bjarni á Facebook-síðu sinni og bendir [galvaskur] á frammistöðu stjórnarinnar'
@@ -1474,6 +1485,8 @@ SögnErLoBotn/tala/kyn →
     | eo* Aldur 'gamall:lo'_sb_nf/tala/kyn?
     # (Jón hefur verið) ráðinn [sem] bæjarstjóri Ísafjarðarbæjar
     | SögnLhÞt_nf/tala/kyn NlBeintAndlag_nf/tala/pers
+    # (Í herferðinni var) [ekki] notast (við nýjar aðferðir)
+    | FsAtv? so_0_mm_sagnb
 
 SögnLhÞt_nf/tala/kyn →
     'kalla:so'_lhþt_sb_nf/tala/kyn                  # kallaður
@@ -1816,7 +1829,7 @@ SögnMeðF_0/tala/pers/kyn →
     | HjSögnSkuluMunu/tala/pers NlFrumlag_nf/tala/pers/kyn VeraVerðaAtv? HreinSögn_lhþt/tala/kyn
 
     # (Í svarinu) segir [jafnframt] að Jón sé ómögulegur
-    | 'segja:so'_0_gm_et_p3 FsAtv? Skýringarsetning
+    | 'segja:so'_0_gm_et_p3 FsAtv? VillaKomma? Skýringarsetning
 
 SögnMeðF_nh/tala/pers/kyn →
     HjSögnNh/tala/pers NlFrumlag_nf/tala/pers/kyn Atviksliður? SögnMeðFNhBotn/tala/pers/kyn
@@ -2665,7 +2678,7 @@ AðLiður →
     NhFyllingAtv
     | SagnInnskotAtv
     # Málinu væri stillt upp þannig að Sjálfstæðisflokkurinn bæri ábyrgð
-    | Atviksliður? Skýringarsetning
+    | Atviksliður? VillaKomma? Skýringarsetning
 
 # Nafnháttarliður
 # 'að lenda snarlega á flugvellinum'
@@ -2784,7 +2797,7 @@ $tag(pick_up_verb) NhLiður
 # Nafnliðir
 
 # (Kötturinn ákvað) [strax] [,] að Jón væri farinn heim
-NlSkýringarsetning → AtviksliðurEinkunn* ","? Skýringarsetning
+NlSkýringarsetning → AtviksliðurEinkunn* VillaKomma? Skýringarsetning
 $score(-2) NlSkýringarsetning
 
 # (Lögreglan rannsakar) [nú] hvort Jón hafi ekið bílnum
@@ -3075,8 +3088,7 @@ OkkarFornafn/fall/kyn →
 # þannig að gera þarf undantekningu fyrir þau þegar þau
 # tengjast eignarfallslið ('Ég seldi ekki íbúðina þína, heldur frænda þíns')
 EignarFornafn/tala/fall/kyn →
-    'minn:fn'/tala/fall/kyn
-    | 'þinn:fn'/tala/fall/kyn
+    'minn:fn'/tala/fall/kyn | 'þinn:fn'/tala/fall/kyn
 
 NlFornafn/tala/fall/kyn →
     # Stakt fornafn, e.t.v. með einkunn og töluorði
@@ -3334,7 +3346,14 @@ NlStak_p3/tala/fall/kyn →
     | 'hvor:fn'/tala/fall/kyn 'tveir:to'_ft_ef/kyn  # (eða) hvor/hvort tveggja
     # '(Sýslumenn sinna) sama hlutverki og prestar'
     # '(Ríkissaksóknari nýtur) sömu verndar í starfi og dómarar'
-    | 'sami:fn'/tala/fall/kyn Nl/fall/tala/kyn "og:st" Nl_nf
+    # '(Hér gilda) sömu reglur [eins] og í Danmörku'
+    # !!! ATH: Ekki virðist virka að nota 'samur:fn' hér
+    | eo* 'sami:fn'/tala/fall/kyn Nl/fall/tala/kyn SamurTagl
+
+SamurTagl →
+    "og:st" Nl_nf | "eins:ao"? "og:st" FsRunaEftirNl
+
+$score(+8) SamurTagl
 
 NlStak_p3/tala/fall/kyn →
     # 'Sú útskýring [núna], að Samfylkingin sé óalandi og óferjandi, (dugir ekki lengur)'
@@ -3858,7 +3877,7 @@ Titill/fall →
     | EinnTitill/fall OgTitill/fall* ','? "og:st" NlTitill/fall
 
 NlTitill/fall →
-    "þá:ao"? TitilEinkunn/fall/kyn? no_et/fall/kyn  # (Jón) [þá] glæsilegur fulltrúi (félagsins)
+    "þá:ao"? TitilEinkunn/fall/kyn? no_et/fall/kyn EignarFornafn_et/fall/kyn? # (Jón) [þá] glæsilegur fulltrúi (félagsins)
 
 TitilEinkunn/fall/kyn →
     Einkunn_et/fall/kyn
@@ -4008,9 +4027,9 @@ Tilvísunarsetning/tala/pers/kyn →
 Tilvísunartenging →
     TengiorðSem | TengiorðEr | TengiorðÞarSem
 
-TengiorðSem → "eða:st"? "sem:stt"
+TengiorðSem → "eða:st"? "sem:stt" VillaAð?
 
-TengiorðÞarSem → "þar:ao" "sem:stt" # í landinu þar sem Jón átti heima
+TengiorðÞarSem → "þar:ao" "sem:stt" VillaAð? # í landinu þar sem Jón átti heima
 
 $score(-4) TengiorðÞarSem # Þetta er oftar samtenging setninga ofar í trénu
 
@@ -4235,13 +4254,17 @@ Skýringarliður →
 OgEða →
     "og:st" OgAo?
     | "eða:st" | "ellegar:st" | "eður:st"
-    | "svo:st" "og:st" | "sem:st" "og:st" | "né:st"
+    | "svo:st" "og:st" | VillaSem "og:st" | "né:st"
     | ÞarÁMeðal | 'meðal_annars:ao'
     | 'það:pfn'_hk_et_nf 'vera:so'_0_gm_fh_et_p3
     | "eins:ao" "og:st" | "líkt:ao" "og:st"
     | "og:st"? "þar:ao" "með:ao" 'telja:so'_lhþt_sb_hk_nf_et?
     | "svo:st" "sem:st" | "jafnt:ao" "sem:st"
     | EnÍOgEða
+
+# 'sem og'
+VillaSem → "sem:st" 
+$tag(error) VillaSem
 
 # Við þurfum að hætta að meta fólk út frá aldri heldur meta það út frá hæfileikum
 OgEðaHeldur → OgEða | "heldur:st"
@@ -4955,12 +4978,20 @@ FsInnanKommu →
 $score(+4) FsInnanKommu
 
 FsRunaEftirNl →
-    FsRuna
-    # Atviksorð sem geta fylgt á eftir nafnliðum
-    # !!! Setja í conf?
-    | "hérlendis:ao"
+    # í Danmörku og hérlendis
+    FsRuna OgAtvEftirNl*
+    # hérlendis og erlendis
+    | AtvEftirNl OgAtvEftirNl*
+
+# Atviksorð sem geta fylgt á eftir nafnliðum
+# !!! Setja í conf?
+AtvEftirNl →
+    "hérlendis:ao"
     | "erlendis:ao"
     | 'í_ár:ao'
+
+OgAtvEftirNl →
+    OgEða AtvEftirNl
 
 # Hvetja létt til þess að forsetningar séu tengdar nafnlið
 $score(+1) FsRunaEftirNl
@@ -5919,6 +5950,11 @@ AnnaðhvortSt →
 
 # Villureglur // Error rules
 
+VillaKomma →
+    ","
+
+$tag(error) VillaKomma
+
 VillaAð →
     "að:st"
 
@@ -6210,26 +6246,46 @@ QSearchToken →
     > tímapunkturafs > tímapunkturfast > tími
     > raðnr > to > töl > ártal > tala > sérnafn
 
+
+# ----------------------------------------------
+#
+# Rules for common grammar errors
+#
+# The following rules are exclusive to the
+# grammar checker (in the ReynirCorrect package)
+#
+# ----------------------------------------------
+
 $if(include_errors)
 
 FsMeðFallstjórn →
-    VillaFsMeðFallstjórn
+    # The following notation means that the production is
+    # added to the existing productions of FsMeðFallstjórn
+    # but with lower priority, so that it is only derived
+    # if no higher-priority derivations are possible
+    > VillaFsMeðFallstjórn/fall
 
-VillaFsMeðFallstjórn →
+VillaFsMeðFallstjórn_nf →
     fs_nf Nl_þf
     | fs_nf Nl_þgf
     | fs_nf Nl_ef
-    | fs_þf Nl_nf
+
+VillaFsMeðFallstjórn_þf →
+    fs_þf Nl_nf
     | fs_þf Nl_þgf
     | fs_þf Nl_ef
-    | fs_þgf Nl_nf
+
+VillaFsMeðFallstjórn_þgf →
+    fs_þgf Nl_nf
     | fs_þgf Nl_þf
     | fs_þgf Nl_ef
-    | fs_ef Nl_nf
+
+VillaFsMeðFallstjórn_ef →
+    fs_ef Nl_nf
     | fs_ef Nl_þf
     | fs_ef Nl_þgf
 
-$tag(error) VillaFsMeðFallstjórn
-$score(-100) VillaFsMeðFallstjórn
+$tag(error) VillaFsMeðFallstjórn/fall
+$score(-999) VillaFsMeðFallstjórn/fall
 
 $endif(include_errors)

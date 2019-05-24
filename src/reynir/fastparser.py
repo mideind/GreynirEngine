@@ -219,11 +219,12 @@ class Node:
         self._start = start
         self._end = end
         self._families = None
-        self._highest_prio = 0  # Priority of highest-priority child family
         self._nonterminal = None
         self._terminal = None
         self._token = None
         self._completed = True
+        # Priority of highest-priority child family
+        self._highest_prio = 0
 
     @classmethod
     def from_c_node(cls, job, c_node, parent=None, index=0):
