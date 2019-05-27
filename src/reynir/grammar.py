@@ -5,7 +5,6 @@
     Grammar module
 
     Copyright (C) 2019 Miðeind ehf.
-    Original author: Vilhjálmur Þorsteinsson
 
        This program is free software: you can redistribute it and/or modify
        it under the terms of the GNU General Public License as published by
@@ -668,11 +667,12 @@ class Grammar:
                     return 0
 
             def parse_rhs(nt_id, vts, s, priority):
-                """ Parse a right-hand side sequence, eventually with relative priority
-                    within the nonterminal """
+                """ Parse a right-hand side sequence, eventually with
+                    relative priority within the nonterminal """
 
                 def add_rhs(nt_id, rhs, priority=0):
-                    """ Add a fully expanded right-hand-side production to a nonterminal rule """
+                    """ Add a fully expanded right-hand-side production
+                        to a nonterminal rule """
                     nt = nonterminals[nt_id]
                     if nt not in grammar:
                         # First production of this nonterminal
@@ -936,8 +936,7 @@ class Grammar:
                                 ),
                                 fname, line
                             )
-                    var_names = variant_names(ntv[0], ntv[1:])
-                    for vname in var_names:
+                    for vname in variant_names(ntv[0], ntv[1:]):
                         if vname not in nonterminals:
                             raise GrammarError(
                                 "Unknown nonterminal '{0}'".format(vname),
@@ -960,6 +959,7 @@ class Grammar:
                     )
 
             if s.startswith("/"):
+
                 # Definition of variant
                 # A variant is specified as /varname = opt1 opt2 opt3...
                 v = s.split("=", maxsplit=1)
@@ -981,10 +981,14 @@ class Grammar:
                             fname, line
                         )
                 variants[vname] = v
+
             elif s.startswith("$"):
+
                 # Pragma
                 s = s.strip()
+
                 if s.startswith(_PRAGMA_SCORE):
+
                     # Pragma $score(int) Nonterminal/var1/var2 ...
                     s = s[len(_PRAGMA_SCORE) :]
 
@@ -994,11 +998,13 @@ class Grammar:
                     apply_to_nonterminals(s, set_score)
 
                 elif s.startswith(_PRAGMA_TAG):
+
                     # Pragma $tag(tagstring) Nonterminal/var1/var2 ...
                     s = s[len(_PRAGMA_TAG) :]
                     apply_to_nonterminals(s, lambda nt, tag: nt.add_tag(tag))
 
                 elif s.startswith(_PRAGMA_ROOT):
+
                     # Pragma $root(Nonterminal)
                     # Identify a nonterminal as a secondary parse root
                     if s[-1] != ")":
@@ -1017,9 +1023,12 @@ class Grammar:
                     # Add an implicit reference to the root
                     nonterminals[root_nt].add_ref()
                     self._secondary_roots.append(nonterminals[root_nt])
+
                 else:
                     raise GrammarError("Unknown pragma '{0}'".format(s), fname, line)
+
             else:
+
                 # New nonterminal
                 if "→" in s:
                     # Fancy schmancy arrow sign: use it
@@ -1046,10 +1055,9 @@ class Grammar:
                             .format(vname, nt),
                             fname, line
                         )
-                var_names = variant_names(nt, current_variants)
 
                 # Add all previously unknown nonterminal variants
-                for nt_var in var_names:
+                for nt_var in variant_names(nt, current_variants):
                     if nt_var in nonterminals:
                         cnt = nonterminals[nt_var]
                     else:
@@ -1088,8 +1096,6 @@ class Grammar:
                     # for grammar error checking.
                     prod = prod.strip()
                     if prod:
-                        if priority > 0:
-                            print("Parsing RHS of {0} using priority of {1}".format(current_NT, priority))
                         parse_rhs(
                             current_NT,
                             current_variants,

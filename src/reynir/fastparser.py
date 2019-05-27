@@ -219,12 +219,11 @@ class Node:
         self._start = start
         self._end = end
         self._families = None
+        self._highest_prio = 0  # Priority of highest-priority child family
         self._nonterminal = None
         self._terminal = None
         self._token = None
         self._completed = True
-        # Priority of highest-priority child family
-        self._highest_prio = 0
 
     @classmethod
     def from_c_node(cls, job, c_node, parent=None, index=0):
@@ -232,7 +231,7 @@ class Node:
         if c_node == ffi.NULL:
             return None
         lb = c_node.label
-        if lb.nI >= lb.nJ:
+        if lb.nI >= lb.nJ:  # and (lb.iNt >= 0 or not job.grammar.lookup(lb.iNt).has_tags):
             # Empty node (no tokens matched within it):
             # don't bother creating a corresponding Python object,
             # we never use these nodes anyway except as fillers

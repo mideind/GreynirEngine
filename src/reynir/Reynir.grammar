@@ -246,7 +246,10 @@ Yfirsetning →
     Upphrópun* HreinYfirsetning
 
 Upphrópun →
-    uh+ ',' # Jú jú, ég fór út í dag / Nei, hann kemur ekki.
+    uh+ NauðsynlegKomma # Jú jú, ég fór út í dag / Nei, hann kemur ekki.
+
+NauðsynlegKomma →
+    ','
 
 HreinYfirsetning →
     Setning
@@ -6258,6 +6261,36 @@ QSearchToken →
 
 $if(include_errors)
 
+# Öll föll nema nefnifall
+/fallxnf = þf þgf ef
+# Öll föll nema þolfall
+/fallxþf = nf þgf ef
+# Öll föll nema þágufall
+/fallxþgf = nf þf ef
+# Öll föll nema eignarfall
+/fallxef = nf þf þgf
+
+# Regla fyrir villu þar sem fornafn í einkunn
+# er ekki í sama falli og nafnorð, t.d. 'þessi maðurinn'
+
+Einkunn/tala/fall/kyn →
+    > VillaEinkunn/fall/tala/kyn
+
+VillaEinkunn_nf/tala/kyn →
+    Fornafn/fallxnf/tala/kyn
+
+VillaEinkunn_þf/tala/kyn →
+    Fornafn/fallxþf/tala/kyn
+
+VillaEinkunn_þgf/tala/kyn →
+    Fornafn/fallxþgf/tala/kyn
+
+VillaEinkunn_ef/tala/kyn →
+    Fornafn/fallxef/tala/kyn
+
+$tag(error) VillaEinkunn/fall/tala/kyn
+$score(-999) VillaEinkunn/fall/tala/kyn
+
 FsMeðFallstjórn →
     # The following notation means that the production is
     # added to the existing productions of FsMeðFallstjórn
@@ -6266,26 +6299,26 @@ FsMeðFallstjórn →
     > VillaFsMeðFallstjórn/fall
 
 VillaFsMeðFallstjórn_nf →
-    fs_nf Nl_þf
-    | fs_nf Nl_þgf
-    | fs_nf Nl_ef
+    fs_nf Nl/fallxnf
 
 VillaFsMeðFallstjórn_þf →
-    fs_þf Nl_nf
-    | fs_þf Nl_þgf
-    | fs_þf Nl_ef
+    fs_þf Nl/fallxþf
 
 VillaFsMeðFallstjórn_þgf →
-    fs_þgf Nl_nf
-    | fs_þgf Nl_þf
-    | fs_þgf Nl_ef
+    fs_þgf Nl/fallxþgf
 
 VillaFsMeðFallstjórn_ef →
-    fs_ef Nl_nf
-    | fs_ef Nl_þf
-    | fs_ef Nl_þgf
+    fs_ef Nl/fallxef
 
 $tag(error) VillaFsMeðFallstjórn/fall
 $score(-999) VillaFsMeðFallstjórn/fall
+
+NauðsynlegKomma →
+    > VillaVantarKommu
+
+VillaVantarKommu → ∅
+
+$tag(error) VillaVantarKommu
+$score(-999) VillaVantarKommu
 
 $endif(include_errors)
