@@ -132,8 +132,8 @@ Forskeyti →
     | Samtenging? uh TengimerkiVh Samtenging?       # Og já, þetta var ekki gott / Nei - en hann átti ekkert svar
     | raðnr_nf_kvk                                  # Raðnúmer málsgreinar
     | "-:em"                                        # Þankastrik á undan setningu (allar gerðir strika varpast í '-')
-    | 'mynd:kvk'_nf_et tala_nf_kvk AfTala? ':'?     # Mynd 2 af 10
-    | 'dæmi:hk'_et_nf tala_nf_hk? ':'
+    | 'mynd:kvk'_nf_et Tala_kvk_nf AfTala? ':'?     # Mynd 2 af 10
+    | 'dæmi:hk'_et_nf Tala_hk_nf? ':'
     | 'sjá:so'_0_gm_nh "einnig:ao"? ':'
     | "semsagt:ao" ':'
     | "sem:st" 'segja:so'_lhþt_sb_hk_nf_et ':'      # sem sagt
@@ -141,7 +141,7 @@ Forskeyti →
     | 'með_öðrum_orðum:ao' ':' | 'með:fs'_þgf 'annar:lo'_hk_þgf_ft 'orð:hk'_þgf_ft ':'
     | Greinarnúmer ':'
 
-AfTala → 'af:fs'_þgf tala_þgf_kvk
+AfTala → 'af:fs'_þgf Tala_kvk_þgf
 
 StrikEðaKomma → "-:em" | ','
 
@@ -213,6 +213,8 @@ StLiður →
     # 'Aftur er umræðan sú sama: um rétt kirkjunnar þegna til að neita að gefa saman samkynhneigða'
     | ':' NhFylling
     # Flokkurinn stefnir á stjórnarþátttöku, fái hann til þess umboð
+
+$score(+12) StLiður
 
 Tengimerki →
     ':' | ';' | ',' | "-:em"
@@ -2925,7 +2927,10 @@ Fyrirbæri_ft/fall/kyn →
     | Skst? no_ft_gr/fall/kyn Fjöldi_ft/fall/kyn    # Mennina tíu / félögin tvö
     | FyrirbæriMeðGreini_ft/fall/kyn
 
-Númer → "númer:hk" tala
+Númer →
+   'númer:hk' Tala_hk_nf
+
+$score(+8) Númer
 
 Fjöldi_ft/fall/kyn → to_ft/fall/kyn | töl_ft/fall/kyn
 
@@ -3436,9 +3441,19 @@ EoTao → eo | tao
 
 # Hér ganga beygjanleg töluorð ekki (?'fjórir manns')
 Manns/fall →
-    EoTao* TöluorðForskeyti? töl_ft_kk/fall "manns:kk"
-    | EoTao* TöluorðForskeyti? tala_ft_kk/fall "manns:kk"
+    EoTao* TöluorðForskeyti? Tala_ft_kk/fall "manns:kk"
     | EoTao* Talnabil "manns:kk" # 50-100 manns
+
+# Tölur í tölustöfum og óbeygjanleg töluorð (fimm, sex, ...)
+Tala/tala/kyn/fall →
+    töl/tala/kyn/fall | tala/tala/kyn/fall
+
+Tala/kyn/fall →
+    töl/kyn/fall | tala/kyn/fall
+
+# Í númerum og öðrum álíka tilvikum leyfum við einnig
+# beygjanleg töluorð: 'herbergi númer þrjú'
+Tala_hk_nf → to_et_hk_nf | to_ft_hk_nf
 
 # 3p. eintala
 
@@ -3992,7 +4007,7 @@ Fornafn_et/fall/kyn → 'einn:fn'_et/fall/kyn "og:st" 'sami:lo'_et/fall/kyn
 
 Töluorð/tala/fall/kyn → to/tala/fall/kyn | tala/tala/fall/kyn
 
-# Öll töluorð (merkt 'töl' í BÍN) tákna fleirtölu
+# Öll óbeygjanleg töluorð (merkt 'töl' í BÍN) tákna fleirtölu
 # Talnabil eru líka alltaf í fleirtölu
 Töluorð_ft/fall/kyn → töl_ft/fall/kyn | Talnabil
 
