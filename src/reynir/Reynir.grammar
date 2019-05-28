@@ -1098,7 +1098,7 @@ SetningAukafallÖfug →
     NlBeintAndlag/aukafall So_1/aukafall/tala/pers FsRunaEftirSögn? NlFrumlag_nf/tala/pers/kyn
         AtvFsAuka? SagnFramhald/tala/pers/kyn*
 
-$score(-8) SetningAukafallÖfug
+$score(-32) SetningAukafallÖfug
 
 SögnÓp/aukafall →
     # (Mér) [algjörlega] blöskraði [af öllu hjarta] vitleysan
@@ -1540,6 +1540,8 @@ Sögn_sagnb/tala/pers/kyn →
 
 HreinSögn_sagnb/tala/kyn →
     FsAtv? EinSögn_sagnb/tala/kyn OgSögn_sagnb/tala/kyn*
+    # (Jón hafi) hvorki látið lífið né slasast alvarlega
+    | "hvorki:st" EinSögn_sagnb/tala/kyn OgSögn_sagnb/tala/kyn* ","? "né:st" EinSögn_sagnb/tala/kyn
 
 # Útgáfa til brúks strax á eftir nafnlið
 # (sem getur endað á FsRunu og er því tvíræður við FsAtv)
@@ -2867,13 +2869,13 @@ $score(+1) NlÓbeintAndlag/fall
 
 Einkunn/tala/fall/kyn →
 
-    LoLiður/tala/fall/kyn       # glæsileg (kona), bókfært (virði) (so_lhþt), leiðandi (fyrirtæki) (so_lh_nt)
+    LoLiður/tala/fall/kyn           # glæsileg (kona), bókfært (virði) (so_lhþt), leiðandi (fyrirtæki) (so_lh_nt)
     # AtviksliðurEinkunn undanskilur atviksorð sem geta líka verið forsetningar;
     # það dregur verulega úr margræðni
-    | AtviksliðurEinkunn        # rúmlega (helmingur)
-    | Fornafn/tala/fall/kyn     # Sá (stóri maður), allt þetta (víkjandi lán)
-    | TöluorðForskeyti/tala/fall/kyn? Töluorð/tala/fall/kyn     # [samtals] þrjá (gangandi menn) / [hátt í] 26
-    | OkkarYkkar                # 'okkar skoðanir', 'ykkar félag' (okkar og ykkar eru pfn, ekki fn)
+    | AtviksliðurEinkunn            # rúmlega (helmingur)
+    | FornafnEinkunn/tala/fall/kyn  # Sá (stóri maður), allt þetta (víkjandi lán)
+    | TöluorðForskeyti/tala/fall/kyn? Töluorð/tala/fall/kyn  # [samtals] þrjá (gangandi menn) / [hátt í] 26
+    | EignarFornafn                 # 'okkar/ykkar/hans/hennar/þess/þeirra' (pfn)
     | GreinirMeðLo/tala/fall/kyn 
 
 # 'Skjölin voru mörg hundruð síður', 'Í húsinu voru fleiri þúsund hænur', 'hún saknaði mörg hundruð hálsmena'
@@ -3046,12 +3048,15 @@ NlStak_ft_p2/fall/kyn → NlStak_p2_ft/fall/kyn FsRunaEftirNl?
 
 NlStak_p3/tala/fall/kyn →
 
-    NlKjarni/tala/fall/kyn Fornafn/tala/fall/kyn*           # (stjórnarframkvæmdum) þessum öllum
-    | NlKjarni/tala/fall/kyn EignarFornafn/tala/fall/kyn KommaOgEðaEn EfLiður # skattskýrslur mínar og eiginkonu minnar
+    NlKjarni/tala/fall/kyn NlStakTagl/tala/fall/kyn
     | NlFornafn/tala/fall/kyn
     | Pfn/kyn/tala/fall to/tala/fall/kyn? 'persónulega:ao'? # 'þið tvær', 'við fjögur', 'hann einn'
     | LoTöluorð_ef 'konar:kk'_ef_et NlKjarni/tala/fall/kyn  # 'tvenns/þrenns/ferns konar innstungur'
     | Raðnr/fall/kyn NlKjarni/tala/fall/kyn Fornafn/tala/fall/kyn*   # 1. verðlaunin öll, 1.-3. sætið, 10. og 12. árið
+
+NlStakTagl/tala/fall/kyn →
+    FornafnEinkunn/tala/fall/kyn* to/tala/fall/kyn?    # (stjórnarframkvæmdum) þessum öllum, (bílana) mína tvo
+    | EignarFornafn/tala/fall/kyn KommaOgEðaEn EfLiður # skattskýrslur mínar og eiginkonu minnar
 
 LoTöluorð_ef →
     'tvennur:lo'_ef_et_hk
@@ -3105,8 +3110,8 @@ NlFornafn/tala/fall/kyn →
     # 'öllu því' / 'neinum þeirra'
     AtviksliðurEinkunn* Töluorð/tala/fall/kyn?
         Fornafn/tala/fall/kyn FornafnViðskeyti/tala/fall/kyn? LoLiður/tala/fall/kyn*
-    # 'okkar besta' / 'óumdeilanlega ykkar versta'
-    | AtviksliðurEinkunn* OkkarYkkar LoLiður/tala/fall/kyn
+    # 'okkar besta' / 'óumdeilanlega hans versta'
+    | AtviksliðurEinkunn* EignarFornafn LoLiður/tala/fall/kyn
     | AtviksliðurEinkunn* 'margur:fn'/tala/fall/kyn 'annar:fn'/tala/fall/kyn
 
 NlFornafn_et_nf_hk → AllurFornafn_nf
@@ -3186,8 +3191,6 @@ NlFornafn_et_ef_hk → ÝmislegtAnnað_ef
     'ýmislegur:lo'_sb_et_hk/fall 'annar:fn'_et_hk/fall
 
 $score(+15) ÝmislegtAnnað/fall
-
-OkkarYkkar → "okkar:pfn" | "ykkar:pfn" # Þarf að kallast pfn til að greinast.
 
 # Gefa stökum fornöfnum mínusstig - við viljum frekar sjá þau sem hluta af stærri nafnlið
 $score(-4) NlFornafn/tala/fall/kyn
@@ -3895,7 +3898,7 @@ Titill/fall →
     | EinnTitill/fall OgTitill/fall* ','? "og:st" NlTitill/fall
 
 NlTitill/fall →
-    "þá:ao"? TitilEinkunn/fall/kyn? no_et/fall/kyn EignarFornafn_et/fall/kyn? # (Jón) [þá] glæsilegur fulltrúi (félagsins)
+    "þá:ao"? TitilEinkunn/fall/kyn? no_et/fall/kyn EignarFornafn_et/fall/kyn? # (Jón) [þá] glæsilegur fulltrúi [minn] (félagsins)
 
 TitilEinkunn/fall/kyn →
     Einkunn_et/fall/kyn
@@ -3992,18 +3995,30 @@ $score(-1) EfLiðurForskeyti
 # Eignarfalls-forskeyti sem eru ekki tölur eða fornöfn eru sjaldgæf
 $score(-5) EfLiðurForskeytiKjarni/tala/kyn
 
-# Leyfa 'okkar'/'ykkar' í eignarfallsforskeyti (er aðeins kynlaust pfn í BÍN)
-Fornafn_ft_ef/kyn → OkkarYkkar
+# Hvetja til notkunar fornafna í einkunn með nafnlið,
+# fremur en að þau standi sjálfstæð
+FornafnEinkunn/tala/fall/kyn → Fornafn/tala/fall/kyn
 
-Fornafn/tala/fall/kyn → fn/tala/fall/kyn
+$score(+18) FornafnEinkunn/tala/fall/kyn
+
 Fornafn/fall/tala/kyn → Fornafn/tala/fall/kyn
 
-# Persónufornöfnin (pfn) "hans" og "hennar" eru án kyns í BÍN
-Fornafn_et_ef_kk → 'hann:pfn'_kk_ef_et
-Fornafn_et_ef_kvk → 'hún:pfn'_kvk_ef_et
+Fornafn/tala/fall/kyn → fn/tala/fall/kyn
 
 # Einn og sami veiðimaðurinn, eitt og sama fyrirbæri
 Fornafn_et/fall/kyn → 'einn:fn'_et/fall/kyn "og:st" 'sami:lo'_et/fall/kyn
+
+# Persónufornöfn sem notuð eru eins og eignarfornöfn
+# en beygjast ekki með nafnlið og eru ekki merkt fn í BÍN, þ.e.
+# okkar / ykkar / hans / hennar / þess / þeirra
+# (Bíllinn okkar, hans skoðanir...)
+# Persónufornöfnin (pfn) "hans", "hennar" og "það" eru án kyns í BÍN
+EignarFornafn →
+    'ég:pfn'_ef_ft
+    | 'þú:pfn'_ef_ft
+    | 'hann:pfn'_kk_ef_et
+    | 'hún:pfn'_kvk_ef_et
+    | 'það:pfn'_hk_ef/tala  # þess / þeirra
 
 Töluorð/tala/fall/kyn → to/tala/fall/kyn | tala/tala/fall/kyn
 
@@ -6335,5 +6350,12 @@ VillaVantarKommu → ∅
 
 $tag(error) VillaVantarKommu
 $score(-999) VillaVantarKommu
+
+OgEðaEn →
+    > VillaNé
+
+VillaNé → "né:st"
+$tag(error) VillaNé
+$score(-999) VillaNé
 
 $endif(include_errors)

@@ -186,6 +186,8 @@ _DEFAULT_NT_MAP = {
     "SögnAðRæða": "VP",
     "SögnAukafallÞgf": "VP",
     "SögnAukafallEf": "VP",
+    "HreinSögn": "VP-SEQ",
+    "EinSögn": "VP",
     "SögnUmAðRæða": "VP-SEQ",
     "SögnVarUmAðRæða": "VP-SEQ",
     "SagnHluti": "VP-SEQ",
