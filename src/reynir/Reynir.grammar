@@ -597,7 +597,7 @@ SagnKomma/tala/pers/kyn →
     ',' SagnRunaKnöpp/tala/pers/kyn
 
 # Hvetja til framhalds sömu sagnrunu, fremur en að skipta niður í fleiri setningar
-$score(+28) SagnFramhald/tala/pers/kyn
+$score(+32) SagnFramhald/tala/pers/kyn
 $score(+2) SagnKomma/tala/pers/kyn
 
 $tag(begin_prep_scope) SagnRunaKnöpp/tala/pers/kyn
@@ -630,6 +630,8 @@ $score(-2) EkkiNeitt # Betra að þekkja fornafnið 'neitt' sem nafnlið
 
 SagnViðhengi/tala/pers/kyn →
     KommaOgEðaEn SagnRuna/tala/pers/kyn
+
+$score(+32) SagnViðhengi/tala/pers/kyn
 
 # Setningarhluti sem byrjar á sögn og hefur innifalið frumlag
 

@@ -1080,7 +1080,7 @@ def test_ifd_tag():
         "ta", "nkeo", "ta",  # 19. júní 2003
         "c",
         "sfm3eþ",
-        "aa",
+        "ao",
         "ta", "x",  # 300 kg
         ".",
     ]
