@@ -166,7 +166,7 @@ SögnSegja/tala/pers →
     | 'staðhæfa:so'_0_gm_fh/tala/pers
     | 'ítreka:so'_0_gm_fh/tala/pers
 
-$score(+32) Tilvitnun # Þarf að vera meiri plús en t.d. SagnFramhald
+$score(+48) Tilvitnun # Þarf að vera meiri plús en t.d. SagnFramhald
 
 Lokatákn → '.' | Spurningarmerki | ':' | '!' | '(' '!' ')'
 LokatáknEðaKomma → Lokatákn | ','
@@ -597,7 +597,7 @@ SagnKomma/tala/pers/kyn →
     ',' SagnRunaKnöpp/tala/pers/kyn
 
 # Hvetja til framhalds sömu sagnrunu, fremur en að skipta niður í fleiri setningar
-$score(+8) SagnFramhald/tala/pers/kyn
+$score(+28) SagnFramhald/tala/pers/kyn
 $score(+2) SagnKomma/tala/pers/kyn
 
 $tag(begin_prep_scope) SagnRunaKnöpp/tala/pers/kyn
@@ -2962,14 +2962,45 @@ NlKjarni/tala/aukafall/kyn →
     'sjálfur:fn'/tala/aukafall/kyn abfn/aukafall/tala/kyn # Hér vitum við tölu og kyn
     | abfn/aukafall # Hér vitum við hvorki tölu né kyn
 
+# Fornöfn sem tákna fleirtölu og standa með eignarfallslið:
 # Mörg/flest þessara mála, sum þeirra sem lentu í slysinu
-# !!! TODO bæta öðrum fornöfnum sem taka hlutaeignarfall við
 NlKjarni_ft/fall/kyn →
     'margur:lo'_sb_ft/fall/kyn EfLiður_ft/kyn
     | 'allmargur:lo'_sb_ft/fall/kyn EfLiður_ft/kyn
     | 'fár:lo'_sb_ft/fall/kyn EfLiður_ft/kyn
     | 'örfár:lo'_sb_ft/fall/kyn EfLiður_ft/kyn
     | 'sumur:fn'_ft/fall/kyn EfLiður_ft/kyn
+    | 'allur:fn'_ft/fall/kyn EfLiður_ft/kyn
+    | 'báðir:fn'_ft/fall/kyn EfLiður_ft/kyn
+    | 'fáeinir:fn'_ft/fall/kyn EfLiður_ft/kyn
+    | 'flestallir:fn'_ft/fall/kyn EfLiður_ft/kyn
+    | 'flestir:fn'_ft/fall/kyn EfLiður_ft/kyn
+    | 'ýmis:fn'_ft/fall/kyn EfLiður_ft/kyn
+    | 'þónokkur:fn'_ft/fall/kyn EfLiður_ft/kyn
+
+# Fornöfn sem tákna eintölu og standa með eignarfallslið:
+NlKjarni_et/fall/kyn →
+    'annar:fn'_et/fall/kyn EfLiður_ft/kyn
+    | 'hvor:fn'_et/fall/kyn EfLiður_ft/kyn
+    | 'hver:fn'/tala/fall/kyn EfLiður_ft/kyn
+    | 'hvorugur:fn'_et/fall/kyn EfLiður_ft/kyn
+    | 'einn:fn'_et/fall/kyn EfLiður_ft/kyn
+    | 'enginn:fn'_et/fall/kyn EfLiður_ft/kyn
+    | 'neinn:fn'_et/fall/kyn EfLiður_ft/kyn
+    | 'sá:fn'_et/fall/kyn EfLiður_ft/kyn
+    | 'sérhver:fn'_et/fall/kyn EfLiður_ft/kyn
+    | 'sinnhver:fn'_et/fall/kyn EfLiður_ft/kyn
+    | 'sinnhvor:fn'_et/fall/kyn EfLiður_ft/kyn
+    | 'sínhver:fn'_et/fall/kyn EfLiður_ft/kyn
+    | 'sínhvor:fn'_et/fall/kyn EfLiður_ft/kyn
+    | 'sitthvað:fn'_et/fall/kyn EfLiður_ft/kyn
+    | 'sitthver:fn'_et/fall/kyn EfLiður_ft/kyn
+    | 'sitthvor:fn'_et/fall/kyn EfLiður_ft/kyn
+
+# Fornöfn sem geta staðið bæði í eintölu og fleirtölu:
+NlKjarni/tala/fall/kyn →
+    'nokkur:fn'/tala/fall/kyn EfLiður_ft/kyn
+    | 'einhver:fn'/tala/fall/kyn EfLiður_ft/kyn
 
 # Prósentubil með eignarfalli
 
@@ -3175,6 +3206,7 @@ NlFornafn/tala/fall/kyn →
     # margir aðrir / marga aðra / mörgum öðrum / margra annarra
     # fáir aðrir / örfáir aðrir
     'margur:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
+    | 'allmargur:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
     | 'fjölmargur:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
     | 'fár:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
     | 'örfár:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
@@ -3941,7 +3973,7 @@ $score(+14) KommuTitill/fall
 # karlanna löngu, kvennanna löngu, barnanna löngu
 
 EfLiður → EfLiðurStakur EfLiðurFramhald? # Jóns, föður Bjarna sterka
-EfLiður_ft/kyn → Nl_ef_ft/kyn # margar þessara kvenna, suma þeirra sem lentu í slysinu
+EfLiður/tala/kyn → Nl_ef/tala/kyn # margar þessara kvenna, suma þeirra sem lentu í slysinu
 
 # Eignarfallsliður getur verið í eintölu eða fleirtölu, og í
 # öllum kynjum, óháð nafnliðnum sem hann stendur með
@@ -4191,9 +4223,12 @@ NlEind_ft_p3/fall/kyn →
     'sá:fn'_ft/fall/kyn 'einn:fn'_ft/fall/kyn? Útskýring
 
 ÞaðTenging →
-    Skýringarsetning
+    # (Þá eru dæmi þess)[,] í veraldarsögunni [,] að eldfjöll hafi gosið
+    AtvFsAukaInnskot? Skýringarsetning
+    # (Það) hvernig kerfið virkar (er óskiljanlegt)
     | Spurnaraukasetning
-    | NhFyllingÁnAtv        # Það að fara til tannlæknis (er ánægjuleg reynsla)
+    # Það að fara til tannlæknis (er ánægjuleg reynsla)
+    | NhFyllingÁnAtv
 
 $score(+32) ÞaðTenging
 
@@ -4501,7 +4536,7 @@ $score(+4) LoSem/fall/tala/kyn
 LoSemSo/fall/tala/kyn →
     LoAtviksliður* LoSemSoBotn/fall/tala/kyn
     # '(hvort það gæfi vísbendingu um) hina [nýlega] eyddu (tölvupósta)'
-    | 'hinn:fn'/fall/tala/kyn LoAtviksliður* so_lhþt_vb/fall/tala/kyn
+    | 'hinn:gr'/fall/tala/kyn LoAtviksliður* so_lhþt_vb/fall/tala/kyn
 
 LoSemSoBotn/fall/tala/kyn →
     so_lhþt/fall/tala/kyn | so_lh_nt    # bráðlega verðandi brúður
@@ -4920,7 +4955,7 @@ AtviksliðurOg →
 
 FsAtv →
     # (Ég samþykkti þetta), en með semingi þó [,]
-    Samanburðarmerki? "en:st"? EinFsAtv+ FsAtvFramhald* ','?
+    Samanburðarmerki? "en:st"? EinFsAtv+ FsAtvFramhald* ","?
 
 FsAtvFramhald → KommaOgEðaEn EinFsAtv+
 
@@ -4933,15 +4968,15 @@ EinFsAtv →
 
 SamsettFsAtv →
     # 'hvorki í Frakklandi né annars staðar í Evrópusambandinu'
-    "hvorki:st" EinEinföldFsAtv+ "né:st" EinEinföldFsAtv+
+    "hvorki:st" EinEinföldFsAtv+ "né:st" EinEinföldFsAtv
     # 'annaðhvort í Breiðholti eða við World Class'
-    | AnnaðhvortSt EinEinföldFsAtv+ "eða:st" EinEinföldFsAtv+
+    | AnnaðhvortSt EinEinföldFsAtv+ "eða:st" EinEinföldFsAtv
     # 'bæði við handavinnu og í viðgerðum'
-    | "bæði:st" EinEinföldFsAtv+ ','? "og:st" EinEinföldFsAtv+
+    | "bæði:st" EinEinföldFsAtv+ ','? "og:st" EinEinföldFsAtv
     # 'ýmist að fullu eða til hálfs'
-    | "ýmist:ao" EinEinföldFsAtv+ "eða:st" EinEinföldFsAtv+
+    | "ýmist:ao" EinEinföldFsAtv+ "eða:st" EinEinföldFsAtv
     # Hann sagði ósatt, annars vegar í fyrstu yfirheyrslu og hins vegar með framburði sínum í lok málsins
-    | 'annars_vegar:ao' EinEinföldFsAtv+ ','? "og:st" 'hins_vegar:ao' EinEinföldFsAtv+
+    | 'annars_vegar:ao' EinEinföldFsAtv+ ','? "og:st" 'hins_vegar:ao' EinEinföldFsAtv
 
 # Gefa samsetningum auka stig, þær smella vel saman
 $score(+4) SamsettFsAtv
@@ -5230,6 +5265,10 @@ AtvFsAuka →
     AtvFs | Atvikssetning
 AtviksliðurAuka → 
     Atviksliður | Atvikssetning
+
+AtvFsAukaInnskot → AtvFsAuka
+
+$score(+4) AtvFsAukaInnskot
 
 # [tæpra] 29 ára, [rúmlega] eins árs, tveggja vikna, margra ára
 Aldur →
