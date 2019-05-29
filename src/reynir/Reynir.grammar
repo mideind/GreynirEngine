@@ -3201,7 +3201,9 @@ GreinirMeðLo/tala/fall/kyn →
 Greinir/tala/fall/kyn →
     'hinn:gr'/tala/fall/kyn
 
-$score(+6) GreinirMeðLo/tala/fall/kyn
+# Stigin þurfa að yfirvinna FornafnEinkunn, þannig að
+# 'hinn/hinu' sé þáttað sem greinir fremur en fornafn
+$score(+24) GreinirMeðLo/tala/fall/kyn
 
 # Lýsingarorð sem stendur sem nafnliður:
 # 'Margir/fjölmargir/allmargir/heilmargir komu og aðstoðuðu Pál'
