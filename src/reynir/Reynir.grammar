@@ -167,7 +167,7 @@ SögnSegja/tala/pers →
     | 'ítreka:so'_0_gm_fh/tala/pers
     | 'viðurkenna:so'_0_gm_fh/tala/pers
 
-$score(+48) Tilvitnun # Þarf að vera meiri plús en t.d. SagnFramhald
+$score(+72) Tilvitnun # Þarf að vera meiri plús en t.d. SagnFramhald
 
 Lokatákn → '.' | Spurningarmerki | ':' | '!' | '(' '!' ')'
 LokatáknEðaKomma → Lokatákn | ','
@@ -709,6 +709,7 @@ SamanburðarNlTenging →
 SamanburðarTengingOg →
     ','? "og:st"                        # Erfitt fjarskiptasamband er á staðnum og mikil snjóþyngsli
 
+$score(-8) SamanburðurNl
 $score(+4) SamanburðarNlTenging
 $score(-14) SamanburðarTengingOg
 
@@ -996,6 +997,10 @@ SetningAukafall →
 
     # Mig/Þig/Hann/Mennina hefur [lengi] langað [til útlanda]
     | NlFrumlag/aukafall HjSögn_et_p3 FsAtv? so_subj_sagnb/aukafall ÓpSagnarBotn?
+
+    # Mig er [búið] að dreyma um ferð til útlanda
+    | NlFrumlag_þf 'vera:so'_0_gm_fh_et_p3 'búa:so'_lhþt_sb_nf_et_hk?
+        nhm so_subj_nh_þf ÓpSagnarBotn?
 
     # Mér hafa ofboðið lætin í hundinum [alla daga]
     | NlFrumlag/aukafall HjSögn/tala/pers FsAtv? so_subj_sagnb/aukafall
@@ -3089,6 +3094,7 @@ $score(+8) NlStakViðbót/fall/kyn
 
 NlStakViðbótNl/fall/kyn →
     NlStak_ft_p3/fall/kyn               # við fóstbræður, við alþingismennirnir
+    | no_gr_et/fall/kyn                 # við fjölskyldan, við hópurinn
 
 NlStakViðbótNl/fall/nkyn →
     Manneskja/fall/nkyn                 # (við) Sóley Tómasdóttir (fórum), (hann ræddi við okkur) Pál dómkirkjuprest
@@ -3212,6 +3218,7 @@ FornafnViðskeyti/tala/fall/kyn →
     AtviksliðurAuka? LoFornafn/fall/tala/kyn # (hafa þeir) [þó] báðir (lýst yfir sigri)
     | Pfn/kyn/tala/fall     # öllu því, ýmsum þeim
     | Töluorð/tala/fall/kyn # öllum fjórum, þeirra tveggja
+    | 'hinn:gr'/tala/fall/kyn # allt hið versta
 
 FornafnViðskeyti_et/fall/kyn →
     # neinum þeirra þriggja, öllum þeirra, hvern þeirra fjögurra
@@ -3222,6 +3229,9 @@ FornafnViðskeytiLo_ft_ef/kyn →
 
 FornafnViðskeyti_ft/fall/kyn →
     HverHvor/fall/kyn       # þá hvern fyrir sig / þær hverja í sínu lagi / öll hvert á fætur öðru
+
+SáÞessi/fall/tala/kyn →
+    'sá:fn'/fall/tala/kyn | 'þessi:fn'/fall/tala/kyn
 
 # Sértilvik þar sem "allt" kemur framan við fornafn óháð tölu, falli og kyni
 # allt annar | allt aðrir
@@ -5496,7 +5506,7 @@ AfstæðurTími →
     | Dagspartur
     | ParturHluti_þf_et Vikudagur_ef_et             # fyrri part sunnudags / seinni helming mánudags
     | 'aðfaranótt:kvk'_et_þf AfstæðDagsetning
-    | 'aðfaranótt:kvk'_et_þf TímaÁkvæðisLo_ef_et_kk? Vikudagur_ef_et
+    | 'aðfaranótt:kvk'_et_þf TímaÁkvæðisliður_ef_et_kk? Vikudagur_ef_et
     | TímaVísiNafnliðurMinni_þf_et/kyn              # sömu mínútu, sama klukkutíma
     | TímaVísiNafnliðurStærri_þf/tala/kyn           # undanfarið ár / undanfarna áratugi
     | FyrrSíðarSeinna? TímaÁkvæðisliður_þf_et/kyn 
@@ -6018,26 +6028,20 @@ FyrrSíðarSeinna →
     | 'seint:ao'_mst
     | 'snemma:ao'_mst # fyrr
 
-TímaÁkvæðisliður/fall/tala/kyn →
-    SáÞessi/fall/tala/kyn? TímaÁkvæðisLo/fall/tala/kyn
-
 # !!! Það er skrýtið að lýsingarorðin séu á víxl í sterkri og veikri beygingu,
 # !!! en það virðist vera tilfellið skv. BÍN.
-TímaÁkvæðisLo/fall/tala/kyn →
+TímaÁkvæðisliður/fall/tala/kyn →
     'næstur:lo'_evb/fall/tala/kyn       # næstu tvö árin
     | 'síðari:lo'_evb/fall/tala/kyn     # síðustu tvö árin
     | 'síðari:lo'_mst/fall/tala/kyn     # síðari tvö árin
-    | 'sami:fn'/fall/tala/kyn           # 'fyrr í þeim sama mánuði' -- hegðar sér frekar sem lo hér.
-    | 'samur:fn'/fall/tala/kyn
+    | SáÞessi/fall/tala/kyn? 'sami:fn'/fall/tala/kyn # 'fyrr í þeim sama mánuði' -- hegðar sér frekar sem lo hér.
     | 'seinn:lo'_evb/fall/tala/kyn      # seinustu tvö árin
     | 'seinn:lo'_mst/fall/tala/kyn      # seinni tvö árin
     | 'næstkomandi:lo'_sb/fall/tala/kyn
     | 'síðastliðinn:lo'_sb/fall/tala/kyn
     | 'undanfarinn:lo'_sb/fall/tala/kyn
     | 'undangenginn:lo'_sb/fall/tala/kyn
-
-SáÞessi/fall/tala/kyn →
-    'sá:fn'/fall/tala/kyn | 'þessi:fn'/fall/tala/kyn
+    | SáÞessi/fall/tala/kyn
 
 # Lýsingarorð sem ganga á eftir dagsetningum
 NæstSíðast/fall/tala/kyn →
