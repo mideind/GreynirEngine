@@ -55,7 +55,7 @@ from threading import Lock
 from functools import reduce
 
 from .binparser import BIN_Parser, simplify_terminal, augment_terminal
-from .grammar import Terminal, GrammarError
+from .grammar import GrammarError
 from .settings import Settings
 from .glock import GlobalLock
 
@@ -301,7 +301,6 @@ class Node:
             # Token node: find the corresponding terminal
             tix = parent.pList[index]
             node._terminal = job.grammar.lookup(tix)
-            # assert isinstance(node._terminal, Terminal)  # !!! DEBUG
             node._token = job.tokens[lb.iNt]
         return node
 

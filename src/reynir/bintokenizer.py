@@ -28,11 +28,13 @@
 
 from collections import namedtuple, defaultdict
 
-from tokenizer import tokenize_without_annotation, TOK, parse_tokens
+from tokenizer import tokenize_without_annotation, TOK
 
 # The following imports are here in order to be visible in clients
 # (they are not used in this module)
-from tokenizer import correct_spaces, paragraphs, tokenize as raw_tokenize
+from tokenizer import (
+    correct_spaces, paragraphs, parse_tokens, tokenize as raw_tokenize
+)
 
 from .settings import StaticPhrases, AmbigPhrases, DisallowedNames
 from .settings import NamePreferences
