@@ -165,6 +165,7 @@ SögnSegja/tala/pers →
     | 'fullyrða:so'_0_gm_fh/tala/pers
     | 'staðhæfa:so'_0_gm_fh/tala/pers
     | 'ítreka:so'_0_gm_fh/tala/pers
+    | 'viðurkenna:so'_0_gm_fh/tala/pers
 
 $score(+48) Tilvitnun # Þarf að vera meiri plús en t.d. SagnFramhald
 
@@ -702,6 +703,7 @@ SamanburðarNlTenging →
     | Samanburðarmerki? "nema:st"           # Allir vita það, nema ég.
     | ','? "enda:st"                        # 'Réttindi í almennum sjóðum breyttust, enda lægri fjárhæð en áður'
     | "sem:st"
+    | Samanburðarmerki "en:st"              # Enginn lögreglumaður var handtekinn - en 100 mótmælendur
     | SamanburðarTengingOg
 
 SamanburðarTengingOg →
@@ -1772,8 +1774,8 @@ Sögn_0/tala/pers/kyn →
 # ('Í dag lenti maðurinn')
 SögnMeðF_0/tala/pers/kyn →
 
-    # (Í dag) lenda og fara [í hendingskasti] mennirnir [galvaskir að þvo bílinn]
-    so_0/tala/pers OgSögn_0/tala/pers* FsRunaInnskot? NlFrumlag_nf/tala/pers/kyn NhFylling/tala/kyn?
+    # (Í dag) lenda og fara [burt í hendingskasti] mennirnir [galvaskir að þvo bílinn]
+    so_0/tala/pers OgSögn_0/tala/pers* FsAtv? NlFrumlag_nf/tala/pers/kyn NhFylling/tala/kyn?
 
     # (Í dag) tókst og heppnaðist Seðlabankanum [galvöskum að lækka vexti]
     # !!! Ath: ekki _fh hér þar sem _vh er leyfilegt (takist Seðlabankanum...)
@@ -1826,13 +1828,15 @@ SögnMeðF_0/tala/pers/kyn →
     | HjSögnNh_et_p3 NlFrumlag/fall/tala/pers/kyn AtvFs? so_subj_nh/fall NhFylling/tala/kyn?
 
     # (Í dag) hafa fjöllin verið klifin og sigruð / hefur þú verið sæmdur orðu
-    | 'hafa:so'_0/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'vera:so'_sagnb HreinSögn_lhþt/tala/kyn
-    # (Í dag) hefur flugvélinni verið lent
+    | 'hafa:so'_0/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs?
+        HjSögn_sagnb HreinSögn_lhþt/tala/kyn
+    # (Í dag) hefur manninum verið sagt [að vera rólegur]
+    # (Frá því í gær) hefur stjórnvöldum verið ljóst að greiða þyrfti atkvæði um málið
     | 'hafa:so'_0_et_p3 NlFrumlag_þgf/tala/pers/kyn AtvFs?
-        'vera:so'_sagnb FsAtv? so_1_þgf_sagnb NhFylling/tala/kyn?
-    # (Í dag) hefur konunnar verið gætt
+        HjSögn_sagnb FsAtv? SögnMeðFSagnbBotn
+    # (Í dag) hefur konunnar getað verið gætt
     | 'hafa:so'_0_et_p3 NlFrumlag_ef/tala/pers/kyn AtvFs?
-        'vera:so'_sagnb FsAtv? so_1_ef_sagnb NhFylling/tala/kyn?
+        HjSögn_sagnb FsAtv? so_1_ef_sagnb NhFylling/tala/kyn?
 
     # (Í dag) skal sú ákvörðun [vera] rökstudd og tilkynnt forseta Alþingis
     | HjSögnSkuluMunu/tala/pers NlFrumlag_nf/tala/pers/kyn VeraVerðaAtv? HreinSögn_lhþt/tala/kyn
@@ -1844,6 +1848,14 @@ SögnMeðF_nh/tala/pers/kyn →
     HjSögnNh/tala/pers NlFrumlag_nf/tala/pers/kyn Atviksliður? SögnMeðFNhBotn/tala/pers/kyn
 
 $score(+4) SögnMeðF_nh/tala/pers/kyn
+
+SögnMeðFSagnbBotn →
+    # (Í dag hefur manninum verið) sagt [að vera rólegur]
+    so_1_þgf_sagnb NhFylling/tala/kyn?
+    # (Í dag hefur stjórnvöldum verið) [það] [algjörlega] ljóst [að málið færi í atkvæðagreiðslu]
+    # (Frá því í gær hefur mér verið) alvarleiki málsins hugleikinn
+    # !!! ATH: Nl_nf á í raun að vera frumlag hér, ef sá nafnliður er fyrir hendi á annað borð
+    | Nl_nf/tala/kyn? LoAtviksliðir? lo_sb_nf_sþgf/tala/kyn Skýringarsetning?
 
 SögnMeðFNhBotn/tala/pers/kyn →
     # (Í stað takka) vill Apple [nú] koma fyrir snertiskynjurum
@@ -2314,6 +2326,24 @@ GetaAtv_sagnb →
 
 $score(+3) HafaGetaFá_nh        # Gefa plús fyrir flókin sagnform
 $tag(purge_verb) HafaGetaFá_nh  # Ekki horfa á hjálparsögnina þegar forsetningar eru tengdar
+
+HjSögn_sagnb →
+    'vera:so'_sagnb                     # hefur stjórnvöldum verið ljóst
+    | 'verða:so'_sagnb                  # hefur stjórnvöldum orðið ljóst
+    | 'mega:so'_sagnb 'vera:so'_nh      # hefur stjórnvöldum mátt vera ljóst
+    | 'mega:so'_sagnb 'verða:so'_nh     # hefur stjórnvöldum mátt verða ljóst
+    | 'þykja:so'_sagnb 'vera:so'_nh     # hefur stjórnvöldum þótt vera ljóst
+    | 'þykja:so'_sagnb 'verða:so'_nh    # hefur stjórnvöldum þótt verða ljóst
+    | 'eiga:so'_sagnb nhm 'vera:so'_nh  # hefur stjórnvöldum átt að vera ljóst
+    | 'eiga:so'_sagnb nhm 'verða:so'_nh # hefur stjórnvöldum átt að verða ljóst
+    | 'eiga:so'_sagnb nhm 'hafa:so'_nh 'vera:so'_sagnb  # hefur stjórnvöldum átt að hafa verið ljóst
+    | 'eiga:so'_sagnb nhm 'hafa:so'_nh 'verða:so'_sagnb # hefur stjórnvöldum átt að hafa orðið ljóst
+    | 'geta:so'_sagnb 'vera:so'_sagnb   # hefur stjórnvöldum getað verið ljóst
+    | 'geta:so'_sagnb 'verða:so'_sagnb  # hefur stjórnvöldum getað orðið ljóst
+    | 'geta:so'_sagnb 'hafa:so'_nh 'vera:so'_sagnb  # hefur stjórnvöldum getað hafa verið ljóst
+    | 'geta:so'_sagnb 'hafa:so'_nh 'verða:so'_sagnb # hefur stjórnvöldum getað hafa orðið ljóst
+
+$tag(purge_verb) HjSögn_sagnb
 
 HjSögn_mm_nh →
     'hafa:so'_nh                    # telst hafa farið
@@ -4957,9 +4987,14 @@ AtviksliðurOg →
 
 FsAtv →
     # (Ég samþykkti þetta), en með semingi þó [,]
-    Samanburðarmerki? "en:st"? EinFsAtv+ FsAtvFramhald* ","?
+    Samanburðarmerki? "en:st"? FsAtvRuna FsAtvFramhald* ","?
 
-FsAtvFramhald → KommaOgEðaEn EinFsAtv+
+FsAtvFramhald →
+    KommaOgEðaEn EinFsAtv FsAtvRuna?
+
+FsAtvRuna →
+    EinFsAtv+
+    | EinFsAtv* "-:em" EinFsAtv+ "-:em"
 
 EinFsAtv →
     Nema? FsMeðFallstjórn
