@@ -5939,9 +5939,12 @@ TímaNafnorðStærri_kvk/fall/tala →
 TímaNafnorðStærri_hk/fall/tala →
     'misseri:hk'/fall/tala
     | 'ár:hk'/fall/tala
+    | 'leikár:hk'/fall/tala
+    | 'reikningsár:hk'/fall/tala
     | 'árhundrað:hk'/fall/tala
     | 'árþúsund:hk'/fall/tala
     | 'sumar:hk'/fall/tala
+    | 'kjörtímabil:hk'/fall/tala
 
 TímaNafnorðStærri_gr/fall/tala →
     'dagur:kk'_gr/fall/tala
@@ -5957,9 +5960,12 @@ TímaNafnorðStærri_gr/fall/tala →
     | 'þúsöld:kvk'_gr/fall/tala
     | 'misseri:hk'_gr/fall/tala
     | 'ár:hk'_gr/fall/tala
+    | 'leikár:hk'_gr/fall/tala
+    | 'reikningsár:hk'_gr/fall/tala
     | 'árhundrað:hk'_gr/fall/tala
     | 'árþúsund:hk'_gr/fall/tala
     | 'sumar:hk'_gr/fall/tala
+    | 'kjörtímabil:hk'_gr/fall/tala
 
 TímaAtviksEinkunn →
     "rétt:ao" TímaAtviksEinkunn

@@ -65,7 +65,69 @@ def test_parse(verbose=False):
         "í hádeginu fór ég á veitingastaðinn á horninu og keypti mér rauðvín "
         "með hamborgaranum sem ég borðaði í gær með mikilli ánægju.",
         # 12
-        "Ég horfði á Pál borða kökuna"
+        "Ég horfði á Pál borða kökuna.",
+        # 13
+        "Fyrir Pál eru þetta góð tíðindi.",
+        # 14
+        "Ég hef unnið og þrælað alla mína tíð.",
+        # 15
+        "Jón borðaði ísinn um svipað leyti og Gunna skrifaði bréfið.",
+        # 16
+        "Það að þau viðurkenna ekki að þjóðin er ósátt við gjörðir þeirra er alvarlegt.",
+        # 17
+        "Hann hefur nú viðurkennt að hafa ákveðið sjálfur að birta "
+        "hvorki almenningi né Alþingi skýrsluna.",
+        # 18
+        "Ríkissjóður stendur í blóma ef 27 milljarða "
+        "arðgreiðsla Íslandsbanka er talin með.",
+        # 19
+        "Auk alls þessa þá getum við líka einfaldlega vandað okkur meira.",
+        # 20
+        "Það er óskandi að gripið verði til margfalt öflugri aðgerða "
+        "en verið hefur á liðnum árum og áratugum.",
+        # 21
+        "Eftir vanfjármögnun úrbóta sl. kjörtímabil, í margyfirlýstu góðæri "
+        "þar sem fjárlagafrumvarp 2017 var samt undir núlli tekjumegin, "
+        "er deginum ljósara að mikla viðbótarfjármögnun þarf svo koma megi "
+        "mörgu í betra horf á næstu 1-2 árum.",
+        # 22
+        "Lögreglan fer ekki nánar ofan í það hvaða skemmdir það voru.",
+        # 23
+        "Ég leyfði þeim að taka allt sitt inn í veturinn.",
+        # 24
+        "Það sem þeir vilja berjast fyrir er ekki loforð, heldur áherslur.",
+        # 25
+        "Mér finnst í sjálfu sér slæmt að það skyldi hafa verið þannig.",
+        # 26
+        "Jón hefur aðgang að gögnum þeirra starfssviða sem eiga að vera aðskilin.",
+        # 27
+        "Fréttaveiturnar Reuters og Bloomberg fengu að vera viðstaddar fundinn.",
+        # 28
+        "Samtök ferðaþjónustunnar eru fylgjandi virðisaukandi þjónustu "
+        "þar með talið bílastæðagjöldum.",
+        # 29
+        "Starfsmenn hans voru ekki á eitt sáttir.",
+        # 30
+        "Það var ekki bara á þann hátt að glútenið vantaði.",
+        # 31
+        "Slökkviliðið var á sama tíma í óðaönn við að slökkva eld "
+        "sem kom upp í húsnæði við Bauganes í Skerjafirði.",
+        # 32
+        "Gömul mynd sem fannst nýlega í Þjóðskjalasafni Bandaríkjanna "
+        "er sögð gefa í skyn að frægasti kvenkyns flugmaður sögunnar, "
+        "Amelia Earhart, hafi ekki dáið í flugslysi í Kyrrahafinu.",
+        # 33
+        "Sams konar mál var svo höfðað í tvígang fyrir dómi, annars vegar "
+        "með stefnu í apríl fyrir sex árum sem var felld niður og hins vegar "
+        "í júlí ári seinna.",
+        # 34
+        "Lögreglan á Suðurlandi rannsakar nú hvort að maður um tvítugt "
+        "hafi brotið kynferðislega gegn unglingsstúlku í liðinni viku.",
+        # 35
+        "Þetta hefur alltaf verið svona, að mér skilst.",
+        # 36
+        "Árásin átti sér stað um klukkan fimm aðfaranótt síðastliðins sunnudags "
+        "þegar karlmaður var stunginn ítrekað í kviðinn með hnífi.",
     ]
     job = r.submit(" ".join(sentences))
 
@@ -132,6 +194,12 @@ def test_parse(verbose=False):
     ]
     assert results[12].tree.nouns == ["Páll", "kaka"]
 
+    assert results[22].tree.nouns == ["lögregla", "skemmd"]
+    assert results[23].tree.nouns == ["vetur"]
+    assert results[24].tree.nouns == ["loforð", "áhersla"]
+    assert results[32].tree.nouns == ["mynd", "þjóðskjalasafn", "Bandaríkin",
+        "skyn", "flugmaður", "saga", "Earhart", "flugslys", "Kyrrahaf"]
+
     # Test that the parser finds the correct verbs
     assert results[0].tree.verbs == ["vera", "vera", "gera"]
     assert results[1].tree.verbs == ["koma"]
@@ -153,6 +221,9 @@ def test_parse(verbose=False):
         "borða",
     ]
     assert results[12].tree.verbs == ["horfa", "borða"]
+    assert results[32].tree.verbs == [
+        "finna", "segja", "gefa", "hafa", "deyja"
+    ]
 
     # Test that the parser finds the correct word lemmas
     assert results[0].tree.lemmas == [
@@ -273,7 +344,28 @@ def test_parse(verbose=False):
         "ánægja",
         ".",
     ]
-    assert results[12].tree.lemmas == ["ég", "horfa", "á", "Páll", "borða", "kaka"]
+    assert results[12].tree.lemmas == ["ég", "horfa", "á", "Páll", "borða", "kaka", "."]
+    assert results[36].tree.lemmas == [
+        "árás",
+        "eiga",
+        "sig",
+        "staður",
+        "um",
+        "klukkan fimm",
+        "aðfaranótt",
+        "síðastliðinn",
+        "sunnudagur",
+        "þegar",
+        "karlmaður",
+        "vera",
+        "stinga",
+        "ítrekað",
+        "í",
+        "kviður",
+        "með",
+        "hnífur",
+        "."
+    ]
 
     def num_pp(s):
         """ Count the prepositional phrases in the parse tree for sentence s """
