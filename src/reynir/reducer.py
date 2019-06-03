@@ -600,7 +600,6 @@ class Reducer:
                                 if m.ordfl == "so"
                             ):
                                 # No meaning where the verb has zero arguments
-                                # print("Subtracting 5 points for 0-arg verb {0}".format(tokens[i].t1))
                                 adj = -5
                         # Apply score adjustments for verbs with particular object cases,
                         # as specified by $score(n) pragmas in Verbs.conf
