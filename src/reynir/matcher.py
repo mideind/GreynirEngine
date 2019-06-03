@@ -151,6 +151,7 @@ _DEFAULT_NT_MAP = {
     "NhLiður": "IP",
     "SetningÞað": "IP", # Under consideration
     "Nl": "NP",
+    "NlRunaEða": "NP",
     "EfLiður": "NP-POSS",
     "EfLiðurForskeyti": "NP-POSS",
     "OkkarFramhald": "NP-POSS",
@@ -160,7 +161,10 @@ _DEFAULT_NT_MAP = {
     "Titill": "NP-TITLE",
     "Frumlag": "NP-SUBJ",
     "NlFrumlag": "NP-SUBJ",
+    "NlFrumlagÞað": "NP-SUBJ",
     "NlBeintAndlag": "NP-OBJ",
+    "NlEnginnAndlag" : "NP-OBJ",  # 'hann getur enga samninga gert'
+    "NlAnnar": "NP-OBJ",  # '[Jón hefur] aðra sögu [að segja]'
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
     "SögnErLoBotn": "NP-PRD",  # Show '(Hann er) góður / 18 ára' as a predicate argument
@@ -177,17 +181,34 @@ _DEFAULT_NT_MAP = {
     #"SagnFramhald" : "VP",
     #"NhLiðir": "VP-SEQ",
     #"NhSögn": "VP",
+    #"NhEinfaldur": "VP",
     #"SagnliðurÁnF": "VP",
     #"ÖfugurSagnliður": "VP-REV",
     #"SagnliðurVh": "VP",
     "HjSögnLhÞt": "VP-AUX", # Auxiliary verb, hjálparsögn
     #"SögnLhNt": "VP-PP",  # Present participle, lýsingarháttur nútíðar
+    #"SögnSagnbBreyting": "VP",  # 'hefur versnað'
+    #"SögnLhNtBreyting": "VP",  # 'hefur farið fækkandi'
+    #"SögnNhBreyting": "VP",  # 'mun fækka'
+    #"SögnÞað": "VP",  # '(það) verður að segjast að...'
+    #"SögnÓp": "VP",  # '(mig) þraut örendið'
+    #"SögnAðRæða": "VP",
+    #"SögnAukafallÞgf": "VP",
+    #"SögnAukafallEf": "VP",
+    #"HreinSögn": "VP-SEQ",
+    #"EinSögn": "VP",
+    #"SögnUmAðRæða": "VP-SEQ",
+    #"SögnVarUmAðRæða": "VP-SEQ",
     #"SagnHluti": "VP-SEQ",
     #"SagnRuna": "VP-SEQ",
     #"SagnRunaStýfð": "VP-SEQ",
-    "SetningSo": "IP"
+    "SetningSo": "IP",
+    "SetningSoÞað": "IP",
     "FsLiður": "PP",
     "FsMeðFallstjórn": "PP",
+    "FsFyrirEftir": "PP",
+    "FsUmAðRæða": "PP",
+    "FsVarUmAðRæða": "PP",
     "LoTengtSögn": "ADJP",
     #"Einkunn": "ADJP",
     "Tímatala": "ADJP",
@@ -198,6 +219,7 @@ _DEFAULT_NT_MAP = {
     #"AtvFs": "ADVP",
     "Atviksliður": "ADVP",
     "AtviksliðurEinkunn": "ADVP",
+    "AlHvortSemUmErAðRæða": "ADVP",
     "LoAtviksliðir": "ADVP",
     "EinnAl": "ADVP",
     "StefnuAtv": "ADVP-DIR",
@@ -236,9 +258,9 @@ _DEFAULT_ID_MAP = {
         name="Tilvísunarsetning", overrides="S", subject_to={"CP-REL"}
     ),
     "S-EXPLAIN": dict(name="Skýring"),  # Explanation
-    "CP-EXPLAIN": dict(name="Skýringarsetning"),  # Explanation
     "S-QUOTE": dict(name="Tilvitnun"),  # Quote at end of sentence
     "S-PREFIX": dict(name="Forskeyti"),  # Prefix in front of sentence
+    "CP-EXPLAIN": dict(name="Skýringarsetning"),  # Explanation
     "CP-ADV-TEMP": dict(name="Tíðarsetning"),  # Adverbial temporal phrase
     "CP-ADV-PURP": dict(name="Tilgangssetning"),  # Adverbial purpose phrase
     "CP-ADV-ACK": dict(name="Viðurkenningarsetning"),  # Adverbial acknowledgement phrase
@@ -257,6 +279,7 @@ _DEFAULT_ID_MAP = {
     "NP-POSS": dict(name="Eignarfallsliður", overrides="NP"),
     "NP-DAT": dict(name="Þágufallsliður", overrides="NP"),
     "NP-ADDR": dict(name="Heimilisfang", overrides="NP"),
+    "NP-COMPANY": dict(name="Fyrirtæki", overrides="NP"),
     "NP-TITLE": dict(name="Titill", overrides="NP"),
     "NP-AGE": dict(name="Aldur"),
     "NP-MEASURE": dict(name="Mæling", overrides="NP"),
@@ -327,6 +350,7 @@ _DEFAULT_TERMINAL_MAP = { # Einhverra hluta vegna er seinna nafnið hér tekið 
     "dagsafs": "DATEREL",
     "dagsfast": "DATEABS",
 }
+
 
 # The following list was obtained using this SQL query:
 # select distinct ordmynd from ord
@@ -964,35 +988,6 @@ class SimpleTree:
                     )
         return " ".join(reversed(result))
 
-    def _bracket_form(self):
-        """ Return a bracketed representation of the tree """
-        result = []
-        def push(node):
-            """ Append information about a node to the result list """
-            if node is None:
-                return
-            nonlocal result
-            puncts = [".", ",", ";", ":", "-", "—", "–"]
-            if node._head.get("k") == "NONTERMINAL":
-                result.append("(" + node._head.get("i"))
-                # Recursively add the children of this nonterminal
-                for child in node.children:
-                    result.append(" ")
-                    push(child)
-                result.append(")")
-            elif node._head.get("k") == "PUNCTUATION" and node._head.get("x") in puncts:
-                result.append("(PUNCT {})".format(node._head.get("x")))
-            else:
-                # Terminal: append the text
-                result.append(node.text.replace(" ", "_"))
-        push(self)
-        return "".join(result)
-
-    @property
-    def bracket_form(self):
-        """ Return a bracketed representation of the tree """
-        return self._bracket_form()
-
     def _flat(self, func):
         """ Return a string containing an a flat representation of this subtree """
         if self._len > 1 or self._children:
@@ -1021,9 +1016,12 @@ class SimpleTree:
             # Return a sequence of ao prefixes before the terminal itself
             return " ".join(["ao"] * numwords + [terminal])
         if tokentype in _MULTIWORD_TOKENS:
-            # Use a special handler for these multiword tokens            
+            # Use a special handler for these multiword tokens
             return self._multiword_token(self._text, tokentype, terminal)
-        # Fallback: Repeat the terminal name for each component word
+        # Fallback: Repeat the terminal name for each component word,
+        # except that we use 'st' for conjunctions. Note that the component
+        # words may have trailing hyphens and commas, as in
+        # 'dómsmála-, ferðamála- og nýsköpunarráðherra'
         words = self._text.split()
         return " ".join("st" if word in _CONJUNCTIONS else terminal for word in words)
 
@@ -1395,7 +1393,7 @@ class SimpleTree:
         if self.match_tag("NP"):
             # Noun phrase:
             # Concatenate the nominative forms of the child terminals,
-            # and the literal text of nested nonterminals (such as NP-POSS and CP-THT)
+            # and the literal text of nested nonterminals (such as NP-POSS and S-THT)
             result = []
             children = list(self.children)
             # If the noun phrase has an adjective, we keep any leading adverbs
@@ -1413,8 +1411,8 @@ class SimpleTree:
                         if i > 0:
                             children = children[i:]
                         break
-            if len(children) == 1 and children[0].tag == "CP-THT":
-                # If the noun phrase consists only of a CP-THT nonterminal
+            if len(children) == 1 and children[0].tag == "S-THT":
+                # If the noun phrase consists only of a S-THT nonterminal
                 # ('skýringarsetning'), add 'það' to the front so the
                 # result is something like 'það að fjöldi dæmdra glæpamanna hafi aukist'
                 np = prop_func(children[0])
@@ -1465,7 +1463,7 @@ class SimpleTree:
             (or noun/adjective terminal) contained within this subtree """
 
         def prop_func(node):
-            """ For canonical noun phrases, cut off CP-REL and CP-THT subtrees since they probably
+            """ For canonical noun phrases, cut off S-REF and S-THT subtrees since they probably
                 don't make sense any more, with the noun phrase having been converted to singular and all.
                 The same applies to NP-POSS. """
             if node.is_terminal:
