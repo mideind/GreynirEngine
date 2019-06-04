@@ -129,8 +129,6 @@ _DEFAULT_NT_MAP = {
     "Skilyrði": "CP-COND",
     "Afleiðing": "S-CONS",
     #"NlSkýring": "CP-EXPLAIN",
-    "Útskýring": "S-EXPLAIN",
-    "FrumlagsInnskot": "S-EXPLAIN",
     "Tilvitnun": "S-QUOTE",
     "Forskeyti": "S-PREFIX",
     # "EfÞegar" : "S-PREFIX",
@@ -148,8 +146,9 @@ _DEFAULT_NT_MAP = {
     "BeygingarliðurÁnUmröðunar": "IP",
     "BeygingarliðurMeðUmröðun": "IP",
     "SagnarBotn": "IP", # Under consideration
-    "NhLiður": "IP",
-    "SetningÞað": "IP", # Under consideration
+    "NhLiður": "IP", # IP-INF?
+    "SetningÞað": "IP", # Under consideration; IP-INF?
+    "ÞaðTenging" : "IP", # IP-INF?
     "Nl": "NP",
     "NlRunaEða": "NP",
     "EfLiður": "NP-POSS",
@@ -211,9 +210,9 @@ _DEFAULT_NT_MAP = {
     "FsVarUmAðRæða": "PP",
     "LoTengtSögn": "ADJP",
     #"Einkunn": "ADJP",
-    "Tímatala": "ADJP",
-    "LoSemNafnliður": "ADJP",
-    "Raðnr": "ADJP",
+    #"Tímatala": "ADJP",
+    #"LoSemNafnliður": "ADJP",
+    #"Raðnr": "ADJP",
     #"SagnInnskot": "ADVP",
     #"FsAtv": "ADVP",
     #"AtvFs": "ADVP",
@@ -225,14 +224,11 @@ _DEFAULT_NT_MAP = {
     "StefnuAtv": "ADVP-DIR",
     "TöluorðForskeyti": "ADVP",
     # Adverbial time phrases
-    "Dagsetning": "ADVP-DATE",
-    "Tímasetning": "ADVP-DATE",
     "FöstDagsetning": "ADVP-DATE-ABS",
     "AfstæðDagsetning": "ADVP-DATE-REL",
     "FasturTímapunktur": "ADVP-TIMESTAMP-ABS",
     "AfstæðurTímapunktur": "ADVP-TIMESTAMP-REL",
     "Tíðni": "ADVP-TMP-SET",
-    #"Tímabil": "ADVP-DUR",
     "FastTímabil": "ADVP-DUR-ABS",
     "AfstættTímabil": "ADVP-DUR-REL",
     "TímabilTími": "ADVP-DUR-TIME",
@@ -246,21 +242,11 @@ _DEFAULT_NT_MAP = {
 
 _DEFAULT_ID_MAP = {
     "S0": dict(name="Málsgrein"),
-    "S-MAIN": dict(name="Setning", overrides="S", subject_to={"S-MAIN"}),
-    "S": dict(name="Setning", subject_to={"S", "S-EXPLAIN", "CP-REL", "IP"}),
-    "S-HEADING": dict(name="Fyrirsögn", overrides="S"),
-    # Condition
-    "S-COND": dict(name="Skilyrði", overrides="S"),
-    # Consequence
-    "S-CONS": dict(name="Afleiðing", overrides="S"),
-    # Reference
-    "CP-REL": dict(
-        name="Tilvísunarsetning", overrides="S", subject_to={"CP-REL"}
-    ),
-    "S-EXPLAIN": dict(name="Skýring"),  # Explanation
+    "S-MAIN": dict(name="Setning", subject_to={"S-MAIN"}),
+    "S-HEADING": dict(name="Fyrirsögn"),
     "S-QUOTE": dict(name="Tilvitnun"),  # Quote at end of sentence
-    "S-PREFIX": dict(name="Forskeyti"),  # Prefix in front of sentence
-    "CP-EXPLAIN": dict(name="Skýringarsetning"),  # Explanation
+    "S-PREFIX": dict(name="Forskeytt setning"),  # Prefix in front of sentence
+    "S-QUE": dict(name="Spurnaraðalsetning"),  # Question clause
     "CP-ADV-TEMP": dict(name="Tíðarsetning"),  # Adverbial temporal phrase
     "CP-ADV-PURP": dict(name="Tilgangssetning"),  # Adverbial purpose phrase
     "CP-ADV-ACK": dict(name="Viðurkenningarsetning"),  # Adverbial acknowledgement phrase
@@ -269,11 +255,11 @@ _DEFAULT_ID_MAP = {
     "CP-ADV-COND": dict(name="Skilyrðissetning"),  # Adverbial conditional phrase
     "CP-THT": dict(name="Skýringarsetning", overrides="S-EXPLAIN"),  # Complement clause
     "CP-QUE": dict(name="Spurnaraukasetning"),  # Question subclause
-    "S-QUE": dict(name="Spurnarsetning"),  # Question clause
+    "CP-REL": dict(name="Tilvísunarsetning", overrides="S", subject_to={"CP-REL"}),
     #"VP-SEQ": dict(name="Sagnliður"),
     #"VP-REV": dict(name="Öfugur sagnliður"),
     "VP-AUX": dict(name="Hjálparsögn"),
-    "VP": dict(name="Sagnliður", overrides="VP-SEQ", subject_to={"VP"}),
+    "VP": dict(name="Sagnliður", overrides="VP-SEQ", subject_to={"VP", "VP-AUX"}),
     #"VP-PP": dict(name="Sögn", overrides="PP"),
     "NP": dict(name="Nafnliður", subject_to={"NP-SUBJ", "NP-OBJ", "NP-IOBJ", "NP-PRD"}),
     "NP-POSS": dict(name="Eignarfallsliður", overrides="NP"),
@@ -282,45 +268,42 @@ _DEFAULT_ID_MAP = {
     "NP-COMPANY": dict(name="Fyrirtæki", overrides="NP"),
     "NP-TITLE": dict(name="Titill", overrides="NP"),
     "NP-AGE": dict(name="Aldur"),
-    "NP-MEASURE": dict(name="Mæling", overrides="NP"),
-    "NP-PERSON": dict(name="Manneskja"),
+    "NP-MEASURE": dict(name="Magnliður", overrides="NP"),
+    #"NP-PERSON": dict(name="Manneskja"),
     "NP-SUBJ": dict(name="Frumlag", subject_to={"NP-SUBJ"}),
     "NP-OBJ": dict(name="Beint andlag"),
     "NP-IOBJ": dict(name="Óbeint andlag"),
     "NP-PRD": dict(name="Sagnfylling"),
     "ADVP": dict(name="Atviksliður", subject_to={"ADVP"}),
     "ADVP-DIR": dict(name="Áttaratviksliður"),
-    "ADVP-DATE": dict(name="Dagsetning"),
     "ADVP-DATE-ABS": dict(name="Föst dagsetning", overrides="ADVP"),
     "ADVP-DATE-REL": dict(name="Afstæð dagsetning", overrides="ADVP"),
-    "ADVP-TIMESTAMP": dict(name="Tímapunktur", overrides="ADVP"),
+    #"ADVP-TIMESTAMP": dict(name="Tímapunktur", overrides="ADVP"),
     "ADVP-TIMESTAMP-ABS": dict(name="Fastur tímapunktur", overrides="ADVP"),
     "ADVP-TIMESTAMP-REL": dict(name="Afstæður tímapunktur", overrides="ADVP"),
     "ADVP-TMP-SET": dict(name="Tíðni", overrides="ADVP"),   
-    "ADVP-DUR": dict(name="Tímabil", overrides="ADVP", subject_to={"ADVP-DUR-REL", "ADVP-DUR-ABS"}),
-    "ADVP-DUR-ABS": dict(name="Fast tímabil", overrides="ADVP-DUR"),
+    "ADVP-DUR-ABS": dict(name="Fast tímabil"),
     "ADVP-DUR-REL": dict(name="Afstætt tímabil", overrides="ADVP"),
-    "ADVP-DUR-TIME": dict(name="Tímabil", overrides="ADVP-DUR"),
+    "ADVP-DUR-TIME": dict(name="Tímabil"),
     "PP": dict(name="Forsetningarliður", overrides="ADVP", subject_to={"ADVP-DUR-REL", "ADVP-DUR-ABS"}),
-    "ADJP": dict(name="Lýsingarliður", subject_to={"ADJP"}),
+    #"ADJP": dict(name="Lýsingarliður", subject_to={"ADJP"}),
     "IP": dict(name="Beygingarliður"),  # Inflectional phrase
     # Hausar
     #"ADV": dict(name="Atviksorð"),
     #"V": dict(name="Sögn"),
     #"N": dict(name="Nafnorð"),
     #"PRON": dict(name="Fornafn"),
-    #"P": dict(name="Forsetning"),
+    "P": dict(name="Forsetning"),
     "INF": dict(name="Nafnháttarmerki"),
     #"NUM": dict(name="Töluorð", subject_to={"NUM-RANGE"}),
-    #"C": dict(name="Samtenging"),
+    "C": dict(name="Samtenging"),
     #"ADJ": dict(name="Lýsingarorð", overrides="V"),
     #"DET": dict(name="Greinir"),
-    "DATEREL": dict(name="Afstæð dagsetning"),
-    "DATEABS": dict(name="Föst dagsetning")
+    #"DATEREL": dict(name="Afstæð dagsetning"),
+    #"DATEABS": dict(name="Föst dagsetning")
 }
 
 _DEFAULT_TERMINAL_MAP = { # Einhverra hluta vegna er seinna nafnið hér tekið til að nefna liðinn á myndinni, þyrfti að breyta
-    #"fs": "P",
     #"no": "N",
     #"hk": "N",
     #"kk": "N",
@@ -332,19 +315,20 @@ _DEFAULT_TERMINAL_MAP = { # Einhverra hluta vegna er seinna nafnið hér tekið 
     #"fn": "PRON",
     #"pfn": "PRON",
     #"abfn": "PRON",
-    "so": "VP",
+    "so": "VP", # A phrase is generated to be able to attach it to the IP without subclauses.
     #"ao": "ADV",
     #"eo": "ADV",
     #"spao": "ADV",
     #"tao": "ADV",
+    "fs": "P",
     #"lo": "ADJ",
     #"raðnr": "ADJ",  # Raðtölur
     #"töl": "NUM",
     #"tala": "NUM",
     #"to": "NUM",
     #"ártal": "NUM",
-    #"st": "C",
-    #"stt": "C",
+    "st": "C",
+    "stt": "C",
     "nhm": "INF",  # Nafnháttarmerki
     #"gr": "DET",
     "dagsafs": "DATEREL",
