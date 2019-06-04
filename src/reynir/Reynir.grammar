@@ -6203,9 +6203,13 @@ QPersonPrefix_þgf →
     "segðu" "mér"? "frá"
 
 QCompany →
-    QCompanyPrefix_nf Fyrirtæki_nf '?'?
-    | QCompanyPrefix_þf Fyrirtæki_þf '?'?
-    | QCompanyPrefix_þgf Fyrirtæki_þgf # '?'?
+    # Það þarf að gera ráð fyrir sérstökum punkti í
+    # enda fyrirspurnarinnar þar sem punktur á eftir 'hf.'
+    # eða 'ehf.' í enda setningar er skilinn frá
+    # skammstöfunar-tókanum.
+    QCompanyPrefix_nf Fyrirtæki_nf '.'? '?'?
+    | QCompanyPrefix_þf Fyrirtæki_þf '.'? '?'?
+    | QCompanyPrefix_þgf Fyrirtæki_þgf '.' # '?'?
 
 QCompanyPrefix_nf →
     "hvað" "er"
@@ -6217,7 +6221,7 @@ QCompanyPrefix_þf →
 QCompanyPrefix_þgf →
     "segðu" "mér"? "frá"
 
-QEntity → QEntityPrefix/fall QEntityKey/fall '?'?
+QEntity → QEntityPrefix/fall QEntityKey/fall '.'? '?'?
 
 QEntityKey/fall →
     Sérnafn/fall > Sérnafn > no/fall > no
