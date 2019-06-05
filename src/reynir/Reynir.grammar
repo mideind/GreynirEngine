@@ -360,6 +360,7 @@ Samanburðarsetning →
 
 Skilyrðissetning → 
     Skilyrðistenging BeygingarliðurÁnUmröðunar
+    | Skilyrðistenging BeygingarliðurMeðUmröðun # 'Ef ekki næðist samkomulag yrði málið svæft'
     | Skilyrðistenging BeygingarliðurÁnF
     | Skilyrðissetning_vh
 
@@ -4043,8 +4044,8 @@ EfLiðurFramhald → KommaEfLiður+ ','?
 KommaEfLiður →
     ',' EfLiðurStakur
 
-$score(+3) EfLiður
-$score(+3) EfLiður_ft/kyn
+$score(+5) EfLiður
+$score(+5) EfLiður_ft/kyn
 
 # Eignarfallsliður sem stendur á undan nafnlið
 # ('Íslands fullorðnu synir', 'allra uppáhald')
@@ -6163,6 +6164,8 @@ $score(-4) VillaFjöldiHluti_ft/fall/kyn
 #
 # ----------------------------------------------
 
+$if(include_queries)
+
 QueryRoot →
 
     QPerson > QCompany > QEntity > QTitle > QWord > QSearch
@@ -6381,6 +6384,8 @@ QSearchToken →
     > dags > dagsafs > dagsföst
     > tímapunkturafs > tímapunkturfast > tími
     > raðnr > to > töl > ártal > tala > sérnafn
+
+$endif(include_queries)
 
 
 # ----------------------------------------------

@@ -4,8 +4,7 @@
 
     Python wrapper for C++ Earley/Scott parser
 
-    Copyright (C) 2018 Miðeind ehf.
-    Author: Vilhjálmur Þorsteinsson
+    Copyright (C) 2019 Miðeind ehf.
 
        This program is free software: you can redistribute it and/or modify
        it under the terms of the GNU General Public License as published by
@@ -697,6 +696,7 @@ class Fast_Parser(BIN_Parser):
 
     @classmethod
     def discard_grammar(cls):
+        """ Discard the C grammar object instance held as a class attribute """
         eparser.deleteGrammar(cls._c_grammar)
         cls._c_grammar = None
         cls._c_grammar_ts = None
