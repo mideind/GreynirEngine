@@ -4,8 +4,8 @@ Reynir: A fast, efficient natural language parser for Icelandic
 
 .. image:: https://github.com/mideind/ReynirPackage/blob/master/doc/_static/ReynirLogo216.png
 
-.. image:: https://travis-ci.org/mideind/ReynirPackage.svg?branch=master
-    :target: https://travis-ci.org/mideind/ReynirPackage
+.. image:: https://travis-ci.com/mideind/ReynirPackage.svg?branch=master
+    :target: https://travis-ci.com/mideind/ReynirPackage
 
 ********
 Overview
