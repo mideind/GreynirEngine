@@ -117,14 +117,14 @@ from .ifdtagger import IFD_Tagset
 _DEFAULT_NT_MAP = {
     "S0": "S0",
     "HreinYfirsetning": "S-MAIN",
-    "Setning": "S",
-    "SetningLo": "S",
-    "SetningÁnF": "S",
-    "SetningAukafall": ("S", "IP"),  # Push two headers: S and IP
-    "SetningAukafallForgangur": ("S", "IP"),
-    "SetningSkilyrði": "S",
-    "SetningUmAðRæða": "S",
-    "StViðtenging": "S",
+    "Setning": "S-MAIN",
+    "SetningLo": "S-MAIN",
+    "SetningÁnF": "S-MAIN",
+    "SetningAukafall": ("S-MAIN", "IP"),  # Push two headers: S and IP
+    "SetningAukafallForgangur": ("S-MAIN", "IP"),
+    "SetningSkilyrði": "S-MAIN",
+    "SetningUmAðRæða": "S-MAIN",
+    "StViðtenging": "S-MAIN",
     "Tilvísunarsetning": "CP-REL",
     "Skilyrði": "CP-COND",
     "Afleiðing": "S-CONS",
@@ -146,9 +146,9 @@ _DEFAULT_NT_MAP = {
     "BeygingarliðurÁnUmröðunar": "IP",
     "BeygingarliðurMeðUmröðun": "IP",
     "SagnarBotn": "IP", # Under consideration
-    "NhLiður": "IP", # IP-INF?
-    "SetningÞað": "IP", # Under consideration; IP-INF?
-    "ÞaðTenging" : "IP", # IP-INF?
+    "NhLiður": "IP-INF", # IP-INF?
+    "SetningÞað": "IP-INF", # Under consideration; IP-INF?
+    "ÞaðTenging" : "IP-INF", # IP-INF?
     "Nl": "NP",
     "NlRunaEða": "NP",
     "EfLiður": "NP-POSS",
@@ -174,33 +174,35 @@ _DEFAULT_NT_MAP = {
     "TímaMagnNafnliðurMinni": "NP",
     #"Fyrirbæri": "NP", # Veldur óþarfa liðum annars staðar
     #"Sérnafn": "NP-PERSON",
-    #"Sagnliður": "VP",
-    #"SagnliðurMeðF": "VP",
-    #"So": "VP",
+    "Sagnliður": "VP",
+    "SagnliðurMeðF": "VP",
+    "So": "VP",
     #"SagnFramhald" : "VP",
-    #"NhLiðir": "VP-SEQ",
-    #"NhSögn": "VP",
-    #"NhEinfaldur": "VP",
-    #"SagnliðurÁnF": "VP",
-    #"ÖfugurSagnliður": "VP-REV",
-    #"SagnliðurVh": "VP",
-    "HjSögnLhÞt": "VP-AUX", # Auxiliary verb, hjálparsögn
-    #"SögnLhNt": "VP-PP",  # Present participle, lýsingarháttur nútíðar
-    #"SögnSagnbBreyting": "VP",  # 'hefur versnað'
-    #"SögnLhNtBreyting": "VP",  # 'hefur farið fækkandi'
-    #"SögnNhBreyting": "VP",  # 'mun fækka'
-    #"SögnÞað": "VP",  # '(það) verður að segjast að...'
-    #"SögnÓp": "VP",  # '(mig) þraut örendið'
-    #"SögnAðRæða": "VP",
-    #"SögnAukafallÞgf": "VP",
-    #"SögnAukafallEf": "VP",
-    #"HreinSögn": "VP-SEQ",
-    #"EinSögn": "VP",
-    #"SögnUmAðRæða": "VP-SEQ",
-    #"SögnVarUmAðRæða": "VP-SEQ",
-    #"SagnHluti": "VP-SEQ",
-    #"SagnRuna": "VP-SEQ",
-    #"SagnRunaStýfð": "VP-SEQ",
+    "NhLiðir": "VP",
+    "NhSögn": "VP",
+    "NhEinfaldur": "VP",
+    "SagnliðurÁnF": "VP",
+    "ÖfugurSagnliður": "VP",
+    "SagnliðurVh": "VP",
+    "HjSögnLhÞt": "VP", # Auxiliary verb, hjálparsögn
+    "SögnLhNt": "VP",  # Present participle, lýsingarháttur nútíðar
+    "SögnSagnbBreyting": "VP",  # 'hefur versnað'
+    "SögnLhNtBreyting": "VP",  # 'hefur farið fækkandi'
+    "SögnNhBreyting": "VP",  # 'mun fækka'
+    "SögnÞað": "VP",  # '(það) verður að segjast að...'
+    "SögnÓp": "VP",  # '(mig) þraut örendið'
+    "SögnAðRæða": "VP",
+    "SögnAukafallÞgf": "VP",
+    "SögnAukafallEf": "VP",
+    "HreinSögn": "VP",
+    "EinSögn": "VP",
+    "SögnUmAðRæða": "VP",
+    "SögnVarUmAðRæða": "VP",
+    "SagnHluti": "VP",
+    "SagnRuna": "VP",
+    "SagnRunaStýfð": "VP",
+    "Andlagssagnliður": "VP",
+    "HjSögn": "VP-AUX",
     "SetningSo": "IP",
     "SetningSoÞað": "IP",
     "FsLiður": "PP",
@@ -208,7 +210,7 @@ _DEFAULT_NT_MAP = {
     "FsFyrirEftir": "PP",
     "FsUmAðRæða": "PP",
     "FsVarUmAðRæða": "PP",
-    "LoTengtSögn": "ADJP",
+    #"LoTengtSögn": "ADJP",
     #"Einkunn": "ADJP",
     #"Tímatala": "ADJP",
     #"LoSemNafnliður": "ADJP",
@@ -217,7 +219,7 @@ _DEFAULT_NT_MAP = {
     #"FsAtv": "ADVP",
     #"AtvFs": "ADVP",
     "Atviksliður": "ADVP",
-    "AtviksliðurEinkunn": "ADVP",
+    #"AtviksliðurEinkunn": "ADVP",
     "AlHvortSemUmErAðRæða": "ADVP",
     "LoAtviksliðir": "ADVP",
     "EinnAl": "ADVP",
@@ -253,13 +255,13 @@ _DEFAULT_ID_MAP = {
     "CP-ADV-CONS": dict(name="Afleiðingarsetning"),  # Adverbial consequence phrase
     "CP-ADV-CAUSE": dict(name="Orsakarsetning"),  # Adverbial causal phrase
     "CP-ADV-COND": dict(name="Skilyrðissetning"),  # Adverbial conditional phrase
-    "CP-THT": dict(name="Skýringarsetning", overrides="S-EXPLAIN"),  # Complement clause
+    "CP-THT": dict(name="Skýringarsetning", overrides="IP-INF"),  # Complement clause
     "CP-QUE": dict(name="Spurnaraukasetning"),  # Question subclause
     "CP-REL": dict(name="Tilvísunarsetning", overrides="S", subject_to={"CP-REL"}),
-    #"VP-SEQ": dict(name="Sagnliður"),
+    "VP-SEQ": dict(name="Sagnliður"),
     #"VP-REV": dict(name="Öfugur sagnliður"),
-    "VP-AUX": dict(name="Hjálparsögn"),
-    "VP": dict(name="Sagnliður", overrides="VP-SEQ", subject_to={"VP", "VP-AUX"}),
+    "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
+    "VP": dict(name="Sagnliður", overrides={"VP"}),
     #"VP-PP": dict(name="Sögn", overrides="PP"),
     "NP": dict(name="Nafnliður", subject_to={"NP-SUBJ", "NP-OBJ", "NP-IOBJ", "NP-PRD"}),
     "NP-POSS": dict(name="Eignarfallsliður", overrides="NP"),
@@ -288,6 +290,7 @@ _DEFAULT_ID_MAP = {
     "PP": dict(name="Forsetningarliður", overrides="ADVP", subject_to={"ADVP-DUR-REL", "ADVP-DUR-ABS"}),
     #"ADJP": dict(name="Lýsingarliður", subject_to={"ADJP"}),
     "IP": dict(name="Beygingarliður"),  # Inflectional phrase
+    "IP-INF": dict(name="Beygingarliður", overrides="VP"),  # Infinitival inflectional phrase
     # Hausar
     #"ADV": dict(name="Atviksorð"),
     #"V": dict(name="Sögn"),
@@ -331,8 +334,8 @@ _DEFAULT_TERMINAL_MAP = { # Einhverra hluta vegna er seinna nafnið hér tekið 
     "stt": "C",
     "nhm": "INF",  # Nafnháttarmerki
     #"gr": "DET",
-    "dagsafs": "DATEREL",
-    "dagsfast": "DATEABS",
+    #"dagsafs": "DATEREL",
+    #"dagsfast": "DATEABS",
 }
 
 

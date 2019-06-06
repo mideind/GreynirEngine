@@ -1104,10 +1104,12 @@ SetningAukafallForgangur →
 # Öfug orðaröð: 'Eignarrétti fylgja [í auknum mæli] skyldur' (í stað 'Skyldur fylgja eignarrétti')
 # 'Þetta skrifar Bjarni á Facebook-síðu sinni og bendir [galvaskur] á frammistöðu stjórnarinnar'
 SetningAukafallÖfug →
-    NlBeintAndlag/aukafall So_1/aukafall/tala/pers FsRunaEftirSögn? NlFrumlag_nf/tala/pers/kyn
+    Andlagssagnliður/tala/pers  FsRunaEftirSögn? NlFrumlag_nf/tala/pers/kyn
         AtvFsAuka? SagnFramhald/tala/pers/kyn*
 
 $score(-32) SetningAukafallÖfug
+
+Andlagssagnliður/tala/pers → NlBeintAndlag/aukafall So_1/aukafall/tala/pers
 
 SögnÓp/aukafall →
     # (Mér) [algjörlega] blöskraði [af öllu hjarta] vitleysan
