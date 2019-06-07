@@ -6488,4 +6488,19 @@ VillaÍTölu_ft_p3/kyn →
 $tag(error) VillaÍTölu/tala/pers/kyn
 $score(-999) VillaÍTölu/tala/pers/kyn
 
+# Orð sem endar á -ir í nefnifalli notað í stað þolfalls:
+# 'ég sá læknir[inn]', 'skipið sigldi á tundurspillir[inn]',
+# 'kjötið var í kælir'
+
+Fyrirbæri_þf_kk →
+    > VillaEndingIR
+
+VillaEndingIR →
+    # The 'xir' variant on nouns causes the terminal to only match
+    # words with lemmas ending with 'ir'
+    no_et_nf_kk_xir
+
+$tag(error) VillaEndingIR
+$score(-999) VillaEndingIR
+
 $endif(include_errors)

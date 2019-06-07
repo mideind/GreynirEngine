@@ -1003,6 +1003,11 @@ class BIN_Token(Token):
                     if m.ordfl != v:
                         # Mismatched gender
                         return False
+                elif v == "xir":
+                    # Only match lemmas that end with 'ir',
+                    # such as 'læknir', 'kælir'
+                    if not m.stofn.endswith("ir"):
+                        return False
                 elif no_info:
                     # No case and number info: probably a foreign word
                     # Match all cases and numbers

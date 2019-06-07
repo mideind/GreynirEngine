@@ -1342,6 +1342,7 @@ def test_compressed_bin():
     assert "Ísland" in binc
     assert "Vestur-Þýskaland" in binc
     assert "glerxaugu" not in binc
+    assert "vextir" in binc
     assert "x" not in binc
     assert "X" not in binc
     assert (
