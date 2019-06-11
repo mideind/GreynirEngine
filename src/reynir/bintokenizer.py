@@ -4,7 +4,7 @@
 
     Dictionary-aware tokenization layer
 
-    Copyright (C) 2018 Miðeind ehf.
+    Copyright (C) 2019 Miðeind ehf.
 
        This program is free software: you can redistribute it and/or modify
        it under the terms of the GNU General Public License as published by
@@ -28,11 +28,13 @@
 
 from collections import namedtuple, defaultdict
 
-from tokenizer import tokenize_without_annotation, TOK, parse_tokens
+from tokenizer import tokenize_without_annotation, TOK
 
 # The following imports are here in order to be visible in clients
 # (they are not used in this module)
-from tokenizer import correct_spaces, paragraphs, tokenize as raw_tokenize
+from tokenizer import (
+    correct_spaces, paragraphs, parse_tokens, tokenize as raw_tokenize
+)
 
 from .settings import StaticPhrases, AmbigPhrases, DisallowedNames
 from .settings import NamePreferences
@@ -59,7 +61,7 @@ COMPOSITE_HYPHEN = "–"  # en dash
 HYPHEN = "-"  # Normal hyphen
 
 # Prefixes that can be applied to adjectives with an intervening hyphen
-ADJECTIVE_PREFIXES = frozenset(["hálf", "marg", "semí"])
+ADJECTIVE_PREFIXES = frozenset(["hálf", "marg", "semí", "full"])
 
 # Recognize words that multiply numbers
 MULTIPLIERS = {
@@ -509,34 +511,71 @@ def parse_phrases_1(db, token_ctor, token_stream):
 
             # Check for composites:
             # 'stjórnskipunar- og eftirlitsnefnd'
-            # 'viðskipta- og iðnaðarráðherra'
+            # 'dómsmála-, viðskipta- og iðnaðarráðherra'
             # 'marg-ítrekaðri'
-            if (
-                token.kind == TOK.WORD
+            tq = []
+            while (
+                (token.kind == TOK.WORD or token.kind == TOK.ENTITY)
                 and next_token.kind == TOK.PUNCTUATION
                 and next_token.txt == COMPOSITE_HYPHEN
             ):
+                # Accumulate the prefix in tq
+                tq.append(token)
+                tq.append(token_ctor.Punctuation(HYPHEN))
+                # Check for optional comma after the prefix
+                comma_token = next(token_stream)
+                if comma_token.kind == TOK.PUNCTUATION and comma_token.txt == ',':
+                    # A comma is present: append it to the queue
+                    # and skip to the next token
+                    tq.append(comma_token)
+                    comma_token = next(token_stream)
+                # Reset our two lookahead tokens
+                token = comma_token
+                next_token = next(token_stream)
 
-                og_token = next(token_stream)
-                if og_token.kind != TOK.WORD or (
-                    og_token.txt != "og" and og_token.txt != "eða"
+            if tq:
+                # We have accumulated one or more prefixes
+                # ('dómsmála-, viðskipta-')
+                if token.kind == TOK.WORD and (
+                    token.txt == "og" or token.txt == "eða"
                 ):
+                    # We have 'viðskipta- og'
+                    if next_token.kind != TOK.WORD:
+                        # Incorrect: yield the accumulated token
+                        # queue and keep the current token and the
+                        # next_token lookahead unchanged
+                        for t in tq:
+                            yield t
+                    else:
+                        # We have 'viðskipta- og iðnaðarráðherra'
+                        # Return a single token with the meanings of
+                        # the last word, but an amalgamated token text.
+                        # Note: there is no meaning check for the first
+                        # part of the composition, so it can be an unknown word.
+                        txt = " ".join(t.txt for t in tq + [token, next_token])
+                        txt = txt.replace(" -", "-").replace(" ,", ",")
+                        token = token_ctor.Word(txt, next_token.val, token=next_token)
+                        next_token = next(token_stream)
+                else:
                     # Incorrect prediction: make amends and continue
                     handled = False
-                    if og_token.kind == TOK.WORD:
-                        composite = token.txt + "-" + og_token.txt
-                        if token.txt.lower() in ADJECTIVE_PREFIXES:
+                    if (
+                        (token.kind == TOK.WORD or token.kind == TOK.ENTITY) and
+                        len(tq) == 2 and tq[1].txt == HYPHEN
+                    ):
+                        # Two words with a hyphen in between
+                        composite = tq[0].txt + "-" + token.txt
+                        if tq[0].txt.lower() in ADJECTIVE_PREFIXES:
                             # hálf-opinberri, marg-ítrekaðri
                             token = token_ctor.Word(
                                 composite,
                                 [
                                     m
-                                    for m in og_token.val
+                                    for m in token.val
                                     if m.ordfl == "lo" or m.ordfl == "ao"
                                 ],
-                                token=og_token
+                                token=token
                             )
-                            next_token = next(token_stream)
                             handled = True
                         else:
                             # Check for Vestur-Þýskaland, Suður-Múlasýsla
@@ -544,34 +583,11 @@ def parse_phrases_1(db, token_ctor, token_stream):
                             m = db.meanings(composite)
                             if m:
                                 # Found composite in BÍN: return it as a single token
-                                token = token_ctor.Word(composite, m)
-                                next_token = next(token_stream)
+                                token = token_ctor.Word(composite, m, token=token)
                                 handled = True
                     if not handled:
-                        yield token
-                        # Put a normal hyphen instead of the composite one
-                        token = token_ctor.Punctuation(HYPHEN)
-                        next_token = og_token
-                else:
-                    # We have 'viðskipta- og'
-                    final_token = next(token_stream)
-                    if final_token.kind != TOK.WORD:
-                        # Incorrect: unwind
-                        yield token
-                        yield token_ctor.Punctuation(HYPHEN)  # Normal hyphen
-                        token = og_token
-                        next_token = final_token
-                    else:
-                        # We have 'viðskipta- og iðnaðarráðherra'
-                        # Return a single token with the meanings of
-                        # the last word, but an amalgamated token text.
-                        # Note: there is no meaning check for the first
-                        # part of the composition, so it can be an unknown word.
-                        txt = (
-                            token.txt + "- " + og_token.txt + " " + final_token.txt
-                        )
-                        token = token_ctor.Word(txt, final_token.val, token=final_token)
-                        next_token = next(token_stream)
+                        for t in tq:
+                            yield t
 
             # Yield the current token and advance to the lookahead
             yield token
@@ -698,24 +714,28 @@ def parse_phrases_2(token_stream, token_ctor):
                 for m in tok.val:
                     if m.fl in categories and ("ET" in m.beyging or m.beyging == "-"):
                         # If this is a given name, we cut out name forms
-                        # that are frequently ambiguous and wrong, i.e. "Frá" as accusative
-                        # of the name "Frár", and "Sigurð" in the nominative.
+                        # that are frequently ambiguous and wrong,
+                        # i.e. "Frá" as accusative of the name "Frár",
+                        # and "Sigurð" in the nominative.
                         c = case(m.beyging, default="-")
                         if m.stofn not in dstems or c not in dstems[m.stofn]:
-                            # Note the stem ('stofn') and the gender from the word type ('ordfl')
+                            # Note the stem ('stofn') and the gender from
+                            # the word type ('ordfl')
                             result.append(
                                 PersonName(name=m.stofn, gender=m.ordfl, case=c)
                             )
                 return result if result else None
 
             def has_category(tok, categories):
-                """ Return True if the token matches a meaning with any of the given categories """
+                """ Return True if the token matches a meaning
+                    with any of the given categories """
                 if tok.kind != TOK.WORD or not tok.val:
                     return False
                 return any(m.fl in categories for m in tok.val)
 
             def has_other_meaning(tok, category_set):
-                """ Return True if the token can denote something besides a given name """
+                """ Return True if the token can denote something
+                    besides a given name """
                 if tok.kind != TOK.WORD or not tok.val:
                     return True
                 # Return True if there is a different meaning, not a given name
@@ -723,7 +743,8 @@ def parse_phrases_2(token_stream, token_ctor):
 
             # Check for person names
             def given_names(tok):
-                """ Check for Icelandic or foreign person name (category 'ism' or 'erm') """
+                """ Check for Icelandic or foreign person name
+                    (category 'ism' or 'erm') """
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
                     # Must be a word starting with an uppercase character
                     return None
@@ -787,7 +808,8 @@ def parse_phrases_2(token_stream, token_ctor):
                 return True
 
             if token.kind == TOK.WORD and token.val and token.val[0].fl == "nafn":
-                # Convert a WORD with fl="nafn" to a PERSON with the correct gender, in all cases
+                # Convert a WORD with fl="nafn" to a PERSON with the correct gender,
+                # in all cases
                 gender = token.val[0].ordfl
                 token = token_ctor.Person(
                     token.txt,
@@ -834,14 +856,16 @@ def parse_phrases_2(token_stream, token_ctor):
                 # for instance 'Dagur Bergþóruson Eggertsson'
 
                 def eat_surnames(gn, w, patronym, next_token):
-                    """ Process contiguous known surnames, typically "*dóttir/*son", while they are
-                        compatible with the given name we already have """
+                    """ Process contiguous known surnames, typically "*dóttir/*son",
+                        while they are compatible with the given name
+                        we already have """
                     while True:
                         sn = surnames(next_token)
                         if not sn:
                             break
                         r = []
-                        # Found surname: append it to the accumulated name, if compatible
+                        # Found surname: append it to the accumulated name,
+                        # if compatible
                         for p in gn:
                             for np in sn:
                                 if compatible(p, np):
@@ -889,7 +913,8 @@ def parse_phrases_2(token_stream, token_ctor):
                         patronym = True
 
                     if patronym:
-                        # We still might have surnames coming up: eat them too, if present
+                        # We still might have surnames coming up:
+                        # eat them too, if present
                         gn, w, _, next_token = eat_surnames(gn, w, patronym, next_token)
 
                 found_name = False
@@ -908,11 +933,13 @@ def parse_phrases_2(token_stream, token_ctor):
                                 lnames = set(lp.name.split(" ")[0:-1])
                                 for n in gnames:
                                     if n not in lnames:
-                                        # We have a given name that does not match the person
+                                        # We have a given name that does not
+                                        # match the person
                                         match = False
                                         break
                             if match:
-                                # All given names match: assign the previously seen full name
+                                # All given names match: assign the previously seen
+                                # full name
                                 gn[ix] = PersonName(
                                     name=lp.name, gender=lp.gender, case=p.case
                                 )
@@ -1175,7 +1202,8 @@ class DisambiguationStream(MatchingStream):
         cats = AmbigPhrases.get_cats(ix)
         token_ctor = self._token_ctor
         for t, cat in zip(tq, cats):
-            # Yield a new token with fewer meanings for each original token in the queue
+            # Yield a new token with fewer meanings for each
+            # original token in the queue
             if cat == "fs":
                 # Handle prepositions specially, since we may have additional
                 # preps defined in Main.conf that don't have fs meanings in BÍN
@@ -1334,7 +1362,8 @@ def stems_of_token(t):
     """ Return a list of word stem descriptors associated with the token t.
         This is an empty list if the token is not a word or person or entity name.
         The list can contain multiple stems, for instance in the case
-        of composite words ('sjómannadagur' -> ['sjómannadagur/kk', sjómaður/kk', 'dagur/kk']).
+        of composite words:
+        ('sjómannadagur' -> ['sjómannadagur/kk', sjómaður/kk', 'dagur/kk']).
     """
     kind = t.get("k", TOK.WORD)
     if kind not in {TOK.WORD, TOK.PERSON, TOK.ENTITY}:
@@ -1393,7 +1422,8 @@ def choose_full_name(val, case, gender):
         if not fn_list:
             fn, g, c = val[0]
             fn_list = [(fn, g, c)]
-    # If there are many choices, select the nominative case, or the first element as a last resort
+    # If there are many choices, select the nominative case,
+    # or the first element as a last resort
     fn = next((fn for fn in fn_list if fn[2] == "nf"), fn_list[0])
     return fn[0], fn[1] if gender is None else gender
 
@@ -1415,7 +1445,8 @@ def describe_token(index, t, terminal, meaning):
                     # Substitute en dash
                     d["x"] = "–"
         else:
-            # Annotate with terminal name and BÍN meaning (no need to do this for punctuation)
+            # Annotate with terminal name and BÍN meaning
+            # (no need to do this for punctuation)
             d["t"] = terminal.name
             if meaning is not None:
                 if terminal.first == "fs":

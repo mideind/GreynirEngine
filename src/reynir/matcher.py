@@ -3,8 +3,7 @@
 
     Matcher module
 
-    Copyright (c) 2018 Miðeind ehf.
-    Author: Vilhjálmur Þorsteinsson
+    Copyright (c) 2019 Miðeind ehf.
 
        This program is free software: you can redistribute it and/or modify
        it under the terms of the GNU General Public License as published by
@@ -156,6 +155,8 @@ _DEFAULT_NT_MAP = {
     "OkkarFramhald": "NP-POSS",
     "LoEftirNlMeðÞgf": "NP-DAT",
     "Heimilisfang": "NP-ADDR",
+    "Fyrirtæki": "NP-COMPANY",
+    "SérnafnFyrirtæki": "NP-COMPANY",
     "Magn": "NP-MEASURE",
     "Titill": "NP-TITLE",
     "Frumlag": "NP-SUBJ",

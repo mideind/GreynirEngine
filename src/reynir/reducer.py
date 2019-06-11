@@ -525,6 +525,12 @@ class Reducer:
 
             # Apply heuristics to each terminal that potentially matches this token
             for t in s:
+
+                if t.is_literal:
+                    # Give a bonus for exact or semi-exact matches with
+                    # literal terminals
+                    sc[t] += 2
+
                 tfirst = t.first
                 if tfirst == "ao" or tfirst == "eo":
                     # Subtract from the score of all ao and eo
@@ -594,7 +600,6 @@ class Reducer:
                                 if m.ordfl == "so"
                             ):
                                 # No meaning where the verb has zero arguments
-                                # print("Subtracting 5 points for 0-arg verb {0}".format(tokens[i].t1))
                                 adj = -5
                         # Apply score adjustments for verbs with particular object cases,
                         # as specified by $score(n) pragmas in Verbs.conf
@@ -609,7 +614,10 @@ class Reducer:
                                     adjmax = score
                                     break
                         sc[t] += adj + adjmax
-                    if t.is_sagnb:
+                    if t.is_bh:
+                        # Discourage 'boðháttur'
+                        sc[t] -= 4
+                    elif t.is_sagnb:
                         # We like sagnb and lh, it means that more
                         # than one piece clicks into place
                         sc[t] += 6
@@ -695,9 +703,6 @@ class Reducer:
                 elif tfirst == "gr":
                     # Encourage separate definite article rather than pronoun
                     sc[t] += 2
-                elif t.name[0] in "\"'":
-                    # Give a bonus for exact or semi-exact matches
-                    sc[t] += 1
 
         return scores
 

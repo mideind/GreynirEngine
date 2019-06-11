@@ -64,6 +64,70 @@ def test_parse(verbose=False):
         "Löngu áður en Jón borðaði ísinn sem hafði bráðnað hratt "
         "í hádeginu fór ég á veitingastaðinn á horninu og keypti mér rauðvín "
         "með hamborgaranum sem ég borðaði í gær með mikilli ánægju.",
+        # 12
+        "Ég horfði á Pál borða kökuna.",
+        # 13
+        "Fyrir Pál eru þetta góð tíðindi.",
+        # 14
+        "Ég hef unnið og þrælað alla mína tíð.",
+        # 15
+        "Jón borðaði ísinn um svipað leyti og Gunna skrifaði bréfið.",
+        # 16
+        "Það að þau viðurkenna ekki að þjóðin er ósátt við gjörðir þeirra er alvarlegt.",
+        # 17
+        "Hann hefur nú viðurkennt að hafa ákveðið sjálfur að birta "
+        "hvorki almenningi né Alþingi skýrsluna.",
+        # 18
+        "Ríkissjóður stendur í blóma ef 27 milljarða "
+        "arðgreiðsla Íslandsbanka er talin með.",
+        # 19
+        "Auk alls þessa þá getum við líka einfaldlega vandað okkur meira.",
+        # 20
+        "Það er óskandi að gripið verði til margfalt öflugri aðgerða "
+        "en verið hefur á liðnum árum og áratugum.",
+        # 21
+        "Eftir vanfjármögnun úrbóta sl. kjörtímabil, í margyfirlýstu góðæri "
+        "þar sem fjárlagafrumvarp 2017 var samt undir núlli tekjumegin, "
+        "er deginum ljósara að mikla viðbótarfjármögnun þarf svo koma megi "
+        "mörgu í betra horf á næstu 1-2 árum.",
+        # 22
+        "Lögreglan fer ekki nánar ofan í það hvaða skemmdir það voru.",
+        # 23
+        "Ég leyfði þeim að taka allt sitt inn í veturinn.",
+        # 24
+        "Það sem þeir vilja berjast fyrir er ekki loforð, heldur áherslur.",
+        # 25
+        "Mér finnst í sjálfu sér slæmt að það skyldi hafa verið þannig.",
+        # 26
+        "Jón hefur aðgang að gögnum þeirra starfssviða sem eiga að vera aðskilin.",
+        # 27
+        "Fréttaveiturnar Reuters og Bloomberg fengu að vera viðstaddar fundinn.",
+        # 28
+        "Samtök ferðaþjónustunnar eru fylgjandi virðisaukandi þjónustu "
+        "þar með talið bílastæðagjöldum.",
+        # 29
+        "Starfsmenn hans voru ekki á eitt sáttir.",
+        # 30
+        "Það var ekki bara á þann hátt að glútenið vantaði.",
+        # 31
+        "Slökkviliðið var á sama tíma í óðaönn við að slökkva eld "
+        "sem kom upp í húsnæði við Bauganes í Skerjafirði.",
+        # 32
+        "Gömul mynd sem fannst nýlega í Þjóðskjalasafni Bandaríkjanna "
+        "er sögð gefa í skyn að frægasti kvenkyns flugmaður sögunnar, "
+        "Amelia Earhart, hafi ekki dáið í flugslysi í Kyrrahafinu.",
+        # 33
+        "Sams konar mál var svo höfðað í tvígang fyrir dómi, annars vegar "
+        "með stefnu í apríl fyrir sex árum sem var felld niður og hins vegar "
+        "í júlí ári seinna.",
+        # 34
+        "Lögreglan á Suðurlandi rannsakar nú hvort að maður um tvítugt "
+        "hafi brotið kynferðislega gegn unglingsstúlku í liðinni viku.",
+        # 35
+        "Þetta hefur alltaf verið svona, að mér skilst.",
+        # 36
+        "Árásin átti sér stað um klukkan fimm aðfaranótt síðastliðins sunnudags "
+        "þegar karlmaður var stunginn ítrekað í kviðinn með hnífi.",
     ]
     job = r.submit(" ".join(sentences))
 
@@ -128,6 +192,13 @@ def test_parse(verbose=False):
         "hamborgari",
         "ánægja",
     ]
+    assert results[12].tree.nouns == ["Páll", "kaka"]
+
+    assert results[22].tree.nouns == ["lögregla", "skemmd"]
+    assert results[23].tree.nouns == ["vetur"]
+    assert results[24].tree.nouns == ["loforð", "áhersla"]
+    assert results[32].tree.nouns == ["mynd", "þjóðskjalasafn", "Bandaríkin",
+        "skyn", "flugmaður", "saga", "Earhart", "flugslys", "Kyrrahaf"]
 
     # Test that the parser finds the correct verbs
     assert results[0].tree.verbs == ["vera", "vera", "gera"]
@@ -148,6 +219,10 @@ def test_parse(verbose=False):
         "fara",
         "kaupa",
         "borða",
+    ]
+    assert results[12].tree.verbs == ["horfa", "borða"]
+    assert results[32].tree.verbs == [
+        "finna", "segja", "gefa", "hafa", "deyja"
     ]
 
     # Test that the parser finds the correct word lemmas
@@ -269,6 +344,28 @@ def test_parse(verbose=False):
         "ánægja",
         ".",
     ]
+    assert results[12].tree.lemmas == ["ég", "horfa", "á", "Páll", "borða", "kaka", "."]
+    assert results[36].tree.lemmas == [
+        "árás",
+        "eiga",
+        "sig",
+        "staður",
+        "um",
+        "klukkan fimm",
+        "aðfaranótt",
+        "síðastliðinn",
+        "sunnudagur",
+        "þegar",
+        "karlmaður",
+        "vera",
+        "stinga",
+        "ítrekað",
+        "í",
+        "kviður",
+        "með",
+        "hnífur",
+        "."
+    ]
 
     def num_pp(s):
         """ Count the prepositional phrases in the parse tree for sentence s """
@@ -279,6 +376,7 @@ def test_parse(verbose=False):
     assert num_pp(results[9]) == 1
     assert num_pp(results[10]) == 1
     assert num_pp(results[11]) == 4
+    assert num_pp(results[12]) == 0
 
 
 def test_consistency(verbose=False):
@@ -697,7 +795,7 @@ def test_amounts():
 
 
 def test_year_range():
-    s = r.parse_single("Jón var formaður árin 1944-50.")
+    s = r.parse_single("Jón var Íslandsmeistari árin 1944-50.")
     t = s.terminals
     assert len(t) == 8
     check_terminal(
@@ -712,8 +810,8 @@ def test_year_range():
     ),
     check_terminal(
         t[2],
-        text="formaður",
-        lemma="formaður",
+        text="Íslandsmeistari",
+        lemma="Íslandsmeistari",
         category="no",
         variants=["et", "nf", "kk"],
     ),
@@ -746,6 +844,7 @@ def test_complex(verbose=False):
         "ákæran var þingfest en fréttastofu er kunnugt um að maðurinn "
         "játaði þar sem þinghaldið er lokað"
     )
+    assert d["num_parsed"] == 1
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 2", end="")
@@ -755,6 +854,7 @@ def test_complex(verbose=False):
         "hvers vegna ákveðið var að segja að vefjunum væri haldið úti af "
         "stuðningsmönnum Sigmundar."
     )
+    assert d["num_parsed"] == 1
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 3", end="")
@@ -763,6 +863,7 @@ def test_complex(verbose=False):
         "en fréttastofu er ekki kunnugt um hvort maðurinn játaði eða neitaði "
         "sök þar sem þinghaldið í málinu er lokað."
     )
+    assert d["num_parsed"] == 1
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 4", end="")
@@ -771,6 +872,7 @@ def test_complex(verbose=False):
         "prófessornum kom búlduleitur beljaki sem þess vegna hefði getað verið "
         "trökkdræver að norðan."
     )
+    assert d["num_parsed"] == 1
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 5", end="")
@@ -781,6 +883,7 @@ def test_complex(verbose=False):
         "fremur innri mann fyrirmyndarinnar en þá ásjónu sem daglega blasti við "
         "samferðamönnum."
     )
+    assert d["num_parsed"] == 1
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
         print("Complex, sentence 6", end="")
@@ -794,6 +897,7 @@ def test_complex(verbose=False):
         "í hnattrænu samfélagi, og takast á við ólík viðhorf, skoðanir og gildi — svo "
         "fátt eitt sé nefnt."
     )
+    assert d["num_parsed"] == 1
     if verbose:
         print(", time: {:.2f} seconds".format(d["parse_time"]))
 
@@ -804,10 +908,10 @@ def test_measurements():
         "tæplega 3,8 km af efninu í yfir 32°F frosti."
     )
     assert (
-        s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ VP so_et_p1 so_1_þf_nh "
-        "NP-OBJ lo_þf_ft_hk tala_ft_þf_hk no_ft_þf_hk /NP-OBJ /VP /IP /S-MAIN st "
-        "S-MAIN IP NP-SUBJ pfn_kk_et_nf /NP-SUBJ VP-SEQ VP so_et_p3 so_1_þf_nh "
-        "NP-OBJ NP-MEASURE ao tala mælieining /NP-MEASURE /NP-OBJ /VP "
+        s.tree.flat == "P S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ VP so_et_p1 VP so_1_þf_nh "
+        "NP-OBJ lo_þf_ft_hk tala_ft_þf_hk no_ft_þf_hk /NP-OBJ /VP /VP /IP /S-MAIN st "
+        "S-MAIN IP NP-SUBJ pfn_kk_et_nf /NP-SUBJ VP-SEQ VP so_et_p3 VP so_1_þf_nh "
+        "NP-OBJ NP-MEASURE ao tala mælieining /NP-MEASURE /NP-OBJ /VP /VP "
         "PP fs_þgf NP no_et_þgf_hk PP fs_þgf NP NP-POSS NP-MEASURE ao tala "
         "mælieining /NP-MEASURE /NP-POSS no_et_þgf_hk /NP /PP /NP "
         "/PP /VP-SEQ /IP /S-MAIN p /P"
@@ -823,7 +927,7 @@ def test_abbreviations():
         "so_1_þf_et_p1 NP-OBJ no_et_þf_kvk NP-POSS no_et_ef_hk /NP-POSS "
         "/NP-OBJ /VP ADVP ADVP-DATE-REL fs_þf no_kk_þf_et /ADVP-DATE-REL "
         "ADVP-DATE-REL fs_þgf dagsafs lo_þgf_et_kk /ADVP-DATE-REL /ADVP "
-        "st VP so_et_p1 so_1_nf_nh NP-OBJ pfn_kvk_et_nf /NP-OBJ /VP ADJP "
+        "st VP so_et_p1 VP so_1_nf_nh NP-OBJ pfn_kvk_et_nf /NP-OBJ /VP /VP ADJP "
         "lo_sb_nf_et_kvk /ADJP /VP-SEQ /IP /S-MAIN p /P"
     )
     # The following also tests augmented variants for personal pronouns,
@@ -835,7 +939,7 @@ def test_abbreviations():
         "NP-POSS no_ef_et_hk /NP-POSS /NP-OBJ /VP ADVP ADVP-DATE-REL "
         "fs_þf no_et_kk_þf /ADVP-DATE-REL ADVP-DATE-REL fs_þgf dagsafs "
         "lo_et_kk_þgf /ADVP-DATE-REL /ADVP st VP so_et_fh_gm_nt_p1 "
-        "so_1_nf_gm_nh NP-OBJ pfn_et_kvk_nf_p3 /NP-OBJ /VP ADJP "
+        "VP so_1_nf_gm_nh NP-OBJ pfn_et_kvk_nf_p3 /NP-OBJ /VP /VP ADJP "
         "lo_et_kvk_nf_sb /ADJP /VP-SEQ /IP /S-MAIN p /P"
     )
     s = r.parse_single(
@@ -844,26 +948,16 @@ def test_abbreviations():
     )
     assert (
         s.tree.flat_with_all_variants == "P S-MAIN IP ADVP ao /ADVP VP-SEQ "
-        "VP so_et_fh_gm_p3_þt NP-SUBJ no_et_gr_hk_nf PP fs_ef NP no_ef_et_hk "
-        "/NP /PP /NP-SUBJ so_0_et_hk_lhþt /VP ADVP ADVP-DATE-REL "
-        "raðnr no_et_kk_þf /ADVP-DATE-REL /ADVP /VP-SEQ /IP /S-MAIN st "
-        "S-MAIN IP NP-SUBJ no_et_kk_nf person_kk_nf /NP-SUBJ VP-SEQ "
-        "VP so_et_fh_gm_p3_þt so_1_þf_gm_nh NP-OBJ pfn_et_hk_p3_þf /NP-OBJ "
-        "/VP PP fs_ef NP no_ef_et_hk st no_ef_et_hk ao /NP /PP /VP-SEQ "
-        "S-ADV-TEMP ao st IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ VP-SEQ "
-        "VP so_0_et_fh_mm_nt_p3 /VP PP fs_þgf NP no_et_hk_þgf /NP /PP "
-        "/VP-SEQ /IP /S-ADV-TEMP /IP /S-MAIN p /P"
-    ) or (
-        s.tree.flat_with_all_variants == "P S-MAIN IP ADVP ao /ADVP VP-SEQ "
-        "VP so_et_fh_gm_p3_þt NP-SUBJ no_et_gr_hk_nf PP fs_ef NP no_ef_et_hk "
-        "/NP /PP /NP-SUBJ so_0_et_hk_lhþt /VP ADVP ADVP-DATE-REL "
-        "raðnr no_et_kk_þf /ADVP-DATE-REL /ADVP /VP-SEQ /IP /S-MAIN st "
-        "S-MAIN IP NP-SUBJ no_et_kk_nf person_kk_nf /NP-SUBJ VP-SEQ "
-        "VP so_et_fh_gm_p3_þt so_1_þf_gm_nh NP-OBJ pfn_et_hk_p3_þf /NP-OBJ "
-        "/VP PP fs_ef NP no_ef_et_hk st no_ef_et_hk ao /NP /PP "
-        "S-ADV-TEMP ao st IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ VP-SEQ "
-        "VP so_0_et_fh_mm_nt_p3 /VP PP fs_þgf NP no_et_hk_þgf /NP /PP "
-        "/VP-SEQ /IP /S-ADV-TEMP /VP-SEQ /IP /S-MAIN p /P"
+        "VP so_et_fh_gm_p3_þt NP-SUBJ no_et_gr_hk_nf PP fs_ef NP "
+        "no_ef_et_hk /NP /PP /NP-SUBJ VP so_0_et_hk_lhþt /VP /VP ADVP "
+        "ADVP-DATE-REL raðnr no_et_kk_þf /ADVP-DATE-REL /ADVP "
+        "/VP-SEQ /IP /S-MAIN st S-MAIN IP NP-SUBJ no_et_kk_nf "
+        "person_kk_nf /NP-SUBJ VP-SEQ VP so_et_fh_gm_p3_þt "
+        "VP so_1_þf_gm_nh NP-OBJ pfn_et_hk_p3_þf /NP-OBJ /VP /VP PP "
+        "fs_ef NP no_ef_et_hk st no_ef_et_hk ao /NP /PP /VP-SEQ "
+        "S-ADV-TEMP ao st IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ "
+        "VP-SEQ VP so_0_et_fh_mm_nt_p3 /VP PP fs_þgf NP lén_þgf "
+        "/NP /PP /VP-SEQ /IP /S-ADV-TEMP /IP /S-MAIN p /P"
     )
 
 
@@ -1078,7 +1172,7 @@ def test_ifd_tag():
         "ta", "nkeo", "ta",  # 19. júní 2003
         "c",
         "sfm3eþ",
-        "aa",
+        "ao",
         "ta", "x",  # 300 kg
         ".",
     ]
@@ -1208,6 +1302,27 @@ def test_composite_words():
         "P S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP so_1_nf_et_fh_gm_p3_þt "
         "NP-PRD no_et_kk_nf st no_et_kk_nf /NP-PRD /VP /IP /S-MAIN p /P"
     )
+    s = r.parse_single("Hann var dómsmála-, mennta- og menningarmálaráðherra.")
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP so_1_nf_et_fh_gm_p3_þt "
+        "NP-PRD no_et_kk_nf no_et_kk_nf st no_et_kk_nf /NP-PRD /VP /IP /S-MAIN p /P"
+    )
+    s = r.parse_single("Hann var dómsmála- ferðamála- mennta- og menningarmálaráðherra.")
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP so_1_nf_et_fh_gm_p3_þt "
+        "NP-PRD no_et_kk_nf no_et_kk_nf no_et_kk_nf st no_et_kk_nf /NP-PRD /VP /IP /S-MAIN p /P"
+    )
+    s = r.parse_single("Hann var hálf-þýskur og fæddist í Vestur-Þýskalandi.")
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP-SEQ VP so_et_fh_gm_p3_þt "
+        "NP-PRD ADJP lo_et_kk_nf_sb /ADJP /NP-PRD /VP st VP so_0_et_fh_mm_p3_þt /VP "
+        "PP fs_þgf NP no_et_hk_þgf /NP /PP /VP-SEQ /IP /S-MAIN p /P"
+    )
+    # Note that 'hálf - þýskur' is not the same as 'hálf-þýskur'
+    # and 'Vestur  -  Þýskaland' is not the same as 'Vestur-Þýskaland'
     s = r.parse_single("Ég borðaði sykursaltan fiskinn")
     assert s.lemmas == ['ég', 'borða', 'sykur-saltur', 'fiskur']
     s = r.parse_single("Ég borðaði sykurinnsaltan fiskinn")
@@ -1216,8 +1331,8 @@ def test_composite_words():
     # 'sykrisaltan' is not a valid composite word, so this should get parsed
     # as an unknown noun - causing 'fiskinn' to be parsed as an adjective
     assert s.lemmas == ['ég', 'borða', 'sykrisaltan', 'fiskinn']
-    s = r.parse_single("Hann fékk reynslulausn úr fangelsi")
-    assert s.lemmas == ['hann', 'fá', 'reynslu-lausn', 'úr', 'fangelsi']
+    s = r.parse_single("Hann hjólaði kattspenntur á kvenbretti niður brekkuna")
+    assert s.lemmas == ['hann', 'hjóla', 'katt-spenna', 'á', 'kven-bretti', 'niður', 'brekka']
 
 
 def test_compressed_bin():
@@ -1227,6 +1342,7 @@ def test_compressed_bin():
     assert "Ísland" in binc
     assert "Vestur-Þýskaland" in binc
     assert "glerxaugu" not in binc
+    assert "vextir" in binc
     assert "x" not in binc
     assert "X" not in binc
     assert (
@@ -1386,6 +1502,10 @@ def test_subj_op():
     assert s.tree is None
     s = r.parse_single("hestsins dreymdi köttinn")
     assert s.tree is None
+    s = r.parse_single("hestinn dreymdi kettinum")
+    assert s.tree is None
+    s = r.parse_single("hestinn dreymdi kattarins")
+    assert s.tree is None
     # hraka
     s = r.parse_single("hestinum hrakaði hratt")
     assert s.tree is not None
@@ -1396,6 +1516,23 @@ def test_subj_op():
     s = r.parse_single("hestinn hrakaði hratt")
     assert s.tree is None
     s = r.parse_single("hestsins hrakaði hratt")
+    assert s.tree is None
+    # blöskra e-ð
+    s = r.parse_single("mér blöskraði vitleysan í Páli")
+    assert s.tree is not None
+    assert s.tree.nouns == ["vitleysa", "Páll"]
+    assert s.tree.verbs == ["blöskra"]
+    s = r.parse_single("ég blöskraði vitleysan í Páli")
+    assert s.tree is None
+    s = r.parse_single("mig blöskraði vitleysan í Páli")
+    assert s.tree is None
+    s = r.parse_single("mín blöskraði vitleysan í Páli")
+    assert s.tree is None
+    s = r.parse_single("mér blöskraði vitleysuna í Páli")
+    assert s.tree is None
+    s = r.parse_single("mér blöskraði vitleysunni í Páli")
+    assert s.tree is None
+    s = r.parse_single("mér blöskraði vitleysunnar í Páli")
     assert s.tree is None
 
 
@@ -1410,6 +1547,120 @@ def test_prepositions():
     s = r.parse_single("Ég fór niðrá bryggjuna.")
     assert s.tree is not None
     assert s.tree.match("P >> { VP > { PP > { fs_þf } } }")
+
+
+def test_personally():
+    s = r.parse_single("Mér persónulega þótti þetta ekki flott.")
+    assert s.tree is not None
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ pfn_et_p1_þgf ao /NP-SUBJ so_subj_op_þgf_et_fh_gm_þt "
+        "NP fn_et_hk_nf /NP ADJP ADVP eo /ADVP lo_et_hk_nf_sb /ADJP /IP /S-MAIN p /P"
+    )
+    s = r.parse_single("Þetta mál varðar þig persónulega.")
+    assert s.tree is not None
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ fn_et_hk_nf no_et_hk_nf /NP-SUBJ VP "
+        "so_1_þf_et_fh_gm_nt_p3 NP-OBJ pfn_et_p2_þf ao /NP-OBJ /VP /IP /S-MAIN p /P"
+    )
+    s = r.parse_single("Þetta kom illa við þær persónulega.")
+    assert s.tree is not None
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP-SEQ VP so_0_et_fh_gm_p3_þt /VP "
+        "ADVP ao PP fs_þf NP pfn_ft_kvk_p3_þf ao /NP /PP /ADVP /VP-SEQ /IP /S-MAIN p /P"
+    )
+
+
+def test_adjectives():
+    sents = [
+        "Páll er skemmtilegur.",
+        "Páll varð skemmtilegur.",
+        "Páll má vera skemmtilegur.",
+        "Páll mætti verða skemmtilegur.",
+        "Páll skyldi vera skemmtilegur.",
+        "Páll skal verða skemmtilegur.",
+        "Páll hefur verið skemmtilegur.",
+        "Páll hefur orðið skemmtilegur.",
+        "Páll hefði viljað vera skemmtilegur.",
+        "Páll hefði viljað verða skemmtilegur.",
+        "Páll hefði getað verið skemmtilegur.",
+        "Páll hefði getað orðið skemmtilegur.",
+        # Of mikið af því góða?
+        # "Páll hefði getað átt að vera skemmtilegur.",
+        # "Páll hafði getað átt að verða skemmtilegur.",
+        "Páll mætti hafa verið skemmtilegur.",
+        "Páll má hafa orðið skemmtilegur.",
+        "Páll skal hafa verið skemmtilegur.",
+        "Páll skyldi hafa orðið skemmtilegur.",
+        "Páll gæti hafa verið skemmtilegur.",
+        "Páll gæti hafa orðið skemmtilegur.",
+        "Páll ætti að vera skemmtilegur.",
+        "Páll ætti að hafa verið skemmtilegur.",
+        "Páll átti að verða skemmtilegur.",
+        "Páll á að hafa orðið skemmtilegur.",
+        "Páll gæti hafa átt að vera skemmtilegur.",
+        "Páll getur hafa átt að verða skemmtilegur.",
+    ]
+    for sent in sents:
+        s = r.parse_single(sent)
+        assert s.tree is not None
+        assert s.tree.nouns == ["Páll"]
+        assert s.tree.S_MAIN.IP.VP.NP_PRD.ADJP.lemmas == ["skemmtilegur"]
+
+
+def test_all_mine():
+    s = r.parse_single("Ég setti allt mitt í hlutabréfin.")
+    assert s.tree is not None
+    assert s.tree.nouns == ["hlutabréf"]
+    assert s.tree.S_MAIN.IP.VP_SEQ.VP.NP_OBJ.lemmas == ["allur", "minn"]
+    s = r.parse_single("Ég tapaði öllu mínu í spilakössum.")
+    assert s.tree is not None
+    assert s.tree.nouns == ["spilakassi"]
+    assert s.tree.S_MAIN.IP.VP_SEQ.VP.NP_OBJ.lemmas == ["allur", "minn"]
+    s = r.parse_single("Þú settir allt þitt í hlutabréfin.")
+    assert s.tree is not None
+    assert s.tree.nouns == ["hlutabréf"]
+    assert s.tree.S_MAIN.IP.VP_SEQ.VP.NP_OBJ.lemmas == ["allur", "þinn"]
+    s = r.parse_single("Þú tapaðir öllu þínu í spilakössum.")
+    assert s.tree is not None
+    assert s.tree.nouns == ["spilakassi"]
+    assert s.tree.S_MAIN.IP.VP_SEQ.VP.NP_OBJ.lemmas == ["allur", "þinn"]
+    s = r.parse_single("Hann setti allt sitt í hlutabréfin.")
+    assert s.tree is not None
+    assert s.tree.nouns == ["hlutabréf"]
+    assert s.tree.S_MAIN.IP.VP_SEQ.VP.NP_OBJ.lemmas == ["allur", "sinn"]
+    s = r.parse_single("Hún tapaði öllu sínu í spilakössum.")
+    assert s.tree is not None
+    assert s.tree.nouns == ["spilakassi"]
+    assert s.tree.S_MAIN.IP.VP_SEQ.VP.NP_OBJ.lemmas == ["allur", "sinn"]
+
+
+def test_company():
+    s = r.parse_single("Hann réðst inn á skrifstofu Samherja hf. og rændi gögnum.")
+    assert s.tree is not None
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP-SEQ VP so_0_et_fh_mm_p3_þt "
+        "/VP PP ao fs_þf NP no_et_kvk_þf NP-POSS NP-COMPANY sérnafn_ef "
+        "fyrirtæki /NP-COMPANY /NP-POSS /NP /PP st VP so_1_þgf_et_fh_gm_p3_þt "
+        "NP-OBJ no_ft_hk_þgf /NP-OBJ /VP /VP-SEQ /IP /S-MAIN p /P"
+    )
+    # !!! Note that lemmas of words found in BÍN are in lower case
+    assert [t.lemma for t in s.tree.all_matches("NP-COMPANY")] == ["samherji hf."]
+    s = r.parse_single("Hands ASA er dótturfyrirtæki Celestial Inc.")
+    assert s.tree is not None
+    assert (
+        s.tree.flat_with_all_variants ==
+        "P S-MAIN IP NP-SUBJ NP-COMPANY sérnafn fyrirtæki /NP-COMPANY /NP-SUBJ "
+        "VP so_1_nf_et_fh_gm_nt_p3 NP-PRD no_et_hk_nf NP-POSS "
+        "NP-COMPANY sérnafn fyrirtæki /NP-COMPANY /NP-POSS /NP-PRD /VP /IP /S-MAIN p /P"
+    )
+    assert (
+        [t.lemma for t in s.tree.all_matches("NP-COMPANY")] ==
+        ['Hands Allmennaksjeselskap', 'Celestial Incorporated']
+    )
 
 
 def test_finish():
@@ -1443,4 +1694,8 @@ if __name__ == "__main__":
     test_subj_op()
     test_names()
     test_prepositions()
+    test_personally()
+    test_company()
+    test_adjectives()
+    test_all_mine()
     test_finish()

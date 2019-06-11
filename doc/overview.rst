@@ -64,11 +64,11 @@ What Reynir does
 
 Reynir starts by **tokenizing** your text, i.e. dividing it up into individual words,
 numbers, punctuation and other tokens. For this, it uses the separate
-`Tokenizer <https://github.com/vthorsteinsson/Tokenizer>`_ package, by the
+`Tokenizer <https://github.com/mideind/Tokenizer>`_ package, by the
 same authors, which is automatically installed with Reynir.
 
 After tokenization, Reynir proceeds to **parse** the text according to a
-`context-free grammar <https://github.com/vthorsteinsson/ReynirPackage/blob/master/src/reynir/Reynir.grammar>`_
+`context-free grammar <https://github.com/mideind/ReynirPackage/blob/master/src/reynir/Reynir.grammar>`_
 for the modern Icelandic language. This grammar contains rules describing
 how sentences and the various subparts thereof can be validly constructed.
 

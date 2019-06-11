@@ -41,13 +41,13 @@ To install Reynir:
 
 ...or if you want to be able to edit Reynir's source code in-place
 and perhaps submit pull requests (welcome!) to the project's
-`GitHub repository <https://github.com/vthorsteinsson/ReynirPackage>`_:
+`GitHub repository <https://github.com/mideind/ReynirPackage>`_:
 
 .. code-block:: bash
 
     $ mkdir ~/github
     $ cd ~/github
-    $ git clone https://github.com/vthorsteinsson/ReynirPackage
+    $ git clone https://github.com/mideind/ReynirPackage
     $ cd ReynirPackage
     $ python setup.py develop
 

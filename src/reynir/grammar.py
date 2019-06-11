@@ -5,7 +5,6 @@
     Grammar module
 
     Copyright (C) 2019 Miðeind ehf.
-    Original author: Vilhjálmur Þorsteinsson
 
        This program is free software: you can redistribute it and/or modify
        it under the terms of the GNU General Public License as published by
@@ -230,6 +229,12 @@ class Terminal:
         """ Return the (positive) sequence number of this terminal """
         return self._index
 
+    @property
+    def is_literal(self):
+        """ Return True if this is a literal terminal, i.e. one enclosed
+            within single or double quotes """
+        return False
+
     def set_index(self, ix):
         """ Set a new sequence number for this nonterminal """
         assert ix > 0
@@ -257,6 +262,12 @@ class LiteralTerminal(Terminal):
         # - no stemming or other canonization should be applied,
         # although the string will be converted to lowercase
         self._strong = q == '"'
+
+    @property
+    def is_literal(self):
+        """ Return True if this is a literal terminal, i.e. one enclosed
+            within single or double quotes """
+        return True
 
     def matches(self, t_kind, t_val, t_lit):
         """ A literal terminal matches a token if the token text is
@@ -417,7 +428,8 @@ class Production:
 _PRAGMA_SCORE = "$score("
 _PRAGMA_ROOT = "$root("
 _PRAGMA_TAG = "$tag("
-_PRAGMA_ERROR = "$error("
+_PRAGMA_IF = "$if("
+_PRAGMA_ENDIF = "$endif("
 
 
 class Grammar:
@@ -471,6 +483,10 @@ class Grammar:
         # Information about the grammar file
         self._file_name = None
         self._file_time = None
+
+        # Grammar parsing conditions, checkable with $if()...$endif()
+        # This should be a set of strings
+        self._conditions = set()
 
     @property
     def nt_dict(self):
@@ -545,6 +561,11 @@ class Grammar:
     def file_time(self):
         """ Return the timestamp of the grammar file, or None """
         return self._file_time
+
+    def set_conditions(self, cond_set):
+        """ Set the parsing conditions for this grammar,
+            checkable with $if()...$endif() """
+        self._conditions = cond_set
 
     def __getitem__(self, nt):
         """ Look up a nonterminal, yielding a list of (priority, production) tuples """
@@ -623,15 +644,11 @@ class Grammar:
         terminals = self._terminals
         nonterminals = self._nonterminals
         grammar = self._nt_dict
-        # The number of the current line in the grammar file
-        line = 0
         # Reset the sequence of production indices
         Production.reset()
-
         # Dictionary of variants, keyed by variant name
         # where the values are lists of variant options (strings)
         variants = OrderedDict()
-        current_line = ""
 
         def parse_line(s):
 
@@ -640,12 +657,22 @@ class Grammar:
                 # Blank line: ignore
                 return
 
-            def _parse_rhs(nt_id, vts, s, priority):
-                """ Parse a right-hand side sequence, eventually with relative priority
-                    within the nonterminal """
+            def highest_priority(nt_id):
+                """ Return the highest priority index for a production
+                    of the given nonterminal """
+                try:
+                    nt = nonterminals[nt_id]
+                    return max(prio for prio, _ in grammar[nt])
+                except (KeyError, ValueError):
+                    return 0
 
-                def _add_rhs(nt_id, rhs, priority=0):
-                    """ Add a fully expanded right-hand-side production to a nonterminal rule """
+            def parse_rhs(nt_id, vts, s, priority):
+                """ Parse a right-hand side sequence, eventually with
+                    relative priority within the nonterminal """
+
+                def add_rhs(nt_id, rhs, priority=0):
+                    """ Add a fully expanded right-hand-side production
+                        to a nonterminal rule """
                     nt = nonterminals[nt_id]
                     if nt not in grammar:
                         # First production of this nonterminal
@@ -663,7 +690,7 @@ class Grammar:
                 s = s.strip()
                 if not s:
                     raise GrammarError("Invalid syntax for production", fname, line)
-                
+
                 tokens = s.split()
 
                 # rhs is a list of tuples, one for each token, as follows:
@@ -738,7 +765,8 @@ class Grammar:
                 # Generate productions for all variants
 
                 def variant_values(vlist):
-                    """ Returns a list of names with all applicable variant options appended """
+                    """ Returns a list of names with all applicable
+                        variant options appended """
                     if not vlist:
                         yield [""]
                         return
@@ -830,26 +858,28 @@ class Grammar:
                                 )
                             # Create C*, C+ or C?
                             new_nt_id = sym + repeat
-                            # Make the new nonterminal and production if not already there
+                            # Make the new nonterminal and production,
+                            # if not already there
                             if new_nt_id not in nonterminals:
                                 new_nt = nonterminals[
                                     new_nt_id
                                 ] = self._make_nonterminal(new_nt_id, fname, line)
                                 new_nt.add_ref()
-                                # Note that the Earley algorithm is more efficient on left recursion
-                                # than middle or right recursion. Therefore it is better to generate
+                                # Note that the Earley algorithm is more efficient
+                                # on left recursion than middle or right recursion.
+                                # Therefore it is better to generate
                                 # Cx -> Cx C than Cx -> C Cx.
                                 # First production: Cx C
                                 new_p = Production(fname, line)
                                 if repeat != "?":
                                     new_p.append(new_nt)  # C* / C+
                                 new_p.append(n)  # C
-                                _add_rhs(new_nt_id, new_p)  # Default priority 0
+                                add_rhs(new_nt_id, new_p)  # Default priority 0
                                 # Second production: epsilon(*, ?) or C(+)
                                 new_p = Production(fname, line)
                                 if repeat == "+":
                                     new_p.append(n)
-                                _add_rhs(new_nt_id, new_p)  # Default priority 0
+                                add_rhs(new_nt_id, new_p)  # Default priority 0
                             # Substitute the Cx in the original production
                             n = nonterminals[new_nt_id]
 
@@ -868,10 +898,11 @@ class Grammar:
                             "Nonterminal {0} deriving itself".format(nt_id_full),
                             fname, line
                         )
-                    _add_rhs(nt_id_full, result, priority)
+                    add_rhs(nt_id_full, result, priority)
 
             def variant_names(nt, vts):
-                """ Returns a list of names with all applicable variant options appended """
+                """ Returns a list of names with all applicable
+                    variant options appended """
                 result = [nt]
                 for v in vts:
                     newresult = []
@@ -882,8 +913,9 @@ class Grammar:
                 return result
 
             def apply_to_nonterminals(s, func):
-                """ Parse a nonterminal/var list from string s, then apply func(nt, p) to
-                    all nonterminals, where p is the parameter of the pragma """
+                """ Parse a nonterminal/var list from string s,
+                    then apply func(nt, p) to all nonterminals,
+                    where p is the parameter of the pragma """
                 ix = s.rfind(")")
                 if ix < 0:
                     raise GrammarError(
@@ -896,8 +928,6 @@ class Grammar:
                 cnt = 0
                 for nt_name in nts:
                     ntv = nt_name.split("/")
-                    # if not ntv[0].isidentifier():
-                    #    raise GrammarError("Invalid nonterminal name '{0}'".format(ntv[0]), fname, line)
                     for vname in ntv[1:]:
                         if vname not in variants:
                             raise GrammarError(
@@ -906,8 +936,7 @@ class Grammar:
                                 ),
                                 fname, line
                             )
-                    var_names = variant_names(ntv[0], ntv[1:])
-                    for vname in var_names:
+                    for vname in variant_names(ntv[0], ntv[1:]):
                         if vname not in nonterminals:
                             raise GrammarError(
                                 "Unknown nonterminal '{0}'".format(vname),
@@ -930,6 +959,7 @@ class Grammar:
                     )
 
             if s.startswith("/"):
+
                 # Definition of variant
                 # A variant is specified as /varname = opt1 opt2 opt3...
                 v = s.split("=", maxsplit=1)
@@ -951,10 +981,14 @@ class Grammar:
                             fname, line
                         )
                 variants[vname] = v
+
             elif s.startswith("$"):
+
                 # Pragma
                 s = s.strip()
+
                 if s.startswith(_PRAGMA_SCORE):
+
                     # Pragma $score(int) Nonterminal/var1/var2 ...
                     s = s[len(_PRAGMA_SCORE) :]
 
@@ -964,11 +998,13 @@ class Grammar:
                     apply_to_nonterminals(s, set_score)
 
                 elif s.startswith(_PRAGMA_TAG):
+
                     # Pragma $tag(tagstring) Nonterminal/var1/var2 ...
                     s = s[len(_PRAGMA_TAG) :]
                     apply_to_nonterminals(s, lambda nt, tag: nt.add_tag(tag))
 
                 elif s.startswith(_PRAGMA_ROOT):
+
                     # Pragma $root(Nonterminal)
                     # Identify a nonterminal as a secondary parse root
                     if s[-1] != ")":
@@ -987,13 +1023,12 @@ class Grammar:
                     # Add an implicit reference to the root
                     nonterminals[root_nt].add_ref()
                     self._secondary_roots.append(nonterminals[root_nt])
-                elif s.startswith(_PRAGMA_ERROR):
-                    # Pragma $error(error_rule, correct_rule)
-                    s = s[len(_PRAGMA_ERROR) :]
-                    # TODO: do something with error pragma
+
                 else:
                     raise GrammarError("Unknown pragma '{0}'".format(s), fname, line)
+
             else:
+
                 # New nonterminal
                 if "→" in s:
                     # Fancy schmancy arrow sign: use it
@@ -1020,10 +1055,9 @@ class Grammar:
                             .format(vname, nt),
                             fname, line
                         )
-                var_names = variant_names(nt, current_variants)
 
                 # Add all previously unknown nonterminal variants
-                for nt_var in var_names:
+                for nt_var in variant_names(nt, current_variants):
                     if nt_var in nonterminals:
                         cnt = nonterminals[nt_var]
                     else:
@@ -1037,6 +1071,7 @@ class Grammar:
                         grammar[cnt] = []
 
                 sep = "|"  # Default production separator
+                priority = 0  # Default production priority
                 if ">" in rule[1]:
                     # Looks like a priority specification between productions
                     if "|" in rule[1]:
@@ -1045,16 +1080,43 @@ class Grammar:
                             fname, line
                         )
                     sep = ">"
-                for priority, prod in enumerate(rule[1].split(sep)):
-                    # Add the productions on the right hand side, delimited by '|' or '>'
-                    _parse_rhs(
-                        current_NT,
-                        current_variants,
-                        prod,
-                        priority if sep == ">" else 0,
-                    )
+                    # In the case of a prioritized list of productions,
+                    # start with a priority index equal to the highest priority
+                    # of the existing productions plus one, ensuring that
+                    # additional productions always have less priority
+                    # (higher index) than the pre-existing ones
+                    priority = highest_priority(current_NT) + 1
+
+                for prod in rule[1].split(sep):
+                    # Add the productions on the right hand side,
+                    # delimited by '|' or '>'
+                    # Note: we explicitly tolerate extra separators without error;
+                    # this can be used to attach lower-priority productions
+                    # to nonterminals, for instance fallback rules to be used
+                    # for grammar error checking.
+                    prod = prod.strip()
+                    if prod:
+                        parse_rhs(
+                            current_NT,
+                            current_variants,
+                            prod,
+                            priority,
+                        )
+                        # If productions are separated by the > sign, we increase
+                        # the priority number (which lowers the priority) by one
+                        # for each production
+                        if sep == ">":
+                            priority += 1
 
         # Main parse loop
+
+        # The number of the current line in the grammar file
+        line = 0
+        # The current logical line, eventually amalgamated from
+        # multiple physical lines via continuation
+        current_line = ""
+        # Stack of conditional sections
+        cond_stack = [("", True)]
 
         try:
             with open(fname, "r", encoding="utf-8") as inp:
@@ -1077,12 +1139,43 @@ class Grammar:
                         current_line += s
                         continue
 
-                    # New item starting: parse the previous one and start a new
-                    parse_line(current_line)
+                    if cond_stack[-1][1]:
+                        # New item starting: parse the previous one and start a new
+                        parse_line(current_line)
+
+                    # Check conditional section
+                    if s.startswith(_PRAGMA_IF) and s.endswith(")"):
+                        cond = s[4:-1].strip()
+                        if not cond.isidentifier():
+                            raise GrammarError(
+                                "$if() condition must be a valid identifier"
+                            )
+                        # Establish whether we want to parse the conditional
+                        # section or not
+                        new_cond = cond_stack[-1][1] and cond in self._conditions
+                        cond_stack.append((cond, new_cond))
+                        s = ""
+                    elif s.startswith(_PRAGMA_ENDIF) and s.endswith(")"):
+                        cond = s[7:-1].strip()
+                        if not cond.isidentifier():
+                            raise GrammarError(
+                                "$endif() condition must be a valid identifier"
+                            )
+                        if len(cond_stack) < 2:
+                            raise GrammarError("$endif() with no matching $if()")
+                        if cond != cond_stack[-1][0]:
+                            raise GrammarError(
+                                "$endif({0}) does not match $if({1})"
+                                .format(cond, cond_stack[-1][0])
+                            )
+                        del cond_stack[-1]
+                        s = ""
+
                     current_line = s
 
                 # Parse the final chunk
-                parse_line(current_line)
+                if current_line:
+                    parse_line(current_line)
 
         except (IOError, OSError):
             raise GrammarError("Unable to open or read grammar file", fname, 0)
@@ -1095,12 +1188,10 @@ class Grammar:
             if verbose and not nt.has_ref:
                 # Emit a warning message if verbose=True
                 print("Nonterminal {0} is never referenced in a production".format(nt))
-                # raise GrammarError("Nonterminal {0} is never referenced in a production".format(nt), nt.fname(), nt.line())
             if nt not in grammar:
                 raise GrammarError(
                     "Nonterminal {0} is referenced but not defined".format(nt),
-                    nt.fname,
-                    nt.line
+                    nt.fname, nt.line
                 )
         for nt, plist in grammar.items():
             if len(plist) == 0:
@@ -1113,8 +1204,7 @@ class Grammar:
                     if len(p) == 1 and p[0] == nt:
                         raise GrammarError(
                             "Nonterminal {0} produces itself".format(nt),
-                            p.fname,
-                            p.line
+                            p.fname, p.line
                         )
 
         # Check that all nonterminals derive terminal strings
@@ -1134,14 +1224,13 @@ class Grammar:
             agenda = [nt for nt in nonterminals.values() if nt not in der_t]
         if agenda:
             raise GrammarError(
-                "Nonterminals {0} do not derive terminal strings".format(
-                    ", ".join([str(nt) for nt in agenda])
-                ),
-                fname,
-                0
+                "Nonterminals {0} do not derive terminal strings"
+                .format(", ".join([str(nt) for nt in agenda])),
+                fname, 0
             )
 
-        # Short-circuit nonterminals that point directly and uniquely to other nonterminals.
+        # Short-circuit nonterminals that point directly and uniquely
+        # to other nonterminals.
         # Becausee this creates a gap between the original grammar
         # and the resulting trees, we only do this for nonterminals with variants
         # that do not have a $score pragma
@@ -1158,7 +1247,8 @@ class Grammar:
                 and len(plist[0][1]) == 1
                 and isinstance(plist[0][1][0], Nonterminal)
             ):
-                # This nonterminal has only one production, with only one nonterminal item
+                # This nonterminal has only one production,
+                # with only one nonterminal item
                 target = plist[0][1][0]
                 assert target != nt
                 while target in shortcuts:
@@ -1180,7 +1270,8 @@ class Grammar:
                         #        .format(s, target, nt))
                         p[ix] = target
 
-        # Now, after applying shortcuts, check that all nonterminals are reachable from the root
+        # Now, after applying shortcuts, check that all nonterminals
+        # are reachable from the root
         unreachable = {nt for nt in nonterminals.values()}
 
         def _remove(nt):

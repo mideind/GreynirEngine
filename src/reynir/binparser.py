@@ -166,10 +166,12 @@ class BIN_Token(Token):
     VBIT_HK = VBIT["hk"]
     VBIT_NH = VBIT["nh"]
     VBIT_VH = VBIT["vh"]
+    VBIT_BH = VBIT["bh"]
     VBIT_LH = VBIT["lhþt"]
     VBIT_MM = VBIT["mm"]
     VBIT_GM = VBIT["gm"]
     VBIT_GR = VBIT["gr"]
+    VBIT_OP = VBIT["op"]
     VBIT_SAGNB = VBIT["sagnb"]
     VBIT_LHNT = VBIT["lh"] | VBIT["nt"]
     VBIT_SUBJ = VBIT["subj"]
@@ -181,6 +183,7 @@ class BIN_Token(Token):
     FBIT_MASK = VBIT_ABBREV | VBIT_SUBJ | VBIT_SCASES
 
     CASES = ["nf", "þf", "þgf", "ef"]
+    CASES_SET = set(CASES)
     GENDERS = ["kk", "kvk", "hk"]
     GENDERS_SET = NOUNS_SET = frozenset(GENDERS)
     GENDERS_MAP = {"kk": "KK", "kvk": "KVK", "hk": "HK"}
@@ -274,6 +277,7 @@ class BIN_Token(Token):
             "af",
             "fyrir",
             "því",
+            "saman"
         ]
     )
 
@@ -428,9 +432,13 @@ class BIN_Token(Token):
         self.t0 = t[0]  # Token type (TOK.WORD, etc.)
         self.t1 = t[1]  # Token text
         self.t1_lower = t[1].lower()  # Token text, lower case
+        self.is_compound = False
         # t2 contains auxiliary token information, such as part-of-speech annotation, numbers, etc.
         if isinstance(t[2], list):
             self.t2 = tuple(t[2])
+            if self.t0 == TOK.WORD:
+                # Note whether the word is constructed by compounding
+                self.is_compound = any("-" in m.stofn for m in self.t2)
         else:
             self.t2 = t[2]
         self.is_upper = self.t1[0] != self.t1_lower[0]  # True if starts with upper case
@@ -598,7 +606,29 @@ class BIN_Token(Token):
             if terminal.has_variant("op") and self.verb_cannot_be_impersonal(verb, form):
                 # This can't work, as the verb can't be impersonal
                 return False
-            # Make sure that the subject case (last variant) matches the terminal
+            if terminal.variant(0) in "012":
+                # The terminal has the form so_1_þf_subj_obj_þgf
+                # where þgf is the subject case and þf is the object case
+                nargs = int(terminal.variant(0))
+                # We only need support one argument for subj_op verbs
+                # ('dreyma' + þf, 'vanta' + þf, etc.)
+                assert nargs == 1
+                if nargs != 1:
+                    return False
+                # Point to dict of single-argument verbs
+                verb_objects = self._VERB_OBJECTS[nargs]
+                if verb not in verb_objects:
+                    # Verb does not allow a single argument: we're done
+                    return False
+                # The case of the argument is in the second variant,
+                # immediately following the nargs
+                arg_case = terminal.variant(1)
+                assert arg_case in BIN_Token.CASES_SET
+                if all(arg_case != argspec[0] for argspec in verb_objects[verb]):
+                    # This verb does not allow an argument in the specified case
+                    return False
+            # Finally, make sure that the subject case (which is always
+            # in the last variant) matches the terminal
             return self.verb_subject_matches(verb, terminal.variant(-1))
 
         # Not a _subj terminal: no match of strictly impersonal verbs
@@ -621,7 +651,7 @@ class BIN_Token(Token):
                 return False
         # Check restrictive variants, i.e. we don't accept meanings
         # that have those unless they are explicitly present in the terminal
-        for v in ("sagnb", "lhþt", "bh"):  # Be careful with "lh" here - !!! add mm?
+        for v in ("sagnb", "lhþt", "bh", "op"):  # Be careful with "lh" here - !!! add mm?
             if BIN_Token.VARIANT[v] in form and not terminal.has_variant(v):
                 return False
         if terminal.is_lh:
@@ -703,7 +733,11 @@ class BIN_Token(Token):
                 # Must be capitalized and a single name
                 return False
             if not terminal.num_variants:
-                return True
+                # There must be a case associated with the 'sérnafn' terminal.
+                # Note that allowing a person name to bind with a caseless
+                # 'sérnafn' enables a number of erroneous parses, so only change
+                # this if you know what you're doing.
+                return False
             case = terminal.variant(0)
             return any(m.case == case for m in self.t2)
         if not terminal.startswith("person"):
@@ -768,9 +802,15 @@ class BIN_Token(Token):
             # Whole number (integer): may be singular
             i = abs(i) % 100
             singular = (i != 11) and (i % 10) == 1
+        elif self.t1[-1] in "¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞":
+            # For numbers ending with fractions, we allow
+            # singular if the integer part is singular or
+            # if the fractional part has a numerator of 1
+            i = abs(i) % 100
+            singular = ((i != 11) and (i % 10) == 1) or self.t1[-1] in "¼½⅐⅑⅒⅓⅕⅙⅛"
         if terminal.is_singular and not singular:
             # Terminal is singular but number is plural
-            return True if orig_i in BIN_Token._SINGULAR_SPECIAL_CASES else False
+            return orig_i in BIN_Token._SINGULAR_SPECIAL_CASES
         if terminal.is_plural and singular:
             # Terminal is plural but number is singular
             return False
@@ -911,6 +951,14 @@ class BIN_Token(Token):
         """ A measurement token matches a measurement (mælieining) terminal """
         return terminal.startswith("mælieining")
 
+    def matches_DOMAIN(self, terminal):
+        """ A domain token matches a domain (lén) terminal """
+        return terminal.startswith("lén")
+
+    def matches_HASHTAG(self, terminal):
+        """ A hashtag token matches a hashtag (myllumerki) terminal """
+        return terminal.startswith("myllumerki")
+
     def matches_WORD(self, terminal):
         """ Match a word token, having the potential part-of-speech meanings
             from the BIN database, with the terminal """
@@ -954,6 +1002,11 @@ class BIN_Token(Token):
                 if v in BIN_Token.GENDERS_SET:
                     if m.ordfl != v:
                         # Mismatched gender
+                        return False
+                elif v == "xir":
+                    # Only match lemmas that end with 'ir',
+                    # such as 'læknir', 'kælir'
+                    if not m.stofn.endswith("ir"):
                         return False
                 elif no_info:
                     # No case and number info: probably a foreign word
@@ -1162,7 +1215,11 @@ class BIN_Token(Token):
             if " " in self.t1_lower:
                 return False
             if terminal.num_variants == 0:
-                return True
+                # For bare 'sérnafn' terminals, we don't allow
+                # tokens that have absolute BÍN matches
+                # (an absolute match being a match that does not
+                # require compounding)
+                return not bool(self.t2) or ("-" in self.t2[0].stofn)
             # The terminal is sérnafn_case: We only accept nouns or adjectives
             # that match the given case
             fbits = BIN_Token.get_fbits(m.beyging) & BIN_Token.VBIT_CASES
@@ -1252,6 +1309,8 @@ class BIN_Token(Token):
         TOK.TIMESTAMPREL: matches_TIMESTAMPREL,
         TOK.TIMESTAMPABS: matches_TIMESTAMPABS,
         TOK.MEASUREMENT: matches_MEASUREMENT,
+        TOK.DOMAIN: matches_DOMAIN,
+        TOK.HASHTAG: matches_HASHTAG,
         TOK.WORD: matches_WORD,
     }
 
@@ -1502,6 +1561,10 @@ class VariantHandler:
         return (self._vbits & BIN_Token.VBIT_SAGNB) != 0
 
     @property
+    def is_op(self):
+        return (self._vbits & BIN_Token.VBIT_OP) != 0
+
+    @property
     def is_lh(self):
         # Lýsingarháttur þátíðar ("LHÞT")
         return (self._vbits & BIN_Token.VBIT_LH) != 0
@@ -1514,6 +1577,10 @@ class VariantHandler:
     @property
     def is_vh(self):
         return (self._vbits & BIN_Token.VBIT_VH) != 0
+
+    @property
+    def is_bh(self):
+        return (self._vbits & BIN_Token.VBIT_BH) != 0
 
 
 class BIN_Terminal(VariantHandler, Terminal):
@@ -1677,17 +1744,20 @@ class BIN_Grammar(Grammar):
 
     @staticmethod
     def _make_terminal(name):
-        """ Make BIN_Terminal instances instead of plain-vanilla Terminals """
+        """ Make BIN_Terminal instances instead of
+            plain-vanilla Terminals """
         return BIN_Terminal(name)
 
     @staticmethod
     def _make_literal_terminal(name):
-        """ Make BIN_LiteralTerminal instances instead of plain-vanilla LiteralTerminals """
+        """ Make BIN_LiteralTerminal instances instead of
+            plain-vanilla LiteralTerminals """
         return BIN_LiteralTerminal(name)
 
     @staticmethod
     def _make_nonterminal(name, fname, line):
-        """ Make BIN_Terminal instances instead of plain-vanilla Terminals """
+        """ Make BIN_Terminal instances instead of
+            plain-vanilla Terminals """
         return BIN_Nonterminal(name, fname, line)
 
 
@@ -1816,7 +1886,8 @@ def wrap_tokens(tokens, wrap_func=None):
             if tok[0] == TOK.PUNCTUATION and tok[1] == ")":
                 # Check the contents of the token list from left+1 to right-1
 
-                # Skip parentheses starting with "e." (English), "þ." (German) or "d." (Danish)
+                # Skip parentheses starting with "e." (English),
+                # "þ." (German) or "d." (Danish)
                 foreign = right > left + 1 and tlist[left + 1][1] in _SKIP_PARENTHESIS
 
                 def is_unknown(t):
@@ -1931,26 +2002,36 @@ def augment_terminal(terminal, text_lower, beyging):
     a = terminal.split("_")
     cases = []
     vstart = 1
+    vset_remove = set()
     if a[0] == "so" and len(a) > 1:
         # Special case for verb arguments: keep them in order
         if a[1] in "012":
             args = int(a[1])
             cases = a[1 : 2 + args]
             vstart = 2 + args
-        elif a[1] == "subj":
-            cases = a[1:2]
-            vstart = 2
+        # If a '_subj_xx' tail follows, keep it intact in its entirety
+        if a[vstart] == "subj":
+            cases += a[vstart:]
+            # In this case, we don't pick up any other variants from the terminal
+            vstart = len(a)
+            # Make sure we don't duplicate variants that are already in the cases string
+            vset_remove = set(cases)
     vset = set(a[vstart:])
     if a[0] == "pfn":
         # For personal pronouns, BÍN is missing gender and person information
         # Add it here for completeness
         vset |= _PFN_VARIANTS.get(text_lower, set())
     # Collect the variants from the terminal and from the BÍN 'beyging' string
-    if a[0] != "fs":
+    if a[0] != "fs" and a[0] != "sérnafn":
         # For prepositions, the beyging string is not significant and
         # may contain junk, if the same word form (such as 'á') is found in BÍN.
         # See comment in matcher_fs() within the BIN_Token class in binparser.py.
+        # For proper names ('sérnafn'), the matched token may be almost
+        # any word in BÍN, and the inflection data is not significant.
         vset |= BIN_Token.bin_variants(beyging)
+    if a[0] == "gata":
+        # No need for number specifier for street names
+        vset -= {"et", "ft"}
     # Additional hygiene to make sure we don't have both _esb and _sb / _evb and _vb
     if "esb" in vset and "sb" in vset:
         vset.remove("sb")
@@ -1960,6 +2041,11 @@ def augment_terminal(terminal, text_lower, beyging):
         # For impersonal verbs, all three persons are identical
         # and not required
         vset -= {"p1", "p2", "p3"}
+    elif "lh" in vset and "þt" in vset:
+        # Change _lh_þt to _lhþt
+        vset -= {"lh", "þt"}
+        vset.add("lhþt")
+    vset -= vset_remove
     return "_".join(a[0:1] + cases + sorted(list(vset)))
 
 

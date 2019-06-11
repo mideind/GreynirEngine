@@ -360,6 +360,7 @@ Samanburðarsetning →
 
 Skilyrðissetning → 
     Skilyrðistenging BeygingarliðurÁnUmröðunar
+    | Skilyrðistenging BeygingarliðurMeðUmröðun # 'Ef ekki næðist samkomulag yrði málið svæft'
     | Skilyrðistenging BeygingarliðurÁnF
     | Skilyrðissetning_vh
 
@@ -487,7 +488,7 @@ Tíðartenging →
     | 'á_sama_tíma:ao' "og:st"
     | 'í_sömu_andrá:ao' "og:st"
     | "síðan:st" VillaAð?
-    | "þegar:st" VillaAð?
+    | "nema:st"? "þegar:st" VillaAð?
     | "uns:st"
     | "meðan:st" VillaAð?
     | 'á_meðan:ao' VillaAð? # á meðan
@@ -2913,7 +2914,7 @@ Einkunn/tala/fall/kyn →
     # það dregur verulega úr margræðni
     | AtviksliðurEinkunn            # rúmlega (helmingur)
     | FornafnEinkunn/tala/fall/kyn  # Sá (stóri maður), allt þetta (víkjandi lán)
-    | TöluorðForskeyti/tala/fall/kyn? Töluorð/tala/fall/kyn  # [samtals] þrjá (gangandi menn) / [hátt í] 26
+    | TöluorðEinkunn/tala/fall/kyn  # [samtals] þrjá (gangandi menn) / [hátt í] 26
     | EignarFornafn                 # 'okkar/ykkar/hans/hennar/þess/þeirra' (pfn)
     | GreinirMeðLo/tala/fall/kyn 
 
@@ -2926,6 +2927,20 @@ $score(+4) Einkunn/tala/fall/kyn
 HundruðForskeyti → 'margur:lo'_sb_hk_nf_ft | 'margur:lo'_mst_hk_nf_ft # mörg, fleiri
 
 Hundruð → 'hundrað:hk'_nf_ft | 'þúsund:hk'_nf_ft # hundruð, þúsund
+
+TöluorðEinkunn/tala/fall/kyn →
+    TöluorðForskeyti/tala/fall/kyn? Töluorð/tala/fall/kyn
+
+# Gefa góðan plús fyrir töluorð í einkunn, þannig að þau límist
+# frekar við nafnorð heldur en að vera sjálfstæðir nafnliðir
+$score(+8) TöluorðEinkunn/tala/fall/kyn
+
+# Hvetja til notkunar fornafna í einkunn með nafnlið,
+# fremur en að þau standi sjálfstæð
+FornafnEinkunn/tala/fall/kyn →
+    Fornafn/tala/fall/kyn
+
+$score(+18) FornafnEinkunn/tala/fall/kyn
 
 # Lýsingarorð eða eignarfallsliður sem kemur á eftir nafnlið
 
@@ -3269,7 +3284,8 @@ NlFornafn_et_ef_hk → ÝmislegtAnnað_ef
 $score(+15) ÝmislegtAnnað/fall
 
 # Gefa stökum fornöfnum mínusstig - við viljum frekar sjá þau sem hluta af stærri nafnlið
-$score(-4) NlFornafn/tala/fall/kyn
+# Mínusinn þarf að vera nógu stór til að yfirvinna plúsinn fyrir andlag sagnar
+$score(-12) NlFornafn/tala/fall/kyn
 
 GreinirMeðLo/tala/fall/kyn →
     Greinir/tala/fall/kyn LoLiður/tala/fall/kyn
@@ -3958,10 +3974,12 @@ $score(-6) Ávarp/nkyn/fall
 ÞekktÁvarp_kk/fall →
     'herra:kk'_et/fall | 'séra:kk'_et/fall | 'hann:pfn'_kk_et/fall
     | 'doktor:kk'_et/fall | 'prófessor:kk'_et/fall
+    | "dj:kk"
 
 ÞekktÁvarp_kvk/fall →
     'frú:kvk'_et/fall | 'séra:kk'_et/fall | 'hún:pfn'_kvk_et/fall
     | 'doktor:kk'_et/fall | 'prófessor:kk'_et/fall | 'maddama:kvk'_et/fall
+    | "dj:kvk"
 
 $score(+10) ÞekktÁvarp/nkyn/fall
 
@@ -4028,8 +4046,8 @@ EfLiðurFramhald → KommaEfLiður+ ','?
 KommaEfLiður →
     ',' EfLiðurStakur
 
-$score(+3) EfLiður
-$score(+3) EfLiður_ft/kyn
+$score(+5) EfLiður
+$score(+5) EfLiður_ft/kyn
 
 # Eignarfallsliður sem stendur á undan nafnlið
 # ('Íslands fullorðnu synir', 'allra uppáhald')
@@ -4072,12 +4090,6 @@ EfLiðurForskeytiKjarni_ft/kyn → no_ef_ft/kyn
 $score(-1) EfLiðurForskeyti
 # Eignarfalls-forskeyti sem eru ekki tölur eða fornöfn eru sjaldgæf
 $score(-5) EfLiðurForskeytiKjarni/tala/kyn
-
-# Hvetja til notkunar fornafna í einkunn með nafnlið,
-# fremur en að þau standi sjálfstæð
-FornafnEinkunn/tala/fall/kyn → Fornafn/tala/fall/kyn
-
-$score(+18) FornafnEinkunn/tala/fall/kyn
 
 Fornafn/fall/tala/kyn → Fornafn/tala/fall/kyn
 
@@ -6160,6 +6172,8 @@ $score(-4) VillaFjöldiHluti_ft/fall/kyn
 #
 # ----------------------------------------------
 
+$if(include_queries)
+
 QueryRoot →
 
     QPerson > QCompany > QEntity > QTitle > QWord > QSearch
@@ -6200,9 +6214,13 @@ QPersonPrefix_þgf →
     "segðu" "mér"? "frá"
 
 QCompany →
-    QCompanyPrefix_nf Fyrirtæki_nf '?'?
-    | QCompanyPrefix_þf Fyrirtæki_þf '?'?
-    | QCompanyPrefix_þgf Fyrirtæki_þgf # '?'?
+    # Það þarf að gera ráð fyrir sérstökum punkti í
+    # enda fyrirspurnarinnar þar sem punktur á eftir 'hf.'
+    # eða 'ehf.' í enda setningar er skilinn frá
+    # skammstöfunar-tókanum.
+    QCompanyPrefix_nf Fyrirtæki_nf '.'? '?'?
+    | QCompanyPrefix_þf Fyrirtæki_þf '.'? '?'?
+    | QCompanyPrefix_þgf Fyrirtæki_þgf '.' # '?'?
 
 QCompanyPrefix_nf →
     "hvað" "er"
@@ -6214,7 +6232,7 @@ QCompanyPrefix_þf →
 QCompanyPrefix_þgf →
     "segðu" "mér"? "frá"
 
-QEntity → QEntityPrefix/fall QEntityKey/fall '?'?
+QEntity → QEntityPrefix/fall QEntityKey/fall '.'? '?'?
 
 QEntityKey/fall →
     Sérnafn/fall > Sérnafn > no/fall > no
@@ -6375,6 +6393,8 @@ QSearchToken →
     > tímapunkturafs > tímapunkturfast > tími
     > raðnr > to > töl > ártal > tala > sérnafn
 
+$endif(include_queries)
+
 
 # ----------------------------------------------
 #
@@ -6453,5 +6473,42 @@ OgEðaEn →
 VillaNé → "né:st"
 $tag(error) VillaNé
 $score(-999) VillaNé
+
+# Sögn í annarri tölu en frumlag: 'Vinnuvika sjómanna eru 7 dagar'
+
+BeygingarliðurÁnUmröðunar/tala/pers/kyn →
+    > VillaÍTölu/tala/pers/kyn
+
+VillaÍTölu_et_p1/kyn →
+    Frumlag_p1_et/kyn BeygingarliðurMegin_ft_p1/kyn
+VillaÍTölu_et_p2/kyn →
+    Frumlag_p2_et/kyn BeygingarliðurMegin_ft_p2/kyn
+VillaÍTölu_et_p3/kyn →
+    Frumlag_p3_et/kyn BeygingarliðurMegin_ft_p3/kyn
+
+VillaÍTölu_ft_p1/kyn →
+    Frumlag_p1_ft/kyn BeygingarliðurMegin_et_p1/kyn
+VillaÍTölu_ft_p2/kyn →
+    Frumlag_p2_ft/kyn BeygingarliðurMegin_et_p2/kyn
+VillaÍTölu_ft_p3/kyn →
+    Frumlag_p3_ft/kyn BeygingarliðurMegin_et_p3/kyn
+
+$tag(error) VillaÍTölu/tala/pers/kyn
+$score(-999) VillaÍTölu/tala/pers/kyn
+
+# Orð sem endar á -ir í nefnifalli notað í stað þolfalls:
+# 'ég sá læknir[inn]', 'skipið sigldi á tundurspillir[inn]',
+# 'kjötið var í kælir'
+
+Fyrirbæri_þf_kk →
+    > VillaEndingIR
+
+VillaEndingIR →
+    # The 'xir' variant on nouns causes the terminal to only match
+    # words with lemmas ending with 'ir'
+    no_et_nf_kk_xir
+
+$tag(error) VillaEndingIR
+$score(-999) VillaEndingIR
 
 $endif(include_errors)
