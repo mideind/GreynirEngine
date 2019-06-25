@@ -291,6 +291,7 @@ _DEFAULT_NT_MAP = {
     "Til": "C",
     "En": "C",
     "HvortSem": "C",
+    "Nhm": "TO",
 }
 
 # subject_to: don't push an instance of this if the
@@ -356,7 +357,7 @@ _DEFAULT_ID_MAP = {
     #"N": dict(name="Nafnorð"),
     #"PRON": dict(name="Fornafn"),
     "P": dict(name="Forsetning"),
-    "INF": dict(name="Nafnháttarmerki"),
+    "TO": dict(name="Nafnháttarmerki"),
     #"NUM": dict(name="Töluorð", subject_to={"NUM-RANGE"}),
     "C": dict(name="Samtenging"),
     #"ADJ": dict(name="Lýsingarorð", overrides="V"),
@@ -377,7 +378,7 @@ _DEFAULT_TERMINAL_MAP = { # Einhverra hluta vegna er seinna nafnið hér tekið 
     #"fn": "PRON",
     #"pfn": "PRON",
     #"abfn": "PRON",
-    "so": "VP", # A phrase is generated to be able to attach it to the IP without subclauses.
+    "so": "VP",
     #"ao": "ADV",
     #"eo": "ADV",
     #"spao": "ADV",
@@ -391,7 +392,7 @@ _DEFAULT_TERMINAL_MAP = { # Einhverra hluta vegna er seinna nafnið hér tekið 
     #"ártal": "NUM",
     #"st": "C",
     #"stt": "C",
-    "nhm": "INF",  # Nafnháttarmerki
+    #"nhm": "TO",  # Nafnháttarmerki
     #"gr": "DET",
     #"dagsafs": "DATEREL",
     #"dagsfast": "DATEABS",

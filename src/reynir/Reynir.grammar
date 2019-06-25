@@ -808,7 +808,9 @@ SetningAð →
 $score(-4) SetningAð # Óalgengt form
 
 SetningAðHugsaSér →
-    nhm 'hugsa:so'_1_þgf_gm_nh abfn_þgf # 'Að hugsa sér [, sagði Anna]'
+    Nhm 'hugsa:so'_1_þgf_gm_nh abfn_þgf # 'Að hugsa sér [, sagði Anna]'
+
+Nhm → nhm
 
 $score(+2) SetningAðHugsaSér
 
@@ -1036,7 +1038,7 @@ SetningAukafall →
 
     # Mig er [búið] að dreyma um ferð til útlanda
     | NlFrumlag_þf 'vera:so'_0_gm_fh_et_p3 'búa:so'_lhþt_sb_nf_et_hk?
-        nhm so_subj_nh_þf ÓpSagnarBotn?
+        Nhm so_subj_nh_þf ÓpSagnarBotn?
 
     # Mér hafa ofboðið lætin í hundinum [alla daga]
     | NlFrumlag/aukafall HjSögn/tala/pers FsAtv? so_subj_sagnb/aukafall
@@ -1046,7 +1048,7 @@ SetningAukafall →
     | NlFrumlag/aukafall SögnÓp/aukafall
 
     # Þann auð ber okkur að nýta (til góðra verka)
-    | NlBeintAndlag/aukafall2 so_subj_op/aukafall NlFrumlag/aukafall AtvFs? nhm So_1_nh/aukafall2 FsAtv?
+    | NlBeintAndlag/aukafall2 so_subj_op/aukafall NlFrumlag/aukafall AtvFs? Nhm So_1_nh/aukafall2 FsAtv?
 
     # Öfug orðaröð: 'Eignarrétti fylgja [í auknum mæli] skyldur' (í stað 'Skyldur fylgja eignarrétti')
     # 'Þetta skrifar Bjarni á Facebook-síðu sinni og bendir [galvaskur] á frammistöðu stjórnarinnar'
@@ -1095,11 +1097,11 @@ SetningAukafall →
     | NlFrumlag/aukafall HjSögnMegiSkuli_et_p3 FsAtv? So_1_nh/aukafall AðLiður?
 
     # Nauðungarvinnu skal engum gert að leysa af hendi
-    | NlFrumlag/aukafall HjSögnMegiSkuli_et_p3 FsAtv? AukafallÖfugSögn nhm So_1_nh/aukafall FsAtv?
+    | NlFrumlag/aukafall HjSögnMegiSkuli_et_p3 FsAtv? AukafallÖfugSögn Nhm So_1_nh/aukafall FsAtv?
 
     # Engan þarf/ætti að undra (að mig langi í ís)
     # Greinarmun verður [ekki] að gera (á Jóni og séra Jóni)
-    | NlFrumlag/aukafall HjSögnÞurfaEiga_et_p3 FsAtv? nhm So_1_nh/aukafall AðLiður?
+    | NlFrumlag/aukafall HjSögnÞurfaEiga_et_p3 FsAtv? Nhm So_1_nh/aukafall AðLiður?
 
     # Engan má svipta íslenskum ríkisborgararétti að ósekju
     | NlÓbeintAndlag_þf HjSögnMegiSkuli_et_p3 FsAtv? So_2_nh_þf/fall NlBeintAndlag/fall AtvFsAuka?
@@ -1121,13 +1123,13 @@ SetningAukafall →
     | NlFrumlag_þgf HjSögn_et_p3 FsAtv? HjSögnFinnst_sagnb 'það:pfn'_hk_nf_et? FinnstAndlag AðLiður?
 
     # Þann auð eigum við [ekki] að nýta (í þágu lands og þjóðar)
-    | NlBeintAndlag/aukafall so_0/tala/pers NlFrumlag_nf/tala/pers AtvFs? nhm So_1_nh/aukafall FsAtv?
+    | NlBeintAndlag/aukafall so_0/tala/pers NlFrumlag_nf/tala/pers AtvFs? Nhm So_1_nh/aukafall FsAtv?
 
     # Þann auð munum/skulum við [ekki] nýta (í þágu lands og þjóðar)
     | NlBeintAndlag/aukafall HjSögnNh/tala/pers NlFrumlag_nf/tala/pers AtvFs? So_1_nh/aukafall FsAtv?
 
     # Nöfn ráðherra var [ekki] að finna [í Panamaskjölunum]
-    | NlBeintAndlag_þf 'vera:so'_0_gm_fh_p3_et FsAtv? nhm 'finna:so'_0_gm_nh FsAtv?
+    | NlBeintAndlag_þf 'vera:so'_0_gm_fh_p3_et FsAtv? Nhm 'finna:so'_0_gm_nh FsAtv?
 
 # Aukafallssetningar sem eru mjög líklega rétt greindar og fá þar
 # af leiðandi plús-skor í stað mínuss
@@ -1196,7 +1198,7 @@ SögnAukafallEfBotn →
     so_1_ef_sagnb AðLiður?
 
     # Ákvörðunar var/er/verður/hefur verið/mun [ekki] að vænta [strax í dag]
-    | nhm so_1_ef_nh FsAtv?
+    | Nhm so_1_ef_nh FsAtv?
 
 $score(+3) SögnAukafallEfBotn
 
@@ -1258,7 +1260,7 @@ MiðmyndarBotnLo →
 $score(+24) MiðmyndarBotnLo # Gefa plús fyrir heildstætt samhengi lýsingarorðs
 
 VeraInnskot →
-    HjSögnVera FsAtv? nhm  # vera [stöðugt] að / geta hafa verið [alltaf] að / verðir [í snatri] að / hafa orðið að...
+    HjSögnVera FsAtv? Nhm  # vera [stöðugt] að / geta hafa verið [alltaf] að / verðir [í snatri] að / hafa orðið að...
 
 # Setningar án frumlags (notaðar t.d. í tengisetningum eftir 'sem').
 # Í setningum án frumlags getur sagnliðurinn verið "öfugur",
@@ -1624,16 +1626,16 @@ Sögn_nh/tala/pers/kyn →
     # Páll mun/skal [galvaskur/allur] skrifa bréfið
     HjSögnNh/tala/pers LoTengtSögn_nf/tala/kyn? HreinSögn_nh/tala/kyn
     # Páll á/ætti/verður/þarf [ekki] [galvaskur/allur] að skrifa bréfið
-    | HjSögnNhMeðSagnb/tala/pers FsAtv? LoTengtSögn_nf/tala/kyn? nhm HreinSögn_nh/tala/kyn
+    | HjSögnNhMeðSagnb/tala/pers FsAtv? LoTengtSögn_nf/tala/kyn? Nhm HreinSögn_nh/tala/kyn
     | Sögn_nh_mm/tala/pers/kyn
     # Jón hefur [haft] sögu að segja
     | HjSögnHafaNh/tala/pers SögnNhBotn
 
 SögnNhBotn →
     # [Jón hefur] sögu að segja
-    NlBeintAndlag/fall nhm So_1_nh/fall
+    NlBeintAndlag/fall Nhm So_1_nh/fall
     # Jón hefur [talsvert] aðra/betri sögu að segja en þá venjulegu
-    | NlAnnar/fall nhm So_1_nh/fall FsAtv? SamanburðarNafnliður
+    | NlAnnar/fall Nhm So_1_nh/fall FsAtv? SamanburðarNafnliður
 
 
 
@@ -1856,7 +1858,7 @@ SögnMeðF_0/tala/pers/kyn →
     | HjSögn/tala/pers NlFrumlag_nf/tala/pers/kyn GetaAtv_sagnb? HreinSögnAtv_sagnb/tala/kyn
 
     # (Í dag) eiga mennirnir [ekki/eftir seinkun gærdagsins] að hafa/geta lent
-    | HjSögnNhMeðSagnb/tala/pers NlFrumlag_nf/tala/pers/kyn nhm HafaGetaFá_nh HreinSögn_sagnb/tala/kyn
+    | HjSögnNhMeðSagnb/tala/pers NlFrumlag_nf/tala/pers/kyn Nhm HafaGetaFá_nh HreinSögn_sagnb/tala/kyn
 
     # (Í dag) munu mennirnir [ekki/innan tíðar] lenda
     | SögnMeðF_nh/tala/pers/kyn
@@ -2366,7 +2368,7 @@ HjSögn/tala/pers →
     | 'þykja:so'/tala/pers FsAtv? HafaGetaFá_nh     # þóttir [ekki] geta/hafa farið
     | 'skulu:so'/tala/pers FsAtv? HafaGetaFá_nh     # skulir [ekki] geta/hafa farið
     | 'munu:so'/tala/pers FsAtv? HafaGetaFá_nh      # munir [ekki] geta/hafa farið
-    | 'eiga:so'/tala/pers FsAtv? nhm HafaGetaFá_nh  # átt [ekki] að geta/hafa farið
+    | 'eiga:so'/tala/pers FsAtv? Nhm HafaGetaFá_nh  # átt [ekki] að geta/hafa farið
     | so_mm/tala/pers FsAtv? HjSögn_mm_nh             # segist [ekki] hafa farið
 
 # Hjálparsagnir koma ekki til álita varðandi tengingu forsetningar við sögn
@@ -2391,10 +2393,10 @@ HjSögn_sagnb →
     | 'mega:so'_sagnb 'verða:so'_nh     # hefur stjórnvöldum mátt verða ljóst
     | 'þykja:so'_sagnb 'vera:so'_nh     # hefur stjórnvöldum þótt vera ljóst
     | 'þykja:so'_sagnb 'verða:so'_nh    # hefur stjórnvöldum þótt verða ljóst
-    | 'eiga:so'_sagnb nhm 'vera:so'_nh  # hefur stjórnvöldum átt að vera ljóst
-    | 'eiga:so'_sagnb nhm 'verða:so'_nh # hefur stjórnvöldum átt að verða ljóst
-    | 'eiga:so'_sagnb nhm 'hafa:so'_nh 'vera:so'_sagnb  # hefur stjórnvöldum átt að hafa verið ljóst
-    | 'eiga:so'_sagnb nhm 'hafa:so'_nh 'verða:so'_sagnb # hefur stjórnvöldum átt að hafa orðið ljóst
+    | 'eiga:so'_sagnb Nhm 'vera:so'_nh  # hefur stjórnvöldum átt að vera ljóst
+    | 'eiga:so'_sagnb Nhm 'verða:so'_nh # hefur stjórnvöldum átt að verða ljóst
+    | 'eiga:so'_sagnb Nhm 'hafa:so'_nh 'vera:so'_sagnb  # hefur stjórnvöldum átt að hafa verið ljóst
+    | 'eiga:so'_sagnb Nhm 'hafa:so'_nh 'verða:so'_sagnb # hefur stjórnvöldum átt að hafa orðið ljóst
     | 'geta:so'_sagnb 'vera:so'_sagnb   # hefur stjórnvöldum getað verið ljóst
     | 'geta:so'_sagnb 'verða:so'_sagnb  # hefur stjórnvöldum getað orðið ljóst
     | 'geta:so'_sagnb 'hafa:so'_nh 'vera:so'_sagnb  # hefur stjórnvöldum getað hafa verið ljóst
@@ -2564,18 +2566,18 @@ HjSögnLhÞt/tala/pers →
     | 'vilja:so'/tala/pers FsAtv? 'vera:so'_nh          # vildu [ekki] vera farnar
     | 'vilja:so'/tala/pers FsAtv? 'hafa:so'_nh 'vera:so'_sagnb # vildu [ekki] hafa verið farnar
     | 'hafa:so'/tala/pers FsAtv? 'vera:so'_sagnb        # hafa [ekki] verið farnar
-    | 'hafa:so'/tala/pers FsAtv? 'eiga:so'_sagnb nhm 'vera:so'_nh # hafa [ekki] átt að vera farnar
+    | 'hafa:so'/tala/pers FsAtv? 'eiga:so'_sagnb Nhm 'vera:so'_nh # hafa [ekki] átt að vera farnar
     | 'hafa:so'/tala/pers FsAtv? 'vilja:so'_sagnb 'vera:so'_nh # hafa [ekki] viljað vera farnar
     | 'hafa:so'/tala/pers FsAtv? 'geta:so'_sagnb 'vera:so'_sagnb # hafa [ekki] getað verið farnar
     | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh? 'vera:so'_sagnb # geta [ekki] verið farnar / geta hafa verið farnar
-    | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh? 'eiga:so'_sagnb nhm 'vera:so'_nh # geta [ekki] [hafa] átt að vera farnar
+    | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh? 'eiga:so'_sagnb Nhm 'vera:so'_nh # geta [ekki] [hafa] átt að vera farnar
     | 'skulu:so'/tala/pers FsAtv? 'vera:so'_nh          # skulu [ekki] vera farnar
     | 'skulu:so'/tala/pers FsAtv? 'hafa:so'_nh 'vera:so'_sagnb # skulu [ekki] hafa verið farnar
     | 'munu:so'/tala/pers FsAtv? 'vera:so'_nh           # munu [ekki] vera farnar
     | 'munu:so'/tala/pers FsAtv? 'hafa:so'_nh 'vera:so'_sagnb  # munu [ekki] hafa verið farnar
-    | 'munu:so'/tala/pers FsAtv? 'eiga:so'_nh nhm 'vera:so'_nh # munu [ekki] eiga að vera farnar
-    | 'eiga:so'/tala/pers FsAtv? nhm 'vera:so'_nh       # eiga [ekki] að vera farnar
-    | 'eiga:so'/tala/pers FsAtv? nhm 'hafa:so'_nh 'vera:so'_sagnb # eiga [ekki] að hafa verið farnar
+    | 'munu:so'/tala/pers FsAtv? 'eiga:so'_nh Nhm 'vera:so'_nh # munu [ekki] eiga að vera farnar
+    | 'eiga:so'/tala/pers FsAtv? Nhm 'vera:so'_nh       # eiga [ekki] að vera farnar
+    | 'eiga:so'/tala/pers FsAtv? Nhm 'hafa:so'_nh 'vera:so'_sagnb # eiga [ekki] að hafa verið farnar
 
     | 'verða:so'/tala/pers                              # verða farnar
     | 'þykja:so'/tala/pers FsAtv? 'verða:so'_nh         # þóttu [ekki] verða farnar
@@ -2585,18 +2587,18 @@ HjSögnLhÞt/tala/pers →
     | 'vilja:so'/tala/pers FsAtv? 'verða:so'_nh         # vildu [ekki] verða farnar
     | 'vilja:so'/tala/pers FsAtv? 'hafa:so'_nh 'verða:so'_sagnb # vildu [ekki] hafa orðið farnar
     | 'hafa:so'/tala/pers FsAtv? 'verða:so'_sagnb       # hafa [ekki] orðið farnar
-    | 'hafa:so'/tala/pers FsAtv? 'eiga:so'_sagnb nhm 'verða:so'_nh # hafa [ekki] átt að verða farnar
+    | 'hafa:so'/tala/pers FsAtv? 'eiga:so'_sagnb Nhm 'verða:so'_nh # hafa [ekki] átt að verða farnar
     | 'hafa:so'/tala/pers FsAtv? 'vilja:so'_sagnb 'verða:so'_nh # hafa [ekki] viljað verða farnar
     | 'hafa:so'/tala/pers FsAtv? 'geta:so'_sagnb 'verða:so'_sagnb # hafa [ekki] getað orðið farnar
     | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh? 'verða:so'_sagnb # geta [ekki] orðið farnar / geta hafa orðið farnar
-    | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh? 'eiga:so'_sagnb nhm 'verða:so'_nh # geta [ekki] [hafa] átt að verða farnar
+    | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh? 'eiga:so'_sagnb Nhm 'verða:so'_nh # geta [ekki] [hafa] átt að verða farnar
     | 'skulu:so'/tala/pers FsAtv? 'verða:so'_nh         # skulu [ekki] verða farnar
     | 'skulu:so'/tala/pers FsAtv? 'hafa:so'_nh 'verða:so'_sagnb # skulu [ekki] hafa orðið farnar
     | 'munu:so'/tala/pers FsAtv? 'verða:so'_nh          # munu [ekki] verða farnar
     | 'munu:so'/tala/pers FsAtv? 'hafa:so'_nh 'verða:so'_sagnb  # munu [ekki] hafa orðið farnar
-    | 'munu:so'/tala/pers FsAtv? 'eiga:so'_nh nhm 'verða:so'_nh # munu [ekki] eiga að verða farnar
-    | 'eiga:so'/tala/pers FsAtv? nhm 'verða:so'_nh      # áttu [ekki] að verða farnar
-    | 'eiga:so'/tala/pers FsAtv? nhm 'hafa:so'_nh 'verða:so'_sagnb  # eiga [ekki] að hafa orðið farnar
+    | 'munu:so'/tala/pers FsAtv? 'eiga:so'_nh Nhm 'verða:so'_nh # munu [ekki] eiga að verða farnar
+    | 'eiga:so'/tala/pers FsAtv? Nhm 'verða:so'_nh      # áttu [ekki] að verða farnar
+    | 'eiga:so'/tala/pers FsAtv? Nhm 'hafa:so'_nh 'verða:so'_sagnb  # eiga [ekki] að hafa orðið farnar
 
 $tag(purge_verb) HjSögnLhÞt/tala/pers
 
@@ -2614,7 +2616,7 @@ HjSögnLoMeðF/tala/pers/kyn →
     | 'mega:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'vera:so'_nh    # mátti Páll [ekki] vera (sáttur)
     | 'skulu:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'vera:so'_nh   # skal Páll [ekki] vera (sáttur)
     | 'munu:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'vera:so'_nh    # mun Páll [ekki] vera (sáttur)
-    | 'eiga:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? nhm 'vera:so'_nh # á Páll [ekki] að vera (sáttur)
+    | 'eiga:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? Nhm 'vera:so'_nh # á Páll [ekki] að vera (sáttur)
     | so_mm/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'vera:so'_nh        # sagðist Páll [ekki] vera (sáttur)
 
     | 'hafa:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'vera:so'_sagnb  # hefur Páll [ekki] verið (sáttur)
@@ -2624,7 +2626,7 @@ HjSögnLoMeðF/tala/pers/kyn →
     | 'mega:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'hafa:so'_nh 'vera:so'_sagnb # mátti Páll [ekki] hafa verið (sáttur)
     | 'skulu:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'hafa:so'_nh 'vera:so'_sagnb # skal Páll [ekki] hafa verið (sáttur)
     | 'munu:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'hafa:so'_nh 'vera:so'_sagnb  # mun Páll [ekki] hafa verið (sáttur)
-    | 'eiga:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? nhm 'hafa:so'_nh 'vera:so'_sagnb  # á Páll [ekki] að hafa verið (sáttur)
+    | 'eiga:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? Nhm 'hafa:so'_nh 'vera:so'_sagnb  # á Páll [ekki] að hafa verið (sáttur)
     | so_mm/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'hafa:so'_nh 'vera:so'_sagnb  # sagðist Páll [ekki] hafa verið (sáttur)
 
     | 'verða:so'/tala/pers NlFrumlag_nf/tala/pers/kyn                          # verður Páll (sáttur)
@@ -2634,7 +2636,7 @@ HjSögnLoMeðF/tala/pers/kyn →
     | 'mega:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'verða:so'_nh      # mátti Páll [ekki] verða (sáttur)
     | 'skulu:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'verða:so'_nh     # skal Páll [ekki] verða (sáttur)
     | 'munu:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'verða:so'_nh      # mun Páll [ekki] verða (sáttur)
-    | 'eiga:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? nhm 'verða:so'_nh  # á Páll [ekki] að verða (sáttur)
+    | 'eiga:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? Nhm 'verða:so'_nh  # á Páll [ekki] að verða (sáttur)
     | so_mm/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'verða:so'_nh          # sagðist Páll [ekki] verða (sáttur)
 
     | 'geta:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'hafa:so'_nh? 'verða:so'_sagnb # getur Páll [ekki] orðið (sáttur) / geta hafa orðið (sáttur)
@@ -2643,7 +2645,7 @@ HjSögnLoMeðF/tala/pers/kyn →
     | 'mega:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'hafa:so'_nh 'verða:so'_sagnb  # mátti Páll [ekki] hafa orðið (sáttur)
     | 'skulu:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'hafa:so'_nh 'verða:so'_sagnb # skal Páll [ekki] hafa orðið (sáttur)
     | 'munu:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'hafa:so'_nh 'verða:so'_sagnb  # mun Páll [ekki] hafa orðið (sáttur)
-    | 'eiga:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? nhm 'hafa:so'_nh 'verða:so'_sagnb  # á Páll [ekki] að hafa orðið (sáttur)
+    | 'eiga:so'/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? Nhm 'hafa:so'_nh 'verða:so'_sagnb  # á Páll [ekki] að hafa orðið (sáttur)
     | so_mm/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? 'hafa:so'_nh 'verða:so'_sagnb   # sagðist Páll [ekki] hafa orðið (sáttur)
 
 # 'Konan skal/mun gefin Páli'
@@ -2743,7 +2745,7 @@ EinNhFylling/fall/tala/kyn →
     # '(Hann er) í reynd strax sjálfur að hafna þessu'
     | FsRuna? LoTengtSögn/tala/fall/kyn NhLiðir
     # 'að þykja og vera fallegt'
-    | SagnInnskot? nhm so_1_nf_nh OgNhSögn_nf* LoTengtSögn/tala/fall/kyn
+    | SagnInnskot? Nhm so_1_nf_nh OgNhSögn_nf* LoTengtSögn/tala/fall/kyn
     # 'að sýnast og þykjast fallegt'
     | SagnInnskot? NhEinfaldur_mm OgSögn_mm_nh* LoTengtSögn/tala/fall/kyn
 
@@ -2781,15 +2783,15 @@ AðLiður →
 # 'að [láta strax] sigla skipinu í land'
 # 'að [láta í snarheitum] bera þangað mat og drykk'
 NhLiður →
-    nhm NhLáta? NhRuna
+    Nhm NhLáta? NhRuna
 
 $score(+2) NhLiður
 
 NhEinfaldur →
-    nhm so_0_nh
+    Nhm so_0_nh
 
 NhEinfaldur_mm →
-    nhm so_0_nh_mm
+    Nhm so_0_nh_mm
 
 NhLáta →
     'láta:so'_0_nh FsAtv?
@@ -5289,7 +5291,7 @@ FsUmAðRæða →
     'um:fs'_þf SögnUmAðRæða NlRunaEða_þf
 
 SögnUmAðRæða →
-    HjSögnVeraNh nhm 'ræða:so'_0_gm_nh FsRunaInnskot?
+    HjSögnVeraNh Nhm 'ræða:so'_0_gm_nh FsRunaInnskot?
 
 SögnVarUmAðRæða →
     HjSögnVeraNh FsVarUmAðRæða
@@ -5298,7 +5300,7 @@ FsVarUmAðRæða →
     'um:fs'_þf SögnAðRæða Nl_þf
 
 SögnAðRæða →
-    nhm 'ræða:so'_0_gm_nh
+    Nhm 'ræða:so'_0_gm_nh
 
 # Þessu virðist þurfa að gefa mjög hátt skor svo það sigri stigagjöf
 # annarra mögulegra trjáa
@@ -6381,13 +6383,13 @@ QWordPersonKey/fall → person/fall
 # 'Hvaða orð tengjast sögninni að teikna?'
 
 QWordVerb →
-    nhm? QWordVerbKey
+    Nhm? QWordVerbKey
     | QWordPrefix_þgf "orðinu" QWordVerbKey '?'?
-    | QWordPrefix_þgf "sögninni" nhm? QWordVerbKey '?'?
-    | QWordPrefix_þgf "sagnorðinu" nhm? QWordVerbKey '?'?
+    | QWordPrefix_þgf "sögninni" Nhm? QWordVerbKey '?'?
+    | QWordPrefix_þgf "sagnorðinu" Nhm? QWordVerbKey '?'?
     | QWordPrefix_nf "orðið" QWordVerbKey '?'?
-    | QWordPrefix_nf "sögnin" nhm? QWordVerbKey '?'?
-    | QWordPrefix_nf "sagnorðið" nhm? QWordVerbKey '?'?
+    | QWordPrefix_nf "sögnin" Nhm? QWordVerbKey '?'?
+    | QWordPrefix_nf "sagnorðið" Nhm? QWordVerbKey '?'?
 
 QWordVerbKey → so_nh
 
