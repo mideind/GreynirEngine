@@ -125,19 +125,32 @@ _DEFAULT_NT_MAP = {
     "SetningUmAðRæða": "S-MAIN",
     "StViðtenging": "S-MAIN",
     "Tilvísunarsetning": "CP-REL",
+    "KommaTilvísunarsetning": "CP-REL",
+    "AðÞvíErSegir": "CP-REL",
     "Skilyrði": "CP-COND",
     "Afleiðing": "S-CONS",
     #"NlSkýring": "CP-EXPLAIN",
-    "Tilvitnun": "S-QUOTE",
+    #"Tilvitnun": "S-QUOTE",
+    "Sagt": "CP-QUOTE",
+    #"Segir": "S-SAYS",
     "Forskeyti": "S-PREFIX",
     # "EfÞegar" : "S-PREFIX",
     "Tíðarsetning": "CP-ADV-TEMP",
     "Tilgangssetning": "CP-ADV-PURP",
     "Viðurkenningarsetning": "CP-ADV-ACK",
+    "Þó": "CP-ADV-ACK",
     "Afleiðingarsetning": "CP-ADV-CONS",
     "Orsakarsetning": "CP-ADV-CAUSE",
     "Skilyrðissetning": "CP-ADV-COND",
+    "Samanburðarsetning": "CP-ADV-CMP",
+    "SamanburðurSemSetning": "CP-ADV-CMP",
+    "SamanburðarNafnliður": "CP-ADV-CMP",   # Til skoðunar
+    "StakViðhengi": "CP-ADV-CMP",   # Til skoðunar
+    "SamanburðarForskeyti": "CP-ADV-CMP",
+    "EnSamanb": "CP-ADV-CMP",
     "Skýringarsetning": "CP-THT",
+    "SkýringarsetningFramhald": "CP-THT",
+    "AtviksAðSetning": "CP-THT",            # Til skoðunar
     "Spurnaraukasetning": "CP-QUE",
     "Spurnarsetning": "S-QUE",
     "Fyrirsögn": "S-HEADING",
@@ -145,9 +158,16 @@ _DEFAULT_NT_MAP = {
     "BeygingarliðurÁnUmröðunar": "IP",
     "BeygingarliðurMeðUmröðun": "IP",
     "SagnarBotn": "IP", # Under consideration
+    "ÞóBotn": "IP",
+    "SkýringarBotn": "IP",
+    "SegirÍ": "IP",
+    "FsUmAðRæða": "IP",
+    "BeygingarliðurStýftAndlag": "IP",
     "NhLiður": "IP-INF", # IP-INF?
     "SetningÞað": "IP-INF", # Under consideration; IP-INF?
     "ÞaðTenging" : "IP-INF", # IP-INF?
+    "ViðurkenningarNh": "IP-INF",
+    "ViðurkenningarNhKomma": "IP-INF",
     "Nl": "NP",
     "NlRunaEða": "NP",
     "EfLiður": "NP-POSS",
@@ -165,6 +185,7 @@ _DEFAULT_NT_MAP = {
     "NlBeintAndlag": "NP-OBJ",
     "NlEnginnAndlag" : "NP-OBJ",  # 'hann getur enga samninga gert'
     "NlAnnar": "NP-OBJ",  # '[Jón hefur] aðra sögu [að segja]'
+    "NlRunaEða": "NP-OBJ", # '[hvort sem um er að ræða] hesta (eða kindur)'
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
     "SögnErLoBotn": "NP-PRD",  # Show '(Hann er) góður / 18 ára' as a predicate argument
@@ -173,6 +194,7 @@ _DEFAULT_NT_MAP = {
     "TímaNafnliðurMinni": "NP",
     "TímaMagnNafnliðurStærri": "NP",
     "TímaMagnNafnliðurMinni": "NP",
+    "NlAðSögn": "NP",
     #"Fyrirbæri": "NP", # Veldur óþarfa liðum annars staðar
     #"Sérnafn": "NP-PERSON",
     "Sagnliður": "VP",
@@ -204,6 +226,7 @@ _DEFAULT_NT_MAP = {
     "SagnRunaStýfð": "VP",
     "Andlagssagnliður": "VP",
     "HjSögn": "VP-AUX",
+    "HjSögnNh": "VP-AUX",
     "SetningSo": "IP",
     "SetningSoÞað": "IP",
     "FsLiður": "PP",
@@ -211,6 +234,8 @@ _DEFAULT_NT_MAP = {
     "FsFyrirEftir": "PP",
     "FsUmAðRæða": "PP",
     "FsVarUmAðRæða": "PP",
+    "AðSögn": "PP",
+    "ÍNl": "PP",
     #"LoTengtSögn": "ADJP",
     #"Einkunn": "ADJP",
     #"Tímatala": "ADJP",
@@ -235,6 +260,37 @@ _DEFAULT_NT_MAP = {
     "FastTímabil": "ADVP-DUR-ABS",
     "AfstættTímabil": "ADVP-DUR-REL",
     "TímabilTími": "ADVP-DUR-TIME",
+    "Aðaltenging": "C",
+    "Samtenging": "C",
+    "Skýringartenging": "C",
+    "Tíðartenging": "C",
+    "Tilgangstenging": "C",
+    "Viðurkenningartenging": "C",
+    "Afleiðingartenging": "C",
+    "Orsakartenging": "C",
+    "OrsakartengingUmröðun": "C",
+    "Skilyrðistenging": "C",
+    "Samanburðartenging": "C",
+    "Tilvísunartenging": "C",
+    "InnskotsSamtenging": "C",
+    "Sem": "C",
+    "EnOgEða": "C",
+    "Nema": "C",
+    "OgSem": "C",
+    "AðÞvíEr": "C",
+    "AnnaðhvortSt": "C",
+    "VillaHeldur": "C",
+    "OgEða": "C",
+    "Bæði": "C",
+    "Ýmist": "C",
+    "Og": "C",
+    "Eða": "C",
+    "Né": "C",
+    "Hvorki": "C",
+    "HeldurEn": "C",
+    "Til": "C",
+    "En": "C",
+    "HvortSem": "C",
 }
 
 # subject_to: don't push an instance of this if the
@@ -246,8 +302,8 @@ _DEFAULT_NT_MAP = {
 _DEFAULT_ID_MAP = {
     "S0": dict(name="Málsgrein"),
     "S-MAIN": dict(name="Setning", subject_to={"S-MAIN"}),
+    #"S-SAYS": dict(name="Setning", subject_to={"S-MAIN"}),
     "S-HEADING": dict(name="Fyrirsögn"),
-    "S-QUOTE": dict(name="Tilvitnun"),  # Quote at end of sentence
     "S-PREFIX": dict(name="Forskeytt setning"),  # Prefix in front of sentence
     "S-QUE": dict(name="Spurnaraðalsetning"),  # Question clause
     "CP-ADV-TEMP": dict(name="Tíðarsetning"),  # Adverbial temporal phrase
@@ -256,9 +312,11 @@ _DEFAULT_ID_MAP = {
     "CP-ADV-CONS": dict(name="Afleiðingarsetning"),  # Adverbial consequence phrase
     "CP-ADV-CAUSE": dict(name="Orsakarsetning"),  # Adverbial causal phrase
     "CP-ADV-COND": dict(name="Skilyrðissetning"),  # Adverbial conditional phrase
+    "CP-ADV-CMP": dict(name="Samanburðarsetning"),  # Adverbial comparative phrase
     "CP-THT": dict(name="Skýringarsetning", overrides="IP-INF"),  # Complement clause
     "CP-QUE": dict(name="Spurnaraukasetning"),  # Question subclause
     "CP-REL": dict(name="Tilvísunarsetning", overrides="S", subject_to={"CP-REL"}),
+    "CP-QUOTE": dict(name="Tilvitnun"),  # Direct quote
     "VP-SEQ": dict(name="Sagnliður"),
     #"VP-REV": dict(name="Öfugur sagnliður"),
     "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
@@ -331,8 +389,8 @@ _DEFAULT_TERMINAL_MAP = { # Einhverra hluta vegna er seinna nafnið hér tekið 
     #"tala": "NUM",
     #"to": "NUM",
     #"ártal": "NUM",
-    "st": "C",
-    "stt": "C",
+    #"st": "C",
+    #"stt": "C",
     "nhm": "INF",  # Nafnháttarmerki
     #"gr": "DET",
     #"dagsafs": "DATEREL",
