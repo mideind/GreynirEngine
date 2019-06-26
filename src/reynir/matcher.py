@@ -157,12 +157,14 @@ _DEFAULT_NT_MAP = {
     "BeygingarliðurÁnF": "IP",
     "BeygingarliðurÁnUmröðunar": "IP",
     "BeygingarliðurMeðUmröðun": "IP",
+    "BeygingarliðurSögnFremst": "IP",
     "SagnarBotn": "IP", # Under consideration
     "ÞóBotn": "IP",
     "SkýringarBotn": "IP",
     "SegirÍ": "IP",
     "FsUmAðRæða": "IP",
     "BeygingarliðurStýftAndlag": "IP",
+    "BlTagl": "IP",
     "NhLiður": "IP-INF", # IP-INF?
     "SetningÞað": "IP-INF", # Under consideration; IP-INF?
     "ÞaðTenging" : "IP-INF", # IP-INF?
@@ -170,6 +172,7 @@ _DEFAULT_NT_MAP = {
     "ViðurkenningarNhKomma": "IP-INF",
     "Nl": "NP",
     "NlRunaEða": "NP",
+    "SpurnarNafnliður": "NP",
     "EfLiður": "NP-POSS",
     "EfLiðurForskeyti": "NP-POSS",
     "OkkarFramhald": "NP-POSS",
@@ -236,6 +239,7 @@ _DEFAULT_NT_MAP = {
     "FsVarUmAðRæða": "PP",
     "AðSögn": "PP",
     "ÍNl": "PP",
+    "SpurnarForsetningarliður": "PP",
     #"LoTengtSögn": "ADJP",
     #"Einkunn": "ADJP",
     #"Tímatala": "ADJP",
@@ -244,13 +248,14 @@ _DEFAULT_NT_MAP = {
     #"SagnInnskot": "ADVP",
     #"FsAtv": "ADVP",
     #"AtvFs": "ADVP",
-    "Atviksliður": "ADVP",
     #"AtviksliðurEinkunn": "ADVP",
+    "Atviksliður": "ADVP",
     "AlHvortSemUmErAðRæða": "ADVP",
     "LoAtviksliðir": "ADVP",
     "EinnAl": "ADVP",
     "StefnuAtv": "ADVP-DIR",
     "TöluorðForskeyti": "ADVP",
+    "SpurnarAtviksorð": "ADVP",
     # Adverbial time phrases
     "FöstDagsetning": "ADVP-DATE-ABS",
     "AfstæðDagsetning": "ADVP-DATE-REL",
@@ -315,7 +320,7 @@ _DEFAULT_ID_MAP = {
     "CP-ADV-COND": dict(name="Skilyrðissetning"),  # Adverbial conditional phrase
     "CP-ADV-CMP": dict(name="Samanburðarsetning"),  # Adverbial comparative phrase
     "CP-THT": dict(name="Skýringarsetning", overrides="IP-INF"),  # Complement clause
-    "CP-QUE": dict(name="Spurnaraukasetning"),  # Question subclause
+    "CP-QUE": dict(name="Spurnaraukasetning", overrides="NP-OBJ"),  # Question subclause
     "CP-REL": dict(name="Tilvísunarsetning", overrides="S", subject_to={"CP-REL"}),
     "CP-QUOTE": dict(name="Tilvitnun"),  # Direct quote
     "VP-SEQ": dict(name="Sagnliður"),
@@ -381,8 +386,6 @@ _DEFAULT_TERMINAL_MAP = { # Einhverra hluta vegna er seinna nafnið hér tekið 
     "so": "VP",
     #"ao": "ADV",
     #"eo": "ADV",
-    #"spao": "ADV",
-    #"tao": "ADV",
     "fs": "P",
     #"lo": "ADJ",
     #"raðnr": "ADJ",  # Raðtölur

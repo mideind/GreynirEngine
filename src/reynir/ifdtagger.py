@@ -124,8 +124,6 @@ class IFD_Tagset:
         "lo": "_l",
         "ao": "_a",
         "eo": "_a",
-        "spao": "_a",
-        "tao": "_a",
         "fs": "_a",
         "uh": "_a",
         "st": "_c",

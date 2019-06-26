@@ -185,6 +185,7 @@ SegirÍ
 
 $score(+72) Sagt # Þarf að vera meiri plús en t.d. SagnFramhald
 
+
 Lokatákn → '.' | Spurningarmerki | ':' | '!' | '(' '!' ')'
 LokatáknEðaKomma → Lokatákn | ','
 
@@ -299,7 +300,7 @@ Spurnarsetning →
     SpurnarNafnliður/tala/fall/kyn FsMeðFallstjórn? BeygingarliðurSögnFremst? "?"
     | SpurnarForsetningarliður FsMeðFallstjórn? BeygingarliðurSögnFremst? "?"
     | SpurnarAtviksorð FsMeðFallstjórn? BeygingarliðurSögnFremst? "?"
-    | SpurnarFrumlag/pers/tala/kyn FsMeðFallstjórn? BlTagl/tala/pers/kyn? "?"
+    | SpurnarFrumlag/pers/tala/kyn BlTagl/tala/pers/kyn? "?"
 
 # Spurnarorðið er frumlag setningarinnar, stendur utan beygingarliðar
 BlTagl/tala/pers/kyn →
@@ -308,7 +309,7 @@ BlTagl/tala/pers/kyn →
         KommaTilvísunarsetning/tala/pers/kyn? Upptalning/tala?
 
 SpurnarFrumlag/pers/tala/kyn →
-    SpurnarNafnliður/tala/fall/kyn
+    SpurnarNafnliður/tala/fall/kyn FsMeðFallstjórn?
 
 $score(+8) Spurnarsetning
 
@@ -422,7 +423,7 @@ Spurnaraukasetning →
     SpurnarNafnliður/tala/fall/kyn FsMeðFallstjórn? BeygingarliðurÁnUmröðunar?
     | SpurnarForsetningarliður BeygingarliðurÁnUmröðunar?
     | SpurnarAtviksorð FsMeðFallstjórn? BeygingarliðurÁnUmröðunar?
-    | SpurnarFrumlag/pers/tala/kyn FsMeðFallstjórn? BlTagl/tala/pers/kyn?
+    | SpurnarFrumlag/pers/tala/kyn BlTagl/tala/pers/kyn?
 
 SpurnarNafnliður/tala/fall/kyn →
     'hver:fn'/tala/fall/kyn Nl_ef_ft/pers/kyn?
@@ -440,9 +441,10 @@ SpurnarForsetningarliður →
     fs/fall SpurnarNafnliður/tala/fall/kyn
 
 SpurnarAtviksorð →
-    spao | "hvernig:ao" | 'af:fs'_þgf 'hver:fn'_þgf_et_hk | "hví:ao" | "afhverju:ao"
+    "hvernig:ao" | 'af:fs'_þgf 'hver:fn'_þgf_et_hk | "hví:ao" | "afhverju:ao"
     | 'til:fs'_ef 'hver:fn'_ef_et_hk | 'hver:fn'_ef_et_hk 'vegna:fs'_ef
-    | "hvort:st" VillaAð?
+    | "hvort:st" VillaAð? | 'hvar:ao' | 'hvaðan:ao' | 'hvenær:ao' | 'hví:ao'
+    | 'hvert:ao'
 
 HversuHve →
     "hversu:ao" | "hve:ao"
@@ -451,6 +453,7 @@ AfLiður/kyn → 'af:fs'_þgf Nl_þgf_ft/pers/kyn
 
 $score(+2) SpurnarAtviksorð
 $score(+1) Spurnaraukasetning
+$score(+27) SpurnarForsetningarliður
 
 # Beygingarliðir
 
@@ -1546,6 +1549,7 @@ $score(+60) SögnErLo/tala/pers/kyn
 SögnErLoBotn/tala/kyn →
     # (Guðrún er) snögg [að svara fyrir sig] / (Það er) torsótt [að Siggi fari einn í skólann]
     LoTengtSögn_nf/tala/kyn AðLiður?
+    | LoTengtSögn_nf/tala/kyn Spurnaraukasetning
     # (Páll var) [rúmlega] tíu ára [gamall]
     | eo* Aldur 'gamall:lo'_sb_nf/tala/kyn?
     # (Jón hefur verið) ráðinn [sem] bæjarstjóri Ísafjarðarbæjar
@@ -2900,7 +2904,6 @@ $score(-2) NlSkýringarsetning
 
 # (Lögreglan rannsakar) [nú] hvort Jón hafi ekið bílnum
 NlSpurnaraukasetning → AtviksliðurEinkunn* Spurnaraukasetning
-$score(-2) NlSpurnaraukasetning
 
 NlFrumlagÞað → 'það:pfn'_hk_nf_et
 
@@ -3584,13 +3587,10 @@ NlStak_p3_ft_nf_kk → Manns_nf
 NlStak_p3_ft_þf_kk → Manns_þf
 NlStak_p3_ft_þgf_kk → Manns_þgf
 
-# Einkunnarorð eða tímaatviksorð
-EoTao → eo | tao
-
 # Hér ganga beygjanleg töluorð ekki (?'fjórir manns')
 Manns/fall →
-    EoTao* TöluorðForskeyti? Tala_ft_kk/fall "manns:kk"
-    | EoTao* Talnabil "manns:kk" # 50-100 manns
+    eo* TöluorðForskeyti? Tala_ft_kk/fall "manns:kk"
+    | eo* Talnabil "manns:kk" # 50-100 manns
 
 # Tölur í tölustöfum og óbeygjanleg töluorð (fimm, sex, ...)
 Tala/tala/kyn/fall →
@@ -3677,7 +3677,7 @@ $score(-2) NlSérnafn_ft
 
 # !!! no_ef er notað í stað EfLiður til að minnka margræðni þegar
 # !!! mörg sérnöfn standa í röð
-NlSérnafn → EoTao* Sérnafn NlSérnafnEf? # ekki Nakamoto, örugglega Nelson Mandela, Hong Kong norðursins
+NlSérnafn → eo* Sérnafn NlSérnafnEf? # ekki Nakamoto, örugglega Nelson Mandela, Hong Kong norðursins
 
 NlSérnafnEf → no_ef
 
@@ -4114,13 +4114,13 @@ TilTölu/tala/kyn →
     "til:fs" Töluorð_ef/tala/kyn+   # (á) tveggja til þriggja metra dýpi
 
 EfLiðurForskeyti →
-    Fornafn_ef/tala/kyn* EoTao* EfLiðurForskeytiTala/tala/kyn? EfLiðurForskeytiKjarni/tala/kyn
-    | Fornafn_ef/tala/kyn+ EoTao* EfLiðurForskeytiTala/tala/kyn?
-    | EoTao* EfLiðurForskeytiTala/tala/kyn ÓbeygðEining? # 'rúmlega sjö prósent (hækkun frá fyrra ári)'
+    Fornafn_ef/tala/kyn* eo* EfLiðurForskeytiTala/tala/kyn? EfLiðurForskeytiKjarni/tala/kyn
+    | Fornafn_ef/tala/kyn+ eo* EfLiðurForskeytiTala/tala/kyn?
+    | eo* EfLiðurForskeytiTala/tala/kyn ÓbeygðEining? # 'rúmlega sjö prósent (hækkun frá fyrra ári)'
     | 'meiri:lo'_mst_kk_ef_et 'háttur:kk'_ef_et     # meiri háttar vandræði
     | 'minni:lo'_mst_kk_ef_et 'háttur:kk'_ef_et     # minni háttar vandamál
     | Prósentubil               # (Spáð er) a.m.k. 10-20% (aukningu)
-    | EoTao* Prósenta           # (eigi) nú 50% (hlut í fjarskiptafyrirtækinu) / rúmlega 690 MW (virkjun)
+    | eo* Prósenta           # (eigi) nú 50% (hlut í fjarskiptafyrirtækinu) / rúmlega 690 MW (virkjun)
     | Magn_ef/tala/kyn          # 100 fermetra (einbýlishúsum), 10 tonna (trukk)
 
 Prósenta →
@@ -4588,7 +4588,7 @@ NlSamaKyn/fall/kyn →
 $score(+2) NlSamaKyn/fall/kyn
 
 NlSá_ft/fall/kyn →
-    EoTao* 'sá:fn'_ft/fall/kyn # einnig þau Jón og Gunna
+    eo* 'sá:fn'_ft/fall/kyn # einnig þau Jón og Gunna
 
 # Blandaðir fleirtölu-nafnliðir eru í hvorugkyni
 
@@ -4657,7 +4657,7 @@ $score(+6) LoSemLo/fall/tala/kyn    # Tilbrigði 3.1, eina sem þarf að toggla.
 # leyfa atviksorðið almennt sem einkunn með nafnliðum; það myndi
 # rekast á fornafnið.
 LoAtviksliður →
-    eo | tao | 'enginn:fn'_hk_et_nf | "þó:ao"? "nokkuð:ao"
+    eo | 'enginn:fn'_hk_et_nf | "þó:ao"? "nokkuð:ao"
 
 $score(+3) LoAtviksliður
 
@@ -4943,7 +4943,7 @@ FsMeðFallstjórn →
     # 'um að lög um endurupptökunefnd standist ekki stjórnarskrá' - Ath: 'um það að' er höndlað í ÞaðTenging
     | 'um:fs'_þf "að:st" HreinYfirsetning ','?
     # 'um hvort/hvenær/af hverju/til hvers/hví Jón kaus Framsóknarflokkinn'
-    | 'um:fs'_þf Spurnarsetning ','?
+    | 'um:fs'_þf Spurnaraukasetning ','?
     # 'er bjartsýnn á að Alfreð komi aftur í liðið' - Ath: 'á það/því að' er höndlað í ÞaðTenging
     | 'á:fs'_þf "að:st" HreinYfirsetning ','?
     | 'að:fs'_þgf 'nafn:hk'_þgf_et person_nf            # Ég ræddi við konu að nafni Aðalbjörg Jónsdóttir
@@ -5217,7 +5217,7 @@ FsUndirÁÍ/fall →
 Al → EinnAl+
 
 EinnAl →
-    ao | tao                # Strax tvöfalt til baka, loksins
+    ao                      # Strax tvöfalt til baka, loksins
     | Tímaliður             # (Ég tilkynnti þetta) strax 3. september
     | EkkiNeitt
     | UndirEins
@@ -5321,7 +5321,7 @@ AtviksliðurKomma →
     AtviksliðurAuka ','?
 
 AtviksliðurEinkunn →
-    eo | tao                        # Einkunnarorð = atviksorð sem geta ekki jafnframt verið forsetningar
+    eo                              # Einkunnarorð = atviksorð sem geta ekki jafnframt verið forsetningar
     | Aldur                         # Hin 29 ára gamla fyrirsæta
     | 'allur:fn'_hk_et_nf "að:ao"   # 'fjárfesta fyrir allt að 100 milljónir króna'
     | "svo:ao" "sem:ao"             # 'enda kemur kynlíf þeirra svo sem engum við'
@@ -6437,7 +6437,7 @@ $score(-100) QSearchArbitrary
 QSearchToken →
     person/fall/kyn > fyrirtæki > no/fall/tala/kyn
     > fn/fall/tala/kyn > pfn/fall/tala/kyn > entity > lo > so
-    > eo > ao > spao > tao > fs/fall
+    > eo > ao > fs/fall
     > dags > dagsafs > dagsföst
     > tímapunkturafs > tímapunkturfast > tími
     > raðnr > to > töl > ártal > tala > sérnafn

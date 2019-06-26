@@ -93,8 +93,6 @@ class BIN_Token(Token):
         "hk": "no",
         "so": "so",
         "ao": "ao",
-        "tao": "tao",  # Never appears in BÍN
-        "spao": "spao",  # Never appears in BÍN
         "fs": "fs",
         "lo": "lo",
         "fn": "fn",
@@ -1076,20 +1074,9 @@ class BIN_Token(Token):
             # which is handled in matcher_default() / terminal.matches_first()
             return m.ordfl == "st" and m.stofn in {"sem", "er"}
 
-        def matcher_spao(m):
-            """ Interrogative adverbs, 'spurnaratviksorð' """
-            return m.ordfl.endswith("ao") and m.stofn in BIN_Token._SPAO
-
-        def matcher_tao(m):
-            """ Temporal adverbs, 'tímaatviksorð' """
-            return m.ordfl.endswith("ao") and m.stofn in BIN_Token._TAO
-
         def matcher_eo(m):
             """ 'Einkunnarorð': adverb (atviksorð) that is not the same
-                as a preposition (forsetning) or pronoun (fornafn).
-                Note that temporal adverbs (tao) are explicitly excluded
-                since we want them marked as such in the result tree.
-                Also, interrogative adverbs (spao) do not match. """
+                as a preposition (forsetning) or pronoun (fornafn)."""
             if not m.ordfl.endswith("ao"):
                 # Do not delete this check or move it inside the if below.
                 # It is necessary to ensure that other word categories do not match,
@@ -1117,8 +1104,8 @@ class BIN_Token(Token):
             return self._is_eo
 
         def matcher_ao(m):
-            """ Adverbs, excluding spao and tao (and meanings explicitly marked as eo) """
-            if m.ordfl != "ao" or matcher_spao(m) or matcher_tao(m):
+            """ Adverbs, excluding meanings explicitly marked as eo """
+            if m.ordfl != "ao":
                 return False
             fbits = BIN_Token.get_fbits(m.beyging)
             return terminal.fbits_match(fbits)
