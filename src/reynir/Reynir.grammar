@@ -1034,7 +1034,7 @@ SetningAukafall →
 
     # Manninn langaði [mjög í ferðina / að fara til útlanda strax]
     # Köttum [í landinu] fjölgar
-    NlFrumlag/aukafall so_subj_op/aukafall ÓpSagnarBotn?
+    NlFrumlag/aukafall ÓpSagnliður/aukafall
 
     # Mig/Þig/Hann/Mennina hefur [lengi] langað [til útlanda]
     | NlFrumlag/aukafall HjSögn_et_p3 FsAtv? so_subj_sagnb/aukafall ÓpSagnarBotn?
@@ -1151,6 +1151,8 @@ SetningAukafallÖfug →
 $score(-32) SetningAukafallÖfug
 
 Andlagssagnliður/tala/pers → NlBeintAndlag/aukafall So_1/aukafall/tala/pers
+
+ÓpSagnliður/aukafall → so_subj_op/aukafall ÓpSagnarBotn?
 
 SögnÓp/aukafall →
     # (Mér) [algjörlega] blöskraði [af öllu hjarta] vitleysan
@@ -3366,7 +3368,11 @@ NlStak_p3_ft/fall/kyn →
     | 'fár:lo'_mst_ft/fall/kyn
 
 NlStak_p3/tala/fall/kyn →
-    Magn/fall/tala/kyn
+    Magn/fall/tala/kyn MagnAfLiður?
+
+MagnAfLiður → 'af:fs'_þgf Nl_þgf/kyn
+
+$score(+30) MagnAfLiður
 
 # Í uppskriftum má segja "fjórir bollar hveiti", "einn desilítri sítrónusafi",
 # "hálft kíló ólífur", en bara í nefnifalli
@@ -5190,6 +5196,8 @@ FsRunaEftirSögn →
 
 AtvTímaliður →
     Atviksliður? Tímaliður  # strax síðastliðið sumar
+    # Undantekningar sem falla ekki undir eo, gegna helst hlutverki talmálsmarkara
+    | "nú:ao" | "þá:ao"   # Lögreglan rannsakar þá/nú málið
 
 $tag(apply_length_bonus) FsRunaEftirSögn
 

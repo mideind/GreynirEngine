@@ -177,6 +177,7 @@ _DEFAULT_NT_MAP = {
     "EfLiðurForskeyti": "NP-POSS",
     "OkkarFramhald": "NP-POSS",
     "LoEftirNlMeðÞgf": "NP-DAT",
+    "LoViðhengi": "NP-ADP",     # Adjective predicate
     "Heimilisfang": "NP-ADDR",
     "Fyrirtæki": "NP-COMPANY",
     "SérnafnFyrirtæki": "NP-COMPANY",
@@ -192,6 +193,7 @@ _DEFAULT_NT_MAP = {
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
     "SögnErLoBotn": "NP-PRD",  # Show '(Hann er) góður / 18 ára' as a predicate argument
+    "LoTengtSögn": "NP-PRD",
     "Aldur": "NP-AGE",
     "TímaNafnliðurStærri": "NP",
     "TímaNafnliðurMinni": "NP",
@@ -228,6 +230,7 @@ _DEFAULT_NT_MAP = {
     "SagnRuna": "VP",
     "SagnRunaStýfð": "VP",
     "Andlagssagnliður": "VP",
+    "ÓpSagnliður": "VP",
     "HjSögn": "VP-AUX",
     "HjSögnNh": "VP-AUX",
     "SetningSo": "IP",
@@ -240,6 +243,7 @@ _DEFAULT_NT_MAP = {
     "AðSögn": "PP",
     "ÍNl": "PP",
     "SpurnarForsetningarliður": "PP",
+    "MagnAfLiður": "PP",
     #"LoTengtSögn": "ADJP",
     #"Einkunn": "ADJP",
     #"Tímatala": "ADJP",
@@ -254,7 +258,7 @@ _DEFAULT_NT_MAP = {
     "LoAtviksliðir": "ADVP",
     "EinnAl": "ADVP",
     "StefnuAtv": "ADVP-DIR",
-    "TöluorðForskeyti": "ADVP",
+    #"TöluorðForskeyti": "ADVP",
     "SpurnarAtviksorð": "ADVP",
     # Adverbial time phrases
     "FöstDagsetning": "ADVP-DATE-ABS",
@@ -328,7 +332,7 @@ _DEFAULT_ID_MAP = {
     "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
     "VP": dict(name="Sagnliður", overrides={"VP"}),
     #"VP-PP": dict(name="Sögn", overrides="PP"),
-    "NP": dict(name="Nafnliður", subject_to={"NP-SUBJ", "NP-OBJ", "NP-IOBJ", "NP-PRD"}),
+    "NP": dict(name="Nafnliður", subject_to={"NP-SUBJ", "NP-OBJ", "NP-IOBJ", "NP-PRD", "NP-ADP"}),
     "NP-POSS": dict(name="Eignarfallsliður", overrides="NP"),
     "NP-DAT": dict(name="Þágufallsliður", overrides="NP"),
     "NP-ADDR": dict(name="Heimilisfang", overrides="NP"),
@@ -341,6 +345,7 @@ _DEFAULT_ID_MAP = {
     "NP-OBJ": dict(name="Beint andlag"),
     "NP-IOBJ": dict(name="Óbeint andlag"),
     "NP-PRD": dict(name="Sagnfylling"),
+    "NP-ADP": dict(name="Andlag lýsingarorðs"),
     "ADVP": dict(name="Atviksliður", subject_to={"ADVP"}),
     "ADVP-DIR": dict(name="Áttaratviksliður"),
     "ADVP-DATE-ABS": dict(name="Föst dagsetning", overrides="ADVP"),
@@ -1528,7 +1533,7 @@ class SimpleTree:
                     return ""
                 return node.canonical
             # Cut off connected explanatory sentences, possessive phrases, and prepositional phrases
-            if any(node.match_tag(tag) for tag in ("S", "NP-POSS", "PP", "ADVP")):
+            if any(node.match_tag(tag) for tag in ("S", "NP-POSS", "PP", "ADVP", "CP")):
                 return None
             return node.text
 
@@ -1582,7 +1587,7 @@ class SimpleTree:
     @property
     def nouns(self):
         """ Returns the lemmas of all nouns in the subtree """
-        return self._list(lambda t: t.tcat == "no" or t._cat in _GENDERS)
+        return self._list(lambda t: t.tcat == "no" or t._cat in _GENDERS or t.tcat == "entity")
 
     @property
     def verbs(self):

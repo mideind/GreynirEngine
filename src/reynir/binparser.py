@@ -1084,11 +1084,9 @@ class BIN_Token(Token):
                 return False
             if self._is_eo is None:
                 txt = self.t1_lower
-                if txt in BIN_Token._TAO or txt in BIN_Token._SPAO:
-                    self._is_eo = False
                 # This token can match an adverb:
                 # Cache whether it can also match a preposition
-                elif txt in BIN_Token._NOT_EO:
+                if txt in BIN_Token._NOT_EO:
                     # Explicitly forbidden, no need to check further
                     self._is_eo = False
                 elif txt in BIN_Token._NOT_NOT_EO:
