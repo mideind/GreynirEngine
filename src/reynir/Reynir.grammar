@@ -129,7 +129,6 @@ MgrInnihald → Forskeyti? Yfirsetning StLiður* Lokatákn?
     | Sagt Segir Lokatákn?                          # "Allt er klappað og klárt", segir Jón.
     | Sagt AðSögn Lokatákn?                         # Allt er klappað og klárt að sögn ráðuneytisins.
     | Sagt AðÞvíErSegir Lokatákn?                   # Allt er klappað og klárt að því er ráðuneytið segir.
-
 Forskeyti →
     "-:em"? Samtenging "bara:ao"? StrikEðaKomma?    # 'En - þegar allt er skoðað, var þetta fínt.'
     | Samtenging? uh TengimerkiVh Samtenging?       # Og já, þetta var ekki gott / Nei - en hann átti ekkert svar
@@ -184,7 +183,6 @@ SegirÍ
 ÍNl → 'í:fs'_þgf Nl_þgf AtvFsAuka?
 
 $score(+72) Sagt # Þarf að vera meiri plús en t.d. SagnFramhald
-
 
 Lokatákn → '.' | Spurningarmerki | ':' | '!' | '(' '!' ')'
 LokatáknEðaKomma → Lokatákn | ','
@@ -295,12 +293,12 @@ $tag(begin_prep_scope) HreinYfirsetning # Nýtt undirtré fyrir tengingu sagnar 
 
 # Spurnaraðalsetningar
 
-# ERROR -- bæta við dæmum
 Spurnarsetning →
-    SpurnarNafnliður/tala/fall/kyn FsMeðFallstjórn? BeygingarliðurSögnFremst? "?"
-    | SpurnarForsetningarliður FsMeðFallstjórn? BeygingarliðurSögnFremst? "?"
-    | SpurnarAtviksorð FsMeðFallstjórn? BeygingarliðurSögnFremst? "?"
-    | SpurnarFrumlag/pers/tala/kyn BlTagl/tala/pers/kyn? "?"
+    SpurnarNafnliður/tala/fall/kyn BeygingarliðurSögnFremst? Spurningarmerki   
+    | SpurnarForsetningarliður BeygingarliðurSögnFremst? Spurningarmerki       # Í hvaða fötum er barnið?
+    | SpurnarAtviksorð BeygingarliðurSögnFremst? Spurningarmerki               # Hvernig missti tröllið lífið?
+    | SpurnarFrumlag/pers/tala/kyn BlTagl/tala/pers/kyn? Spurningarmerki       # Hvað er í pokanum?
+    | BeygingarliðurSögnFremst Spurningarmerki                                 # Getur þú hlaupið hratt?
 
 # Spurnarorðið er frumlag setningarinnar, stendur utan beygingarliðar
 BlTagl/tala/pers/kyn →

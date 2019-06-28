@@ -131,6 +131,7 @@ _DEFAULT_NT_MAP = {
     "Afleiðing": "S-CONS",
     #"NlSkýring": "CP-EXPLAIN",
     #"Tilvitnun": "S-QUOTE",
+    "Spurnarsetning": "S-QUE",
     "Sagt": "CP-QUOTE",
     #"Segir": "S-SAYS",
     "Forskeyti": "S-PREFIX",
@@ -152,7 +153,6 @@ _DEFAULT_NT_MAP = {
     "SkýringarsetningFramhald": "CP-THT",
     "AtviksAðSetning": "CP-THT",            # Til skoðunar
     "Spurnaraukasetning": "CP-QUE",
-    "Spurnarsetning": "S-QUE",
     "Fyrirsögn": "S-HEADING",
     "BeygingarliðurÁnF": "IP",
     "BeygingarliðurÁnUmröðunar": "IP",
@@ -311,11 +311,11 @@ _DEFAULT_NT_MAP = {
 
 _DEFAULT_ID_MAP = {
     "S0": dict(name="Málsgrein"),
-    "S-MAIN": dict(name="Setning", subject_to={"S-MAIN"}),
+    "S-MAIN": dict(name="Setning", subject_to={"S-MAIN", "S-QUE"}),
     #"S-SAYS": dict(name="Setning", subject_to={"S-MAIN"}),
     "S-HEADING": dict(name="Fyrirsögn"),
     "S-PREFIX": dict(name="Forskeytt setning"),  # Prefix in front of sentence
-    "S-QUE": dict(name="Spurnaraðalsetning"),  # Question clause
+    "S-QUE": dict(name="Spurnaraðalsetning", overrides="S-MAIN"),  # Question clause
     "CP-ADV-TEMP": dict(name="Tíðarsetning"),  # Adverbial temporal phrase
     "CP-ADV-PURP": dict(name="Tilgangssetning"),  # Adverbial purpose phrase
     "CP-ADV-ACK": dict(name="Viðurkenningarsetning"),  # Adverbial acknowledgement phrase
