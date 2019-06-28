@@ -311,6 +311,7 @@ _DEFAULT_NT_MAP = {
 
 _DEFAULT_ID_MAP = {
     "S0": dict(name="Málsgrein"),
+    "S0-X": dict(name="Rangt mynduð setning"),
     "S-MAIN": dict(name="Setning", subject_to={"S-MAIN", "S-QUE"}),
     #"S-SAYS": dict(name="Setning", subject_to={"S-MAIN"}),
     "S-HEADING": dict(name="Fyrirsögn"),
@@ -327,7 +328,9 @@ _DEFAULT_ID_MAP = {
     "CP-QUE": dict(name="Spurnaraukasetning", overrides="NP-OBJ"),  # Question subclause
     "CP-REL": dict(name="Tilvísunarsetning", overrides="S", subject_to={"CP-REL"}),
     "CP-QUOTE": dict(name="Tilvitnun"),  # Direct quote
-    "VP-SEQ": dict(name="Sagnliður"),
+    "IP": dict(name="Beygingarliður"),  # Inflectional phrase
+    "IP-INF": dict(name="Beygingarliður", overrides="VP"),  # Infinitival inflectional phrase
+    #"VP-SEQ": dict(name="Sagnliður"),
     #"VP-REV": dict(name="Öfugur sagnliður"),
     "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
     "VP": dict(name="Sagnliður", overrides={"VP"}),
@@ -357,10 +360,9 @@ _DEFAULT_ID_MAP = {
     "ADVP-DUR-ABS": dict(name="Fast tímabil"),
     "ADVP-DUR-REL": dict(name="Afstætt tímabil", overrides="ADVP"),
     "ADVP-DUR-TIME": dict(name="Tímabil"),
+    "ADVP-PCL": dict(name="Ögn"),
     "PP": dict(name="Forsetningarliður", overrides="ADVP", subject_to={"ADVP-DUR-REL", "ADVP-DUR-ABS"}),
     #"ADJP": dict(name="Lýsingarliður", subject_to={"ADJP"}),
-    "IP": dict(name="Beygingarliður"),  # Inflectional phrase
-    "IP-INF": dict(name="Beygingarliður", overrides="VP"),  # Infinitival inflectional phrase
     # Hausar
     #"ADV": dict(name="Atviksorð"),
     #"V": dict(name="Sögn"),
@@ -374,6 +376,7 @@ _DEFAULT_ID_MAP = {
     #"DET": dict(name="Greinir"),
     #"DATEREL": dict(name="Afstæð dagsetning"),
     #"DATEABS": dict(name="Föst dagsetning")
+    "FOREIGN": dict(name="Erlendur texti"),
 }
 
 _DEFAULT_TERMINAL_MAP = { # Einhverra hluta vegna er seinna nafnið hér tekið til að nefna liðinn á myndinni, þyrfti að breyta
