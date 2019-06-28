@@ -6503,4 +6503,18 @@ VillaEndingIR →
 $tag(error) VillaEndingIR
 $score(-999) VillaEndingIR
 
+# Orð sem endar á -ana í þolfalli notað í stað eignarfalls:
+# 'niðurstaða þingflokkana', 'hattar karlana'
+
+FyrirbæriMeðGreini_ft_ef_kk →
+    > VillaEndingANA
+
+VillaEndingANA →
+    # The 'zana' variant on nouns causes the terminal to only match
+    # words ending with 'ana'
+    no_ft_þf_kk_gr_zana
+
+$tag(error) VillaEndingANA
+$score(-999) VillaEndingANA
+
 $endif(include_errors)

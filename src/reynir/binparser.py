@@ -1003,10 +1003,17 @@ class BIN_Token(Token):
                     if m.ordfl != v:
                         # Mismatched gender
                         return False
-                elif v == "xir":
-                    # Only match lemmas that end with 'ir',
+                elif v[0] == "x":
+                    # Variants starting with 'x' specify a stem ending match.
+                    # For example 'xir' matches only lemmas that end with 'ir',
                     # such as 'læknir', 'kælir'
-                    if not m.stofn.endswith("ir"):
+                    if not m.stofn.endswith(v[1:]):
+                        return False
+                elif v[0] == "z":
+                    # Variants starting with 'z' specify a word form ending match.
+                    # For example 'zana' matches only words that end with 'ana',
+                    # such as 'þingflokkana', 'karlana'
+                    if not self.t1_lower.endswith(v[1:]):
                         return False
                 elif no_info:
                     # No case and number info: probably a foreign word
