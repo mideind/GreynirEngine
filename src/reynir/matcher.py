@@ -114,44 +114,66 @@ from .ifdtagger import IFD_Tagset
 # Default tree simplifier configuration maps
 
 _DEFAULT_NT_MAP = {
-    "S0": "P",
+    "S0": "S0",
     "HreinYfirsetning": "S-MAIN",
-    "Setning": "S",
-    "SetningLo": "S",
-    "SetningÁnF": "S",
-    "SetningAukafall": ("S", "IP"),  # Push two headers: S and IP
-    "SetningAukafallForgangur": ("S", "IP"),
-    "SetningSkilyrði": "S",
-    "SetningUmAðRæða": "S",
-    "StViðtenging": "S",
-    "Tilvísunarsetning": "S-REF",
-    "Skilyrði": "S-COND",
+    "Setning": "S-MAIN",
+    "SetningLo": "S-MAIN",
+    "SetningÁnF": "S-MAIN",
+    "SetningAukafall": ("S-MAIN", "IP"),  # Push two headers: S and IP
+    "SetningAukafallForgangur": ("S-MAIN", "IP"),
+    "SetningSkilyrði": "S-MAIN",
+    "SetningUmAðRæða": "S-MAIN",
+    "StViðtenging": "S-MAIN",
+    "Tilvísunarsetning": "CP-REL",
+    "KommaTilvísunarsetning": "CP-REL",
+    "AðÞvíErSegir": "CP-REL",
+    "Skilyrði": "CP-COND",
     "Afleiðing": "S-CONS",
-    "NlSkýring": "S-EXPLAIN",
-    "Útskýring": "S-EXPLAIN",
-    "FrumlagsInnskot": "S-EXPLAIN",
-    "Tilvitnun": "S-QUOTE",
-    "Forskeyti": "S-PREFIX",
-    # "EfÞegar" : "S-PREFIX",
-    "Tíðarsetning": "S-ADV-TEMP",
-    "Tilgangssetning": "S-ADV-PURP",
-    "Viðurkenningarsetning": "S-ADV-ACK",
-    "Afleiðingarsetning": "S-ADV-CONS",
-    "Orsakarsetning": "S-ADV-CAUSE",
-    "Skilyrðissetning": "S-ADV-COND",
-    "Skýringarsetning": "S-THT",
-    "Spurnaraukasetning": "S-QUE",
     "Spurnarsetning": "S-QUE",
+    "Sagt": "CP-QUOTE",
+    "Forskeyti": "S-PREFIX",
+    "Tíðarsetning": "CP-ADV-TEMP",
+    "Tilgangssetning": "CP-ADV-PURP",
+    "Viðurkenningarsetning": "CP-ADV-ACK",
+    "Þó": "CP-ADV-ACK",
+    "Afleiðingarsetning": "CP-ADV-CONS",
+    "Orsakarsetning": "CP-ADV-CAUSE",
+    "Skilyrðissetning": "CP-ADV-COND",
+    "Samanburðarsetning": "CP-ADV-CMP",
+    "SamanburðurSemSetning": "CP-ADV-CMP",
+    "SamanburðarNafnliður": "CP-ADV-CMP",
+    "StakViðhengi": "CP-ADV-CMP", 
+    "SamanburðarForskeyti": "CP-ADV-CMP",
+    "EnSamanb": "CP-ADV-CMP",
+    "Skýringarsetning": "CP-THT",
+    "SkýringarsetningFramhald": "CP-THT",
+    "AtviksAðSetning": "CP-THT",
+    "Spurnaraukasetning": "CP-QUE",
     "Fyrirsögn": "S-HEADING",
     "BeygingarliðurÁnF": "IP",
     "BeygingarliðurÁnUmröðunar": "IP",
     "BeygingarliðurMeðUmröðun": "IP",
+    "BeygingarliðurSögnFremst": "IP",
+    "SagnarBotn": "IP",
+    "ÞóBotn": "IP",
+    "SkýringarBotn": "IP",
+    "SegirÍ": "IP",
+    "FsUmAðRæða": "IP",
+    "BeygingarliðurStýftAndlag": "IP",
+    "BlTagl": "IP",
+    "NhLiður": "IP-INF",
+    "SetningÞað": "IP-INF",
+    "ÞaðTenging" : "IP-INF",
+    "ViðurkenningarNh": "IP-INF",
+    "ViðurkenningarNhKomma": "IP-INF",
     "Nl": "NP",
     "NlRunaEða": "NP",
+    "SpurnarNafnliður": "NP",
     "EfLiður": "NP-POSS",
     "EfLiðurForskeyti": "NP-POSS",
     "OkkarFramhald": "NP-POSS",
     "LoEftirNlMeðÞgf": "NP-DAT",
+    "LoViðhengi": "NP-ADP",     # Adjective predicate
     "Heimilisfang": "NP-ADDR",
     "Fyrirtæki": "NP-COMPANY",
     "SérnafnFyrirtæki": "NP-COMPANY",
@@ -163,21 +185,28 @@ _DEFAULT_NT_MAP = {
     "NlBeintAndlag": "NP-OBJ",
     "NlEnginnAndlag" : "NP-OBJ",  # 'hann getur enga samninga gert'
     "NlAnnar": "NP-OBJ",  # '[Jón hefur] aðra sögu [að segja]'
+    "NlRunaEða": "NP-OBJ", # '[hvort sem um er að ræða] hesta (eða kindur)'
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
     "SögnErLoBotn": "NP-PRD",  # Show '(Hann er) góður / 18 ára' as a predicate argument
+    "LoTengtSögn": "NP-PRD",
     "Aldur": "NP-AGE",
+    "TímaNafnliðurStærri": "NP",
+    "TímaNafnliðurMinni": "NP",
+    "TímaMagnNafnliðurStærri": "NP",
+    "TímaMagnNafnliðurMinni": "NP",
+    "NlAðSögn": "NP",
     "Sagnliður": "VP",
     "SagnliðurMeðF": "VP",
     "So": "VP",
-    # "SagnFramhald" : "VP",
-    "NhLiðir": "VP-SEQ",
+    "NhLiðir": "VP",
     "NhSögn": "VP",
     "NhEinfaldur": "VP",
     "SagnliðurÁnF": "VP",
-    "ÖfugurSagnliður": "VP-REV",
+    "ÖfugurSagnliður": "VP",
     "SagnliðurVh": "VP",
-    "SögnLhNt": "VP-PP",  # Present participle, lýsingarháttur nútíðar ('reykjandi sígarettu')
+    "HjSögnLhÞt": "VP", # Auxiliary verb, hjálparsögn
+    "SögnLhNt": "VP",  # Present participle, lýsingarháttur nútíðar
     "SögnSagnbBreyting": "VP",  # 'hefur versnað'
     "SögnLhNtBreyting": "VP",  # 'hefur farið fækkandi'
     "SögnNhBreyting": "VP",  # 'mun fækka'
@@ -186,39 +215,74 @@ _DEFAULT_NT_MAP = {
     "SögnAðRæða": "VP",
     "SögnAukafallÞgf": "VP",
     "SögnAukafallEf": "VP",
-    "HreinSögn": "VP-SEQ",
+    "HreinSögn": "VP",
     "EinSögn": "VP",
-    "SögnUmAðRæða": "VP-SEQ",
-    "SögnVarUmAðRæða": "VP-SEQ",
-    "SagnHluti": "VP-SEQ",
-    "SagnRuna": "VP-SEQ",
-    "SagnRunaStýfð": "VP-SEQ",
-    "SetningSo": "VP-SEQ",
-    "SetningSoÞað": "VP-SEQ",
+    "SögnUmAðRæða": "VP",
+    "SögnVarUmAðRæða": "VP",
+    "SagnHluti": "VP",
+    "SagnRuna": "VP",
+    "SagnRunaStýfð": "VP",
+    "Andlagssagnliður": "VP",
+    "ÓpSagnliður": "VP",
+    "HjSögn": "VP-AUX",
+    "HjSögnNh": "VP-AUX",
+    "SetningSo": "IP",
+    "SetningSoÞað": "IP",
     "FsLiður": "PP",
     "FsMeðFallstjórn": "PP",
     "FsFyrirEftir": "PP",
     "FsUmAðRæða": "PP",
     "FsVarUmAðRæða": "PP",
-    "LoTengtSögn": "ADJP",
-    "SagnInnskot": "ADVP",
-    "FsAtv": "ADVP",
-    "AtvFs": "ADVP",
+    "AðSögn": "PP",
+    "ÍNl": "PP",
+    "SpurnarForsetningarliður": "PP",
+    "MagnAfLiður": "PP",
     "Atviksliður": "ADVP",
     "AlHvortSemUmErAðRæða": "ADVP",
     "LoAtviksliðir": "ADVP",
-    "Dagsetning": "ADVP-DATE",
-    "Tímasetning": "ADVP-DATE",
-    # Adverbial time phrases
+    "EinnAl": "ADVP",
+    "StefnuAtv": "ADVP-DIR",
+    "SpurnarAtviksorð": "ADVP",
     "FöstDagsetning": "ADVP-DATE-ABS",
     "AfstæðDagsetning": "ADVP-DATE-REL",
     "FasturTímapunktur": "ADVP-TIMESTAMP-ABS",
     "AfstæðurTímapunktur": "ADVP-TIMESTAMP-REL",
     "Tíðni": "ADVP-TMP-SET",
-    "Tímabil": "ADVP-DUR",
     "FastTímabil": "ADVP-DUR-ABS",
     "AfstættTímabil": "ADVP-DUR-REL",
     "TímabilTími": "ADVP-DUR-TIME",
+    "Aðaltenging": "C",
+    "Samtenging": "C",
+    "Skýringartenging": "C",
+    "Tíðartenging": "C",
+    "Tilgangstenging": "C",
+    "Viðurkenningartenging": "C",
+    "Afleiðingartenging": "C",
+    "Orsakartenging": "C",
+    "OrsakartengingUmröðun": "C",
+    "Skilyrðistenging": "C",
+    "Samanburðartenging": "C",
+    "Tilvísunartenging": "C",
+    "InnskotsSamtenging": "C",
+    "Sem": "C",
+    "EnOgEða": "C",
+    "Nema": "C",
+    "OgSem": "C",
+    "AðÞvíEr": "C",
+    "AnnaðhvortSt": "C",
+    "VillaHeldur": "C",
+    "OgEða": "C",
+    "Bæði": "C",
+    "Ýmist": "C",
+    "Og": "C",
+    "Eða": "C",
+    "Né": "C",
+    "Hvorki": "C",
+    "HeldurEn": "C",
+    "Til": "C",
+    "En": "C",
+    "HvortSem": "C",
+    "Nhm": "TO",
 }
 
 # subject_to: don't push an instance of this if the
@@ -228,65 +292,89 @@ _DEFAULT_NT_MAP = {
 # if there are no intermediate nodes
 
 _DEFAULT_ID_MAP = {
-    "P": dict(name="Málsgrein"),
-    "S-MAIN": dict(name="Setning", overrides="S", subject_to={"S-MAIN"}),
-    "S": dict(name="Setning", subject_to={"S", "S-EXPLAIN", "S-REF", "IP"}),
-    "S-HEADING": dict(name="Fyrirsögn", overrides="S"),
-    # Condition
-    "S-COND": dict(name="Skilyrði", overrides="S"),
-    # Consequence
-    "S-CONS": dict(name="Afleiðing", overrides="S"),
-    # Reference
-    "S-REF": dict(
-        name="Tilvísunarsetning", overrides="S", subject_to={"S-REF"}
-    ),
-    "S-EXPLAIN": dict(name="Skýring"),  # Explanation
-    "S-QUOTE": dict(name="Tilvitnun"),  # Quote at end of sentence
-    "S-PREFIX": dict(name="Forskeyti"),  # Prefix in front of sentence
-    "S-ADV-TEMP": dict(name="Tíðarsetning"),  # Adverbial temporal phrase
-    "S-ADV-PURP": dict(name="Tilgangssetning"),  # Adverbial purpose phrase
-    "S-ADV-ACK": dict(name="Viðurkenningarsetning"),  # Adverbial acknowledgement phrase
-    "S-ADV-CONS": dict(name="Afleiðingarsetning"),  # Adverbial consequence phrase
-    "S-ADV-CAUSE": dict(name="Orsakarsetning"),  # Adverbial causal phrase
-    "S-ADV-COND": dict(name="Skilyrðissetning"),  # Adverbial conditional phrase
-    "S-THT": dict(name="Skýringarsetning"),  # Complement clause
-    "S-QUE": dict(name="Spurnarsetning"),  # Question clause
-    "VP-SEQ": dict(name="Sagnliður", subject_to={"VP-SEQ"}),
-    "VP-REV": dict(name="Öfugur sagnliður"),
-    "VP": dict(name="Sögn", overrides="VP-SEQ", subject_to={"VP"}),
-    "VP-PP": dict(name="Sögn", overrides="PP"),
-    "NP": dict(name="Nafnliður", subject_to={"NP-SUBJ", "NP-OBJ", "NP-IOBJ", "NP-PRD"}),
+    "S0": dict(name="Málsgrein"),
+    "S0-X": dict(name="Rangt mynduð setning"),
+    "S-MAIN": dict(name="Setning", subject_to={"S-MAIN", "S-QUE"}),
+    "S-HEADING": dict(name="Fyrirsögn"),
+    "S-PREFIX": dict(name="Forskeytt setning"),  # Prefix in front of sentence
+    "S-QUE": dict(name="Spurnaraðalsetning", overrides="S-MAIN"),  # Question clause
+    "CP-ADV-TEMP": dict(name="Tíðarsetning"),  # Adverbial temporal phrase
+    "CP-ADV-PURP": dict(name="Tilgangssetning"),  # Adverbial purpose phrase
+    "CP-ADV-ACK": dict(name="Viðurkenningarsetning"),  # Adverbial acknowledgement phrase
+    "CP-ADV-CONS": dict(name="Afleiðingarsetning"),  # Adverbial consequence phrase
+    "CP-ADV-CAUSE": dict(name="Orsakarsetning"),  # Adverbial causal phrase
+    "CP-ADV-COND": dict(name="Skilyrðissetning"),  # Adverbial conditional phrase
+    "CP-ADV-CMP": dict(name="Samanburðarsetning"),  # Adverbial comparative phrase
+    "CP-THT": dict(name="Skýringarsetning", overrides="IP-INF"),  # Complement clause
+    "CP-QUE": dict(name="Spurnaraukasetning", overrides="NP-OBJ"),  # Question subclause
+    "CP-REL": dict(name="Tilvísunarsetning", overrides="S", subject_to={"CP-REL"}),
+    "CP-QUOTE": dict(name="Tilvitnun"),  # Direct quote
+    "IP": dict(name="Beygingarliður"),  # Inflectional phrase
+    "IP-INF": dict(name="Beygingarliður", overrides="VP"),  # Infinitival inflectional phrase
+    "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
+    "VP": dict(name="Sagnliður", overrides={"VP"}),
+    "NP": dict(name="Nafnliður", subject_to={"NP-SUBJ", "NP-OBJ", "NP-IOBJ", "NP-PRD", "NP-ADP"}),
     "NP-POSS": dict(name="Eignarfallsliður", overrides="NP"),
     "NP-DAT": dict(name="Þágufallsliður", overrides="NP"),
     "NP-ADDR": dict(name="Heimilisfang", overrides="NP"),
     "NP-COMPANY": dict(name="Fyrirtæki", overrides="NP"),
     "NP-TITLE": dict(name="Titill", overrides="NP"),
     "NP-AGE": dict(name="Aldur"),
-    "NP-MEASURE": dict(name="Mæling", overrides="NP"),
+    "NP-MEASURE": dict(name="Magnliður", overrides="NP"),
     "NP-SUBJ": dict(name="Frumlag", subject_to={"NP-SUBJ"}),
     "NP-OBJ": dict(name="Beint andlag"),
     "NP-IOBJ": dict(name="Óbeint andlag"),
     "NP-PRD": dict(name="Sagnfylling"),
+    "NP-ADP": dict(name="Andlag lýsingarorðs"),
     "ADVP": dict(name="Atviksliður", subject_to={"ADVP"}),
-    "ADVP-DATE": dict(name="Dagsetning"),
-    "ADVP-DATE-ABS": dict(name="Föst dagsetning"),
-    "ADVP-DATE-REL": dict(name="Afstæð dagsetning"),
-    "ADVP-TIMESTAMP": dict(name="Tímapunktur"),
-    "ADVP-TIMESTAMP-ABS": dict(name="Fastur tímapunktur"),
-    "ADVP-TIMESTAMP-REL": dict(name="Afstæður tímapunktur"),
-    "ADVP-TMP-SET": dict(name="Tíðni"),
-    "ADVP-DUR": dict(name="Tímabil"),
-    "ADVP-DUR-ABS": dict(name="Fast tímabil", overrides="ADVP-DUR"),
-    "ADVP-DUR-REL": dict(name="Afstætt tímabil", overrides="ADVP-DUR"),
-    "ADVP-DUR-TIME": dict(name="Tímabil", overrides="ADVP-DUR"),
-    "PP": dict(name="Forsetningarliður", overrides="ADVP"),
-    "ADJP": dict(name="Lýsingarliður", subject_to={"ADJP"}),
-    "IP": dict(name="Beygingarliður"),  # Inflectional phrase
+    "ADVP-DIR": dict(name="Áttaratviksliður"),
+    "ADVP-DATE-ABS": dict(name="Föst dagsetning", overrides="ADVP"),
+    "ADVP-DATE-REL": dict(name="Afstæð dagsetning", overrides="ADVP"),
+    "ADVP-TIMESTAMP-ABS": dict(name="Fastur tímapunktur", overrides="ADVP"),
+    "ADVP-TIMESTAMP-REL": dict(name="Afstæður tímapunktur", overrides="ADVP"),
+    "ADVP-TMP-SET": dict(name="Tíðni", overrides="ADVP"),   
+    "ADVP-DUR-ABS": dict(name="Fast tímabil"),
+    "ADVP-DUR-REL": dict(name="Afstætt tímabil", overrides="ADVP"),
+    "ADVP-DUR-TIME": dict(name="Tímabil"),
+    "ADVP-PCL": dict(name="Ögn"),
+    "PP": dict(name="Forsetningarliður", overrides="ADVP", subject_to={"ADVP-DUR-REL", "ADVP-DUR-ABS"}),
+    # Hausar
+    "P": dict(name="Forsetning"),
+    "TO": dict(name="Nafnháttarmerki"),
+    "C": dict(name="Samtenging"),
+    "FOREIGN": dict(name="Erlendur texti"),
 }
 
-_DEFAULT_TERMINAL_MAP = {
-    # Empty
+_DEFAULT_TERMINAL_MAP = { # TODO: Make sure node names are translated in treegrid
+    #"no": "N",
+    #"hk": "N",
+    #"kk": "N",
+    #"kvk": "N",
+    #"fyrirtæki": "N",
+    #"sérnafn": "N",
+    #"person": "N",
+    #"entity": "N",
+    #"fn": "PRON",
+    #"pfn": "PRON",
+    #"abfn": "PRON",
+    "so": "VP",
+    #"ao": "ADV",
+    #"eo": "ADV",
+    "fs": "P",
+    #"lo": "ADJ",
+    #"raðnr": "ADJ",  # Raðtölur
+    #"töl": "NUM",
+    #"tala": "NUM",
+    #"to": "NUM",
+    #"ártal": "NUM",
+    #"st": "C",
+    #"stt": "C",
+    #"nhm": "TO",  # Nafnháttarmerki
+    #"gr": "DET",
+    #"dagsafs": "DATEREL",
+    #"dagsfast": "DATEABS",
 }
+
 
 # The following list was obtained using this SQL query:
 # select distinct ordmynd from ord
@@ -1414,7 +1502,7 @@ class SimpleTree:
                     return ""
                 return node.canonical
             # Cut off connected explanatory sentences, possessive phrases, and prepositional phrases
-            if any(node.match_tag(tag) for tag in ("S", "NP-POSS", "PP", "ADVP")):
+            if any(node.match_tag(tag) for tag in ("S", "NP-POSS", "PP", "ADVP", "CP")):
                 return None
             return node.text
 
@@ -1468,8 +1556,7 @@ class SimpleTree:
     @property
     def nouns(self):
         """ Returns the lemmas of all nouns in the subtree """
-        return self._list(lambda t: t.tcat == "no" or t._cat in _GENDERS)
-
+        return self._list(lambda t: t.tcat == "no" or t.tcat == "entity" or t._cat in _GENDERS)
     @property
     def verbs(self):
         """ Returns the lemmas of all verbs in the subtree """
