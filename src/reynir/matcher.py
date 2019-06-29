@@ -129,13 +129,9 @@ _DEFAULT_NT_MAP = {
     "AðÞvíErSegir": "CP-REL",
     "Skilyrði": "CP-COND",
     "Afleiðing": "S-CONS",
-    #"NlSkýring": "CP-EXPLAIN",
-    #"Tilvitnun": "S-QUOTE",
     "Spurnarsetning": "S-QUE",
     "Sagt": "CP-QUOTE",
-    #"Segir": "S-SAYS",
     "Forskeyti": "S-PREFIX",
-    # "EfÞegar" : "S-PREFIX",
     "Tíðarsetning": "CP-ADV-TEMP",
     "Tilgangssetning": "CP-ADV-PURP",
     "Viðurkenningarsetning": "CP-ADV-ACK",
@@ -145,29 +141,29 @@ _DEFAULT_NT_MAP = {
     "Skilyrðissetning": "CP-ADV-COND",
     "Samanburðarsetning": "CP-ADV-CMP",
     "SamanburðurSemSetning": "CP-ADV-CMP",
-    "SamanburðarNafnliður": "CP-ADV-CMP",   # Til skoðunar
-    "StakViðhengi": "CP-ADV-CMP",   # Til skoðunar
+    "SamanburðarNafnliður": "CP-ADV-CMP",
+    "StakViðhengi": "CP-ADV-CMP", 
     "SamanburðarForskeyti": "CP-ADV-CMP",
     "EnSamanb": "CP-ADV-CMP",
     "Skýringarsetning": "CP-THT",
     "SkýringarsetningFramhald": "CP-THT",
-    "AtviksAðSetning": "CP-THT",            # Til skoðunar
+    "AtviksAðSetning": "CP-THT",
     "Spurnaraukasetning": "CP-QUE",
     "Fyrirsögn": "S-HEADING",
     "BeygingarliðurÁnF": "IP",
     "BeygingarliðurÁnUmröðunar": "IP",
     "BeygingarliðurMeðUmröðun": "IP",
     "BeygingarliðurSögnFremst": "IP",
-    "SagnarBotn": "IP", # Under consideration
+    "SagnarBotn": "IP",
     "ÞóBotn": "IP",
     "SkýringarBotn": "IP",
     "SegirÍ": "IP",
     "FsUmAðRæða": "IP",
     "BeygingarliðurStýftAndlag": "IP",
     "BlTagl": "IP",
-    "NhLiður": "IP-INF", # IP-INF?
-    "SetningÞað": "IP-INF", # Under consideration; IP-INF?
-    "ÞaðTenging" : "IP-INF", # IP-INF?
+    "NhLiður": "IP-INF",
+    "SetningÞað": "IP-INF",
+    "ÞaðTenging" : "IP-INF",
     "ViðurkenningarNh": "IP-INF",
     "ViðurkenningarNhKomma": "IP-INF",
     "Nl": "NP",
@@ -200,12 +196,9 @@ _DEFAULT_NT_MAP = {
     "TímaMagnNafnliðurStærri": "NP",
     "TímaMagnNafnliðurMinni": "NP",
     "NlAðSögn": "NP",
-    #"Fyrirbæri": "NP", # Veldur óþarfa liðum annars staðar
-    #"Sérnafn": "NP-PERSON",
     "Sagnliður": "VP",
     "SagnliðurMeðF": "VP",
     "So": "VP",
-    #"SagnFramhald" : "VP",
     "NhLiðir": "VP",
     "NhSögn": "VP",
     "NhEinfaldur": "VP",
@@ -244,23 +237,12 @@ _DEFAULT_NT_MAP = {
     "ÍNl": "PP",
     "SpurnarForsetningarliður": "PP",
     "MagnAfLiður": "PP",
-    #"LoTengtSögn": "ADJP",
-    #"Einkunn": "ADJP",
-    #"Tímatala": "ADJP",
-    #"LoSemNafnliður": "ADJP",
-    #"Raðnr": "ADJP",
-    #"SagnInnskot": "ADVP",
-    #"FsAtv": "ADVP",
-    #"AtvFs": "ADVP",
-    #"AtviksliðurEinkunn": "ADVP",
     "Atviksliður": "ADVP",
     "AlHvortSemUmErAðRæða": "ADVP",
     "LoAtviksliðir": "ADVP",
     "EinnAl": "ADVP",
     "StefnuAtv": "ADVP-DIR",
-    #"TöluorðForskeyti": "ADVP",
     "SpurnarAtviksorð": "ADVP",
-    # Adverbial time phrases
     "FöstDagsetning": "ADVP-DATE-ABS",
     "AfstæðDagsetning": "ADVP-DATE-REL",
     "FasturTímapunktur": "ADVP-TIMESTAMP-ABS",
@@ -311,9 +293,8 @@ _DEFAULT_NT_MAP = {
 
 _DEFAULT_ID_MAP = {
     "S0": dict(name="Málsgrein"),
-    "S0-X": dict(name="Rangt mynduð setning"),
+    "S0-X": dict(name="Rangt mynduð setning")
     "S-MAIN": dict(name="Setning", subject_to={"S-MAIN", "S-QUE"}),
-    #"S-SAYS": dict(name="Setning", subject_to={"S-MAIN"}),
     "S-HEADING": dict(name="Fyrirsögn"),
     "S-PREFIX": dict(name="Forskeytt setning"),  # Prefix in front of sentence
     "S-QUE": dict(name="Spurnaraðalsetning", overrides="S-MAIN"),  # Question clause
@@ -330,11 +311,8 @@ _DEFAULT_ID_MAP = {
     "CP-QUOTE": dict(name="Tilvitnun"),  # Direct quote
     "IP": dict(name="Beygingarliður"),  # Inflectional phrase
     "IP-INF": dict(name="Beygingarliður", overrides="VP"),  # Infinitival inflectional phrase
-    #"VP-SEQ": dict(name="Sagnliður"),
-    #"VP-REV": dict(name="Öfugur sagnliður"),
     "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
     "VP": dict(name="Sagnliður", overrides={"VP"}),
-    #"VP-PP": dict(name="Sögn", overrides="PP"),
     "NP": dict(name="Nafnliður", subject_to={"NP-SUBJ", "NP-OBJ", "NP-IOBJ", "NP-PRD", "NP-ADP"}),
     "NP-POSS": dict(name="Eignarfallsliður", overrides="NP"),
     "NP-DAT": dict(name="Þágufallsliður", overrides="NP"),
@@ -343,7 +321,6 @@ _DEFAULT_ID_MAP = {
     "NP-TITLE": dict(name="Titill", overrides="NP"),
     "NP-AGE": dict(name="Aldur"),
     "NP-MEASURE": dict(name="Magnliður", overrides="NP"),
-    #"NP-PERSON": dict(name="Manneskja"),
     "NP-SUBJ": dict(name="Frumlag", subject_to={"NP-SUBJ"}),
     "NP-OBJ": dict(name="Beint andlag"),
     "NP-IOBJ": dict(name="Óbeint andlag"),
@@ -353,7 +330,6 @@ _DEFAULT_ID_MAP = {
     "ADVP-DIR": dict(name="Áttaratviksliður"),
     "ADVP-DATE-ABS": dict(name="Föst dagsetning", overrides="ADVP"),
     "ADVP-DATE-REL": dict(name="Afstæð dagsetning", overrides="ADVP"),
-    #"ADVP-TIMESTAMP": dict(name="Tímapunktur", overrides="ADVP"),
     "ADVP-TIMESTAMP-ABS": dict(name="Fastur tímapunktur", overrides="ADVP"),
     "ADVP-TIMESTAMP-REL": dict(name="Afstæður tímapunktur", overrides="ADVP"),
     "ADVP-TMP-SET": dict(name="Tíðni", overrides="ADVP"),   
@@ -362,24 +338,14 @@ _DEFAULT_ID_MAP = {
     "ADVP-DUR-TIME": dict(name="Tímabil"),
     "ADVP-PCL": dict(name="Ögn"),
     "PP": dict(name="Forsetningarliður", overrides="ADVP", subject_to={"ADVP-DUR-REL", "ADVP-DUR-ABS"}),
-    #"ADJP": dict(name="Lýsingarliður", subject_to={"ADJP"}),
     # Hausar
-    #"ADV": dict(name="Atviksorð"),
-    #"V": dict(name="Sögn"),
-    #"N": dict(name="Nafnorð"),
-    #"PRON": dict(name="Fornafn"),
     "P": dict(name="Forsetning"),
     "TO": dict(name="Nafnháttarmerki"),
-    #"NUM": dict(name="Töluorð", subject_to={"NUM-RANGE"}),
     "C": dict(name="Samtenging"),
-    #"ADJ": dict(name="Lýsingarorð", overrides="V"),
-    #"DET": dict(name="Greinir"),
-    #"DATEREL": dict(name="Afstæð dagsetning"),
-    #"DATEABS": dict(name="Föst dagsetning")
     "FOREIGN": dict(name="Erlendur texti"),
 }
 
-_DEFAULT_TERMINAL_MAP = { # Einhverra hluta vegna er seinna nafnið hér tekið til að nefna liðinn á myndinni, þyrfti að breyta
+_DEFAULT_TERMINAL_MAP = { # TODO: Make sure node names are translated in treegrid
     #"no": "N",
     #"hk": "N",
     #"kk": "N",
@@ -1590,8 +1556,7 @@ class SimpleTree:
     @property
     def nouns(self):
         """ Returns the lemmas of all nouns in the subtree """
-        return self._list(lambda t: t.tcat == "no" or t._cat in _GENDERS or t.tcat == "entity")
-
+        return self._list(lambda t: t.tcat == "no" or t.tcat == "entity" or t._cat in _GENDERS)
     @property
     def verbs(self):
         """ Returns the lemmas of all verbs in the subtree """
