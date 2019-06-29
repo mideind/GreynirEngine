@@ -293,7 +293,7 @@ _DEFAULT_NT_MAP = {
 
 _DEFAULT_ID_MAP = {
     "S0": dict(name="Málsgrein"),
-    "S0-X": dict(name="Rangt mynduð setning")
+    "S0-X": dict(name="Rangt mynduð setning"),
     "S-MAIN": dict(name="Setning", subject_to={"S-MAIN", "S-QUE"}),
     "S-HEADING": dict(name="Fyrirsögn"),
     "S-PREFIX": dict(name="Forskeytt setning"),  # Prefix in front of sentence
