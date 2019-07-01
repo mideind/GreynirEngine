@@ -634,9 +634,23 @@ class Grammar:
 
     def read(self, fname, verbose=False, binary_fname=None):
         """ Read grammar from a text file. Set verbose=True to get diagnostic messages
-            about unused nonterminals and nonterminals that are unreachable from the root.
+            about unused nonterminals and nonterminals that are unreachable
+            from the root.
             Pass a file name in binary_fname to write a fresh binary file if the
             grammar text file is newer than the existing binary file. """
+        try:
+            with open(fname, "r", encoding="utf-8") as inp:
+                # Read grammar file line-by-line
+                return self.read_from_generator(fname, inp, verbose, binary_fname)
+        except (IOError, OSError):
+            raise GrammarError("Unable to open or read grammar file", fname, 0)
+
+    def read_from_generator(self, fname, line_generator, verbose=False, binary_fname=None):
+        """ Read grammar from a generator of lines. Set verbose=True to get
+            diagnostic messages about unused nonterminals and nonterminals that are
+            unreachable from the root. Pass a file name in binary_fname to write
+            a fresh binary file if the grammar text file is newer than the
+            existing binary file. """
 
         # Clear previous file info, if any
         self._file_time = self._file_name = None
@@ -1119,66 +1133,63 @@ class Grammar:
         cond_stack = [("", True)]
 
         try:
-            with open(fname, "r", encoding="utf-8") as inp:
-                # Read grammar file line-by-line
+            # Read grammar file line-by-line
 
-                for s in inp:
+            for s in line_generator:
 
-                    line += 1
-                    # Ignore comments
-                    ix = s.find("#")
-                    if ix >= 0:
-                        s = s[0:ix]
+                line += 1
+                # Ignore comments
+                ix = s.find("#")
+                if ix >= 0:
+                    s = s[0:ix]
 
-                    s = s.rstrip()
-                    if not s:
-                        continue
+                s = s.rstrip()
+                if not s:
+                    continue
 
-                    # If line starts with a blank, assume it's a continuation
-                    if s[0].isspace():
-                        current_line += s
-                        continue
+                # If line starts with a blank, assume it's a continuation
+                if s[0].isspace():
+                    current_line += s
+                    continue
 
-                    if cond_stack[-1][1]:
-                        # New item starting: parse the previous one and start a new
-                        parse_line(current_line)
-
-                    # Check conditional section
-                    if s.startswith(_PRAGMA_IF) and s.endswith(")"):
-                        cond = s[4:-1].strip()
-                        if not cond.isidentifier():
-                            raise GrammarError(
-                                "$if() condition must be a valid identifier"
-                            )
-                        # Establish whether we want to parse the conditional
-                        # section or not
-                        new_cond = cond_stack[-1][1] and cond in self._conditions
-                        cond_stack.append((cond, new_cond))
-                        s = ""
-                    elif s.startswith(_PRAGMA_ENDIF) and s.endswith(")"):
-                        cond = s[7:-1].strip()
-                        if not cond.isidentifier():
-                            raise GrammarError(
-                                "$endif() condition must be a valid identifier"
-                            )
-                        if len(cond_stack) < 2:
-                            raise GrammarError("$endif() with no matching $if()")
-                        if cond != cond_stack[-1][0]:
-                            raise GrammarError(
-                                "$endif({0}) does not match $if({1})"
-                                .format(cond, cond_stack[-1][0])
-                            )
-                        del cond_stack[-1]
-                        s = ""
-
-                    current_line = s
-
-                # Parse the final chunk
-                if current_line:
+                if cond_stack[-1][1]:
+                    # New item starting: parse the previous one and start a new
                     parse_line(current_line)
 
-        except (IOError, OSError):
-            raise GrammarError("Unable to open or read grammar file", fname, 0)
+                # Check conditional section
+                if s.startswith(_PRAGMA_IF) and s.endswith(")"):
+                    cond = s[4:-1].strip()
+                    if not cond.isidentifier():
+                        raise GrammarError(
+                            "$if() condition must be a valid identifier"
+                        )
+                    # Establish whether we want to parse the conditional
+                    # section or not
+                    new_cond = cond_stack[-1][1] and cond in self._conditions
+                    cond_stack.append((cond, new_cond))
+                    s = ""
+                elif s.startswith(_PRAGMA_ENDIF) and s.endswith(")"):
+                    cond = s[7:-1].strip()
+                    if not cond.isidentifier():
+                        raise GrammarError(
+                            "$endif() condition must be a valid identifier"
+                        )
+                    if len(cond_stack) < 2:
+                        raise GrammarError("$endif() with no matching $if()")
+                    if cond != cond_stack[-1][0]:
+                        raise GrammarError(
+                            "$endif({0}) does not match $if({1})"
+                            .format(cond, cond_stack[-1][0])
+                        )
+                    del cond_stack[-1]
+                    s = ""
+
+                current_line = s
+
+            # Parse the final chunk
+            if current_line:
+                parse_line(current_line)
+
         except GrammarError as e:
             e.augment(fname, line)
             raise e
