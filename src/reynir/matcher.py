@@ -124,6 +124,7 @@ _DEFAULT_NT_MAP = {
     "SetningSkilyrði": "S-MAIN",
     "SetningUmAðRæða": "S-MAIN",
     "StViðtenging": "S-MAIN",
+    "Fyrirsögn": "S-HEADING",
     "Tilvísunarsetning": "CP-REL",
     "KommaTilvísunarsetning": "CP-REL",
     "AðÞvíErSegir": "CP-REL",
@@ -149,7 +150,6 @@ _DEFAULT_NT_MAP = {
     "SkýringarsetningFramhald": "CP-THT",
     "AtviksAðSetning": "CP-THT",
     "Spurnaraukasetning": "CP-QUE",
-    "Fyrirsögn": "S-HEADING",
     "BeygingarliðurÁnF": "IP",
     "BeygingarliðurÁnUmröðunar": "IP",
     "BeygingarliðurMeðUmröðun": "IP",
@@ -311,8 +311,8 @@ _DEFAULT_ID_MAP = {
     "CP-QUOTE": dict(name="Tilvitnun"),  # Direct quote
     "IP": dict(name="Beygingarliður"),  # Inflectional phrase
     "IP-INF": dict(name="Beygingarliður", overrides="VP"),  # Infinitival inflectional phrase
-    "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
     "VP": dict(name="Sagnliður", overrides={"VP"}),
+    "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
     "NP": dict(name="Nafnliður", subject_to={"NP-SUBJ", "NP-OBJ", "NP-IOBJ", "NP-PRD", "NP-ADP"}),
     "NP-POSS": dict(name="Eignarfallsliður", overrides="NP"),
     "NP-DAT": dict(name="Þágufallsliður", overrides="NP"),
@@ -374,7 +374,6 @@ _DEFAULT_TERMINAL_MAP = { # TODO: Make sure node names are translated in treegri
     #"dagsafs": "DATEREL",
     #"dagsfast": "DATEABS",
 }
-
 
 # The following list was obtained using this SQL query:
 # select distinct ordmynd from ord
@@ -2000,7 +1999,12 @@ class SimpleTreeBuilder:
         else:
             # Yes: create an intermediate nonterminal with this terminal
             # as its only child
-            self._stack[-1].append(dict(k="NONTERMINAL", n=mapped_t, i=mapped_t, p=[d]))
+            # Look up the corresponding nonterminal from the id map
+            mapped_id = self._id_map[mapped_t]
+            # Use the human-readable name of the nonterminal
+            self._stack[-1].append(
+                dict(k="NONTERMINAL", n=mapped_id["name"], i=mapped_t, p=[d])
+            )
 
     def push_nonterminal(self, nt_base):
         """ Entering a nonterminal node. Pass None if the nonterminal is
