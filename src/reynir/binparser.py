@@ -1316,27 +1316,12 @@ class BIN_Token(Token):
 
     def matches(self, terminal):
         """ Return True if this token matches the given terminal """
-        # If the terminal already knows it doesn't match this token,
-        # bail out quickly
-        if (
-            terminal.shortcut_match is not None
-            and terminal.shortcut_match(self.t1_lower)
-        ):
-            return False
-        # Otherwise, dispatch the token matching according to the dispatch table in _MATCHING_FUNC
+        # Dispatch the token matching according to the dispatch table in _MATCHING_FUNC
         return self._matching_func(self, terminal) is not False
 
     def match_with_meaning(self, terminal):
         """ Return False if this token does not match the given terminal;
             otherwise True or the actual meaning tuple that matched """
-        # If the terminal already knows it doesn't match this token,
-        # bail out quickly
-        if (
-            terminal.shortcut_match is not None
-            and terminal.shortcut_match(self.t1_lower)
-        ):
-            # Strong literal terminals (those in double quotes) implement this feature
-            return False
         # Dispatch the token matching according to the dispatch table in _MATCHING_FUNC
         return self._matching_func(self, terminal)
 
@@ -1583,8 +1568,6 @@ class BIN_Terminal(VariantHandler, Terminal):
 
     def __init__(self, name):
         super().__init__(name)
-        # By default, there is not shortcut function for matching
-        self.shortcut_match = None
 
 
 class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
@@ -1633,19 +1616,15 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
             raise GrammarError(
                 "An exact literal terminal with double quotes cannot have variants"
             )
-        if self._match_cat is None:
-            # In the simple case where there is no associated category,
-            # override matches_first with a simple comparison
-            if self._strong:
-                self.matches_first = lambda t_kind, t_val, t_lit: self._first == t_lit
-            else:
-                self.matches_first = lambda t_kind, t_val, t_lit: self._first == t_val
-        # For strong literal terminals, provide a fast shortcut so that a token
-        # is not considered further if its text does not match the literal
         if self._strong:
-            self.shortcut_match = lambda t_lit: self._first != t_lit
+            # Invoke the matching function for strong literal terminals
+            # directly, saving a comparison at run-time
+            self.matches_first = self.matches_strong
+            self.matches = self.matches_strong
         else:
-            self.shortcut_match = None
+            # For literal terminals, the matches_first() and matches()
+            # functions are identical
+            self.matches_first = self.matches
 
     def _check_first(self):
         """ Replace underscores in the terminal's first part with spaces
@@ -1687,18 +1666,22 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
             (overrides VariantHandler) """
         return self._match_cat == cat
 
-    def matches_first(self, t_kind, t_val, t_lit):
+    def matches(self, t_kind, t_val, t_lit):
         """ A literal terminal matches a token if the token text is identical to the literal """
-        # Note that this function is overridden in __init__ if self._cat is None
-        if t_kind != self._match_cat:
+        if self._match_cat is not None and t_kind != self._match_cat and t_kind != "punctuation":
             # Match only the word category that was specified
             return False
-        return (self._first == t_lit) if self._strong else (self._first == t_val)
+        # Compare with lemma
+        return self._first == t_val
 
-    def matches(self, t_kind, t_val, t_lit):
-        """ A literal terminal matches a token if the token text is
-            canonically or absolutely identical to the literal """
-        return (self._first == t_lit) if self._strong else (self._first == t_val)
+    def matches_strong(self, t_kind, t_val, t_lit):
+        """ A literal terminal matches a token if the token text is identical to the literal """
+        # Note that this function is overridden in __init__ if self._cat is None
+        if self._match_cat is not None and t_kind != self._match_cat and t_kind != "punctuation":
+            # Match only the word category that was specified
+            return False
+        # Compare with literal token text (which has been converted to lower case)
+        return self._first == t_lit
 
 
 class BIN_Nonterminal(Nonterminal):
