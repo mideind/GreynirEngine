@@ -205,7 +205,7 @@ _DEFAULT_NT_MAP = {
     "SagnliðurÁnF": "VP",
     "ÖfugurSagnliður": "VP",
     "SagnliðurVh": "VP",
-    "HjSögnLhÞt": "VP-AUX", # Auxiliary verb, hjálparsögn
+    "HjSögnLhÞt": "VP", # Auxiliary verb, hjálparsögn
     "SögnLhNt": "VP",  # Present participle, lýsingarháttur nútíðar
     "SögnSagnbBreyting": "VP",  # 'hefur versnað'
     "SögnLhNtBreyting": "VP",  # 'hefur farið fækkandi'
