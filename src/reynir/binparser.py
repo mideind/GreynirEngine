@@ -275,7 +275,7 @@ class BIN_Token(Token):
             "af",
             "fyrir",
             "því",
-            "saman"
+            "saman",
         ]
     )
 
@@ -417,7 +417,6 @@ class BIN_Token(Token):
 
     _MEANING_CACHE = {}
     _VARIANT_CACHE = {}
-
 
     def __init__(self, t, original_index):
 
@@ -601,7 +600,9 @@ class BIN_Token(Token):
                 # For regular subj, we don't allow supine (sagnbót)
                 # ('langað', 'þótt')
                 return False
-            if terminal.has_variant("op") and self.verb_cannot_be_impersonal(verb, form):
+            if terminal.has_variant("op") and self.verb_cannot_be_impersonal(
+                verb, form
+            ):
                 # This can't work, as the verb can't be impersonal
                 return False
             if terminal.variant(0) in "012":
@@ -649,7 +650,8 @@ class BIN_Token(Token):
                 return False
         # Check restrictive variants, i.e. we don't accept meanings
         # that have those unless they are explicitly present in the terminal
-        for v in ("sagnb", "lhþt", "bh", "op"):  # Be careful with "lh" here - !!! add mm?
+        # Be careful with "lh" here
+        for v in ("sagnb", "lhþt", "bh", "op"):
             if BIN_Token.VARIANT[v] in form and not terminal.has_variant(v):
                 return False
         if terminal.is_lh:
@@ -739,7 +741,14 @@ class BIN_Token(Token):
             case = terminal.variant(0)
             return any(m.case == case for m in self.t2)
         if not terminal.startswith("person"):
-            return False
+            if terminal.matcher == "uppercase_lemma_literal":
+                # We allow lemma terminals ('Vagn'_þgf_kk) to match
+                # person names
+                if all(m.name != terminal.first for m in self.t2):
+                    # No name match
+                    return False
+            else:
+                return False
         if not terminal.num_variants:
             # No variant specified on terminal: we're done
             return True
@@ -1253,12 +1262,27 @@ class BIN_Token(Token):
             # in the meaning string
             return terminal.fbits_match(fbits)
 
+        def matcher_strong_literal(m):
+            """ Check whether the meaning matches a strong literal terminal,
+                i.e. one that is enclosed in double quotes ("dæmi:hk") """
+            return terminal.matches_first(m.ordfl, m.stofn, self.t1_lower)
+
+        def matcher_lemma_literal(m):
+            """ Check whether the meaning matches a lemma literal terminal,
+                i.e. one that is enclosed in single quotes ('dæmi:hk'_nf_et) """
+            return matcher_default(m)
+
+        def matcher_uppercase_lemma_literal(m):
+            """ Check whether the meaning matches an uppercase lemma literal terminal,
+                i.e. one that is enclosed in single quotes ('Vestur-Þýskaland:hk'_nf) """
+            return matcher_default(m)
+
         # We have a match if any of the possible part-of-speech meanings
         # of this token match the terminal
         if self.t2:
             # The dispatch table has to be constructed each time because
             # the calls will have a wrong self pointer otherwise
-            matcher = locals().get("matcher_" + terminal.first, matcher_default)
+            matcher = locals().get("matcher_" + terminal.matcher, matcher_default)
             # Return the first matching meaning, or False if none
             return next((m for m in self.t2 if matcher(m)), False)
 
@@ -1314,16 +1338,24 @@ class BIN_Token(Token):
             return t[1] in cls._UNDERSTOOD_PUNCTUATION
         return t[0] in cls._MATCHING_FUNC
 
-    def matches(self, terminal):
-        """ Return True if this token matches the given terminal """
-        # Dispatch the token matching according to the dispatch table in _MATCHING_FUNC
-        return self._matching_func(self, terminal) is not False
-
     def match_with_meaning(self, terminal):
         """ Return False if this token does not match the given terminal;
             otherwise True or the actual meaning tuple that matched """
+        # If the terminal is able to shortcut this match without
+        # going through the token-kind specific matching code,
+        # allow it to do so. This is used for literal terminals,
+        # which can only match certain token texts.
+        shortcut_match = terminal.shortcut_match
+        if shortcut_match is not None:
+            shortcut = shortcut_match(self.t1_lower)
+            if shortcut is not None:
+                return shortcut
         # Dispatch the token matching according to the dispatch table in _MATCHING_FUNC
         return self._matching_func(self, terminal)
+
+    def matches(self, terminal):
+        """ Return True if this token matches the given terminal """
+        return self.match_with_meaning(terminal) is not False
 
     def __repr__(self):
         return "[" + self.kind + ": " + self.t1 + "]"
@@ -1377,19 +1409,15 @@ class VariantHandler:
             # part, within quotes, may contain underscores
             ix = self._name.rfind(q)
             if ix < 0:
-                raise GrammarError(
-                    "Malformed literal terminal name '{0}'"
-                    .format(name)
-                )
-            lit = self._name[0:ix+1]
+                raise GrammarError("Malformed literal terminal name '{0}'".format(name))
+            lit = self._name[0 : ix + 1]
             assert lit[0] == q and lit[-1] == q
-            rest = self._name[ix+1:]
+            rest = self._name[ix + 1 :]
             parts = [lit]
             if rest:
-                if rest[0] != '_' or len(rest) < 2:
+                if rest[0] != "_" or len(rest) < 2:
                     raise GrammarError(
-                        "Malformed literal terminal name '{0}'"
-                        .format(name)
+                        "Malformed literal terminal name '{0}'".format(name)
                     )
                 parts += rest[1:].split("_")
         else:
@@ -1440,6 +1468,13 @@ class VariantHandler:
     @property
     def category(self):
         """ Return the word category matched by the terminal """
+        return self._first
+
+    @property
+    def matcher(self):
+        """ Return the identifier of the matcher function in BIN_Token to
+            invoke for this terminal ('no' for matcher_no, etc.). """
+        # This is overridden in LiteralTerminal
         return self._first
 
     @property
@@ -1568,6 +1603,9 @@ class BIN_Terminal(VariantHandler, Terminal):
 
     def __init__(self, name):
         super().__init__(name)
+        # This type of terminal always requires full matching
+        # as appropriate for each token kind
+        self.shortcut_match = None
 
 
 class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
@@ -1582,7 +1620,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
         assert self._first[0] == self._first[-1]
         self._first = self._first[1:-1]
         self._check_first()
-        # Handle word category specification, 
+        # Handle word category specification,
         # i.e. "sem:st", "að:fs", 'vera:so'_gm_nt
         self._cat = None
         self._match_cat = None
@@ -1609,6 +1647,10 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
                     # Hack to allow cases to be specified on fs and so literal terminals
                     # (like so: 'í:fs'_þgf) without having them affect the matching
                     self.cut_fbits(BIN_Token.VBIT_CASES)
+                elif self._cat == "en" or self._cat == "em":
+                    # Hyphen type specifications: in this case, the actual
+                    # token kind that we match is 'punctuation'
+                    self._match_cat = "punctuation"
         # Check whether we have variants on an exact literal
         if self._strong and self.num_variants > 0:
             # It doesn't make sense to have variants on exact literals
@@ -1621,10 +1663,36 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
             # directly, saving a comparison at run-time
             self.matches_first = self.matches_strong
             self.matches = self.matches_strong
+            # Invoke BIN_Token.matches_strong_literal() to check for match
+            self._matcher = "strong_literal"
+            # Add a shortcut_match function which immediately aborts the
+            # token match if the token text is not what we want
+            if self._cat is None or self._match_cat == "punctuation":
+                # Fot literal terminals with no category specification,
+                # i.e. "hvenær", we simply match on the token text with no further ado
+                self.shortcut_match = lambda t_lit: self._first == t_lit
+            else:
+                # For literal terminals with a category specification,
+                # i.e. "hvenær:ao", we shortcut the match, returning False, if the
+                # token text does not match the literal. But if the text matches,
+                # we return None, indicating no shortcut, which means that BIN_Token.matches_WORD()
+                # will be called, which again calls BIN_LiteralTerminal.matches()
+                # for each possible meaning of the word (since we want to select a
+                # meaning that fits the specified category).
+                self.shortcut_match = (
+                    lambda t_lit: False if self._first != t_lit else None
+                )
         else:
-            # For literal terminals, the matches_first() and matches()
+            # For lemma terminals, the matches_first() and matches()
             # functions are identical
             self.matches_first = self.matches
+            self.shortcut_match = None
+            # Invoke BIN_Token.matches_lemma_literal() to check for match
+            self._matcher = (
+                "uppercase_lemma_literal"
+                if self._first[0].isupper()
+                else "lemma_literal"
+            )
 
     def _check_first(self):
         """ Replace underscores in the terminal's first part with spaces
@@ -1636,10 +1704,9 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
             phrase = phrase.replace("_", " ")
             self._first = phrase
             phrase = phrase.split(":")[0]  # Remove :cat, if present
-            if (
-                StaticPhrases.lookup(phrase) is None
-                and not Abbreviations.has_abbreviation(phrase)
-            ):
+            if StaticPhrases.lookup(
+                phrase
+            ) is None and not Abbreviations.has_abbreviation(phrase):
                 # Check that a multi-phrase literal terminal exists in the StaticPhrases
                 # dictionary (normally defined in Phrases.conf)
                 raise GrammarError(
@@ -1657,6 +1724,14 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
         """ Return the word category matched by the terminal """
         return self._match_cat
 
+    @property
+    def matcher(self):
+        """ Return the identifier of the matcher function in BIN_Token to
+            invoke for this terminal ('no' for matcher_no, etc.). """
+        # For literal terminals, we invoke either BIN_Token.matches_strong_literal()
+        # or BIN_Token.matches_lemma_literal()
+        return self._matcher
+
     def startswith(self, part):
         """ Override VariantHandler.startswith() """
         return False
@@ -1668,7 +1743,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
 
     def matches(self, t_kind, t_val, t_lit):
         """ A literal terminal matches a token if the token text is identical to the literal """
-        if self._match_cat is not None and t_kind != self._match_cat and t_kind != "punctuation":
+        if self._match_cat is not None and t_kind != self._match_cat:
             # Match only the word category that was specified
             return False
         # Compare with lemma
@@ -1677,7 +1752,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
     def matches_strong(self, t_kind, t_val, t_lit):
         """ A literal terminal matches a token if the token text is identical to the literal """
         # Note that this function is overridden in __init__ if self._cat is None
-        if self._match_cat is not None and t_kind != self._match_cat and t_kind != "punctuation":
+        if self._match_cat is not None and t_kind != self._match_cat:
             # Match only the word category that was specified
             return False
         # Compare with literal token text (which has been converted to lower case)
@@ -1791,20 +1866,18 @@ class BIN_Parser(Base_Parser):
         g = cls._grammar_class()
         if Settings.DEBUG:
             print(
-                "Loading grammar file {0} with timestamp {1}"
-                .format(cls._GRAMMAR_FILE, datetime.fromtimestamp(ts))
+                "Loading grammar file {0} with timestamp {1}".format(
+                    cls._GRAMMAR_FILE, datetime.fromtimestamp(ts)
+                )
             )
         g.read(
-            cls._GRAMMAR_FILE,
-            verbose=verbose,
-            binary_fname=cls._GRAMMAR_BINARY_FILE
+            cls._GRAMMAR_FILE, verbose=verbose, binary_fname=cls._GRAMMAR_BINARY_FILE
         )
         cls._grammar = g
         cls._grammar_ts = ts
         if Settings.DEBUG:
             print(
-                "Grammar parsed and loaded in {0:.2f} seconds"
-                .format(time.time() - t0)
+                "Grammar parsed and loaded in {0:.2f} seconds".format(time.time() - t0)
             )
         return g
 
