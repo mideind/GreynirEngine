@@ -1199,7 +1199,7 @@ def test_ifd_tag():
     ]
 
 
-def test_tree_flat():
+def test_tree_flat(verbose=False):
 
     AMOUNTS = {
         "þf": [
@@ -1213,6 +1213,8 @@ def test_tree_flat():
             ("3 þúsundir", "ef", "tala no_ft_kvk_þf"),
             ("1.234,5 milljónir", "ef", "tala no_ft_kvk_þf"),
             ("1.234,5 milljarða", "ef", "tala no_ft_kk_þf"),
+            ("1,234.5 milljónir", "ef", "tala no_ft_kvk_þf"),
+            ("1,234.5 milljarða", "ef", "tala no_ft_kk_þf"),
         ],
         "þgf": [
             ("13", "þgf", "tala"),
@@ -1225,6 +1227,8 @@ def test_tree_flat():
             ("3 þúsundum", "ef", "tala no_ft_hk_þgf"),
             ("1.234,5 milljónum", "ef", "tala no_ft_kvk_þgf"),
             ("1.234,5 milljörðum", "ef", "tala no_ft_kk_þgf"),
+            ("1,234.5 milljónum", "ef", "tala no_ft_kvk_þgf"),
+            ("1,234.5 milljörðum", "ef", "tala no_ft_kk_þgf"),
         ]
     }
 
@@ -1273,9 +1277,12 @@ def test_tree_flat():
                     sent = "Hann tapaði " + amount + " " + currency + "."
                 else:
                     assert False  # Unknown verb case
+                if verbose:
+                    print(sent)
                 s = r.parse_single(sent)
                 np_obj = s.tree.S.IP.VP.NP_OBJ.flat_with_all_variants
-                assert np_obj == "NP-OBJ " + t1 + " " + t2 + " /NP-OBJ"
+                expected = "NP-OBJ " + t1 + " " + t2 + " /NP-OBJ"
+                assert np_obj == expected
 
 
 def test_noun_lemmas():
@@ -1689,7 +1696,7 @@ if __name__ == "__main__":
     test_abbreviations()
     test_nominative()
     test_ifd_tag()
-    test_tree_flat()
+    test_tree_flat(verbose=True)
     test_noun_lemmas()
     test_composite_words()
     test_foreign_names()

@@ -872,6 +872,16 @@ class SimpleTree:
                 # 12:34 or 11:34:50
                 result.append("tími")
                 continue
+            if re.match(r"^[+\-]?\d+(\.\d\d\d)*(,\d+)?$", tok):
+                # 12, 1.234 or 1.234,56
+                result.append("tala")
+                continue
+            if re.match(r"^[+\-]?\d+(\,\d\d\d)+(\.\d+)+$", tok):
+                # English-format number: must have both a thousands separator
+                # and a decimal part
+                # 1,234.56
+                result.append("tala")
+                continue
             if (
                 re.match(r"^\d{1,2}\.\d{1,2}(\.\d{2,4})?$", tok)
                 or re.match(r"^\d{1,2}/\d{1,2}(/\d{2,4})?$", tok)
@@ -886,10 +896,6 @@ class SimpleTree:
             if re.match(r"^\d\d\d\d$", tok) and 1776 <= int(tok) <= 2100:
                 # 1981
                 result.append("ártal")
-                continue
-            if re.match(r"^[+\-]?\d+(\.\d\d\d)*(,\d+)?$", tok):
-                # 12, 1.234 or 1.234,56
-                result.append("tala")
                 continue
             tok_lower = tok.lower()
             if tok_lower == "árið":
