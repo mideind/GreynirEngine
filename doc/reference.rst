@@ -157,7 +157,7 @@ The Reynir class
         Output::
 
             The parse tree for 'Litla gula hænan fann fræ' is:
-            P
+            S0
             +-S-MAIN
               +-IP
                 +-NP-SUBJ
@@ -165,7 +165,8 @@ The Reynir class
                   +-lo_nf_et_kvk: 'gula'
                   +-no_et_nf_kvk: 'hænan'
                 +-VP
-                  +-so_1_þf_et_p3: 'fann'
+                  +-VP
+                    +-so_1_þf_et_p3: 'fann'
                   +-NP-OBJ
                     +-no_et_þf_hk: 'fræ'
 
@@ -464,22 +465,23 @@ hence the leading underscore in the class name.
                                       NlKjarni_et_nf_kvk
                                         Fyrirbæri_nf_kvk
                                           'Ása' -> no_et_nf_kvk
-                            SagnRuna_et_p3_kvk
-                              SagnRunaKnöpp_et_p3_kvk
-                                Sagnliður_et_p3_kvk
-                                  Sögn_1_et_p3_kvk
-                                    'sá' -> so_1_þf_et_p3
-                                    NlBeintAndlag_þf
-                                      Nl_þf
-                                        NlEind_et_p3_þf_kvk
-                                          NlStak_et_p3_þf_kvk
-                                            NlStak_p3_et_þf_kvk
-                                              NlKjarni_et_þf_kvk
-                                                Fyrirbæri_þf_kvk
-                                                  'sól' -> no_et_þf_kvk
+                            BeygingarliðurMegin_et_p3_kvk
+                              SagnRuna_et_p3_kvk
+                                SagnRunaKnöpp_et_p3_kvk
+                                  Sagnliður_et_p3_kvk
+                                    Sögn_1_et_p3_kvk
+                                      'sá' -> so_1_þf_et_p3
+                                      NlBeintAndlag_þf
+                                        Nl_þf
+                                          NlEind_et_p3_þf_kvk
+                                            NlStak_et_p3_þf_kvk
+                                              NlStak_p3_et_þf_kvk
+                                                NlKjarni_et_þf_kvk
+                                                  Fyrirbæri_þf_kvk
+                                                    'sól' -> no_et_þf_kvk
                   Lokatákn?
                     Lokatákn
-                      '.' -> '.'
+                      '.' -> "."
 
 
     .. py:attribute:: flat_tree
@@ -539,18 +541,17 @@ hence the leading underscore in the class name.
         .. code-block:: none
 
             Þórgnýr  Þórgnýr  person   nf, kk
-            fór      fara     so       0, et, p3, þt, gm, fh
+            fór      fara     so       0, et, fh, gm, p3, þt
             út       út       ao
             og       og       st
-            fékk     fá       so       2, þgf, þf, et, p3, þt, gm, fh
+            fékk     fá       so       2, þgf, þf, et, fh, gm, p3, þt
             sér      sig      abfn     þgf
-            ís       ís       no       et, þf, kk
+            ís       ís       no       et, kk, þf
             .        .
 
 
-        (The line for *sá* means that this is the verb (``so``) *sjá*,
-        in the third person (``p3``), singular (``et``), having one argument (``1``)
-        in accusative case (``þf``); it is indicative (``fh``), active voice (``gm``)
+        (The line for *fékk* means that this is the verb (``so``) *fá*,
+        having two arguments (``2``) in dative case (``þg0f``) and accusative case (``þf``); it is singular (``et``), indicative (``fh``), active voice (``gm``), in the third person (``p3``),  
         and in past tense (``þt``). See :ref:`variants` for a detailed explanation.)
 
     .. py:attribute:: lemmas

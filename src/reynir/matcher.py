@@ -298,6 +298,9 @@ _DEFAULT_ID_MAP = {
     "S-HEADING": dict(name="Fyrirsögn"),
     "S-PREFIX": dict(name="Forskeytt setning"),  # Prefix in front of sentence
     "S-QUE": dict(name="Spurnaraðalsetning", overrides="S-MAIN"),  # Question clause
+    "CP-THT": dict(name="Skýringarsetning", overrides="IP-INF"),  # Complement clause
+    "CP-QUE": dict(name="Spurnaraukasetning", overrides="NP-OBJ"),  # Question subclause
+    "CP-REL": dict(name="Tilvísunarsetning", overrides="S", subject_to={"CP-REL"}),  # Relative clause
     "CP-ADV-TEMP": dict(name="Tíðarsetning"),  # Adverbial temporal phrase
     "CP-ADV-PURP": dict(name="Tilgangssetning"),  # Adverbial purpose phrase
     "CP-ADV-ACK": dict(name="Viðurkenningarsetning"),  # Adverbial acknowledgement phrase
@@ -305,9 +308,6 @@ _DEFAULT_ID_MAP = {
     "CP-ADV-CAUSE": dict(name="Orsakarsetning"),  # Adverbial causal phrase
     "CP-ADV-COND": dict(name="Skilyrðissetning"),  # Adverbial conditional phrase
     "CP-ADV-CMP": dict(name="Samanburðarsetning"),  # Adverbial comparative phrase
-    "CP-THT": dict(name="Skýringarsetning", overrides="IP-INF"),  # Complement clause
-    "CP-QUE": dict(name="Spurnaraukasetning", overrides="NP-OBJ"),  # Question subclause
-    "CP-REL": dict(name="Tilvísunarsetning", overrides="S", subject_to={"CP-REL"}),
     "CP-QUOTE": dict(name="Tilvitnun"),  # Direct quote
     "IP": dict(name="Beygingarliður"),  # Inflectional phrase
     "IP-INF": dict(name="Beygingarliður", overrides="VP"),  # Infinitival inflectional phrase

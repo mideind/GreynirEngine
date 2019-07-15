@@ -29,7 +29,7 @@ The output of the program is as follows::
     Sentence: Litla gula hænan fann fræ.
     Lemmas:   ['lítill', 'gulur', 'hæna', 'finna', 'fræ', '.']
     Parse tree:
-    P
+    S0
     +-S-MAIN
       +-IP
         +-NP-SUBJ
@@ -37,20 +37,22 @@ The output of the program is as follows::
           +-lo_nf_et_kvk: 'gula'
           +-no_et_nf_kvk: 'hænan'
         +-VP
-          +-so_1_þf_et_p3: 'fann'
+          +-VP
+            +-so_1_þf_et_p3: 'fann'
           +-NP-OBJ
             +-no_et_þf_hk: 'fræ'
     +-'.'
     Sentence: Það var hveitifræ.
     Lemmas:   ['það', 'vera', 'hveitifræ', '.']
     Parse tree:
-    P
+    S0
     +-S-MAIN
       +-IP
         +-NP-SUBJ
           +-pfn_hk_et_nf: 'Það'
         +-VP
-          +-so_1_nf_et_p3: 'var'
+          +-VP
+            +-so_1_nf_et_p3: 'var'
           +-NP-PRD
             +-no_et_nf_hk: 'hveitifræ'
     +-'.'
@@ -76,12 +78,12 @@ which returns a normalized form of the tokenized sentence.
 If the sentence was successfully parsed, the ``sent.tree`` property
 (of type :py:class:`SimpleTree`)
 contains its best parse tree. This tree can be further queried via
-properties such as ``sent.lemmas`` which returns a list of the
-word lemmas in the sentence, and ``sent.tree.view`` which
+properties such as ``sent.lemmas``, which returns a list of the
+word lemmas in the sentence, and ``sent.tree.view``, which
 returns a string with an "ASCII art" representation of the parse tree.
 
 The parse tree contains grammar **nonterminals** in uppercase, such
-as ``P`` (paragraph), ``S-MAIN`` (main sentence), ``IP`` (inflected
+as ``S0`` (root), ``S-MAIN`` (main sentence), ``IP`` (inflected
 phrase - *beygingarliður*), ``NP-SUBJ`` (noun phrase - subject,
 *frumlag*), ``VP`` (verb phrase - *sagnliður*), etc.
 

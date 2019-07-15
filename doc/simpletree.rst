@@ -37,8 +37,8 @@ head (top) node, as well as about its children and contained subtrees.
         specified in the :ref:`terminal <terminals>` corresponding to this
         subtree.
 
-        For example, if the terminal is ``no_ft_ef_hvk`` this property is
-        ``[ 'ft', 'ef', 'hvk' ]`` for plural, possessive case,
+        For example, if the terminal is ``no_ft_ef_hk`` this property is
+        ``[ 'ft', 'ef', 'hk' ]`` for plural, possessive case,
         neutral gender.
 
         This property only returns the variants that occur in the terminal
@@ -59,26 +59,23 @@ head (top) node, as well as about its children and contained subtrees.
             from reynir import Reynir
             r = Reynir()
             s = r.parse_single("Ása sá sól.")
-            print(s.tree.S.IP.VP[0].all_variants)
+            print(s.tree.S.IP.VP.VP[0].all_variants)
 
         Output (the variants of the verb *sá* in the verb phrase)::
 
-            ['1', 'þf', 'et', 'p3', 'fh', 'gm', 'þt']
+            ['1', 'þf', 'et', 'fh', 'gm', 'p3', 'þt']
 
         These are all the variants (features) of the verb form *sá*, in this case
         specifying that it has one argument in accusative case (``þf``), and
-        that the verb itself is singular (``et``), third person (``p3``), indicative (``fh``),
-        active voice (``gm``), past tense (``þt``).
+        that the verb itself is singular (``et``), indicative (``fh``), active voice (``gm``),
+        third person (``p3``), and past tense (``þt``).
 
-        The last three variants are only returned from the :py:attr:`SimpleTree.all_variants`
-        property, not from the :py:attr:`SimpleTree.variants` property, as they are not
-        present in the terminal name in the grammar and are not significant when deriving
-        the parse tree.
+        The variants ``fh``, ``gm`` and ``þt`` are only returned from the :py:attr:`SimpleTree.all_variants` property, not from the :py:attr:`SimpleTree.variants` property, as they are not present in the terminal name in the grammar and are not significant when deriving the parse tree.
 
     .. py:attribute:: tcat
 
         Returns a ``str`` with the terminal :ref:`category <categories>` corresponding to this
-        subtree, e.g. ``no`` for nouns or ``dags`` for dates. If this subtree does not
+        subtree, e.g. ``no`` for nouns or ``fs`` for prepositions. If this subtree does not
         correspond to a terminal, an empty string is returned.
 
     .. py:attribute:: cat
@@ -173,13 +170,14 @@ head (top) node, as well as about its children and contained subtrees.
 
         outputs::
 
-            P
+            S0
             +-S-MAIN
               +-IP
                 +-NP-SUBJ
                   +-no_et_nf_kvk: 'Ása'
                 +-VP
-                  +-so_1_þf_et_p3: 'sá'
+                  +-VP
+                    +-so_1_þf_et_p3: 'sá'
                   +-NP-OBJ
                     +-no_et_þf_kvk: 'sól'
             +-'.'
@@ -209,13 +207,13 @@ head (top) node, as well as about its children and contained subtrees.
 
         Output (line breaks inserted)::
 
-            P S-MAIN IP
+            S0 S-MAIN IP
                 NP-SUBJ person_nf_kk /NP-SUBJ
-                VP so_2_þgf_þf_et_p3
+                VP VP so_2_þgf_þf_et_p3 /VP
                     NP-IOBJ no_et_þgf_kk /NP-IOBJ
                     NP-OBJ tala no_ft_kvk_þf no_ef_ft_kvk /NP-OBJ
                 /VP
-            /IP /S-MAIN p /P
+            /IP /S-MAIN p /S0
 
     .. py:attribute:: flat_with_all_variants
 
@@ -242,13 +240,13 @@ head (top) node, as well as about its children and contained subtrees.
 
         Output (line breaks inserted)::
 
-            P S-MAIN IP
+            S0 S-MAIN IP
                 NP-SUBJ person_kk_nf /NP-SUBJ
-                VP so_2_þgf_þf_et_fh_gm_p3_þt
+                VP VP so_2_þgf_þf_et_fh_gm_p3_þt /VP
                     NP-IOBJ no_et_gr_kk_þgf /NP-IOBJ
                     NP-OBJ tala no_ft_kvk_þf no_ef_ft_kvk /NP-OBJ
                 /VP
-            /IP /S-MAIN p /P
+            /IP /S-MAIN p /S0
 
     .. py:method:: __getitem__(self, item) -> SimpleTree
 

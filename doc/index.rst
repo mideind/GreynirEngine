@@ -18,14 +18,14 @@ and opinions.
 Along the way, Reynir tokenizes the text, finds **lemmas** and assigns
 **part-of-speech (POS) tags** to every word.
 
-.. figure:: _static/GreynirTreeExampleSmall.png
+.. figure:: _static/GreynirTreeExampleSmall2.png
    :align: center
    :alt: An example of a parse tree
 
    Reynir is the engine of `Greynir.is <https://greynir.is>`_
 
 Reynir has been used to parse text from Icelandic news websites since 2015,
-processing 6 million sentences in 300.000 articles. Its optimized C++ parsing
+processing over 8 million sentences in over 400.000 articles. Its optimized C++ parsing
 core is fast and efficient enough to parse real-world text according to a
 `context-free grammar for the Icelandic
 language <https://github.com/mideind/ReynirPackage/blob/master/src/reynir/Reynir.grammar>`_

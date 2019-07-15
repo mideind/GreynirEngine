@@ -29,16 +29,17 @@ Here is a short example of what can be done with Reynir::
     >>> r = Reynir()
     >>> sent = r.parse_single("Ása sá sól.")
     >>> print(sent.tree.view)
-    P                             # Root
-    +-S-MAIN                      # Main sentence
-      +-IP                        # Inflected phrase
-        +-NP-SUBJ                 # Noun phrase, subject
-          +-no_et_nf_kvk: 'Ása'   # Noun, singular, nominative, feminine
-        +-VP                      # Verb phrase
-          +-so_1_þf_et_p3: 'sá'   # Verb, 1 accusative arg, singular, 3rd p
+    S0                              # Root
+    +-S-MAIN                        # Main sentence
+      +-IP                          # Inflected phrase
+        +-NP-SUBJ                   # Noun phrase, subject
+          +-no_et_nf_kvk: 'Ása'     # Noun, singular, nominative, feminine
+        +-VP                        # Verb phrase containing arguments
+          +-VP                      # Verb phrase containing verb
+            +-so_1_þf_et_p3: 'sá'   # Verb, 1 accusative arg, singular, 3rd p
           +-NP-OBJ                # Noun phrase, object
-            +-no_et_þf_kvk: 'sól' # Noun, singular, accusative, feminine
-    +-'.'                         # Punctuation
+          +-no_et_þf_kvk: 'sól' # Noun, singular, accusative, feminine
+    +-'.'                           # Punctuation
     >>> sent.tree.nouns
     ['Ása', 'sól']
     >>> sent.tree.verbs
