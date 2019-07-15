@@ -872,6 +872,16 @@ class SimpleTree:
                 # 12:34 or 11:34:50
                 result.append("tími")
                 continue
+            if re.match(r"^[+\-]?\d+(\.\d\d\d)*(,\d+)?$", tok):
+                # 12, 1.234 or 1.234,56
+                result.append("tala")
+                continue
+            if re.match(r"^[+\-]?\d+(\,\d\d\d)+(\.\d+)+$", tok):
+                # English-format number: must have both a thousands separator
+                # and a decimal part
+                # 1,234.56
+                result.append("tala")
+                continue
             if (
                 re.match(r"^\d{1,2}\.\d{1,2}(\.\d{2,4})?$", tok)
                 or re.match(r"^\d{1,2}/\d{1,2}(/\d{2,4})?$", tok)
@@ -886,10 +896,6 @@ class SimpleTree:
             if re.match(r"^\d\d\d\d$", tok) and 1776 <= int(tok) <= 2100:
                 # 1981
                 result.append("ártal")
-                continue
-            if re.match(r"^[+\-]?\d+(\.\d\d\d)*(,\d+)?$", tok):
-                # 12, 1.234 or 1.234,56
-                result.append("tala")
                 continue
             tok_lower = tok.lower()
             if tok_lower == "árið":
@@ -1058,6 +1064,37 @@ class SimpleTree:
         """ Return a flat representation of this subtree, where terminals
             include all applicable variants """
         return self._flat(lambda tree: tree.terminal_with_all_variants)
+
+    def _bracket_form(self):
+        """ Return a bracketed representation of the tree """
+        result = []
+        puncts = frozenset((".", ",", ";", ":", "-", "—", "–"))
+        def push(node):
+            """ Append information about a node to the result list """
+            if node is None:
+                return
+            nonlocal result
+            node_head = node._head
+            node_kind = node_head.get("k")
+            if node_kind == "NONTERMINAL":
+                result.append("(" + node_head.get("i"))
+                # Recursively add the children of this nonterminal
+                for child in node.children:
+                    result.append(" ")
+                    push(child)
+                result.append(")")
+            elif node_kind == "PUNCTUATION" and node_head.get("x") in puncts:
+                result.append("(PUNCT {})".format(node_head.get("x")))
+            else:
+                # Terminal: append the text
+                result.append(node.text.replace(" ", "_"))
+        push(self)
+        return "".join(result)
+
+    @property
+    def bracket_form(self):
+        """ Return a bracketed representation of the tree """
+        return self._bracket_form()
 
     def __getattr__(self, name):
         """ Return the first child of this subtree having the given tag """
