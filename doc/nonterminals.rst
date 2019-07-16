@@ -92,8 +92,6 @@ Noun phrases
 +------------+---------------------------------------------------+
 | NP-POSS    | Noun phrase - possessive (köttur *Páls*)          |
 +------------+---------------------------------------------------+
-| NP-DAT     | Noun phrase - dative (Kona *tengd samtökunum* kom)|
-+------------+---------------------------------------------------+
 | NP-ADDR    | Noun phrase - address (*Fiskislóð 31*)            |
 +------------+---------------------------------------------------+
 | NP-TITLE   | Noun phrase - title (Páll Jónsson *ritari*)       |
