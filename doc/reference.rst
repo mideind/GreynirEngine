@@ -275,8 +275,8 @@ in the class name.
 
     .. py:attribute:: parse_time
 
-        Returns a ``float`` with the accumulated wall clock time, in seconds, that has been
-        spent parsing sentences via this job.
+        Returns a ``float`` with the accumulated wall clock time, in seconds,
+        that has been spent parsing sentences via this job.
 
 The _Paragraph class
 --------------------
@@ -511,7 +511,8 @@ hence the leading underscore in the class name.
             ``-`` at the component boundaries. Examples: ``borgar-stjórnarmál``,
             ``skugga-kosning``.
 
-        2. **category**: The word :ref:`category <categories>` (``no`` for noun, ``so`` for verb, etc.)
+        2. **category**: The word :ref:`category <categories>`
+            (``no`` for noun, ``so`` for verb, etc.)
 
         3. **variants**: A list of the :ref:`grammatical variants <variants>` for
             the word or token, or an empty list if not applicable. The variants include
@@ -551,7 +552,9 @@ hence the leading underscore in the class name.
 
 
         (The line for *fékk* means that this is the verb (``so``) *fá*,
-        having two arguments (``2``) in dative case (``þg0f``) and accusative case (``þf``); it is singular (``et``), indicative (``fh``), active voice (``gm``), in the third person (``p3``),  
+        having two arguments (``2``) in dative case (``þgf``) and
+        accusative case (``þf``); it is singular (``et``), indicative (``fh``),
+        active voice (``gm``), in the third person (``p3``),
         and in past tense (``þt``). See :ref:`variants` for a detailed explanation.)
 
     .. py:attribute:: lemmas

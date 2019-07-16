@@ -2,7 +2,7 @@
 
     Reynir: Natural language processing for Icelandic
 
-    Copyright(C) 2018 Miðeind ehf.
+    Copyright(C) 2019 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
         This program is free software: you can redistribute it and/or modify
@@ -40,7 +40,7 @@ from tokenizer import Abbreviations
 __author__ = "Miðeind ehf."
 __copyright__ = "(C) 2019 Miðeind ehf."
 # Remember to update the version in doc/conf.py as well
-__version__ = "1.6.0"
+__version__ = "1.7.0"
 
 Abbreviations.initialize()
 Settings.read("config/ReynirPackage.conf")
