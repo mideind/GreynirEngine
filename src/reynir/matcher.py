@@ -172,7 +172,7 @@ _DEFAULT_NT_MAP = {
     "EfLiður": "NP-POSS",
     "EfLiðurForskeyti": "NP-POSS",
     "OkkarFramhald": "NP-POSS",
-    "LoEftirNlMeðÞgf": "NP-DAT",
+    #"LoEftirNlMeðÞgf": "NP-DAT",
     "LoViðhengi": "NP-ADP",     # Adjective predicate
     "Heimilisfang": "NP-ADDR",
     "Fyrirtæki": "NP-COMPANY",
