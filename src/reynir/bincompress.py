@@ -819,7 +819,10 @@ class BIN_Compressed:
     def _mapping_cffi(self, word):
         """ Call the C++ mapping() function that has been wrapped using CFFI"""
         try:
-            m = bin_cffi.mapping(self._mmap_buffer, word.encode("latin-1"))
+            m = bin_cffi.mapping(
+                ffi.cast("uint8_t*", self._mmap_buffer),
+                word.encode("latin-1")
+            )
             return None if m == 0xFFFFFFFF else m
         except UnicodeEncodeError:
             # The word contains a non-latin-1 character:
