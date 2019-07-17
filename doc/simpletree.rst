@@ -1,3 +1,5 @@
+:orphan:
+
 .. _simpletree:
 
 The SimpleTree class
