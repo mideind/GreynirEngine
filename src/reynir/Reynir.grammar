@@ -4651,12 +4651,13 @@ $score(+6) LoSemLo/fall/tala/kyn    # Tilbrigði 3.1, eina sem þarf að toggla.
 
 # 'Ég vaknaði ekkert alltof fersk'
 # 'Atburðarásin var [þó] nokkuð skýr'
+# 'Hagsmunirnir eru það miklir að aðgerða er þörf'
 # Ath.: 'nokkuð' er ekki leyft sem eo þar sem það er einnig fornafn.
 # Þess vegna er það sértilvik hér. Ekki er hins vegar ráðlegt að
 # leyfa atviksorðið almennt sem einkunn með nafnliðum; það myndi
 # rekast á fornafnið.
 LoAtviksliður →
-    eo | 'enginn:fn'_hk_et_nf | "þó:ao"? "nokkuð:ao"
+    eo | 'enginn:fn'_hk_et_nf | "þó:ao"? "nokkuð:ao" | 'sá:fn'_hk_nf_et
 
 $score(+3) LoAtviksliður
 

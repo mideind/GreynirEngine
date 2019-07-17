@@ -1254,9 +1254,10 @@ class DefaultPipeline:
         output stream. Individual phases in the sequence can
         easily be overridden in derived classes. """
 
-    def __init__(self, text, auto_uppercase):
+    def __init__(self, text, **options):
         self._text = text
-        self._auto_uppercase = auto_uppercase
+        self._auto_uppercase = options.pop("auto_uppercase", False)
+        self._options = options
         self._db = None
         # Initialize the default tokenizer pipeline.
         # This sequence of phases can be modified in derived classes.
@@ -1277,7 +1278,7 @@ class DefaultPipeline:
 
     def tokenize_without_annotation(self):
         """ The basic, raw tokenization from the tokenizer package """
-        return tokenize_without_annotation(self._text)
+        return tokenize_without_annotation(self._text, **self._options)
 
     def parse_static_phrases(self, stream):
         """ Static multiword phrases """
@@ -1352,9 +1353,9 @@ class DefaultPipeline:
                 self._db = None
 
 
-def tokenize(text, auto_uppercase=False):
+def tokenize(text, **options):
     """ Tokenize text using the default pipeline """
-    pipeline = DefaultPipeline(text, auto_uppercase)
+    pipeline = DefaultPipeline(text, **options)
     return pipeline.tokenize()
 
 
