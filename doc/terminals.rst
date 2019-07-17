@@ -209,7 +209,7 @@ Occurs with adjectives (``lo`` terminal category) only.
 +------------+---------------------------------------------------+
 
 Adjective object case
-------
+---------------------
 
 Occurs with adjectives (``lo`` terminal category) only.
 

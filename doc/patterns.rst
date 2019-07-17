@@ -136,81 +136,82 @@ Here is a short program using some of the matching features::
         print(m.canonical_np)
 
 Output::
-  S0
-    +-S-MAIN
-      +-IP
-        +-VP
+
+    S0
+      +-S-MAIN
+        +-IP
           +-VP
-            +-so_sagnb: 'Reynt'
-          +-VP
-            +-so_et_p3: 'er'
-          +-IP-INF
-            +-TO
-              +-nhm: 'að'
+            +-VP
+              +-so_sagnb: 'Reynt'
+            +-VP
+              +-so_et_p3: 'er'
+            +-IP-INF
+              +-TO
+                +-nhm: 'að'
+              +-VP
+                +-VP
+                  +-so_1_þf_nh: 'efla'
+                +-NP-OBJ
+                  +-no_et_þf_kk: 'áhuga'
+                  +-NP-POSS
+                    +-lo_ef_et_hk: 'ungs'
+                    +-no_et_ef_hk: 'fólks'
+                    +-PP
+                      +-P
+                        +-fs_þgf: 'á'
+                      +-NP
+                        +-no_ft_þgf_hk: 'borgarstjórnarmálum'
+                        +-PP
+                          +-P
+                            +-fs_þgf: 'með'
+                          +-NP
+                            +-no_ft_þgf_kk: 'framboðsfundum'
+                            +-C
+                              +-st: 'og'
+                            +-no_ft_þgf_kvk: 'skuggakosningum'
+      +-C
+        +-st: 'en'
+      +-S-MAIN
+        +-CP-ADV-ACK
+          +-C
+            +-st: 'þótt'
+          +-IP
+            +-NP-SUBJ
+              +-no_ft_nf_kk: 'kjörstaðirnir'
+              +-PP
+                +-P
+                  +-fs_þgf: 'í'
+                +-NP
+                  +-pfn_kvk_ft_þgf: 'þeim'
             +-VP
               +-VP
-                +-so_1_þf_nh: 'efla'
-              +-NP-OBJ
-                +-no_et_þf_kk: 'áhuga'
-                +-NP-POSS
-                  +-lo_ef_et_hk: 'ungs'
-                  +-no_et_ef_hk: 'fólks'
-                  +-PP
-                    +-P
-                      +-fs_þgf: 'á'
-                    +-NP
-                      +-no_ft_þgf_hk: 'borgarstjórnarmálum'
-                      +-PP
-                        +-P
-                          +-fs_þgf: 'með'
-                        +-NP
-                          +-no_ft_þgf_kk: 'framboðsfundum'
-                          +-C
-                            +-st: 'og'
-                          +-no_ft_þgf_kvk: 'skuggakosningum'
-    +-C
-      +-st: 'en'
-    +-S-MAIN
-      +-CP-ADV-ACK
-        +-C
-          +-st: 'þótt'
+                +-so_ft_p3: 'séu'
+              +-NP-PRD
+                +-NP-PRD
+                  +-VP
+                    +-so_lhþt_sb_nf_ft_kk: 'færðir'
+                +-PP
+                  +-ADVP-DIR
+                    +-ao: 'inn'
+                  +-P
+                    +-fs_þf: 'í'
+                  +-NP
+                    +-no_ft_þf_kk: 'framhaldsskólana'
         +-IP
-          +-NP-SUBJ
-            +-no_ft_nf_kk: 'kjörstaðirnir'
-            +-PP
-              +-P
-                +-fs_þgf: 'í'
-              +-NP
-                +-pfn_kvk_ft_þgf: 'þeim'
           +-VP
             +-VP
-              +-so_ft_p3: 'séu'
+              +-so_et_p3: 'er'
+            +-NP-SUBJ
+              +-no_et_nf_kvk: 'þátttakan'
             +-NP-PRD
-              +-NP-PRD
-                +-VP
-                  +-so_lhþt_sb_nf_ft_kk: 'færðir'
-              +-PP
-                +-ADVP-DIR
-                  +-ao: 'inn'
-                +-P
-                  +-fs_þf: 'í'
-                +-NP
-                  +-no_ft_þf_kk: 'framhaldsskólana'
-      +-IP
-        +-VP
-          +-VP
-            +-so_et_p3: 'er'
-          +-NP-SUBJ
-            +-no_et_nf_kvk: 'þátttakan'
-          +-NP-PRD
-            +-lo_sb_nf_et_kvk: 'lítil'
-    +-'.'
-    All subjects:
-    kjörstaðirnir í þeim
-    þátttakan
-    All masculine noun and pronoun phrases:
-    áhugi
-    framboðsfundur og skuggakosning
-    kjörstaður
-    framhaldsskóli
+              +-lo_sb_nf_et_kvk: 'lítil'
+      +-'.'
+      All subjects:
+      kjörstaðirnir í þeim
+      þátttakan
+      All masculine noun and pronoun phrases:
+      áhugi
+      framboðsfundur og skuggakosning
+      kjörstaður
+      framhaldsskóli
 

@@ -60,7 +60,7 @@ Sentences and paragraphs
 
 
 Inflectional phrases
------------------
+--------------------
 
 *Beygingarliðir*
 
