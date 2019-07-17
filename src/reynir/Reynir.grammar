@@ -725,7 +725,6 @@ SamanburðurNl →
 SamanburðarNlTenging →
     HeldurEn                                # 'Forseti á ekki að gera meiri breytingu á sér (heldur) en forsætisráðherra'
     | ","? Samanburðartenging               # 'Hann á ekki andstæðinga eins og aðrir kjörnir fulltrúar'
-    | ","? Samanburðartenging
     | Samanburðarmerki? "þar:ao" "af:ao"    # 'Fjöldi barna var í vélinni, þar af tvö kornabörn'
     | Samanburðarmerki? "þar:ao" 'á_meðal:ao'
     | Samanburðarmerki? 'þar_með_talið:ao'  # Skammstöfunin 'þ.m.t.'
@@ -736,7 +735,7 @@ SamanburðarNlTenging →
     | SamanburðarTengingOg
 
 SamanburðarTengingOg →
-    ","? "og:st"                        # Erfitt fjarskiptasamband er á staðnum og mikil snjóþyngsli
+    ","? "og:st"                            # Erfitt fjarskiptasamband er á staðnum og mikil snjóþyngsli
 
 $score(-8) SamanburðurNl
 $score(+4) SamanburðarNlTenging
@@ -4110,7 +4109,7 @@ EfLiðurForskeytiTala/tala/kyn →
     Töluorð_ef/tala/kyn TilTölu/tala/kyn?  # (vel rúmlega) þriggja (klukkutíma bið) / 30 þúsund (króna tjón)
 
 TilTölu/tala/kyn →
-    "til:fs" Töluorð_ef/tala/kyn+   # (á) tveggja til þriggja metra dýpi
+    'til:fs'_ef Töluorð_ef/tala/kyn+   # (á) tveggja til þriggja metra dýpi
 
 EfLiðurForskeyti →
     Fornafn_ef/tala/kyn* eo* EfLiðurForskeytiTala/tala/kyn? EfLiðurForskeytiKjarni/tala/kyn
