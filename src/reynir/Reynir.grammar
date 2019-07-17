@@ -129,6 +129,7 @@ MgrInnihald → Forskeyti? Yfirsetning StLiður* Lokatákn?
     | Sagt Segir Lokatákn?                          # "Allt er klappað og klárt", segir Jón.
     | Sagt AðSögn Lokatákn?                         # Allt er klappað og klárt að sögn ráðuneytisins.
     | Sagt AðÞvíErSegir Lokatákn?                   # Allt er klappað og klárt að því er ráðuneytið segir.
+
 Forskeyti →
     "-:em"? Samtenging "bara:ao"? StrikEðaKomma?    # 'En - þegar allt er skoðað, var þetta fínt.'
     | Samtenging? uh TengimerkiVh Samtenging?       # Og já, þetta var ekki gott / Nei - en hann átti ekkert svar
@@ -177,8 +178,8 @@ AðÞvíErSegir →
 AðÞvíEr →
     'að:fs'_þgf 'það:pfn'_hk_þgf_et "er:stt" # að því er [segir í tilkynningu]
 
-SegirÍ
-    → 'segja:so'_0_gm_fh_et_p3 ÍNl
+SegirÍ →
+    'segja:so'_0_gm_fh_et_p3 ÍNl
 
 ÍNl → 'í:fs'_þgf Nl_þgf AtvFsAuka?
 
@@ -332,7 +333,6 @@ Bæði → "bæði:st"
 Ýmist → "ýmist:st"
 Og → "og:st"
 Eða → "eða:st"
-
 
 # Aukasetningar
 Atvikssetning → 
@@ -527,6 +527,7 @@ Tíðartenging →
 $tag(apply_length_bonus) Tíðartenging
 
 Allt → 'allur:fn'_nf_hk_et
+
 $score(+4) Allt
 
 Tilgangstenging → 
@@ -615,7 +616,6 @@ SagnRuna/tala/pers/kyn →
 
 Hvorki → "hvorki:st"
 Né → "né:st"
-
 
 SagnRunaKnöpp/tala/pers/kyn →
     Sagnliður/tala/pers/kyn LoTengtSögn_nf/tala/kyn? SagnInnskotAtv?
@@ -836,8 +836,6 @@ SamanburðarForskeyti →
     # 'Líkt og bakarar eru smiðir óhressir með þetta'
     # 'Eins og Páll borða ég ekki smjör'
     Samanburðartenging Nl_nf       
-
-
 
 # Hvetja til forskeyta fremur en samtenginga, ef val er þar á milli
 $score(+10) SamanburðarForskeyti
@@ -1641,8 +1639,6 @@ SögnNhBotn →
     # Jón hefur [talsvert] aðra/betri sögu að segja en þá venjulegu
     | NlAnnar/fall Nhm So_1_nh/fall FsAtv? SamanburðarNafnliður
 
-
-
 NlAnnar/fall →
     AtviksliðurEinkunn* MiðstigEðaAnnar/fall/tala/kyn Nl/fall/tala/kyn
 
@@ -2366,14 +2362,14 @@ HjSögn/tala/pers →
     'hafa:so'/tala/pers Geta_sagnb?                 # hafðir [í fátinu ekki getað] farið
     | 'geta:so'/tala/pers                           # gast farið
     | 'fá:so'/tala/pers                             # (allir) fái notið (þeirra réttinda)
-    | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh     # gast [ekki] hafa farið
+    | 'geta:so'/tala/pers FsAtv? 'hafa:so'_nh       # gast [ekki] hafa farið
     | 'vilja:so'/tala/pers FsAtv? HafaGetaFá_nh     # vildir [ekki] geta/hafa farið
     | 'mega:so'/tala/pers FsAtv? HafaGetaFá_nh      # máttir [ekki] geta/hafa farið
     | 'þykja:so'/tala/pers FsAtv? HafaGetaFá_nh     # þóttir [ekki] geta/hafa farið
     | 'skulu:so'/tala/pers FsAtv? HafaGetaFá_nh     # skulir [ekki] geta/hafa farið
     | 'munu:so'/tala/pers FsAtv? HafaGetaFá_nh      # munir [ekki] geta/hafa farið
     | 'eiga:so'/tala/pers FsAtv? Nhm HafaGetaFá_nh  # átt [ekki] að geta/hafa farið
-    | so_mm/tala/pers FsAtv? HjSögn_mm_nh             # segist [ekki] hafa farið
+    | so_mm/tala/pers FsAtv? HjSögn_mm_nh           # segist [ekki] hafa farið
 
 # Hjálparsagnir koma ekki til álita varðandi tengingu forsetningar við sögn
 $tag(purge_verb) HjSögn/tala/pers
@@ -2714,7 +2710,6 @@ HjSögnFinnst/tala/pers →
 HjSögnVantaSkorta →
     'vanta:so'_nh           # Okkur þykir/þótti vanta mýkt í rödd Pálínu
     | 'skorta:so'_nh        # Páli þykir/þótti skorta samkvæmni í málflutningi Jóns
-
 
 # HjSögnÞaðLo_et_p3 →
 #     'vera:so'_gm_p3_et 'verða:so'_sagnb? # Það er [orðið] brýnt að...
