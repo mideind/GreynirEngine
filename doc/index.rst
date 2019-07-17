@@ -18,7 +18,7 @@ and opinions.
 Along the way, Reynir tokenizes the text, finds **lemmas** and assigns
 **part-of-speech (POS) tags** to every word.
 
-.. figure:: _static/GreynirTreeExampleSmall.png
+.. figure:: _static/GreynirTreeExampleSmall2.png
    :align: center
    :alt: An example of a parse tree
 
