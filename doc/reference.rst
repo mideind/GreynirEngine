@@ -49,7 +49,7 @@ The Reynir class
 
         Initializes the :py:class:`Reynir` instance.
 
-        :param **options: Tokenizer options can be passed via keyword arguments,
+        :param options: Tokenizer options can be passed via keyword arguments,
             as in ``r = Reynir(convert_numbers=True)``. See the documentation
             for the `Tokenizer <https://github.com/mideind/Tokenizer>`_
             package for further information.
