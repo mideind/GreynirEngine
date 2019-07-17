@@ -45,9 +45,14 @@ The Reynir class
 
 .. py:class:: Reynir
 
-    .. py:method:: __init__(self)
+    .. py:method:: __init__(self, **options)
 
         Initializes the :py:class:`Reynir` instance.
+
+        Tokenizer options can be passed via keyword arguments, as in
+        ``r = Reynir(convert_numbers=True)``. See the
+        documentation for the `Tokenizer <https://github.com/mideind/Tokenizer>`_
+        package for further information.
 
     .. py:method:: submit(self, text : string, parse : bool = False,
             *, split_paragraphs = False) -> _Job

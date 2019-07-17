@@ -4,8 +4,8 @@
 
     High-level wrapper for the Reynir tokenizer, parser and reducer
 
-    Copyright (c) 2018 Miðeind ehf.
-    Author: Vilhjálmur Þorsteinsson
+    Copyright (c) 2019 Miðeind ehf.
+    Original author: Vilhjálmur Þorsteinsson
 
        This program is free software: you can redistribute it and/or modify
        it under the terms of the GNU General Public License as published by
@@ -390,12 +390,14 @@ class Reynir:
     _reducer = None
     _lock = Lock()
 
-    def __init__(self):
-        pass
+    def __init__(self, **options):
+        """ Tokenization options can be passed as keyword arguments to the
+            Reynir constructor """
+        self._options = options
 
     def tokenize(self, text):
         """ Call the tokenizer (overridable in derived classes) """
-        return bin_tokenize(text)
+        return bin_tokenize(text, **self._options)
 
     def create_sentence(self, job, s):
         """ Override this in derived classes to modify how sentences
