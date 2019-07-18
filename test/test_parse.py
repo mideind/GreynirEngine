@@ -1458,6 +1458,14 @@ def test_vocabulary():
         cnt += 1
     assert cnt == 2
 
+    s = r.parse_single("Ég veipaði af miklum krafti og fór á marga vegu.")
+    assert s.tree.flat_with_all_variants == (
+        "S0 S-MAIN IP NP-SUBJ pfn_et_nf_p1 /NP-SUBJ VP VP so_0_et_fh_gm_p1_þt /VP "
+        "PP P fs_þgf /P NP lo_et_kk_sb_þgf no_et_kk_þgf /NP /PP C st /C VP "
+        "so_0_et_fh_gm_p1_þt /VP PP P fs_þf /P NP lo_ft_kk_sb_þf no_ft_kk_þf "
+        "/NP /PP /VP /IP /S-MAIN p /S0"
+    )
+
 
 def test_adjective_predicates():
     """ Test adjectives with an associated predicate """
