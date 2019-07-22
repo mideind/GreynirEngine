@@ -33,9 +33,13 @@ from .bintokenizer import tokenize
 
 # Expose the tokenizer API
 
-from tokenizer import TOK, Tok, correct_spaces, mark_paragraphs
-from tokenizer import TP_LEFT, TP_CENTER, TP_RIGHT, TP_NONE, TP_WORD
-from tokenizer import Abbreviations
+from tokenizer import TOK, Tok, correct_spaces, mark_paragraphs, Abbreviations
+from tokenizer import (
+    TP_LEFT, TP_CENTER, TP_RIGHT, TP_NONE, TP_WORD,
+    KLUDGY_ORDINALS_PASS_THROUGH,
+    KLUDGY_ORDINALS_MODIFY,
+    KLUDGY_ORDINALS_TRANSLATE
+)
 
 __author__ = "Miðeind ehf."
 __copyright__ = "(C) 2019 Miðeind ehf."

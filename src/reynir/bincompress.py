@@ -71,7 +71,7 @@ if __package__:
     # This is not needed for command-line invocation of bincompress.py,
     # i.e. when generating a new ord.compressed file.
     from ._bin import lib as bin_cffi, ffi
-elif __name__ != "__main__":
+else:
     from _bin import lib as bin_cffi, ffi
 
 
@@ -85,6 +85,12 @@ UINT32 = struct.Struct("<I")
 _BIN_ERRATA = None
 # A set of BÍN deletions, loaded from BinErrata.conf
 _BIN_DELETIONS = None
+
+CASES = ("NF", "ÞF", "ÞGF", "EF")
+CASES_LATIN = tuple(case.encode("latin-1") for case in CASES)
+
+# FILENAME = "ord.compressed.test"
+FILENAME = "ord.compressed"
 
 
 class _Node:
@@ -203,7 +209,7 @@ class _Node:
         for child in self.children:
             if fragment.startswith(child.fragment):
                 # This is a continuation route: take it
-                return child.lookup(fragment[len(child.fragment):])
+                return child.lookup(fragment[len(child.fragment) :])
         # No route matches: the key was not found
         return None
 
@@ -323,21 +329,24 @@ class BIN_Compressor:
 
     """
 
-    VERSION = b'Reynir 001.03.00'
+    VERSION = b"Reynir 001.04.00"
     assert len(VERSION) == 16
 
     def __init__(self):
-        self._forms = Trie()        # ordmynd
-        self._stems = Indexer()     # stofn
+        self._forms = Trie()  # ordmynd
+        self._stems = Indexer()  # stofn
         self._meanings = Indexer()  # beyging
         self._alphabet = set()
         # map form index -> { (stem, meaning) }
         self._lookup_form = defaultdict(set)
-        # map stem index -> { form }
-        self._lookup_stem = defaultdict(set)
+        # map stem index -> { case: { form } }
+        self._lookup_stem = defaultdict(lambda: defaultdict(set))
         # Count of stem word categories
         self._stem_cat_count = defaultdict(int)
-        self._canonical_count = 0
+        # Count of word forms for each case for each stem
+        self._canonical_count = defaultdict(int)
+        # map declension pattern -> { offset }
+        self._case_variants = dict()
 
     def read(self, fnames):
         """ Read the given .csv text files in turn and add them to the
@@ -356,9 +365,15 @@ class BIN_Compressor:
                     stem, wid, ordfl, fl, form, meaning = t
                     # Skip this if present in _BIN_DELETIONS
                     if (stem, ordfl, fl) in _BIN_DELETIONS:
-                        print("Skipping {stem} {wid} {ordfl} {fl} {form} {meaning}"
-                            .format(stem=stem, wid=wid, ordfl=ordfl, fl=fl,
-                                form=form, meaning=meaning)
+                        print(
+                            "Skipping {stem} {wid} {ordfl} {fl} {form} {meaning}".format(
+                                stem=stem,
+                                wid=wid,
+                                ordfl=ordfl,
+                                fl=fl,
+                                form=form,
+                                meaning=meaning,
+                            )
                         )
                         continue
                     # Apply a fix if we have one for this
@@ -368,11 +383,10 @@ class BIN_Compressor:
                     ordfl = ordfl.encode("latin-1")
                     fl = fl.encode("latin-1")
                     form = form.encode("latin-1")
-                    m = meaning
                     meaning = meaning.encode("latin-1")
                     # Cut off redundant ending of meaning (beyging),
                     # e.g. ÞGF2
-                    if meaning and meaning[-1] in {b'2', b'3'}:
+                    if meaning and meaning[-1] in {b"2", b"3"}:
                         meaning = meaning[:-1]
                     self._alphabet |= set(form)
                     # Map null (no string) in utg to -1
@@ -385,11 +399,13 @@ class BIN_Compressor:
                     fix = self._forms.add(form)  # Add to a trie
                     mix = self._meanings.add((ordfl, fl, meaning))
                     self._lookup_form[fix].add((six, mix))
-                    if "NF" in m:
-                        # Nominative case: store with the stem as a canonical form
-                        if form not in self._lookup_stem[six]:
-                            self._lookup_stem[six].add(form)
-                            self._canonical_count += 1
+                    case_forms = self._lookup_stem[six]
+                    for case in CASES_LATIN:
+                        if case in meaning:
+                            # Store each case with the stem
+                            if form not in case_forms[case]:
+                                case_forms[case].add(form)
+                                self._canonical_count[case] += 1
                     cnt += 1
                     # Progress indicator
                     if cnt % 10000 == 0:
@@ -408,7 +424,15 @@ class BIN_Compressor:
         print("They are distributed as follows:")
         for key, val in self._stem_cat_count.items():
             print("   {0:6s} {1:8d}".format(key, val))
-        print("Nominative forms associated with stems are {0}".format(self._canonical_count))
+        for index, case in enumerate(
+            ("Nominative", "Accusative", "Dative", "Possessive")
+        ):
+            print(
+                "{0} forms associated with stems are {1}".format(
+                    case,
+                    self._canonical_count[CASES_LATIN[index]]
+                )
+            )
         print("Meanings are {0}".format(len(self._meanings)))
         print("The alphabet is '{0}'".format(self._alphabet))
         print("It contains {0} characters".format(len(self._alphabet)))
@@ -419,28 +443,27 @@ class BIN_Compressor:
         try:
             values = self._lookup_form[self._forms[form_latin]]
             # Obtain the stem and meaning tuples corresponding to the word form
-            result = [
-                (self._stems[six], self._meanings[mix])
-                for six, mix in values
-            ]
-            # Convert to Unicode and return a 5-tuple (stofn, utg, ordfl, fl, ordmynd, beyging)
+            result = [(self._stems[six], self._meanings[mix]) for six, mix in values]
+            # Convert to Unicode and return a 5-tuple
+            # (stofn, utg, ordfl, fl, ordmynd, beyging)
             return [
                 (
-                    s[0].decode("latin-1"),     # stofn
-                    s[1],                       # utg
-                    m[0].decode("latin-1"),     # ordfl
-                    m[1].decode("latin-1"),     # fl
-                    form,                       # ordmynd
-                    m[2].decode("latin-1")      # beyging
+                    s[0].decode("latin-1"),  # stofn
+                    s[1],  # utg
+                    m[0].decode("latin-1"),  # ordfl
+                    m[1].decode("latin-1"),  # fl
+                    form,  # ordmynd
+                    m[2].decode("latin-1"),  # beyging
                 )
                 for s, m in result
             ]
         except KeyError:
             return []
 
-    def lookup_forms(self, form):
+    def lookup_forms(self, form, case="NF"):
         """ Test lookup of all forms having the same stem as the given form """
         form_latin = form.encode("latin-1")
+        case_latin = case.encode("latin-1")
         try:
             values = self._lookup_form[self._forms[form_latin]]
             # Obtain the stem and meaning tuples corresponding to the word form
@@ -448,25 +471,22 @@ class BIN_Compressor:
             # Go through the distinct stems found for this word form
             for six in set(v[0] for v in values):
                 # Look at all forms of this stem that may be canonical
-                if six in self._lookup_stem:
-                    for can in self._lookup_stem[six]:
+                if six in self._lookup_stem and case in self._lookup_stem[six]:
+                    for can in self._lookup_stem[six][case]:
                         for s, m in self._lookup_form[self._forms[can]]:
                             if s == six:
                                 b = self._meanings[m][2]
-                                if b"NF" in b:
+                                if case_latin in b:
                                     # Nominative
                                     v.append((b, can))
-            return [
-                (m.decode("latin-1"), f.decode("latin-1"))
-                for m, f in v
-            ]
+            return [(m.decode("latin-1"), f.decode("latin-1")) for m, f in v]
         except KeyError:
             return []
 
     def write_forms(self, f, alphabet, lookup_map):
         """ Write the forms trie contents to a packed binary stream """
         # We assume that the alphabet can be represented in 7 bits
-        assert len(alphabet) + 1 < 2**7
+        assert len(alphabet) + 1 < 2 ** 7
         todo = []
         node_cnt = 0
         single_char_node_count = 0
@@ -479,7 +499,7 @@ class BIN_Compressor:
                 of this node """
             loc = f.tell()
             val = 0x007FFFFF if node.value is None else lookup_map[node.value]
-            assert val < 2**23
+            assert val < 2 ** 23
             nonlocal node_cnt, single_char_node_count, multi_char_node_count
             nonlocal no_child_node_count
             node_cnt += 1
@@ -494,13 +514,10 @@ class BIN_Compressor:
                     chix = 0
                 else:
                     chix = alphabet.index(node.fragment[0]) + 1
-                assert chix < 2**7
+                assert chix < 2 ** 7
                 f.write(
                     UINT32.pack(
-                        0x80000000
-                        | childless_bit
-                        | (chix << 23)
-                        | (val & 0x007FFFFF)
+                        0x80000000 | childless_bit | (chix << 23) | (val & 0x007FFFFF)
                     )
                 )
                 single_char_node_count += 1
@@ -536,7 +553,9 @@ class BIN_Compressor:
 
         print(
             "Written {0} nodes, thereof {1} single-char nodes and {2} multi-char."
-            .format(node_cnt, single_char_node_count, multi_char_node_count)
+            .format(
+                node_cnt, single_char_node_count, multi_char_node_count
+            )
         )
         print("Childless nodes are {0}.".format(no_child_node_count))
 
@@ -556,6 +575,8 @@ class BIN_Compressor:
         f.write(UINT32.pack(0))
         stems_offset = f.tell()
         f.write(UINT32.pack(0))
+        variants_offset = f.tell()
+        f.write(UINT32.pack(0))
         meanings_offset = f.tell()
         f.write(UINT32.pack(0))
         alphabet_offset = f.tell()
@@ -574,31 +595,62 @@ class BIN_Compressor:
             """ Write a string in the latin-1 charset, zero-terminated,
                 padded to align on a DWORD (32-bit) boundary """
             pad = 4 - (len(s) & 0x03)  # Always add at least one space
-            f.write(s + b' ' * pad)
+            f.write(s + b" " * pad)
 
         def write_string(s):
             """ Write a string preceded by a length byte, aligned to a
                 DWORD (32-bit) boundary """
             f.write(struct.pack("B{0}s0I".format(len(s)), len(s), s))
 
-        def write_set(s):
-            """ Write a set of strings as a single compressed string """
+        def write_bytes(s):
+            """ Write bytes aligned to a DWORD (32-bit) boundary """
+            f.write(struct.pack("{0}s0I".format(len(s)), s))
+
+        def compress_set(s, base=None):
+            """ Write a set of strings as a single compressed string. """
+
+            # Each string is written as a variation of the previous
+            # string, or the given base string, or the lexicographically
+            # smallest string if no base is given. A variation consists
+            # of a leading byte indicating the number of characters to be
+            # cut off the end of the previous string, before appending the
+            # following characters (prefixed by a length byte). The
+            # set "hestur", "hest", "hesti", "hests" is thus encoded
+            # like so, assuming "hestur" is the base (stem):
+            # 1) The set is sorted to become the list
+            #    "hest", "hesti", "hests", "hestur"
+            # 2) "hest" is written as 2, 0, ""
+            # 3) "hesti" is written as 0, 1, "i"
+            # 4) "hests" is written as 1, 1, "s"
+            # 5) "hestur" is written as 1, 2, "ur"
+            # Note that a variation string such as this one, with four components,
+            # is stored only once and then referred to by index. This saves
+            # a lot of space since declension variants are identical
+            # for many different stems.
+
             # Sort the set for maximum compression
-            assert len(s) > 0
             ss = sorted(s)
             b = bytearray()
-            last_w = ss[0]
-            llast = len(last_w)
-            b.append(len(last_w))
-            b += last_w
-            for w in ss[1:]:
+            if base is None:
+                # Use the first word in the set as a base
+                last_w = ss[0]
+                llast = len(last_w)
+                b.append(len(last_w))
+                b += last_w
+                it = ss[1:]
+            else:
+                # Use the given base
+                last_w = base
+                llast = len(last_w)
+                it = ss
+            for w in it:
                 lw = len(w)
                 # Find number of common characters in front
                 i = 0
                 while i < llast and i < lw and last_w[i] == w[i]:
                     i += 1
-                # Write the number of common characters
-                b.append(i)
+                # Write the number of characters to cut off from the end
+                b.append(llast - i)
                 # Remember the last word
                 last_w = w
                 # Cut the common chars off
@@ -609,11 +661,7 @@ class BIN_Compressor:
                 llast = lw
             # End of list marker
             b.append(255)
-            # Append padding to a DWORD (32-bit) boundary, if needed
-            pad = 4 - (len(b) & 0x03)
-            if 0 < pad < 4:
-                b += b'\x00' * pad
-            f.write(b)
+            return b
 
         def fixup(ptr):
             """ Go back and fix up a previous pointer to point at the
@@ -642,16 +690,16 @@ class BIN_Compressor:
             num_meanings = len(self._lookup_form[fix])
             for i, (six, mix) in enumerate(self._lookup_form[fix]):
                 # Allocate 20 bits for the stem index
-                assert six < 2**20
+                assert six < 2 ** 20
                 # Allocate 11 bits for the meaning index
-                assert mix < 2**11
+                assert mix < 2 ** 11
                 # Mark the last meaning with the high bit
                 last_indicator = 0x80000000 if i == num_meanings - 1 else 0
                 f.write(UINT32.pack(last_indicator | (six << 11) | mix))
                 cnt += 1
 
-        # Write the the compact radix trie structure
-        # that holds the word forms themselves, mapping them
+        # Write the the compact radix trie structure that
+        # holds the word forms themselves, mapping them
         # to indices
         fixup(forms_offset)
         self.write_forms(f, self._alphabet, lookup_map)
@@ -660,26 +708,69 @@ class BIN_Compressor:
         write_padded(b"[stems]", 16)
         lookup_map = []
         f.write(UINT32.pack(len(self._stems)))
+        # Keep track of the number of bytes that will be written
+        # to the case variant buffer
+        num_sets_bytes = 0
         for ix in range(len(self._stems)):
             lookup_map.append(f.tell())
             # Squeeze the word id into the lower 31 bits
             # and a flag for whether a canonical forms list
             # is present into the uppermost bit
             wid = self._stems[ix][1] + 1  # -1 becomes 0
-            if ix in self._lookup_stem:
+            has_case_variants = False
+            if ix in self._lookup_stem and self._lookup_stem[ix]:
+                # We have a set of word forms in four cases
+                # for this stem
                 wid |= 0x80000000
+                has_case_variants = True
             f.write(UINT32.pack(wid))
             # Write the stem
-            write_string(self._stems[ix][0])
-            # Write the set of nominative word forms, compressed,
+            stem = self._stems[ix][0]
+            write_string(stem)
+            # Write the set of word forms in four cases, compressed,
             # if this stem has such a set
-            if ix in self._lookup_stem:
-                write_set(self._lookup_stem[ix])
-        fixup(stems_offset)
+            if has_case_variants:
+                case_forms = self._lookup_stem[ix]
+                sets = []
+                for case in CASES_LATIN:
+                    sets.append(compress_set(case_forms[case], base=stem))
+                sets_bytes = b"".join(sets)
+                # Have we seen this set of case variants before?
+                case_variant_offset = self._case_variants.get(sets_bytes)
+                if case_variant_offset is None:
+                    # No: put it in the index, at the current offset
+                    case_variant_offset = num_sets_bytes
+                    num_sets_bytes += len(sets_bytes)
+                    self._case_variants[sets_bytes] = case_variant_offset
+                f.write(UINT32.pack(case_variant_offset))
+
+        print("Different case variants are {0}".format(len(self._case_variants)))
+        print(
+            "Bytes used for case variants are {0}".format(
+                num_sets_bytes + 4 * len(self._case_variants)
+            )
+        )
 
         # Write the index-to-offset mapping table for stems
+        fixup(stems_offset)
         for offset in lookup_map:
             f.write(UINT32.pack(offset))
+
+        # Write the case variants
+        write_padded(b"[variants]", 16)
+        fixup(variants_offset)
+        # Sort the case variants array by increasing offset
+        check = 0
+        for sets_bytes, offset in sorted(
+            self._case_variants.items(), key=lambda x: x[1]
+        ):
+            assert offset == check
+            f.write(sets_bytes)
+            check += len(sets_bytes)
+        # Align to a 16-byte boundary
+        align = check % 16
+        if align:
+            f.write(b"\x00" * (16 - align))
 
         # Write the meanings
         write_padded(b"[meanings]", 16)
@@ -687,8 +778,8 @@ class BIN_Compressor:
         f.write(UINT32.pack(len(self._meanings)))
         for ix in range(len(self._meanings)):
             lookup_map.append(f.tell())
-            write_spaced(b' '.join(self._meanings[ix]))  # ordfl, fl, beyging
-        f.write(b' ' * 24)
+            write_spaced(b" ".join(self._meanings[ix]))  # ordfl, fl, beyging
+        f.write(b" " * 24)
         fixup(meanings_offset)
 
         # Write the index-to-offset mapping table for meanings
@@ -709,10 +800,11 @@ class BIN_Compressed:
         # Make sure that the ord.compressed filename is
         # unpacked and ready for use
         import pkg_resources
+
         # Note: the resource path below should NOT use os.path.join()
-        _FNAME = pkg_resources.resource_filename(__name__, "resources/ord.compressed")
+        _FNAME = pkg_resources.resource_filename(__name__, "resources/" + FILENAME)
     else:
-        _FNAME = os.path.join(_PATH, "resources", "ord.compressed")
+        _FNAME = os.path.join(_PATH, "resources", FILENAME)
 
     def __init__(self):
         """ We use a memory map, provided by the mmap module, to
@@ -721,13 +813,15 @@ class BIN_Compressed:
             the same memory map to be shared between processes. """
         with open(self._FNAME, "rb") as stream:
             self._b = mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ)
+        # Check that the file version matches what we expect
         assert self._b[0:16] == BIN_Compressor.VERSION
-        mappings_offset, forms_offset, stems_offset, meanings_offset, alphabet_offset = (
-            struct.unpack("<IIIII", self._b[16:36])
+        mappings_offset, forms_offset, stems_offset, variants_offset, meanings_offset, alphabet_offset = struct.unpack(
+            "<IIIIII", self._b[16:40]
         )
         self._forms_offset = forms_offset
         self._mappings = self._b[mappings_offset:]
         self._stems = self._b[stems_offset:]
+        self._case_variants = self._b[variants_offset:]
         self._meanings = self._b[meanings_offset:]
         # Create partial unpacking functions for speed
         self._partial_UINT = functools.partial(UINT32.unpack_from, self._b)
@@ -737,7 +831,9 @@ class BIN_Compressed:
         # The alphabet header occupies the next 16 bytes
         # Read the alphabet length
         alphabet_length = self._UINT(alphabet_offset)
-        self._alphabet = bytes(self._b[alphabet_offset+4:alphabet_offset + 4 + alphabet_length])
+        self._alphabet = bytes(
+            self._b[alphabet_offset + 4 : alphabet_offset + 4 + alphabet_length]
+        )
         # Create a CFFI buffer object pointing to the memory map
         self._mmap_buffer = ffi.from_buffer(self._b)
 
@@ -760,8 +856,8 @@ class BIN_Compressed:
         """ Find and decode a meaning (ordfl, fl, beyging) tuple,
             given its index """
         off, = UINT32.unpack_from(self._meanings, ix * 4)
-        b = bytes(self._b[off:off+24])
-        s = b.decode('latin-1').split(maxsplit=4)
+        b = bytes(self._b[off : off + 24])
+        s = b.decode("latin-1").split(maxsplit=4)
         return tuple(s[0:3])  # ordfl, fl, beyging
 
     def stem(self, ix):
@@ -773,55 +869,80 @@ class BIN_Compressed:
         p = off + 4
         lw = self._b[p]  # Length byte
         p += 1
-        b = bytes(self._b[p:p + lw])
-        return b.decode('latin-1'), wid  # stofn, utg
+        b = bytes(self._b[p : p + lw])
+        return b.decode("latin-1"), wid  # stofn, utg
 
-    def canonicals(self, ix):
-        """ Return all canonical word forms, i.e. forms with the nominative
-            case, associated with the stem whose index is in ix """
+    def case_variants(self, ix, case=b"NF"):
+        """ Return all word forms having the given case, that are
+            associated with the stem whose index is in ix """
 
-        def read_set(p):
-            """ Decompress a set of strings written by write_set() """
-            lw = self._b[p]
-            p += 1
-            last_w = self._b[p: p + lw]
-            p += lw
-            c = [last_w]
+        def read_set(p, base=None):
+            """ Decompress a set of strings compressed by compress_set() """
+            b = self._case_variants
+            if base is None:
+                lw = b[p]
+                p += 1
+                last_w = b[p : p + lw]
+                p += lw
+                c = [last_w]
+            else:
+                last_w = base
+                lw = len(last_w)
+                c = []
             while True:
-                common = self._b[p]
-                if common == 255:
+                # How many letters should we cut off the end of the
+                # last word before appending the divergent part?
+                cut = b[p]
+                p += 1
+                if cut == 255:
+                    # Done
                     break
+                # Calculate the number of common characters between
+                # this word and the last one
+                common = lw - cut
+                lw = b[p]
                 p += 1
-                lw = self._b[p]
-                p += 1
-                w = last_w[0:common] + self._b[p:p + lw]
+                # Assemble this word and append it to our result
+                w = last_w[0:common] + b[p : p + lw]
                 p += lw
                 c.append(w)
                 last_w = w
-            return c
+                lw += common
+            # Return the set as a list of strings, as well as the current byte pointer
+            return c, p
 
         off, = UINT32.unpack_from(self._stems, ix * 4)
         wid = self._UINT(off)
         # The id (utg) is stored in the lower 31 bits, after adding 1
         if wid & 0x80000000 == 0:
-            # No canonicals associated with this stem
+            # No case_variants associated with this stem
             return []
         # Skip past the stem itself
         p = off + 4
         lw = self._b[p]  # Length byte
+        stem = bytes(self._b[p + 1 : p + 1 + lw])
         lw += 1
         if lw & 3:
             lw += 4 - (lw & 3)
         p += lw
-        # Read the set of canonicals from the given offset
-        return read_set(p)
+        # Make p point to the case variant offset within the
+        # self._case_variants buffer
+        p = self._UINT(p)
+        # Read the sets of case_variants from the byte buffer, starting at p.
+        # They are stored in case order: NF, ÞF, ÞGF, EF
+        for this_case in CASES_LATIN:
+            c, p = read_set(p, base=stem)
+            if case == this_case:
+                # That's us: return
+                return c
+        assert False, "Unknown case requested in case_variants()"
+        return []
 
     def _mapping_cffi(self, word):
         """ Call the C++ mapping() function that has been wrapped using CFFI"""
         try:
             m = bin_cffi.mapping(
-                ffi.cast("uint8_t*", self._mmap_buffer),
-                word.encode("latin-1")
+                ffi.cast("uint8_t*", self._mmap_buffer), word.encode("latin-1")
             )
             return None if m == 0xFFFFFFFF else m
         except UnicodeEncodeError:
@@ -858,26 +979,113 @@ class BIN_Compressed:
         """ Returns True if the trie contains the given word form"""
         return self._mapping_cffi(word) is not None
 
-    def lookup(self, word):
-        """ Returns a list of BÍN meanings for the given word form """
+    def lookup(self, word, cat=None, must_set=None, must_not_set=None):
+        """ Returns a list of BÍN meanings for the given word form,
+            eventually constrained to the requested word category
+            and by the given strings in the constraint_set being
+            present in the beyging field. """
+        # Category set
+        if cat is None:
+            cats = None
+        elif cat == "no":
+            # Allow a cat of "no" to mean a noun of any gender
+            cats = set(("kk", "kvk", "hk"))
+        else:
+            cats = set([cat])
         result = []
         for stem_index, meaning_index in self._raw_lookup(word):
-            stem, meaning = self.stem(stem_index), self.meaning(meaning_index)
+            meaning = self.meaning(meaning_index)
+            if cats is not None and meaning[0] not in cats:
+                # Fails the word category constraint
+                continue
+            beyging = meaning[2]
+            if must_set is not None and any(
+                constraint not in beyging for constraint in must_set
+            ):
+                # Fails the beyging must_set constraints:
+                # skip it
+                continue
+            if must_not_set is not None and any(
+                constraint in beyging for constraint in must_not_set
+            ):
+                # Fails the beyging must_not_set constraints:
+                # skip it
+                continue
+            stem = self.stem(stem_index)
             utg = None if stem[1] == -1 else stem[1]
             # stofn, utg, ordfl, fl, ordmynd, beyging
-            result.append((stem[0], utg, meaning[0], meaning[1], word, meaning[2]))
+            result.append((stem[0], utg, meaning[0], meaning[1], word, beyging))
         return result
 
-    def nominative(self, word):
-        """ Returns a set of all nominative forms of the stems of the given word form.
-            Note that the word form is case-sensitive. """
+    def lookup_case(self, word, case, cat=None, must_set=None, must_not_set=None):
+        """ Returns a set of meanings in the requested case,
+            of the stems of the given word form, optionally constrained
+            by word category, by the given strings in the
+            must_set being present in the beyging field, and by
+            the given strings in the must_not_set NOT being present
+            in the beyging field. Note that the word form is case-sensitive. """
         result = set()
-        for stem_index, _ in self._raw_lookup(word):
-            for c_latin in self.canonicals(stem_index):
+        case_latin = case.encode("latin-1")
+        # We always include the requested case in the must_set
+        cset = set([case])
+        if must_set is not None:
+            cset |= must_set
+        # Category set
+        if cat is None:
+            cats = None
+        elif cat == "no":
+            # Allow a cat of "no" to mean a noun of any gender
+            cats = set(("kk", "kvk", "hk"))
+        else:
+            cats = set([cat])
+        for stem_index, meaning_index in self._raw_lookup(word):
+            # Check the category filter, if present
+            if cats is not None:
+                meaning = self.meaning(meaning_index)
+                if meaning[0] not in cats:
+                    # Not the category we're looking for
+                    continue
+            # Go through the variants of this
+            # stem, for the requested case
+            for c_latin in self.case_variants(stem_index, case=case_latin):
+                # TODO: Encoding and decoding back and forth not terribly efficient
                 c = c_latin.decode("latin-1")
-                # Make sure we only include each result once
-                result.update(m for m in self.lookup(c) if "NF" in m[5])
+                # Make sure we only include each result once.
+                # Also note that we need to check again for the word
+                # category constraint because different inflection
+                # forms may be identical to forms of other stems
+                # and categories.
+                result.update(
+                    m
+                    for m in self.lookup(
+                        c, cat=cat, must_set=cset, must_not_set=must_not_set
+                    )
+                )
         return result
+
+    def nominative(self, word, cat=None, must_set=None, must_not_set=None):
+        """ Returns a set of all nominative forms of the stems of the given word form,
+            subject to the given constraints on the beyging field.
+            Note that the word form is case-sensitive. """
+        return self.lookup_case(word, "NF", cat, must_set, must_not_set)
+
+    def accusative(self, word, cat=None, must_set=None, must_not_set=None):
+        """ Returns a set of all accusative forms of the stems of the given word form,
+            subject to the given constraints on the beyging field.
+            Note that the word form is case-sensitive. """
+        return self.lookup_case(word, "ÞF", cat, must_set, must_not_set)
+
+    def dative(self, word, cat=None, must_set=None, must_not_set=None):
+        """ Returns a set of all dative forms of the stems of the given word form,
+            subject to the given constraints on the beyging field.
+            Note that the word form is case-sensitive. """
+        return self.lookup_case(word, "ÞGF", cat, must_set, must_not_set)
+
+    def possessive(self, word, cat=None, must_set=None, must_not_set=None):
+        """ Returns a set of all possessive forms of the stems of the given word form,
+            subject to the given constraints on the beyging field.
+            Note that the word form is case-sensitive. """
+        return self.lookup_case(word, "EF", cat, must_set, must_not_set)
 
 
 if __name__ == "__main__":
@@ -886,6 +1094,7 @@ if __name__ == "__main__":
 
     # Read BÍN errata and deletions from BinErrata.conf
     from settings import Settings, BinErrata, BinDeletions
+
     Settings.read(os.path.join(_PATH, "config", "BinErrata.conf"))
     _BIN_ERRATA = BinErrata.DICT
     _BIN_DELETIONS = BinDeletions.SET
@@ -902,7 +1111,7 @@ if __name__ == "__main__":
         ]
     )
     b.print_stats()
-    filename = os.path.join(_PATH, "resources", "ord.compressed")
+
+    filename = os.path.join(_PATH, "resources", FILENAME)
     b.write_binary(filename)
     print("Done; the compressed vocabulary was written to {0}".format(filename))
-

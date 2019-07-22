@@ -1682,6 +1682,24 @@ def test_company():
     )
 
 
+def test_kludgy_ordinals():
+    from reynir import Reynir, KLUDGY_ORDINALS_PASS_THROUGH
+    r2 = Reynir(handle_kludgy_ordinals=KLUDGY_ORDINALS_PASS_THROUGH)
+    s = r2.parse_single(
+        "Hann keypti 3ja herbergja íbúð á 1stu hæð "
+        "en hún átti 2ja strokka mótorhjól af 4ðu kynslóð."
+    )
+    assert s.tree is not None
+    # þriggja herbergja
+    assert "NP-POSS to_ft_ef_hk no_ef_ft_hk /NP-POSS" in s.tree.flat
+    # á fyrstu hæð
+    assert "PP P fs_þf /P NP lo_þf_et_kvk no_et_þf_kvk /NP /PP" in s.tree.flat
+    # tveggja strokka
+    assert "NP-POSS to_ft_ef_kk no_ef_ft_kk /NP-POSS" in s.tree.flat
+    # af fjórðu kynslóð
+    assert "PP P fs_þgf /P NP lo_þgf_et_kvk no_et_þgf_kvk /NP /PP" in s.tree.flat
+
+
 def test_finish():
     r.__class__.cleanup()
 
@@ -1717,4 +1735,5 @@ if __name__ == "__main__":
     test_company()
     test_adjectives()
     test_all_mine()
+    test_kludgy_ordinals()
     test_finish()
