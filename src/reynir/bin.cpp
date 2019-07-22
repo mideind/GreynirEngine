@@ -62,6 +62,7 @@ private:
       UINT32 nMappingsOffset;
       UINT32 nFormsOffset;
       UINT32 nStemsOffset;
+      UINT32 nCaseVariantsOffset;
       UINT32 nMeaningsOffset;
       UINT32 nAlphabetOffset;
    };
