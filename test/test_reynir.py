@@ -55,7 +55,8 @@ def test_bin():
     b = BIN_Compressed()
 
     def f(word, case, stem, cat, func=None):
-        meanings = b.lookup_case(word, case)
+        # must_not_set={"2","3"} avoids secondary forms
+        meanings = b.lookup_case(word, case, must_not_set={"2", "3"})
         return set([
             (m[4], m[5]) for m in meanings
             if m[0] == stem and m[2] == cat and (func is None or func(m[5]))
@@ -184,7 +185,7 @@ def test_bin():
     )
     assert(
         declension("sulta", "kvk", bf_ft_gr) ==
-        ("sulturnar", "sulturnar", "sultunum", "sultanna")
+        ("sulturnar", "sulturnar", "sultunum", "sultnanna")
     )
     assert(
         declension("vígi", "hk", bf_ft_gr) ==
