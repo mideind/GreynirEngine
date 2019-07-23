@@ -703,6 +703,9 @@ class Reducer:
                 elif tfirst == "gr":
                     # Encourage separate definite article rather than pronoun
                     sc[t] += 2
+                elif tfirst == "nhm":
+                    # Encourage the infinitive
+                    sc[t] += 4
 
         return scores
 

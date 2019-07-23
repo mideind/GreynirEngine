@@ -964,7 +964,8 @@ SetningSoÞað →
     | SagnliðurVh ","? "þá:ao"? BeygingarliðurMeðUmröðun FsAtv?
 
     # Með lögum megi tryggja rétt almennings
-    | FsAtv SagnliðurÁnF
+    # Áður en ég fer má sækja tölvuna
+    | AtvFsAuka VillaKomma? SagnliðurÁnF
 
     # Endurnýja þarf/skal/má [í snatri] leigusamninginn í ár
     | So_1_nh/fall HjSögnMegiSkuliÞurfi_et_p3 FsRuna?
@@ -1001,7 +1002,7 @@ $score(-4) Sagnliður_lhþt # Knúsað orðalag - velja annað ef í boði
 # !!! t.d. orðmyndin 'ábyrgst' er aðeins í BÍN sem MM-SAGNB, þannig að reglan
 # !!! hér nær yfir 'Ábyrgst hefur verið að greiðslan færi fram'.)
 Sagnliður_sagnb →
-    so_sagnb HjSögnSagnb_et_p3 LoTengtSögn_nf_et_hk? SagnliðurBotn_sagnb
+    so_sagnb HjSögnSagnb LoTengtSögn_nf_et_hk? SagnliðurBotn_sagnb
 
 SagnliðurBotn_sagnb →
     NhFylling
@@ -1326,33 +1327,39 @@ Sagnliður/tala/pers/kyn →
 # '(Ef hann hringir) má sækja tölvuna og byrja að vinna'
 
 SagnliðurÁnF →
-    # so_subj_gm_none NhFyllingAtv?                         # (Í dag) þarf [sannarlega] (að vökva grasið)
-    so_0_mm_p3_et NhFyllingAtv?                             # (Í dag) dregst [sennilega] (að vökva grasið)
+    so_subj_gm_none NhFyllingAtv                            # (Í dag) þarf [sannarlega] (að vökva grasið)
+    | so_0_mm_p3_et NhFyllingAtv                            # (Í dag) dregst [sennilega] (að vökva grasið)
 
-    # | HjSögn_et_p3 FsAtv? so_subj_sagnb_none NhFyllingAtv? # (Í ár) hefur [í sumarhitanum] þurft (að vökva grasið)
-    | HjSögn_et_p3 FsAtv? so_mm_sagnb NhFyllingAtv?         # (Í ár) hefur [vegna leti] dregist (að vökva grasið)
-    # | HjSögnNh_et_p3 FsAtv? so_subj_nh_none NhFyllingAtv? # (Í ár) mun [í sumarhitanum] þurfa (að vökva grasið)
-    | HjSögnNh_et_p3 FsAtv? so_mm_nh NhFyllingAtv?          # (Í ár) mun [í sumarhitanum] dragast (að vökva grasið)
+    | HjSögn_et_p3 FsAtv? so_subj_sagnb_none NhFyllingAtv   # (Í ár) hefur [í sumarhitanum] þurft (að vökva grasið)
+    | HjSögn_et_p3 FsAtv? so_mm_sagnb NhFyllingAtv          # (Í ár) hefur [vegna leti] dregist (að vökva grasið)
+    | HjSögnNh_et_p3 FsAtv? so_subj_nh_none NhFyllingAtv    # (Í ár) mun [í sumarhitanum] þurfa (að vökva grasið)
+    | HjSögnNh_et_p3 FsAtv? so_mm_nh NhFyllingAtv           # (Í ár) mun [í sumarhitanum] dragast (að vökva grasið)
 
-    # | HjSögnLhÞtSM_et_p3 FsAtv? so_sagnb NhFyllingEðaAtv? # (í dag) verður/skal/mun [líklega] lent á brautinni (eftir hádegi)
+    | HjSögnSagnb FsAtv? so_sagnb NhFyllingEðaAtv? # (í dag) verður/skal/mun [líklega] lent á brautinni (eftir hádegi)
 
     | HjSögnMegiSkuli_et_p3 HreinSögn_nh_et_hk SagnInnskot? # [Í dag] má sækja tölvuna (og byrja að vinna)
     | so_0_nh HjSögnNhMeðSo_et_p3 HreinSögnAtv_nh?          # [hvort] leggja skuli/eigi/þarf/verður [á skatt, breyta honum eða afnema hann]
 
     | HjSögnNh_p3/tala FsAtv? so_mm_nh FsRunaEftirSögn? NlFrumlag_nf/tala # [Í kröfunum] skulu felast [í snatri] tillögur (um nýtt fyrirkomulag)
 
-    | 'þurfa:so'_1_þf_gm_fh_et_p3 FsRunaEftirSögn? NlBeintAndlag_þf # Þarf [til þess] lagafyrirmæli
+    | Þarf_þf
 
     | StökSögn_et_p3_gm                                     # (Í dag) segir
     | so_0_et_p3_gm SagnInnskot                             # (Í dag) fýkur í fólk / kreppir að / losnar um stífluna / segir
 
 $tag(begin_prep_scope) SagnliðurÁnF # Nýtt undirtré fyrir tengingu sagnar og forsetningar
 
+Þarf_þf →
+    'þurfa:so'_1_þf_gm_fh_et_p3 FsRunaEftirSögn? NlBeintAndlag_þf # Þarf [til þess] lagafyrirmæli
+
+# Draga úr þessu frekar formlega orðalagi
+$score(-12) Þarf_þf
+
 StökSögn_et_p3_gm →
     so_0_et_p3_gm
 
 # Óalgengt að sagnorð standi ein og sér án frumlags
-$score(-8) StökSögn_et_p3_gm
+$score(-16) StökSögn_et_p3_gm
 
 HreinSögnAtv_nh →
     FsAtv? HreinSögn_nh_et_hk
@@ -1878,9 +1885,11 @@ SögnMeðF_0/tala/pers/kyn →
     # (Í ár) hefur krönunum [í borginni] fjölgað
     | HjSögn_et_p3 NlFrumlag/fall/tala/pers/kyn AtvFs? so_subj_sagnb/fall NhFylling/tala/kyn?
     # (Í dag) er þingmönnunum [í flokknum] stefnt (til þings)
-    | HjSögnLhÞt_et_p3 NlFrumlag_þgf/tala/pers/kyn AtvFs? so_1_þgf_sagnb NhFylling/tala/kyn?
+    | HjSögnSagnb NlFrumlag_þgf/tala/pers/kyn AtvFs? so_1_þgf_sagnb NhFylling/tala/kyn?
     # (Í kvöld) er viðurgjörningsins notið (í skíðaskálanum)
-    | HjSögnLhÞt_et_p3 NlFrumlag_ef/tala/pers/kyn AtvFs? so_1_ef_sagnb NhFylling/tala/kyn?
+    | HjSögnSagnb NlFrumlag_ef/tala/pers/kyn AtvFs? so_1_ef_sagnb NhFylling/tala/kyn?
+    # [Áður en þetta gerðist] er/var/yrði/skal mér sagt að fara út / að Jón væri farinn
+    | HjSögnSagnb NlFrumlag_þgf/tala/pers/kyn AtvFs? so_2_þgf_þf_sagnb AðAndlag
 
     # (Í ár) mun krönunum [í borginni] fjölga
     | HjSögnNh_et_p3 NlFrumlag/fall/tala/pers/kyn AtvFs? so_subj_nh/fall NhFylling/tala/kyn?
@@ -2664,8 +2673,11 @@ HjSögnLhÞtSM_p3_et →
 HjSögnLhÞtSM_p3_ft →
     HjSögnLhÞt_ft_p3 | HjSögnSkuluMunu_ft_p3
 
-HjSögnSagnb_et_p3 →
-    HjSögnLhÞtSM_et_p3 # | 'hafa:so'_et_p3
+HjSögnSagnb →
+    'vera:so'_gm_et_p3      # var/væri sagt
+    | 'verða:so'_gm_et_p3   # verður/yrði sagt
+    | 'skulu:so'_gm_et_p3   # skal/skyldi sagt
+    | 'munu:so'_gm_et_p3    # mun/myndi sagt
 
 # 'Hælisleitendum fer/fór/færi/hefur farið/mun fara fækkandi'
 
@@ -2773,6 +2785,12 @@ NhFyllingEðaAtv →
 AðLiður →
     NhFyllingAtv
     | SagnInnskotAtv
+    # Málinu væri stillt upp þannig að Sjálfstæðisflokkurinn bæri ábyrgð
+    | Atviksliður? VillaKomma? Skýringarsetning
+
+# Mér var sagt að fara út / að Jón væri farinn
+AðAndlag →
+    NhFyllingAtv
     # Málinu væri stillt upp þannig að Sjálfstæðisflokkurinn bæri ábyrgð
     | Atviksliður? VillaKomma? Skýringarsetning
 
