@@ -4510,16 +4510,44 @@ KommaSemíkomma → "," | ";"
 
 NlRuna/fall/kyn →
     KommuSamtenging/fall/kyn* KommuEndir/fall/kyn
-    | "," KommuStForskeyti? NlEind/fall/kyn AtvKomma # Konurnar, sérstaklega Anna, voru óánægðar
+    | "," KommuStForskeyti/kyn/fall? NlEind/fall/kyn AtvKomma # Konurnar, sérstaklega Anna, voru óánægðar
 
-KommuStForskeyti →
+KommuStForskeyti/fall →
+    FsRunaEftirNl
+    | "þar:ao" "af:ao"    # fjórir þingmenn, þar af einn nýútskrifaður, 
+    | 'það:pfn'_ft/fall   # þau Jóna og Friðgeir
+    | StForskeytiHannHún/fall
+
+StForskeytiHannHún/fall →
+    'hann:pfn'_ft/fall  # þeir Jón og Páll
+    | 'hún:pfn'_ft/fall   # Þær Jóna og Gunna
+
+# Draga úr 'þeir' eða 'þær' sem forskeyti í lista sem ekki er af sama kyni
+# (en það er samt nauðsynlegt að leyfa þetta því stundum innihalda listar
+# erlend nöfn sem talin eru vera í hvorugkyni)
+$score(-8) StForskeytiHannHún/fall
+
+KommuStForskeyti/kyn/fall →
     FsRunaEftirNl
     | "þar:ao" "af:ao"    # fjórir þingmenn, þar af einn nýútskrifaður, 
 
-KommuSamtenging/fall/kyn → KommaSemíkomma KommuStForskeyti? NlEind/fall/kyn
+KommuStForskeyti_kk/fall →
+    'hann:pfn'_ft/fall  # þeir Jón og Páll
+
+KommuStForskeyti_kvk/fall →
+    'hún:pfn'_ft/fall   # Þær Jóna og Gunna
+
+KommuStForskeyti_hk/fall →
+    'það:pfn'_ft/fall   # Þau barnið og dýrið
+
+# Draga úr 'þau' sem forskeyti í lista sem inniheldur aðeins
+# hvorugkyn, því það er frekar óvenjuleg notkun
+$score(-4) KommuStForskeyti_hk/fall
+
+KommuSamtenging/fall/kyn → KommaSemíkomma KommuStForskeyti/kyn/fall? NlEind/fall/kyn
 
 KommuEndir/fall/kyn →
-    Atviksliður? KommaOgEða KommuStForskeyti? NlEind/fall/kyn AtvKomma?
+    Atviksliður? KommaOgEða KommuStForskeyti/kyn/fall? NlEind/fall/kyn AtvKomma?
     | 'og_fleira:ao' KommaSemíkomma?
     | 'og_margt_fleira:ao' KommaSemíkomma?
     | 'og_svo_framvegis:ao' KommaSemíkomma?
@@ -4532,12 +4560,12 @@ $score(+6) KommuSamtenging/fall/kyn
 
 NlRuna/fall →
     KommuSamtenging/fall* KommuEndir/fall
-    | "," KommuStForskeyti? NlEind/fall AtvKomma # Þingmenn, sérstaklega Jóhanna, voru óánægðir
+    | "," KommuStForskeyti/fall? NlEind/fall AtvKomma # Þingmenn, sérstaklega Jóhanna, voru óánægðir
 
-KommuSamtenging/fall → KommaSemíkomma KommuStForskeyti? NlEind/fall
+KommuSamtenging/fall → KommaSemíkomma KommuStForskeyti/fall? NlEind/fall
 
 KommuEndir/fall →
-    Atviksliður? KommaOgEða KommuStForskeyti? NlEind/fall AtvKomma?
+    Atviksliður? KommaOgEða KommuStForskeyti/fall? NlEind/fall AtvKomma?
     | 'og_fleira:ao' KommaSemíkomma?
     | 'og_margt_fleira:ao' KommaSemíkomma?
     | 'og_svo_framvegis:ao' KommaSemíkomma?
@@ -4549,7 +4577,7 @@ NlRunaEða/fall →
     NlEind/fall KommuSamtenging/fall* EðaEndir/fall
 
 EðaEndir/fall →
-    Atviksliður? Eða KommuStForskeyti? NlEind/fall
+    Atviksliður? Eða KommuStForskeyti/fall? NlEind/fall
 
 # Hvetja til eins langra lista og mögulegt er
 $score(+6) KommuSamtenging/fall
@@ -4601,7 +4629,7 @@ NlSamaKyn/fall/kyn →
     NlSá_ft/fall/kyn? NlEind_p3/fall/kyn NlRuna/fall/kyn+ TilvísunarsetningMeðKommu_ft_p3/kyn?
 
 # Fleirtölunafnliðir af sama kyni eru betri en blandaðir
-$score(+2) NlSamaKyn/fall/kyn
+$score(+4) NlSamaKyn/fall/kyn
 
 NlSá_ft/fall/kyn →
     eo* 'sá:fn'_ft/fall/kyn # einnig þau Jón og Gunna

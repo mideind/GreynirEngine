@@ -1174,6 +1174,9 @@ class SimpleTree:
             # This is not a potentially declined terminal node: return the original text
             return self._text
         txt = self._text
+        canonical = form == "canonical"
+        nominative = form == "nominative"
+        indefinite = form == "indefinite"
         prefix = ""
         with BIN_Db.get_db() as db:
 
@@ -1182,18 +1185,14 @@ class SimpleTree:
                 result = []
                 gender = self._cat
                 for name in txt.split():
-                    meanings = db.lookup_nominative(name)
+                    meanings = db.lookup_nominative(name, singular=True, cat=gender)
                     try:
                         # Try to find an 'ism', 'erm', 'föð' or 'móð' 
                         # nominative form of the correct gender
                         result.append(
                             next(
                                 filter(
-                                    lambda m: (
-                                        m.ordfl == gender
-                                        and "FT" not in m.beyging
-                                        and m.fl in {"ism", "erm", "föð", "móð"}
-                                    ),
+                                    lambda m: m.fl in {"ism", "erm", "föð", "móð"},
                                     meanings
                                 )
                             ).ordmynd
@@ -1225,29 +1224,29 @@ class SimpleTree:
                     txt = txt[1:]
                     prefix += "-"
 
-            meanings = db.lookup_nominative(txt)
+            options = dict(
+                cat=self._cat, stem=lemma,
+                singular=canonical, indefinite=indefinite or canonical
+            )
+            meanings = db.lookup_nominative(txt, **options)
             if not meanings and not txt.islower():
                 # We don't find this form in BÍN:
                 # if upper case, try a lower case version of it
-                meanings = db.lookup_nominative(txt.lower())
+                meanings = db.lookup_nominative(txt.lower(), **options)
 
-            # The following functions filter the nominative list down
-            # to those desired forms that match our lemma and category
+            # The following functions filter the nominative list in a
+            # final step that is required because some word forms are
+            # can have more than one gender and even be valid both as
+            # singular and plural
 
             def filter_func_no(m):
                 """ Filter function for nouns """
-                if m.stofn != lemma or m.ordfl != self._cat:
-                    return False
-                if form == "canonical":
-                    # Only return singular forms
-                    if "FT" in m.beyging:
-                        return False
-                else:
+                if not canonical:
                     # Match the original word in terms of number (singular/plural)
                     number = next(iter(self._vset & {"et", "ft"}), "et")
                     if number.upper() not in m.beyging:
                         return False
-                if form == "nominative":
+                if nominative:
                     # Match the original word in terms of definite/indefinite
                     if ("gr" in self._vset) != ("gr" in m.beyging):
                         return False
@@ -1258,13 +1257,7 @@ class SimpleTree:
 
             def filter_func_without_gender(m):
                 """ Filter function for personal pronouns """
-                if m.stofn != lemma or m.ordfl != self._cat:
-                    return False
-                if form == "canonical":
-                    # Only return singular forms
-                    if "FT" in m.beyging:
-                        return False
-                else:
+                if not canonical:
                     # Match the original word in terms of number (singular/plural)
                     number = next(iter(self._vset & {"et", "ft"}), "et")
                     if number.upper() not in m.beyging:
@@ -1274,17 +1267,11 @@ class SimpleTree:
             def filter_func_with_gender(m):
                 """ Filter function for nonpersonal pronouns
                     and declinable number words """
-                if m.stofn != lemma or m.ordfl != self._cat:
-                    return False
                 # Match the original word in terms of gender
                 gender = next(iter(self._vset & _GENDERS), "kk")
                 if gender.upper() not in m.beyging:
                     return False
-                if form == "canonical":
-                    # Only return singular forms
-                    if "FT" in m.beyging:
-                        return False
-                else:
+                if not canonical:
                     # Match the original word in terms of number (singular/plural)
                     number = next(iter(self._vset & {"et", "ft"}), "et")
                     if number.upper() not in m.beyging:
@@ -1293,22 +1280,16 @@ class SimpleTree:
 
             def filter_func_lo(m):
                 """ Filter function for adjectives """
-                if m.stofn != lemma or m.ordfl != "lo":
-                    return False
                 # Match the original word in terms of gender
                 gender = next(iter(self._vset & _GENDERS), "kk")
                 if gender.upper() not in m.beyging:
                     return False
-                if form == "canonical":
-                    # Only return singular forms
-                    if "FT" in m.beyging:
-                        return False
-                else:
+                if not canonical:
                     # Match the original word in terms of number (singular/plural)
                     number = next(iter(self._vset & {"et", "ft"}), "et")
                     if number.upper() not in m.beyging:
                         return False
-                if form == "nominative":
+                if nominative:
                     if "est" in self._vset:
                         if not ("EVB" in m.beyging or "ESB" in m.beyging):
                             return False
@@ -1384,7 +1365,7 @@ class SimpleTree:
                 else:
                     txt = w.lower()
             except StopIteration:
-                if self._cat == "to" and "ft" in self._vset and form == "canonical":
+                if self._cat == "to" and "ft" in self._vset and canonical:
                     # Declinable number, for which there is no singular form available,
                     # such as "tveir": return an empty string
                     txt = prefix = ""

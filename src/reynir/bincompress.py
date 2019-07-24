@@ -429,8 +429,7 @@ class BIN_Compressor:
         ):
             print(
                 "{0} forms associated with stems are {1}".format(
-                    case,
-                    self._canonical_count[CASES_LATIN[index]]
+                    case, self._canonical_count[CASES_LATIN[index]]
                 )
             )
         print("Meanings are {0}".format(len(self._meanings)))
@@ -552,8 +551,7 @@ class BIN_Compressor:
             write_node(*todo.pop())
 
         print(
-            "Written {0} nodes, thereof {1} single-char nodes and {2} multi-char."
-            .format(
+            "Written {0} nodes, thereof {1} single-char nodes and {2} multi-char.".format(
                 node_cnt, single_char_node_count, multi_char_node_count
             )
         )
@@ -806,6 +804,10 @@ class BIN_Compressed:
     else:
         _FNAME = os.path.join(_PATH, "resources", FILENAME)
 
+    # Unique indicator used to signify no utg field
+    # (needed since None is a valid utg value)
+    NoUtg = object()
+
     def __init__(self):
         """ We use a memory map, provided by the mmap module, to
             directly map the compressed file into memory without
@@ -979,74 +981,123 @@ class BIN_Compressed:
         """ Returns True if the trie contains the given word form"""
         return self._mapping_cffi(word) is not None
 
-    def lookup(self, word, cat=None, must_set=None, must_not_set=None):
+    def lookup(self, word, cat=None, stem=None, utg=None, beyging_func=None):
         """ Returns a list of BÍN meanings for the given word form,
-            eventually constrained to the requested word category
-            and by the given strings in the constraint_set being
-            present in the beyging field. """
+            eventually constrained to the requested word category,
+            stem, utg number and/or the given beyging_func filter function,
+            which is called with the beyging field as a parameter. """
         # Category set
         if cat is None:
             cats = None
         elif cat == "no":
             # Allow a cat of "no" to mean a noun of any gender
-            cats = set(("kk", "kvk", "hk"))
+            cats = {"kk", "kvk", "hk"}
         else:
-            cats = set([cat])
+            cats = {cat}
         result = []
         for stem_index, meaning_index in self._raw_lookup(word):
             meaning = self.meaning(meaning_index)
             if cats is not None and meaning[0] not in cats:
                 # Fails the word category constraint
                 continue
+            word_stem = self.stem(stem_index)
+            if stem is not None and word_stem[0] != stem:
+                # Fails the stem filter
+                continue
+            word_utg = None if word_stem[1] == -1 else word_stem[1]
+            if utg is not None and word_utg != utg:
+                # Fails the utg filter
+                continue
             beyging = meaning[2]
-            if must_set is not None and any(
-                constraint not in beyging for constraint in must_set
-            ):
-                # Fails the beyging must_set constraints:
-                # skip it
+            if beyging_func is not None and not (beyging_func(beyging)):
+                # Fails the beyging_func filter
                 continue
-            if must_not_set is not None and any(
-                constraint in beyging for constraint in must_not_set
-            ):
-                # Fails the beyging must_not_set constraints:
-                # skip it
-                continue
-            stem = self.stem(stem_index)
-            utg = None if stem[1] == -1 else stem[1]
             # stofn, utg, ordfl, fl, ordmynd, beyging
-            result.append((stem[0], utg, meaning[0], meaning[1], word, beyging))
+            result.append(
+                (word_stem[0], word_utg, meaning[0], meaning[1], word, beyging)
+            )
         return result
 
-    def lookup_case(self, word, case, cat=None, must_set=None, must_not_set=None):
-        """ Returns a set of meanings in the requested case,
-            of the stems of the given word form, optionally constrained
-            by word category, by the given strings in the
-            must_set being present in the beyging field, and by
-            the given strings in the must_not_set NOT being present
-            in the beyging field. Note that the word form is case-sensitive. """
+    def lookup_case(
+        self, word, case, *,
+        singular=False, indefinite=False,
+        cat=None, stem=None, utg=NoUtg,
+        beyging_filter=None
+    ):
+        """ Returns a set of meanings, in the requested case, derived
+            from the lemmas of the given word form, optionally constrained
+            by word category and by the other arguments given. The
+            beyging_filter argument, if present, should be a function that
+            filters on the beyging field of each candidate BÍN meaning.
+            Note that the word form is case-sensitive. """
         result = set()
         case_latin = case.encode("latin-1")
-        # We always include the requested case in the must_set
-        cset = set([case])
-        if must_set is not None:
-            cset |= must_set
         # Category set
         if cat is None:
             cats = None
         elif cat == "no":
             # Allow a cat of "no" to mean a noun of any gender
-            cats = set(("kk", "kvk", "hk"))
+            cats = {"kk", "kvk", "hk"}
         else:
-            cats = set([cat])
+            cats = {cat}
+        wanted_beyging = ""
+
+        def simplify_beyging(beyging):
+            """ Removes case-related information from a beyging string """
+            # Note that we also remove '2' and '3' in cases like
+            # 'ÞGF2' and 'EF2', where alternate declination forms are
+            # being specified.
+            for s in ("NF", "ÞF", "ÞGF", "EF", "2", "3"):
+                beyging = beyging.replace(s, "")
+            if singular:
+                for s in ("ET", "FT"):
+                    beyging = beyging.replace(s, "")
+            if indefinite:
+                beyging = beyging.replace("gr", "")
+                # For adjectives, we neutralize weak and strong
+                # declension ('VB', 'SB'), but keep the degree (F, M, E)
+                beyging = beyging.replace("EVB", "ESB").replace("FVB", "FSB")
+            return beyging
+
+        def beyging_func(beyging):
+            """ This function is passed to self.lookup() as a filter
+                on the beyging field """
+            if case not in beyging:
+                # We get all BIN entries having the word form we ask
+                # for from self.lookup(), so we need to be careful to
+                # filter again on the case
+                return False
+            if singular and ("ET" not in beyging):
+                return False
+            if indefinite and any(b in beyging for b in ("gr", "FVB", "EVB")):
+                # For indefinite forms, we don't want the attached definite
+                # article ('gr') or weak declensions of adjectives
+                return False
+            if beyging_filter is not None and not beyging_filter(beyging):
+                # The user-defined filter fails: return False
+                return False
+            # Apply our own filter, making sure we have effectively
+            # the same beyging string as the word form we're coming
+            # from, except for the case
+            return simplify_beyging(beyging) == wanted_beyging
+
         for stem_index, meaning_index in self._raw_lookup(word):
             # Check the category filter, if present
+            meaning = self.meaning(meaning_index)
             if cats is not None:
-                meaning = self.meaning(meaning_index)
                 if meaning[0] not in cats:
                     # Not the category we're looking for
                     continue
+            word_stem = self.stem(stem_index)
+            if stem is not None and stem != word_stem[0]:
+                # Not the stem we're looking for
+                continue
+            if utg is not BIN_Compressed.NoUtg and utg != word_stem[1]:
+                # Not the utg we're looking for (note that None is a valid utg)
+                continue
             # Go through the variants of this
             # stem, for the requested case
+            wanted_beyging = simplify_beyging(meaning[2])
             for c_latin in self.case_variants(stem_index, case=case_latin):
                 # TODO: Encoding and decoding back and forth not terribly efficient
                 c = c_latin.decode("latin-1")
@@ -1058,34 +1109,38 @@ class BIN_Compressed:
                 result.update(
                     m
                     for m in self.lookup(
-                        c, cat=cat, must_set=cset, must_not_set=must_not_set
+                        c,
+                        cat=meaning[0],
+                        stem=word_stem[0],
+                        utg=word_stem[1],
+                        beyging_func=beyging_func,
                     )
                 )
         return result
 
-    def nominative(self, word, cat=None, must_set=None, must_not_set=None):
+    def nominative(self, word, **options):
         """ Returns a set of all nominative forms of the stems of the given word form,
             subject to the given constraints on the beyging field.
             Note that the word form is case-sensitive. """
-        return self.lookup_case(word, "NF", cat, must_set, must_not_set)
+        return self.lookup_case(word, "NF", **options)
 
-    def accusative(self, word, cat=None, must_set=None, must_not_set=None):
+    def accusative(self, word, **options):
         """ Returns a set of all accusative forms of the stems of the given word form,
             subject to the given constraints on the beyging field.
             Note that the word form is case-sensitive. """
-        return self.lookup_case(word, "ÞF", cat, must_set, must_not_set)
+        return self.lookup_case(word, "ÞF", **options)
 
-    def dative(self, word, cat=None, must_set=None, must_not_set=None):
+    def dative(self, word, **options):
         """ Returns a set of all dative forms of the stems of the given word form,
             subject to the given constraints on the beyging field.
             Note that the word form is case-sensitive. """
-        return self.lookup_case(word, "ÞGF", cat, must_set, must_not_set)
+        return self.lookup_case(word, "ÞGF", **options)
 
-    def possessive(self, word, cat=None, must_set=None, must_not_set=None):
+    def possessive(self, word, **options):
         """ Returns a set of all possessive forms of the stems of the given word form,
             subject to the given constraints on the beyging field.
             Note that the word form is case-sensitive. """
-        return self.lookup_case(word, "EF", cat, must_set, must_not_set)
+        return self.lookup_case(word, "EF", **options)
 
 
 if __name__ == "__main__":

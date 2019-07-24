@@ -54,185 +54,151 @@ def test_bin():
 
     b = BIN_Compressed()
 
-    def f(word, case, stem, cat, func=None):
-        # must_not_set={"2","3"} avoids secondary forms
-        meanings = b.lookup_case(word, case, must_not_set={"2", "3"})
-        return set([
-            (m[4], m[5]) for m in meanings
-            if m[0] == stem and m[2] == cat and (func is None or func(m[5]))
-        ])
+    def f(word, case, stem, cat, beyging_filter=None):
+        meanings = b.lookup_case(
+            word, case, cat=cat, stem=stem, beyging_filter=beyging_filter
+        )
+        return {(m[4], m[5]) for m in meanings}
 
-    def declension(stem, cat, func=None):
+    def declension(word, stem, cat):
         result = []
         for case in ("NF", "ÞF", "ÞGF", "EF"):
-            wf_list = list(f(stem, case, stem, cat, func))
+            wf_list = list(
+                f(word, case, stem, cat, lambda b: "2" not in b and "3" not in b)
+            )
             result.append(wf_list[0][0] if wf_list else "N/A")
         return tuple(result)
 
-    bf = lambda b: ("FVB" in b and "ET" in b)
-    assert(
-        f("fjarðarins", "NF", "fjörður", "kk") ==
-        {('firðir', 'NFFT'), ('firðirnir', 'NFFTgr'), ('fjörður', 'NFET'), ('fjörðurinn', 'NFETgr')}
-    )
-    assert(
-        f("breiðustu", "NF", "breiður", "lo", bf) ==
-        {('breiða', 'FVB-KVK-NFET'), ('breiða', 'FVB-HK-NFET'), ('breiði', 'FVB-KK-NFET')}
-    )
-    assert(
-        b.lookup_case("fjarðarins", "NF", "kk", {"ET", "gr"}) ==
-        {('fjörður', 5697, 'kk', 'alm', 'fjörðurinn', 'NFETgr')}
-    )
-    assert(
-        b.lookup_case("breiðustu", "NF", "lo", {"FT", "KK", "ESB"}) ==
-        {('breiður', 388135, 'lo', 'alm', 'breiðastir', 'ESB-KK-NFFT')}
-    )
-    assert(
-        f("fjarðarins", "ÞF", "fjörður", "kk") ==
-        {('firði', 'ÞFFT'), ('firðina', 'ÞFFTgr'), ('fjörð', 'ÞFET'), ('fjörðinn', 'ÞFETgr')}
-    )
-    assert(
-        f("breiðustu", "ÞF", "breiður", "lo", bf) ==
-        {('breiða', 'FVB-KK-ÞFET'), ('breiða', 'FVB-HK-ÞFET'), ('breiðu', 'FVB-KVK-ÞFET')}
-    )
-    assert(
-        f("fjarðarins", "ÞGF", "fjörður", "kk") ==
-        {('firði', 'ÞGFET'), ('firðinum', 'ÞGFETgr'), ('fjörðum', 'ÞGFFT'), ('fjörðunum', 'ÞGFFTgr')}
-    )
-    assert(
-        f("breiðustu", "ÞGF", "breiður", "lo", bf) ==
-        {('breiða', 'FVB-KK-ÞGFET'), ('breiða', 'FVB-HK-ÞGFET'), ('breiðu', 'FVB-KVK-ÞGFET')}
-    )
-    assert(
-        f("fjarðarins", "EF", "fjörður", "kk") ==
-        {('fjarða', 'EFFT'), ('fjarðanna', 'EFFTgr'), ('fjarðar', 'EFET'), ('fjarðarins', 'EFETgr')}
-    )
-    assert(
-        f("breiðustu", "EF", "breiður", "lo", bf) ==
-        {('breiða', 'FVB-KK-EFET'), ('breiða', 'FVB-HK-EFET'), ('breiðu', 'FVB-KVK-EFET')}
-    )
-    bf_et = lambda b: ("ET" in b and "gr" not in b)
-    assert(
-        declension("brjóstsykur", "kk", bf_et) ==
-        ("brjóstsykur", "brjóstsykur", "brjóstsykri", "brjóstsykurs")
-    )
-    assert(
-        declension("smáskífa", "kvk", bf_et) ==
-        ("smáskífa", "smáskífu", "smáskífu", "smáskífu")
-    )
-    assert(
-        declension("ungabarn", "hk", bf_et) ==
-        ("ungabarn", "ungabarn", "ungabarni", "ungabarns")
-    )
-    assert(
-        declension("geymir", "kk", bf_et) ==
-        ("geymir", "geymi", "geymi", "geymis")
-    )
-    assert(
-        declension("sulta", "kvk", bf_et) ==
-        ("sulta", "sultu", "sultu", "sultu")
-    )
-    assert(
-        declension("vígi", "hk", bf_et) ==
-        ("vígi", "vígi", "vígi", "vígis")
-    )
-    assert(
-        declension("buxur", "kvk", bf_et) ==
-        ("N/A", "N/A", "N/A", "N/A")
-    )
-    assert(
-        declension("ríki", "hk", bf_et) ==
-        ("ríki", "ríki", "ríki", "ríkis")
-    )
+    lo_filter = lambda b: "EVB" in b and "FT" in b
 
-    bf_et_gr = lambda b: ("ET" in b and "gr" in b)
-    assert(
-        declension("brjóstsykur", "kk", bf_et_gr) ==
-        ("brjóstsykurinn", "brjóstsykurinn", "brjóstsykrinum", "brjóstsykursins")
+    assert f("fjarðarins", "NF", "fjörður", "kk") == {("fjörðurinn", "NFETgr")}
+    assert f("breiðustu", "NF", "breiður", "lo", lo_filter) == {
+        ("breiðustu", "EVB-KVK-NFFT"),
+        ("breiðustu", "EVB-HK-NFFT"),
+        ("breiðustu", "EVB-KK-NFFT"),
+    }
+    assert b.lookup_case("fjarðarins", "NF", cat="kk", stem="fjörður") == {
+        ("fjörður", 5697, "kk", "alm", "fjörðurinn", "NFETgr")
+    }
+    assert b.lookup_case("breiðastra", "NF", cat="lo", stem="breiður") == {
+        ("breiður", 388135, "lo", "alm", "breiðastir", "ESB-KK-NFFT"),
+        ("breiður", 388135, "lo", "alm", "breiðastar", "ESB-KVK-NFFT"),
+        ("breiður", 388135, "lo", "alm", "breiðust", "ESB-HK-NFFT"),
+    }
+    assert f("fjarðarins", "ÞF", "fjörður", "kk") == {("fjörðinn", "ÞFETgr")}
+    assert f("breiðustu", "ÞF", "breiður", "lo", lo_filter) == {
+        ("breiðustu", "EVB-KVK-ÞFFT"),
+        ("breiðustu", "EVB-HK-ÞFFT"),
+        ("breiðustu", "EVB-KK-ÞFFT"),
+    }
+    assert f("fjarðarins", "ÞGF", "fjörður", "kk") == {("firðinum", "ÞGFETgr")}
+    assert f("breiðustu", "ÞGF", "breiður", "lo", lo_filter) == {
+        ("breiðustu", "EVB-KVK-ÞGFFT"),
+        ("breiðustu", "EVB-HK-ÞGFFT"),
+        ("breiðustu", "EVB-KK-ÞGFFT"),
+    }
+    assert f("fjarðarins", "EF", "fjörður", "kk") == {("fjarðarins", "EFETgr")}
+    assert f("breiðustu", "EF", "breiður", "lo", lo_filter) == {
+        ("breiðustu", "EVB-KVK-EFFT"),
+        ("breiðustu", "EVB-HK-EFFT"),
+        ("breiðustu", "EVB-KK-EFFT"),
+    }
+    assert declension("brjóstsykur", "brjóstsykur", "kk") == (
+        "brjóstsykur",
+        "brjóstsykur",
+        "brjóstsykri",
+        "brjóstsykurs",
     )
-    assert(
-        declension("smáskífa", "kvk", bf_et_gr) ==
-        ("smáskífan", "smáskífuna", "smáskífunni", "smáskífunnar")
+    assert declension("smáskífa", "smáskífa", "kvk") == (
+        "smáskífa",
+        "smáskífu",
+        "smáskífu",
+        "smáskífu",
     )
-    assert(
-        declension("ungabarn", "hk", bf_et_gr) ==
-        ("ungabarnið", "ungabarnið", "ungabarninu", "ungabarnsins")
+    assert declension("ungabarn", "ungabarn", "hk") == (
+        "ungabarn",
+        "ungabarn",
+        "ungabarni",
+        "ungabarns",
     )
-    assert(
-        declension("geymir", "kk", bf_et_gr) ==
-        ("geymirinn", "geyminn", "geyminum", "geymisins")
+    assert declension("geymir", "geymir", "kk") == (
+        "geymir",
+        "geymi",
+        "geymi",
+        "geymis",
     )
-    assert(
-        declension("sulta", "kvk", bf_et_gr) ==
-        ("sultan", "sultuna", "sultunni", "sultunnar")
+    assert declension("sulta", "sulta", "kvk") == ("sulta", "sultu", "sultu", "sultu")
+    assert declension("vígi", "vígi", "hk") == ("vígi", "vígi", "vígi", "vígis")
+    assert declension("buxur", "buxur", "kvk") == ("buxur", "buxur", "buxum", "buxna")
+    assert declension("ríki", "ríki", "hk") == ("ríki", "ríki", "ríki", "ríkis")
+    assert declension("ríki", "ríkir", "kk") == ("ríkir", "ríki", "ríki", "ríkis")
+    assert declension("brjóstsykurinn", "brjóstsykur", "kk") == (
+        "brjóstsykurinn",
+        "brjóstsykurinn",
+        "brjóstsykrinum",
+        "brjóstsykursins",
     )
-    assert(
-        declension("vígi", "hk", bf_et_gr) ==
-        ("vígið", "vígið", "víginu", "vígisins")
+    assert declension("smáskífan", "smáskífa", "kvk") == (
+        "smáskífan",
+        "smáskífuna",
+        "smáskífunni",
+        "smáskífunnar",
     )
-    assert(
-        declension("buxur", "kvk", bf_et_gr) ==
-        ("N/A", "N/A", "N/A", "N/A")
+    assert declension("ungabarnið", "ungabarn", "hk") == (
+        "ungabarnið",
+        "ungabarnið",
+        "ungabarninu",
+        "ungabarnsins",
     )
-    assert(
-        declension("ríki", "hk", bf_et_gr) ==
-        ("ríkið", "ríkið", "ríkinu", "ríkisins")
+    assert declension("geymirinn", "geymir", "kk") == (
+        "geymirinn",
+        "geyminn",
+        "geyminum",
+        "geymisins",
     )
-
-    bf_ft_gr = lambda b: ("FT" in b and "gr" in b)
-    assert(
-        declension("geymir", "kk", bf_ft_gr) ==
-        ("geymarnir", "geymana", "geymunum", "geymanna")
+    assert declension("sultan", "sulta", "kvk") == (
+        "sultan",
+        "sultuna",
+        "sultunni",
+        "sultunnar",
     )
-    assert(
-        declension("sulta", "kvk", bf_ft_gr) ==
-        ("sulturnar", "sulturnar", "sultunum", "sultnanna")
+    assert declension("vígið", "vígi", "hk") == ("vígið", "vígið", "víginu", "vígisins")
+    assert declension("ríkið", "ríki", "hk") == ("ríkið", "ríkið", "ríkinu", "ríkisins")
+    assert declension("geymarnir", "geymir", "kk") == (
+        "geymarnir",
+        "geymana",
+        "geymunum",
+        "geymanna",
     )
-    assert(
-        declension("vígi", "hk", bf_ft_gr) ==
-        ("vígin", "vígin", "vígjunum", "vígjanna")
+    assert declension("sulturnar", "sulta", "kvk") == (
+        "sulturnar",
+        "sulturnar",
+        "sultunum",
+        "sultnanna",
     )
-    assert(
-        declension("buxur", "kvk", bf_ft_gr) ==
-        ("buxurnar", "buxurnar", "buxunum", "buxnanna")
+    assert declension("vígin", "vígi", "hk") == (
+        "vígin",
+        "vígin",
+        "vígjunum",
+        "vígjanna",
     )
-    assert(
-        declension("ríki", "hk", bf_ft_gr) ==
-        ("ríkin", "ríkin", "ríkjunum", "ríkjanna")
+    assert declension("buxurnar", "buxur", "kvk") == (
+        "buxurnar",
+        "buxurnar",
+        "buxunum",
+        "buxnanna",
     )
-
-    # A bit more fancy way of specifying constraints on the
-    # returned word forms
-
-    lookup_noun_sg_masc_indefinite = functools.partial(
-        b.lookup_case, cat="kk", must_set={"ET"}, must_not_set={"gr"}
+    assert declension("ríkin", "ríki", "hk") == (
+        "ríkin",
+        "ríkin",
+        "ríkjunum",
+        "ríkjanna",
     )
-    lookup_adj_sg_fem_strong = functools.partial(
-        b.lookup_case, cat="lo", must_set={"ET", "KVK", "FSB"}
-    )
-    lookup_adj_pl_fem_weak = functools.partial(
-        b.lookup_case, cat="lo", must_set={"FT", "KVK", "FVB"}
-    )
-    def decl(word, func):
-        result = []
-        for case in ("NF", "ÞF", "ÞGF", "EF"):
-            mlist = list(func(word, case))
-            assert len(mlist) <= 1
-            if mlist:
-                result.append(mlist[0][4])
-            else:
-                result.append("N/A")
-        return tuple(result)
-    assert(
-        decl("sími", lookup_noun_sg_masc_indefinite) ==
-        ("sími", "síma", "síma", "síma")
-    )
-    assert(
-        decl("lítill", lookup_adj_sg_fem_strong) ==
-        ("lítil", "litla", "lítilli", "lítillar")
-    )
-    assert(
-        decl("lítill", lookup_adj_pl_fem_weak) ==
-        ("litlu", "litlu", "litlu", "litlu")
+    assert declension("Vestur-Þýskalands", "Vestur-Þýskaland", "hk") == (
+        "Vestur-Þýskaland",
+        "Vestur-Þýskaland",
+        "Vestur-Þýskalandi",
+        "Vestur-Þýskalands",
     )
 
 

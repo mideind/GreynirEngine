@@ -204,11 +204,25 @@ class BIN_Db:
         """ Return a list of meanings with the given integer id ('utg' column) """
         assert False, "This feature is not supported in the Reynir module"
 
-    @lru_cache(maxsize=CACHE_SIZE)
-    def lookup_nominative(self, w):
+    def lookup_nominative(self, w, **options):
         """ Return meaning tuples for all word forms in nominative
             case for all { kk, kvk, hk, lo } category stems of the given word """
-        return list(map(BIN_Meaning._make, self._compressed_bin.nominative(w)))
+        return list(map(BIN_Meaning._make, self._compressed_bin.nominative(w, **options)))
+
+    def lookup_accusative(self, w, **options):
+        """ Return meaning tuples for all word forms in nominative
+            case for all { kk, kvk, hk, lo } category stems of the given word """
+        return list(map(BIN_Meaning._make, self._compressed_bin.accusative(w, **options)))
+
+    def lookup_dative(self, w, **options):
+        """ Return meaning tuples for all word forms in nominative
+            case for all { kk, kvk, hk, lo } category stems of the given word """
+        return list(map(BIN_Meaning._make, self._compressed_bin.dative(w, **options)))
+
+    def lookup_possessive(self, w, **options):
+        """ Return meaning tuples for all word forms in nominative
+            case for all { kk, kvk, hk, lo } category stems of the given word """
+        return list(map(BIN_Meaning._make, self._compressed_bin.possessive(w, **options)))
 
     def lookup_word(self, w, at_sentence_start=False, auto_uppercase=False):
         """ Given a word form, look up all its possible meanings """

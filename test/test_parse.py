@@ -1102,14 +1102,26 @@ def test_nominative():
     assert subj.indefinite_np == "íslenskt bókmenntafélag"
     assert subj.canonical_np == "íslenskt bókmenntafélag"
 
+    s = r.parse_single("Ég var með Páli Húnfjörð Jónssyni.")
+    subj = s.tree.S_MAIN.IP.VP.PP.NP
+    assert subj.nominative_np == "Páll Húnfjörð Jónsson"
+    assert subj.indefinite_np == "Páll Húnfjörð Jónsson"
+    assert subj.canonical_np == "Páll Húnfjörð Jónsson"
+
+    s = r.parse_single("Ég var með Sigríði Sölku Kristínardóttur.")
+    subj = s.tree.S_MAIN.IP.VP.PP.NP
+    assert subj.nominative_np == "Sigríður Salka Kristínardóttir"
+    assert subj.indefinite_np == "Sigríður Salka Kristínardóttir"
+    assert subj.canonical_np == "Sigríður Salka Kristínardóttir"
+
     s = r.parse_single("Kristín málaði hús Hönnu Önfjörð Álfhildardóttur")
     assert (
         s.tree.first_match("NP-POSS").nominative_np == "Hanna Önfjörð Álfhildardóttir"
     )
 
     s = r.parse_single(
-        "Stóri feiti jólasveinninn beislaði "
-        "fjögur sætustu hreindýrin og ók rauða vagninum "
+        "Stóri feiti Jólasveinninn beislaði "
+        "fjögur sætustu hreindýrin og ók rauða VAGNINUM "
         "með fjölda gjafa til spenntu barnanna sem biðu "
         "milli vonar og ótta."
     )
@@ -1119,11 +1131,11 @@ def test_nominative():
     assert list(n.text for n in s.tree.all_matches("( no | lo)")) == [
         "Stóri",
         "feiti",
-        "jólasveinninn",
+        "Jólasveinninn",
         "sætustu",
         "hreindýrin",
         "rauða",
-        "vagninum",
+        "VAGNINUM",
         "fjölda",
         "gjafa",
         "spenntu",
@@ -1132,11 +1144,11 @@ def test_nominative():
     assert list(n.nominative for n in s.tree.all_matches("( no | lo)")) == [
         "Stóri",
         "feiti",
-        "jólasveinninn",
+        "Jólasveinninn",
         "sætustu",
         "hreindýrin",
         "rauði",
-        "vagninn",
+        "VAGNINN",
         "fjöldi",
         "gjafir",
         "spenntu",
@@ -1145,11 +1157,11 @@ def test_nominative():
     assert list(n.canonical for n in s.tree.all_matches("( no | lo)")) == [
         "Stór",
         "feitur",
-        "jólasveinn",
+        "Jólasveinn",
         "sætast",
         "hreindýr",
         "rauður",
-        "vagn",
+        "VAGN",
         "fjöldi",
         "gjöf",
         "spennt",
@@ -1157,13 +1169,14 @@ def test_nominative():
     ]
     assert list(
         n.canonical for t in s.tree.top_matches("NP") for n in t.all_matches("no")
-    ) == ["jólasveinn", "hreindýr", "vagn", "fjöldi", "gjöf", "barn"]
+    ) == ["Jólasveinn", "hreindýr", "VAGN", "fjöldi", "gjöf", "barn"]
 
 
 def test_ifd_tag():
     """ Test IFD tagging """
     s = r.parse_single(
-        "Að minnsta kosti stal Guðbjörn J. Óskarsson 200 krónum þann 19. júní 2003 og þyngdist um 300 kg."
+        "Að minnsta kosti stal Guðbjörn J. Óskarsson 200 krónum þann 19. júní 2003 "
+        "og þyngdist um 300 kg."
     )
     assert s.ifd_tags == [
         "aþ",
@@ -1181,7 +1194,8 @@ def test_ifd_tag():
         ".",
     ]
     s = r.parse_single(
-        "Vestur-Þýskalandi bar blátt áfram að bjarga a.m.k. 284,47 börnum kl. 11:45 árið 374 f.Kr."
+        "Vestur-Þýskalandi bar blátt áfram að bjarga a.m.k. 284,47 börnum "
+        "kl. 11:45 árið 374 f.Kr."
     )
     assert s.ifd_tags == [
         'nheþ-ö',
@@ -1364,8 +1378,8 @@ def test_compressed_bin():
         binc.lookup("einkabílnum") ==
         [('einkabíll', 75579, 'kk', 'alm', 'einkabílnum', 'ÞGFETgr')]
     )
-    nominal_forms = [m[4] for m in binc.nominative("einkabílnum") if m[5] == "NFET"]
-    assert nominal_forms == ['einkabíll']
+    nominal_forms = [m[4] for m in binc.nominative("einkabílnum") if m[5] == "NFETgr"]
+    assert nominal_forms == ['einkabíllinn']
     # Test non-latin-1 code point (should not throw an exception)
     assert "Domino’s" not in binc
     # Test errata (BinErrata.conf)
