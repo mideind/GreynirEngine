@@ -5274,7 +5274,9 @@ EinnAl →
     | Úrslit                # KR sigraði Val 6:0
     | AlMiðstig             # [mun] hraðar en augað sér
     | AlHvortSemUmErAðRæða  # Hvort sem um er að ræða X eða Y
+
     # Fjölyrtir atviksliðir sem ekki er unnt að búa til fasta frasa úr
+
     | 'einn:fn'_kvk_et_þf 'ferð:kvk'_þf_et_gr "enn:ao"  # eina ferðina enn
     | "heima:ao" "fyrir:ao"
     | "hingað:ao" "til:ao"
@@ -5283,6 +5285,7 @@ EinnAl →
     | "sem:ao" "fyrst:ao"
     | 'vinsamlegur:lo'_esb_hk_nf_et     # (Þátttakendur eru) vinsamlegast (beðnir að fylla út eyðublað)
     | 'náðarsamlegur:lo'_esb_hk_nf_et   # (Þátttakendur eru) náðarsamlegast (beðnir að fylla út eyðublað)
+    | "mest:ao" 'allur:fn'_ft_ef_hk     # (Ferðamönnum hefur fjölgað) mest allra
     | 'allur:fn'_et_þf_kk 'tími:kk'_gr_et_þf # Allan tímann var mér ljóst að þetta var vonlaust
     | 'allur:fn'_ft_þf_kk "jafna:ao"    # Alla jafna eru menn rólegir yfir þessu
 
