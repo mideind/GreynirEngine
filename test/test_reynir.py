@@ -60,12 +60,16 @@ def test_bin():
         )
         return {(m[4], m[5]) for m in meanings}
 
-    def declension(word, stem, cat):
+    def declension(word, stem, cat, beyging_filter=None):
         result = []
+
+        def bf(b):
+            if beyging_filter is not None and not beyging_filter(b):
+                return False
+            return "2" not in b and "3" not in b
+
         for case in ("NF", "ÞF", "ÞGF", "EF"):
-            wf_list = list(
-                f(word, case, stem, cat, lambda b: "2" not in b and "3" not in b)
-            )
+            wf_list = list(f(word, case, stem, cat, bf))
             result.append(wf_list[0][0] if wf_list else "N/A")
         return tuple(result)
 
@@ -109,11 +113,17 @@ def test_bin():
         "brjóstsykri",
         "brjóstsykurs",
     )
-    assert declension("smáskífa", "smáskífa", "kvk") == (
+    assert declension("smáskífa", "smáskífa", "kvk", lambda b: "ET" in b) == (
         "smáskífa",
         "smáskífu",
         "smáskífu",
         "smáskífu",
+    )
+    assert declension("smáskífa", "smáskífa", "kvk", lambda b: "FT" in b) == (
+        "smáskífur",
+        "smáskífur",
+        "smáskífum",
+        "smáskífa",
     )
     assert declension("ungabarn", "ungabarn", "hk") == (
         "ungabarn",

@@ -5286,6 +5286,9 @@ EinnAl →
     | 'vinsamlegur:lo'_esb_hk_nf_et     # (Þátttakendur eru) vinsamlegast (beðnir að fylla út eyðublað)
     | 'náðarsamlegur:lo'_esb_hk_nf_et   # (Þátttakendur eru) náðarsamlegast (beðnir að fylla út eyðublað)
     | "mest:ao" 'allur:fn'_ft_ef_hk     # (Ferðamönnum hefur fjölgað) mest allra
+    | 'allur:fn'_ft_ef_hk "mest:ao"     # (Ferðamönnum hefur fjölgað) allra mest
+    | "minnst:ao" 'allur:fn'_ft_ef_hk   # (Ferðamönnum hefur fjölgað) minnst allra
+    | 'allur:fn'_ft_ef_hk "minnst:ao"   # (Ferðamönnum hefur fjölgað) allra minnst
     | 'allur:fn'_et_þf_kk 'tími:kk'_gr_et_þf # Allan tímann var mér ljóst að þetta var vonlaust
     | 'allur:fn'_ft_þf_kk "jafna:ao"    # Alla jafna eru menn rólegir yfir þessu
 
