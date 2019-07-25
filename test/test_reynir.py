@@ -137,7 +137,9 @@ def test_bin():
         "geymi",
         "geymis",
     )
-    assert declension("sulta", "sulta", "kvk") == ("sulta", "sultu", "sultu", "sultu")
+    assert declension("sulta", "sulta", "kvk", lambda b: "ET" in b) == (
+        "sulta", "sultu", "sultu", "sultu"
+    )
     assert declension("vígi", "vígi", "hk") == ("vígi", "vígi", "vígi", "vígis")
     assert declension("buxur", "buxur", "kvk") == ("buxur", "buxur", "buxum", "buxna")
     assert declension("ríki", "ríki", "hk") == ("ríki", "ríki", "ríki", "ríkis")
