@@ -530,6 +530,9 @@ Allt → 'allur:fn'_nf_hk_et
 
 $score(+4) Allt
 
+# Allra er notað ef óskað er eftir NP-POSS nafnlið utan um fornafnið
+Allra → 'allur:fn'_ef_hk_ft
+
 Tilgangstenging → 
     'til:fs'_ef 'það:pfn'_hk_ef_et "að:st"
     | "svo:st" "að:st"    # Líka afleiðingartenging
@@ -1649,7 +1652,7 @@ NlAnnar/fall →
     AtviksliðurEinkunn* MiðstigEðaAnnar/fall/tala/kyn Nl/fall/tala/kyn
 
 MiðstigEðaAnnar/fall/tala/kyn →
-    'allur:fn'_nf_hk_et? 'annar:fn'/fall/tala/kyn  # [allt] aðra sögu
+    Allt? 'annar:fn'/fall/tala/kyn  # [allt] aðra sögu
     | MiðstigForskeyti? lo_mst/fall/tala/kyn
 
 SamanburðarNafnliður → HeldurEn Nl/fall
@@ -3321,7 +3324,7 @@ SáÞessi/fall/tala/kyn →
 # allt önnur | allt aðrar
 # allt annað | allt önnur
 NlFornafn/tala/fall/kyn →
-    'allur:fn'_et_nf_hk 'annar:fn'/tala/fall/kyn
+    Allt 'annar:fn'/tala/fall/kyn
 
 # Sértilvik þar sem lýsingarorðin "margur"/"fjölmargur" standa
 # fyrir framan fornafn og úr verður sjálfstæður nafnliður.
@@ -3573,7 +3576,7 @@ TöluorðForskeyti →
     | "næstum:ao" | "nálægt:ao" | "yfir:ao"
     # Fleiryrt forskeyti
     | "hátt:ao" "í:ao"
-    | 'allur:fn'_et_nf_hk "að:ao" 
+    | Allt "að:ao"
     | "innan:ao" "við:ao"
     | "svo:st" "sem:st"
 
@@ -4378,7 +4381,7 @@ NlSkýring/tala/pers/fall/kyn →
     | "-:em" SvigaForskeyti? SvigaInnihald/tala/pers/fall/kyn "-:em"
     | "," Skýring Skýringarliður LokatáknEðaKomma
     # (Verslunin þjónar fjölbreyttum markhópi), allt frá börnum til aldraðra, (og er vinsæl í hverfinu)
-    | Samanburðarmerki 'allur:fn'_et_nf_hk 'frá:fs'_þgf Nl_þgf
+    | Samanburðarmerki Allt 'frá:fs'_þgf Nl_þgf
         'til:fs'_ef Nl_ef LokatáknEðaKomma
     | NlSkýringKomma/tala/pers/fall/kyn
 
@@ -4394,9 +4397,9 @@ $score(+6) NlSkýring/tala/pers/fall/kyn
 SvigaInnihald/tala/pers/fall/kyn →
     Árabil
     > Tilvísunarsetning/tala/pers/kyn # (og sem ég er almennt fylgjandi)
-    > Nl/fall/tala      # 'Ég spurði forsætisráðherra, Sigmund Davíð, um málið'
+    > Nl/fall/tala          # 'Ég spurði forsætisráðherra, Sigmund Davíð, um málið'
     > SvigaInnihaldFsRuna
-    > SvigaInnihaldNl   # Ef ekki finnst sama fall og tala, prófa almennan nafnlið
+    > SvigaInnihaldNl/fall  # Ef ekki finnst sama fall og tala, prófa almennan nafnlið
     > HreinYfirsetning
 
 # Árabil nota en-dash
@@ -4405,11 +4408,13 @@ SvigaInnihald/tala/pers/fall/kyn →
     ártal "-:en" ártal   # 1951-1983
     > ártal "-:en" tala  # 2001-8
 
-SvigaInnihaldNl →
+SvigaInnihaldNl/fall →
     Nl
 
 # Nafnliður í öðru falli en það sem verið er að skýra er ekki spennandi kostur
-$score(-8) SvigaInnihaldNl
+# og gæti mjög vel verið villa
+$score(-8) SvigaInnihaldNl/fall
+$tag(error) SvigaInnihaldNl/fall
 
 SvigaInnihaldFsRuna →
     FsRuna
@@ -4667,6 +4672,7 @@ Lo/fall/tala/kyn →
 
 LoSemLo/fall/tala/kyn → 
     LoAtviksliður* lo/fall/tala/kyn # (Þingmenn kosnir) algerlega leynilegri (kosningu)
+    | Allra lo_evb/fall/tala/kyn # (Ég átti) allra stærsta (bílinn)
 
 LoMun/fall/tala/kyn →
     'munur:kk'_þgf_et lo_mst/fall/tala/kyn # (Schengen rekur) mun öflugri gagnagrunn / (þau voru) mun frjálsari skoðana sinna
@@ -4702,7 +4708,8 @@ $score(+6) LoSemLo/fall/tala/kyn    # Tilbrigði 3.1, eina sem þarf að toggla.
 # leyfa atviksorðið almennt sem einkunn með nafnliðum; það myndi
 # rekast á fornafnið.
 LoAtviksliður →
-    eo | 'enginn:fn'_hk_et_nf | "þó:ao"? "nokkuð:ao" | 'sá:fn'_hk_nf_et
+    eo | 'enginn:fn'_hk_et_nf | "þó:ao"? "nokkuð:ao"
+    | 'sá:fn'_hk_nf_et
 
 # Við viljum yfirleitt frekar fá atviksorð framan við lýsingarorð
 # heldur en að fá mörg lýsingarorð í röð, þ.e. við viljum fremur
@@ -4987,7 +4994,7 @@ FsMeðFallstjórn →
     | "innan:ao" "sem:st" 'utan:fs'_ef Nl_ef
     | "hvað:ao" FsHvaðVarðar
     # allt frá hruni, allt frá börnum til fullorðinna
-    | 'allur:fn'_nf_hk_et 'frá:fs'_þgf Nl_þgf
+    | Allt 'frá:fs'_þgf Nl_þgf
     # 'um að lög um endurupptökunefnd standist ekki stjórnarskrá' - Ath: 'um það að' er höndlað í ÞaðTenging
     | 'um:fs'_þf "að:st" HreinYfirsetning ","?
     # 'um hvort/hvenær/af hverju/til hvers/hví Jón kaus Framsóknarflokkinn'
@@ -5288,10 +5295,10 @@ EinnAl →
     | "sem:ao" "fyrst:ao"
     | 'vinsamlegur:lo'_esb_hk_nf_et     # (Þátttakendur eru) vinsamlegast (beðnir að fylla út eyðublað)
     | 'náðarsamlegur:lo'_esb_hk_nf_et   # (Þátttakendur eru) náðarsamlegast (beðnir að fylla út eyðublað)
-    | "mest:ao" 'allur:fn'_ft_ef_hk     # (Ferðamönnum hefur fjölgað) mest allra
-    | 'allur:fn'_ft_ef_hk "mest:ao"     # (Ferðamönnum hefur fjölgað) allra mest
-    | "minnst:ao" 'allur:fn'_ft_ef_hk   # (Ferðamönnum hefur fjölgað) minnst allra
-    | 'allur:fn'_ft_ef_hk "minnst:ao"   # (Ferðamönnum hefur fjölgað) allra minnst
+    | "mest:ao" Allra     # (Ferðamönnum hefur fjölgað) mest allra
+    | Allra "mest:ao"     # (Ferðamönnum hefur fjölgað) allra mest
+    | "minnst:ao" Allra   # (Ferðamönnum hefur fjölgað) minnst allra
+    | Allra "minnst:ao"   # (Ferðamönnum hefur fjölgað) allra minnst
     | 'allur:fn'_et_þf_kk 'tími:kk'_gr_et_þf # Allan tímann var mér ljóst að þetta var vonlaust
     | 'allur:fn'_ft_þf_kk "jafna:ao"    # Alla jafna eru menn rólegir yfir þessu
 
@@ -5379,7 +5386,7 @@ AtviksliðurKomma →
 AtviksliðurEinkunn →
     eo                              # Einkunnarorð = atviksorð sem geta ekki jafnframt verið forsetningar
     | Aldur                         # Hin 29 ára gamla fyrirsæta
-    | 'allur:fn'_hk_et_nf "að:ao"   # 'fjárfesta fyrir allt að 100 milljónir króna'
+    | Allt "að:ao"   # 'fjárfesta fyrir allt að 100 milljónir króna'
     | "svo:ao" "sem:ao"             # 'enda kemur kynlíf þeirra svo sem engum við'
     | UmEðaYfir
 

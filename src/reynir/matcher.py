@@ -174,12 +174,15 @@ _DEFAULT_NT_MAP = {
     "EfLiður": "NP-POSS",
     "EfLiðurForskeyti": "NP-POSS",
     "OkkarFramhald": "NP-POSS",
+    "Allra": "NP-POSS",
     #"LoEftirNlMeðÞgf": "NP-DAT",
     "LoViðhengi": "NP-ADP",     # Adjective predicate
     "Heimilisfang": "NP-ADDR",
     "Fyrirtæki": "NP-COMPANY",
     "SérnafnFyrirtæki": "NP-COMPANY",
     "Magn": "NP-MEASURE",
+    # Note: NP-TITLE is referred to in the program logic below,
+    # so be careful when changing it
     "Titill": "NP-TITLE",
     "Frumlag": "NP-SUBJ",
     "NlFrumlag": "NP-SUBJ",
@@ -1490,7 +1493,11 @@ class SimpleTree:
                     np = ""
             else:
                 for ch in children:
-                    np = prop_func(ch)
+                    if ch.tag == "NP-TITLE":
+                        # For NP-TITLE, we make an exception and recurse into it
+                        np = ch._np_form(prop_func)
+                    else:
+                        np = prop_func(ch)
                     if np:
                         result.append(np)
                 np = " ".join(result)
