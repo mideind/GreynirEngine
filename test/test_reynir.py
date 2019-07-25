@@ -140,10 +140,21 @@ def test_bin():
     assert declension("sulta", "sulta", "kvk", lambda b: "ET" in b) == (
         "sulta", "sultu", "sultu", "sultu"
     )
-    assert declension("vígi", "vígi", "hk") == ("vígi", "vígi", "vígi", "vígis")
-    assert declension("buxur", "buxur", "kvk") == ("buxur", "buxur", "buxum", "buxna")
-    assert declension("ríki", "ríki", "hk") == ("ríki", "ríki", "ríki", "ríkis")
-    assert declension("ríki", "ríkir", "kk") == ("ríkir", "ríki", "ríki", "ríkis")
+    assert declension("vígi", "vígi", "hk", lambda b: "ET" in b) == (
+        "vígi", "vígi", "vígi", "vígis"
+    )
+    assert declension("buxur", "buxur", "kvk") == (
+        "buxur", "buxur", "buxum", "buxna"
+    )
+    assert declension("ríki", "ríki", "hk", lambda b: "ET" in b) == (
+        "ríki", "ríki", "ríki", "ríkis"
+    )
+    assert declension("ríki", "ríki", "hk", lambda b: "FT" in b) == (
+        "ríki", "ríki", "ríkjum", "ríkja"
+    )
+    assert declension("ríki", "ríkir", "kk") == (
+        "ríkir", "ríki", "ríki", "ríkis"
+    )
     assert declension("brjóstsykurinn", "brjóstsykur", "kk") == (
         "brjóstsykurinn",
         "brjóstsykurinn",
@@ -174,8 +185,12 @@ def test_bin():
         "sultunni",
         "sultunnar",
     )
-    assert declension("vígið", "vígi", "hk") == ("vígið", "vígið", "víginu", "vígisins")
-    assert declension("ríkið", "ríki", "hk") == ("ríkið", "ríkið", "ríkinu", "ríkisins")
+    assert declension("vígið", "vígi", "hk") == (
+        "vígið", "vígið", "víginu", "vígisins"
+    )
+    assert declension("ríkið", "ríki", "hk") == (
+        "ríkið", "ríkið", "ríkinu", "ríkisins"
+    )
     assert declension("geymarnir", "geymir", "kk") == (
         "geymarnir",
         "geymana",
