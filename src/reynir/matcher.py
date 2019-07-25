@@ -146,6 +146,8 @@ _DEFAULT_NT_MAP = {
     "StakViðhengi": "CP-ADV-CMP", 
     "SamanburðarForskeyti": "CP-ADV-CMP",
     "EnSamanb": "CP-ADV-CMP",
+    # Note: CP-THT is used in code logic below; if modifying this,
+    # be careful to change all instances where it is referred to
     "Skýringarsetning": "CP-THT",
     "SkýringarsetningFramhald": "CP-THT",
     "AtviksAðSetning": "CP-THT",
@@ -487,7 +489,7 @@ def cut_definite_pronouns(txt):
         # Make an exception for 'það að X sé Y' - this is OK to return,
         # even as an indefinite form
         return txt
-    # 'Stefna Norður-Kóreu hefur ávallt verið sú að Bandaríkin setjist við samningaborðið'
+    # 'Stefna hans hefur ávallt verið sú að Bandaríkin setjist við samningaborðið'
     # -> 'það að Bandaríkin setjist við samningaborðið'
     for prefix in ("sá að ", "sú að "):
         if lower_txt.startswith(prefix):
@@ -1165,7 +1167,7 @@ class SimpleTree:
             lemma = f(*args)
         return lemma
 
-    def _nominative_form(self, form):
+    def _alternative_form(self, form):
         """ Return a nominative form of the text within this node only, if any.
             The form can be 'nominative' for the nominative case only,
             'indefinite' for the indefinite nominative form,
@@ -1174,18 +1176,25 @@ class SimpleTree:
             # This is not a potentially declined terminal node: return the original text
             return self._text
         txt = self._text
-        canonical = form == "canonical"
-        nominative = form == "nominative"
         indefinite = form == "indefinite"
+        canonical = form == "canonical"
         prefix = ""
         with BIN_Db.get_db() as db:
+
+            # A bit convoluted, but so it goes
+            lookup_functions = {
+                "accusative" : db.lookup_accusative,
+                "dative" : db.lookup_dative,
+                "possessive" : db.lookup_possessive
+            }
+            lookup_func = lookup_functions.get(form, db.lookup_nominative)
 
             if self.tcat == "person":
                 # Special case for person names as they may have embedded spaces
                 result = []
                 gender = self._cat
                 for name in txt.split():
-                    meanings = db.lookup_nominative(name, singular=True, cat=gender)
+                    meanings = lookup_func(name, singular=True, cat=gender)
                     try:
                         # Try to find an 'ism', 'erm', 'föð' or 'móð' 
                         # nominative form of the correct gender
@@ -1228,15 +1237,15 @@ class SimpleTree:
                 cat=self._cat, stem=lemma,
                 singular=canonical, indefinite=indefinite or canonical
             )
-            meanings = db.lookup_nominative(txt, **options)
+            meanings = lookup_func(txt, **options)
             if not meanings and not txt.islower():
                 # We don't find this form in BÍN:
                 # if upper case, try a lower case version of it
-                meanings = db.lookup_nominative(txt.lower(), **options)
+                meanings = lookup_func(txt.lower(), **options)
 
             # The following functions filter the nominative list in a
-            # final step that is required because some word forms are
-            # can have more than one gender and even be valid both as
+            # final step that is required because some word forms can
+            # have more than one gender and can even be valid both as
             # singular and plural
 
             def filter_func_no(m):
@@ -1246,8 +1255,11 @@ class SimpleTree:
                     number = next(iter(self._vset & {"et", "ft"}), "et")
                     if number.upper() not in m.beyging:
                         return False
-                if nominative:
+                if not(canonical or indefinite):
                     # Match the original word in terms of definite/indefinite
+                    # (This is probably redundant since definite and indefinite
+                    # forms are (almost?) always disjoint sets, but one can
+                    # never be too careful)
                     if ("gr" in self._vset) != ("gr" in m.beyging):
                         return False
                 elif "gr" in m.beyging:
@@ -1289,7 +1301,7 @@ class SimpleTree:
                     number = next(iter(self._vset & {"et", "ft"}), "et")
                     if number.upper() not in m.beyging:
                         return False
-                if nominative:
+                if not(canonical or indefinite):
                     if "est" in self._vset:
                         if not ("EVB" in m.beyging or "ESB" in m.beyging):
                             return False
@@ -1343,14 +1355,14 @@ class SimpleTree:
                 return True
 
             # Select and apply the appropriate filter function
-            FILTERS = {
+            filters = {
                 "lo": filter_func_lo,
                 "to": filter_func_with_gender,
                 "fn": filter_func_with_gender,
                 "gr": filter_func_with_gender,
                 "pfn": filter_func_without_gender,
             }
-            meanings = filter(FILTERS.get(self._cat, filter_func_no), meanings)
+            meanings = filter(filters.get(self._cat, filter_func_no), meanings)
             try:
                 # Choose the first nominative form that got past the filter
                 w = next(meanings).ordmynd
@@ -1374,17 +1386,32 @@ class SimpleTree:
     @cached_property
     def nominative(self):
         """ Return the nominative form of this node only, if any """
-        return self._nominative_form("nominative")
+        return self._alternative_form("nominative")
+
+    @property
+    def accusative(self):
+        """ Return the accusative form of this node only, if any """
+        return self._alternative_form("accusative")
+
+    @property
+    def dative(self):
+        """ Return the dative form of this node only, if any """
+        return self._alternative_form("dative")
+
+    @property
+    def possessive(self):
+        """ Return the possessive form of this node only, if any """
+        return self._alternative_form("possessive")
 
     @cached_property
     def indefinite(self):
         """ Return the indefinite nominative form of this node only, if any """
-        return self._nominative_form("indefinite")
+        return self._alternative_form("indefinite")
 
     @cached_property
     def canonical(self):
         """ Return the singular indefinite nominative form of this node only, if any """
-        return self._nominative_form("canonical")
+        return self._alternative_form("canonical")
 
     @property
     def _cat(self):
@@ -1434,7 +1461,7 @@ class SimpleTree:
         if self.match_tag("NP"):
             # Noun phrase:
             # Concatenate the nominative forms of the child terminals,
-            # and the literal text of nested nonterminals (such as NP-POSS and S-THT)
+            # and the literal text of nested nonterminals (such as NP-POSS and CP-THT)
             result = []
             children = list(self.children)
             # If the noun phrase has an adjective, we keep any leading adverbs
@@ -1452,8 +1479,8 @@ class SimpleTree:
                         if i > 0:
                             children = children[i:]
                         break
-            if len(children) == 1 and children[0].tag == "S-THT":
-                # If the noun phrase consists only of a S-THT nonterminal
+            if len(children) == 1 and children[0].tag == "CP-THT":
+                # If the noun phrase consists only of a CP-THT nonterminal
                 # ('skýringarsetning'), add 'það' to the front so the
                 # result is something like 'það að fjöldi dæmdra glæpamanna hafi aukist'
                 np = prop_func(children[0])
@@ -1482,6 +1509,30 @@ class SimpleTree:
             lambda node: node.nominative if node.is_terminal else node.text
         )
 
+    @property
+    def accusative_np(self):
+        """ Return the accusative form of the noun phrase (or noun/adjective terminal)
+            contained within this subtree """
+        return self._np_form(
+            lambda node: node.accusative if node.is_terminal else node.text
+        )
+
+    @property
+    def dative_np(self):
+        """ Return the dative form of the noun phrase (or noun/adjective terminal)
+            contained within this subtree """
+        return self._np_form(
+            lambda node: node.dative if node.is_terminal else node.text
+        )
+
+    @property
+    def possessive_np(self):
+        """ Return the possessive form of the noun phrase (or noun/adjective terminal)
+            contained within this subtree """
+        return self._np_form(
+            lambda node: node.possessive if node.is_terminal else node.text
+        )
+
     @cached_property
     def indefinite_np(self):
         """ Return the indefinite nominative form of the noun phrase (or noun/adjective terminal)
@@ -1504,21 +1555,25 @@ class SimpleTree:
             (or noun/adjective terminal) contained within this subtree """
 
         def prop_func(node):
-            """ For canonical noun phrases, cut off S-REF and S-THT subtrees since they probably
-                don't make sense any more, with the noun phrase having been converted to singular and all.
+            """ For canonical noun phrases, cut off CP subtrees
+                since they probably don't make sense any more, with the noun
+                phrase having been converted to singular and all.
                 The same applies to NP-POSS. """
             if node.is_terminal:
                 if node.tcat == "töl" or (node.tcat == "tala" and "ft" in node._vset):
-                    # If we are asking for the canonical (singular) form, cut away undeclinable numbers
-                    # so that 'sautján góðglaða alþingismenn' -> 'góðglaður alþingismaður',
-                    # not 'sautján góðglaður alþingismaður'; and also cut away declinable plural numbers
+                    # If we are asking for the canonical (singular) form,
+                    # cut away undeclinable numbers so that
+                    # 'sautján góðglaða alþingismenn' -> 'góðglaður alþingismaður',
+                    # not 'sautján góðglaður alþingismaður'; and also cut away
+                    # declinable plural numbers
                     return ""
                 if node._cat == "gr":
                     # Cut away the definite article, if present
                     # ('hinir ungu alþingismenn' -> 'ungur alþingismaður')
                     return ""
                 return node.canonical
-            # Cut off connected explanatory sentences, possessive phrases, and prepositional phrases
+            # Cut off connected explanatory sentences, possessive phrases,
+            # and prepositional phrases
             if any(node.match_tag(tag) for tag in ("S", "NP-POSS", "PP", "ADVP", "CP")):
                 return None
             return node.text
@@ -1574,6 +1629,7 @@ class SimpleTree:
     def nouns(self):
         """ Returns the lemmas of all nouns in the subtree """
         return self._list(lambda t: t.tcat == "no" or t.tcat == "entity" or t._cat in _GENDERS)
+
     @property
     def verbs(self):
         """ Returns the lemmas of all verbs in the subtree """

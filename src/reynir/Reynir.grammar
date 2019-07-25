@@ -4704,7 +4704,10 @@ $score(+6) LoSemLo/fall/tala/kyn    # Tilbrigði 3.1, eina sem þarf að toggla.
 LoAtviksliður →
     eo | 'enginn:fn'_hk_et_nf | "þó:ao"? "nokkuð:ao" | 'sá:fn'_hk_nf_et
 
-$score(+3) LoAtviksliður
+# Við viljum yfirleitt frekar fá atviksorð framan við lýsingarorð
+# heldur en að fá mörg lýsingarorð í röð, þ.e. við viljum fremur
+# 'gríðarlega:ao' 'stóra:lo' en 'gríðarlega:lo' 'stóra:lo'.
+$score(+12) LoAtviksliður
 
 LoAtviksliðir →
     LoAtviksliður+ | "og:ao" # 'honum er og heimilt að merkja við fleiri en einn frambjóðanda'
