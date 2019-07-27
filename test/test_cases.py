@@ -185,6 +185,20 @@ def test_cases():
         "Póstsins Páls , hins sívinsæla gleðigjafa"
     )
 
+    s = r.parse_single("Pósturinn Páll og kötturinn Njáll, tveir sívinsælir gleðigjafar, eru á dagskrá í sumar.")
+    assert (s.tree.S_MAIN.IP.NP_SUBJ.nominative_np ==
+        "Pósturinn Páll og kötturinn Njáll , tveir sívinsælir gleðigjafar"
+    )
+    assert (s.tree.S_MAIN.IP.NP_SUBJ.accusative_np ==
+        "Póstinn Pál og köttinn Njál , tvo sívinsæla gleðigjafa"
+    )
+    assert (s.tree.S_MAIN.IP.NP_SUBJ.dative_np ==
+        "Póstinum Páli og kettinum Njáli , tveimur sívinsælum gleðigjöfum"
+    )
+    assert (s.tree.S_MAIN.IP.NP_SUBJ.possessive_np ==
+        "Póstsins Páls og kattarins Njáls , tveggja sívinsælla gleðigjafa"
+    )
+
 
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test

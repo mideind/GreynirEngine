@@ -590,6 +590,15 @@ class SimpleTree:
             .format(self.tag, len_self)
         )
 
+    @classmethod
+    def from_deep_tree(cls, deep_tree, toklist):
+        """ Construct a SimpleTree from a deep (detailed) parse tree """
+        if deep_tree is None or not toklist:
+            return None
+        s = Simplifier(toklist)
+        s.go(deep_tree)
+        return s.tree
+
     @property
     def root(self):
         """ The original topmost root of this subtree """
@@ -1238,7 +1247,10 @@ class SimpleTree:
 
             options = dict(
                 cat=self._cat, stem=lemma,
-                singular=canonical, indefinite=indefinite or canonical
+                singular=canonical, indefinite=indefinite or canonical,
+                # We don't want second or third optional forms of
+                # word declensions; we just stick with the first form
+                beyging_filter=lambda b: "2" not in b and "3" not in b
             )
             meanings = lookup_func(txt, **options)
             if not meanings and not txt.islower():
@@ -1508,7 +1520,8 @@ class SimpleTree:
         # This is not a noun phrase: return its text as-is
         return self.text
 
-    @cached_property
+    # @cached_property
+    @property
     def nominative_np(self):
         """ Return the nominative form of the noun phrase (or noun/adjective terminal)
             contained within this subtree """

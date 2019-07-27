@@ -36,7 +36,7 @@ from .bintokenizer import tokenize as bin_tokenize
 from .fastparser import Fast_Parser, ParseError
 from .reducer import Reducer
 from .cache import cached_property
-from .matcher import Simplifier
+from .matcher import SimpleTree
 
 
 # The Sentence.terminals attribute returns a list of Terminal objects
@@ -56,6 +56,7 @@ class _Sentence:
 
     def __init__(self, job, s):
         self._job = job
+        # s is a token list
         self._s = s
         self._len = len(s)
         assert self._len > 0  # Input should be already sanitized
@@ -91,9 +92,7 @@ class _Sentence:
             self._simplified_tree = None
         else:
             # Create a simplified tree as well
-            s = Simplifier(self._s)
-            s.go(tree)
-            self._simplified_tree = s.tree
+            self._simplified_tree = SimpleTree.from_deep_tree(tree, self._s)
         self._num = num
         self._score = score
         return num > 0
