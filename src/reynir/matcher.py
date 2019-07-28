@@ -1398,7 +1398,7 @@ class SimpleTree:
                     txt = prefix = ""
         return prefix + txt
 
-    @cached_property
+    @property
     def nominative(self):
         """ Return the nominative form of this node only, if any """
         return self._alternative_form("nominative")
@@ -1473,85 +1473,87 @@ class SimpleTree:
         if self.is_terminal:
             # Terminal node: return its nominative form
             return prop_func(self)
-        if self.match_tag("NP"):
-            # Noun phrase:
-            # Concatenate the nominative forms of the child terminals,
-            # and the literal text of nested nonterminals (such as NP-POSS and CP-THT)
-            result = []
-            children = list(self.children)
-            # If the noun phrase has an adjective, we keep any leading adverbs
-            # ('stórkostlega fallegu blómin', 'ekki vingjarnlegu mennirnir',
-            # 'strax fáanlegu vörurnar').
-            # Otherwise, they probably belong to a previous verb and we
-            # cut them away.
-            has_adjective = any(ch.is_terminal and ch.tcat == "lo" for ch in children)
-            if not has_adjective:
-                # Cut away certain leading adverbs (einkunnarorð, "eo")
-                for i, ch in enumerate(children):
-                    if ch.is_terminal and ch.tcat == "eo":
-                        continue
-                    else:
-                        if i > 0:
-                            children = children[i:]
-                        break
-            if len(children) == 1 and children[0].tag == "CP-THT":
-                # If the noun phrase consists only of a CP-THT nonterminal
-                # ('skýringarsetning'), add 'það' to the front so the
-                # result is something like 'það að fjöldi dæmdra glæpamanna hafi aukist'
-                np = prop_func(children[0])
-                if np:
-                    np = "það " + np
+        if not self.match_tag("NP"):
+            # This is not a noun phrase: return its text as-is
+            return self.text
+        # Noun phrase:
+        # Concatenate the nominative forms of the child terminals,
+        # and the literal text of nested nonterminals (such as NP-POSS and CP-THT)
+        result = []
+        children = list(self.children)
+        # If the noun phrase has an adjective, we keep any leading adverbs
+        # ('stórkostlega fallegu blómin', 'ekki vingjarnlegu mennirnir',
+        # 'strax fáanlegu vörurnar').
+        # Otherwise, they probably belong to a previous verb and we
+        # cut them away.
+        has_adjective = any(ch.is_terminal and ch.tcat == "lo" for ch in children)
+        if not has_adjective:
+            # Cut away certain leading adverbs (einkunnarorð, "eo")
+            for i, ch in enumerate(children):
+                if ch.is_terminal and ch.tcat == "eo":
+                    continue
                 else:
-                    np = ""
+                    if i > 0:
+                        children = children[i:]
+                    break
+        if len(children) == 1 and children[0].tag == "CP-THT":
+            # If the noun phrase consists only of a CP-THT nonterminal
+            # ('skýringarsetning'), add 'það' to the front so the
+            # result is something like 'það að fjöldi dæmdra glæpamanna hafi aukist'
+            np = prop_func(children[0])
+            if np:
+                np = "það " + np
             else:
-                for ch in children:
-                    if ch.tag == "NP-TITLE":
-                        # For NP-TITLE, we make an exception and recurse into it
-                        np = ch._np_form(prop_func)
-                    else:
-                        np = prop_func(ch)
-                    if np:
-                        result.append(np)
-                np = " ".join(result)
-            # Cut off trailing punctuation
-            while len(np) >= 2 and np[-1] in {",", ":", ";", "!", "-", "."}:
-                np = np[0:-2]
-            return np
-        # This is not a noun phrase: return its text as-is
-        return self.text
+                np = ""
+        else:
+            for ch in children:
+                np = prop_func(ch)
+                if np:
+                    result.append(np)
+            np = " ".join(result)
+        # Cut off trailing punctuation
+        while len(np) >= 2 and np[-1] in {",", ":", ";", "!", "-", "."}:
+            np = np[0:-2]
+        return np
 
-    # @cached_property
+    def _case_np(self, case_property):
+        """ Return the noun phrase contained within this subtree
+            after casting it to the given case """
+
+        def prop_func(node):
+            if node.is_terminal:
+                return case_property.fget(node)
+            if node.tag == "NP-TITLE":
+                # For NP-TITLE, recurse into it, since we
+                # also want to cast it to the requested case
+                return node._np_form(prop_func)
+            return node.text
+
+        return self._np_form(prop_func)
+
     @property
     def nominative_np(self):
         """ Return the nominative form of the noun phrase (or noun/adjective terminal)
             contained within this subtree """
-        return self._np_form(
-            lambda node: node.nominative if node.is_terminal else node.text
-        )
+        return self._case_np(SimpleTree.nominative)
 
     @property
     def accusative_np(self):
         """ Return the accusative form of the noun phrase (or noun/adjective terminal)
             contained within this subtree """
-        return self._np_form(
-            lambda node: node.accusative if node.is_terminal else node.text
-        )
+        return self._case_np(SimpleTree.accusative)
 
     @property
     def dative_np(self):
         """ Return the dative form of the noun phrase (or noun/adjective terminal)
             contained within this subtree """
-        return self._np_form(
-            lambda node: node.dative if node.is_terminal else node.text
-        )
+        return self._case_np(SimpleTree.dative)
 
     @property
     def possessive_np(self):
         """ Return the possessive form of the noun phrase (or noun/adjective terminal)
             contained within this subtree """
-        return self._np_form(
-            lambda node: node.possessive if node.is_terminal else node.text
-        )
+        return self._case_np(SimpleTree.possessive)
 
     @cached_property
     def indefinite_np(self):
@@ -1592,7 +1594,7 @@ class SimpleTree:
                     # ('hinir ungu alþingismenn' -> 'ungur alþingismaður')
                     return ""
                 return node.canonical
-            # Cut off connected explanatory sentences, possessive phrases,
+            # Cut off connected explanatory sentences, possessive noun phrases,
             # and prepositional phrases
             if any(node.match_tag(tag) for tag in ("S", "NP-POSS", "PP", "ADVP", "CP")):
                 return None
