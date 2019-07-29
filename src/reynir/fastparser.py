@@ -382,7 +382,11 @@ class Node:
         """ Return the first token within the span of this node """
         p = self
         while p._token is None:
-            assert len(p._families) == 1
+            # Note that this function may be called before the
+            # tree is reduced; therefore we may have more than one
+            # family of children. The families should however all
+            # cover the same token span.
+            assert len(p._families) >= 1
             _, f = p._families[0]
             ix = 0
             while f[ix] is None:
@@ -394,7 +398,11 @@ class Node:
         """ Return the last token within the span of this node """
         p = self
         while p._token is None:
-            assert len(p._families) == 1
+            # Note that this function may be called before the
+            # tree is reduced; therefore we may have more than one
+            # family of children. The families should however all
+            # cover the same token span.
+            assert len(p._families) >= 1
             _, f = p._families[0]
             ix = -1
             while f[ix] is None:

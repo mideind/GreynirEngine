@@ -37,6 +37,8 @@ def test_finish():
 
 
 def test_cases():
+    if r is None:
+        test_init()
     s = r.parse_single("Ég átti svakalega stóran hest með fallegasta makkann.")
     np_obj = s.tree.S_MAIN.IP.VP.NP_OBJ
     assert np_obj.nominative_np == "svakalega stór hestur með fallegasta makkann"
