@@ -850,9 +850,9 @@ class BIN_Compressed:
             self._stems = None
             self._meanings = None
             self._alphabet = None
+            self._mmap_buffer = None
             self._b.close()
             self._b = None
-            self._mmap_buffer = None
 
     def meaning(self, ix):
         """ Find and decode a meaning (ordfl, fl, beyging) tuple,

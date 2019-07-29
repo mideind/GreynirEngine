@@ -71,10 +71,8 @@ class GrammarError(Exception):
     """ Exception class for errors in a grammar """
 
     def __init__(self, text, fname=None, line=0):
-
         """ A GrammarError contains an error text and optionally the name
             of a grammar file and a line number where the error occurred """
-
         super().__init__(text)
         self.fname = fname
         self.line = line
