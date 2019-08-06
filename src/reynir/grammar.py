@@ -626,8 +626,9 @@ class Grammar:
         if Settings.DEBUG:
             print("Writing of binary grammar file completed")
             print(
-                "num_terminals was {0}, num_nonterminals {1}"
-                .format(self.num_terminals, num_nt)
+                "num_terminals was {0}, num_nonterminals {1}".format(
+                    self.num_terminals, num_nt
+                )
             )
 
     def read(self, fname, verbose=False, binary_fname=None):
@@ -643,12 +644,16 @@ class Grammar:
         except (IOError, OSError):
             raise GrammarError("Unable to open or read grammar file", fname, 0)
 
-    def read_from_generator(self, fname, line_generator, verbose=False, binary_fname=None):
+    def read_from_generator(
+        self, fname, line_generator, verbose=False,
+        binary_fname=None, force_new_binary=False
+    ):
         """ Read grammar from a generator of lines. Set verbose=True to get
             diagnostic messages about unused nonterminals and nonterminals that are
             unreachable from the root. Pass a file name in binary_fname to write
             a fresh binary file if the grammar text file is newer than the
-            existing binary file. """
+            existing binary file. Set force_new_binary=True to write a fresh
+            binary file regardless of timestamps. """
 
         # Clear previous file info, if any
         self._file_time = self._file_name = None
@@ -721,7 +726,8 @@ class Grammar:
                         if len(tokens) != 1:
                             raise GrammarError(
                                 "Empty (epsilon) rule must be of the form NT -> 0",
-                                fname, line
+                                fname,
+                                line,
                             )
                         rhs.append((None, None, None))
                         break
@@ -746,8 +752,7 @@ class Grammar:
                         for vspec in v:
                             if vspec not in variants:
                                 raise GrammarError(
-                                    "Unknown variant '{0}'".format(vspec),
-                                    fname, line
+                                    "Unknown variant '{0}'".format(vspec), fname, line
                                 )
                             if vspec not in vts:
                                 # Free variant: add to set
@@ -760,15 +765,13 @@ class Grammar:
                             pass
                         elif len(r) < 3 or r[0] not in r[2:]:
                             raise GrammarError(
-                                "Invalid literal terminal {0}".format(r),
-                                fname, line
+                                "Invalid literal terminal {0}".format(r), fname, line
                             )
                     else:
                         # Identifier of nonterminal or terminal
                         if not r.isidentifier():
                             raise GrammarError(
-                                "Invalid identifier '{0}'".format(r),
-                                fname, line
+                                "Invalid identifier '{0}'".format(r), fname, line
                             )
                     rhs.append((r, repeat, v))
 
@@ -866,7 +869,8 @@ class Grammar:
                             if n is None:
                                 raise GrammarError(
                                     "Epsilon (0) cannot be suffixed with ?, * or +",
-                                    fname, line
+                                    fname,
+                                    line,
                                 )
                             # Create C*, C+ or C?
                             new_nt_id = sym + repeat
@@ -908,7 +912,8 @@ class Grammar:
                         # Nonterminal derives itself
                         raise GrammarError(
                             "Nonterminal {0} deriving itself".format(nt_id_full),
-                            fname, line
+                            fname,
+                            line,
                         )
                     add_rhs(nt_id_full, result, priority)
 
@@ -931,8 +936,7 @@ class Grammar:
                 ix = s.rfind(")")
                 if ix < 0:
                     raise GrammarError(
-                        "Expected right parenthesis in pragma",
-                        fname, line
+                        "Expected right parenthesis in pragma", fname, line
                     )
                 param = s[0:ix].strip()
                 s = s[ix + 1 :]
@@ -946,13 +950,13 @@ class Grammar:
                                 "Unknown variant '{0}' for nonterminal '{1}'".format(
                                     vname, ntv[0]
                                 ),
-                                fname, line
+                                fname,
+                                line,
                             )
                     for vname in variant_names(ntv[0], ntv[1:]):
                         if vname not in nonterminals:
                             raise GrammarError(
-                                "Unknown nonterminal '{0}'".format(vname),
-                                fname, line
+                                "Unknown nonterminal '{0}'".format(vname), fname, line
                             )
                         try:
                             # Found a nonterminal to which this pragma applies
@@ -961,13 +965,13 @@ class Grammar:
                         except:
                             raise GrammarError(
                                 "Invalid pragma argument '{0}'".format(param),
-                                fname, line
+                                fname,
+                                line,
                             )
                 if cnt == 0:
                     # This pragma has no effect
                     raise GrammarError(
-                        "Pragma does not affect any nonterminal",
-                        fname, line
+                        "Pragma does not affect any nonterminal", fname, line
                     )
 
             if s.startswith("/"):
@@ -981,8 +985,7 @@ class Grammar:
                 if "_" in vname or not vname.isidentifier():
                     # Variant names must be valid identifiers without underscores
                     raise GrammarError(
-                        "Invalid variant name '{0}'".format(vname),
-                        fname, line
+                        "Invalid variant name '{0}'".format(vname), fname, line
                     )
                 v = v[1].split()
                 for vopt in v:
@@ -990,7 +993,8 @@ class Grammar:
                         # Variant options must be valid identifiers without underscores
                         raise GrammarError(
                             "Invalid option '{0}' in variant '{1}'".format(vopt, vname),
-                            fname, line
+                            fname,
+                            line,
                         )
                 variants[vname] = v
 
@@ -1021,14 +1025,14 @@ class Grammar:
                     # Identify a nonterminal as a secondary parse root
                     if s[-1] != ")":
                         raise GrammarError(
-                            "Expected right parenthesis in $root() pragma",
-                            fname, line
+                            "Expected right parenthesis in $root() pragma", fname, line
                         )
                     root_nt = s[len(_PRAGMA_ROOT) : -1].strip()
                     if not root_nt.isidentifier():
                         raise GrammarError(
                             "Invalid nonterminal name '{0}'".format(root_nt),
-                            fname, line
+                            fname,
+                            line,
                         )
                     if root_nt not in nonterminals:
                         raise GrammarError("Unknown nonterminal '{0}'".format(root_nt))
@@ -1057,15 +1061,16 @@ class Grammar:
                 current_variants = ntv[1:]
                 if not nt.isidentifier():
                     raise GrammarError(
-                        "Invalid nonterminal name '{0}'".format(nt),
-                        fname, line
+                        "Invalid nonterminal name '{0}'".format(nt), fname, line
                     )
                 for vname in current_variants:
                     if vname not in variants:
                         raise GrammarError(
-                            "Unknown variant '{0}' for nonterminal '{1}'"
-                            .format(vname, nt),
-                            fname, line
+                            "Unknown variant '{0}' for nonterminal '{1}'".format(
+                                vname, nt
+                            ),
+                            fname,
+                            line,
                         )
 
                 # Add all previously unknown nonterminal variants
@@ -1088,8 +1093,7 @@ class Grammar:
                     # Looks like a priority specification between productions
                     if "|" in rule[1]:
                         raise GrammarError(
-                            "Cannot mix '|' and '>' between productions",
-                            fname, line
+                            "Cannot mix '|' and '>' between productions", fname, line
                         )
                     sep = ">"
                     # In the case of a prioritized list of productions,
@@ -1108,12 +1112,7 @@ class Grammar:
                     # for grammar error checking.
                     prod = prod.strip()
                     if prod:
-                        parse_rhs(
-                            current_NT,
-                            current_variants,
-                            prod,
-                            priority,
-                        )
+                        parse_rhs(current_NT, current_variants, prod, priority)
                         # If productions are separated by the > sign, we increase
                         # the priority number (which lowers the priority) by one
                         # for each production
@@ -1158,9 +1157,7 @@ class Grammar:
                 if s.startswith(_PRAGMA_IF) and s.endswith(")"):
                     cond = s[4:-1].strip()
                     if not cond.isidentifier():
-                        raise GrammarError(
-                            "$if() condition must be a valid identifier"
-                        )
+                        raise GrammarError("$if() condition must be a valid identifier")
                     # Establish whether we want to parse the conditional
                     # section or not
                     new_cond = cond_stack[-1][1] and cond in self._conditions
@@ -1176,8 +1173,9 @@ class Grammar:
                         raise GrammarError("$endif() with no matching $if()")
                     if cond != cond_stack[-1][0]:
                         raise GrammarError(
-                            "$endif({0}) does not match $if({1})"
-                            .format(cond, cond_stack[-1][0])
+                            "$endif({0}) does not match $if({1})".format(
+                                cond, cond_stack[-1][0]
+                            )
                         )
                     del cond_stack[-1]
                     s = ""
@@ -1200,20 +1198,21 @@ class Grammar:
             if nt not in grammar:
                 raise GrammarError(
                     "Nonterminal {0} is referenced but not defined".format(nt),
-                    nt.fname, nt.line
+                    nt.fname,
+                    nt.line,
                 )
         for nt, plist in grammar.items():
             if len(plist) == 0:
                 raise GrammarError(
-                    "Nonterminal {0} has no productions".format(nt),
-                    nt.fname, nt.line
+                    "Nonterminal {0} has no productions".format(nt), nt.fname, nt.line
                 )
             else:
                 for _, p in plist:
                     if len(p) == 1 and p[0] == nt:
                         raise GrammarError(
                             "Nonterminal {0} produces itself".format(nt),
-                            p.fname, p.line
+                            p.fname,
+                            p.line,
                         )
 
         # Check that all nonterminals derive terminal strings
@@ -1233,9 +1232,11 @@ class Grammar:
             agenda = [nt for nt in nonterminals.values() if nt not in der_t]
         if agenda:
             raise GrammarError(
-                "Nonterminals {0} do not derive terminal strings"
-                .format(", ".join([str(nt) for nt in agenda])),
-                fname, 0
+                "Nonterminals {0} do not derive terminal strings".format(
+                    ", ".join([str(nt) for nt in agenda])
+                ),
+                fname,
+                0,
             )
 
         # Short-circuit nonterminals that point directly and uniquely
@@ -1348,12 +1349,16 @@ class Grammar:
 
         if binary_fname is not None:
             # Check whether to write a fresh binary file
-            try:
-                binary_file_time = datetime.fromtimestamp(
-                    os.path.getmtime(binary_fname)
-                )
-            except os.error:
+            if force_new_binary:
+                # Always write a fresh binary file if this flag is set
                 binary_file_time = None
+            else:
+                try:
+                    binary_file_time = datetime.fromtimestamp(
+                        os.path.getmtime(binary_fname)
+                    )
+                except os.error:
+                    binary_file_time = None
             if binary_file_time is None or binary_file_time < self._file_time:
                 # No binary file or older than text file: write a fresh one
                 self._write_binary(binary_fname)
@@ -1367,7 +1372,6 @@ class Grammar:
         nullable = set()
 
         def is_nullable(nt):
-
             def is_nullable_prod(p):
                 return p.is_empty or all(s in nullable for s in p)
 
@@ -1440,21 +1444,23 @@ if __name__ == "__main__":
         print("Unable to read grammar file {0}".format(fname))
     else:
         print(
-            "Reading grammar file {0} with timestamp {1:%Y-%m-%d %H:%M:%S}\n"
-            .format(fname, datetime.fromtimestamp(ts))
+            "Reading grammar file {0} with timestamp {1:%Y-%m-%d %H:%M:%S}\n".format(
+                fname, datetime.fromtimestamp(ts)
+            )
         )
         import time
+
         t0 = time.time()
         g = Grammar()
         try:
             g.read(fname, verbose=True)
             print(
-                "Grammar parsed and loaded in {0:.2f} seconds"
-                .format(time.time() - t0)
+                "Grammar parsed and loaded in {0:.2f} seconds".format(time.time() - t0)
             )
             print(
-                "Grammar has {0:,} terminals, {1:,} nonterminals and {2:,} productions"
-                .format(g.num_terminals, g.num_nonterminals, g.num_productions)
+                "Grammar has {0:,} terminals, {1:,} nonterminals and {2:,} productions".format(
+                    g.num_terminals, g.num_nonterminals, g.num_productions
+                )
             )
         except GrammarError as err:
             print(str(err))
