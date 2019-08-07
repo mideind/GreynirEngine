@@ -379,6 +379,8 @@ Samanburðarsetning →
     Samanburðartenging BeygingarliðurÁnUmröðunar # Bara vh.
     | Samanburðartenging BeygingarliðurÁnF
 
+# Ath.: Skilyrðissetning er notuð í Reynir/processors/entities.py;
+# ef nafni hnútsins er breytt þarf að breyta þar einnig
 Skilyrðissetning → 
     Skilyrðistenging BeygingarliðurÁnUmröðunar
     | Skilyrðistenging BeygingarliðurMeðUmröðun # 'Ef ekki næðist samkomulag yrði málið svæft'
@@ -948,6 +950,7 @@ SetningSo →
 # í skýringarsetningu (t.d. í framhaldi af 'Ég taldi að...')
 
 SetningSoÞað →
+
     # Leitað verður/skal/mun til sérfræðinga
     # Verið er í snatri að ráða hæfasta umsækjandann
     # Komið hefur/hafi til átaka milli þeirra
@@ -4003,7 +4006,7 @@ SkstAtvOrð →
     "norður:ao" | "suður:ao" | "vestur:ao" | "austur:ao"
 
 # Hvetja til runa af lýsingarorðum í veikri beygingu með skilgreiningu sérnafna
-$score(+8) VeiktLo/tala/fall/kyn
+$score(+12) VeiktLo/tala/fall/kyn
 $score(+2) SkstAtv
 
 $score(+5) SamstættFall/fall/kyn

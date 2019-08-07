@@ -1118,9 +1118,20 @@ class BIN_Compressed:
                 )
         return result
 
+    def raw_nominative(self, word):
+        """ Returns a set of all nominative forms of the stems of the given word form.
+            Note that the word form is case-sensitive. """
+        result = set()
+        for stem_index, _ in self._raw_lookup(word):
+            for c_latin in self.case_variants(stem_index):
+                c = c_latin.decode("latin-1")
+                # Make sure we only include each result once
+                result.update(m for m in self.lookup(c) if "NF" in m[5])
+        return result
+
     def nominative(self, word, **options):
         """ Returns a set of all nominative forms of the stems of the given word form,
-            subject to the given constraints on the beyging field.
+            subject to the constraints in **options.
             Note that the word form is case-sensitive. """
         return self.lookup_case(word, "NF", **options)
 

@@ -204,6 +204,14 @@ class BIN_Db:
         """ Return a list of meanings with the given integer id ('utg' column) """
         assert False, "This feature is not supported in the Reynir module"
 
+    @lru_cache(maxsize=CACHE_SIZE)
+    def lookup_raw_nominative(self, w):
+        """ Return a set of meaning tuples for all word forms in nominative case.
+            The set is unfiltered except for the presence of 'NF' in the beyging
+            field. For new code, lookup_nominative() is likely to be a
+            more efficient choice. """
+        return list(map(BIN_Meaning._make, self._compressed_bin.raw_nominative(w)))
+
     def lookup_nominative(self, w, **options):
         """ Return meaning tuples for all word forms in nominative
             case for all { kk, kvk, hk, lo } category stems of the given word """
