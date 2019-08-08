@@ -22,23 +22,20 @@
 
 """
 
-r = None
+import pytest
 
 
-def test_init():
-    """ Test that importing and initializing the reynir module works """
+@pytest.fixture(scope="module")
+def r():
+    """ Provide a module-scoped Reynir instance as a test fixture """
     from reynir import Reynir
-    global r
     r = Reynir()
-
-
-def test_finish():
+    yield r
+    # Do teardown here
     r.__class__.cleanup()
 
 
-def test_cases():
-    if r is None:
-        test_init()
+def test_cases(r):
     s = r.parse_single("Ég átti svakalega stóran hest með fallegasta makkann.")
     np_obj = s.tree.S_MAIN.IP.VP.NP_OBJ
     assert np_obj.nominative_np == "svakalega stór hestur með fallegasta makkann"
@@ -204,6 +201,7 @@ def test_cases():
 
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
-    test_init()
-    test_cases()
-    test_finish()
+    from reynir import Reynir
+    r = Reynir()
+    test_cases(r)
+    r.__class__.cleanup()
