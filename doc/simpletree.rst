@@ -72,7 +72,11 @@ head (top) node, as well as about its children and contained subtrees.
         that the verb itself is singular (``et``), indicative (``fh``), active voice (``gm``),
         third person (``p3``), and past tense (``þt``).
 
-        The variants ``fh``, ``gm`` and ``þt`` are only returned from the :py:attr:`SimpleTree.all_variants` property, not from the :py:attr:`SimpleTree.variants` property, as they are not present in the terminal name in the grammar and are not significant when deriving the parse tree.
+        The variants ``fh``, ``gm`` and ``þt`` are only returned from the
+        :py:attr:`SimpleTree.all_variants` property, not from the
+        :py:attr:`SimpleTree.variants` property, as they are not present
+        in the terminal name in the grammar and are not significant when
+        deriving the parse tree.
 
     .. py:attribute:: tcat
 
@@ -401,6 +405,63 @@ head (top) node, as well as about its children and contained subtrees.
 
             Góðglaðir karlarnir langar í hestur .
 
+    .. py:attribute:: accusative
+
+        Returns a ``str`` containing the *accusative* form, if it exists, of the word
+        corresponding to the root of this subtree only. If no accusative form exists,
+        the word or token text is returned unchanged. For nonterminal
+        roots, an empty string is returned.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Góðglaða karlana langar í hest.")
+            print(" ".join(n.accusative
+                for n in s.tree.descendants if n.is_terminal))
+
+        outputs::
+
+            Góðglaða karlana langar í hest .
+
+    .. py:attribute:: dative
+
+        Returns a ``str`` containing the *dative* form, if it exists, of the word
+        corresponding to the root of this subtree only. If no dative form exists,
+        the word or token text is returned unchanged. For nonterminal
+        roots, an empty string is returned.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Góðglaða karlana langar í hest.")
+            print(" ".join(n.dative
+                for n in s.tree.descendants if n.is_terminal))
+
+        outputs::
+
+            Góðglöðum körlunum langar í hesti .
+
+    .. py:attribute:: possessive
+
+        Returns a ``str`` containing the *possessive* form, if it exists, of the word
+        corresponding to the root of this subtree only. If no possessive form exists,
+        the word or token text is returned unchanged. For nonterminal
+        roots, an empty string is returned.
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Góðglaða karlana langar í hest.")
+            print(" ".join(n.possessive
+                for n in s.tree.descendants if n.is_terminal))
+
+        outputs::
+
+            Góðglaðra karlanna langar í hests .
+
     .. py:attribute:: indefinite
 
         Returns a ``str`` containing the *indefinite nominative* form, if it exists, of the word
@@ -460,13 +521,78 @@ head (top) node, as well as about its children and contained subtrees.
             Ótrúlega frábærir bílstjórar þriggja góðglöðu alþingismannanna sem fóru út
             þrír góðglöðu alþingismennirnir sem fóru út
 
+    .. py:attribute:: accusative_np
+
+        Returns a ``str`` containing the text within the subtree, except that if the
+        subtree root is a noun phrase (``NP``) nonterminal, that phrase is converted to
+        *accusative* form (*þolfall*).
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Ótrúlega frábærum bílstjórum "
+                "þriggja góðglöðu alþingismannanna "
+                "sem fóru út þykir þetta leiðinlegt.")
+            print(s.tree.S_MAIN.IP.NP_SUBJ.accusative_np)
+            print(s.tree.S_MAIN.IP.NP_SUBJ.NP_POSS.accusative_np)
+
+        outputs::
+
+            Ótrúlega frábæra bílstjóra þriggja góðglöðu alþingismannanna sem fóru út
+            þrjá góðglöðu alþingismennina sem fóru út
+
+    .. py:attribute:: dative_np
+
+        Returns a ``str`` containing the text within the subtree, except that if the
+        subtree root is a noun phrase (``NP``) nonterminal, that phrase is converted to
+        *dative* form (*þágufall*).
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Ótrúlega frábærum bílstjórum "
+                "þriggja góðglöðu alþingismannanna "
+                "sem fóru út þykir þetta leiðinlegt.")
+            print(s.tree.S_MAIN.IP.NP_SUBJ.dative_np)
+            print(s.tree.S_MAIN.IP.NP_SUBJ.NP_POSS.dative_np)
+
+        outputs::
+
+            Ótrúlega frábærum bílstjórum þriggja góðglöðu alþingismannanna sem fóru út
+            þremur góðglöðu alþingismönnunum sem fóru út
+
+    .. py:attribute:: possessive_np
+
+        Returns a ``str`` containing the text within the subtree, except that if the
+        subtree root is a noun phrase (``NP``) nonterminal, that phrase is converted to
+        *possessive* form (*eignarfall*).
+
+        Example::
+
+            from reynir import Reynir
+            r = Reynir()
+            s = r.parse_single("Ótrúlega frábærum bílstjórum "
+                "þriggja góðglöðu alþingismannanna "
+                "sem fóru út þykir þetta leiðinlegt.")
+            print(s.tree.S_MAIN.IP.NP_SUBJ.possessive_np)
+            print(s.tree.S_MAIN.IP.NP_SUBJ.NP_POSS.possessive_np)
+
+        outputs::
+
+            Ótrúlega frábærra bílstjóra þriggja góðglöðu alþingismannanna sem fóru út
+            þriggja góðglöðu alþingismannanna sem fóru út
+
     .. py:attribute:: indefinite_np
 
         Returns a ``str`` containing the text within the subtree, except that if the
-        subtree root is a noun phrase (``NP``) nonterminal, that phrase is converted to *indefinite nominative* form
-        (*nefnifall án greinis*). The determiner (*laus greinir*) and any demonstrative pronouns
-        (*ábendingarfornöfn*) are cut off the front of the noun phrases in the conversion, if present.
-        Adjectives are converted from definite (*veik beyging*) to indefinite forms (*sterk beyging*).
+        subtree root is a noun phrase (``NP``) nonterminal, that phrase is
+        converted to *indefinite nominative* form (*nefnifall án greinis*).
+        The determiner (*laus greinir*) and any demonstrative pronouns
+        (*ábendingarfornöfn*) are cut off the front of the noun phrases
+        in the conversion, if present. Adjectives are converted from
+        definite (*veik beyging*) to indefinite forms (*sterk beyging*).
 
         Example::
 
@@ -487,12 +613,13 @@ head (top) node, as well as about its children and contained subtrees.
 
         Returns a ``str`` containing the text within the subtree, except that if the
         subtree root is a noun phrase (``NP``) nonterminal, that phrase is converted to
-        *singular indefinite nominative* form
-        (*nefnifall eintölu án greinis*). The determiner (*laus greinir*) and any demonstrative pronouns
-        (*ábendingarfornöfn*) are cut off the front of the noun phrases in the conversion, if present.
-        Also, associated possessive phrases and referential sentences are removed
-        (*mennina sem ég þekkti vel* -> *maður*). Adjectives are converted from definite
-        (*veik beyging*) to indefinite forms (*sterk beyging*).
+        *singular indefinite nominative* form (*nefnifall eintölu án greinis*).
+        The determiner (*laus greinir*) and any demonstrative pronouns
+        (*ábendingarfornöfn*) are cut off the front of the noun phrases
+        in the conversion, if present. Also, associated possessive phrases
+        and referential sentences are removed (*mennina sem ég þekkti vel* -> *maður*).
+        Adjectives are converted from definite (*veik beyging*) to
+        indefinite forms (*sterk beyging*).
 
         Example::
 
@@ -529,7 +656,7 @@ head (top) node, as well as about its children and contained subtrees.
 
     .. py:attribute:: persons
 
-        Returns a ``list`` of the lemmas (the nominative case) of all *person names*
+        Returns a ``list`` of the lemmas (in nominative case) of all *person names*
         within this subtree, i.e. the root and all its descendants, recursively.
         The list is in left-traversal order.
 
@@ -549,7 +676,7 @@ head (top) node, as well as about its children and contained subtrees.
 
     .. py:attribute:: entities
 
-        Returns a ``list`` of the lemmas (the nominative case, as far as that can
+        Returns a ``list`` of the lemmas (in the nominative case, as far as that can
         be established and is applicable) of all *entity names*
         within this subtree, i.e. the root and all its descendants, recursively.
         The list is in left-traversal order.
@@ -557,7 +684,7 @@ head (top) node, as well as about its children and contained subtrees.
     .. py:attribute:: proper_names
 
         Returns a ``list`` of the lemmas (the nominative case, as far as that can
-        be established and is applicable) of all *proper names (sérnöfn*)
+        be established and is applicable) of all *proper names* *(sérnöfn)*
         within this subtree, i.e. the root and all its descendants, recursively.
         The list is in left-traversal order.
 
@@ -631,8 +758,9 @@ head (top) node, as well as about its children and contained subtrees.
         *von* and *ótti* are thus not included in the list of noun phrases.
 
         Also note that *rauði vagninn með fjölda gjafa til spenntu barnanna sem biðu milli vonar og ótta*
-        is a noun phrase containing two nested noun phrases. :py:meth:`SimpleTree.all_matches()` returns
-        all three noun phrases, also the nested ones. If you only want the outermost (top) matching subtree
+        is a noun phrase containing two nested noun phrases.
+        :py:meth:`SimpleTree.all_matches()` returns all three noun phrases,
+        also the nested ones. If you only want the outermost (top) matching subtree
         for a pattern, use :py:meth:`SimpleTree.top_matches()` instead.
 
     .. py:method:: top_matches(self, pattern : str) -> generator[SimpleTree]
@@ -665,6 +793,7 @@ head (top) node, as well as about its children and contained subtrees.
             rauði vagninn með fjölda gjafa til spenntu barnanna sem biðu milli vonar og ótta
 
         Note that *rauði vagninn með fjölda gjafa til spenntu barnanna sem biðu milli vonar og ótta*
-        is a single noun phrase containing two nested noun phrases. If you want all matching phrases for a
-        pattern, including nested ones, use :py:meth:`SimpleTree.all_matches()` instead.
+        is a single noun phrase containing two nested noun phrases.
+        If you want all matching phrases for a pattern, including nested ones,
+        use :py:meth:`SimpleTree.all_matches()` instead.
 

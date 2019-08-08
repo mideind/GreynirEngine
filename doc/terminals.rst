@@ -168,7 +168,7 @@ variant indicates which case the preposition controls.
 +------------+---------------------------------------------------+
 | þgf        | Dative (þágufall)                                 |
 +------------+---------------------------------------------------+
-| ef         | Genitive/Possessive (eignarfall)                  |
+| ef         | Possessive/genitive (eignarfall)                  |
 +------------+---------------------------------------------------+
 
 Arguments
@@ -211,7 +211,8 @@ Occurs with verbs (``so`` terminal category) only.
 Degree
 ------
 
-Occurs with adjectives (``lo`` terminal category) only.
+Occurs with adjectives (``lo`` terminal category), and in the
+case of ``mst`` with certain adverbs (``ao`` terminal category).
 
 +------------+---------------------------------------------------+
 | mst        | Comparative *(stærri)*                            |
@@ -231,7 +232,7 @@ Occurs with adjectives (``lo`` terminal category) only.
 +------------+---------------------------------------------------+
 | sþgf       | Dative (líkur *Páli*)                             |
 +------------+---------------------------------------------------+
-| sef        | Genitive (fullur *orku*)                          |
+| sef        | Possessive/genitive (fullur *orku*)               |
 +------------+---------------------------------------------------+
 
 Verb forms
@@ -239,43 +240,43 @@ Verb forms
 
 These variants occur with verbs (``so`` terminal category) only.
 
-+------------+---------------------------------------------------+
-| gm         | Active voice (germynd)                            |
-+------------+---------------------------------------------------+
-| mm         | Middle voice (miðmynd)                            |
-+------------+---------------------------------------------------+
-| nh         | Infinitive (nafnháttur)                           |
-+------------+---------------------------------------------------+
-| fh         | Indicative (framsöguháttur)                       |
-+------------+---------------------------------------------------+
-| bh         | Imperative (boðháttur)                            |
-+------------+---------------------------------------------------+
-| vh         | Subjunctive (viðtengingarháttur)                  |
-+------------+---------------------------------------------------+
-| nt         | Present tense (nútíð)                             |
-+------------+---------------------------------------------------+
-| þt         | Past tense (þátíð)                                |
-+------------+---------------------------------------------------+
-| lh         | | Present participle (lýsingarháttur nútíðar)     |
-|            | | (note that the nt variant will also be present) |
-+------------+---------------------------------------------------+
-| lhþt       | | Past participle (lýsingarþáttur þátíðar)        |
-|            | | (note that the þt variant will NOT be present)  |
-+------------+---------------------------------------------------+
-| sagnb      | Supine (sagnbót)                                  |
-+------------+---------------------------------------------------+
-| sb         | Indefinite (sterk beyging),                       |
-|            | only occurs with lhþt                             |
-+------------+---------------------------------------------------+
-| vb         | Definite (veik beyging),                          |
-|            | only occurs with lhþt                             |
-+------------+---------------------------------------------------+
-| op         | Impersonal verb (ópersónuleg sögn)                |
-+------------+---------------------------------------------------+
-| subj       | Verb that requires the subject's case to be       |
-|            | non-nominative (sögn sem krefst frumlags í        |
-|            | aukafalli)                                        |
-+------------+---------------------------------------------------+
++------------+---------------------------------------------------------+
+| gm         | Active voice (germynd)                                  |
++------------+---------------------------------------------------------+
+| mm         | Middle voice (miðmynd)                                  |
++------------+---------------------------------------------------------+
+| nh         | Infinitive (nafnháttur)                                 |
++------------+---------------------------------------------------------+
+| fh         | Indicative (framsöguháttur)                             |
++------------+---------------------------------------------------------+
+| bh         | Imperative (boðháttur)                                  |
++------------+---------------------------------------------------------+
+| vh         | Subjunctive (viðtengingarháttur)                        |
++------------+---------------------------------------------------------+
+| nt         | Present tense (nútíð)                                   |
++------------+---------------------------------------------------------+
+| þt         | Past tense (þátíð)                                      |
++------------+---------------------------------------------------------+
+| lh         | | Present participle (lýsingarháttur nútíðar)           |
+|            | | (note that the ``nt`` variant will also be present)   |
++------------+---------------------------------------------------------+
+| lhþt       | | Past participle (lýsingarþáttur þátíðar)              |
+|            | | (note that the ``þt`` variant will NOT be present)    |
++------------+---------------------------------------------------------+
+| sagnb      | Supine (sagnbót)                                        |
++------------+---------------------------------------------------------+
+| sb         | Indefinite (sterk beyging),                             |
+|            | only occurs with ``lhþt``                               |
++------------+---------------------------------------------------------+
+| vb         | Definite (veik beyging),                                |
+|            | only occurs with ``lhþt``                               |
++------------+---------------------------------------------------------+
+| op         | Impersonal verb (ópersónuleg sögn)                      |
++------------+---------------------------------------------------------+
+| subj       | Verb that requires the subject's case to be             |
+|            | non-nominative (sögn sem krefst frumlags í              |
+|            | aukafalli)                                              |
++------------+---------------------------------------------------------+
 
 Noun qualifiers
 ---------------
