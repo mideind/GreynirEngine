@@ -22,20 +22,21 @@
 
 """
 
+import pytest
 from collections import defaultdict
 
-r = None
 
-
-def test_init():
-    """ Test that importing and initializing the reynir module works """
+@pytest.fixture(scope="module")
+def r():
+    """ Provide a module-scoped Reynir instance as a test fixture """
     from reynir import Reynir
-
-    global r
     r = Reynir()
+    yield r
+    # Do teardown here
+    r.__class__.cleanup()
 
 
-def test_parse(verbose=False):
+def test_parse(r, verbose=False):
 
     sentences = [
         # 0
@@ -379,7 +380,7 @@ def test_parse(verbose=False):
     assert num_pp(results[12]) == 0
 
 
-def test_consistency(verbose=False):
+def test_consistency(r, verbose=False):
     """ Check that multiple parses of the same sentences yield exactly
         the same preposition counts, and also identical scores. This is
         inter alia to guard agains nondeterminism that may arise from
@@ -450,7 +451,7 @@ def test_consistency(verbose=False):
         assert ITERATIONS * 4 // 5 in sc_set
 
 
-def test_long_parse(verbose=False):
+def test_long_parse(r, verbose=False):
     if verbose:
         print("Long parse test")
     txt = """
@@ -489,7 +490,7 @@ def test_long_parse(verbose=False):
         print("Parsing time        : {0:.2f}".format(job.parse_time))
 
 
-def test_properties():
+def test_properties(r):
     s = r.parse("Þetta er prófun.")["sentences"][0]
     _ = s.score
     _ = s.tokens
@@ -545,12 +546,12 @@ def check_terminals(t):
     check_terminal(t[6], text=".", lemma=".", category="", variants=[])
 
 
-def test_terminals():
+def test_terminals(r):
     s = r.parse("Jón greiddi bænum 10 milljónir króna í skaðabætur.")["sentences"][0]
     check_terminals(s.terminals)
 
 
-def test_amounts():
+def test_amounts(r):
     s = r.parse_single("Tjónið nam 10 milljörðum króna.")
     t = s.terminals
     assert len(t) == 4
@@ -794,7 +795,7 @@ def test_amounts():
     assert s.tokens[2].val[1] == "IDR"
 
 
-def test_year_range():
+def test_year_range(r):
     s = r.parse_single("Jón var Íslandsmeistari árin 1944-50.")
     t = s.terminals
     assert len(t) == 8
@@ -824,7 +825,7 @@ def test_year_range():
     check_terminal(t[7], text=".", lemma=".", category="", variants=[])
 
 
-def test_single():
+def test_single(r):
     s = r.parse_single("Jón greiddi bænum 10 milljónir króna í skaðabætur.")
     check_terminals(s.terminals)
     try:
@@ -837,7 +838,7 @@ def test_single():
     assert s.tree is None
 
 
-def test_complex(verbose=False):
+def test_complex(r, verbose=False):
     if verbose:
         print("Complex, sentence 1", end="")
     d = r.parse(
@@ -902,7 +903,7 @@ def test_complex(verbose=False):
         print(", time: {:.2f} seconds".format(d["parse_time"]))
 
 
-def test_measurements():
+def test_measurements(r):
     s = r.parse_single(
         "Ég vildi leggja rúm 220 tonn en hann vildi kaupa "
         "tæplega 3,8 km af efninu í yfir 32°F frosti."
@@ -921,7 +922,7 @@ def test_measurements():
     )
 
 
-def test_abbreviations():
+def test_abbreviations(r):
     s = r.parse_single(
         "Ég borða köku BHM á laugard. í okt. nk. og mun þykja hún vond."
     )
@@ -965,7 +966,7 @@ def test_abbreviations():
     )
 
 
-def test_attachment(verbose=False):
+def test_attachment(r, verbose=False):
     """ Test attachment of prepositions to nouns and verbs """
     if verbose:
         print("Testing attachment of prepositions")
@@ -988,7 +989,7 @@ def test_attachment(verbose=False):
         )  # um þetta .
 
 
-def test_nominative():
+def test_nominative(r):
     """ Test conversion of noun phrases to nominative/indefinite/canonical forms """
 
     s = r.parse_single("Frábærum bílskúrum þykir þetta leiðinlegt.")
@@ -1172,7 +1173,7 @@ def test_nominative():
     ) == ["Jólasveinn", "hreindýr", "VAGN", "fjöldi", "gjöf", "barn"]
 
 
-def test_ifd_tag():
+def test_ifd_tag(r):
     """ Test IFD tagging """
     s = r.parse_single(
         "Að minnsta kosti stal Guðbjörn J. Óskarsson 200 krónum þann 19. júní 2003 "
@@ -1213,7 +1214,7 @@ def test_ifd_tag():
     ]
 
 
-def test_tree_flat(verbose=False):
+def test_tree_flat(r, verbose=False):
 
     AMOUNTS = {
         "þf": [
@@ -1299,7 +1300,7 @@ def test_tree_flat(verbose=False):
                 assert np_obj == expected
 
 
-def test_noun_lemmas():
+def test_noun_lemmas(r):
     """ Test abbreviation lemmas ('Schengen' is an abbreviation), proper name
         lemmas ('Ísland'), and lemmas of literal terminals in the grammar
         ('munur:kk' in this case) """
@@ -1320,7 +1321,7 @@ def test_noun_lemmas():
     assert leaves[2].fl == "göt"  # In this case it's not alm
 
 
-def test_composite_words():
+def test_composite_words(r):
     s = r.parse_single("Hann var mennta- og menningarmálaráðherra.")
     assert (
         s.tree.flat_with_all_variants ==
@@ -1401,7 +1402,7 @@ def test_compressed_bin():
     )
 
 
-def test_foreign_names():
+def test_foreign_names(r):
     s = r.parse_single("Aristóteles uppgötvaði þyngdarlögmálið.")
     assert (
         s.tree.flat_with_all_variants ==
@@ -1425,7 +1426,7 @@ def test_foreign_names():
     )
 
 
-def test_vocabulary():
+def test_vocabulary(r):
     """ Test words that should be in the vocabulary, coming from
         ord.auka.csv or ord.add.csv """
     s = r.parse_single("""
@@ -1481,7 +1482,7 @@ def test_vocabulary():
     )
 
 
-def test_adjective_predicates():
+def test_adjective_predicates(r):
     """ Test adjectives with an associated predicate """
 
     # Accusative case (þolfall)
@@ -1511,7 +1512,7 @@ def test_adjective_predicates():
     assert "NP-PRD lo_sb_nf_sef_et_kk NP-ADP no_ft_ef_hk fn_ft_ef_hk /NP-ADP /NP-PRD" in s.tree.flat
 
 
-def test_subj_op():
+def test_subj_op(r):
     """ Test impersonal verbs """
     # langa
     s = r.parse_single("hestinn langaði í brauð")
@@ -1569,20 +1570,20 @@ def test_subj_op():
     assert s.tree is None
 
 
-def test_names():
+def test_names(r):
     s = r.parse_single("Sýningarnar voru í Gamla bíói á þriðjudagskvöldum.")
     assert s.tree is not None
     assert s.tree.persons == []
     assert s.tree.nouns == ["sýning", "bíó", "þriðjudagskvöld"]
 
 
-def test_prepositions():
+def test_prepositions(r):
     s = r.parse_single("Ég fór niðrá bryggjuna.")
     assert s.tree is not None
     assert s.tree.match("S0 >> { IP > { VP > { PP > { P > { fs } } } } } ")
 
 
-def test_personally():
+def test_personally(r):
     s = r.parse_single("Mér persónulega þótti þetta ekki flott.")
     assert s.tree is not None
     assert (
@@ -1606,7 +1607,7 @@ def test_personally():
     )
 
 
-def test_adjectives():
+def test_adjectives(r):
     sents = [
         "Páll er skemmtilegur.",
         "Páll varð skemmtilegur.",
@@ -1643,7 +1644,7 @@ def test_adjectives():
         assert s.tree.S_MAIN.IP.VP.NP_PRD.lemmas == ["skemmtilegur"]
 
 
-def test_all_mine():
+def test_all_mine(r):
     s = r.parse_single("Ég setti allt mitt í hlutabréfin.")
     assert s.tree is not None
     assert s.tree.nouns == ["hlutabréf"]
@@ -1670,7 +1671,7 @@ def test_all_mine():
     assert s.tree.S.IP.VP.VP.NP_OBJ.lemmas == ["allur", "sinn"]
 
 
-def test_company():
+def test_company(r):
     s = r.parse_single("Hann réðst inn á skrifstofu Samherja hf. og rændi gögnum.")
     assert s.tree is not None
     assert (
@@ -1714,40 +1715,37 @@ def test_kludgy_ordinals():
     assert "PP P fs_þgf /P NP lo_þgf_et_kvk no_et_þgf_kvk /NP /PP" in s.tree.flat
 
 
-def test_finish():
-    r.__class__.cleanup()
-
-
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
-    test_init()
+    from reynir import Reynir
+    r = Reynir()
     test_compressed_bin()
-    test_parse(verbose=True)
-    test_properties()
-    test_long_parse(verbose=True)
-    test_consistency(verbose=True)
-    test_terminals()
-    test_single()
-    test_year_range()
-    test_amounts()
-    test_complex(verbose=True)
-    test_attachment(verbose=True)
-    test_measurements()
-    test_abbreviations()
-    test_nominative()
-    test_ifd_tag()
-    test_tree_flat(verbose=True)
-    test_noun_lemmas()
-    test_composite_words()
-    test_foreign_names()
-    test_vocabulary()
-    test_adjective_predicates()
-    test_subj_op()
-    test_names()
-    test_prepositions()
-    test_personally()
-    test_company()
-    test_adjectives()
-    test_all_mine()
+    test_parse(r, verbose=True)
+    test_properties(r)
+    test_long_parse(r, verbose=True)
+    test_consistency(r, verbose=True)
+    test_terminals(r)
+    test_single(r)
+    test_year_range(r)
+    test_amounts(r)
+    test_complex(r, verbose=True)
+    test_attachment(r, verbose=True)
+    test_measurements(r)
+    test_abbreviations(r)
+    test_nominative(r)
+    test_ifd_tag(r)
+    test_tree_flat(r, verbose=True)
+    test_noun_lemmas(r)
+    test_composite_words(r)
+    test_foreign_names(r)
+    test_vocabulary(r)
+    test_adjective_predicates(r)
+    test_subj_op(r)
+    test_names(r)
+    test_prepositions(r)
+    test_personally(r)
+    test_company(r)
+    test_adjectives(r)
+    test_all_mine(r)
     test_kludgy_ordinals()
-    test_finish()
+    r.__class__.cleanup()

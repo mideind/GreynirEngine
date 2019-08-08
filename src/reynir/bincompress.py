@@ -817,9 +817,14 @@ class BIN_Compressed:
             self._b = mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ)
         # Check that the file version matches what we expect
         assert self._b[0:16] == BIN_Compressor.VERSION
-        mappings_offset, forms_offset, stems_offset, variants_offset, meanings_offset, alphabet_offset = struct.unpack(
-            "<IIIIII", self._b[16:40]
-        )
+        (
+            mappings_offset,
+            forms_offset,
+            stems_offset,
+            variants_offset,
+            meanings_offset,
+            alphabet_offset,
+        ) = struct.unpack("<IIIIII", self._b[16:40])
         self._forms_offset = forms_offset
         self._mappings = self._b[mappings_offset:]
         self._stems = self._b[stems_offset:]
@@ -840,7 +845,8 @@ class BIN_Compressed:
         self._mmap_buffer = ffi.from_buffer(self._b)
 
     def _UINT(self, offset):
-        """ Return the 32-bit UINT at the indicated offset in the memory-mapped buffer """
+        """ Return the 32-bit UINT at the indicated offset
+            in the memory-mapped buffer """
         return self._partial_UINT(offset)[0]
 
     def close(self):
