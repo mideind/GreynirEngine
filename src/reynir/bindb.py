@@ -218,19 +218,19 @@ class BIN_Db:
         return list(map(BIN_Meaning._make, self._compressed_bin.nominative(w, **options)))
 
     def lookup_accusative(self, w, **options):
-        """ Return meaning tuples for all word forms in nominative
+        """ Return meaning tuples for all word forms in accusative
             case for all { kk, kvk, hk, lo } category stems of the given word """
         return list(map(BIN_Meaning._make, self._compressed_bin.accusative(w, **options)))
 
     def lookup_dative(self, w, **options):
-        """ Return meaning tuples for all word forms in nominative
+        """ Return meaning tuples for all word forms in dative
             case for all { kk, kvk, hk, lo } category stems of the given word """
         return list(map(BIN_Meaning._make, self._compressed_bin.dative(w, **options)))
 
-    def lookup_possessive(self, w, **options):
-        """ Return meaning tuples for all word forms in nominative
+    def lookup_genitive(self, w, **options):
+        """ Return meaning tuples for all word forms in genitive
             case for all { kk, kvk, hk, lo } category stems of the given word """
-        return list(map(BIN_Meaning._make, self._compressed_bin.possessive(w, **options)))
+        return list(map(BIN_Meaning._make, self._compressed_bin.genitive(w, **options)))
 
     def lookup_word(self, w, at_sentence_start=False, auto_uppercase=False):
         """ Given a word form, look up all its possible meanings """

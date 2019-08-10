@@ -34,8 +34,6 @@ from .binparser import canonicalize_token
 from .bintokenizer import TOK
 
 
-
-
 class IFD_Tagset:
 
     """ Utility class to generate POS tags compatible with
@@ -49,8 +47,8 @@ class IFD_Tagset:
         "ÞF2": "þf",  # Þolfall / accusative
         "ÞGF": "þgf",  # Þágufall / dative
         "ÞGF2": "þgf",  # Þágufall / dative
-        "EF": "ef",  # Eignarfall / possessive
-        "EF2": "ef",  # Eignarfall / possessive
+        "EF": "ef",  # Eignarfall / genitive
+        "EF2": "ef",  # Eignarfall / genitive
         "KK": "kk",  # Karlkyn / masculine
         "KVK": "kvk",  # Kvenkyn / feminine
         "HK": "hk",  # Hvorugkyn / neutral

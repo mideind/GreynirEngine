@@ -31,7 +31,7 @@ head (top) node, as well as about its children and contained subtrees.
         Returns a ``str`` with the :ref:`terminal <terminals>` corresponding to this
         subtree. The terminal contains a category followed by eventual
         :ref:`variants <variants>`, separated by underscores, e.g. ``no_ef_ft_hvk`` for
-        a noun, possessive case, plural, neutral gender.
+        a noun, genitive case, plural, neutral gender.
 
     .. py:attribute:: variants
 
@@ -40,7 +40,7 @@ head (top) node, as well as about its children and contained subtrees.
         subtree.
 
         For example, if the terminal is ``no_ft_ef_hk`` this property is
-        ``[ 'ft', 'ef', 'hk' ]`` for plural, possessive case,
+        ``[ 'ft', 'ef', 'hk' ]`` for plural, genitive case,
         neutral gender.
 
         This property only returns the variants that occur in the terminal
@@ -443,10 +443,10 @@ head (top) node, as well as about its children and contained subtrees.
 
             Góðglöðum körlunum langar í hesti .
 
-    .. py:attribute:: possessive
+    .. py:attribute:: genitive
 
-        Returns a ``str`` containing the *possessive* form, if it exists, of the word
-        corresponding to the root of this subtree only. If no possessive form exists,
+        Returns a ``str`` containing the *genitive* form, if it exists, of the word
+        corresponding to the root of this subtree only. If no genitive form exists,
         the word or token text is returned unchanged. For nonterminal
         roots, an empty string is returned.
 
@@ -455,7 +455,7 @@ head (top) node, as well as about its children and contained subtrees.
             from reynir import Reynir
             r = Reynir()
             s = r.parse_single("Góðglaða karlana langar í hest.")
-            print(" ".join(n.possessive
+            print(" ".join(n.genitive
                 for n in s.tree.descendants if n.is_terminal))
 
         outputs::
@@ -563,11 +563,11 @@ head (top) node, as well as about its children and contained subtrees.
             Ótrúlega frábærum bílstjórum þriggja góðglöðu alþingismannanna sem fóru út
             þremur góðglöðu alþingismönnunum sem fóru út
 
-    .. py:attribute:: possessive_np
+    .. py:attribute:: genitive_np
 
         Returns a ``str`` containing the text within the subtree, except that if the
         subtree root is a noun phrase (``NP``) nonterminal, that phrase is converted to
-        *possessive* form (*eignarfall*).
+        *genitive* form (*eignarfall*).
 
         Example::
 
@@ -576,8 +576,8 @@ head (top) node, as well as about its children and contained subtrees.
             s = r.parse_single("Ótrúlega frábærum bílstjórum "
                 "þriggja góðglöðu alþingismannanna "
                 "sem fóru út þykir þetta leiðinlegt.")
-            print(s.tree.S_MAIN.IP.NP_SUBJ.possessive_np)
-            print(s.tree.S_MAIN.IP.NP_SUBJ.NP_POSS.possessive_np)
+            print(s.tree.S_MAIN.IP.NP_SUBJ.genitive_np)
+            print(s.tree.S_MAIN.IP.NP_SUBJ.NP_POSS.genitive_np)
 
         outputs::
 
@@ -715,7 +715,7 @@ head (top) node, as well as about its children and contained subtrees.
             from reynir import Reynir
             r = Reynir()
             s = r.parse_single("Kristín málaði hús Steingríms")
-            # Show the first possessive noun phrase ('Steingríms')
+            # Show the first genitive noun phrase ('Steingríms')
             print(s.tree.first_match("NP-POSS").nominative_np)
 
         outputs::

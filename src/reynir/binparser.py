@@ -112,7 +112,7 @@ class BIN_Token(Token):
         "nf": "NF",  # Nefnifall / nominative
         "þf": "ÞF",  # Þolfall / accusative
         "þgf": "ÞGF",  # Þágufall / dative
-        "ef": "EF",  # Eignarfall / possessive
+        "ef": "EF",  # Eignarfall / genitive
         "kk": "KK",  # Karlkyn / masculine
         "kvk": "KVK",  # Kvenkyn / feminine
         "hk": "HK",  # Hvorugkyn / neutral

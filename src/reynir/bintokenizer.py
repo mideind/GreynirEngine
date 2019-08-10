@@ -51,7 +51,7 @@ NOT_NAME_AT_SENTENCE_START = {
     "Ljótur", "Ljót", "Ljóti", "Ljóts"
 }
 
-# Set of all cases (nominative, accusative, dative, possessive)
+# Set of all cases (nominative, accusative, dative, genitive)
 ALL_CASES = frozenset(["nf", "þf", "þgf", "ef"])
 
 # Named tuple for person names, including case and gender
@@ -427,9 +427,9 @@ def parse_phrases_1(db, token_ctor, token_stream):
 
                 if multiplier_next is not None:
                     # Retain the case of the last multiplier, except
-                    # if it is possessive (eignarfall) and the previous
+                    # if it is genitive (eignarfall) and the previous
                     # token had a case ('hundruðum milljarða' is dative,
-                    # not possessive)
+                    # not genitive)
                     next_case = all_cases(next_token)
                     next_gender = all_genders(next_token)
                     if "ef" in next_case:

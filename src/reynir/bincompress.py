@@ -1153,8 +1153,8 @@ class BIN_Compressed:
             Note that the word form is case-sensitive. """
         return self.lookup_case(word, "ÞGF", **options)
 
-    def possessive(self, word, **options):
-        """ Returns a set of all possessive forms of the stems of the given word form,
+    def genitive(self, word, **options):
+        """ Returns a set of all genitive forms of the stems of the given word form,
             subject to the given constraints on the beyging field.
             Note that the word form is case-sensitive. """
         return self.lookup_case(word, "EF", **options)

@@ -666,7 +666,7 @@ class Reducer:
                         sc[t] -= 4
                 elif tfirst == "tala":
                     if t.has_variant("ef"):
-                        # Try to avoid interpreting plain numbers as possessives
+                        # Try to avoid interpreting plain numbers as possessive phrases
                         sc[t] -= 4
                 elif tfirst == "person":
                     if t.has_variant("nf"):

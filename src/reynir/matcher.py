@@ -1016,7 +1016,7 @@ class SimpleTree:
             # No special case for this atom: return the terminal
             result.append(terminal)
         # Fix the last terminal if it denotes a currency abbreviation
-        # that should be in the possessive case
+        # that should be in the genitive case
         if tokentype == "AMOUNT":
             # Note that the terminal list is reversed, so a[0] is the last terminal
             if a[0] in CURRENCY_GENDERS:
@@ -1024,7 +1024,7 @@ class SimpleTree:
                 if result[1].startswith("no_"):
                     # Following a noun (we're assuming that it's a multiplier
                     # such as 'þúsund', 'milljónir', 'milljarðar'):
-                    # assemble a terminal identifier with plural, possessive
+                    # assemble a terminal identifier with plural, genitive
                     # and the correct gender
                     result[0] = "no_" + "_".join(
                         sorted(["ft", "ef", CURRENCY_GENDERS[a[0]]])
@@ -1197,7 +1197,7 @@ class SimpleTree:
             lookup_functions = {
                 "accusative" : db.lookup_accusative,
                 "dative" : db.lookup_dative,
-                "possessive" : db.lookup_possessive
+                "genitive" : db.lookup_genitive
             }
             lookup_func = lookup_functions.get(form, db.lookup_nominative)
 
@@ -1414,9 +1414,9 @@ class SimpleTree:
         return self._alternative_form("dative")
 
     @property
-    def possessive(self):
-        """ Return the possessive form of this node only, if any """
-        return self._alternative_form("possessive")
+    def genitive(self):
+        """ Return the genitive form of this node only, if any """
+        return self._alternative_form("genitive")
 
     @cached_property
     def indefinite(self):
@@ -1550,10 +1550,10 @@ class SimpleTree:
         return self._case_np(SimpleTree.dative)
 
     @property
-    def possessive_np(self):
-        """ Return the possessive form of the noun phrase (or noun/adjective terminal)
+    def genitive_np(self):
+        """ Return the genitive form of the noun phrase (or noun/adjective terminal)
             contained within this subtree """
-        return self._case_np(SimpleTree.possessive)
+        return self._case_np(SimpleTree.genitive)
 
     @cached_property
     def indefinite_np(self):
