@@ -676,7 +676,7 @@ class Reducer:
                     if not token.t2:
                         # If there are no BÍN meanings, we had no choice but to use sérnafn,
                         # so alleviate some of the penalty given by the grammar
-                        sc[t] += 4
+                        sc[t] += 12
                     else:
                         # BÍN meanings are available: discourage this
                         # print(f"Discouraging sérnafn {txt}, BÍN meanings are {tokens[i].t2}")
