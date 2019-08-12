@@ -35,16 +35,10 @@
 from functools import lru_cache
 from collections import namedtuple
 
-if __package__:
-    from .settings import AdjectiveTemplate, StemPreferences, StaticPhrases
-    from .cache import LFU_Cache
-    from .dawgdictionary import Wordbase
-    from .bincompress import BIN_Compressed
-else:
-    from settings import AdjectiveTemplate, StemPreferences, StaticPhrases
-    from cache import LFU_Cache
-    from dawgdictionary import Wordbase
-    from bincompress import BIN_Compressed
+from .settings import AdjectiveTemplate, StemPreferences, StaticPhrases
+from .cache import LFU_Cache
+from .dawgdictionary import Wordbase
+from .bincompress import BIN_Compressed
 
 
 # Size of LRU/LFU caches for word lookups

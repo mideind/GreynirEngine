@@ -5647,6 +5647,12 @@ AfstæðurTími →
     | FyrrSíðarSeinna? TímaÁkvæðisliður_þf_et/kyn 
         MorgunnKvöld/kyn                            # sama kvöld, fyrr sama morgun
     | FyrrSíðarSeinna? AfstæðurTímiFs
+    # Það sem af er kvöldi/ári/degi
+    | 'það_sem_af_er:ao' TímaNafnorð_þgf_et
+    # Það sem af var/væri kvöldi/ári/degi
+    | 'það:pfn'_hk_nf_et "sem:st" 'af:fs'_þgf 'vera:so'_0_gm_et_p3 TímaNafnorð_þgf_et
+    # Það sem eftir lifir dags/kvölds/nætur
+    | 'það:pfn'_hk_nf_et "sem:st" "eftir:ao" 'lifa:so'_0_gm_et_p3 TímaNafnorð_ef_et
 
 ÁTímanum → 
     'á:fs'_þgf RaðKlukkuTala_þgf_et_kk 'tími:kk'_þgf_et_gr  # Á sjötta tímanum
@@ -6029,6 +6035,13 @@ TímaMagnNafnliðurMinni/fall/tala/kyn →
     TímaAtviksEinkunn? TímaÁkvæðisliður/fall/tala/kyn? 
         Tímatala/fall/tala/kyn? TímaNafnorðMinni/fall/tala/kyn
 
+TímaNafnorð/fall/tala →
+    TímaNafnorð/fall/tala/kyn
+
+TímaNafnorð/fall/tala/kyn →
+    TímaNafnorðMinni/fall/tala/kyn
+    | TímaNafnorðStærri/fall/tala/kyn
+
 # Tímaeiningar sem eru styttri en dagur
 TímaNafnorðMinni/fall/tala/kyn → TímaNafnorðMinni/kyn/fall/tala
 
@@ -6047,11 +6060,13 @@ TímaNafnorðMinni_hk/fall/tala →
     'sekúndubrot:hk'/fall/tala
     | 'korter:hk'/fall/tala
     | 'kortér:hk'/fall/tala
-    
+    | 'kvöld:hk'/fall/tala
+
 TímaNafnorðMinni_kk/fall/tala →
     'stundarfjórðungur:kk'/fall/tala
     | 'hálftími:kk'/fall/tala
     | 'klukkutími:kk'/fall/tala
+    | 'morgunn:kk'/fall/tala
 
 # Tímaeiningar sem eru dagur eða lengri
 TímaNafnorðStærri/fall/tala/kyn → TímaNafnorðStærri/kyn/fall/tala
