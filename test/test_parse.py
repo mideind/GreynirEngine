@@ -199,7 +199,7 @@ def test_parse(r, verbose=False):
     assert results[23].tree.nouns == ["vetur"]
     assert results[24].tree.nouns == ["loforð", "áhersla"]
     assert results[32].tree.nouns == ["mynd", "þjóðskjalasafn", "Bandaríkin",
-        "skyn", "flugmaður", "saga", "Earhart", "flugslys", "Kyrrahaf"]
+        "skyn", "flugmaður", "saga", "flugslys", "Kyrrahaf"]
 
     # Test that the parser finds the correct verbs
     assert results[0].tree.verbs == ["vera", "vera", "gera"]
