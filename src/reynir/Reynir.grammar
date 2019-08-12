@@ -4290,7 +4290,7 @@ BeygingarliðurÁnF/tala/pers/kyn →
 $score(+8) BeygingarliðurÁnF/tala/pers/kyn
 
 # Nota frekar SetningÁnF heldur en HreinYfirsetning, ef völ er á hvoru tveggja
-$score(-8) TengiYfirsetning
+$score(-96) TengiYfirsetning
 
 # ...sem hætta gæti stafað af og eru kílómetri í þvermál
 OgTengisetning/tala/pers/kyn →
