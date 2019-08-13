@@ -715,7 +715,7 @@ head (top) node, as well as about its children and contained subtrees.
             from reynir import Reynir
             r = Reynir()
             s = r.parse_single("Kristín málaði hús Steingríms")
-            # Show the first genitive noun phrase ('Steingríms')
+            # Show the first possessive noun phrase ('Steingríms')
             print(s.tree.first_match("NP-POSS").nominative_np)
 
         outputs::
