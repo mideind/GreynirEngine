@@ -168,7 +168,7 @@ variant indicates which case the preposition controls.
 +------------+---------------------------------------------------+
 | þgf        | Dative (þágufall)                                 |
 +------------+---------------------------------------------------+
-| ef         | Possessive/genitive (eignarfall)                  |
+| ef         | Genitive (eignarfall)                             |
 +------------+---------------------------------------------------+
 
 Arguments
@@ -232,7 +232,7 @@ Occurs with adjectives (``lo`` terminal category) only.
 +------------+---------------------------------------------------+
 | sþgf       | Dative (líkur *Páli*)                             |
 +------------+---------------------------------------------------+
-| sef        | Possessive/genitive (fullur *orku*)               |
+| sef        | Genitive (fullur *orku*)                          |
 +------------+---------------------------------------------------+
 
 Verb forms

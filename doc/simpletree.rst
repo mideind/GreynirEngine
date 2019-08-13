@@ -676,14 +676,14 @@ head (top) node, as well as about its children and contained subtrees.
 
     .. py:attribute:: entities
 
-        Returns a ``list`` of the lemmas (in the nominative case, as far as that can
+        Returns a ``list`` of the lemmas (in nominative case, as far as that can
         be established and is applicable) of all *entity names*
         within this subtree, i.e. the root and all its descendants, recursively.
         The list is in left-traversal order.
 
     .. py:attribute:: proper_names
 
-        Returns a ``list`` of the lemmas (the nominative case, as far as that can
+        Returns a ``list`` of the lemmas (in nominative case, as far as that can
         be established and is applicable) of all *proper names* *(sérnöfn)*
         within this subtree, i.e. the root and all its descendants, recursively.
         The list is in left-traversal order.
