@@ -44,7 +44,7 @@ from tokenizer import (
 __author__ = "Miðeind ehf."
 __copyright__ = "(C) 2019 Miðeind ehf."
 # Remember to update the version in doc/conf.py as well
-__version__ = "1.7.1"
+__version__ = "1.8.0"
 
 Abbreviations.initialize()
 Settings.read("config/ReynirPackage.conf")
