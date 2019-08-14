@@ -2034,6 +2034,8 @@ So_subj_op_þf/aukafall → so_1_þf_subj_op/aukafall
 So_subj_op_þgf/aukafall → so_1_þgf_subj_op/aukafall
 So_subj_op_ef/aukafall → so_1_ef_subj_op/aukafall
 
+$score(+4) So_subj_op/fall/aukafall
+
 # Sagnbót með einu viðfangi
 
 Sögn_1_sagnb →
@@ -2289,13 +2291,16 @@ SögnMeðF_1/tala/pers/kyn →
     | So_1_þf_nh/tala/pers OgSögn_1_þf_nh/tala/pers* NlFrumlag_nf/tala/pers/kyn SagnarBotn
 
     # (Í dag) barst lögreglunni ábending
-    | so_mm_op/tala NlÓbeintAndlag_þgf NlFrumlag_nf/tala
+    | so_mm_op/tala NlÓbeintAndlag_þgf NlFrumlag_nf/tala/pers/kyn
 
     # (Í dag) finnst þeim vera slagsíða (í umfjölluninni) / þykir okkur ósanngjarnt (að haldið sé áfram)
-    | HjSögnFinnst NlFrumlag_þgf SögnFinnstBotn
+    | HjSögnFinnst NlFrumlag_þgf/tala/pers/kyn SögnFinnstBotn
 
     # (Áður) hafði KR látið Jón og Gunnar fara / sagt niðurstöðuna vera ranga
-    | HjSögn/tala/pers NlFrumlag_nf/tala/pers So_1_þf_nh_sagnb SagnarBotn
+    | HjSögn/tala/pers NlFrumlag_nf/tala/pers/kyn So_1_þf_nh_sagnb SagnarBotn
+
+    # (Í dag) vantar mig vakran hest
+    | So_subj_op/fall/aukafall NlFrumlag/aukafall/tala/pers/kyn NlBeintAndlag/fall
 
 SögnMeðF_1/tala/pers/kyn →
     # (Í dag) eru og verða þetta tvítugir strákar [galvaskir] [að hella sig fulla]
