@@ -3683,6 +3683,16 @@ NlStak_p3_et_þf_hk → NlSérnafn
 NlStak_p3_et_þgf_hk → NlSérnafn
 NlStak_p3_et_ef_hk → NlSérnafn
 
+# Leyfa frístandandi sérnöfn í karlkyni og kvenkyni,
+# t.d. 'Cole var giftur Sigríði',
+# en þá með lægra skori en hvorugkynið
+
+NlStak_p3_et/fall/nkyn → NlSérnafn_nkyn
+
+NlSérnafn_nkyn → NlSérnafn
+
+$score(-8) NlSérnafn_nkyn
+
 # Sérnöfn þurfa einnig að geta staðið í fleirtölu,
 # sbr. 'Valsmenn skoruðu flest mörk', 'Dodgers áttu sigurinn vísan',
 # 'Essenar voru trúflokkur'
