@@ -5015,6 +5015,8 @@ FsMeðFallstjórn →
     | Allt 'frá:fs'_þgf Nl_þgf
     # 'um að lög um endurupptökunefnd standist ekki stjórnarskrá' - Ath: 'um það að' er höndlað í ÞaðTenging
     | 'um:fs'_þf "að:st" HreinYfirsetning ","?
+    # '(yfirlýsingu) þess efnis að (Jón væri asni)'
+    | 'þess_efnis:ao' "að:st" HreinYfirsetning ","?
     # 'um hvort/hvenær/af hverju/til hvers/hví Jón kaus Framsóknarflokkinn'
     | 'um:fs'_þf Spurnaraukasetning ","?
     # 'er bjartsýnn á að Alfreð komi aftur í liðið' - Ath: 'á það/því að' er höndlað í ÞaðTenging
@@ -5022,7 +5024,7 @@ FsMeðFallstjórn →
     | 'að:fs'_þgf 'nafn:hk'_þgf_et person_nf            # Ég ræddi við konu að nafni Aðalbjörg Jónsdóttir
     | 'að:fs'_þgf Nl_þgf/tala/kyn lo_sb/fall/tala/kyn   # 'að virðisaukaskatti meðtöldum'
     | 'af:fs'_þgf Nl_þgf NhEinfaldur                    # Af fyrstu fregnum að dæma (virðist veiðitímabilið byrja vel)
-    | 'með:fs'_þgf Eða 'án:fs'_ef Nl_ef            # 'með eða án greindarskerðingar'
+    | 'með:fs'_þgf Eða 'án:fs'_ef Nl_ef                 # 'með eða án greindarskerðingar'
     | FsÚtFrá
     | FsMiðaðVið
     | FsÍGegnUm
