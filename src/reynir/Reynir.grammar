@@ -464,7 +464,7 @@ BeygingarliðurÁnUmröðunar →
     | SetningAukafallForgangur
 
 BeygingarliðurÁnUmröðunar/tala/pers/kyn →
-    Frumlag/pers/tala/kyn BeygingarliðurMegin/tala/pers/kyn
+    Frumlag/pers/tala/kyn VillaKomma? BeygingarliðurMegin/tala/pers/kyn
 
 BeygingarliðurMegin/tala/pers/kyn →
     FrumlagsInnskot/tala/pers/kyn? AtviksliðurEinkunn*
@@ -5552,6 +5552,7 @@ AfstæðDagsetning →
 
     | TímaNafnliðurStærri_þgf/tala/kyn ÁðurSíðarSeinna             # (hér um bil) 10 vikum síðar
     | 'einhver:fn'_hk_þgf_et ÁðurSíðarSeinna                       # Einhverju síðar (var bíllinn færður)
+    | 'einn:fn'_kk_et_þf 'dagur:kk'_et_þf_gr                       # Einn daginn (var bíllinn færður)
     | 'fyrir:fs'_þgf TímaNafnliðurStærri_þgf/tala/kyn VillaSíðan?  # fyrir (rúmlega) 10 árum (síðan)
     | 'eftir:fs'_þf TímaNafnliðurStærri_þf/tala/kyn                # eftir tæplega átta daga
 
@@ -6274,6 +6275,7 @@ VillaKomma →
     ","
 
 $tag(error) VillaKomma
+$score(-999) VillaKomma
 
 VillaAð →
     "að:st"
