@@ -247,10 +247,10 @@ Samtenging →
     # Flóknari samtenging úr mörgum orðum
     "og:st" | "eða:st" | "ellegar:st" | "heldur:st" 
     | "enda:st" | "en:st" | "hvorki:st"
-    | 'það:pfn'_hk_nf_et 'vera:so'_0_gm_fh_et_p3        # það er
+    | 'það:pfn'_hk_nf_et 'vera:so'_0_gm_fh_et_p3 # það er
     | "þar:ao" 'á_meðal:ao'
     | 'auk_þess:ao' "sem:st" VillaAð?
-    | 'það_er_að_segja:ao' Tengimerki "að:st"?
+    | 'það_er_að_segja:ao' Tengimerki? "að:st"?
     | "svo:st" "sem:st"
     | "eins:ao" "og:st"
     | "því:st" "að:st"
@@ -680,19 +680,32 @@ $tag(begin_prep_scope) SagnHluti/tala/pers/kyn # Nýtt undirtré fyrir tengingu 
 
 FrumlagsInnskot/tala/pers/kyn →
     "," SetningÁnF/tala/pers/kyn ","
-    | "," Samtenging HreinYfirsetning ","   # Lögheimili á Íslandi, þegar kosning fer fram, er skilyrði
-    | InnskotsSamtenging HreinYfirsetning   # Lögheimili á Íslandi þegar kosning fer fram er skilyrði
-    | Tímaliður                             # Tjónið þann 3. mars nam 1,2 milljarði króna
+    # Lögheimili á Íslandi þegar kosning fer fram er skilyrði
+    | InnskotsSamtenging HreinYfirsetning
+    # Lögheimili á Íslandi, þegar kosning fer fram, er skilyrði
+    | "," InnskotsSamtenging HreinYfirsetning ","
+    # Tjónið þann 3. mars, þegar veðrið var verst, nam 1,2 milljarði króna
+    | Tímaliður FrumlagsInnskot/tala/pers/kyn?
 
 # Þröngt mengi samtenginga sem nota má án kommu í frumlagsinnskoti
 # (sé mengið of vítt eykst margræðni verulega)
 InnskotsSamtenging →
-    "þegar:st" VillaAð? 
-    | "meðan:st" VillaAð? 
-    | 'á_meðan:ao' VillaAð? 
-    | "þar:ao" "sem:st" VillaAð? 
-    | 'þrátt_fyrir:ao'
+    # (Lögheimili á Íslandi), þegar sótt er um atvinnuleyfi, (er skilyrði)
+    "þegar:st" VillaAð?
+    # (Lögheimili á Íslandi), meðan atvinna er stunduð, (er skilyrði)
+    | "meðan:st" VillaAð?
+    # (Lögheimili á Íslandi), á meðan atvinna er stunduð, (er skilyrði)
+    | 'á_meðan:ao' VillaAð?
+    # (Lögheimili á Íslandi), þar sem gott er að búa, (er skilyrði)
     | "þar:ao" "sem:st" VillaAð?
+    # (Lögheimili á Íslandi), þrátt fyrir að margur efist um það, (er skilyrði)
+    | 'þrátt_fyrir:ao' "að:st"
+    # (Lögheimili á Íslandi), þ.e.a.s. að búið sé á landinu, (er skilyrði)
+    | 'það_er_að_segja:ao' Tengimerki? "að:st"
+    # (Lögheimili á Íslandi), eins og það er skilgreint í lögum, (er skilyrði)
+    | "eins:ao" "og:st"
+    # (Lögheimili á Íslandi), þannig að maður hafi búið hér í 3 ár hið minnsta, (er skilyrði)
+    | "þannig:ao" "að:st"
 
 Frumlag/pers/tala/kyn →
     NlFrumlag_nf/tala/pers/kyn
@@ -4124,6 +4137,7 @@ $score(+14) KommuTitill/fall
 
 EfLiður → EfLiðurStakur EfLiðurFramhald? # Jóns, föður Bjarna sterka
 EfLiður/tala/kyn → Nl_ef/tala/kyn # margar þessara kvenna, suma þeirra sem lentu í slysinu
+EfLiður_ft → EfLiður_ft/kyn
 
 # Eignarfallsliður getur verið í eintölu eða fleirtölu, og í
 # öllum kynjum, óháð nafnliðnum sem hann stendur með
@@ -4251,8 +4265,10 @@ TengiorðEr → "er:stt"
 $score(-8) TengiorðEr # Sjaldgæft - ekki velja nema það þurfi
 
 Tengisetning/tala/pers/kyn →
-    TengiYfirsetning                    # (Maðurinn sem) konan kyssti í gær / konurnar kysstu í gær
-    | BeygingarliðurÁnF/tala/pers/kyn   # (Maðurinn sem) kyssti konuna í gær / (Maðurinn sem) var fallegur
+    # (Maðurinn sem) konan kyssti í gær / konurnar kysstu í gær
+    TengiYfirsetning
+    # (Maðurinn sem) kyssti konuna í gær [fyrstur allra]/ (Maðurinn sem) var fallegur
+    | BeygingarliðurÁnF/tala/pers/kyn LoTengtSögn_nf/tala/kyn?
     | BeygingarliðurStýftAndlag
 
 # Beygingarliður þar sem eitt andlag er stýft af sögn
@@ -4756,7 +4772,9 @@ Lo_sb/tala/fall/kyn →
     | LoAtviksliðir? lo_sb/sfall/tala/fall/kyn LoViðhengi/sfall
 
 Lo_sb_nf/tala/kyn →
-    LoAtviksliðir? lo_sb_nf/tala/kyn
+    # (Hann vann keppnina) fyrstur [karla/allra]
+    # (Jóna var) glöðust [allra gesta] (í partíinu)
+    LoAtviksliðir? lo_sb_nf/tala/kyn EfLiður_ft?
     # (Hann var forsvarsmaður starfssviða sem eiga að vera) aðskilin
     # 'aðskilja' er einungis til sem sagnorð í BÍN, ekki lýsingarorð
     | LoAtviksliðir? so_lhþt_sb_nf/tala/kyn
