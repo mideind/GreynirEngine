@@ -3556,7 +3556,13 @@ $score(+8) SamurTagl
 
 NlStak_p3/tala/fall/kyn →
     # 'Sú útskýring [núna], að Samfylkingin sé óalandi og óferjandi, (dugir ekki lengur)'
+    NlSá/tala/fall/kyn
+
+NlSá/tala/fall/kyn →
+    # (Jón gaf út yfirlýsingu) þess efnis að hann væri hættur í pólitík
     'sá:fn'/tala/fall/kyn Nl/fall/tala/kyn AtvFs? Útskýring
+
+$score(+16) NlSá/tala/fall/kyn
 
 NlStak_p3_et_nf_hk → NlHittOgÞetta_nf
 NlStak_p3_et_þf_hk → NlHittOgÞetta_þf
@@ -5033,8 +5039,6 @@ FsMeðFallstjórn →
     | Allt 'frá:fs'_þgf Nl_þgf
     # 'um að lög um endurupptökunefnd standist ekki stjórnarskrá' - Ath: 'um það að' er höndlað í ÞaðTenging
     | 'um:fs'_þf "að:st" HreinYfirsetning ","?
-    # '(yfirlýsingu) þess efnis að (Jón væri asni)'
-    | 'þess_efnis:ao' "að:st" HreinYfirsetning ","?
     # 'um hvort/hvenær/af hverju/til hvers/hví Jón kaus Framsóknarflokkinn'
     | 'um:fs'_þf Spurnaraukasetning ","?
     # 'er bjartsýnn á að Alfreð komi aftur í liðið' - Ath: 'á það/því að' er höndlað í ÞaðTenging
@@ -5051,6 +5055,7 @@ FsMeðFallstjórn →
     | FsTilÞgf
     | AtvFsSaman    # inn eftir firðinum, fram undan rúminu
     | FsUmLeið
+    | FsMilli
     # 'hvorki við stjórn spítalans né ráðherrann'
     # 'hvorki til mín né stjórnarinnar'
     | Hvorki fs/fall Nl/fall Né Nl/fall
@@ -5112,6 +5117,14 @@ FsUmLeið →
     'um:fs'_þf 'leið:kvk'_þf_et
 
 $score(+6) FsUmLeið
+
+# Gefa aukastig fyrir hið algenga form 'milli X og Y'
+# þar sem annars er tilhneiging til að tengja 'og Y' við
+# eignarfallslið ofar í trénu
+FsMilli →
+    'milli:fs'_ef Nl_ef "og:st" Nl_ef
+
+$score(+6) FsMilli
 
 # Sérregla fyrir "út frá" vegna þess að "út frá því að S" er
 # algengt mynstur sem annars þáttast sem Tíðarsetning
@@ -5538,6 +5551,7 @@ AfstæðDagsetning →
     | ÍByrjunLok TímaÁkvæðisliður_ef_et/kyn? TímaNafnorðStærri_ef_et/kyn # í byrjun/lok dags/viku
 
     | TímaNafnliðurStærri_þgf/tala/kyn ÁðurSíðarSeinna             # (hér um bil) 10 vikum síðar
+    | 'einhver:fn'_hk_þgf_et ÁðurSíðarSeinna                       # Einhverju síðar (var bíllinn færður)
     | 'fyrir:fs'_þgf TímaNafnliðurStærri_þgf/tala/kyn VillaSíðan?  # fyrir (rúmlega) 10 árum (síðan)
     | 'eftir:fs'_þf TímaNafnliðurStærri_þf/tala/kyn                # eftir tæplega átta daga
 
