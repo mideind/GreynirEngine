@@ -3556,13 +3556,13 @@ $score(+8) SamurTagl
 
 NlStak_p3/tala/fall/kyn →
     # 'Sú útskýring [núna], að Samfylkingin sé óalandi og óferjandi, (dugir ekki lengur)'
-    NlSá/tala/fall/kyn
+    NlSáAð/tala/fall/kyn
 
-NlSá/tala/fall/kyn →
+NlSáAð/tala/fall/kyn →
     # (Jón gaf út yfirlýsingu) þess efnis að hann væri hættur í pólitík
     'sá:fn'/tala/fall/kyn Nl/fall/tala/kyn AtvFs? Útskýring
 
-$score(+16) NlSá/tala/fall/kyn
+$score(+16) NlSáAð/tala/fall/kyn
 
 NlStak_p3_et_nf_hk → NlHittOgÞetta_nf
 NlStak_p3_et_þf_hk → NlHittOgÞetta_þf
