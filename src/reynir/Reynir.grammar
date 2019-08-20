@@ -343,6 +343,7 @@ Atvikssetning →
     | Orsakarsetning
     | Skilyrðissetning
     | Samanburðarsetning
+    | Hvortsetning
 
 $score(+15) Atvikssetning
 
@@ -389,6 +390,10 @@ Skilyrðissetning →
 
 Skilyrðissetning_vh →
     TengimerkiVh? SagnliðurVh
+
+Hvortsetning →
+    # Hvort [heldur] sem bíllinn er lítill eða stór (eyðir hann bensíni)
+    HvortSem BeygingarliðurÁnUmröðunar
 
 $score(+4) Samanburðarsetning
 $score(+4) Tíðarsetning
@@ -448,6 +453,10 @@ SpurnarAtviksorð →
 
 HversuHve →
     "hversu:ao" | "hve:ao"
+
+HvortSem →
+    # hvort [heldur] sem
+    "hvort:st" 'gjarna:ao'_mst? "sem:st"
 
 AfLiður/kyn → 'af:fs'_þgf Nl_þgf_ft/pers/kyn
 
@@ -1493,14 +1502,10 @@ OgSögn_nh/tala/kyn →
 
 # Þá segist hún styðja trúfrelsi, þrátt fyrir að vera andsnúin moskubyggingum
 
-KommaViðurkenningarNh → "," ViðurkenningarNhKomma
-
-ViðurkenningarNhKomma → 
-    Viðurkenningartenging FsAtv? EinSögn_nh/tala/kyn FsAtvKomma?
+KommaViðurkenningarNh → "," ViðurkenningarNh FsAtvKomma?
 
 ViðurkenningarNh →
     Viðurkenningartenging FsAtv? EinSögn_nh/tala/kyn 
-
 
 OgSögn_lhþt/tala/kyn →
     # Leyfa að 'og' sé sleppt, sbr. "Tveir menn voru stöðvaðir í morgun [sterklega] grunaðir um ölvun við akstur"
@@ -5395,11 +5400,9 @@ TalaOg →
 
 $score(+24) Sinnum
 
-# Hvort sem um er að ræða nýja byggingu, timburhús eða eldra mannvirki
+# Hvort [heldur] sem um er að ræða nýja byggingu, timburhús eða eldra mannvirki
 AlHvortSemUmErAðRæða →
     HvortSem FsUmAðRæða
-
-HvortSem → "hvort:st" "sem:st"
 
 FsUmAðRæða →
     'um:fs'_þf SögnUmAðRæða NlRunaEða_þf
