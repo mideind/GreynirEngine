@@ -1715,6 +1715,21 @@ def test_kludgy_ordinals():
     assert "PP P fs_þgf /P NP lo_þgf_et_kvk no_et_þgf_kvk /NP /PP" in s.tree.flat
 
 
+def test_adjective_dative(r):
+    s = r.parse_single(
+        "Páli er í grundvallaratriðum óheimilt að gegna öðrum störfum "
+        "meðan hann er þingmaður."
+    )
+    assert (
+        s.tree.flat == "S0 S-MAIN IP IP NP-SUBJ person_þgf_kk /NP-SUBJ VP "
+        "so_et_p3 /VP PP P fs_þgf /P NP no_ft_þgf_hk /NP /PP NP-PRD lo_nf_et_hk_sb "
+        "/NP-PRD /IP IP-INF TO nhm /TO VP VP so_1_þgf_nh /VP "
+        "NP-OBJ fn_ft_þgf_hk no_ft_þgf_hk /NP-OBJ /VP /IP-INF CP-ADV-TEMP "
+        "C st /C IP NP-SUBJ pfn_kk_et_nf /NP-SUBJ VP VP so_1_nf_et_p3 /VP "
+        "NP-PRD no_et_nf_kk /NP-PRD /VP /IP /CP-ADV-TEMP /IP /S-MAIN p /S0"
+    )
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Reynir
@@ -1748,4 +1763,5 @@ if __name__ == "__main__":
     test_adjectives(r)
     test_all_mine(r)
     test_kludgy_ordinals()
+    test_adjective_dative(r)
     r.__class__.cleanup()

@@ -1162,9 +1162,26 @@ SetningAukafall →
 # af leiðandi plús-skor í stað mínuss
 SetningAukafallForgangur →
     # Öllum er [í meginatriðum] frjálst/fyrir bestu að ákveða snarlega að flytja úr landi
-    NlFrumlag_þgf HjSögnLhÞt_et_p3 FsRunaEftirSögn? LhÞtÞgfEinkunn AðLiður?
+    # Forseta er [algerlega] óheimilt [í bráð og lengd] að hafa önnur launuð störf á hendi
+    BeygingarliðurLoÞgf AðLiður?
     # Mér sýndist [eftir íhugun] að málið hefði fengið eðlilega meðferð
     | NlFrumlag_þgf so_0_mm FsAtv? VillaKomma? Skýringarsetning
+
+BeygingarliðurLoÞgf →
+    NlFrumlag_þgf HjSögnLhÞt_et_p3 FsAtv? LoÞgfNh
+
+$score(+0) BeygingarliðurLoÞgf
+
+# Lýsingarorð sem geta staðið með aukafalli og nafnháttarsetningu
+LoÞgfNh →
+    LhÞtÞgfBotn # '(Páli er) fyrir bestu (að fara heim)'
+    # '(Mér er) ljóst (að Jón er farinn)'
+    # '(Mér er) frjálst (að fara héðan)'
+    | 'frjáls:lo'_nf_et_hk_sb
+    | 'heimill:lo'_nf_et_hk_sb
+    | 'óheimill:lo'_nf_et_hk_sb
+    | 'eðlislægur:lo'_nf_et_hk_sb
+    | 'ljós:lo'_nf_et_hk_sb
 
 # Öfug orðaröð: 'Eignarrétti fylgja [í auknum mæli] skyldur' (í stað 'Skyldur fylgja eignarrétti')
 # 'Þetta skrifar Bjarni á Facebook-síðu sinni og bendir [galvaskur] á frammistöðu stjórnarinnar'
@@ -1602,7 +1619,8 @@ $score(+10) SögnLhÞt_nf/tala/kyn
 
 LhÞtÞgfBotn → 'fyrir:fs'_þgf 'góður:lo'_esb_hk_þgf_et  # Það sem er börnum fyrir bestu
 
-LhÞtÞgfEinkunn → LhÞtÞgfBotn | LoTengtSögn_nf_et_hk
+LhÞtÞgfEinkunn →
+    LhÞtÞgfBotn | LoTengtSögn_nf_et_hk
 
 Sögn_lhþt_et_p3_hk →
     # Sértilfelli fyrir 'Það er okkur mikilvægt/fyrir bestu [í þessu máli] að fara/gera...'
@@ -2812,7 +2830,7 @@ NhFyllingEðaAtv →
 
 # Mér fannst skemmtilegt [ að Jón læsi bókina / að fara út í þessu veðri / í dag ]
 AðLiður →
-    NhFyllingAtv
+    NhFylling SagnInnskotAtv?
     | SagnInnskotAtv
     # Málinu væri stillt upp þannig að Sjálfstæðisflokkurinn bæri ábyrgð
     | Atviksliður? VillaKomma? Skýringarsetning
