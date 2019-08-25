@@ -484,7 +484,7 @@ class Node:
             pass
         elif n == 1:
             # Single family of children: yield from that list
-            prod, children = self._families[0]
+            _, children = self._families[0]
             yield from children
         else:
             # Multiple families of children,

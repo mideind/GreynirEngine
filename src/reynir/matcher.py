@@ -156,6 +156,7 @@ _DEFAULT_NT_MAP = {
     "BeygingarliðurÁnUmröðunar": "IP",
     "BeygingarliðurMeðUmröðun": "IP",
     "BeygingarliðurSögnFremst": "IP",
+    "BeygingarliðurLoÞgf": "IP",  # Mér er frjálst (að fara ferða minna)
     "SagnarBotn": "IP",
     "ÞóBotn": "IP",
     "SkýringarBotn": "IP",
@@ -195,6 +196,7 @@ _DEFAULT_NT_MAP = {
     "NlSagnfylling": "NP-PRD",
     "SögnErLoBotn": "NP-PRD",  # Show '(Hann er) góður / 18 ára' as a predicate argument
     "LoTengtSögn": "NP-PRD",
+    "LoÞgfNh": "NP-PRD",  # '(Mér er) frjálst (að reykja utandyra)'
     "Aldur": "NP-AGE",
     "TímaNafnliðurStærri": "NP",
     "TímaNafnliðurMinni": "NP",
