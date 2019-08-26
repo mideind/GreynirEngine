@@ -240,9 +240,10 @@ def test_casting():
     assert db.cast_to_dative("Kattarhestur") == "Kattarhesti"
     assert db.cast_to_genitive("Kattarhestur") == "Kattarhests"
 
-    assert db.cast_to_accusative("fjórir") == "fjóra"
-    assert db.cast_to_dative("fjórir") == "fjórum"
-    assert db.cast_to_genitive("fjórir") == "fjögra"
+    f = lambda mm: [m for m in mm if "2" not in m.beyging]
+    assert db.cast_to_accusative("fjórir", meaning_filter_func=f) == "fjóra"
+    assert db.cast_to_dative("fjórir", meaning_filter_func=f) == "fjórum"
+    assert db.cast_to_genitive("fjórir", meaning_filter_func=f) == "fjögurra"
 
 
 if __name__ == "__main__":
