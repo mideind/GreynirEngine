@@ -1741,6 +1741,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
             (overrides VariantHandler) """
         return self._match_cat == cat
 
+    # pylint: disable=method-hidden
     def matches(self, t_kind, t_val, t_lit):
         """ A literal terminal matches a token if the token text is identical to the literal """
         if self._match_cat is not None and t_kind != self._match_cat:

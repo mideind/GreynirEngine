@@ -199,9 +199,56 @@ def test_cases(r):
     )
 
 
+def test_casting():
+    """ Test functions to cast words in nominative case to other cases """
+    from reynir.bindb import BIN_Db
+    db = BIN_Db()
+
+    assert db.cast_to_accusative("") == ""
+    assert db.cast_to_dative("") == ""
+    assert db.cast_to_genitive("") == ""
+
+    assert db.cast_to_accusative("xxx") == "xxx"
+    assert db.cast_to_dative("xxx") == "xxx"
+    assert db.cast_to_genitive("xxx") == "xxx"
+
+    assert db.cast_to_accusative("maðurinn") == "manninn"
+    assert db.cast_to_dative("maðurinn") == "manninum"
+    assert db.cast_to_genitive("maðurinn") == "mannsins"
+
+    assert db.cast_to_accusative("mennirnir") == "mennina"
+    assert db.cast_to_dative("mennirnir") == "mönnunum"
+    assert db.cast_to_genitive("mennirnir") == "mannanna"
+
+    assert db.cast_to_accusative("framkvæma") == "framkvæma"
+    assert db.cast_to_dative("framkvæma") == "framkvæma"
+    assert db.cast_to_genitive("framkvæma") == "framkvæma"
+
+    assert db.cast_to_accusative("stóru") == "stóru"
+    assert db.cast_to_dative("stóru") == "stóru"
+    assert db.cast_to_genitive("stóru") == "stóru"
+
+    assert db.cast_to_accusative("stóri") == "stóra"
+    assert db.cast_to_dative("stóri") == "stóra"
+    assert db.cast_to_genitive("stóri") == "stóra"
+
+    assert db.cast_to_accusative("kattarhestur") == "kattarhest"
+    assert db.cast_to_dative("kattarhestur") == "kattarhesti"
+    assert db.cast_to_genitive("kattarhestur") == "kattarhests"
+
+    assert db.cast_to_accusative("Kattarhestur") == "Kattarhest"
+    assert db.cast_to_dative("Kattarhestur") == "Kattarhesti"
+    assert db.cast_to_genitive("Kattarhestur") == "Kattarhests"
+
+    assert db.cast_to_accusative("fjórir") == "fjóra"
+    assert db.cast_to_dative("fjórir") == "fjórum"
+    assert db.cast_to_genitive("fjórir") == "fjögra"
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Reynir
     r = Reynir()
     test_cases(r)
+    test_casting()
     r.__class__.cleanup()

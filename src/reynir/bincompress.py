@@ -70,8 +70,12 @@ if __package__:
     # Import the CFFI wrapper for the bin.cpp C++ module (see also build_bin.py)
     # This is not needed for command-line invocation of bincompress.py,
     # i.e. when generating a new ord.compressed file.
+    # pylint: disable=no-name-in-module
+    # pylint: disable=import-error
     from ._bin import lib as bin_cffi, ffi
 else:
+    # pylint: disable=no-name-in-module
+    # pylint: disable=import-error
     from _bin import lib as bin_cffi, ffi
 
 
@@ -600,10 +604,6 @@ class BIN_Compressor:
                 DWORD (32-bit) boundary """
             f.write(struct.pack("B{0}s0I".format(len(s)), len(s), s))
 
-        def write_bytes(s):
-            """ Write bytes aligned to a DWORD (32-bit) boundary """
-            f.write(struct.pack("{0}s0I".format(len(s)), s))
-
         def compress_set(s, base=None):
             """ Write a set of strings as a single compressed string. """
 
@@ -716,7 +716,7 @@ class BIN_Compressor:
             # is present into the uppermost bit
             wid = self._stems[ix][1] + 1  # -1 becomes 0
             has_case_variants = False
-            if ix in self._lookup_stem and self._lookup_stem[ix]:
+            if self._lookup_stem.get(ix):
                 # We have a set of word forms in four cases
                 # for this stem
                 wid |= 0x80000000
@@ -987,7 +987,7 @@ class BIN_Compressed:
         """ Returns True if the trie contains the given word form"""
         return self._mapping_cffi(word) is not None
 
-    def lookup(self, word, cat=None, stem=None, utg=None, beyging_func=None):
+    def lookup(self, word, cat=None, stem=None, utg=NoUtg, beyging_func=None):
         """ Returns a list of BÍN meanings for the given word form,
             eventually constrained to the requested word category,
             stem, utg number and/or the given beyging_func filter function,
@@ -1011,7 +1011,7 @@ class BIN_Compressed:
                 # Fails the stem filter
                 continue
             word_utg = None if word_stem[1] == -1 else word_stem[1]
-            if utg is not None and word_utg != utg:
+            if utg is not BIN_Compressed.NoUtg and word_utg != utg:
                 # Fails the utg filter
                 continue
             beyging = meaning[2]
@@ -1036,6 +1036,13 @@ class BIN_Compressed:
             beyging_filter argument, if present, should be a function that
             filters on the beyging field of each candidate BÍN meaning.
             Note that the word form is case-sensitive. """
+
+        # Note that singular=True means that we force the result to be
+        # singular even if the original word given is plural.
+        # singular=False does not force the result to be plural; it
+        # simply means that no forcing to singular occurs.
+        # The same applies to indefinite=True and False, mutatis mutandis.
+
         result = set()
         case_latin = case.encode("latin-1")
         # Category set
@@ -1098,14 +1105,15 @@ class BIN_Compressed:
             if stem is not None and stem != word_stem[0]:
                 # Not the stem we're looking for
                 continue
-            if utg is not BIN_Compressed.NoUtg and utg != word_stem[1]:
+            word_utg = None if word_stem[1] == -1 else word_stem[1]
+            if utg is not BIN_Compressed.NoUtg and utg != word_utg:
                 # Not the utg we're looking for (note that None is a valid utg)
                 continue
             # Go through the variants of this
             # stem, for the requested case
             wanted_beyging = simplify_beyging(meaning[2])
             for c_latin in self.case_variants(stem_index, case=case_latin):
-                # TODO: Encoding and decoding back and forth not terribly efficient
+                # TODO: Encoding and decoding back and forth is not terribly efficient
                 c = c_latin.decode("latin-1")
                 # Make sure we only include each result once.
                 # Also note that we need to check again for the word
@@ -1118,7 +1126,7 @@ class BIN_Compressed:
                         c,
                         cat=meaning[0],
                         stem=word_stem[0],
-                        utg=word_stem[1],
+                        utg=word_utg,
                         beyging_func=beyging_func,
                     )
                 )

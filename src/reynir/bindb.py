@@ -35,7 +35,7 @@
 from functools import lru_cache
 from collections import namedtuple
 
-from .settings import AdjectiveTemplate, StemPreferences, StaticPhrases
+from .settings import AdjectiveTemplate, StemPreferences, StaticPhrases, NounPreferences
 from .cache import LFU_Cache
 from .dawgdictionary import Wordbase
 from .bincompress import BIN_Compressed
@@ -173,7 +173,7 @@ class BIN_Db:
         if stem_prefs is not None:
             # We have a preferred stem for this word form:
             # cut off meanings based on other stems
-            worse, better = stem_prefs
+            worse, _ = stem_prefs
             m = [mm for mm in m if mm.stofn not in worse]
             # The better (preferred) stem should still be there somewhere
             # assert any(mm.stofn in better for mm in m)
@@ -404,3 +404,127 @@ class BIN_Db:
             w = w.capitalize()
 
         return w, m
+
+    @staticmethod
+    def _cast_to_case(w, lookup_func, case_func, meaning_filter_func):
+        """ Return a word after casting it from nominative to another case,
+            as returned by the case_func """
+
+        def score(m):
+            """ Return a score for a noun word form, based on the
+                [noun_preferences] section in Prefs.conf """
+            sc = NounPreferences.DICT.get(m.ordmynd.split("-")[-1])
+            return 0 if sc is None else sc.get(m.ordfl, 0)
+
+        # Begin by looking up the word form
+        _, mm = lookup_func(w)
+        if not mm:
+            # Unknown word form: leave it as-is
+            return w
+        # Check whether this is (or might be) an adjective
+        m_word = next(
+            (m for m in mm if m.ordfl == "lo" and "NF" in m.beyging),
+            None,
+        )
+        if m_word is not None:
+            # This is an adjective: find its forms
+            # in the requested case ("Gul gata", "Stjáni blái")
+            mm = case_func(
+                m_word.ordmynd,
+                cat="lo",
+                stem=m_word.stofn
+            )
+            if "VB" in m_word.beyging:
+                mm = [m for m in mm if "VB" in m.beyging]
+            elif "SB" in m_word.beyging:
+                mm = [m for m in mm if "SB" in m.beyging]
+        else:
+            # Sort the possible meanings in reverse order by score
+            mm = sorted(mm, key=score, reverse=True)
+            m_word = next(
+                (
+                    m for m in mm
+                    if m.ordfl in {"kk", "kvk", "hk", "fn", "pfn", "to", "gr"} and "NF" in m.beyging
+                ),
+                None,
+            )
+            if m_word is None:
+                # Not a case-inflectable word that we are interested in: leave it
+                return w
+            if "-" in m_word.ordmynd:
+                # Composite word: use the meaning of its last part
+                cw = m_word.ordmynd.split("-")
+                prefix = "-".join(cw[0:-1])
+                # No need to think about upper or lower case here,
+                # since the last part of a composite word is always in BÍN as-is
+                mm = case_func(
+                    cw[-1], cat=m_word.ordfl, stem=m_word.stofn.split("-")[-1]
+                )
+                # Add the prefix to the remaining word stems
+                mm = BIN_Db.prefix_meanings(mm, prefix)
+            else:
+                mm = case_func(w, cat=m_word.ordfl, stem=m_word.stofn)
+                if not mm and w[0].isupper() and not w.isupper():
+                    # Did not find an uppercase version: try a lowercase one
+                    mm = case_func(
+                        w[0].lower() + w[1:], cat=m_word.ordfl, stem=m_word.stofn
+                    )
+        if mm:
+            # Likely successful: return the word after casting it
+            if "ET" in m_word.beyging:
+                # Restrict to singular
+                mm = [m for m in mm if "ET" in m.beyging]
+            elif "FT" in m_word.beyging:
+                # Restrict to plural
+                mm = [m for m in mm if "FT" in m.beyging]
+            # Apply further filtering, if desired
+            if meaning_filter_func is not None:
+                mm = meaning_filter_func(mm)
+            if mm:
+                o = mm[0].ordmynd.replace("-", "")
+                # Imitate the case of the original word
+                if w.isupper():
+                    o = o.upper()
+                elif w[0].isupper() and not o[0].isupper():
+                    o = o[0].upper() + o[1:]
+                return o
+
+        # No case casting could be done: return the original word
+        return w
+
+
+    def cast_to_accusative(self, w, *, meaning_filter_func=None):
+        """ Cast a word from nominative to accusative case, or return it
+            unchanged if it is not inflectable by case. """
+        # Note that since this function has no context, the conversion is
+        # by necessity simplistic; for instance it does not know whether
+        # an adjective is being used with an indefinite or definite noun,
+        # or whether a word such as 'við' is actually a preposition.
+        return self._cast_to_case(
+            w, self.lookup_word, self.lookup_accusative,
+            meaning_filter_func=meaning_filter_func
+        )
+
+    def cast_to_dative(self, w, *, meaning_filter_func=None):
+        """ Cast a word from nominative to dative case, or return it
+            unchanged if it is not inflectable by case. """
+        # Note that since this function has no context, the conversion is
+        # by necessity simplistic; for instance it does not know whether
+        # an adjective is being used with an indefinite or definite noun,
+        # or whether a word such as 'við' is actually a preposition.
+        return self._cast_to_case(
+            w, self.lookup_word, self.lookup_dative,
+            meaning_filter_func=meaning_filter_func
+        )
+
+    def cast_to_genitive(self, w, *, meaning_filter_func=None):
+        """ Cast a word from nominative to genitive case, or return it
+            unchanged if it is not inflectable by case. """
+        # Note that since this function has no context, the conversion is
+        # by necessity simplistic; for instance it does not know whether
+        # an adjective is being used with an indefinite or definite noun,
+        # or whether a word such as 'við' is actually a preposition.
+        return self._cast_to_case(
+            w, self.lookup_word, self.lookup_genitive,
+            meaning_filter_func=meaning_filter_func
+        )
