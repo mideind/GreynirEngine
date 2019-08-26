@@ -1166,6 +1166,10 @@ SetningAukafallForgangur →
     BeygingarliðurLoÞgf AðLiður?
     # Mér sýndist [eftir íhugun] að málið hefði fengið eðlilega meðferð
     | NlFrumlag_þgf so_0_mm FsAtv? VillaKomma? Skýringarsetning
+    # Þess ber að geta að... / Því ber að fagna að...
+    # Þess verður að geta að...
+    # !!! TODO: 'Því bæri að fagna ef Jón hefði sannfærst'
+    | 'það:pfn'_hk_et/aukafall HjSögnBer FsAtv? Nhm So_1_nh/aukafall AðLiður?
 
 BeygingarliðurLoÞgf →
     NlFrumlag_þgf HjSögnLhÞt_et_p3 FsAtv? LoÞgfNh
@@ -2708,6 +2712,15 @@ HjSögnSkuluMunu/tala/pers →
     'skulu:so'/tala/pers | 'munu:so'/tala/pers
 
 $tag(purge_verb) HjSögnSkuluMunu/tala/pers
+
+# 'Því ber/bæri að fagna að...' / 'Því verður/varð/yrði að fagna að...''
+# 'Þess þyrfti að geta að...' / 'Því ætti að leyna að...'
+HjSögnBer →
+    'bera:so'_0_gm_et_p3 | 'verða:so'_0_gm_et_p3
+    | 'þurfa:so'_0_gm_et_p3 | 'eiga:so'_0_gm_et_p3
+
+$tag(purge_verb) HjSögnBer
+$score(+10) HjSögnBer
 
 # Sameiginleg regla fyrir LhÞt og SkuluMunu
 
