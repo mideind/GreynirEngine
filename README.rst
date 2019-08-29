@@ -12,9 +12,10 @@ Overview
 ********
 
 **Reynir** is a Python 3.x package for
-**parsing Icelandic text into sentence trees** (i.e. full constituency parse trees).
-The trees can then be used to extract information from the text, for instance
-about people, titles, entities, facts, actions and opinions.
+**parsing Icelandic text into sentence trees** (i.e. full
+constituency parse trees). The trees can then be used to extract
+information from the text, for instance about people, titles, entities,
+facts, actions and opinions.
 
 Along the way, Reynir tokenizes the text, finds **lemmas** and assigns
 **part-of-speech (POS) tags** to every word.
@@ -88,7 +89,8 @@ To install this package::
 
     $ pip3 install reynir   # or pip install reynir if Python3 is your default
 
-If you want to be able to edit the source, do like so (assuming you have **git** installed)::
+If you want to be able to edit the source, do like so (assuming
+you have **git** installed)::
 
     $ git clone https://github.com/mideind/ReynirPackage
     $ cd ReynirPackage
