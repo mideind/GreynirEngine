@@ -1099,19 +1099,19 @@ class MatchingStream:
                     # This matches an expected token:
                     # go through potential continuations
                     yield from accept(state[skey])
-                elif tq:
-                    # This does not continue a started phrase:
-                    # yield the accumulated token queue
-                    yield from tq
-                    tq = []
-
-                skey = self.match_state(key, pdict)
-                if skey is not None:
-                    # This word potentially starts a new phrase
-                    yield from accept(pdict[skey])
-                elif token:
-                    # Not starting a new phrase: pass the token through
-                    yield token
+                else:
+                    if tq:
+                        # This does not continue a started phrase:
+                        # yield the accumulated token queue
+                        yield from tq
+                        tq = []
+                    skey = self.match_state(key, pdict)
+                    if skey is not None:
+                        # This word potentially starts a new phrase
+                        yield from accept(pdict[skey])
+                    elif token:
+                        # Not starting a new phrase: pass the token through
+                        yield token
 
                 # Transition to the new state
                 state = newstate
@@ -1201,6 +1201,7 @@ class DisambiguationStream(MatchingStream):
             the word categories specified in the phrase configration """
         cats = AmbigPhrases.get_cats(ix)
         token_ctor = self._token_ctor
+        assert len(tq) == len(cats)
         for t, cat in zip(tq, cats):
             # Yield a new token with fewer meanings for each
             # original token in the queue
