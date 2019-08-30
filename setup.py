@@ -65,7 +65,7 @@ setup(
     name="reynir",
     # Remember to modify version numbers in
     # doc/conf.py and src/reynir/__init__.py as well
-    version="1.8.0",
+    version="1.8.1",
     license="GNU GPLv3",
     description="A natural language parser for Icelandic",
     long_description="{0}\n{1}".format(

@@ -6263,10 +6263,16 @@ FyrrSíðarSeinna →
     | 'seint:ao'_mst    # seinna
 
 ÁðurSíðarSeinna →
-    "áður:ao" 
+    "áður:ao" EnTagl?
     | "síðar:ao"
     | 'seint:ao'_mst
     | 'snemma:ao'_mst # fyrr
+    | 'eftir:fs'_þf "að:st" HreinYfirsetning # þremur dögum eftir að Jón var ráðinn
+    | 'eftir:fs'_þf Nl_þf # (tveimur dögum) eftir þennan atburð
+    | 'fyrir:fs'_þf Nl_þf # (viku) fyrir þennan atburð
+
+# (tveimur vikum áður) en skriðan féll á húsið
+EnTagl → "en:st" HreinYfirsetning
 
 # !!! Það er skrýtið að lýsingarorðin séu á víxl í sterkri og veikri beygingu,
 # !!! en það virðist vera tilfellið skv. BÍN.
