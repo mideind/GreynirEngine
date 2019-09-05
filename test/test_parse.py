@@ -1730,6 +1730,19 @@ def test_adjective_dative(r):
     )
 
 
+def test_relative_clause(r):
+    s = r.parse_single(
+        "Þetta eru lausnirnar sem kallað hefur verið eftir."
+    )
+    assert (
+        s.tree.flat_with_all_variants =="S0 S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP VP "
+        "so_1_nf_fh_ft_gm_nt_p3 /VP NP-PRD no_ft_gr_kvk_nf CP-REL C stt /C "
+        "S-MAIN NP-PRD VP so_et_hk_lhþt_nf_sb /VP /NP-PRD VP VP so_et_fh_gm_nt_p3 /VP "
+        "VP so_gm_sagnb /VP /VP ADVP ao /ADVP /S-MAIN /CP-REL /NP-PRD /VP /IP "
+        "/S-MAIN p /S0"
+    )
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Reynir
@@ -1764,4 +1777,5 @@ if __name__ == "__main__":
     test_all_mine(r)
     test_kludgy_ordinals()
     test_adjective_dative(r)
+    test_relative_clause(r)
     r.__class__.cleanup()
