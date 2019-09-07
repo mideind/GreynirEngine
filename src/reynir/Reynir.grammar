@@ -725,22 +725,6 @@ InnskotsSamtenging →
 Frumlag/pers/tala/kyn →
     NlFrumlag_nf/tala/pers/kyn
 
-# Hakk til að láta 1.p. og 2.p. virka með fornafninu "allur",
-# sem annars er aðeins brúklegt í 3.p.
-
-Frumlag_p1/tala/kyn →
-    FrumlagAllur/tala/kyn
-
-Frumlag_p2/tala/kyn →
-    FrumlagAllur/tala/kyn
-
-FrumlagAllur/tala/kyn →
-    # Allar eruð þið jafnar fyrir lögum
-    # Öll erum við jöfn fyrir lögum
-    'allur:fn'_nf/tala/kyn
-
-$score(-5) FrumlagAllur/tala/kyn # Ekki nota þessa undantekningu nema þörf krefji
-
 # Hakk til að láta "Þetta/Það eru aðallega fjögur atriði" virka,
 # þ.e. þar sem ábendingarfornöfnin "þessi"/"sá" eru notuð í eintölu
 # sem frumlag með andlagi í fleirtölu.
