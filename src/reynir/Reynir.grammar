@@ -3409,6 +3409,15 @@ NlFornafn_et_ef_hk → ÝmislegtAnnað_ef
 
 $score(+15) ÝmislegtAnnað/fall
 
+NlFornafn/tala/fall/kyn →
+    SáSem/tala/fall/kyn
+
+# Reyna sterklega að greina 'sá sem...' sem einn samhangandi lið
+SáSem/tala/fall/kyn →
+    'sá:fn'/tala/fall/kyn Tilvísunarsetning_p3/tala/kyn
+
+$score(+96) SáSem/tala/fall/kyn
+
 # Gefa stökum fornöfnum mínusstig - við viljum frekar sjá þau sem hluta af stærri nafnlið
 # Mínusinn þarf að vera nógu stór til að yfirvinna plúsinn fyrir andlag sagnar
 $score(-12) NlFornafn/tala/fall/kyn
@@ -4292,6 +4301,12 @@ $score(-8) KommaTilvísunarsetning/tala/pers/kyn
 
 Tilvísunarsetning/tala/pers/kyn →
     Tilvísunartenging Tengisetning/tala/pers/kyn OgTengisetning/tala/pers/kyn*
+
+Tilvísunarsetning_p3_et/kyn →
+    Tilvísunarsetning_et_p3/kyn
+
+Tilvísunarsetning_p3_ft/kyn →
+    Tilvísunarsetning_ft_p3/kyn
 
 Tilvísunartenging →
     TengiorðSem | TengiorðEr | TengiorðÞarSem

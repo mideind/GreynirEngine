@@ -1730,6 +1730,41 @@ def test_adjective_dative(r):
     )
 
 
+def test_ambig_phrases(r):
+
+    def has_verbs(s, v):
+        return set(s.tree.verbs) == set(v)
+
+    s = r.parse_single("Hann var sá sem ég treysti best.")
+    assert has_verbs(s, ("vera", "treysta"))
+    s = r.parse_single("Hún hefur verið sú sem ég treysti best.")
+    assert has_verbs(s, ("hafa", "vera", "treysta"))
+    s = r.parse_single("Hún væri sú sem ég treysti best.")
+    assert has_verbs(s, ("vera", "treysta"))
+    s = r.parse_single("Ég fór að kaupa inn en hún var að selja eignir.")
+    assert has_verbs(s, ("vera", "fara", "kaupa", "selja"))
+    s = r.parse_single("Ég setti gleraugun ofan á kommóðuna.")
+    assert has_verbs(s, ("setja",))
+    s = r.parse_single("Hugmynd Jóns varð ofan á í umræðunni.")
+    assert has_verbs(s, ("verða",))
+    s = r.parse_single("Efsta húsið er það síðasta sem var lokið við.")
+    assert has_verbs(s, ("vera", "ljúka"))
+    s = r.parse_single("Hún var fljót að fara út.")
+    assert has_verbs(s, ("vera", "fara"))
+    s = r.parse_single("Það var forsenda þess að hún var fljót að maturinn var góður.")
+    assert has_verbs(s, ("vera",))
+    s = r.parse_single("Peningarnir verða nýttir til uppbyggingar.")
+    assert has_verbs(s, ("verða", "nýta"))
+    s = r.parse_single("Ég vildi ekki segja neitt sem ræðan stangaðist á við.")
+    assert has_verbs(s, ("vilja", "segja", "stanga"))
+    s = r.parse_single("Reglurnar stönguðust á við raunveruleikann.")
+    assert has_verbs(s, ("stanga",))
+    s = r.parse_single("Hann braut gegn venju með því að hnerra.")
+    assert has_verbs(s, ("brjóta", "hnerra"))
+    s = r.parse_single("Hann braut gegn venju með því að ræðan var óhefðbundin.")
+    assert has_verbs(s, ("brjóta", "vera"))
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Reynir

@@ -266,7 +266,9 @@ class VerbObjects:
             else:
                 raise ConfigError("Unknown type of WRONG-XXX in $error pragma")
         else:
-            raise ConfigError("Unknown error type in $error pragma: '{0}'".format(errkind))
+            raise ConfigError(
+                "Unknown error type in $error pragma: '{0}'".format(errkind)
+            )
 
     @staticmethod
     def verb_matches_preposition(verb_with_cases, prep_with_case):
@@ -328,9 +330,13 @@ class VerbSubjects:
                 corr_case = corrlist[1].strip()
                 VerbSubjects.VERBS_ERRORS[verb][VerbSubjects._CASE] = corr_case
             else:
-                raise ConfigError("Unknown subject specification: 'SUBJ-{0}'".format(subj_type))
+                raise ConfigError(
+                    "Unknown subject specification: 'SUBJ-{0}'".format(subj_type)
+                )
         else:
-            raise ConfigError("Unknown error type in $error pragma: '{0}'".format(errkind))
+            raise ConfigError(
+                "Unknown error type in $error pragma: '{0}'".format(errkind)
+            )
 
     @staticmethod
     def is_strictly_impersonal(verb):
@@ -518,7 +524,8 @@ class StaticPhrases:
 
 class AmbigPhrases:
 
-    """ Wrapper around dictionary of potentially ambiguous phrases, initialized from the config file """
+    """ Wrapper around dictionary of potentially ambiguous phrases,
+        initialized from the config file """
 
     # List of tuples of ambiguous phrases and their word category lists
     LIST = []
@@ -529,7 +536,8 @@ class AmbigPhrases:
 
     @staticmethod
     def add(words, cats):
-        """ Add an ambiguous phrase to the dictionary. Called from the config file handler. """
+        """ Add an ambiguous phrase to the dictionary.
+            Called from the config file handler. """
 
         # First add to phrase list
         ix = len(AmbigPhrases.LIST)
@@ -542,7 +550,8 @@ class AmbigPhrases:
 
     @staticmethod
     def add_error(words, error):
-        # Dictionary structure: dict { phrase : (error_code, right_phrase, right_parts_of_speech) }
+        # Dictionary structure:
+        # dict { phrase : (error_code, right_phrase, right_parts_of_speech) }
         AmbigPhrases.ERROR_DICT[words] = error
 
     @staticmethod
@@ -592,8 +601,9 @@ class Topics:
         identifier = a[1].strip() if len(a) > 1 else None
         if identifier is not None and not identifier.isidentifier():
             raise ConfigError(
-                "Topic identifier ('{0}') must be a valid Python identifier"
-                .format(identifier)
+                "Topic identifier ('{0}') must be a valid Python identifier".format(
+                    identifier
+                )
             )
         try:
             threshold = float(a[2].strip()) if len(a) > 2 else None
@@ -897,7 +907,8 @@ class Settings:
             ix = s.rfind("$error(")  # Must be at the end
             if ix >= 0:
                 error = True
-                # A typical format is $error(error_code, right_phrase, right_parts_of_speech)
+                # A typical format is
+                # $error(error_code, right_phrase, right_parts_of_speech)
                 e = s[ix + 7 :].lstrip().rstrip(" )").split(", ")
                 s = s[:ix].strip()
             StaticPhrases.add(s)
@@ -1208,7 +1219,9 @@ class Settings:
             raise ConfigError("Expected 'stem ordfl fl' fields in bin_errata section")
         stem, ordfl, fl = a
         if not ordfl.islower() or not fl.islower():
-            raise ConfigError("Expected lowercase ordfl and fl fields in bin_errata section")
+            raise ConfigError(
+                "Expected lowercase ordfl and fl fields in bin_errata section"
+            )
         BinErrata.add(stem, ordfl, fl)
 
     @staticmethod
@@ -1216,10 +1229,14 @@ class Settings:
         """ Handle deletions from BÍN, given as stem/ordfl/fl triples """
         a = s.split()
         if len(a) != 3:
-            raise ConfigError("Expected 'stem ordfl fl' fields in bin_deletions section")
+            raise ConfigError(
+                "Expected 'stem ordfl fl' fields in bin_deletions section"
+            )
         stem, ordfl, fl = a
         if not ordfl.islower() or not fl.islower():
-            raise ConfigError("Expected lowercase ordfl and fl fields in bin_deletions section")
+            raise ConfigError(
+                "Expected lowercase ordfl and fl fields in bin_deletions section"
+            )
         BinDeletions.add(stem, ordfl, fl)
 
     @staticmethod
@@ -1232,7 +1249,8 @@ class Settings:
         ix = s.rfind("$error(")  # Must be at the end
         if ix >= 0:
             error = True
-            # A typical format is $error(error_code, right_phrase, right_parts_of_speech)
+            # A typical format is
+            # $error(error_code, right_phrase, right_parts_of_speech)
             e = s[ix + 7 :].lstrip().rstrip(" )").split(", ")
             s = s[:ix].strip()
         q = s.rfind('"')
@@ -1240,17 +1258,28 @@ class Settings:
             raise ConfigError("Ambiguous phrase must be enclosed in double quotes")
         # Obtain a list of the words in the phrase
         words = s[1:q].strip().lower().split()
+        if any("*" in word and not word.endswith("*") for word in words):
+            raise ConfigError("An asterisk is only allowed at the end of lemmas")
+        if len(words) < 2:
+            raise ConfigError("Ambiguous phrase must contain at least two words")
         # Obtain a list of the corresponding word categories
         cats = s[q + 1 :].strip().lower().split()
         if len(words) != len(cats):
             raise ConfigError(
-                "Ambiguous phrase has {0} words but {1} categories".format(
+                "Ambiguous phrase has {0} words but {1} category sets".format(
                     len(words), len(cats)
                 )
             )
-        if len(words) < 2:
-            raise ConfigError("Ambiguous phrase must contain at least two words")
-        AmbigPhrases.add(words, cats)
+        # Convert the list of category specifiers to a tuple of frozensets of
+        # word categories
+        cats_t = tuple(frozenset(cat.split("/")) for cat in cats)
+        # Check for something like ao/ or so//fs
+        if any("" in cats_set for cats_set in cats_t):
+            raise ConfigError("Empty category set not allowed")
+        # Check for something like ao/*
+        if any("*" in cats_set and len(cats_set) > 1 for cats_set in cats_t):
+            raise ConfigError("Redundant category specified alongside wildcard '*'")
+        AmbigPhrases.add(words, cats_t)
         if error:
             AmbigPhrases.add_error(s[1:q].strip().lower(), e)
 
@@ -1283,7 +1312,8 @@ class Settings:
         ix = s.rfind("$error(")  # Must be at the end
         if ix >= 0:
             error = True
-            # A typical format is $error(error_code, right_phrase, right_parts_of_speech)
+            # A typical format is
+            # $error(error_code, right_phrase, right_parts_of_speech)
             e = s[ix + 7 :].lstrip().rstrip(" )").split(",")
             s = s[:ix].strip()
 

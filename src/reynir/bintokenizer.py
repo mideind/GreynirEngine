@@ -32,9 +32,7 @@ from tokenizer import tokenize_without_annotation, TOK
 
 # The following imports are here in order to be visible in clients
 # (they are not used in this module)
-from tokenizer import (
-    correct_spaces, paragraphs, parse_tokens, tokenize as raw_tokenize
-)
+from tokenizer import correct_spaces, paragraphs, parse_tokens, tokenize as raw_tokenize
 
 from .settings import StaticPhrases, AmbigPhrases, DisallowedNames
 from .settings import NamePreferences
@@ -43,12 +41,20 @@ from .bindb import BIN_Db, BIN_Meaning
 
 # Person names that are not recognized at the start of sentences
 NOT_NAME_AT_SENTENCE_START = {
-    "Annar", "Annars",
-    "Kalla", "Sanna",
-    "Gamli", "Gamla",
-    "Vinni", "Vinna",
-    "Vilji", "Vilja",
-    "Ljótur", "Ljót", "Ljóti", "Ljóts"
+    "Annar",
+    "Annars",
+    "Kalla",
+    "Sanna",
+    "Gamli",
+    "Gamla",
+    "Vinni",
+    "Vinna",
+    "Vilji",
+    "Vilja",
+    "Ljótur",
+    "Ljót",
+    "Ljóti",
+    "Ljóts",
 }
 
 # Set of all cases (nominative, accusative, dative, genitive)
@@ -266,9 +272,7 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
         if t.kind != TOK.WORD:
             # Not a word: relay the token unchanged
             yield t
-            if t.kind == TOK.S_BEGIN or (
-                t.kind == TOK.PUNCTUATION and t.txt == ":"
-            ):
+            if t.kind == TOK.S_BEGIN or (t.kind == TOK.PUNCTUATION and t.txt == ":"):
                 at_sentence_start = True
             elif t.kind != TOK.PUNCTUATION and t.kind != TOK.ORDINAL:
                 at_sentence_start = False
@@ -399,9 +403,7 @@ def parse_phrases_1(db, token_ctor, token_stream):
                     # Do not accept 'áttu' (stem='átta', no kvk) as a number
                     return None
                 return match_stem_list(
-                    tok,
-                    MULTIPLIERS,
-                    filter_func=lambda m: m.ordfl in NUMBER_CATEGORIES,
+                    tok, MULTIPLIERS, filter_func=lambda m: m.ordfl in NUMBER_CATEGORIES
                 )
 
             # Check whether we have an initial number word
@@ -421,7 +423,7 @@ def parse_phrases_1(db, token_ctor, token_stream):
                             multiplier,
                             all_cases(token),
                             all_genders(token),
-                            token=token
+                            token=token,
                         )
                     return token
 
@@ -448,7 +450,7 @@ def parse_phrases_1(db, token_ctor, token_stream):
                         token.val[0] * multiplier_next,
                         next_case,
                         next_gender,
-                        token=token
+                        token=token,
                     )
                     # Eat the multiplier token
                     next_token = next(token_stream)
@@ -501,9 +503,7 @@ def parse_phrases_1(db, token_ctor, token_stream):
                                 all_common_cases(
                                     token,
                                     next_token,
-                                    lambda m: (
-                                        m.ordfl == "lo" and "SB" in m.beyging
-                                    ),
+                                    lambda m: (m.ordfl == "lo" and "SB" in m.beyging),
                                 ),
                                 [CURRENCY_GENDERS[cur]],
                             )
@@ -524,7 +524,7 @@ def parse_phrases_1(db, token_ctor, token_stream):
                 tq.append(token_ctor.Punctuation(HYPHEN))
                 # Check for optional comma after the prefix
                 comma_token = next(token_stream)
-                if comma_token.kind == TOK.PUNCTUATION and comma_token.txt == ',':
+                if comma_token.kind == TOK.PUNCTUATION and comma_token.txt == ",":
                     # A comma is present: append it to the queue
                     # and skip to the next token
                     tq.append(comma_token)
@@ -536,9 +536,7 @@ def parse_phrases_1(db, token_ctor, token_stream):
             if tq:
                 # We have accumulated one or more prefixes
                 # ('dómsmála-, viðskipta-')
-                if token.kind == TOK.WORD and (
-                    token.txt == "og" or token.txt == "eða"
-                ):
+                if token.kind == TOK.WORD and (token.txt == "og" or token.txt == "eða"):
                     # We have 'viðskipta- og'
                     if next_token.kind != TOK.WORD:
                         # Incorrect: yield the accumulated token
@@ -560,8 +558,9 @@ def parse_phrases_1(db, token_ctor, token_stream):
                     # Incorrect prediction: make amends and continue
                     handled = False
                     if (
-                        (token.kind == TOK.WORD or token.kind == TOK.ENTITY) and
-                        len(tq) == 2 and tq[1].txt == HYPHEN
+                        (token.kind == TOK.WORD or token.kind == TOK.ENTITY)
+                        and len(tq) == 2
+                        and tq[1].txt == HYPHEN
                     ):
                         # Two words with a hyphen in between
                         composite = tq[0].txt + "-" + token.txt
@@ -574,7 +573,7 @@ def parse_phrases_1(db, token_ctor, token_stream):
                                     for m in token.val
                                     if m.ordfl == "lo" or m.ordfl == "ao"
                                 ],
-                                token=token
+                                token=token,
                             )
                             handled = True
                         else:
@@ -676,8 +675,7 @@ def parse_phrases_2(token_stream, token_ctor):
                 h, m, s = token.val
                 y, mo, d = next_token.val
                 token = token_ctor.Timestampabs(
-                    token.txt + " " + next_token.txt,
-                    y=y, mo=mo, d=d, h=h, m=m, s=s
+                    token.txt + " " + next_token.txt, y=y, mo=mo, d=d, h=h, m=m, s=s
                 )
                 # Eat the time token
                 next_token = next(token_stream)
@@ -688,8 +686,7 @@ def parse_phrases_2(token_stream, token_ctor):
                 h, m, s = token.val
                 y, mo, d = next_token.val
                 token = token_ctor.Timestamprel(
-                    token.txt + " " + next_token.txt,
-                    y=y, mo=mo, d=d, h=h, m=m, s=s
+                    token.txt + " " + next_token.txt, y=y, mo=mo, d=d, h=h, m=m, s=s
                 )
                 # Eat the time token
                 next_token = next(token_stream)
@@ -870,7 +867,8 @@ def parse_phrases_2(token_stream, token_ctor):
                             for np in sn:
                                 if compatible(p, np):
                                     gender = (
-                                        np.gender if (np.gender and np.gender != "hk")
+                                        np.gender
+                                        if (np.gender and np.gender != "hk")
                                         else p.gender
                                     )
                                     case = np.case if np.case != "-" else p.case
@@ -1000,15 +998,13 @@ class MatchingStream:
         self._pdict = phrase_dictionary
 
     def key(self, token):
-        """ Generate a phrase key from the given token """
+        """ Generate a state key from the given token """
         return token.txt.lower()
 
     def match_state(self, key, state):
-        """ Called to see if the current token's key matches
-            the given state. Returns the value that should be
-            used to look up the key within the state, or None
-            if there is no match. """
-        return key if key in state else None
+        """ Returns an iterable of states that match the key,
+            or a falsy value if the key matches no states. """
+        return state.get(key)
 
     def match(self, tq, ix):
         """ Called when we have found a match for the entire
@@ -1074,15 +1070,11 @@ class MatchingStream:
                                 # that belong to a previously seen partial phrase
                                 # that was not completed: yield them first
                                 yield tq.pop(0)
-                            if not tq:
-                                # If there is no token queue, we can't
-                                # match anything, so ignore this and
-                                # try something else
-                                continue
-                            # Let the match function decide what to yield
-                            # from this matched state
-                            yield from self.match(tq, ix)
-                            tq = []
+                            if tq:
+                                # Let the match function decide what to yield
+                                # from this matched state
+                                yield from self.match(tq, ix)
+                                tq = []
                             # Make sure that we start from a fresh state and
                             # a fresh token queue when processing the next token
                             if newstate:
@@ -1094,21 +1086,28 @@ class MatchingStream:
                         # Nonempty continuation: add it to the next state
                         add_to_state(sl, ix)
 
-                skey = self.match_state(key, state)
-                if skey is not None:
+                siter = self.match_state(key, state)
+                if siter:
                     # This matches an expected token:
                     # go through potential continuations
-                    yield from accept(state[skey])
+                    yield from accept(siter)
                 else:
+                    # This matches no expected token, i.e. is not a
+                    # continuation of any previously pushed state
                     if tq:
-                        # This does not continue a started phrase:
-                        # yield the accumulated token queue
+                        # Yield the accumulated token queue
                         yield from tq
                         tq = []
-                    skey = self.match_state(key, pdict)
-                    if skey is not None:
+                    # Check whether this token starts a new phrase.
+                    # Note: we cannot allow the last token of a
+                    # previous phrase to start a new phrase, since it
+                    # has already been consumed and acted upon
+                    # (and, indeed, in that case the token variable
+                    # would contain None at this point)
+                    siter = self.match_state(key, pdict)
+                    if siter:
                         # This word potentially starts a new phrase
-                        yield from accept(pdict[skey])
+                        yield from accept(siter)
                     elif token:
                         # Not starting a new phrase: pass the token through
                         yield token
@@ -1161,8 +1160,8 @@ class StaticPhraseStream(MatchingStream):
         elif wo is not w and wo in state:
             wm = wo  # Original word
         elif w in state:
-            wm = w   # Lowercase version
-        return wm
+            wm = w  # Lowercase version
+        return state[wm]
 
     def match(self, tq, ix):
         w = " ".join([t.txt for t in tq])
@@ -1172,11 +1171,7 @@ class StaticPhraseStream(MatchingStream):
         # Also note that the entire token queue is sent in as
         # the token paramter, as any token in the queue may
         # contain error information.
-        yield self._token_ctor.Word(
-            w,
-            StaticPhrases.get_meaning(ix),
-            token=tq
-        )
+        yield self._token_ctor.Word(w, StaticPhrases.get_meaning(ix), token=tq)
 
 
 def parse_static_phrases(token_stream, token_ctor, auto_uppercase):
@@ -1188,9 +1183,39 @@ def parse_static_phrases(token_stream, token_ctor, auto_uppercase):
 
 class DisambiguationStream(MatchingStream):
 
+    """ Disambiguates a token stream by only retaining word
+        meanings that have categories matching those allowed
+        in the [disambiguate_phrases] section in config/Phrases.conf """
+
     def __init__(self, token_ctor):
         super().__init__(AmbigPhrases.DICT)
         self._token_ctor = token_ctor
+
+    def key(self, token):
+        """ Generate a phrase key from the given token """
+        # Construct a set of all possible lemmas of this word form
+        stems = (
+            frozenset(m.stofn + "*" for m in token.val)
+            if token.kind == TOK.WORD
+            else frozenset()
+        )
+        return (token.txt.lower(), stems)
+
+    def match_state(self, key, state):
+        """ Called to see if the current token's key matches
+            the given state. Returns the value that should be
+            used to look up the key within the state, or None
+            if there is no match. """
+        # First, check for a direct text match
+        states = []
+        if key[0] in state:
+            states.extend(state[key[0]])
+        # Then, check whether the stems of the token match any
+        # asterisk-marked entry in the state
+        for stem in key[1]:
+            if stem in state:
+                states.extend(state[stem])
+        return states
 
     def length(self, ix):
         return len(AmbigPhrases.get_cats(ix))
@@ -1202,22 +1227,26 @@ class DisambiguationStream(MatchingStream):
         cats = AmbigPhrases.get_cats(ix)
         token_ctor = self._token_ctor
         assert len(tq) == len(cats)
-        for t, cat in zip(tq, cats):
+        for t, cat_set in zip(tq, cats):
             # Yield a new token with fewer meanings for each
             # original token in the queue
-            if cat == "fs":
+            if t.kind != TOK.WORD or "*" in cat_set:
+                # Not a word or no category constraint:
+                # nothing to do
+                yield t
+                continue
+            # Prepare the constrained list of meanings
+            if "fs" in cat_set:
                 # Handle prepositions specially, since we may have additional
                 # preps defined in Main.conf that don't have fs meanings in BÍN
                 w = t.txt.lower()
-                yield token_ctor.Word(
-                    t.txt, [BIN_Meaning(w, 0, "fs", "alm", w, "-")], token=t
-                )
-            elif t.kind == TOK.WORD:
-                yield token_ctor.Word(
-                    t.txt, [m for m in t.val if m.ordfl == cat], token=t
-                )
+                mm = [BIN_Meaning(w, 0, "fs", "alm", w, "-")]
+                cat_set = cat_set - frozenset(("fs",))
             else:
-                yield t
+                mm = []
+            if cat_set:
+                mm.extend([m for m in t.val if m.ordfl in cat_set])
+            yield token_ctor.Word(t.txt, mm, token=t)
 
 
 def disambiguate_phrases(token_stream, token_ctor):
