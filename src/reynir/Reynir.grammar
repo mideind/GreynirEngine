@@ -396,7 +396,7 @@ Hvortsetning →
     HvortSem BeygingarliðurÁnUmröðunar
 
 $score(+4) Samanburðarsetning
-$score(+4) Tíðarsetning
+$score(+5) Tíðarsetning
 $score(-10) Skilyrðissetning # Skilyrðistenging er með plús á móti
 $score(-14) Skilyrðissetning_vh # Draga enn úr skilyrðissetningum sem byggja á viðtengingarhætti
 
@@ -690,11 +690,17 @@ $tag(begin_prep_scope) SagnHluti/tala/pers/kyn # Nýtt undirtré fyrir tengingu 
 FrumlagsInnskot/tala/pers/kyn →
     "," SetningÁnF/tala/pers/kyn ","
     # Lögheimili á Íslandi þegar kosning fer fram er skilyrði
-    | InnskotsSamtenging HreinYfirsetning
+    | KommulaustInnskot
     # Lögheimili á Íslandi, þegar kosning fer fram, er skilyrði
     | "," InnskotsSamtenging HreinYfirsetning ","
     # Tjónið þann 3. mars, þegar veðrið var verst, nam 1,2 milljarði króna
     | Tímaliður FrumlagsInnskot/tala/pers/kyn?
+
+# Gefum kommulausu innskoti mínus
+KommulaustInnskot →
+    InnskotsSamtenging HreinYfirsetning
+
+$score(-4) KommulaustInnskot
 
 # Þröngt mengi samtenginga sem nota má án kommu í frumlagsinnskoti
 # (sé mengið of vítt eykst margræðni verulega)
@@ -718,22 +724,6 @@ InnskotsSamtenging →
 
 Frumlag/pers/tala/kyn →
     NlFrumlag_nf/tala/pers/kyn
-
-# Hakk til að láta 1.p. og 2.p. virka með fornafninu "allur",
-# sem annars er aðeins brúklegt í 3.p.
-
-Frumlag_p1/tala/kyn →
-    FrumlagAllur/tala/kyn
-
-Frumlag_p2/tala/kyn →
-    FrumlagAllur/tala/kyn
-
-FrumlagAllur/tala/kyn →
-    # Allar eruð þið jafnar fyrir lögum
-    # Öll erum við jöfn fyrir lögum
-    'allur:fn'_nf/tala/kyn
-
-$score(-5) FrumlagAllur/tala/kyn # Ekki nota þessa undantekningu nema þörf krefji
 
 # Hakk til að láta "Þetta/Það eru aðallega fjögur atriði" virka,
 # þ.e. þar sem ábendingarfornöfnin "þessi"/"sá" eru notuð í eintölu
@@ -1038,7 +1028,7 @@ SagnliðurBotn_sagnb →
     | VillaKomma? Skýringarsetning
 
 $tag(begin_prep_scope) Sagnliður_sagnb
-$score(+240) Sagnliður_sagnb
+$score(+12) Sagnliður_sagnb
 
 # Skal í frumvarpinu fólgin greinargerð
 # Er í frumvarpinu fólgin greinargerð
@@ -1320,6 +1310,10 @@ VeraInnskot →
 
 SetningÁnF/tala/pers/kyn →
     EinSetningÁnF/tala/pers/kyn FramhaldÁnF/tala/pers/kyn*
+
+# Sértilvik fyrir falið 'það': 'kallað hafði verið eftir lækni'
+SetningÁnF_et_p3_hk →
+    SetningSoÞað
 
 EinSetningÁnF/tala/pers/kyn →
     Atviksliður? ÖfugurSagnliður/tala/pers/kyn
@@ -4326,7 +4320,13 @@ Tengisetning/tala/pers/kyn →
     TengiYfirsetning
     # (Maðurinn sem) kyssti konuna í gær [fyrstur allra]/ (Maðurinn sem) var fallegur
     | BeygingarliðurÁnF/tala/pers/kyn LoTengtSögn_nf/tala/kyn?
+    | TengisetningSoÞað # (Lausnirnar sem) kallað var eftir
     | BeygingarliðurStýftAndlag
+
+TengisetningSoÞað →
+    SetningSoÞað # (Lausnirnar sem) kallað var eftir
+
+$score(-4) TengisetningSoÞað
 
 # Beygingarliður þar sem eitt andlag er stýft af sögn
 # vegna þess að það er komið fram í nafnliðnum sem vísað er til:
@@ -4367,8 +4367,11 @@ Tengisetning_ft_p3/kyn →
 TengiYfirsetning →
     HreinYfirsetning
 
-BeygingarliðurÁnF → 
-    BeygingarliðurÁnF/tala/pers/kyn
+# Hér er gert ráð fyrir að frumlagslausar atvikssetningar
+# séu alltaf í 3p et hk, sbr. 'þegar kallað var eftir lækni',
+# 'meðan farið var yfir málið'
+BeygingarliðurÁnF →
+    BeygingarliðurÁnF_et_p3_hk # Var BeygingarliðurÁnF/tala/pers/kyn
 
 $score(-8) BeygingarliðurÁnF
 

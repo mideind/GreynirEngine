@@ -120,3 +120,30 @@ and `reference information <https://greynir.is/doc/reference.html>`_,
 as well as important information
 about `copyright and licensing <https://greynir.is/doc/copyright.html>`_.
 
+***********************
+Copyright and licensing
+***********************
+
+Reynir is *copyright (C) 2019 by Miðeind ehf.*
+The original author of this software is *Vilhjálmur Þorsteinsson*.
+
+.. image:: https://raw.githubusercontent.com/mideind/Reynir/master/static/img/GPLv3.png
+    :target: https://github.com/mideind/Reynir/blob/master/LICENSE.txt
+
+This set of programs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option)
+any later version.
+
+This set of programs is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+more details.
+
+The full text of the GNU General Public License v3 is
+`included here <https://github.com/mideind/Reynir/blob/master/LICENSE.txt>`_
+and also available here: https://www.gnu.org/licenses/gpl-3.0.html.
+
+If you would like to use this software in ways that are incompatible
+with the standard GNU GPLv3 license, please contact Miðeind ehf.
+to negotiate alternative arrangements.
