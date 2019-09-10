@@ -134,24 +134,24 @@ class PrepositionUnpacker(ParseForestNavigator):
     def __init__(self):
         super().__init__(visit_all=False)
 
-    def _visit_nonterminal(self, level, node):
+    def visit_nonterminal(self, level, node):
         """ Create a result object to capture information about
             productions (families of children) of this nonterminal """
         return defaultdict(list)
 
-    def _add_result(self, results, ix, r):
+    def add_result(self, results, ix, r):
         """ Capture a particular child node r of family ix """
         results[ix].append(r)
 
-    def _process_results(self, results, node):
+    def process_results(self, results, node):
         """ Go through the child productions (families) and
             duplicate any nodes that have the enable_prep_bonus
             tag, so that they can receive independent scores in
             the reducer depending on the containing verb context """
         for family_ix, children in results.items():
             for ix, child_nt in enumerate(children):
-                # child_nt is None for all uninteresting nodes, i.e. terminal/token nodes
-                # and nonterminal nodes that are not completed
+                # child_nt is None for all uninteresting nodes, i.e.
+                # terminal/token nodes and nonterminal nodes that are not completed
                 if child_nt is not None and child_nt.has_tag("enable_prep_bonus"):
                     # This is a nonterminal node marked with enable_prep_bonus:
                     # Duplicate its subtree
@@ -222,6 +222,7 @@ class ReductionInfo:
             csc = self.sc
             if not csc:
                 return dict(sc=0)  # Empty node
+
             if len(csc) == 1:
                 # Not ambiguous: only one result, do a shortcut
                 [sc] = csc.values()  # Will raise an exception if not exactly one value
@@ -234,7 +235,8 @@ class ReductionInfo:
                 # (and the one with the lowest index
                 # if there are many with the same score)
                 ix, sc = s[0]
-                # And now for the key action of the reducer: Eliminate all other families
+                # And now for the key action of the reducer:
+                # Eliminate all other families
                 node.reduce_to(ix)
 
             if self.nt is not None:
@@ -255,8 +257,8 @@ class ReductionInfo:
                     and self.reducer.get_prep_bonus() is not None
                 ):
                     # This is a nonterminal that we like to see in a verb/prep context
-                    # An example is Dagsetning which we like to be associated with a verb
-                    # rather than a noun phrase
+                    # An example is Dagsetning which we like to be associated
+                    # with a verb rather than a noun phrase
                     sc["sc"] += _VERB_PREP_BONUS
 
                 if self.nt.has_tag("pick_up_verb"):
@@ -270,6 +272,7 @@ class ReductionInfo:
                     # and Setning have this tag
                     sc.pop("so", None)  # Simpler than if "so" in sc: del sc["so"]
                     sc.pop("sl", None)
+
             return sc
 
         finally:
@@ -287,6 +290,7 @@ class ParseForestReducer(ParseForestNavigator):
 
     def __init__(self, grammar, scores):
         super().__init__()
+        # scores contains the token-terminal matching scores
         self._scores = scores
         self._grammar = grammar
         self._score_adj = grammar._nt_scores
@@ -345,11 +349,11 @@ class ParseForestReducer(ParseForestNavigator):
         # If no match, discourage
         return _VERB_PREP_PENALTY
 
-    def _visit_epsilon(self, level):
+    def visit_epsilon(self, level):
         """ At Epsilon node """
         return dict(sc=0)  # Score 0
 
-    def _visit_token(self, level, node):
+    def visit_token(self, level, node):
         """ At token node """
         # Return the score of this token/terminal match
         d = dict()
@@ -382,35 +386,34 @@ class ParseForestReducer(ParseForestNavigator):
         elif node.terminal.matches_category("so"):  # !!! Was .startswith("so")
             # Verb terminal: pick up the verb
             d["so"] = [(node.terminal, node.token)]
-        d["sc"] = sc
-        # node.score = sc
+        d["sc"] = node.score = sc
         return d
 
-    def _visit_nonterminal(self, level, node):
+    def visit_nonterminal(self, level, node):
         """ At nonterminal node """
         # Return a fresh object to collect results, unless the
         # node doesn't span any tokens, in which case we don't bother
         return ReductionInfo(self, node) if node.is_span else None
 
-    def _visit_family(self, results, level, node, ix, prod):
+    def visit_family(self, results, level, node, ix, prod):
         """ Add information about a family of children to the result object """
         # if node.is_ambiguous:
         #     print(f"Visiting family {ix} of head node {node}")
         if results is not None:
             results.add_child_production()
 
-    def _add_result(self, results, ix, sc):
+    def add_result(self, results, ix, sc):
         """ Append a single result to the result object """
         # Add up scores for each family of children
         # print(f"Node {results.node}: family {ix}, adding child score {sc}")
         if results is not None:
             results.add_child_score(ix, sc)
 
-    def _process_results(self, results, node):
+    def process_results(self, results, node):
         """ Sort scores after visiting children, then prune the child families
             (productions) leaving only the top-scoring family (production) """
         d = dict(sc=0) if results is None else results.process(node)
-        # node.score = d["sc"]
+        node.score = d["sc"]
         return d
 
     def _check_stacks(self):
@@ -437,7 +440,7 @@ class OptionFinder(ParseForestNavigator):
     """ Subclass to navigate a parse forest and populate the set
         of terminals that match each token """
 
-    def _visit_token(self, level, node):
+    def visit_token(self, level, node):
         """ At token node """
         # assert node.terminal is not None
         self._finals[node.start].add(node.terminal)
@@ -470,7 +473,8 @@ class Reducer:
         tokens = dict()
         self._find_options(w, finals, tokens)
 
-        # Second pass: find a (partial) ordering by scoring the terminal alternatives for each token
+        # Second pass: find a (partial) ordering by scoring
+        # the terminal alternatives for each token
         scores = dict()
         noun_prefs = NounPreferences.DICT
 
@@ -496,7 +500,8 @@ class Reducer:
             if token.is_word and token.t2 and "-" in token.t2[0].ordmynd:
                 composite = True
                 txt_last = token.t2[0].ordmynd.rsplit("-", maxsplit=1)[-1]
-            # No need to check preferences if the first parts of all possible terminals are equal
+            # No need to check preferences if the first parts of
+            # all possible terminals are equal
             # Look up the preference ordering from Reynir.conf, if any
             prefs = None if same_first else Preferences.get(txt_last)
             sc = scores[i]
@@ -584,11 +589,12 @@ class Reducer:
                 elif tfirst == "so":
                     if t.num_variants > 0 and t.variant(0) in "012":
                         # Consider verb arguments
-                        # Normally, we give a bonus for verb arguments: the more matched, the better
+                        # Normally, we give a bonus for verb arguments:
+                        # the more matched, the better
                         numcases = int(t.variant(0))
                         adj = 2 * numcases
-                        # !!! TODO: Logic should be added here to encourage zero arguments
-                        # for verbs in the middle voice
+                        # !!! TODO: Logic should be added here to encourage
+                        # zero arguments for verbs in the middle voice
                         if numcases == 0:
                             # Zero arguments: we might not like this
                             vo0 = VerbObjects.VERBS[0]
@@ -601,8 +607,8 @@ class Reducer:
                             ):
                                 # No meaning where the verb has zero arguments
                                 adj = -5
-                        # Apply score adjustments for verbs with particular object cases,
-                        # as specified by $score(n) pragmas in Verbs.conf
+                        # Apply score adjustments for verbs with particular
+                        # object cases, as specified by $score(n) pragmas in Verbs.conf
                         # In the (rare) cases where there are conflicting scores,
                         # apply the most positive adjustment
                         adjmax = 0
@@ -657,8 +663,9 @@ class Reducer:
                             pt.first == "no" and pt.has_variant("ef") and pt.is_plural
                             for pt in s
                         ):
-                            # If this is a so_nh and an alternative no_ef_ft exists, choose this one
-                            # (for example, 'hafa', 'vera', 'gera', 'fara', 'mynda', 'berja', 'borða')
+                            # If this is a so_nh and an alternative no_ef_ft exists,
+                            # choose this one (for example, 'hafa', 'vera', 'gera',
+                            # 'fara', 'mynda', 'berja', 'borða')
                             sc[t] += 4
                     if (i > 0) and token.is_upper:
                         # The token is uppercase and not at the start of a sentence:
@@ -674,12 +681,14 @@ class Reducer:
                         sc[t] += 2
                 elif tfirst == "sérnafn":
                     if not token.t2:
-                        # If there are no BÍN meanings, we had no choice but to use sérnafn,
-                        # so alleviate some of the penalty given by the grammar
+                        # If there are no BÍN meanings, we had no choice but
+                        # to use sérnafn, so alleviate some of the penalty given
+                        # by the grammar
                         sc[t] += 12
                     else:
                         # BÍN meanings are available: discourage this
-                        # print(f"Discouraging sérnafn {txt}, BÍN meanings are {tokens[i].t2}")
+                        # print(f"Discouraging sérnafn {txt}, "
+                        #     "BÍN meanings are {tokens[i].t2}")
                         sc[t] -= 10
                         if i == w.start:
                             # First token in sentence, and we have BÍN meanings:

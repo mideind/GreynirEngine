@@ -211,18 +211,30 @@ class Node:
     # but they are beneficial on CPython
     __slots__ = (
         "_start", "_end", "_families", "_highest_prio",
-        "_nonterminal", "_terminal", "_token", "_completed"
+        "_nonterminal", "_terminal", "_token", "_completed",
+        "score",
     )
 
     def __init__(self, start, end):
+        # Start and end token indices, i.e. the span of this node
         self._start = start
         self._end = end
+        # Families of children of this node
         self._families = None
-        self._highest_prio = 0  # Priority of highest-priority child family
+        # Priority of highest-priority child family
+        self._highest_prio = 0
+        # The nonterminal corresponding to this node, if not a leaf node
         self._nonterminal = None
+        # The terminal corresponding to this node, if it is a leaf node
         self._terminal = None
+        # The token matching this terminal, if this is a leaf node
         self._token = None
+        # If completed is True, this node represents a completed nonterminal.
+        # Otherwise, it is an internal node representing a position within
+        # a production of a nonterminal.
         self._completed = True
+        # The score for this node, calculated by the reducer
+        self.score = 0
 
     @classmethod
     def from_c_node(cls, job, c_node, parent=None, index=0):
@@ -749,34 +761,34 @@ class ParseForestNavigator:
             If True, we visit the entire tree in order. """
         self._visit_all = visit_all
 
-    def _visit_epsilon(self, level):
+    def visit_epsilon(self, level):
         """ At Epsilon node """
         return None
 
-    def _visit_token(self, level, node):
+    def visit_token(self, level, node):
         """ At token node """
         return None
 
-    def _visit_nonterminal(self, level, node):
+    def visit_nonterminal(self, level, node):
         """ At nonterminal node """
         # Return object to collect results
         return None
 
-    def _visit_family(self, results, level, node, ix, prod):
+    def visit_family(self, results, level, node, ix, prod):
         """ At a family of children """
         return
 
-    def _add_result(self, results, ix, r):
+    def add_result(self, results, ix, r):
         """ Append a single result object r to the result object """
         return
 
-    def _process_results(self, results, node):
+    def process_results(self, results, node):
         """ Process results after visiting children.
             The results list typically contains tuples (ix, r) where ix is
             the family index and r is the child result """
         return None
 
-    def _force_visit(self, w, visited):
+    def force_visit(self, w, visited):
         """ Override this and return True to visit a node, even if self._visit_all
             is False and the node has been visited before """
         return False
@@ -791,21 +803,21 @@ class ParseForestNavigator:
             if (
                 not self._visit_all
                 and w in visited
-                and not self._force_visit(w, visited)
+                and not self.force_visit(w, visited)
             ):
                 # Already seen: return the previously calculated result
                 return visited[w]
             if w is None:
                 # Epsilon node
-                v = self._visit_epsilon(level)
+                v = self.visit_epsilon(level)
             elif w._token is not None:
                 # Return the score of this terminal option
-                v = self._visit_token(level, w)
+                v = self.visit_token(level, w)
             else:
                 # Init container for child results
-                results = self._visit_nonterminal(level, w)
+                results = self.visit_nonterminal(level, w)
                 if results is NotImplemented:
-                    # If _visit_nonterminal() returns NotImplemented,
+                    # If visit_nonterminal() returns NotImplemented,
                     # don't bother visiting children or processing
                     # results; instead _nav_helper() returns NotImplemented
                     v = results
@@ -817,7 +829,7 @@ class ParseForestNavigator:
                             child_level = level + 1
                         for ix, (prod, children) in enumerate(w._families):
                             # assert len(children) > 0
-                            self._visit_family(results, level, w, ix, prod)
+                            self.visit_family(results, level, w, ix, prod)
                             if w._completed:
                                 # Completed nonterminal: restart children index
                                 child_ix = -1
@@ -826,11 +838,11 @@ class ParseForestNavigator:
                             if len(children) > 1:
                                 child_ix -= len(children) - 1
                             for ch in children:
-                                self._add_result(
+                                self.add_result(
                                     results, ix, _nav_helper(ch, child_ix, child_level)
                                 )
                                 child_ix += 1
-                    v = self._process_results(results, w)
+                    v = self.process_results(results, w)
             if not self._visit_all:
                 # Mark the node as visited and store its result
                 visited[w] = v
@@ -868,13 +880,13 @@ class ParseForestPrinter(ParseForestNavigator):
         # !!! needs to be uncommented in reducer.py
         return " [{0}]".format(w.score) if self._show_scores else ""
 
-    def _visit_epsilon(self, level):
+    def visit_epsilon(self, level):
         """ Epsilon (null) node """
         indent = "  " * level  # Two spaces per indent level
         print(indent + "(empty)", file=self._file)
         return None
 
-    def _visit_token(self, level, w):
+    def visit_token(self, level, w):
         """ Token matching a terminal """
         indent = "  " * level  # Two spaces per indent level
         h = str(w.token)
@@ -886,7 +898,7 @@ class ParseForestPrinter(ParseForestNavigator):
         )
         return None
 
-    def _visit_nonterminal(self, level, w):
+    def visit_nonterminal(self, level, w):
         # Interior nodes are not printed
         # and do not increment the indentation level
         if self._detailed or not w.is_interior:
@@ -908,7 +920,7 @@ class ParseForestPrinter(ParseForestNavigator):
                 self._visited.add(w)
         return None  # No results required, but visit children
 
-    def _visit_family(self, results, level, w, ix, prod):
+    def visit_family(self, results, level, w, ix, prod):
         """ Show trees for different options, if ambiguous """
         if w.is_ambiguous:
             indent = "  " * level  # Two spaces per indent level
@@ -957,13 +969,13 @@ class ParseForestDumper(ParseForestNavigator):
         self._result = ["R1"]  # Start indicator and version number
         self._token_dicts = token_dicts
 
-    def _visit_epsilon(self, level):
+    def visit_epsilon(self, level):
         # Identify this as an epsilon (null) node
         # !!! Not necessary - removed July 2018 VTh
         # self._result.append("P{0}".format(level))
         return None
 
-    def _visit_token(self, level, w):
+    def visit_token(self, level, w):
         # Identify this as a terminal/token
         ta = ""  # Augmented terminal
         if self._token_dicts is not None:
@@ -986,7 +998,7 @@ class ParseForestDumper(ParseForestNavigator):
         )
         return None
 
-    def _visit_nonterminal(self, level, w):
+    def visit_nonterminal(self, level, w):
         # Interior nodes are not dumped
         # and do not increment the indentation level
         if not w.is_interior:
@@ -997,7 +1009,7 @@ class ParseForestDumper(ParseForestNavigator):
             self._result.append("N{0} {1}".format(level, w.nonterminal.name))
         return None  # No results required, but visit children
 
-    def _visit_family(self, results, level, w, ix, prod):
+    def visit_family(self, results, level, w, ix, prod):
         if w.is_ambiguous:
             # Identify this as an option
             self._result.append("O{0} {1}".format(level, ix))
@@ -1016,8 +1028,10 @@ class ParseForestFlattener(ParseForestNavigator):
     """ Create a simpler, flatter version of an already disambiguated parse tree """
 
     class Node:
-        def __init__(self, p):
+
+        def __init__(self, p, score):
             self._p = p
+            self._score = score
             self._children = None
 
         def add_child(self, child):
@@ -1041,6 +1055,10 @@ class ParseForestFlattener(ParseForestNavigator):
         @property
         def is_nonterminal(self):
             return not isinstance(self._p, tuple)
+
+        @property
+        def score(self):
+            return self._score
 
         def _to_str(self, indent):
             if self.has_children:
@@ -1068,20 +1086,20 @@ class ParseForestFlattener(ParseForestNavigator):
     def root(self):
         return self._stack[0] if self._stack else None
 
-    def _visit_epsilon(self, level):
+    def visit_epsilon(self, level):
         """ Epsilon (null) node: not included in a flattened tree """
         return None
 
-    def _visit_token(self, level, w):
+    def visit_token(self, level, w):
         """ Add a terminal/token node to the flattened tree """
         # assert level > 0
         # assert self._stack
-        node = ParseForestFlattener.Node((w.terminal, w.token))
+        node = ParseForestFlattener.Node((w.terminal, w.token), w.score)
         self._stack = self._stack[0:level]
         self._stack[-1].add_child(node)
         return None
 
-    def _visit_nonterminal(self, level, w):
+    def visit_nonterminal(self, level, w):
         """ Add a nonterminal node to the flattened tree """
         # Interior nodes are not dumped
         # and do not increment the indentation level
@@ -1090,7 +1108,7 @@ class ParseForestFlattener(ParseForestNavigator):
                 # Skip optional nodes that don't contain anything
                 return NotImplemented  # Signal: Don't visit child nodes
             # Identify this as a nonterminal
-            node = ParseForestFlattener.Node(w.nonterminal)
+            node = ParseForestFlattener.Node(w.nonterminal, w.score)
             if level == 0:
                 # New root (must be the only one)
                 assert self._stack is None
@@ -1102,7 +1120,7 @@ class ParseForestFlattener(ParseForestNavigator):
                 self._stack.append(node)
         return None  # No results required, but visit children
 
-    def _visit_family(self, results, level, w, ix, prod):
+    def visit_family(self, results, level, w, ix, prod):
         """ Visit different subtree options within a parse forest """
         # In this case, the tree should be unambigous
         assert not w.is_ambiguous

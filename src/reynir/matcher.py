@@ -161,7 +161,6 @@ _DEFAULT_NT_MAP = {
     "ÞóBotn": "IP",
     "SkýringarBotn": "IP",
     "SegirÍ": "IP",
-    "FsUmAðRæða": "IP",
     "BeygingarliðurStýftAndlag": "IP",
     "BlTagl": "IP",
     "NhLiður": "IP-INF",
@@ -191,7 +190,6 @@ _DEFAULT_NT_MAP = {
     "NlBeintAndlag": "NP-OBJ",
     "NlEnginnAndlag" : "NP-OBJ",  # 'hann getur enga samninga gert'
     "NlAnnar": "NP-OBJ",  # '[Jón hefur] aðra sögu [að segja]'
-    "NlRunaEða": "NP-OBJ", # '[hvort sem um er að ræða] hesta (eða kindur)'
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
     "SögnErLoBotn": "NP-PRD",  # Show '(Hann er) góður / 18 ára' as a predicate argument
@@ -2199,7 +2197,7 @@ class Annotator(ParseForestNavigator):
         super().__init__()
         self._tmap = tmap
 
-    def _visit_token(self, level, node):
+    def visit_token(self, level, node):
         """ At token node """
         ix = node.token.index  # Index into original sentence
         assert ix not in self._tmap
@@ -2222,7 +2220,7 @@ class Simplifier(ParseForestNavigator):
         self._tokens = tokens
         self._builder = SimpleTreeBuilder(nt_map, id_map, terminal_map)
 
-    def _visit_token(self, level, node):
+    def visit_token(self, level, node):
         """ At terminal node, matching a token """
         meaning = node.token.match_with_meaning(node.terminal)
         d = describe_token(
@@ -2236,7 +2234,7 @@ class Simplifier(ParseForestNavigator):
         self._builder.push_terminal(d)
         return None
 
-    def _visit_nonterminal(self, level, node):
+    def visit_nonterminal(self, level, node):
         """ Entering a nonterminal node """
         if node.is_interior or node.nonterminal.is_optional:
             nt_base = None
@@ -2245,7 +2243,7 @@ class Simplifier(ParseForestNavigator):
         self._builder.push_nonterminal(nt_base)
         return None
 
-    def _process_results(self, results, node):
+    def process_results(self, results, node):
         """ Exiting a nonterminal node """
         self._builder.pop_nonterminal()
 
