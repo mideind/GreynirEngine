@@ -1599,6 +1599,8 @@ SögnErLoBotn/tala/kyn →
     | SögnLhÞt_nf/tala/kyn NlBeintAndlag_nf/tala/pers
     # (Í herferðinni var) [ekki] notast (við nýjar aðferðir)
     | FsAtv? so_0_mm_sagnb
+    # (Hún er/var/hefur verið) talin/álitin/sögð vera lykillinn [að því að málið leystist]
+    | SögnLhÞtVera_nf/tala/kyn HjSögnVera NlSagnfylling_nf
 
 SögnLhÞt_nf/tala/kyn →
     'kalla:so'_lhþt_sb_nf/tala/kyn                  # kallaður
@@ -1614,6 +1616,15 @@ SögnLhÞt_nf/tala/kyn →
     | 'telja:so'_lhþt_sb_nf/tala/kyn                # talinn
 
 $score(+10) SögnLhÞt_nf/tala/kyn
+
+SögnLhÞtVera_nf/tala/kyn →
+    'segja:so'_lhþt_sb_nf/tala/kyn                  # sögð vera
+    | 'álíta:so'_lhþt_sb_nf/tala/kyn                # álitin vera
+    | 'telja:so'_lhþt_sb_nf/tala/kyn                # talin vera
+    | 'láta:so'_lhþt_sb_nf/tala/kyn                 # látin vera
+
+$score(+12) SögnLhÞtVera_nf/tala/kyn
+$tag(purge_verb) SögnLhÞtVera_nf/tala/kyn
 
 LhÞtÞgfBotn → 'fyrir:fs'_þgf 'góður:lo'_esb_hk_þgf_et  # Það sem er börnum fyrir bestu
 
@@ -4313,7 +4324,7 @@ $score(-4) TengiorðÞarSem # Þetta er oftar samtenging setninga ofar í trénu
 
 TengiorðEr → "er:stt"
 
-$score(-8) TengiorðEr # Sjaldgæft - ekki velja nema það þurfi
+$score(-16) TengiorðEr # Sjaldgæft - ekki velja nema það þurfi
 
 Tengisetning/tala/pers/kyn →
     # (Maðurinn sem) konan kyssti í gær / konurnar kysstu í gær
@@ -5353,7 +5364,7 @@ AtvTímaliður →
     # Undantekningar sem falla ekki undir eo, gegna helst hlutverki talmálsmarkara
     | "nú:ao" | "þá:ao"   # Lögreglan rannsakar þá/nú málið
 
-$tag(apply_length_bonus) FsRunaEftirSögn
+# $tag(apply_length_bonus) FsRunaEftirSögn
 
 # Forskeyti sem leyfileg eru á undan forsetningarlið innan kommu
 FsForskeyti →
