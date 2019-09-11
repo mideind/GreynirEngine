@@ -125,10 +125,17 @@ Málsgrein →
     | "(" MgrInnihald ")"
     | "[" MgrInnihald "]"
 
-MgrInnihald → Forskeyti? Yfirsetning StLiður* Lokatákn?
-    | Sagt Segir Lokatákn?                          # "Allt er klappað og klárt", segir Jón.
-    | Sagt AðSögn Lokatákn?                         # Allt er klappað og klárt að sögn ráðuneytisins.
-    | Sagt AðÞvíErSegir Lokatákn?                   # Allt er klappað og klárt að því er ráðuneytið segir.
+MgrInnihald →
+    Forskeyti? Yfirsetning StLiður* Lokatákn?
+    | Staðhæfing
+
+Staðhæfing →
+    Sagt Segjandi Lokatákn?
+
+Segjandi →
+    Segir                            # "Allt er klappað og klárt", segir Jón.
+    | AðSögn                         # Allt er klappað og klárt að sögn ráðuneytisins.
+    | AðÞvíErSegir                   # Allt er klappað og klárt að því er ráðuneytið segir.
 
 Forskeyti →
     "-:em"? Samtenging "bara:ao"? StrikEðaKomma?    # 'En - þegar allt er skoðað, var þetta fínt.'
@@ -150,11 +157,23 @@ StrikEðaKomma → "-:em" | ","
 
 $score(-6) Forskeyti # Ekki freistast í forskeyti ef annað er í boði
 
+Heimild_nf/tala/pers →
+    Nl_nf/tala/pers
+Heimild_þgf/tala/pers →
+    Nl_þgf/tala/pers
+Heimild_ef/tala/pers →
+    Nl_ef/tala/pers
+
+# Koma í veg fyrir að þessir hnútar séu bestaðir burt
+$score(+1) Heimild_nf/tala/pers
+$score(+1) Heimild_þgf/tala/pers
+$score(+1) Heimild_ef/tala/pers
+
 Sagt → Forskeyti? Yfirsetning StLiður* 
 
 Segir →
     # , segir/fullyrðir Jón Ásmundsson, fulltrúi samtakanna, í dag í útvarpinu
-    "," SögnSegja/tala/pers NlFrumlag_nf/tala/pers AtvFsAuka?
+    "," SögnSegja/tala/pers Heimild_nf/tala/pers AtvFsAuka?
 
 SögnSegja/tala/pers →
     'segja:so'_0_gm_fh/tala/pers
@@ -167,21 +186,17 @@ SögnSegja/tala/pers →
 
 AðSögn →
     # , að [sögn fulltrúa lögregluyfirvalda]
-    ","? 'að:fs'_þgf NlAðSögn
-
-NlAðSögn → 'sögn:kvk'_et_þgf EfLiður AtvFsAuka?
+    ","? 'að:fs'_þgf 'sögn:kvk'_et_þgf Heimild_ef/tala/pers AtvFsAuka?
 
 AðÞvíErSegir →
     # , [að því er] segir í tilkynningu ráðuneytisins í gær
-    ","? AðÞvíEr? SegirÍ
+    ","? AðÞvíEr? SegirÍ AtvFsAuka?
 
 AðÞvíEr →
     'að:fs'_þgf 'það:pfn'_hk_þgf_et "er:stt" # að því er [segir í tilkynningu]
 
 SegirÍ →
-    'segja:so'_0_gm_fh_et_p3 ÍNl
-
-ÍNl → 'í:fs'_þgf Nl_þgf AtvFsAuka?
+    'segja:so'_0_gm_fh_et_p3 'í:fs'_þgf Heimild_þgf/tala/pers
 
 $score(+72) Sagt # Þarf að vera meiri plús en t.d. SagnFramhald
 
@@ -6262,6 +6277,10 @@ $score(+14) TímaLo/fall/tala/kyn
 
 # Hjálparreglur
 HinnSá/fall → 'sá:fn'_et_kk/fall | 'hinn:gr'_et_kk/fall
+
+# Stigin hér þurfa að yfirvinna EinkunnFornafn, sem skeytir
+# 'þann' aftan við nafnlið
+$score(+20) HinnSá/fall
 
 Vikudagur/tala/fall → Vikudagur/fall/tala
 Vikudagur/fall/tala →
