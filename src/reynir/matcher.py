@@ -125,6 +125,7 @@ _DEFAULT_NT_MAP = {
     "SetningUmAðRæða": "S-MAIN",
     "StViðtenging": "S-MAIN",
     "Fyrirsögn": "S-HEADING",
+    "Staðhæfing": "S-QUOTE",  # "Þetta er svona, segir Páll"
     "Tilvísunarsetning": "CP-REL",
     "KommaTilvísunarsetning": "CP-REL",
     "AðÞvíErSegir": "CP-REL",
@@ -132,6 +133,7 @@ _DEFAULT_NT_MAP = {
     "Afleiðing": "S-CONS",
     "Spurnarsetning": "S-QUE",
     "Sagt": "CP-QUOTE",
+    "Segjandi": "CP-SOURCE",
     "Forskeyti": "S-PREFIX",
     "Tíðarsetning": "CP-ADV-TEMP",
     "Tilgangssetning": "CP-ADV-PURP",
@@ -200,7 +202,7 @@ _DEFAULT_NT_MAP = {
     "TímaNafnliðurMinni": "NP",
     "TímaMagnNafnliðurStærri": "NP",
     "TímaMagnNafnliðurMinni": "NP",
-    "NlAðSögn": "NP",
+    "Heimild": "NP-SOURCE",
     "Sagnliður": "VP",
     "SagnliðurMeðF": "VP",
     "So": "VP",
@@ -299,7 +301,8 @@ _DEFAULT_NT_MAP = {
 _DEFAULT_ID_MAP = {
     "S0": dict(name="Málsgrein"),
     "S0-X": dict(name="Rangt mynduð setning"),
-    "S-MAIN": dict(name="Setning", subject_to={"S-MAIN", "S-QUE"}),
+    "S-MAIN": dict(name="Setning", subject_to={"S-MAIN", "S-QUE", "CP-QUOTE"}),
+    "S-QUOTE": dict(name="Staðhæfing", overrides="S-MAIN"),
     "S-HEADING": dict(name="Fyrirsögn"),
     "S-PREFIX": dict(name="Forskeytt setning"),  # Prefix in front of sentence
     "S-QUE": dict(name="Spurnaraðalsetning", overrides="S-MAIN"),  # Question clause
@@ -314,6 +317,7 @@ _DEFAULT_ID_MAP = {
     "CP-ADV-COND": dict(name="Skilyrðissetning"),  # Adverbial conditional phrase
     "CP-ADV-CMP": dict(name="Samanburðarsetning"),  # Adverbial comparative phrase
     "CP-QUOTE": dict(name="Tilvitnun"),  # Direct quote
+    "CP-SOURCE": dict(name="Segjandi"),  # Quote source
     "IP": dict(name="Beygingarliður"),  # Inflectional phrase
     "IP-INF": dict(name="Beygingarliður", overrides="VP"),  # Infinitival inflectional phrase
     "VP": dict(name="Sagnliður", overrides={"VP"}),
@@ -324,6 +328,7 @@ _DEFAULT_ID_MAP = {
     "NP-ADDR": dict(name="Heimilisfang", overrides="NP"),
     "NP-COMPANY": dict(name="Fyrirtæki", overrides="NP"),
     "NP-TITLE": dict(name="Titill", overrides="NP"),
+    "NP-SOURCE": dict(name="Heimild"),
     "NP-AGE": dict(name="Aldur"),
     "NP-MEASURE": dict(name="Magnliður", overrides="NP"),
     "NP-SUBJ": dict(name="Frumlag", subject_to={"NP-SUBJ"}),

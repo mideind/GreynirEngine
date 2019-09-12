@@ -513,7 +513,7 @@ class Reducer:
                         if wt.first in worse:
                             for bt in s:
                                 if wt is not bt and bt.first in better:
-                                    if bt.name[0] in "\"'":
+                                    if bt.is_literal:
                                         # Literal terminal:
                                         # be even more aggressive in promoting it
                                         adj_w = -2 * factor
