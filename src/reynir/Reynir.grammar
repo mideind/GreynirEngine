@@ -1195,6 +1195,7 @@ LoÞgfNh →
     | 'skyldur:lo'_nf_et_hk_sb
     # '(Mér er [það]) ljúft [og skylt] (að tilkynna að Gunna er frjáls)'
     | 'ljúfur:lo'_nf_et_hk_sb OgSkylt?
+    | "bæði:st" 'ljúfur:lo'_nf_et_hk_sb OgSkylt
 
 OgSkylt →
     "og:st" 'skyldur:lo'_nf_et_hk_sb
