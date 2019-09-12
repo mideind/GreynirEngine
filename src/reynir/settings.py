@@ -677,22 +677,6 @@ class AdjectivePredicates:
             AdjectivePredicates.ERROR_PREPOSITIONS[adj].update(prepositions)
 
 
-class Morphemes:
-
-    # dict { morpheme : [ preferred PoS ] }
-    BOUND_DICT = {}
-    # dict { morpheme : [ excluded PoS ] }
-    FREE_DICT = {}
-
-    @staticmethod
-    def add(morph, boundlist, freelist):
-        if boundlist:
-            Morphemes.BOUND_DICT[morph] = boundlist
-        else:
-            raise ConfigError("A definition of allowed PoS is necessary with morphemes")
-        # The freelist may be empty
-        Morphemes.FREE_DICT[morph] = freelist
-
 
 class Preferences:
 
@@ -1339,29 +1323,6 @@ class Settings:
             AdjectivePredicates.add(adj, a[1:], prepositions)
 
     @staticmethod
-    def _handle_morphemes(s):
-        """ Process the contents of the [morphemes] section """
-        freelist = []
-        boundlist = []
-        spl = s.split()
-        if len(spl) < 2:
-            raise ConfigError(
-                "Expected at least a prefix and an attachment specification"
-            )
-        m = spl[0]
-        for pos in spl[1:]:
-            if pos:
-                if pos.startswith("+"):
-                    boundlist.append(pos[1:])
-                elif pos.startswith("-"):
-                    freelist.append(pos[1:])
-                else:
-                    raise ConfigError(
-                        "Attachment specification should start with '+' or '-'"
-                    )
-        Morphemes.add(m, boundlist, freelist)
-
-    @staticmethod
     def read(fname):
         """ Read configuration file """
 
@@ -1389,7 +1350,6 @@ class Settings:
                 "noindex_words": Settings._handle_noindex_words,
                 "topics": Settings._handle_topics,
                 "adjective_predicates": Settings._handle_adjective_predicates,
-                "morphemes": Settings._handle_morphemes,
                 "bin_errata": Settings._handle_bin_errata,
                 "bin_deletions": Settings._handle_bin_deletions,
             }

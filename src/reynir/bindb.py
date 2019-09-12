@@ -286,7 +286,6 @@ class BIN_Db:
             upper/lower case variations, etc. """
 
         # Start with a straightforward lookup of the word
-
         lower_w = w
         if auto_uppercase and w.islower():
             if len(w) == 1:
@@ -334,7 +333,6 @@ class BIN_Db:
                     # but we want to give the regular, common lower case form
                     # priority.
                     m = lookup(lower_w) + m
-
         if m:
             # Most common path out of this function
             return w, m
