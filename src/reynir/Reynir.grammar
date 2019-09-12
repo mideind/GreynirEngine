@@ -1177,7 +1177,7 @@ SetningAukafallForgangur →
     | 'það:pfn'_hk_et/aukafall HjSögnBer FsAtv? Nhm So_1_nh/aukafall AðLiður?
 
 BeygingarliðurLoÞgf →
-    NlFrumlag_þgf HjSögnLhÞt_et_p3 FsAtv? LoÞgfNh
+    NlFrumlag_þgf HjSögnLhÞt_et_p3 'það:pfn'_hk_et_nf? FsAtv? LoÞgfNh
 
 $score(+0) BeygingarliðurLoÞgf
 
@@ -1191,6 +1191,15 @@ LoÞgfNh →
     | 'óheimill:lo'_nf_et_hk_sb
     | 'eðlislægur:lo'_nf_et_hk_sb
     | 'ljós:lo'_nf_et_hk_sb
+    # '(Mér er) skylt (að upplýsa að Jón dró sér fé)'
+    | 'skyldur:lo'_nf_et_hk_sb
+    # '(Mér er [það]) ljúft [og skylt] (að tilkynna að Gunna er frjáls)'
+    | 'ljúfur:lo'_nf_et_hk_sb OgSkylt?
+
+OgSkylt →
+    "og:st" 'skyldur:lo'_nf_et_hk_sb
+
+$score(+20) OgSkylt
 
 # Öfug orðaröð: 'Eignarrétti fylgja [í auknum mæli] skyldur' (í stað 'Skyldur fylgja eignarrétti')
 # 'Þetta skrifar Bjarni á Facebook-síðu sinni og bendir [galvaskur] á frammistöðu stjórnarinnar'
