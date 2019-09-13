@@ -1296,7 +1296,6 @@ class DefaultPipeline:
             self.correct_tokens,
             self.parse_static_phrases,
             self.annotate,
-            self.lookup_unknown_words,
             self.recognize_entities,
             self.check_spelling,
             self.parse_phrases_1,
@@ -1322,11 +1321,6 @@ class DefaultPipeline:
     def annotate(self, stream):
         """ Lookup meanings from dictionary """
         return annotate(self._db, self._token_ctor, stream, self._auto_uppercase)
-
-    def lookup_unknown_words(self, stream):
-        """ Lookup unknown words. Default stack doesn't do anything,
-            but derived classes can override this. """
-        return stream
 
     def recognize_entities(self, stream):
         """ Recognize named entities. Default stack doesn't do anything,
