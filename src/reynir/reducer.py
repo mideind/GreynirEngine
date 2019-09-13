@@ -368,6 +368,7 @@ class ParseForestReducer(ParseForestNavigator):
                 # an enclosing verb
                 # Iterate through enclosing verbs
                 final_bonus = None
+                # pylint: disable=not-an-iterable
                 for terminal, token in prep_bonus:
                     # Attempt to find the preposition matching bonus in the cache
                     key = (node.terminal, node.token.lower, terminal, token)

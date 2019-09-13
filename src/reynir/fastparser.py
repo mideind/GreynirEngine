@@ -60,6 +60,7 @@ from .glock import GlobalLock
 
 # Import the CFFI wrapper module for the _eparser.*.so library
 # which is compiled from eparser.cpp (see eparser_build.py)
+# pylint: disable=no-name-in-module
 from ._eparser import lib as eparser, ffi
 
 
@@ -755,6 +756,8 @@ class ParseForestNavigator:
 
     """ Base class for navigating parse forests. Override the underscored
         methods to perform actions at the corresponding points of navigation. """
+
+    # pylint: disable=assignment-from-none
 
     def __init__(self, visit_all=False):
         """ If visit_all is False, we only visit each packed node once.
