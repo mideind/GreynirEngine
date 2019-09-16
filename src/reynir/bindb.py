@@ -285,30 +285,30 @@ class BIN_Db:
             return its meaning(s). This function checks for abbreviations,
             upper/lower case variations, etc. """
 
-        # Start with a straightforward lookup of the word
+        # Start with a straightforward lookup of the word as-is
         lower_w = w
-        if auto_uppercase and w.islower():
+        m = lookup(w)
+
+        if auto_uppercase and not m and w.islower():
+            # Lowercase word that was not found in BÍN:
+            # If auto_uppercase is True, we attempt to find an
+            # uppercase variant of it
             if len(w) == 1:
-                # Special case for single letter words:
-                # if they exist in BÍN, don't convert them
-                m = lookup(w)
-                if not m:
-                    # If they don't exist in BÍN, treat them as uppercase
-                    # abbreviations (probably middle names)
-                    w = w.upper() + "."
+                # Special case for single letter words that are not found in BÍN:
+                # treat them as uppercase abbreviations
+                # (probably middle names)
+                w = w.upper() + "."
             else:
                 # Check whether this word has an uppercase form in the database
+                # capitalize() converts "ABC" and "abc" to "Abc"
                 w_upper = w.capitalize()
-                m = lookup(w_upper)
-                if m:
+                m_upper = lookup(w_upper)
+                if m_upper:
                     # Yes: assume it should be uppercase
                     w = w_upper
+                    # Use the uppercase meanings
+                    m = m_upper
                     at_sentence_start = False  # No need for special case here
-                else:
-                    # No: go for the regular lookup
-                    m = lookup(w)
-        else:
-            m = lookup(w)
 
         if at_sentence_start or not m:
             # No meanings found in database, or at sentence start
@@ -396,9 +396,9 @@ class BIN_Db:
                         if r.ordfl == "lo"
                     ]
 
-        if not m and auto_uppercase and w.islower():
-            # If no meaning found and we're auto-uppercasing,
-            # convert this to upper case (could be an entity name)
+        if auto_uppercase and not m and w.islower():
+            # If still no meaning found and we're auto-uppercasing,
+            # convert this to upper case (probably an entity name)
             w = w.capitalize()
 
         return w, m

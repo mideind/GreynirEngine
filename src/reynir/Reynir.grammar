@@ -5633,8 +5633,8 @@ AfstæðDagsetning →
     | 'á:fs'_þgf 'liðinn:lo'_sb_þgf_ft_hk 'ár:hk'_þgf_ft OgÁratugum? # á liðnum árum [og áratugum]
     | 'í:fs'_þgf dagsafs NæstSíðast_þgf_et_kk? # í október [1933] [síðastliðnum]
 
-    | ÍByrjunLok Mánuður_et_ef          # í byrjun septembermánaðar
-    | ÍByrjunLok dagsafs                # í byrjun október (2014)
+    | ÍByrjunLok Mánuður_et_ef NæstSíðast_ef_et_kk? # í byrjun septembermánaðar [síðastliðins]
+    | ÍByrjunLok dagsafs NæstSíðast_ef_et_kk? # í byrjun október (2014) [síðastliðins]
     | ÍByrjunLok 'ár:hk'_et_ef ártal    # í byrjun árs 1945
     | ÍByrjunLok TímaÁkvæðisliður_ef_et/kyn? TímaNafnorðStærri_ef_et/kyn # í byrjun/lok dags/viku
 
