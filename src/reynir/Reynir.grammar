@@ -2073,10 +2073,14 @@ So_1_sagnb_þf → so_1_þf_sagnb   # (Í dag hafa konurnar [ekki]) borðað mat
 So_1_sagnb_þgf → so_1_þgf_sagnb # (Í dag hafa konurnar [ekki]) hafnað Páli
 So_1_sagnb_ef → so_1_ef_sagnb   # (Í dag hafa konurnar [ekki]) notið matarins
 
+$tag(pick_up_verb) So_1_sagnb/fall
+
 So_1_nh_nf → so_1_nf_nh         # (Í dag munu konurnar [ekki]) vera leikarar
 So_1_nh_þf → so_1_þf_nh         # (Í dag munu konurnar [ekki]) borða matinn
 So_1_nh_þgf → so_1_þgf_nh       # (Í dag munu konurnar [ekki]) hafna Páli
 So_1_nh_ef → so_1_ef_nh         # (Í dag munu konurnar [ekki]) njóta matarins
+
+$tag(pick_up_verb) So_1_nh/fall
 
 So_1_bh_nf → so_1_nf_bh | so_1_nf_gm_fh_p1_ft_nt # Vertu leikari / Verum leikarar
 So_1_bh_þf → so_1_þf_bh | so_1_þf_gm_fh_p1_ft_nt # Borðaðu matinn / borðum matinn
@@ -2090,10 +2094,14 @@ So_1_vh_þf/tala/pers → so_1_þf_vh/tala/pers    # Borðir þú matinn
 So_1_vh_þgf/tala/pers → so_1_þgf_vh/tala/pers  # Hafni ég Páli
 So_1_vh_ef/tala/pers → so_1_ef_vh/tala/pers    # Nyti hann matarins
 
+$tag(pick_up_verb) So_1_vh/fall/tala/pers
+
 So_1_p3_nf/tala → so_1_nf_p3/tala
 So_1_p3_þf/tala → so_1_þf_p3/tala
 So_1_p3_þgf/tala → so_1_þgf_p3/tala
 So_1_p3_ef/tala → so_1_ef_p3/tala
+
+$tag(pick_up_verb) So_1_p3/fall/tala
 
 # Ópersónulegar sagnir sem standa með frumlagi í aukafalli og hafa jafnframt
 # andlag, t.d. 'Mig dreymdi hest', þar sem 'dreymdi'
