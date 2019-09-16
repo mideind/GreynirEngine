@@ -3146,7 +3146,7 @@ $score(+8) Númer
 
 Fjöldi_ft/fall/kyn → to_ft/fall/kyn | töl_ft/fall/kyn
 
-# Persónufornöfn þriðju persónu eintölu, karl- og kvenkyn
+# Persónufornöfn þriðju persónu eintölu
 # Þessi orð eru ekki merkt með kyni í BÍN;
 # þess vegna þurfa þau sérstaka meðhöndlun hér
 
@@ -3159,6 +3159,11 @@ NlKjarni_et_nf_kvk → 'hún:pfn'_kvk_et_nf
 NlKjarni_et_þf_kvk → 'hún:pfn'_kvk_et_þf
 NlKjarni_et_þgf_kvk → 'hún:pfn'_kvk_et_þgf
 NlKjarni_et_ef_kvk → 'hún:pfn'_kvk_et_ef
+
+NlKjarni_et_nf_hk → 'hán:pfn'_hk_et_nf
+NlKjarni_et_þf_hk → 'hán:pfn'_hk_et_þf
+NlKjarni_et_þgf_hk → 'hán:pfn'_hk_et_þgf
+NlKjarni_et_ef_hk → 'hán:pfn'_hk_et_ef
 
 # Fleirtölumyndir 3. persónu eru í BÍN undir 'sá'
 
@@ -3269,8 +3274,8 @@ NlStakViðbótNl/fall/kyn →
     NlStak_ft_p3/fall/kyn               # við fóstbræður, við alþingismennirnir
     | no_gr_et/fall/kyn                 # við fjölskyldan, við hópurinn
 
-NlStakViðbótNl/fall/nkyn →
-    Manneskja/fall/nkyn                 # (við) Sóley Tómasdóttir (fórum), (hann ræddi við okkur) Pál dómkirkjuprest
+NlStakViðbótNl/fall/kyn →
+    Manneskja/fall/kyn                  # (við) Sóley Tómasdóttir (fórum), (hann ræddi við okkur) Pál dómkirkjuprest
 
 $score(-20) NlStakViðbótNl/fall/kyn     # Draga af stig fyrir "við fóstbræður" vegna hættu á ruglingi við forsetninguna 'við'
 
@@ -3312,7 +3317,7 @@ Skyldleiki_kvk/fall → 'mæðgur:kvk'_gr_ft/fall | 'systir:kvk'_gr_ft/fall | 'f
 # Systkinin Jón og Anna, feðginin Friðmar og Jóna
 Skyldleiki_hk/fall → 'systkin:hk'_gr_ft/fall | 'frændsystkin:hk'_gr_ft/fall | 'mæðgin:hk'_gr_ft/fall | 'feðgin:hk'_gr_ft/fall
 
-Fjölskylda_ft/nkyn/fall → Skyldleiki/nkyn/fall Manneskja/fall/nkyn FsRuna? Og Manneskja/fall/nkyn
+Fjölskylda_ft/kyn/fall → Skyldleiki/kyn/fall Manneskja/fall/kyn FsRuna? Og Manneskja/fall/kyn
 Fjölskylda_ft_hk/fall → Skyldleiki_hk/fall Manneskja/fall FsRuna? Og Manneskja/fall
 
 NlStak_ft_p3/fall/kyn → Fjölskylda_ft/kyn/fall FsRunaEftirNl?
@@ -3384,6 +3389,8 @@ AllurSinn/fall → 'allur:fn'_et_hk/fall 'sinn:fn'_et_hk/fall
 Pfn_kk/tala/fall → 'hann:pfn'_kk/tala/fall
 Pfn_kvk/tala/fall → 'hún:pfn'_kvk/tala/fall
 Pfn_hk/tala/fall → 'það:pfn'_hk/tala/fall
+# 'hán' er aðeins til í eintölu; fleirtölumyndin er 'þau'
+Pfn_hk_et/fall → 'hán:pfn'_hk/tala/fall
 
 Pfn/tala/fall/kyn → Pfn/kyn/tala/fall
 
@@ -4018,9 +4025,9 @@ Til → "-:en" | "til:fs" | "og:st" | 'til:fs'_ef "og:st" 'með:fs'_þgf | 'til_
 
 $score(+2) Úrslit/fall/kyn
 
-# nkyn = náttúrulegt kyn (karlkyn eða kvenkyn)
-Fyrirbæri/fall/nkyn →
-    Manneskja/fall/nkyn
+# Manneskja getur verið kk, kvk eða hk ('hán')
+Fyrirbæri/fall/kyn →
+    Manneskja/fall/kyn
 
 # Fyrirtækisnöfn - hvorugkyn
 # !!! Ath: Eiga fyrirtækisnöfn e.t.v. að vera NlKjarni, ekki Fyrirbæri?
@@ -4143,15 +4150,31 @@ $score(+8) FyrirbæriMeðGreini_ft/fall/kyn
 # [frú] Vigdís Finnbogadóttir [fyrrverandi forseti]
 # [stórvesír] Ásbjörn Friðriksson [, alþingismann]
 # [hún] Kristín (okkar)
+# [hán] Alda Villiljós [er sannfært um að málstaðurinn sé góður]
+
+# Hrein mannanöfn eru látin halda málfræðilegu kyni sínu,
+# þ.e. karl- eða kvenkyni
 Mannsnafn/fall/nkyn → person/fall/nkyn
 
 Manneskja/fall/nkyn → Ávarp/nkyn/fall? Mannsnafn/fall/nkyn Titill/fall?
-Manneskja/fall → Manneskja/fall/nkyn
+
+# Ef notað er ávarp ('hán') leyfa reglurnar nöfn í hvort sem er
+# [málfræðilegu] karl- eða kvenkyni, en hnúturinn 'Manneskja' fær
+# málfræðilegt hvorugkyn.
+Manneskja_nf_hk → ÞekktÁvarp_hk_nf Mannsnafn_nf/nkyn Titill_nf?
+Manneskja_þf_hk → ÞekktÁvarp_hk_þf Mannsnafn_þf/nkyn Titill_þf?
+Manneskja_þgf_hk → ÞekktÁvarp_hk_þgf Mannsnafn_þgf/nkyn Titill_þgf?
+Manneskja_ef_hk → ÞekktÁvarp_hk_ef Mannsnafn_ef/nkyn Titill_ef?
+
+Manneskja/fall → Manneskja/fall/kyn
+
+Ávarp/kyn/fall →
+    ÞekktÁvarp/kyn/fall
 
 Ávarp/nkyn/fall →
-    no_et/fall | ÞekktÁvarp/nkyn/fall
+    no_et/fall
 
-$score(-6) Ávarp/nkyn/fall
+$score(-6) Ávarp/kyn/fall
 
 ÞekktÁvarp_kk/fall →
     'herra:kk'_et/fall | 'séra:kk'_et/fall | 'hann:pfn'_kk_et/fall
@@ -4163,7 +4186,10 @@ $score(-6) Ávarp/nkyn/fall
     | 'doktor:kk'_et/fall | 'prófessor:kk'_et/fall | 'maddama:kvk'_et/fall
     | "dj:kvk"
 
-$score(+10) ÞekktÁvarp/nkyn/fall
+ÞekktÁvarp_hk/fall →
+    'hán:pfn'_hk_et/fall
+
+$score(+10) ÞekktÁvarp/kyn/fall
 
 # 'Már Guðmundsson, bankastjóri [Seðlabanka Íslands]'
 # Reynt er að láta titil ekki enda á FsRuna/FsAtv eða á EfLiður
@@ -4283,14 +4309,15 @@ Fornafn_et/fall/kyn → 'einn:fn'_et/fall/kyn Og 'sami:lo'_et/fall/kyn
 
 # Persónufornöfn sem notuð eru eins og eignarfornöfn
 # en beygjast ekki með nafnlið og eru ekki merkt fn í BÍN, þ.e.
-# okkar / ykkar / hans / hennar / þess / þeirra
+# okkar / ykkar / hans / hennar / háns / þess / þeirra
 # (Bíllinn okkar, hans skoðanir...)
 # Persónufornöfnin (pfn) "hans", "hennar" og "það" eru án kyns í BÍN
 EignarFornafn →
-    'ég:pfn'_ef_ft
-    | 'þú:pfn'_ef_ft
-    | 'hann:pfn'_kk_ef_et
-    | 'hún:pfn'_kvk_ef_et
+    'ég:pfn'_ef_ft          # okkar
+    | 'þú:pfn'_ef_ft        # ykkar
+    | 'hann:pfn'_kk_ef_et   # hans
+    | 'hún:pfn'_kvk_ef_et   # hennar
+    | 'hán:pfn'_hk_ef_et    # háns
     | 'það:pfn'_hk_ef/tala  # þess / þeirra
 
 Töluorð/tala/fall/kyn → to/tala/fall/kyn | tala/tala/fall/kyn
@@ -4654,8 +4681,9 @@ KommuStForskeyti/fall →
     | StForskeytiHannHún/fall
 
 StForskeytiHannHún/fall →
-    'hann:pfn'_ft/fall  # þeir Jón og Páll
-    | 'hún:pfn'_ft/fall   # Þær Jóna og Gunna
+    'hann:pfn'_kk_ft/fall      # þeir Jón og Páll
+    | 'hún:pfn'_kvk_ft/fall     # Þær Jóna og Gunna
+    # Ekki þarf 'hán' hér þar sem notað er 'þau' í fleirtölu í því tilviki
 
 # Draga úr 'þeir' eða 'þær' sem forskeyti í lista sem ekki er af sama kyni
 # (en það er samt nauðsynlegt að leyfa þetta því stundum innihalda listar
@@ -4667,13 +4695,13 @@ KommuStForskeyti/kyn/fall →
     | "þar:ao" "af:ao"    # fjórir þingmenn, þar af einn nýútskrifaður, 
 
 KommuStForskeyti_kk/fall →
-    'hann:pfn'_ft/fall  # þeir Jón og Páll
+    'hann:pfn'_kk_ft/fall  # þeir Jón og Páll
 
 KommuStForskeyti_kvk/fall →
-    'hún:pfn'_ft/fall   # Þær Jóna og Gunna
+    'hún:pfn'_kvk_ft/fall  # Þær Jóna og Gunna
 
 KommuStForskeyti_hk/fall →
-    'það:pfn'_ft/fall   # Þau barnið og dýrið
+    'það:pfn'_hk_ft/fall   # Þau barnið og dýrið
 
 # Draga úr 'þau' sem forskeyti í lista sem inniheldur aðeins
 # hvorugkyn, því það er frekar óvenjuleg notkun

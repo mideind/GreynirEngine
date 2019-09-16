@@ -1778,6 +1778,49 @@ def test_relative_clause(r):
     )
 
 
+def test_neutral_pronoun(r):
+    s = r.parse_single("Hán var ánægt með stöðu mála.")
+    assert (
+        s.tree.flat_with_all_variants == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ "
+        "VP VP so_et_fh_gm_p3_þt /VP NP-PRD NP-PRD lo_et_hk_nf_sb /NP-PRD "
+        "PP P fs_þgf /P NP no_et_kvk_þgf NP-POSS no_ef_ft_hk /NP-POSS /NP /PP /NP-PRD "
+        "/VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Hán langaði að tala við hán um málið.")
+    assert (
+        s.tree.flat_with_all_variants == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_p3_þf /NP-SUBJ "
+        "VP VP so_1_þf_subj_op_þf_et_fh_gm_þt /VP IP-INF TO nhm /TO VP so_0_gm_nh "
+        "/VP /IP-INF PP P fs_þf /P NP pfn_et_hk_p3_þf /NP /PP PP P fs_þf /P NP "
+        "no_et_gr_hk_þf /NP /PP /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Hán Alda var ánægt.")
+    assert (
+        s.tree.flat_with_all_variants == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_nf_p3 "
+        "person_kvk_nf /NP-SUBJ VP VP so_et_fh_gm_p3_þt /VP NP-PRD lo_et_hk_nf_sb "
+        "/NP-PRD /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Hán Halldór var ánægt.")
+    assert (
+        s.tree.flat_with_all_variants == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_nf_p3 "
+        "person_kk_nf /NP-SUBJ VP VP so_et_fh_gm_p3_þt /VP NP-PRD lo_et_hk_nf_sb "
+        "/NP-PRD /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Hán Auður leitaði álits háns Ilmar.")
+    assert (
+        s.tree.flat_with_all_variants == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_nf_p3 "
+        "person_kvk_nf /NP-SUBJ VP VP so_1_ef_et_fh_gm_p3_þt /VP NP-OBJ "
+        "no_ef_et_hk NP-POSS pfn_ef_et_hk_kk_p3 person_ef_kvk /NP-POSS /NP-OBJ "
+        "/VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Háni féll illa að talað var af vanvirðingu um hán.")
+    assert (
+        s.tree.flat_with_all_variants == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_p3_þgf "
+        "/NP-SUBJ VP VP so_1_nf_subj_op_þgf_et_fh_gm_þt /VP NP-OBJ eo CP-THT C st /C "
+        "IP VP VP so_gm_sagnb /VP VP so_et_fh_gm_p3_þt /VP PP P fs_þgf /P NP "
+        "no_et_kvk_þgf PP P fs_þf /P NP pfn_et_hk_p3_þf /NP /PP /NP /PP /VP /IP "
+        "/CP-THT /NP-OBJ /VP /IP /S-MAIN p /S0"
+    )
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Reynir
@@ -1814,4 +1857,5 @@ if __name__ == "__main__":
     test_adjective_dative(r)
     test_ambig_phrases(r)
     test_relative_clause(r)
+    test_neutral_pronoun(r)
     r.__class__.cleanup()
