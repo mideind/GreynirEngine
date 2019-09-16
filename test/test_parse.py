@@ -1779,11 +1779,11 @@ def test_relative_clause(r):
 
 
 def test_neutral_pronoun(r):
-    s = r.parse_single("Hán var ánægt með stöðu mála.")
+    s = r.parse_single("Hán var ánægt með hest háns.")
     assert (
         s.tree.flat_with_all_variants == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ "
         "VP VP so_et_fh_gm_p3_þt /VP NP-PRD NP-PRD lo_et_hk_nf_sb /NP-PRD "
-        "PP P fs_þgf /P NP no_et_kvk_þgf NP-POSS no_ef_ft_hk /NP-POSS /NP /PP /NP-PRD "
+        "PP P fs_þf /P NP no_et_kk_þf NP-POSS pfn_ef_et_hk_p3 /NP-POSS /NP /PP /NP-PRD "
         "/VP /IP /S-MAIN p /S0"
     )
     s = r.parse_single("Hán langaði að tala við hán um málið.")
@@ -1806,10 +1806,16 @@ def test_neutral_pronoun(r):
         "/NP-PRD /VP /IP /S-MAIN p /S0"
     )
     s = r.parse_single("Hán Auður leitaði álits háns Ilmar.")
+    # 'Auður' er bæði í kk og kvk í BÍN
     assert (
         s.tree.flat_with_all_variants == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_nf_p3 "
         "person_kvk_nf /NP-SUBJ VP VP so_1_ef_et_fh_gm_p3_þt /VP NP-OBJ "
-        "no_ef_et_hk NP-POSS pfn_ef_et_hk_kk_p3 person_ef_kvk /NP-POSS /NP-OBJ "
+        "no_ef_et_hk NP-POSS pfn_ef_et_hk_p3 person_ef_kvk /NP-POSS /NP-OBJ "
+        "/VP /IP /S-MAIN p /S0"
+    ) or (
+        s.tree.flat_with_all_variants == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_nf_p3 "
+        "person_kk_nf /NP-SUBJ VP VP so_1_ef_et_fh_gm_p3_þt /VP NP-OBJ "
+        "no_ef_et_hk NP-POSS pfn_ef_et_hk_p3 person_ef_kvk /NP-POSS /NP-OBJ "
         "/VP /IP /S-MAIN p /S0"
     )
     s = r.parse_single("Háni féll illa að talað var af vanvirðingu um hán.")

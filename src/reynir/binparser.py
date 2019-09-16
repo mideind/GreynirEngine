@@ -1403,6 +1403,7 @@ class VariantHandler:
         super().__init__(name)
         # Do a bit of pre-calculation to speed up various
         # checks against this terminal
+        # pylint: disable=no-member
         q = self._name[0]
         if q in "\"'":
             # Literal terminal: be careful since the first (literal)
@@ -2038,7 +2039,7 @@ _PFN_VARIANTS = {
     "þær": {"p3", "kvk"},
     "hán": {"p3", "hk"},
     "háni": {"p3", "hk"},
-    "háns": {"p3", "kk"},
+    "háns": {"p3", "hk"},
     "það": {"p3", "hk"},
     "því": {"p3", "hk"},
     "þess": {"p3", "hk"},
