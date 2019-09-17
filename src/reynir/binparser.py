@@ -36,6 +36,7 @@
 
 import os
 import time
+import re
 
 from datetime import datetime
 from functools import reduce
@@ -1609,6 +1610,28 @@ class BIN_Terminal(VariantHandler, Terminal):
         self.shortcut_match = None
 
 
+class SequenceTerminal(BIN_Terminal):
+
+    """ Subclass of BIN_Terminal that shortcuts matching for
+        'sequence' terminals. This is done as a special case
+        because sequence terminals can match multiple token
+        types. """
+
+    # A sequence terminal matches integers, a,b,c...,aa,ab,ac...,
+    # as well as roman numerals
+    _REGEX = re.compile(r"(?:[0-9]+$)|(?:[a-z]{1,2}$)|(?:[ivxlcm]+$)")
+
+    def __init__(self):
+        super().__init__("sequence")
+        self.shortcut_match = SequenceTerminal._match
+
+    @staticmethod
+    def _match(token_txt):
+        """ Return True if the given (lower case) token text matches a
+            sequence, i.e. is a number, a,b,c..., or i,ii,iii... """
+        return SequenceTerminal._REGEX.match(token_txt) is not None
+
+
 class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
 
     """ Subclass of LiteralTerminal that mixes in support from VariantHandler
@@ -1798,6 +1821,10 @@ class BIN_Grammar(Grammar):
     def _make_terminal(name):
         """ Make BIN_Terminal instances instead of
             plain-vanilla Terminals """
+        # Hack to support 'sequence' terminals, which
+        # bind to more than one token type
+        if name == "sequence":
+            return SequenceTerminal()
         return BIN_Terminal(name)
 
     @staticmethod
@@ -1960,10 +1987,11 @@ def wrap_tokens(tokens, wrap_func=None):
         # No match: we're done
         return right
 
+    # Remove embedded parentheses with unknown content
     ix = 0
     while ix < tlen:
         tok = tlist[ix]
-        if tok[0] == TOK.PUNCTUATION and tok[1] == "(":
+        if tok and tok[0] == TOK.PUNCTUATION and tok[1] == "(":
             ix = scan_par(ix)  # Jumps to the right parenthesis, if found
         else:
             ix += 1

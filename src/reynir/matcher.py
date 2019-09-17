@@ -304,7 +304,7 @@ _DEFAULT_ID_MAP = {
     "S-MAIN": dict(name="Setning", subject_to={"S-MAIN", "S-QUE", "CP-QUOTE"}),
     "S-QUOTE": dict(name="Staðhæfing", overrides="S-MAIN"),
     "S-HEADING": dict(name="Fyrirsögn"),
-    "S-PREFIX": dict(name="Forskeytt setning"),  # Prefix in front of sentence
+    "S-PREFIX": dict(name="Forskeyti"),  # Prefix in front of sentence
     "S-QUE": dict(name="Spurnaraðalsetning", overrides="S-MAIN"),  # Question clause
     "CP-THT": dict(name="Skýringarsetning", overrides="IP-INF"),  # Complement clause
     "CP-QUE": dict(name="Spurnaraukasetning", overrides="NP-OBJ"),  # Question subclause

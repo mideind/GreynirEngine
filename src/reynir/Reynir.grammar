@@ -149,7 +149,11 @@ Forskeyti →
     | "sem:st" 'segja:so'_lhþt_sb_hk_nf_et ":"      # sem sagt
     | 'aðferð:kvk'_nf_et ":"
     | 'með_öðrum_orðum:ao' ":" | 'með:fs'_þgf 'annar:lo'_hk_þgf_ft 'orð:hk'_þgf_ft ":"
-    | Greinarnúmer ":"
+    | GreinarForskeyti
+
+GreinarForskeyti →
+    Greinarnúmer ":"
+    | sequence ")"    # Tengist við tölu; a,b,c...; i,ii,iii,iv...
 
 AfTala → 'af:fs'_þgf Tala_kvk_þgf
 
