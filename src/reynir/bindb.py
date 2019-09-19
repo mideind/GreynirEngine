@@ -289,11 +289,11 @@ class BIN_Db:
         lower_w = w
         m = lookup(w)
 
-        if auto_uppercase and not m and w.islower():
+        if auto_uppercase and w.islower():
             # Lowercase word that was not found in BÍN:
             # If auto_uppercase is True, we attempt to find an
             # uppercase variant of it
-            if len(w) == 1:
+            if len(w) == 1 and not m:
                 # Special case for single letter words that are not found in BÍN:
                 # treat them as uppercase abbreviations
                 # (probably middle names)
@@ -304,10 +304,17 @@ class BIN_Db:
                 w_upper = w.capitalize()
                 m_upper = lookup(w_upper)
                 if m_upper:
-                    # Yes: assume it should be uppercase
+                    # Uppercase form(s) found
                     w = w_upper
-                    # Use the uppercase meanings
-                    m = m_upper
+                    if m:
+                        # ...in addition to lowercase ones
+                        # Note that the uppercase forms are put in front of the
+                        # resulting list. This is intentional, inter alia so that
+                        # person names are recognized as such in bintokenizer.py.
+                        m = m_upper + m
+                    else:
+                        # No lowercase forms: use the uppercase form and meanings
+                        m = m_upper
                     at_sentence_start = False  # No need for special case here
 
         if at_sentence_start or not m:
