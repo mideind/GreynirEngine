@@ -4519,6 +4519,10 @@ NlEind_ft_p3/fall/kyn →
     # (Niðurstöðurnar voru) þær [einar] [,] að Katrín myndaði stjórn [,] (og kom það sumum á óvart)
     'sá:fn'_ft/fall/kyn 'einn:fn'_ft/fall/kyn? Útskýring
 
+NlEind_et_p3_þgf_hk →
+    # (Hann gekk út frá) því sem vísu/öruggu/afgreiddu að hann gæti greitt sektina
+    'sá:fn'_et_þgf_hk "sem:stt" lo_sb_hk_et_þgf Útskýring
+
 ÞaðTenging →
     # (Þá eru dæmi þess)[,] í veraldarsögunni [,] að eldfjöll hafi gosið
     AtvFsAukaInnskot? Skýringarsetning
@@ -4567,6 +4571,7 @@ SvigaInnihald/tala/pers/fall/kyn →
     Árabil
     > Tilvísunarsetning/tala/pers/kyn # (og sem ég er almennt fylgjandi)
     > Nl/fall/tala          # 'Ég spurði forsætisráðherra, Sigmund Davíð, um málið'
+    > Nl/fall               # Sama fall en ekki sama tala
     > SvigaInnihaldFsRuna
     > SvigaInnihaldNl/fall  # Ef ekki finnst sama fall og tala, prófa almennan nafnlið
     > HreinYfirsetning
@@ -4920,6 +4925,8 @@ Lo_sb_nf/tala/kyn →
     | LoViðhengi_sþgf LoAtviksliðir? lo_sb_nf_sþgf/tala/kyn
     # Hann er heiðursins [svo sannarlega] verður
     | LoViðhengi_sef LoAtviksliðir? lo_sb_nf_sef/tala/kyn
+    # Hann er þess [algerlega] fullviss að Jón sé sekur
+    | 'það:pfn'_hk_ef_et LoAtviksliðir? lo_sb_nf_sef/tala/kyn Skýringarsetning
 
 Lo_sb_nf_ft/kyn →
     'margur:lo'_sb_nf_ft/kyn 'hver:fn'_nf_ft/kyn # margir hverjir, mörg hver, margar hverjar
