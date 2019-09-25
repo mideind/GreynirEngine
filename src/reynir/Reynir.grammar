@@ -3316,6 +3316,12 @@ NlStak_p3/tala/fall/kyn →
 NlStakTagl/tala/fall/kyn →
     FornafnEinkunn/tala/fall/kyn* to/tala/fall/kyn?    # (stjórnarframkvæmdum) þessum öllum, (bílana) mína tvo
     | EignarFornafn/tala/fall/kyn KommaOgEðaEn EfLiður # skattskýrslur mínar og eiginkonu minnar
+    | EinnOgSér/tala/fall/kyn
+
+EinnOgSér/tala/fall/kyn →
+    'einn:fn'/tala/fall/kyn "og:st" "sér:ao"           # skipulagsbreytingar einar og sér
+
+$score(+50) EinnOgSér/tala/fall/kyn # Þarf hærra skor en FornafnEinkunn
 
 LoTöluorð_ef →
     'tvennur:lo'_ef_et_hk
@@ -5519,16 +5525,20 @@ UndirEins →
 $score(+4) UndirEins
 
 Sinnum →
-    # tvisvar, þrisvar og fjórum sinnum er skilgreint í Main.conf
-    TalaOg? töl_ft_hk_þgf 'sinn:hk'_þgf_ft      # tuttugu og fimm sinnum
-    | tala_ft_hk_þgf 'sinn:hk'_þgf_ft           # 5 sinnum
-    | tala_et_hk_þgf 'sinn:hk'_þgf_et           # 101 sinni
+    # tvisvar, þrisvar og fjórum sinnum er skilgreint sem atviksliður í Phrases.conf
+    TalaOg? töl_ft_hk_þgf TalaTil? 'sinn:hk'_þgf_ft     # tuttugu og fimm sinnum
+    | tala_ft_hk_þgf TalaTil? 'sinn:hk'_þgf_ft          # 5 sinnum
+    | tala_et_hk_þgf 'sinn:hk'_þgf_et                   # 101 sinni
     | TalaOg 'tvisvar_sinnum:ao'
     | TalaOg 'þrisvar_sinnum:ao'
     | TalaOg 'fjórum_sinnum:ao'
 
 TalaOg →
     töl_ft_hk_þgf Og
+
+TalaTil →
+    "til:st" töl_ft_hk_þgf
+    | "til:st" tala_ft_hk_þgf
 
 $score(+24) Sinnum
 

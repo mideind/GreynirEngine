@@ -383,7 +383,6 @@ def all_genders(token):
 
 
 def parse_phrases_1(db, token_ctor, token_stream):
-
     """ Parse numbers and amounts """
 
     token = None
@@ -601,10 +600,9 @@ def parse_phrases_1(db, token_ctor, token_stream):
 
 
 def parse_phrases_2(token_stream, token_ctor):
-
     """ Parse a stream of tokens looking for phrases and making substitutions.
-        Second pass
-    """
+        Second pass: handle conversion of numbers + currencies into amounts,
+        and process person names """
 
     token = None
     try:
@@ -985,6 +983,50 @@ def parse_phrases_2(token_stream, token_ctor):
         yield token
 
 
+def parse_phrases_3(token_stream, token_ctor):
+    """ Parse a stream of tokens looking for phrases and making substitutions.
+        Third pass: coalesce uppercase, otherwise unrecognized words with
+        a following person name, if any. """
+
+    token = None
+    try:
+
+        # Maintain a one-token lookahead
+        token = next(token_stream)
+
+        while True:
+            next_token = next(token_stream)
+
+            if (
+                (token.kind == TOK.ENTITY or (token.kind == TOK.WORD and not token.val))
+                and token.txt[0].isupper() and token.txt[1:].islower()
+                and next_token.kind == TOK.PERSON
+            ):
+                # Upper-case word that is either an entity or a word that is
+                # not in BÍN, and the next token is a person: merge the two
+                # tokens into a single person name
+                # 'Jesse' 'John Kelley' -> 'Jesse John Kelley'
+                token = token_ctor.Person(
+                    token.txt + " " + next_token.txt,
+                    [
+                        PersonName(token.txt + " " + pn.name, pn.gender, pn.case)
+                        for pn in next_token.val
+                    ]
+                )
+                next_token = next(token_stream)
+
+            # Yield the current token and advance to the lookahead
+            yield token
+            token = next_token
+
+    except StopIteration:
+        pass
+
+    # Final token (previous lookahead)
+    if token:
+        yield token
+
+
 class MatchingStream:
 
     """ This class parses a stream of tokens while looking for
@@ -1300,6 +1342,7 @@ class DefaultPipeline:
             self.check_spelling,
             self.parse_phrases_1,
             self.parse_phrases_2,
+            self.parse_phrases_3,
             self.disambiguate_phrases,
         ]
 
@@ -1339,6 +1382,10 @@ class DefaultPipeline:
     def parse_phrases_2(self, stream):
         """ Currencies, person names """
         return parse_phrases_2(stream, self._token_ctor)
+
+    def parse_phrases_3(self, stream):
+        """ Additional person name logic """
+        return parse_phrases_3(stream, self._token_ctor)
 
     def disambiguate_phrases(self, stream):
         """ Eliminate very uncommon meanings """
