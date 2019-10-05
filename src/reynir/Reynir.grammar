@@ -3148,7 +3148,7 @@ NlKjarni_ft/fall/kyn →
 
 Fyrirbæri_ft/fall/kyn →
     Skst? no_ft/fall/kyn                            # [Commodore PET] tölvur
-    | Skst? no_ft_gr/fall/kyn Fjöldi_ft/fall/kyn    # Mennina tíu / félögin tvö
+    | Skst? no_gr_ft/fall/kyn Fjöldi_ft/fall/kyn    # Mennina tíu / félögin tvö
     | FyrirbæriMeðGreini_ft/fall/kyn
 
 Númer →
@@ -4311,7 +4311,7 @@ $score(+8) Prósenta
     | 'hola:kvk'_ef_et      # Átján holu golfvöllur (ekki átján hol(n)a golfvöllur)
 
 EfLiðurForskeytiKjarni_et/kyn → Fyrirbæri_ef/kyn
-EfLiðurForskeytiKjarni_ft/kyn → no_ef_ft/kyn
+EfLiðurForskeytiKjarni_ft/kyn → no_ft_ef/kyn
 
 # Ef hægt er að nota t.d. fornafn í stað eignarfalls-forskeytis er það betra
 $score(-1) EfLiðurForskeyti

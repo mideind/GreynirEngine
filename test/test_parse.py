@@ -1706,11 +1706,11 @@ def test_kludgy_ordinals():
     )
     assert s.tree is not None
     # þriggja herbergja
-    assert "NP-POSS to_ft_ef_hk no_ef_ft_hk /NP-POSS" in s.tree.flat
+    assert "NP-POSS to_ft_ef_hk no_ft_ef_hk /NP-POSS" in s.tree.flat
     # á fyrstu hæð
     assert "PP P fs_þf /P NP lo_þf_et_kvk no_et_þf_kvk /NP /PP" in s.tree.flat
     # tveggja strokka
-    assert "NP-POSS to_ft_ef_kk no_ef_ft_kk /NP-POSS" in s.tree.flat
+    assert "NP-POSS to_ft_ef_kk no_ft_ef_kk /NP-POSS" in s.tree.flat
     # af fjórðu kynslóð
     assert "PP P fs_þgf /P NP lo_þgf_et_kvk no_et_þgf_kvk /NP /PP" in s.tree.flat
 

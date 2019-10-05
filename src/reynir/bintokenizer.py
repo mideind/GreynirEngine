@@ -1000,6 +1000,7 @@ def parse_phrases_3(token_stream, token_ctor):
             if (
                 (token.kind == TOK.ENTITY or (token.kind == TOK.WORD and not token.val))
                 and token.txt[0].isupper() and token.txt[1:].islower()
+                and " " not in token.txt
                 and next_token.kind == TOK.PERSON
             ):
                 # Upper-case word that is either an entity or a word that is
