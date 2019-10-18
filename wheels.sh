@@ -16,8 +16,10 @@ chgrp docker /tmp/io/wheelhouse
 cp -L ./* /tmp/io
 cp -L -r ./src/* /tmp/io/src
 cp -L -r ./test/* /tmp/io/test
+# Pull the latest pypa/manylinux1 Docker image
+docker pull quay.io/pypa/manylinux1_x86_64
 # Run the Docker image
-docker run --rm -it -v /tmp/io:/io quay.io/pypa/manylinux1_x86_64 bash /io/build_wheels.sh
+docker run --rm -e PLAT=manylinux1_x86_64 -it -v /tmp/io:/io quay.io/pypa/manylinux1_x86_64 bash /io/build_wheels.sh
 # Copy the finished wheels
 mkdir -p ./dist
 mv /tmp/io/wheelhouse/reynir* ./dist
