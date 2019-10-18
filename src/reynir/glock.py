@@ -1,10 +1,24 @@
 """
+
     Reynir: Natural language processing for Icelandic
 
     GlobalLock utility class
 
-    Copyright (C) 2016 Vilhjalmur Thorsteinsson
-    All rights reserved
+    Copyright (C) 2019 Miðeind ehf.
+    Original author: Vilhjálmur Þorsteinsson
+
+       This program is free software: you can redistribute it and/or modify
+       it under the terms of the GNU General Public License as published by
+       the Free Software Foundation, either version 3 of the License, or
+       (at your option) any later version.
+       This program is distributed in the hope that it will be useful,
+       but WITHOUT ANY WARRANTY; without even the implied warranty of
+       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+       GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see http://www.gnu.org/licenses/.
+
 
     This module implements the GlobalLock class, providing
     interprocess locks within a server.
@@ -25,6 +39,7 @@ import tempfile
 
 class LockError(Exception):
     """ Lock could not be obtained """
+
     pass
 
 
@@ -36,11 +51,14 @@ except ImportError:
         # Try Windows
         import msvcrt
     except ImportError:
+
         # Not Unix, not Windows: bail out
         def _lock_file(file, block):
-            raise TypeError('File locking not supported on this platform')
+            raise TypeError("File locking not supported on this platform")
+
         def _unlock_file(file):
-            raise TypeError('File locking not supported on this platform')
+            raise TypeError("File locking not supported on this platform")
+
     else:
 
         # Windows
@@ -50,21 +68,27 @@ except ImportError:
             while retry:
                 retry = False
                 try:
-                    msvcrt.locking(file.fileno(), msvcrt.LK_LOCK if block else msvcrt.NBLCK, 1)
+                    msvcrt.locking(
+                        file.fileno(), msvcrt.LK_LOCK if block else msvcrt.NBLCK, 1
+                    )
                 except OSError as e:
                     if block and e.errno == 36:
-                        # Windows says 'resource deadlock avoided', but we truly want a longer
-                        # blocking wait: try again
+                        # Windows says 'resource deadlock avoided', but we truly want
+                        # a longer blocking wait: try again
                         retry = True
                     else:
-                        raise LockError("Couldn't lock {0}, errno is {1}".format(file.name, e.errno))
+                        raise LockError(
+                            "Couldn't lock {0}, errno is {1}".format(file.name, e.errno)
+                        )
 
         def _unlock_file(file):
             try:
                 file.seek(0)
                 msvcrt.locking(file.fileno(), msvcrt.LK_UNLCK, 1)
             except OSError as e:
-                raise LockError("Couldn't unlock {0}, errno is {1}".format(file.name, e.errno))
+                raise LockError(
+                    "Couldn't unlock {0}, errno is {1}".format(file.name, e.errno)
+                )
 
 else:
     # Unix/POSIX
@@ -89,10 +113,10 @@ class GlobalLock:
         assert lockname and isinstance(lockname, str)
         # Locate global locks in the system temporary directory
         # (should work on both Windows and Unix/POSIX)
-        self._path = os.path.join(self._TMP_DIR, 'greynir-' + lockname)
+        self._path = os.path.join(self._TMP_DIR, "greynir-" + lockname)
         self._fp = None
 
-    def acquire(self, block = True):
+    def acquire(self, block=True):
         """ Acquire a global lock, blocking if block = True """
 
         if self._fp is not None:
@@ -103,13 +127,13 @@ class GlobalLock:
         fp = None
         try:
             # Try to open for writing without truncation:
-            fp = open(path, 'r+')
+            fp = open(path, "r+")
         except IOError:
             # If the file doesn't exist, we'll get an IO error, try a+
             # Note that there may be a race here. Multiple processes
             # could fail on the r+ open and open the file a+, but only
             # one will get the the lock and write a pid.
-            fp = open(path, 'a+')
+            fp = open(path, "a+")
 
         if fp is None:
             raise LockError("Couldn't open or create lock file {0}".format(path))
@@ -137,7 +161,7 @@ class GlobalLock:
 
     def __enter__(self):
         """ Python context manager protocol """
-        self.acquire(block = True)
+        self.acquire(block=True)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):

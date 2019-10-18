@@ -93,7 +93,6 @@ _BIN_DELETIONS = None
 CASES = ("NF", "ÞF", "ÞGF", "EF")
 CASES_LATIN = tuple(case.encode("latin-1") for case in CASES)
 
-# FILENAME = "ord.compressed.test"
 FILENAME = "ord.compressed"
 
 
@@ -363,14 +362,16 @@ class BIN_Compressor:
             with open(fname, "r") as f:
                 for line in f:
                     line = line.strip()
-                    if not line:
+                    if not line or line[0] == "#":
+                        # Empty line or comment: skip
                         continue
                     t = line.split(";")
                     stem, wid, ordfl, fl, form, meaning = t
                     # Skip this if present in _BIN_DELETIONS
-                    if (stem, ordfl, fl) in _BIN_DELETIONS:
+                    if (stem, ordfl, fl) in _BIN_DELETIONS or " " in line:
                         print(
-                            "Skipping {stem} {wid} {ordfl} {fl} {form} {meaning}".format(
+                            "Skipping {stem} {wid} {ordfl} {fl} {form} {meaning}"
+                            .format(
                                 stem=stem,
                                 wid=wid,
                                 ordfl=ordfl,

@@ -166,7 +166,8 @@ class Nonterminal:
 
     @property
     def line(self):
-        """ Return the number of the line within the grammar file where this nt was defined """
+        """ Return the number of the line within the grammar file
+            where this nt was defined """
         return self._line
 
     @property
@@ -179,7 +180,8 @@ class Nonterminal:
         return self._tags is not None and tag in self._tags
 
     def has_any_tag(self, tagset):
-        """ Check whether this nonterminal has been tagged with any of the given tags """
+        """ Check whether this nonterminal has been tagged
+            with any of the given tags """
         return False if self._tags is None else not self._tags.isdisjoint(tagset)
 
     def add_tag(self, tag):
@@ -512,17 +514,20 @@ class Grammar:
 
     @property
     def nonterminals_by_ix(self):
-        """ Return a dictionary of nonterminals in the grammar indexed by integer < 0 """
+        """ Return a dictionary of nonterminals in the grammar,
+            indexed by integer < 0 """
         return self._nonterminals_by_ix
 
     @property
     def terminals_by_ix(self):
-        """ Return a dictionary of terminals in the grammar indexed by integer > 0 """
+        """ Return a dictionary of terminals in the grammar,
+            indexed by integer > 0 """
         return self._terminals_by_ix
 
     @property
     def productions_by_ix(self):
-        """ Return a dictionary of productions in the grammar indexed by integer >= 0 """
+        """ Return a dictionary of productions in the grammar,
+            indexed by integer >= 0 """
         return self._productions_by_ix
 
     def lookup(self, index):
@@ -1444,9 +1449,8 @@ if __name__ == "__main__":
         print("Unable to read grammar file {0}".format(fname))
     else:
         print(
-            "Reading grammar file {0} with timestamp {1:%Y-%m-%d %H:%M:%S}\n".format(
-                fname, datetime.fromtimestamp(ts)
-            )
+            "Reading grammar file {0} with timestamp {1:%Y-%m-%d %H:%M:%S}\n"
+            .format(fname, datetime.fromtimestamp(ts))
         )
         import time
 
@@ -1455,12 +1459,12 @@ if __name__ == "__main__":
         try:
             g.read(fname, verbose=True)
             print(
-                "Grammar parsed and loaded in {0:.2f} seconds".format(time.time() - t0)
+                "Grammar parsed and loaded in {0:.2f} seconds"
+                .format(time.time() - t0)
             )
             print(
-                "Grammar has {0:,} terminals, {1:,} nonterminals and {2:,} productions".format(
-                    g.num_terminals, g.num_nonterminals, g.num_productions
-                )
+                "Grammar has {0:,} terminals, {1:,} nonterminals and {2:,} productions"
+                .format(g.num_terminals, g.num_nonterminals, g.num_productions)
             )
         except GrammarError as err:
             print(str(err))

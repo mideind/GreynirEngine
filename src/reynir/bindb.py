@@ -54,8 +54,9 @@ BIN_Meaning = namedtuple(
 
 # Compact string representation
 BIN_Meaning.__str__ = BIN_Meaning.__repr__ = lambda self: (
-    "(stofn='{0}', {2}/{3}/{1}, ordmynd='{4}' {5})"
-    .format(self.stofn, self.utg, self.ordfl, self.fl, self.ordmynd, self.beyging)
+    "(stofn='{0}', {2}/{3}/{1}, ordmynd='{4}' {5})".format(
+        self.stofn, self.utg, self.ordfl, self.fl, self.ordmynd, self.beyging
+    )
 )
 
 # The set of word subcategories (fl) for person names
@@ -204,27 +205,37 @@ class BIN_Db:
             The set is unfiltered except for the presence of 'NF' in the beyging
             field. For new code, lookup_nominative() is likely to be a
             more efficient choice. """
-        return list(map(BIN_Meaning._make, self._compressed_bin.raw_nominative(w)))
+        return list(
+            map(BIN_Meaning._make, self._compressed_bin.raw_nominative(w))
+        )
 
     def lookup_nominative(self, w, **options):
         """ Return meaning tuples for all word forms in nominative
             case for all { kk, kvk, hk, lo } category stems of the given word """
-        return list(map(BIN_Meaning._make, self._compressed_bin.nominative(w, **options)))
+        return list(
+            map(BIN_Meaning._make, self._compressed_bin.nominative(w, **options))
+        )
 
     def lookup_accusative(self, w, **options):
         """ Return meaning tuples for all word forms in accusative
             case for all { kk, kvk, hk, lo } category stems of the given word """
-        return list(map(BIN_Meaning._make, self._compressed_bin.accusative(w, **options)))
+        return list(
+            map(BIN_Meaning._make, self._compressed_bin.accusative(w, **options))
+        )
 
     def lookup_dative(self, w, **options):
         """ Return meaning tuples for all word forms in dative
             case for all { kk, kvk, hk, lo } category stems of the given word """
-        return list(map(BIN_Meaning._make, self._compressed_bin.dative(w, **options)))
+        return list(
+            map(BIN_Meaning._make, self._compressed_bin.dative(w, **options))
+        )
 
     def lookup_genitive(self, w, **options):
         """ Return meaning tuples for all word forms in genitive
             case for all { kk, kvk, hk, lo } category stems of the given word """
-        return list(map(BIN_Meaning._make, self._compressed_bin.genitive(w, **options)))
+        return list(
+            map(BIN_Meaning._make, self._compressed_bin.genitive(w, **options))
+        )
 
     def lookup_word(self, w, at_sentence_start=False, auto_uppercase=False):
         """ Given a word form, look up all its possible meanings """
@@ -256,7 +267,8 @@ class BIN_Db:
 
     @staticmethod
     def prefix_meanings(mlist, prefix):
-        """ Return a meaning list with a prefix added to the stofn and ordmynd attributes """
+        """ Return a meaning list with a prefix added to the
+            stofn and ordmynd attributes """
         return (
             [
                 BIN_Meaning(
@@ -427,18 +439,11 @@ class BIN_Db:
             # Unknown word form: leave it as-is
             return w
         # Check whether this is (or might be) an adjective
-        m_word = next(
-            (m for m in mm if m.ordfl == "lo" and "NF" in m.beyging),
-            None,
-        )
+        m_word = next((m for m in mm if m.ordfl == "lo" and "NF" in m.beyging), None)
         if m_word is not None:
             # This is an adjective: find its forms
             # in the requested case ("Gul gata", "Stjáni blái")
-            mm = case_func(
-                m_word.ordmynd,
-                cat="lo",
-                stem=m_word.stofn
-            )
+            mm = case_func(m_word.ordmynd, cat="lo", stem=m_word.stofn)
             if "VB" in m_word.beyging:
                 mm = [m for m in mm if "VB" in m.beyging]
             elif "SB" in m_word.beyging:
@@ -448,8 +453,10 @@ class BIN_Db:
             mm = sorted(mm, key=score, reverse=True)
             m_word = next(
                 (
-                    m for m in mm
-                    if m.ordfl in {"kk", "kvk", "hk", "fn", "pfn", "to", "gr"} and "NF" in m.beyging
+                    m
+                    for m in mm
+                    if m.ordfl in {"kk", "kvk", "hk", "fn", "pfn", "to", "gr"}
+                    and "NF" in m.beyging
                 ),
                 None,
             )
@@ -497,7 +504,6 @@ class BIN_Db:
         # No case casting could be done: return the original word
         return w
 
-
     def cast_to_accusative(self, w, *, meaning_filter_func=None):
         """ Cast a word from nominative to accusative case, or return it
             unchanged if it is not inflectable by case. """
@@ -506,8 +512,10 @@ class BIN_Db:
         # an adjective is being used with an indefinite or definite noun,
         # or whether a word such as 'við' is actually a preposition.
         return self._cast_to_case(
-            w, self.lookup_word, self.lookup_accusative,
-            meaning_filter_func=meaning_filter_func
+            w,
+            self.lookup_word,
+            self.lookup_accusative,
+            meaning_filter_func=meaning_filter_func,
         )
 
     def cast_to_dative(self, w, *, meaning_filter_func=None):
@@ -518,8 +526,10 @@ class BIN_Db:
         # an adjective is being used with an indefinite or definite noun,
         # or whether a word such as 'við' is actually a preposition.
         return self._cast_to_case(
-            w, self.lookup_word, self.lookup_dative,
-            meaning_filter_func=meaning_filter_func
+            w,
+            self.lookup_word,
+            self.lookup_dative,
+            meaning_filter_func=meaning_filter_func,
         )
 
     def cast_to_genitive(self, w, *, meaning_filter_func=None):
@@ -530,6 +540,8 @@ class BIN_Db:
         # an adjective is being used with an indefinite or definite noun,
         # or whether a word such as 'við' is actually a preposition.
         return self._cast_to_case(
-            w, self.lookup_word, self.lookup_genitive,
-            meaning_filter_func=meaning_filter_func
+            w,
+            self.lookup_word,
+            self.lookup_genitive,
+            meaning_filter_func=meaning_filter_func,
         )

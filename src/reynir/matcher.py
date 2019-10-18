@@ -1,4 +1,5 @@
 """
+
     Reynir: Natural language processing for Icelandic
 
     Matcher module
@@ -145,7 +146,7 @@ _DEFAULT_NT_MAP = {
     "Samanburðarsetning": "CP-ADV-CMP",
     "SamanburðurSemSetning": "CP-ADV-CMP",
     "SamanburðarNafnliður": "CP-ADV-CMP",
-    "StakViðhengi": "CP-ADV-CMP", 
+    "StakViðhengi": "CP-ADV-CMP",
     "SamanburðarForskeyti": "CP-ADV-CMP",
     "EnSamanb": "CP-ADV-CMP",
     # Note: CP-THT is used in code logic below; if modifying this,
@@ -167,7 +168,7 @@ _DEFAULT_NT_MAP = {
     "BlTagl": "IP",
     "NhLiður": "IP-INF",
     "SetningÞað": "IP-INF",
-    "ÞaðTenging" : "IP-INF",
+    "ÞaðTenging": "IP-INF",
     "ViðurkenningarNh": "IP-INF",
     "ViðurkenningarNhKomma": "IP-INF",
     "Nl": "NP",
@@ -177,8 +178,8 @@ _DEFAULT_NT_MAP = {
     "EfLiðurForskeyti": "NP-POSS",
     "OkkarFramhald": "NP-POSS",
     "Allra": "NP-POSS",
-    #"LoEftirNlMeðÞgf": "NP-DAT",
-    "LoViðhengi": "NP-ADP",     # Adjective predicate
+    # "LoEftirNlMeðÞgf": "NP-DAT",
+    "LoViðhengi": "NP-ADP",  # Adjective predicate
     "Heimilisfang": "NP-ADDR",
     "Fyrirtæki": "NP-COMPANY",
     "SérnafnFyrirtæki": "NP-COMPANY",
@@ -190,7 +191,7 @@ _DEFAULT_NT_MAP = {
     "NlFrumlag": "NP-SUBJ",
     "NlFrumlagÞað": "NP-SUBJ",
     "NlBeintAndlag": "NP-OBJ",
-    "NlEnginnAndlag" : "NP-OBJ",  # 'hann getur enga samninga gert'
+    "NlEnginnAndlag": "NP-OBJ",  # 'hann getur enga samninga gert'
     "NlAnnar": "NP-OBJ",  # '[Jón hefur] aðra sögu [að segja]'
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
@@ -212,7 +213,7 @@ _DEFAULT_NT_MAP = {
     "SagnliðurÁnF": "VP",
     "ÖfugurSagnliður": "VP",
     "SagnliðurVh": "VP",
-    "HjSögnLhÞt": "VP", # Auxiliary verb, hjálparsögn
+    "HjSögnLhÞt": "VP",  # Auxiliary verb, hjálparsögn
     "SögnLhNt": "VP",  # Present participle, lýsingarháttur nútíðar
     "SögnSagnbBreyting": "VP",  # 'hefur versnað'
     "SögnLhNtBreyting": "VP",  # 'hefur farið fækkandi'
@@ -308,10 +309,14 @@ _DEFAULT_ID_MAP = {
     "S-QUE": dict(name="Spurnaraðalsetning", overrides="S-MAIN"),  # Question clause
     "CP-THT": dict(name="Skýringarsetning", overrides="IP-INF"),  # Complement clause
     "CP-QUE": dict(name="Spurnaraukasetning", overrides="NP-OBJ"),  # Question subclause
-    "CP-REL": dict(name="Tilvísunarsetning", overrides="S", subject_to={"CP-REL"}),  # Relative clause
+    "CP-REL": dict(
+        name="Tilvísunarsetning", overrides="S", subject_to={"CP-REL"}
+    ),  # Relative clause
     "CP-ADV-TEMP": dict(name="Tíðarsetning"),  # Adverbial temporal phrase
     "CP-ADV-PURP": dict(name="Tilgangssetning"),  # Adverbial purpose phrase
-    "CP-ADV-ACK": dict(name="Viðurkenningarsetning"),  # Adverbial acknowledgement phrase
+    "CP-ADV-ACK": dict(
+        name="Viðurkenningarsetning"
+    ),  # Adverbial acknowledgement phrase
     "CP-ADV-CONS": dict(name="Afleiðingarsetning"),  # Adverbial consequence phrase
     "CP-ADV-CAUSE": dict(name="Orsakarsetning"),  # Adverbial causal phrase
     "CP-ADV-COND": dict(name="Skilyrðissetning"),  # Adverbial conditional phrase
@@ -319,10 +324,15 @@ _DEFAULT_ID_MAP = {
     "CP-QUOTE": dict(name="Tilvitnun"),  # Direct quote
     "CP-SOURCE": dict(name="Segjandi"),  # Quote source
     "IP": dict(name="Beygingarliður"),  # Inflectional phrase
-    "IP-INF": dict(name="Beygingarliður", overrides="VP"),  # Infinitival inflectional phrase
+    "IP-INF": dict(
+        name="Beygingarliður", overrides="VP"
+    ),  # Infinitival inflectional phrase
     "VP": dict(name="Sagnliður", overrides={"VP"}),
     "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
-    "NP": dict(name="Nafnliður", subject_to={"NP-SUBJ", "NP-OBJ", "NP-IOBJ", "NP-PRD", "NP-ADP"}),
+    "NP": dict(
+        name="Nafnliður",
+        subject_to={"NP-SUBJ", "NP-OBJ", "NP-IOBJ", "NP-PRD", "NP-ADP"},
+    ),
     "NP-POSS": dict(name="Eignarfallsliður", overrides="NP"),
     "NP-DAT": dict(name="Þágufallsliður", overrides="NP"),
     "NP-ADDR": dict(name="Heimilisfang", overrides="NP"),
@@ -342,12 +352,16 @@ _DEFAULT_ID_MAP = {
     "ADVP-DATE-REL": dict(name="Afstæð dagsetning", overrides="ADVP"),
     "ADVP-TIMESTAMP-ABS": dict(name="Fastur tímapunktur", overrides="ADVP"),
     "ADVP-TIMESTAMP-REL": dict(name="Afstæður tímapunktur", overrides="ADVP"),
-    "ADVP-TMP-SET": dict(name="Tíðni", overrides="ADVP"),   
+    "ADVP-TMP-SET": dict(name="Tíðni", overrides="ADVP"),
     "ADVP-DUR-ABS": dict(name="Fast tímabil"),
     "ADVP-DUR-REL": dict(name="Afstætt tímabil", overrides="ADVP"),
     "ADVP-DUR-TIME": dict(name="Tímabil"),
     "ADVP-PCL": dict(name="Ögn"),
-    "PP": dict(name="Forsetningarliður", overrides="ADVP", subject_to={"ADVP-DUR-REL", "ADVP-DUR-ABS"}),
+    "PP": dict(
+        name="Forsetningarliður",
+        overrides="ADVP",
+        subject_to={"ADVP-DUR-REL", "ADVP-DUR-ABS"},
+    ),
     # Hausar
     "P": dict(name="Forsetning"),
     "TO": dict(name="Nafnháttarmerki"),
@@ -355,34 +369,34 @@ _DEFAULT_ID_MAP = {
     "FOREIGN": dict(name="Erlendur texti"),
 }
 
-_DEFAULT_TERMINAL_MAP = { # TODO: Make sure node names are translated in treegrid
-    #"no": "N",
-    #"hk": "N",
-    #"kk": "N",
-    #"kvk": "N",
-    #"fyrirtæki": "N",
-    #"sérnafn": "N",
-    #"person": "N",
-    #"entity": "N",
-    #"fn": "PRON",
-    #"pfn": "PRON",
-    #"abfn": "PRON",
+_DEFAULT_TERMINAL_MAP = {  # TODO: Make sure node names are translated in treegrid
+    # "no": "N",
+    # "hk": "N",
+    # "kk": "N",
+    # "kvk": "N",
+    # "fyrirtæki": "N",
+    # "sérnafn": "N",
+    # "person": "N",
+    # "entity": "N",
+    # "fn": "PRON",
+    # "pfn": "PRON",
+    # "abfn": "PRON",
     "so": "VP",
-    #"ao": "ADV",
-    #"eo": "ADV",
+    # "ao": "ADV",
+    # "eo": "ADV",
     "fs": "P",
-    #"lo": "ADJ",
-    #"raðnr": "ADJ",  # Raðtölur
-    #"töl": "NUM",
-    #"tala": "NUM",
-    #"to": "NUM",
-    #"ártal": "NUM",
-    #"st": "C",
-    #"stt": "C",
-    #"nhm": "TO",  # Nafnháttarmerki
-    #"gr": "DET",
-    #"dagsafs": "DATEREL",
-    #"dagsfast": "DATEABS",
+    # "lo": "ADJ",
+    # "raðnr": "ADJ",  # Raðtölur
+    # "töl": "NUM",
+    # "tala": "NUM",
+    # "to": "NUM",
+    # "ártal": "NUM",
+    # "st": "C",
+    # "stt": "C",
+    # "nhm": "TO",  # Nafnháttarmerki
+    # "gr": "DET",
+    # "dagsafs": "DATEREL",
+    # "dagsfast": "DATEABS",
 }
 
 # The following list was obtained using this SQL query:
@@ -590,10 +604,7 @@ class SimpleTree:
                 x = self._head.get("x")
                 return "<SimpleTree for punctuation '{0}'>".format(x)
             return "<SimpleTree for terminal {0}>".format(self.terminal)
-        return (
-            "<SimpleTree with tag {0} and length {1}>"
-            .format(self.tag, len_self)
-        )
+        return "<SimpleTree with tag {0} and length {1}>".format(self.tag, len_self)
 
     @classmethod
     def from_deep_tree(cls, deep_tree, toklist):
@@ -718,8 +729,9 @@ class SimpleTree:
 
     @property
     def terminal_with_all_variants(self):
-        """ The terminal matched by this subtree, with all applicable variants
-            in canonical form (in alphabetical order, except for verb argument cases) """
+        """ The terminal matched by this subtree, with all applicable
+            variants in canonical form (in alphabetical order, except for
+            verb argument cases) """
         terminal = self._head.get("a")
         if terminal is not None:
             # All variants already available in canonical form: we're done
@@ -768,15 +780,15 @@ class SimpleTree:
 
     @property
     def index(self):
-        """ Return the associated token index, if this is a terminal, otherwise None """
+        """ Return the associated token index, if this is a terminal,
+            otherwise None """
         return self._head.get("ix") if self.is_terminal else None
-    
+
     @cached_property
     def sentences(self):
         """ A list of the contained sentences """
         return [
-            SimpleTree([[sent]], root=self.root, parent=self)
-            for sent in self._sents
+            SimpleTree([[sent]], root=self.root, parent=self) for sent in self._sents
         ]
 
     @property
@@ -901,9 +913,8 @@ class SimpleTree:
                 # 1,234.56
                 result.append("tala")
                 continue
-            if (
-                re.match(r"^\d{1,2}\.\d{1,2}(\.\d{2,4})?$", tok)
-                or re.match(r"^\d{1,2}/\d{1,2}(/\d{2,4})?$", tok)
+            if re.match(r"^\d{1,2}\.\d{1,2}(\.\d{2,4})?$", tok) or re.match(
+                r"^\d{1,2}/\d{1,2}(/\d{2,4})?$", tok
             ):
                 # 17.6, 30.12.1965, 17/6 or 30/12/65
                 result.append("dags")
@@ -961,7 +972,7 @@ class SimpleTree:
                                 if mm.ordfl in _GENDERS
                                 else mm.ordfl in {"to", "töl", "lo"}
                             ),
-                            m
+                            m,
                         )
                     )
                     if not m:
@@ -1007,8 +1018,8 @@ class SimpleTree:
                             result.append(
                                 "no_" + "_".join(sorted(list(variants | {ordfl})))
                             )
-                            # Note the gender and case of the noun, so we can restrict our
-                            # set of adjective forms, if an adjective is attached
+                            # Note the gender and case of the noun, so we can restrict
+                            # our set of adjective forms, if an adjective is attached
                             gender = ordfl.upper()
                             case = next(iter(variants & _CASES), "nf").upper()
                             continue
@@ -1088,6 +1099,7 @@ class SimpleTree:
         """ Return a bracketed representation of the tree """
         result = []
         puncts = frozenset((".", ",", ";", ":", "-", "—", "–"))
+
         def push(node):
             """ Append information about a node to the result list """
             if node is None:
@@ -1107,6 +1119,7 @@ class SimpleTree:
             else:
                 # Terminal: append the text
                 result.append(node.text.replace(" ", "_"))
+
         push(self)
         return "".join(result)
 
@@ -1190,7 +1203,8 @@ class SimpleTree:
             'indefinite' for the indefinite nominative form,
             or 'canonical' for the singular, indefinite, nominative. """
         if self._cat not in _DECLINABLE_CATEGORIES:
-            # This is not a potentially declined terminal node: return the original text
+            # This is not a potentially declined terminal node:
+            # return the original text
             return self._text
         txt = self._text
         indefinite = form == "indefinite"
@@ -1200,9 +1214,9 @@ class SimpleTree:
 
             # A bit convoluted, but so it goes
             lookup_functions = {
-                "accusative" : db.lookup_accusative,
-                "dative" : db.lookup_dative,
-                "genitive" : db.lookup_genitive
+                "accusative": db.lookup_accusative,
+                "dative": db.lookup_dative,
+                "genitive": db.lookup_genitive,
             }
             lookup_func = lookup_functions.get(form, db.lookup_nominative)
 
@@ -1213,13 +1227,13 @@ class SimpleTree:
                 for name in txt.split():
                     meanings = lookup_func(name, singular=True, cat=gender)
                     try:
-                        # Try to find an 'ism', 'erm', 'föð' or 'móð' 
+                        # Try to find an 'ism', 'erm', 'föð' or 'móð'
                         # nominative form of the correct gender
                         result.append(
                             next(
                                 filter(
                                     lambda m: m.fl in {"ism", "erm", "föð", "móð"},
-                                    meanings
+                                    meanings,
                                 )
                             ).ordmynd
                         )
@@ -1251,11 +1265,13 @@ class SimpleTree:
                     prefix += "-"
 
             options = dict(
-                cat=self._cat, stem=lemma,
-                singular=canonical, indefinite=indefinite or canonical,
+                cat=self._cat,
+                stem=lemma,
+                singular=canonical,
+                indefinite=indefinite or canonical,
                 # We don't want second or third optional forms of
                 # word declensions; we just stick with the first form
-                beyging_filter=lambda b: "2" not in b and "3" not in b
+                beyging_filter=lambda b: "2" not in b and "3" not in b,
             )
             meanings = lookup_func(txt, **options)
             if not meanings and not txt.islower():
@@ -1275,7 +1291,7 @@ class SimpleTree:
                     number = next(iter(self._vset & {"et", "ft"}), "et")
                     if number.upper() not in m.beyging:
                         return False
-                if not(canonical or indefinite):
+                if not (canonical or indefinite):
                     # Match the original word in terms of definite/indefinite
                     # (This is probably redundant since definite and indefinite
                     # forms are (almost?) always disjoint sets, but one can
@@ -1321,7 +1337,7 @@ class SimpleTree:
                     number = next(iter(self._vset & {"et", "ft"}), "et")
                     if number.upper() not in m.beyging:
                         return False
-                if not(canonical or indefinite):
+                if not (canonical or indefinite):
                     if "est" in self._vset:
                         if not ("EVB" in m.beyging or "ESB" in m.beyging):
                             return False
@@ -1562,8 +1578,8 @@ class SimpleTree:
 
     @cached_property
     def indefinite_np(self):
-        """ Return the indefinite nominative form of the noun phrase (or noun/adjective terminal)
-            contained within this subtree """
+        """ Return the indefinite nominative form of the noun phrase
+            (or noun/adjective terminal) contained within this subtree """
 
         def prop_func(node):
             if node.is_terminal:
@@ -1612,7 +1628,8 @@ class SimpleTree:
         return self._text
 
     def _list(self, filter_func):
-        """ Return a list of word lemmas that meet the filter criteria within this subtree """
+        """ Return a list of word lemmas that meet the filter criteria
+            within this subtree """
         if self._len > 1 or self._children:
             # Concatenate the text from the children
             t = []
@@ -1655,7 +1672,9 @@ class SimpleTree:
     @property
     def nouns(self):
         """ Returns the lemmas of all nouns in the subtree """
-        return self._list(lambda t: t.tcat == "no" or t.tcat == "entity" or t._cat in _GENDERS)
+        return self._list(
+            lambda t: t.tcat == "no" or t.tcat == "entity" or t._cat in _GENDERS
+        )
 
     @property
     def verbs(self):
@@ -1730,7 +1749,6 @@ class SimpleTree:
                 yield from child._top_matches(items)
 
     class _NestedList(list):
-
         def __init__(self, kind, content):
             self._kind = kind
             super().__init__()
@@ -1770,8 +1788,7 @@ class SimpleTree:
                                 for n in nested:
                                     if isinstance(n, str) and n in cls._FINISHERS:
                                         raise ValueError(
-                                            "Mismatched '{0}' in pattern"
-                                            .format(n)
+                                            "Mismatched '{0}' in pattern".format(n)
                                         )
                                 items = items[0:i] + [nested] + items[j + 1 :]
                                 len_items = len(items)
@@ -1793,7 +1810,8 @@ class SimpleTree:
         # Not parsed before: do it and cache the result
 
         def gen1():
-            """ First generator: yield non-null strings from a regex split of the pattern """
+            """ First generator: yield non-null strings from a
+                regex split of the pattern """
             for item in re.split(r"\s+|([\.\|\(\)\{\}\[\]\*\+\?\>\$])", pattern):
                 if item:
                     yield item
@@ -1914,8 +1932,7 @@ class SimpleTree:
                 )
             if kind == "{":
                 return any(
-                    run_set(gen_children, subseq)
-                    for gen_children in tree.deep_children
+                    run_set(gen_children, subseq) for gen_children in tree.deep_children
                 )
             assert False
             return False
@@ -1990,8 +2007,7 @@ class SimpleTree:
                             op = ">>"
                         if pc >= len_items:
                             raise ValueError(
-                                "Missing argument to '{0}' operator"
-                                .format(op)
+                                "Missing argument to '{0}' operator".format(op)
                             )
                         result = contained(tree, items, pc, op == ">>")
                         if not result:
@@ -2047,8 +2063,7 @@ class SimpleTree:
                             pc += 1
                         if pc >= len_items:
                             raise ValueError(
-                                "Missing argument to '{0}' operator"
-                                .format(op)
+                                "Missing argument to '{0}' operator".format(op)
                             )
                         if result:
                             # Further constrained by containment
@@ -2208,10 +2223,7 @@ class Annotator(ParseForestNavigator):
         assert ix not in self._tmap
         meaning = node.token.match_with_meaning(node.terminal)
         # Map from original token to matched terminal
-        self._tmap[ix] = (
-            node.terminal,
-            None if isinstance(meaning, bool) else meaning,
-        )
+        self._tmap[ix] = (node.terminal, None if isinstance(meaning, bool) else meaning)
         return None
 
 
