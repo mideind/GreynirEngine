@@ -4361,14 +4361,26 @@ Töluorð/fall/tala/kyn → Töluorð/tala/fall/kyn
 # en forðast verri kosti
 
 TilvísunarsetningMeðKommu/tala/pers/kyn →
-      "," Tilvísunarsetning/tala/pers/kyn ","
-    >     Tilvísunarsetning/tala/pers/kyn
-    >     Tilvísunarsetning/tala/pers/kyn ","
-    > "," Tilvísunarsetning/tala/pers/kyn
+    Ts2Kommur/tala/pers/kyn
+    | Ts0Kommur/tala/pers/kyn
+    | Ts1Komma/tala/pers/kyn
+
+Ts2Kommur/tala/pers/kyn →
+    "," Tilvísunarsetning/tala/pers/kyn ","
+
+Ts0Kommur/tala/pers/kyn →
+    Tilvísunarsetning/tala/pers/kyn
+
+Ts1Komma/tala/pers/kyn →
+    Tilvísunarsetning/tala/pers/kyn ","
+    | "," Tilvísunarsetning/tala/pers/kyn
+
+$score(+32) Ts2Kommur/tala/pers/kyn
+$score(-8) Ts1Komma/tala/pers/kyn
 
 # KommaTilvísunarsetning er einungis notað í lok venjulegrar
 # setningar með frumlagi í nefnifalli, sbr.
-# Allir mega koma með okkur sem eru fullklæddir
+# 'Allir mega koma með okkur sem eru fullklæddir'
 KommaTilvísunarsetning/tala/pers/kyn →
     ","? Sem SetningÁnF/tala/pers/kyn
 
@@ -6546,6 +6558,7 @@ FsMeðFallstjórn →
     # added to the existing productions of FsMeðFallstjórn
     # but with lower priority, so that it is only derived
     # if no higher-priority derivations are possible
+    # for the same token span
     > VillaFsMeðFallstjórn/fall
 
 VillaFsMeðFallstjórn_nf →
