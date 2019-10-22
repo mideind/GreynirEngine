@@ -209,8 +209,12 @@ class ReductionInfo:
                 if key == "sl":
                     self.reducer.set_current_verb(sc[key])
 
-    def add_child_production(self):
-        """ Reset the current verb scope for each family """
+    def add_child_production(self, ix, prod):
+        """ Start the processing of a production (numbered ix) of a nonterminal """
+        # Initialize the score of this family of children, so that productions
+        # with higher priorities (more negative prio values) get a starting bonus
+        assert ix not in self.sc or "sc" not in self.sc[ix]
+        self.sc[ix]["sc"] = -10 * prod.priority
         self.reducer.set_current_verb(self.start_verb)
 
     def process(self, node):
@@ -401,7 +405,7 @@ class ParseForestReducer(ParseForestNavigator):
         # if node.is_ambiguous:
         #     print(f"Visiting family {ix} of head node {node}")
         if results is not None:
-            results.add_child_production()
+            results.add_child_production(ix, prod)
 
     def add_result(self, results, ix, sc):
         """ Append a single result to the result object """

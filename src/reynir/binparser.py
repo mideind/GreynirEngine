@@ -1241,10 +1241,10 @@ class BIN_Token(Token):
             if not terminal.matches_first(m.ordfl, m.stofn, self.t1_lower):
                 return False
             if m.beyging == "-":
-                if m.ordfl == "lo":
-                    # If we have an adjective (lo) with no declension info,
+                if m.ordfl == "lo" or m.ordfl == "so":
+                    # If we have an adjective (lo) or verb (so) with no declension info,
                     # assume it's an abbreviation ("hæstv." for "hæstvirtur")
-                    # and thus it matches any lo_X terminal irrespective of variants.
+                    # and thus it matches any lo_X/so_X terminal irrespective of variants.
                     # Don't delete this if you don't know what you're doing ;-)
                     return True
                 if m.ordfl in BIN_Token.GENDERS_SET:
@@ -1717,7 +1717,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
             # functions are identical
             self.matches_first = self.matches
             self.shortcut_match = None
-            # Invoke BIN_Token.matches_lemma_literal() to check for match
+            # Invoke BIN_Token.matcher_lemma_literal() to check for match
             self._matcher = (
                 "uppercase_lemma_literal"
                 if self._first[0].isupper()
@@ -1758,8 +1758,8 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
     def matcher(self):
         """ Return the identifier of the matcher function in BIN_Token to
             invoke for this terminal ('no' for matcher_no, etc.). """
-        # For literal terminals, we invoke either BIN_Token.matches_strong_literal()
-        # or BIN_Token.matches_lemma_literal()
+        # For literal terminals, we invoke either BIN_Token.matcher_strong_literal()
+        # or BIN_Token.matcher_lemma_literal()
         return self._matcher
 
     def startswith(self, part):

@@ -4937,6 +4937,8 @@ Lo_sb_nf/tala/kyn →
     # (Hann var forsvarsmaður starfssviða sem eiga að vera) aðskilin
     # 'aðskilja' er einungis til sem sagnorð í BÍN, ekki lýsingarorð
     | LoAtviksliðir? so_lhþt_sb_nf/tala/kyn
+    # (Bréfið var) dagsett 10. júlí
+    | LoAtviksliðir? 'dagsetja:so'_lhþt_sb_nf/tala/kyn Dagsetningarliður
     # Jón hefur verið hlynntur málinu
     | LoAtviksliðir? lo_sb_nf/sfall/tala/kyn LoViðhengi/sfall
     # Hann er málinu [efnislega] hlynntur
@@ -5683,6 +5685,13 @@ Tímaliður →
 $score(+8) Tímaliður
 $tag(apply_prep_bonus) Tímaliður    # Gefa bónus þegar dagsetning fylgir sögn frekar en nafnlið
 $tag(apply_length_bonus) Tímaliður  # Gefa bónus eftir því hversu margar eindir (tokens) falla undir dagsetninguna
+
+Dagsetningarliður →
+    FöstDagsetning | AfstæðDagsetning
+
+$score(+12) Dagsetningarliður
+$tag(apply_prep_bonus) Dagsetningarliður    # Gefa bónus þegar dagsetning fylgir sögn frekar en nafnlið
+$tag(apply_length_bonus) Dagsetningarliður  # Gefa bónus eftir því hversu margar eindir (tokens) falla undir dagsetninguna
 
 # Aðalliður: Föst dagsetning
 FöstDagsetning → 
