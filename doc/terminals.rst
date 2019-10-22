@@ -89,16 +89,16 @@ Number categories
 +------------+---------------------------------------------------+
 | raðnr      | Ordinal number                                    |
 +------------+---------------------------------------------------+
-| sequence   | Sequence: 1, 2, 3..., a, b, c..., i, ii, iii...   |
+| sequence   | Sequence: *1, 2, 3..., a, b, c..., i, ii, iii...* |
 +------------+---------------------------------------------------+
 
 Date and time categories
 ------------------------
 
 +------------+---------------------------------------------------+
-| dagsafs    | Absolute date (year, month, day)                  |
+| dagsföst   | Absolute date (year, month, day)                  |
 +------------+---------------------------------------------------+
-| dagsföst   | Relative date                                     |
+| dagsafs    | Relative date                                     |
 |            | (year, month, day - at least one value missing)   |
 +------------+---------------------------------------------------+
 | tími       | Time (hour, minute, second)                       |
@@ -290,5 +290,20 @@ These variants occur with noun terminals (``no`` category) only.
 |            | með nafnorði)                                     |
 +------------+---------------------------------------------------+
 | abbrev     | Abbreviation (skammstöfun)                        |
++------------+---------------------------------------------------+
+
+Word or lemma endings
+---------------------
+
+These variants can be used to constrain matching to word forms or lemmas
+with particular endings only. They are used to detect certain forms of
+grammatical errors.
+
++------------+---------------------------------------------------+
+| xir        | Matches only words with lemmas that end with      |
+|            | *ir* (e.g., *læknir*, *kælir*)                    |
++------------+---------------------------------------------------+
+| zana       | Matches only word forms that end with             |
+|            | *ana* (e.g., *flokkana*, *bílana*)                |
 +------------+---------------------------------------------------+
 
