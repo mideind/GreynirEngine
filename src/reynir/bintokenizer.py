@@ -272,7 +272,7 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
         if t.kind != TOK.WORD:
             # Not a word: relay the token unchanged
             yield t
-            if t.kind == TOK.S_BEGIN or (t.kind == TOK.PUNCTUATION and t.txt == ":"):
+            if t.kind == TOK.S_BEGIN or (t.kind == TOK.PUNCTUATION and t.val[1] == ":"):
                 at_sentence_start = True
             elif t.kind != TOK.PUNCTUATION and t.kind != TOK.ORDINAL:
                 at_sentence_start = False
@@ -516,14 +516,17 @@ def parse_phrases_1(db, token_ctor, token_stream):
             while (
                 (token.kind == TOK.WORD or token.kind == TOK.ENTITY)
                 and next_token.kind == TOK.PUNCTUATION
-                and next_token.txt == COMPOSITE_HYPHEN
+                and next_token.val[1] == COMPOSITE_HYPHEN
             ):
                 # Accumulate the prefix in tq
                 tq.append(token)
+                # Note that the composite hyphen is always replaced by
+                # a 'normal' hyphen, irrespective of the type of hyphen that
+                # was originally in the text.
                 tq.append(token_ctor.Punctuation(HYPHEN))
                 # Check for optional comma after the prefix
                 comma_token = next(token_stream)
-                if comma_token.kind == TOK.PUNCTUATION and comma_token.txt == ",":
+                if comma_token.kind == TOK.PUNCTUATION and comma_token.val[1] == ",":
                     # A comma is present: append it to the queue
                     # and skip to the next token
                     tq.append(comma_token)
@@ -968,7 +971,7 @@ def parse_phrases_2(token_stream, token_ctor):
             yield token
 
             if token.kind == TOK.S_BEGIN or (
-                token.kind == TOK.PUNCTUATION and token.txt == ":"
+                token.kind == TOK.PUNCTUATION and token.val[1] == ":"
             ):
                 at_sentence_start = True
             elif token.kind != TOK.PUNCTUATION and token.kind != TOK.ORDINAL:
@@ -1505,11 +1508,14 @@ def describe_token(index, t, terminal, meaning):
     """ Return a compact dictionary describing the token t,
         at the given index within its sentence,
         which matches the given terminal with the given meaning """
-    d = dict(x=t.txt, ix=index)
+    # We use the tokenizer's normalized form of punctuation here,
+    # stored in t.val[1]
+    txt = t.val[1] if t.kind == TOK.PUNCTUATION else t.txt
+    d = dict(x=txt, ix=index)
     if terminal is not None:
         # There is a token-terminal match
         if t.kind == TOK.PUNCTUATION:
-            if t.txt == "-":
+            if txt == "-":
                 # Hyphen: check whether it is matching an em or en-dash terminal
                 if terminal.colon_cat == "em":
                     # Substitute em dash (will be displayed with surrounding space)
