@@ -495,14 +495,22 @@ def parse_phrases_1(db, token_ctor, token_stream):
                             # Match: accumulate the possible cases
                             iso_code = ISO_CURRENCIES[(nat, cur)]
                             # Filter the possible cases by considering adjectives
-                            # having a strong declension (indefinite form) only
+                            # having the correct form, i.e.
+                            # strong inflection for indefinite nouns or
+                            # weak inflection for definite nouns
+                            if next_token.val and "gr" in next_token.val[0].beyging:
+                                # Definite form ('pundið', 'dollarinn')
+                                form = "VB"
+                            else:
+                                # Indefinite form ('pund', 'dollari')
+                                form = "SB"
                             token = token_ctor.Currency(
                                 token.txt + " " + next_token.txt,
                                 iso_code,
                                 all_common_cases(
                                     token,
                                     next_token,
-                                    lambda m: (m.ordfl == "lo" and "SB" in m.beyging),
+                                    lambda m: (m.ordfl == "lo" and form in m.beyging),
                                 ),
                                 [CURRENCY_GENDERS[cur]],
                             )
