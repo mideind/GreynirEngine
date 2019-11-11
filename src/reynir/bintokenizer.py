@@ -495,14 +495,22 @@ def parse_phrases_1(db, token_ctor, token_stream):
                             # Match: accumulate the possible cases
                             iso_code = ISO_CURRENCIES[(nat, cur)]
                             # Filter the possible cases by considering adjectives
-                            # having a strong declension (indefinite form) only
+                            # having the correct form, i.e.
+                            # strong inflection for indefinite nouns or
+                            # weak inflection for definite nouns
+                            if next_token.val and "gr" in next_token.val[0].beyging:
+                                # Definite form ('pundið', 'dollarinn')
+                                form = "VB"
+                            else:
+                                # Indefinite form ('pund', 'dollari')
+                                form = "SB"
                             token = token_ctor.Currency(
                                 token.txt + " " + next_token.txt,
                                 iso_code,
                                 all_common_cases(
                                     token,
                                     next_token,
-                                    lambda m: (m.ordfl == "lo" and "SB" in m.beyging),
+                                    lambda m: (m.ordfl == "lo" and form in m.beyging),
                                 ),
                                 [CURRENCY_GENDERS[cur]],
                             )
@@ -520,7 +528,10 @@ def parse_phrases_1(db, token_ctor, token_stream):
             ):
                 # Accumulate the prefix in tq
                 tq.append(token)
-                tq.append(token_ctor.Punctuation(next_token.txt, HYPHEN))
+                # Note that the composite hyphen is always replaced by
+                # a 'normal' hyphen, irrespective of the type of hyphen that
+                # was originally in the text.
+                tq.append(token_ctor.Punctuation(HYPHEN))
                 # Check for optional comma after the prefix
                 comma_token = next(token_stream)
                 if comma_token.kind == TOK.PUNCTUATION and comma_token.val[1] == ",":
@@ -968,7 +979,7 @@ def parse_phrases_2(token_stream, token_ctor):
             yield token
 
             if token.kind == TOK.S_BEGIN or (
-                token.kind == TOK.PUNCTUATION and token.txt == ":"
+                token.kind == TOK.PUNCTUATION and token.val[1] == ":"
             ):
                 at_sentence_start = True
             elif token.kind != TOK.PUNCTUATION and token.kind != TOK.ORDINAL:
@@ -1505,11 +1516,14 @@ def describe_token(index, t, terminal, meaning):
     """ Return a compact dictionary describing the token t,
         at the given index within its sentence,
         which matches the given terminal with the given meaning """
-    d = dict(x=t.txt, ix=index)
+    # We use the tokenizer's normalized form of punctuation here,
+    # stored in t.val[1]
+    txt = t.val[1] if t.kind == TOK.PUNCTUATION else t.txt
+    d = dict(x=txt, ix=index)
     if terminal is not None:
         # There is a token-terminal match
         if t.kind == TOK.PUNCTUATION:
-            if t.val[1] == "-":
+            if txt == "-":
                 # Hyphen: check whether it is matching an em or en-dash terminal
                 if terminal.colon_cat == "em":
                     # Substitute em dash (will be displayed with surrounding space)

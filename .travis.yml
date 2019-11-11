@@ -10,6 +10,7 @@ python:
   - "pypy3"
 
 install:
+  - python -m pip install git+https://github.com/mideind/Tokenizer#egg=tokenizer
   - python setup.py develop
 
 script:

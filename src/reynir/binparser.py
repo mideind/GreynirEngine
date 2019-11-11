@@ -778,7 +778,19 @@ class BIN_Token(Token):
         return terminal.matches("punctuation", self.t1, self.t1)
 
     def matches_CURRENCY(self, terminal):
-        """ A currency name token matches a noun terminal """
+        """ A currency name token matches a noun (no) terminal,
+            or a currency/iso/fall terminal """
+        if terminal.startswith("currency"):
+            if terminal.num_variants < 1 or terminal.variant(0).upper() != self.t2[0]:
+                # ISO currency code does not match
+                return False
+            if terminal.num_variants >= 2:
+                # Check case
+                if terminal.variant(1) not in self.t2[1]:
+                    # The case is not present in the token
+                    return False
+            # The token matches
+            return True
         if not terminal.startswith("no"):
             return False
         if terminal.is_abbrev:
