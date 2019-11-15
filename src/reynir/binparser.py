@@ -881,6 +881,8 @@ class BIN_Token(Token):
 
     def matches_AMOUNT(self, terminal):
         """ An amount token matches a noun terminal """
+        if terminal.startswith("amount"):
+            return True
         if not terminal.startswith("no"):
             return False
         if terminal.has_any_vbits(BIN_Token.VBIT_ABBREV | BIN_Token.VBIT_GR):
