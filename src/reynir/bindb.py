@@ -419,7 +419,6 @@ class BIN_Db:
             # If still no meaning found and we're auto-uppercasing,
             # convert this to upper case (probably an entity name)
             w = w.capitalize()
-
         return w, m
 
     @staticmethod

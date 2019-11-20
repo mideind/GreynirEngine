@@ -985,6 +985,18 @@ class BIN_Token(Token):
         """ A hashtag token matches a hashtag (myllumerki) terminal """
         return terminal.startswith("myllumerki")
 
+    def matches_SSN(self, terminal):
+        """ A social security number token matches an ssn (kennitala) terminal """
+        return terminal.startswith("kennitala")
+
+    def matches_MOLECULE(self, terminal):
+        """ A molecule token matches a molecule (sameind) terminal """
+        return terminal.startswith("sameind")
+
+    def matches_USERNAME(self, terminal):
+        """ A username token matches a username (notandanafn) terminal """
+        return terminal.startswith("notandanafn")
+
     def matches_WORD(self, terminal):
         """ Match a word token, having the potential part-of-speech meanings
             from the BIN database, with the terminal """
@@ -1346,6 +1358,9 @@ class BIN_Token(Token):
         TOK.MEASUREMENT: matches_MEASUREMENT,
         TOK.DOMAIN: matches_DOMAIN,
         TOK.HASHTAG: matches_HASHTAG,
+        TOK.SSN: matches_SSN,
+        TOK.MOLECULE: matches_MOLECULE,
+        TOK.USERNAME: matches_USERNAME,
         TOK.WORD: matches_WORD,
     }
 

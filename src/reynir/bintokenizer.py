@@ -279,13 +279,39 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
             continue
         if t.val is None:
             # Look up word in BIN database
-            w, m = db.lookup_word(t.txt, at_sentence_start, auto_uppercase)
+            if t.txt.endswith("-") or t.txt.endswith("-") or t.txt.endswith("-"):
+                #print("Fann í lokin! Vil skoða:{}".format(t.txt[:-1]))
+                w, m = db.lookup_word(t.txt[:-1], at_sentence_start, auto_uppercase)
+                w = t.txt
+            elif "-" in t.txt or "–" in t.txt or "—" in t.txt:
+                last = t.txt.split("-")
+                last = last[-1].split("–")
+                last = last[-1].split("—")
+                #print("    Fann samsetningu")
+                #print("Last:{}".format(last))
+                w, m = db.lookup_word(last[-1], at_sentence_start, auto_uppercase)
+                w = t.txt
+            else:
+                w, m = db.lookup_word(t.txt, at_sentence_start, auto_uppercase)
             # Yield a word tuple with meanings
             yield token_ctor.Word(w, m, token=t)
         else:
             # Already have a meaning, which probably needs conversion
             # from a bare tuple to a BIN_Meaning
-            yield token_ctor.Word(t.txt, list(map(BIN_Meaning._make, t.val)), token=t)
+            if type(t.val) is list and type(t.val[0]) is list:
+                # An abbreviation, possibly containing many meanings
+                xlist = list()
+                for each in t.val:
+                    x = map(BIN_Meaning._make, each)
+                    xlist.extend(x)
+                w, m = db.lookup_word(t.txt, at_sentence_start, auto_uppercase)
+                if m:
+                    # Wrong form of abbreviation without dots is also a valid word
+                    # Add that meaning to meaning list
+                    xlist.extend(m)
+                yield token_ctor.Word(t.txt, xlist, token=t)
+            else:
+                yield token_ctor.Word(t.txt, list(map(BIN_Meaning._make, t.val)), token=t)
         # No longer at sentence start
         at_sentence_start = False
 
@@ -515,88 +541,69 @@ def parse_phrases_1(db, token_ctor, token_stream):
                                 [CURRENCY_GENDERS[cur]],
                             )
                             next_token = next(token_stream)
-
             # Check for composites:
             # 'stjórnskipunar- og eftirlitsnefnd'
             # 'dómsmála-, viðskipta- og iðnaðarráðherra'
-            # 'marg-ítrekaðri'
             tq = []
+
             while (
                 (token.kind == TOK.WORD or token.kind == TOK.ENTITY)
-                and next_token.kind == TOK.PUNCTUATION
-                and next_token.val[1] == COMPOSITE_HYPHEN
+                and (
+                    token.txt.endswith("-") 
+                    or token.txt.endswith("–")
+                )
             ):
-                # Accumulate the prefix in tq
+                print("Byrja hér:{}".format(token))
                 tq.append(token)
-                # Note that the composite hyphen is always replaced by
-                # a 'normal' hyphen, irrespective of the type of hyphen that
-                # was originally in the text.
-                tq.append(token_ctor.Punctuation(HYPHEN))
                 # Check for optional comma after the prefix
-                comma_token = next(token_stream)
+                comma_token = next_token
+                print("Í upphafi umferðar:\n\ttoken:{}\n\tcomma_token:{}".format(token.txt, comma_token.txt))
+                print("\ttype comma:{}".format(comma_token))
                 if comma_token.kind == TOK.PUNCTUATION and comma_token.val[1] == ",":
                     # A comma is present: append it to the queue
                     # and skip to the next token
+                    print("\tBætum comma_token við tq")
                     tq.append(comma_token)
                     comma_token = next(token_stream)
+                    #print("\tNæsti comma_token er {}".format(comma_token.txt))
                 # Reset our two lookahead tokens
+                print("\tHætt að leita að fyrri hlutum, endursetjum")
                 token = comma_token
                 next_token = next(token_stream)
-
+                print("\t\ttoken:{}; next_token:{}".format(token.txt, next_token.txt))
             if tq:
+                print("\tFann tq!\n\t{}".format(tq))
+                print("\t\ttoken:{}\n\tnext_token:{}".format(token.txt, next_token.txt))
                 # We have accumulated one or more prefixes
                 # ('dómsmála-, viðskipta-')
                 if token.kind == TOK.WORD and (token.txt == "og" or token.txt == "eða"):
                     # We have 'viðskipta- og'
+                    print("\tFann og!\n\t{}".format(token.txt))
                     if next_token.kind != TOK.WORD:
                         # Incorrect: yield the accumulated token
                         # queue and keep the current token and the
                         # next_token lookahead unchanged
+                        print("Fann ekki!{}".format(next_token.txt))
                         for t in tq:
                             yield t
                     else:
                         # We have 'viðskipta- og iðnaðarráðherra'
+                        # or 'dómsmála-, viðskipta- og iðnaðarráðherra'.
                         # Return a single token with the meanings of
                         # the last word, but an amalgamated token text.
                         # Note: there is no meaning check for the first
                         # part of the composition, so it can be an unknown word.
+                        print("Allt komið!")
                         txt = " ".join(t.txt for t in tq + [token, next_token])
-                        txt = txt.replace(" -", "-").replace(" ,", ",")
+                        print("     ".format(txt))
+                        txt = txt.replace(" ,", ",")
                         token = token_ctor.Word(txt, next_token.val, token=next_token)
                         next_token = next(token_stream)
                 else:
                     # Incorrect prediction: make amends and continue
-                    handled = False
-                    if (
-                        (token.kind == TOK.WORD or token.kind == TOK.ENTITY)
-                        and len(tq) == 2
-                        and tq[1].txt == HYPHEN
-                    ):
-                        # Two words with a hyphen in between
-                        composite = tq[0].txt + "-" + token.txt
-                        if tq[0].txt.lower() in ADJECTIVE_PREFIXES:
-                            # hálf-opinberri, marg-ítrekaðri
-                            token = token_ctor.Word(
-                                composite,
-                                [
-                                    m
-                                    for m in token.val
-                                    if m.ordfl == "lo" or m.ordfl == "ao"
-                                ],
-                                token=token,
-                            )
-                            handled = True
-                        else:
-                            # Check for Vestur-Þýskaland, Suður-Múlasýsla
-                            # (which are in BÍN in their entirety)
-                            m = db.meanings(composite)
-                            if m:
-                                # Found composite in BÍN: return it as a single token
-                                token = token_ctor.Word(composite, m, token=token)
-                                handled = True
-                    if not handled:
-                        for t in tq:
-                            yield t
+                    for t in tq:
+                        yield t
+
 
             # Yield the current token and advance to the lookahead
             yield token

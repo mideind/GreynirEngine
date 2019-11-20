@@ -4010,6 +4010,13 @@ Skst_abbrev → no_abbrev "-"?    # FIH bankann
 
 $score(+8) Skst_abbrev
 
+LoLýsing/fall/kyn →
+    lo_mst/fall/kyn "-"?
+    #| lo_mst/fall/kyn "–"?
+    #| lo_mst/fall/kyn "—"?
+
+$score(+4) LoLýsing/fall/kyn
+
 Myllumerki_abbrev →
     myllumerki "-"?             # #metoo-umræðan, #eurovision tístin
 
@@ -4017,6 +4024,7 @@ $score(+24) Myllumerki_abbrev
 
 Fyrirbæri/fall/kyn →
     Skst? no_et/fall/kyn        # Microsoft-hugbúnaðarrisinn, Nikon myndavél
+    | LoLýsing/fall/kyn no_et/fall/kyn    # Syðra-Brunnholt, Efri-Kirkjubær
     | FyrirbæriMeðGreini/fall/kyn
     | Úrslit/fall/kyn
     | FyrirbæriMeðEignarfornafni/fall/kyn
