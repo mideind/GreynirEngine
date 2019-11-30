@@ -762,6 +762,9 @@ class SimpleTree:
             # The 'a' field contains the entire variant set, canonically ordered
             return a.split("_")[1:]
         vlist = self.variants
+        if self.terminal in {"sérnafn", "fyrirtæki"}:
+            # Don't attempt to augment proper names or company abbreviations
+            return vlist
         bin_variants = BIN_Token.bin_variants(self._head.get("b"))
         return vlist + list(bin_variants - set(vlist))  # Add any missing variants
 

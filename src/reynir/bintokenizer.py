@@ -26,6 +26,7 @@
 
 """
 
+import re
 from collections import namedtuple, defaultdict
 
 from tokenizer import tokenize_without_annotation, TOK
@@ -273,46 +274,101 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
             # Not a word: relay the token unchanged
             yield t
             if t.kind == TOK.S_BEGIN or (t.kind == TOK.PUNCTUATION and t.val[1] == ":"):
+                # After an S_BEGIN, and also after a colon, we consider ourselves
+                # to be at a sentence starting point
                 at_sentence_start = True
             elif t.kind != TOK.PUNCTUATION and t.kind != TOK.ORDINAL:
+                # Wait until we have something other than punctuation or an
+                # ordinal number to conclude that the sentence has started
                 at_sentence_start = False
             continue
-        if t.val is None:
+        w = t.txt
+        if not t.val:
             # Look up word in BIN database
-            if t.txt.endswith("-") or t.txt.endswith("-") or t.txt.endswith("-"):
-                #print("Fann í lokin! Vil skoða:{}".format(t.txt[:-1]))
-                w, m = db.lookup_word(t.txt[:-1], at_sentence_start, auto_uppercase)
+            w, m = db.lookup_word(w, at_sentence_start, auto_uppercase)
+            if not m:
+                # Check exceptional cases involving hyphens
                 w = t.txt
-            elif "-" in t.txt or "–" in t.txt or "—" in t.txt:
-                last = t.txt.split("-")
-                last = last[-1].split("–")
-                last = last[-1].split("—")
-                #print("    Fann samsetningu")
-                #print("Last:{}".format(last))
-                w, m = db.lookup_word(last[-1], at_sentence_start, auto_uppercase)
-                w = t.txt
-            else:
-                w, m = db.lookup_word(t.txt, at_sentence_start, auto_uppercase)
+                if w[0] in "---":
+                    # Something like '-menn' in 'þingkonur og -menn'
+                    _, m = db.lookup_word(w[1:], False, False)
+                    if m:
+                        m = [
+                            BIN_Meaning(
+                                mm.stofn,
+                                mm.utg,
+                                mm.ordfl,
+                                mm.fl,
+                                w[0] + mm.ordmynd,
+                                mm.beyging
+                            )
+                            for mm in m
+                        ]
+                elif "-" in w or "–" in w or "—" in w:
+                    # Word with embedded hyphen: 'marg-ítrekaðri',
+                    # 'málfræði-greining'
+                    parts = re.split(r"[-–—]", w)
+                    # Start by checking whether it exists in BÍN without hyphens
+                    if all(p[0].islower() for p in parts[1:]):
+                        # ...but we only do this if all of the suffixes start
+                        # with a lowercase character (so, we don't do this for
+                        # 'Syðri-Hnaus' or 'Litla-Brekka')
+                        w_new, m = db.lookup_word(
+                            "".join(parts), at_sentence_start, auto_uppercase
+                        )
+                    if m:
+                        # Found without hyphens: use that word form
+                        m = [
+                            BIN_Meaning(
+                                mm.stofn,
+                                mm.utg,
+                                mm.ordfl,
+                                mm.fl,
+                                w,  # The word as it originally appeared, with hyphens
+                                mm.beyging
+                            )
+                            for mm in m
+                        ]
+                        # In this case, we allow auto_uppercase to do its thing
+                        w = w_new
+                    else:
+                        # Not found without hyphens:
+                        # Look up the last part only
+                        _, m = db.lookup_word(parts[-1], False, False)
+                        if m:
+                            m = [
+                                BIN_Meaning(
+                                    "-".join(parts[:-1] + [mm.stofn]),
+                                    mm.utg,
+                                    mm.ordfl,
+                                    mm.fl,
+                                    "-".join(parts[:-1] + [mm.ordmynd]),
+                                    mm.beyging
+                                )
+                                for mm in m
+                            ]
             # Yield a word tuple with meanings
             yield token_ctor.Word(w, m, token=t)
         else:
-            # Already have a meaning, which probably needs conversion
+            # Already have a meaning (most likely from an abbreviation that the
+            # tokenizer has recognized), which probably needs conversion
             # from a bare tuple to a BIN_Meaning
-            if type(t.val) is list and type(t.val[0]) is list:
-                # An abbreviation, possibly containing many meanings
-                xlist = list()
-                for each in t.val:
-                    x = map(BIN_Meaning._make, each)
-                    xlist.extend(x)
-                w, m = db.lookup_word(t.txt, at_sentence_start, auto_uppercase)
+            meanings = list(map(BIN_Meaning._make, t.val))
+            if not w.isupper() and " " not in w and "." not in w:
+                # This token is not in all-caps and does not contain spaces or
+                # periods. It is thus possible that it is an abbreviation that
+                # could have additional meanings as a word in BÍN.
+                w_new, m = db.lookup_word(w, at_sentence_start, auto_uppercase)
                 if m:
-                    # Wrong form of abbreviation without dots is also a valid word
-                    # Add that meaning to meaning list
-                    xlist.extend(m)
-                yield token_ctor.Word(t.txt, xlist, token=t)
-            else:
-                yield token_ctor.Word(t.txt, list(map(BIN_Meaning._make, t.val)), token=t)
-        # No longer at sentence start
+                    # Additional meanings found: add them to
+                    # the front of the meaning list, giving them a bit of
+                    # priority over the dubious abbreviation
+                    # !!! TODO: Consider doing list(set(m + meanings)) to
+                    # !!! eliminate duplicates
+                    meanings = m + meanings
+                    w = w_new
+            yield token_ctor.Word(w, meanings, token=t)
+        # We have yielded a word token: definitely no longer at sentence start
         at_sentence_start = False
 
 
@@ -541,49 +597,38 @@ def parse_phrases_1(db, token_ctor, token_stream):
                                 [CURRENCY_GENDERS[cur]],
                             )
                             next_token = next(token_stream)
+
             # Check for composites:
             # 'stjórnskipunar- og eftirlitsnefnd'
             # 'dómsmála-, viðskipta- og iðnaðarráðherra'
             tq = []
-
             while (
                 (token.kind == TOK.WORD or token.kind == TOK.ENTITY)
-                and (
-                    token.txt.endswith("-") 
-                    or token.txt.endswith("–")
-                )
+                and next_token.kind == TOK.PUNCTUATION
+                and next_token.val[1] == COMPOSITE_HYPHEN
             ):
-                print("Byrja hér:{}".format(token))
                 tq.append(token)
+                tq.append(TOK.Punctuation(next_token.txt, normalized=HYPHEN))
                 # Check for optional comma after the prefix
-                comma_token = next_token
-                print("Í upphafi umferðar:\n\ttoken:{}\n\tcomma_token:{}".format(token.txt, comma_token.txt))
-                print("\ttype comma:{}".format(comma_token))
+                comma_token = next(token_stream)
                 if comma_token.kind == TOK.PUNCTUATION and comma_token.val[1] == ",":
                     # A comma is present: append it to the queue
                     # and skip to the next token
-                    print("\tBætum comma_token við tq")
                     tq.append(comma_token)
                     comma_token = next(token_stream)
-                    #print("\tNæsti comma_token er {}".format(comma_token.txt))
                 # Reset our two lookahead tokens
-                print("\tHætt að leita að fyrri hlutum, endursetjum")
                 token = comma_token
                 next_token = next(token_stream)
-                print("\t\ttoken:{}; next_token:{}".format(token.txt, next_token.txt))
+
             if tq:
-                print("\tFann tq!\n\t{}".format(tq))
-                print("\t\ttoken:{}\n\tnext_token:{}".format(token.txt, next_token.txt))
                 # We have accumulated one or more prefixes
                 # ('dómsmála-, viðskipta-')
-                if token.kind == TOK.WORD and (token.txt == "og" or token.txt == "eða"):
+                if token.kind == TOK.WORD and token.txt in ("og", "eða"):
                     # We have 'viðskipta- og'
-                    print("\tFann og!\n\t{}".format(token.txt))
                     if next_token.kind != TOK.WORD:
                         # Incorrect: yield the accumulated token
                         # queue and keep the current token and the
                         # next_token lookahead unchanged
-                        print("Fann ekki!{}".format(next_token.txt))
                         for t in tq:
                             yield t
                     else:
@@ -593,17 +638,27 @@ def parse_phrases_1(db, token_ctor, token_stream):
                         # the last word, but an amalgamated token text.
                         # Note: there is no meaning check for the first
                         # part of the composition, so it can be an unknown word.
-                        print("Allt komið!")
                         txt = " ".join(t.txt for t in tq + [token, next_token])
-                        print("     ".format(txt))
-                        txt = txt.replace(" ,", ",")
-                        token = token_ctor.Word(txt, next_token.val, token=next_token)
+                        txt = txt.replace(" -", "-").replace(" ,", ",")
+                        # Create a fresh list of meanings with the full
+                        # prefix in the ordmynd field
+                        prefix, _ = txt.rsplit(maxsplit=1)
+                        m = [
+                            BIN_Meaning(
+                                prefix + " " + mm.stofn,
+                                mm.utg,
+                                mm.ordfl,
+                                mm.fl,
+                                prefix + " " + mm.ordmynd,
+                                mm.beyging
+                            ) for mm in next_token.val
+                        ]
+                        token = token_ctor.Word(txt, m, token=next_token)
                         next_token = next(token_stream)
                 else:
                     # Incorrect prediction: make amends and continue
                     for t in tq:
                         yield t
-
 
             # Yield the current token and advance to the lookahead
             yield token
@@ -685,6 +740,7 @@ def parse_phrases_2(token_stream, token_ctor):
                     )
                     # Eat the currency token
                     next_token = next(token_stream)
+
             # Check for [time] [date] (absolute)
             if token.kind == TOK.TIME and next_token.kind == TOK.DATEABS:
                 # Create a time stamp

@@ -2136,12 +2136,14 @@ def augment_terminal(terminal, text_lower, beyging):
         # Add it here for completeness
         vset |= _PFN_VARIANTS.get(text_lower, set())
     # Collect the variants from the terminal and from the BÍN 'beyging' string
-    if a[0] != "fs" and a[0] != "sérnafn":
+    if a[0] not in {"fs", "sérnafn", "fyrirtæki"}:
         # For prepositions, the beyging string is not significant and
         # may contain junk, if the same word form (such as 'á') is found in BÍN.
         # See comment in matcher_fs() within the BIN_Token class in binparser.py.
         # For proper names ('sérnafn'), the matched token may be almost
         # any word in BÍN, and the inflection data is not significant.
+        # For company abbreviations ('hf', 'ASA', etc.) the inflection data is
+        # not significant.
         vset |= BIN_Token.bin_variants(beyging)
     if a[0] == "gata":
         # No need for number specifier for street names
