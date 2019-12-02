@@ -4014,11 +4014,6 @@ Skst_abbrev → no_abbrev "-"?    # FIH bankann
 
 $score(+8) Skst_abbrev
 
-FyrirbæriMeðBandstriki/fall/kyn →
-    lo_vb/fall/kyn "-" no_et/fall/kyn  # !!! TODO: Add _uc variant to force uppercase?
-
-$score(+4) FyrirbæriMeðBandstriki/fall/kyn
-
 Myllumerki_abbrev →
     myllumerki "-"?                     # #metoo - umræðan, #eurovision tístin
 
@@ -4026,7 +4021,6 @@ $score(+24) Myllumerki_abbrev
 
 Fyrirbæri/fall/kyn →
     Skst? no_et/fall/kyn                # Microsoft - hugbúnaðarrisinn, Nikon myndavél
-    | FyrirbæriMeðBandstriki/fall/kyn   # Litla - Brunnholt, Efri - Kirkjubær
     | FyrirbæriMeðGreini/fall/kyn
     | FyrirbæriMeðEignarfornafni/fall/kyn
     | Úrslit/fall/kyn

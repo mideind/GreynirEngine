@@ -414,7 +414,11 @@ class BIN_Token(Token):
         ]
     )
 
-    _UNDERSTOOD_PUNCTUATION = ".?!,:;–-()[]"
+    # The following is a filter on the punctuation tokens that are passed into
+    # the parser (after being wrapped into BIN_Token objects). The actual
+    # test is made on the normalized punctuation, i.e. on the t.val[1] field
+    # of each punctuation token.
+    _UNDERSTOOD_PUNCTUATION = ".?!,:;-()[]"
 
     _MEANING_CACHE = {}
     _VARIANT_CACHE = {}
@@ -425,11 +429,14 @@ class BIN_Token(Token):
         # to a token object that will be seen by the parser and used to
         # check matches against grammar terminals.
 
-        super().__init__(TOK.descr[t[0]], t[1])
+        # We use the normalized form of punctuation when parsing
+        txt = t[2][1] if t[0] == TOK.PUNCTUATION else t[1]
+
+        super().__init__(TOK.descr[t[0]], txt)
 
         self.t0 = t[0]  # Token type (TOK.WORD, etc.)
-        self.t1 = t[1]  # Token text
-        self.t1_lower = t[1].lower()  # Token text, lower case
+        self.t1 = txt  # Token text
+        self.t1_lower = txt.lower()  # Token text, lower case
         self.is_compound = False
         # t2 contains auxiliary token information, such as part-of-speech annotation, numbers, etc.
         if isinstance(t[2], list):
@@ -1369,7 +1376,8 @@ class BIN_Token(Token):
         """ Return True if the token type is understood by the BIN Parser """
         if t[0] == TOK.PUNCTUATION:
             # A limited number of punctuation symbols is currently understood
-            return t[1] in cls._UNDERSTOOD_PUNCTUATION
+            # Note that we use the normalized punctuation here, i.e. t.val[1]
+            return t[2][1] in cls._UNDERSTOOD_PUNCTUATION
         return t[0] in cls._MATCHING_FUNC
 
     def match_with_meaning(self, terminal):

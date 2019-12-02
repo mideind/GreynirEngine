@@ -295,11 +295,13 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
                     if m:
                         m = [
                             BIN_Meaning(
+                                # We leave the lemma intact here ('maður' for '-menn')
                                 mm.stofn,
                                 mm.utg,
                                 mm.ordfl,
                                 mm.fl,
-                                w[0] + mm.ordmynd,
+                                # ...but keep the hyphen in the word form ('-menn')
+                                w,
                                 mm.beyging
                             )
                             for mm in m
@@ -320,17 +322,22 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
                         # Found without hyphens: use that word form
                         m = [
                             BIN_Meaning(
+                                # Leave the lemma intact (but it may already contain
+                                # hyphens inserted by the compound word recognizer)
                                 mm.stofn,
                                 mm.utg,
                                 mm.ordfl,
                                 mm.fl,
-                                w,  # The word as it originally appeared, with hyphens
+                                # Keep the word form as it originally appeared,
+                                # with its hyphens
+                                w,
                                 mm.beyging
                             )
                             for mm in m
                         ]
-                        # In this case, we allow auto_uppercase to do its thing
-                        w = w_new
+                        # Emulate what auto_uppercase does in this case
+                        if auto_uppercase and w_new[0].isupper():
+                            w = w[0].upper() + w[1:]
                     else:
                         # Not found without hyphens:
                         # Look up the last part only
@@ -338,11 +345,14 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
                         if m:
                             m = [
                                 BIN_Meaning(
+                                    # In this case, keep the hyphens in the lemma,
+                                    # imitating the compound word recognizer
                                     "-".join(parts[:-1] + [mm.stofn]),
                                     mm.utg,
                                     mm.ordfl,
                                     mm.fl,
-                                    "-".join(parts[:-1] + [mm.ordmynd]),
+                                    # Keep the word form intact with hyphens
+                                    w,
                                     mm.beyging
                                 )
                                 for mm in m
