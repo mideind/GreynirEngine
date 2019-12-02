@@ -266,17 +266,21 @@ class BIN_Db:
         return "hk"  # Unknown gender
 
     @staticmethod
-    def prefix_meanings(mlist, prefix):
+    def prefix_meanings(mlist, prefix, *, insert_hyphen=True):
         """ Return a meaning list with a prefix added to the
             stofn and ordmynd attributes """
+        if insert_hyphen:
+            concat = lambda w: prefix + "-" + w
+        else:
+            concat = lambda w: prefix + w
         return (
             [
                 BIN_Meaning(
-                    prefix + "-" + r.stofn,
+                    concat(r.stofn),
                     r.utg,
                     r.ordfl,
                     r.fl,
-                    prefix + "-" + r.ordmynd,
+                    concat(r.ordmynd),
                     r.beyging,
                 )
                 for r in mlist
@@ -472,7 +476,7 @@ class BIN_Db:
                     cw[-1], cat=m_word.ordfl, stem=m_word.stofn.split("-")[-1]
                 )
                 # Add the prefix to the remaining word stems
-                mm = BIN_Db.prefix_meanings(mm, prefix)
+                mm = BIN_Db.prefix_meanings(mm, prefix, insert_hyphen=False)
             else:
                 mm = case_func(w, cat=m_word.ordfl, stem=m_word.stofn)
                 if not mm and w[0].isupper() and not w.isupper():
@@ -492,7 +496,7 @@ class BIN_Db:
             if meaning_filter_func is not None:
                 mm = meaning_filter_func(mm)
             if mm:
-                o = mm[0].ordmynd.replace("-", "")
+                o = mm[0].ordmynd
                 # Imitate the case of the original word
                 if w.isupper():
                     o = o.upper()
