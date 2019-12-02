@@ -64,8 +64,11 @@ ALL_CASES = frozenset(["nf", "þf", "þgf", "ef"])
 # Named tuple for person names, including case and gender
 PersonName = namedtuple("PersonName", ["name", "gender", "case"])
 
-COMPOSITE_HYPHEN = "–"  # en dash
 HYPHEN = "-"  # Normal hyphen
+EN_DASH = "\u2013"  # "–"
+EM_DASH = "\u2014"  # "—"
+COMPOSITE_HYPHEN = EN_DASH
+COMPOSITE_HYPHENS = HYPHEN + EN_DASH
 
 # Prefixes that can be applied to adjectives with an intervening hyphen
 ADJECTIVE_PREFIXES = frozenset(["hálf", "marg", "semí", "full"])
@@ -289,7 +292,7 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
             if not m:
                 # Check exceptional cases involving hyphens
                 w = t.txt
-                if w[0] in "---":
+                if w[0] in COMPOSITE_HYPHENS:
                     # Something like '-menn' in 'þingkonur og -menn'
                     _, m = db.lookup_word(w[1:], False, False)
                     if m:
@@ -306,10 +309,10 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
                             )
                             for mm in m
                         ]
-                elif "-" in w or "–" in w or "—" in w:
+                elif HYPHEN in w or EN_DASH in w:
                     # Word with embedded hyphen: 'marg-ítrekaðri',
                     # 'málfræði-greining'
-                    parts = re.split(r"[-–—]", w)
+                    parts = re.split(r"[" + HYPHEN + EN_DASH + r"]", w)
                     # Start by checking whether it exists in BÍN without hyphens
                     if all(p[0].islower() for p in parts[1:]):
                         # ...but we only do this if all of the suffixes start
@@ -1596,14 +1599,14 @@ def describe_token(index, t, terminal, meaning):
     if terminal is not None:
         # There is a token-terminal match
         if t.kind == TOK.PUNCTUATION:
-            if txt == "-":
+            if txt == HYPHEN:
                 # Hyphen: check whether it is matching an em or en-dash terminal
                 if terminal.colon_cat == "em":
                     # Substitute em dash (will be displayed with surrounding space)
-                    d["x"] = "—"
+                    d["x"] = EM_DASH
                 elif terminal.colon_cat == "en":
                     # Substitute en dash
-                    d["x"] = "–"
+                    d["x"] = EN_DASH
         else:
             # Annotate with terminal name and BÍN meaning
             # (no need to do this for punctuation)
