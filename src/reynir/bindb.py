@@ -466,8 +466,9 @@ class BIN_Db:
             if m_word is None:
                 # Not a case-inflectable word that we are interested in: leave it
                 return w
-            if "-" in m_word.ordmynd:
-                # Composite word: use the meaning of its last part
+            if "-" in m_word.ordmynd and "-" not in w:
+                # Composite word (and not something like 'Vestur-Þýskaland', which
+                # is in BÍN including the hyphen): use the meaning of its last part
                 cw = m_word.ordmynd.split("-")
                 prefix = "-".join(cw[0:-1])
                 # No need to think about upper or lower case here,
@@ -482,7 +483,7 @@ class BIN_Db:
                 if not mm and w[0].isupper() and not w.isupper():
                     # Did not find an uppercase version: try a lowercase one
                     mm = case_func(
-                        w[0].lower() + w[1:], cat=m_word.ordfl, stem=m_word.stofn
+                        w.lower(), cat=m_word.ordfl, stem=m_word.stofn
                     )
         if mm:
             # Likely successful: return the word after casting it
