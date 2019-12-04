@@ -1752,6 +1752,7 @@ class SimpleTree:
                 yield from child._top_matches(items)
 
     class _NestedList(list):
+
         def __init__(self, kind, content):
             self._kind = kind
             super().__init__()

@@ -1241,7 +1241,15 @@ class BIN_Token(Token):
             """ Check whether the token text matches a set of corporation identfiers """
             # Note: these must have a meaning for this to work, so specifying them
             # as abbreviations to Main.conf is recommended
-            return self.t1 in BIN_Token._CORPORATION_ENDINGS
+            if (
+                self.t1 not in BIN_Token._CORPORATION_ENDINGS
+                or m.ordmynd not in BIN_Token._CORPORATION_ENDINGS
+            ):
+                # Must match exactly one of the company ending texts
+                return False
+            # Be careful not to match alternative abbreviations, such as
+            # 'ASA' meaning 'aust-suð-austan' (which is an adverb)
+            return m.ordfl in {"kk", "kvk", "hk"}
 
         def matcher_sérnafn(m):
             """ Proper name terminal """
