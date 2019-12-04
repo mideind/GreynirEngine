@@ -414,7 +414,11 @@ class BIN_Token(Token):
         ]
     )
 
-    _UNDERSTOOD_PUNCTUATION = ".?!,:;–-()[]"
+    # The following is a filter on the punctuation tokens that are passed into
+    # the parser (after being wrapped into BIN_Token objects). The actual
+    # test is made on the normalized punctuation, i.e. on the t.val[1] field
+    # of each punctuation token.
+    _UNDERSTOOD_PUNCTUATION = ".?!,:;-()[]"
 
     _MEANING_CACHE = {}
     _VARIANT_CACHE = {}
@@ -425,11 +429,14 @@ class BIN_Token(Token):
         # to a token object that will be seen by the parser and used to
         # check matches against grammar terminals.
 
-        super().__init__(TOK.descr[t[0]], t[1])
+        # We use the normalized form of punctuation when parsing
+        txt = t[2][1] if t[0] == TOK.PUNCTUATION else t[1]
+
+        super().__init__(TOK.descr[t[0]], txt)
 
         self.t0 = t[0]  # Token type (TOK.WORD, etc.)
-        self.t1 = t[1]  # Token text
-        self.t1_lower = t[1].lower()  # Token text, lower case
+        self.t1 = txt  # Token text
+        self.t1_lower = txt.lower()  # Token text, lower case
         self.is_compound = False
         # t2 contains auxiliary token information, such as part-of-speech annotation, numbers, etc.
         if isinstance(t[2], list):
@@ -987,6 +994,18 @@ class BIN_Token(Token):
         """ A hashtag token matches a hashtag (myllumerki) terminal """
         return terminal.startswith("myllumerki")
 
+    def matches_SSN(self, terminal):
+        """ A social security number token matches an ssn (kennitala) terminal """
+        return terminal.startswith("kennitala")
+
+    def matches_MOLECULE(self, terminal):
+        """ A molecule token matches a molecule (sameind) terminal """
+        return terminal.startswith("sameind")
+
+    def matches_USERNAME(self, terminal):
+        """ A username token matches a username (notandanafn) terminal """
+        return terminal.startswith("notandanafn")
+
     def matches_WORD(self, terminal):
         """ Match a word token, having the potential part-of-speech meanings
             from the BIN database, with the terminal """
@@ -1348,6 +1367,9 @@ class BIN_Token(Token):
         TOK.MEASUREMENT: matches_MEASUREMENT,
         TOK.DOMAIN: matches_DOMAIN,
         TOK.HASHTAG: matches_HASHTAG,
+        TOK.SSN: matches_SSN,
+        TOK.MOLECULE: matches_MOLECULE,
+        TOK.USERNAME: matches_USERNAME,
         TOK.WORD: matches_WORD,
     }
 
@@ -1356,7 +1378,8 @@ class BIN_Token(Token):
         """ Return True if the token type is understood by the BIN Parser """
         if t[0] == TOK.PUNCTUATION:
             # A limited number of punctuation symbols is currently understood
-            return t[1] in cls._UNDERSTOOD_PUNCTUATION
+            # Note that we use the normalized punctuation here, i.e. t.val[1]
+            return t[2][1] in cls._UNDERSTOOD_PUNCTUATION
         return t[0] in cls._MATCHING_FUNC
 
     def match_with_meaning(self, terminal):
@@ -2123,12 +2146,14 @@ def augment_terminal(terminal, text_lower, beyging):
         # Add it here for completeness
         vset |= _PFN_VARIANTS.get(text_lower, set())
     # Collect the variants from the terminal and from the BÍN 'beyging' string
-    if a[0] != "fs" and a[0] != "sérnafn":
+    if a[0] not in {"fs", "sérnafn", "fyrirtæki"}:
         # For prepositions, the beyging string is not significant and
         # may contain junk, if the same word form (such as 'á') is found in BÍN.
         # See comment in matcher_fs() within the BIN_Token class in binparser.py.
         # For proper names ('sérnafn'), the matched token may be almost
         # any word in BÍN, and the inflection data is not significant.
+        # For company abbreviations ('hf', 'ASA', etc.) the inflection data is
+        # not significant.
         vset |= BIN_Token.bin_variants(beyging)
     if a[0] == "gata":
         # No need for number specifier for street names

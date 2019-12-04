@@ -3989,19 +3989,23 @@ NlStak_ft_p1/fall/kyn → NlBæðiHvorki_p1_hk/fall
 NlBæðiHvorki_p1_hk/fall →
     Bæði Nl_p1/fall/kyn Og Nl_p2/fall/kyn             # bæði mér og þér þykir þetta óásættanlegt
     | Hvorki Nl_p1/fall/kyn Né Nl_p2/fall/kyn         # hvorki ég né þú höfum vit á þessu
-    | AnnaðhvortSt Nl_p1/fall/kyn Eða Nl_p2/fall/kyn       # annaðhvort ég eða þú þurfum að fara
+    | AnnaðhvortSt Nl_p1/fall/kyn Eða Nl_p2/fall/kyn  # annaðhvort ég eða þú þurfum að fara
     | Bæði Nl_p2/fall/kyn Og Nl_p1/fall/kyn           # bæði þér og mér þykir þetta óásættanlegt
     | Hvorki Nl_p2/fall/kyn Né Nl_p1/fall/kyn         # hvorki þú né ég erum fallegar/falleg/fallegir
-    | AnnaðhvortSt Nl_p2/fall/kyn Eða Nl_p1/fall/kyn       # annaðhvort þú eða ég erum fallegar/falleg/fallegir
+    | AnnaðhvortSt Nl_p2/fall/kyn Eða Nl_p1/fall/kyn  # annaðhvort þú eða ég erum fallegar/falleg/fallegir
     | Ýmist Nl_p2/fall/kyn Eða Nl_p1/fall/kyn         # ýmist þú eða ég erum fallegar/falleg/fallegir
 
 $score(+4) NlBæðiHvorki_p1_hk/fall
 
 # Skammstafanir með bandstriki nota stutt bandstrik, ekki en- eða em-dash
 
+# Athugið að þessar reglur eiga einungis við um laus bandstrik, þ.e. með
+# eyðum utan um; 'Microsoft-hugbúnaðarrisinn' er tókað sem eitt orð,
+# en 'Microsoft - hugbúnaðarrisinn' eru þrír tókar.
+
 Skst →
     Skst_abbrev
-    | Sérnafn "-"?              # Barclays-bankann, Al Thani-málið
+    | Sérnafn "-"?              # Barclays - bankann, Al Thani - málið
     | Myllumerki_abbrev         # #metoo-umræðan, #eurovision tístin
 
 $score(+8) Skst
@@ -4011,15 +4015,15 @@ Skst_abbrev → no_abbrev "-"?    # FIH bankann
 $score(+8) Skst_abbrev
 
 Myllumerki_abbrev →
-    myllumerki "-"?             # #metoo-umræðan, #eurovision tístin
+    myllumerki "-"?                     # #metoo - umræðan, #eurovision tístin
 
 $score(+24) Myllumerki_abbrev
 
 Fyrirbæri/fall/kyn →
-    Skst? no_et/fall/kyn        # Microsoft-hugbúnaðarrisinn, Nikon myndavél
+    Skst? no_et/fall/kyn                # Microsoft - hugbúnaðarrisinn, Nikon myndavél
     | FyrirbæriMeðGreini/fall/kyn
-    | Úrslit/fall/kyn
     | FyrirbæriMeðEignarfornafni/fall/kyn
+    | Úrslit/fall/kyn
 
 # Raðnúmer
 

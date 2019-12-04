@@ -245,6 +245,19 @@ def test_casting():
     assert db.cast_to_dative("fjórir", meaning_filter_func=f) == "fjórum"
     assert db.cast_to_genitive("fjórir", meaning_filter_func=f) == "fjögurra"
 
+    assert db.cast_to_accusative("Suður-Afríka") == "Suður-Afríku"
+    assert db.cast_to_dative("Suður-Afríka") == "Suður-Afríku"
+    assert db.cast_to_genitive("Suður-Afríka") == "Suður-Afríku"
+
+    assert db.cast_to_accusative("Vestur-Þýskaland") == "Vestur-Þýskaland"
+    assert db.cast_to_dative("Vestur-Þýskaland") == "Vestur-Þýskalandi"
+    assert db.cast_to_genitive("Vestur-Þýskaland") == "Vestur-Þýskalands"
+
+    f = lambda mm: sorted(mm, key=lambda m: "2" in m.beyging or "3" in m.beyging)
+    assert db.cast_to_accusative("Kópavogur", meaning_filter_func=f) == "Kópavog"
+    assert db.cast_to_dative("Kópavogur", meaning_filter_func=f) == "Kópavogi"
+    assert db.cast_to_genitive("Kópavogur", meaning_filter_func=f) == "Kópavogs"
+
 
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test

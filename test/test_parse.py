@@ -182,7 +182,7 @@ def test_parse(r, verbose=False):
     assert results[7].tree.nouns == ["hús", "strönd"]
     assert results[8].tree.nouns == ["barn", "augnrannsókn", "húsnæðiskaup"]
     assert results[9].tree.nouns == ["barn", "loðfíla-rannsókn"]
-    assert results[10].tree.nouns == ["eðlisfræðingur", "dagur", "pí", "dagur"]
+    assert results[10].tree.nouns == ["eðlisfræðingur", "dagur", "pí-dagur"]
     assert results[11].tree.nouns == [
         "Jón",
         "ís",
@@ -306,9 +306,7 @@ def test_parse(r, verbose=False):
         "dagur",
         ",",
         "á",
-        "pí",
-        "—",
-        "dagur",
+        "pí-dagur",
         ".",
     ]
     assert results[11].tree.lemmas == [
@@ -916,7 +914,7 @@ def test_measurements(r):
         "/NP-SUBJ VP VP-AUX so_et_p3 /VP-AUX VP VP so_1_þf_nh "
         "/VP NP-OBJ NP-MEASURE ao tala mælieining "
         "/NP-MEASURE PP P fs_þgf /P NP no_et_þgf_hk PP P fs_þgf "
-        "/P NP NP-POSS NP-MEASURE ao tala mælieining /NP-MEASURE "
+        "/P NP NP-POSS NP-MEASURE ao mælieining /NP-MEASURE "
         "/NP-POSS no_et_þgf_hk /NP /PP /NP /PP /NP-OBJ /VP /VP "
         "/IP /S-MAIN p /S0"
     )
@@ -1358,6 +1356,15 @@ def test_composite_words(r):
     assert s.lemmas == ['ég', 'borða', 'sykrisaltan', 'fiskinn']
     s = r.parse_single("Hann hjólaði kattspenntur á kvenbretti niður brekkuna")
     assert s.lemmas == ['hann', 'hjóla', 'katt-spenna', 'á', 'kven-bretti', 'niður', 'brekka']
+    s = r.parse_single(
+        "Málfræði-reglurnar sögðu að hann væri frá Vestur-Þýskalandi "
+        "og Ytri-Hnausi í Þingvalla-sveit."
+    )
+    assert s.tree.nouns == ['málfræðiregla', 'Vestur-Þýskaland', 'Ytri-Hnaus', 'Þingvallasveit']
+    s = r.parse_single(
+        "Þing-konur og -menn dvöldu í þingvalla-sveitinni."
+    )
+    assert s.tree.nouns == ['þingkona', 'maður', 'þingvalla-sveit']
 
 
 def test_compressed_bin():
