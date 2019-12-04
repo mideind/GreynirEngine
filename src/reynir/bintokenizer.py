@@ -29,11 +29,20 @@
 import re
 from collections import namedtuple, defaultdict
 
-from tokenizer import tokenize_without_annotation, TOK
+from tokenizer import (
+    TOK,
+    tokenize_without_annotation,
+    normalized_text,
+)
 
 # The following imports are here in order to be visible in clients
 # (they are not used in this module)
-from tokenizer import correct_spaces, paragraphs, parse_tokens, tokenize as raw_tokenize
+from tokenizer import (
+    tokenize as raw_tokenize,
+    correct_spaces,
+    paragraphs,
+    parse_tokens,
+)
 
 from .settings import StaticPhrases, AmbigPhrases, DisallowedNames
 from .settings import NamePreferences
@@ -1592,9 +1601,7 @@ def describe_token(index, t, terminal, meaning):
     """ Return a compact dictionary describing the token t,
         at the given index within its sentence,
         which matches the given terminal with the given meaning """
-    # We use the tokenizer's normalized form of punctuation here,
-    # stored in t.val[1]
-    txt = t.val[1] if t.kind == TOK.PUNCTUATION else t.txt
+    txt = normalized_text(t)
     d = dict(x=txt, ix=index)
     if terminal is not None:
         # There is a token-terminal match
