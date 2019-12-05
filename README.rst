@@ -1,8 +1,9 @@
-================================================================
-Greynir: A fast, efficient natural language parser for Icelandic
-================================================================
 
 .. image:: https://github.com/mideind/ReynirPackage/blob/master/doc/_static/GreynirLogo220.png?raw=true
+
+=======================================================
+A fast, efficient natural language parser for Icelandic
+=======================================================
 
 .. image:: https://travis-ci.com/mideind/ReynirPackage.svg?branch=master
     :target: https://travis-ci.com/mideind/ReynirPackage
@@ -148,6 +149,8 @@ more details.
 The full text of the GNU General Public License v3 is
 `included here <https://github.com/mideind/Reynir/blob/master/LICENSE.txt>`_
 and also available here: https://www.gnu.org/licenses/gpl-3.0.html.
+
+.. image:: https://github.com/mideind/ReynirPackage/blob/master/doc/_static/MideindLogoVert300.png?raw=true
 
 If you would like to use this software in ways that are incompatible
 with the standard GNU GPLv3 license, please contact
