@@ -2,7 +2,7 @@
 Greynir: A fast, efficient natural language parser for Icelandic
 ================================================================
 
-.. image:: https://github.com/mideind/ReynirPackage/blob/master/doc/_static/ReynirLogo216.png?raw=true
+.. image:: https://github.com/mideind/ReynirPackage/blob/master/doc/_static/GreynirLogo220.png?raw=true
 
 .. image:: https://travis-ci.com/mideind/ReynirPackage.svg?branch=master
     :target: https://travis-ci.com/mideind/ReynirPackage
@@ -24,7 +24,8 @@ Full documentation for Greynir is `available here <https://greynir.is/doc/>`_.
 
 Greynir is the engine of `Greynir.is <https://greynir.is>`_, a natural-language
 front end for a database of 8 million sentences parsed from Icelandic
-news articles.
+news articles, and `Embla <https://embla.is>`_, a natural-language query app
+for smart phones.
 
 Greynir uses the `Tokenizer <https://pypi.org/project/tokenizer/>`_ package,
 by the same authors, to tokenize text.
@@ -69,7 +70,7 @@ P                               # Root
 Prerequisites
 *************
 
-This package runs on CPython 3.4 or newer, and on PyPy 3.5 or newer.
+This package runs on CPython 3.5 or newer, and on PyPy 3.5 or newer.
 
 If a binary wheel package isn't available on `PyPi <https://pypi.org>`_
 for your system, you may need to have the ``python3-dev`` and/or potentially
