@@ -6,7 +6,7 @@ Installation
 Prerequisites
 -------------
 
-Reynir runs on **CPython 3.4** or newer, and on **PyPy 3.5**
+Greynir runs on **CPython 3.4** or newer, and on **PyPy 3.5**
 or newer (more info on PyPy `here <http://pypy.org/>`_).
 
 On GNU/Linux and similar systems, you may need to have ``python3-dev`` and/or
@@ -27,7 +27,7 @@ with the Windows 10 SDK.
 Install with pip
 ----------------
 
-To install Reynir:
+To install Greynir:
 
 .. code-block:: bash
 
@@ -39,7 +39,7 @@ To install Reynir:
 
     $ pip3 install reynir
 
-...or if you want to be able to edit Reynir's source code in-place
+...or if you want to be able to edit Greynir's source code in-place
 and perhaps submit pull requests (welcome!) to the project's
 `GitHub repository <https://github.com/mideind/ReynirPackage>`_:
 
@@ -60,7 +60,7 @@ Install into a virtualenv
 -------------------------
 
 In many cases, you will want to maintain a separate Python environment for
-your project that uses Reynir. For this, you can use *virtualenv*
+your project that uses Greynir. For this, you can use *virtualenv*
 (if you haven't already, install it with ``pip install virtualenv``):
 
 .. code-block:: bash
@@ -70,11 +70,11 @@ your project that uses Reynir. For this, you can use *virtualenv*
     # Enter the virtual environment
     $ source venv/bin/activate
 
-    # Install reynir into it
+    # Install Greynir into it
     $ pip install reynir
 
     $ python
-        [ Use Python with reynir ]
+        [ Use Python with Greynir ]
 
     # Leave the virtual environment
     $ deactivate
@@ -88,11 +88,11 @@ On Windows:
     REM Enter the virtual environment
     C:\MyProject> venv/Scripts/activate
 
-    REM Install reynir into it
+    REM Install Greynir into it
     (venv) C:\MyProject> pip install reynir
 
     (venv) C:\MyProject> python
-        REM [ Use Python with reynir ]
+        REM [ Use Python with Greynir ]
 
     REM Leave the virtual environment
     (venv) C:\MyProject> deactivate

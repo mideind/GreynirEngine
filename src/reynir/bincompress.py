@@ -817,7 +817,10 @@ class BIN_Compressed:
         with open(self._FNAME, "rb") as stream:
             self._b = mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ)
         # Check that the file version matches what we expect
-        assert self._b[0:16] == BIN_Compressor.VERSION
+        assert (
+            self._b[0:16] == BIN_Compressor.VERSION,
+            "Invalid signature in ord.compressed (git-lfs might be missing)"
+        )
         (
             mappings_offset,
             forms_offset,

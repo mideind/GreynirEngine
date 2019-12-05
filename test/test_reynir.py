@@ -2,7 +2,7 @@
 
     test_reynir.py
 
-    Tests for Reynir module
+    Tests for Greynir module
 
     Copyright(C) 2019 by Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
@@ -24,7 +24,6 @@
 
 import functools
 
-from reynir import Reynir
 from reynir.binparser import augment_terminal
 from reynir.bincompress import BIN_Compressed
 

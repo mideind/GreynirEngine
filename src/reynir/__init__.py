@@ -1,6 +1,6 @@
 """
 
-    Reynir: Natural language processing for Icelandic
+    Greynir: Natural language processing for Icelandic
 
     Copyright(C) 2019 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
@@ -18,14 +18,14 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-    This module exposes the reynir API, i.e. the identifiers that are
+    This module exposes the Greynir API, i.e. the identifiers that are
     directly accessible via the reynir module object after importing it.
 
 """
 
-# Expose the reynir API
+# Expose the Greynir API
 
-from .reynir import Reynir, Terminal
+from .reynir import Greynir, Reynir, Terminal
 from .fastparser import ParseForestPrinter, ParseForestDumper, ParseForestFlattener
 from .fastparser import ParseError, ParseForestNavigator
 from .settings import Settings
@@ -44,7 +44,7 @@ from tokenizer import (
 __author__ = "Miðeind ehf."
 __copyright__ = "(C) 2019 Miðeind ehf."
 # Remember to update the version in doc/conf.py as well
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 
 Abbreviations.initialize()
 Settings.read("config/ReynirPackage.conf")

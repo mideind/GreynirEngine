@@ -1,6 +1,6 @@
-===============================================================
-Reynir: A fast, efficient natural language parser for Icelandic
-===============================================================
+================================================================
+Greynir: A fast, efficient natural language parser for Icelandic
+================================================================
 
 .. image:: https://github.com/mideind/ReynirPackage/blob/master/doc/_static/ReynirLogo216.png?raw=true
 
@@ -11,31 +11,31 @@ Reynir: A fast, efficient natural language parser for Icelandic
 Overview
 ********
 
-**Reynir** is a Python 3.x package for
+**Greynir** is a Python 3.x package for
 **parsing Icelandic text into sentence trees** (i.e. full
 constituency parse trees). The trees can then be used to extract
 information from the text, for instance about people, titles, entities,
 facts, actions and opinions.
 
-Along the way, Reynir tokenizes the text, finds **lemmas** and assigns
+Along the way, Greynir tokenizes the text, finds **lemmas** and assigns
 **part-of-speech (POS) tags** to every word.
 
-Full documentation for Reynir is `available here <https://greynir.is/doc/>`_.
+Full documentation for Greynir is `available here <https://greynir.is/doc/>`_.
 
-Reynir is the engine of `Greynir.is <https://greynir.is>`_, a natural-language
+Greynir is the engine of `Greynir.is <https://greynir.is>`_, a natural-language
 front end for a database of 8 million sentences parsed from Icelandic
 news articles.
 
-Reynir uses the `Tokenizer <https://pypi.org/project/tokenizer/>`_ package,
+Greynir uses the `Tokenizer <https://pypi.org/project/tokenizer/>`_ package,
 by the same authors, to tokenize text.
 
 *******
 Example
 *******
 
->>> from reynir import Reynir
->>> r = Reynir()
->>> sent = r.parse_single("Ása sá sól.")
+>>> from reynir import Greynir
+>>> g = Greynir()
+>>> sent = g.parse_single("Ása sá sól.")
 >>> print(sent.tree.view)
 P                               # Root
 +-S-MAIN                        # Main sentence
@@ -74,7 +74,7 @@ This package runs on CPython 3.4 or newer, and on PyPy 3.5 or newer.
 If a binary wheel package isn't available on `PyPi <https://pypi.org>`_
 for your system, you may need to have the ``python3-dev`` and/or potentially
 ``python3.6-dev`` packages (or their Windows equivalents) installed on your
-system to set up Reynir successfully. This is because a source distribution
+system to set up Greynir successfully. This is because a source distribution
 install requires a C++ compiler and linker::
 
     # Debian or Ubuntu:
@@ -90,7 +90,7 @@ To install this package::
     $ pip3 install reynir   # or pip install reynir if Python3 is your default
 
 If you want to be able to edit the source, do like so (assuming
-you have **git** installed)::
+you have **git** and **git-lfs** installed)::
 
     $ git clone https://github.com/mideind/ReynirPackage
     $ cd ReynirPackage
@@ -98,6 +98,10 @@ you have **git** installed)::
     $ python setup.py develop
 
 The package source code is now in ``ReynirPackage/src/reynir``.
+
+Note that **git-lfs** is required to clone and pull the full compressed binary
+files for the *Beygingarlýsing íslensks nútímamáls* (BÍN) database. If it is
+missing, you will get assertion errors.
 
 *****
 Tests
@@ -113,7 +117,7 @@ virtualenv), then run::
 Documentation
 *************
 
-Please consult `Reynir's documentation <https://greynir.is/doc/>`_ for detailed
+Please consult `Greynir's documentation <https://greynir.is/doc/>`_ for detailed
 `installation instructions <https://greynir.is/doc/installation.html>`_,
 a `quickstart guide <https://greynir.is/doc/quickstart.html>`_,
 and `reference information <https://greynir.is/doc/reference.html>`_,
@@ -124,7 +128,7 @@ about `copyright and licensing <https://greynir.is/doc/copyright.html>`_.
 Copyright and licensing
 ***********************
 
-Reynir is *copyright (C) 2019 by Miðeind ehf.*
+Greynir is *copyright (C) 2019 by Miðeind ehf.*
 The original author of this software is *Vilhjálmur Þorsteinsson*.
 
 .. image:: https://raw.githubusercontent.com/mideind/Reynir/master/static/img/GPLv3.png
@@ -145,5 +149,6 @@ The full text of the GNU General Public License v3 is
 and also available here: https://www.gnu.org/licenses/gpl-3.0.html.
 
 If you would like to use this software in ways that are incompatible
-with the standard GNU GPLv3 license, please contact Miðeind ehf.
-to negotiate alternative arrangements.
+with the standard GNU GPLv3 license, please contact
+Miðeind ehf. (*mideind@mideind.is*) to negotiate alternative
+arrangements.

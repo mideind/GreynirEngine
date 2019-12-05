@@ -119,12 +119,12 @@ a male person as an argument::
 
 Here is a short program using some of the matching features::
 
-    from reynir import Reynir
-    r = Reynir()
+    from reynir import Greynir
+    g = Greynir()
     my_text = ("Reynt er að efla áhuga ungs fólks á borgarstjórnarmálum "
         "með framboðsfundum og skuggakosningum en þótt kjörstaðirnir "
         "í þeim séu færðir inn í framhaldsskólana er þátttakan lítil.")
-    s = r.parse_single(my_text)
+    s = g.parse_single(my_text)
     print("Parse tree:")
     print(s.tree.view)
     print("All subjects:")

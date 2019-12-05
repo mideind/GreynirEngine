@@ -4,59 +4,59 @@ Reference
 =========
 
 The following sections describe the available classes, methods
-and properties of Reynir.
+and properties of Greynir.
 
 Separate sections describe grammar :ref:`nonterminals` and :ref:`terminals`.
 
 The following classes are documented herein:
 
-* The :py:class:`Reynir` class
+* The :py:class:`Greynir` class
 * The :py:class:`_Job` class
 * The :py:class:`_Paragraph` class
 * The :py:class:`_Sentence` class
 * The :py:class:`SimpleTree` class
 
-Initializing Reynir
+Initializing Greynir
 -------------------
 
 After installing the ``reynir`` package (see :ref:`installation`),
 use the following code to import it and initialize an instance of
-the :py:class:`Reynir` class::
+the :py:class:`Greynir` class::
 
-    from reynir import Reynir
-    r = Reynir()
+    from reynir import Greynir
+    g = Greynir()
 
-Now you can use the ``r`` instance to parse text, by calling
-the :py:meth:`Reynir.submit()`, :py:meth:`Reynir.parse()` and/or
-:py:meth:`Reynir.parse_single()` methods on it.
+Now you can use the ``g`` instance to parse text, by calling
+the :py:meth:`Greynir.submit()`, :py:meth:`Greynir.parse()` and/or
+:py:meth:`Greynir.parse_single()` methods on it.
 
-.. topic:: The Reynir instance
+.. topic:: The Greynir instance
 
-    It is recommended to initialize **only one instance** of the Reynir class for
+    It is recommended to initialize **only one instance** of the Greynir class for
     the duration of your program/process, since each instance needs to read
     its own configuration data. This includes the compressed
     *Database of Modern Icelandic Inflection (BÍN)* which occupies about 60 megabytes
-    of memory. However, if you run Reynir in multiple processes, BÍN will
+    of memory. However, if you run Greynir in multiple processes, BÍN will
     -- under most operating systems -- only be mapped once into the
     computer's physical address space.
 
-The Reynir class
-----------------
+The Greynir class
+-----------------
 
-.. py:class:: Reynir
+.. py:class:: Greynir
 
     .. py:method:: __init__(self, **options)
 
-        Initializes the :py:class:`Reynir` instance.
+        Initializes the :py:class:`Greynir` instance.
 
         :param options: Tokenizer options can be passed via keyword arguments,
-            as in ``r = Reynir(convert_numbers=True)``. See the documentation
+            as in ``g = Greynir(convert_numbers=True)``. See the documentation
             for the `Tokenizer <https://github.com/mideind/Tokenizer>`_
             package for further information.
 
     .. py:method:: submit(self, text : string, parse : bool = False, *, split_paragraphs = False) -> _Job
 
-        Submits a text string to Reynir for parsing and returns
+        Submits a text string to Greynir for parsing and returns
         a :py:class:`_Job` object.
 
         :param str text: The text to parse. Can be a single sentence
@@ -115,10 +115,10 @@ The Reynir class
 
         Example *(try it!)*::
 
-            from reynir import Reynir
-            r = Reynir()
+            from reynir import Greynir
+            g = Greynir()
             my_text = "Litla gula hænan fann fræ. Það var hveitifræ."
-            d = r.parse(my_text)
+            d = g.parse(my_text)
             print("{0} sentences were parsed".format(d["num_parsed"]))
             for sent in d["sentences"]:
                 print("The parse tree for '{0}' is:\n{1}"
@@ -147,10 +147,10 @@ The Reynir class
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
+            from reynir import Greynir
+            g = Greynir()
             my_text = "Litla gula hænan fann fræ"
-            sent = r.parse_single(my_text)
+            sent = g.parse_single(my_text)
             if sent.tree is None:
                 print("The sentence could not be parsed.")
             else:
@@ -179,20 +179,20 @@ The Reynir class
 
         Deallocates memory resources allocated by :py:meth:`__init__`.
 
-        If your code has finished using Reynir and you want to free up the
+        If your code has finished using Greynir and you want to free up the
         memory allocated for its resources, including the 60 megabytes for the
         *Database of Modern Icelandic Inflection (BÍN)*,
-        call :py:meth:`Reynir.cleanup()`.
+        call :py:meth:`Greynir.cleanup()`.
 
-        After calling :py:meth:`Reynir.cleanup()` the functionality of Reynir is
-        no longer available via existing instances of :py:class:`Reynir`.
-        However, you can initialize new instances (via ``r = Reynir()``),
+        After calling :py:meth:`Greynir.cleanup()` the functionality of Greynir is
+        no longer available via existing instances of :py:class:`Greynir`.
+        However, you can initialize new instances (via ``g = Greynir()``),
         causing the configuration to be re-read and memory to be allocated again.
 
 The _Job class
 ----------------
 
-Instances of this class are returned from :py:meth:`Reynir.submit()`.
+Instances of this class are returned from :py:meth:`Greynir.submit()`.
 You should not need to instantiate it yourself, hence the leading underscore
 in the class name.
 
@@ -208,11 +208,11 @@ in the class name.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
+            from reynir import Greynir
+            g = Greynir()
             my_text = ("[[ Þetta er fyrsta efnisgreinin. Hún er stutt. ]] "
                 "[[ Hér er önnur efnisgreinin. Hún er líka stutt. ]]")
-            j = r.submit(my_text)
+            j = g.submit(my_text)
             for pg in j.paragraphs():
                 for sent in pg:
                     print(sent.tidy_text)
@@ -333,9 +333,9 @@ hence the leading underscore in the class name.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Jón - faðir Ásgeirs - átti 2/3 hluta "
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Jón - faðir Ásgeirs - átti 2/3 hluta "
                 "af landinu árin 1944-1950.")
             print(s.text)
 
@@ -359,9 +359,9 @@ hence the leading underscore in the class name.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Jón - faðir Ásgeirs - átti 2/3 hluta "
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Jón - faðir Ásgeirs - átti 2/3 hluta "
                 "af landinu árin 1944-1950.")
             print(s.tidy_text)
 
@@ -378,9 +378,9 @@ hence the leading underscore in the class name.
 
         Example::
 
-            from reynir import Reynir, TOK
-            r = Reynir()
-            s = r.parse_single("5. janúar sá Ása 5 sólir.")
+            from reynir import Greynir, TOK
+            g = Greynir()
+            s = g.parse_single("5. janúar sá Ása 5 sólir.")
             for t in s.tokens:
                 print(TOK.descr[t.kind], t.txt)
 
@@ -420,7 +420,7 @@ hence the leading underscore in the class name.
     .. py:attribute:: score
 
         Returns an ``int`` representing the score that the best parse tree
-        got from the scoring heuristics of Reynir. The score is ``0`` if
+        got from the scoring heuristics of Greynir. The score is ``0`` if
         the sentence has not been successfully parsed.
 
     .. py:attribute:: tree
@@ -435,7 +435,7 @@ hence the leading underscore in the class name.
     .. py:attribute:: deep_tree
 
         Returns the best (highest-scoring) parse tree for the sentence,
-        in a *detailed form* corresponding directly to Reynir's context-free grammar
+        in a *detailed form* corresponding directly to Greynir's context-free grammar
         for Icelandic.
 
         If the sentence has not yet been parsed, or no parse tree was found
@@ -443,9 +443,9 @@ hence the leading underscore in the class name.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Ása sá sól.")
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Ása sá sól.")
             print(repr(s.deep_tree))
 
 
@@ -532,9 +532,9 @@ hence the leading underscore in the class name.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Þórgnýr fór út og fékk sér ís.")
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Þórgnýr fór út og fékk sér ís.")
             for t in s.terminals:
                 print("{0:8s} {1:8s} {2:8s} {3}"
                     .format(t.text, t.lemma, t.category,

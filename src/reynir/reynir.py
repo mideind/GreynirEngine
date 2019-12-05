@@ -1,8 +1,8 @@
 """
 
-    Reynir: Natural language processing for Icelandic
+    Greynir: Natural language processing for Icelandic
 
-    High-level wrapper for the Reynir tokenizer, parser and reducer
+    High-level wrapper for the Greynir tokenizer, parser and reducer
 
     Copyright (c) 2019 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
@@ -20,7 +20,7 @@
     along with this program.  If not, see http://www.gnu.org/licenses/.
 
 
-    This module implements a high-level interface to the Reynir
+    This module implements a high-level interface to the Greynir
     tokenizer, parser and reducer for parsing Icelandic text into
     trees.
 
@@ -227,8 +227,8 @@ class _Job:
         by paragraph and/or sentence.
     """
 
-    def __init__(self, reynir, tokens, parse):
-        self._r = reynir
+    def __init__(self, greynir, tokens, parse):
+        self._r = greynir
         self._parser = self._r.parser
         self._reducer = self._r.reducer
         self._tokens = tokens
@@ -346,14 +346,14 @@ class _Job:
         return self._parse_time
 
 
-class Reynir:
+class Greynir:
 
     """ Utility class to tokenize and parse text, organized
         as a sequence of sentences or alternatively as paragraphs
         of sentences. Typical usage:
 
-        r = Reynir()
-        job = r.submit(my_text)
+        g = Greynir()
+        job = g.submit(my_text)
         # Iterate through sentences and parse each one:
         for sent in job:
             if sent.parse():
@@ -365,7 +365,7 @@ class Reynir:
                 # the error token index is at sent.err_index
                 pass
         # Alternatively, split into paragraphs first:
-        job = r.submit(my_text)
+        job = g.submit(my_text)
         for p in job.paragraphs(): # Yields paragraphs
             for sent in p.sentences(): # Yields sentences
                 if sent.parse():
@@ -391,7 +391,7 @@ class Reynir:
 
     def __init__(self, **options):
         """ Tokenization options can be passed as keyword arguments to the
-            Reynir constructor """
+            Greynir constructor """
         self._options = options
 
     def tokenize(self, text):
@@ -407,19 +407,19 @@ class Reynir:
     def parser(self):
         """ Return the parser instance to be used """
         with self._lock:
-            if Reynir._parser is None:
+            if Greynir._parser is None:
                 # Initialize a singleton instance of the parser and the reducer.
                 # Both classes are re-entrant and thread safe.
-                Reynir._parser = Fast_Parser()
-                Reynir._reducer = Reducer(Reynir._parser.grammar)
-            return Reynir._parser
+                Greynir._parser = Fast_Parser()
+                Greynir._reducer = Reducer(Greynir._parser.grammar)
+            return Greynir._parser
 
     @property
     def reducer(self):
         """ Return the reducer instance to be used """
         # Should always retrieve the parser attribute first
-        assert Reynir._reducer is not None
-        return Reynir._reducer
+        assert Greynir._reducer is not None
+        return Greynir._reducer
 
     def submit(self, text, parse=False, *, split_paragraphs=False):
         """ Submit a text to the tokenizer and parser, yielding a job object.
@@ -428,7 +428,7 @@ class Reynir:
             sentences are automatically parsed before being returned.
             Otherwise, they need to be explicitly parsed by calling
             sent.parse(). This is a more incremental, asynchronous
-            approach than Reynir.parse(). """
+            approach than Greynir.parse(). """
         if split_paragraphs:
             # Original text consists of paragraphs separated by newlines:
             # insert paragraph separators before tokenization
@@ -462,9 +462,13 @@ class Reynir:
 
     @classmethod
     def cleanup(cls):
-        """ Discard memory resources held by the Reynir class object """
+        """ Discard memory resources held by the Greynir class object """
         cls._reducer = None
         if cls._parser:
             Fast_Parser.discard_grammar()
             cls._parser.cleanup()
             cls._parser = None
+
+
+# Allow old class name for compatibility
+Reynir = Greynir

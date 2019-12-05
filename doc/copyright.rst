@@ -3,7 +3,7 @@
 Copyright and licensing
 =======================
 
-Reynir is *copyright © 2019 Miðeind ehf.*
+Greynir is *copyright © 2019 Miðeind ehf.*
 
 The project's original author is **Vilhjálmur Þorsteinsson**.
 
@@ -22,7 +22,7 @@ at https://www.gnu.org/licenses/gpl-3.0.en.html.
 
 .. note::
 
-    Reynir embeds the `Database of Modern Icelandic Inflection <http://bin.arnastofnun.is/DMII/>`_
+    Greynir embeds the `Database of Modern Icelandic Inflection <http://bin.arnastofnun.is/DMII/>`_
     (`Beygingarlýsing íslensks nútímamáls <http://bin.arnastofnun.is>`_, abbreviated BÍN)
     in compressed form. It is not permitted to reverse engineer this file format
     in order to extract the original BÍN source data. These source data
@@ -36,6 +36,6 @@ at https://www.gnu.org/licenses/gpl-3.0.en.html.
     Miðeind ehf. is a licensee of the BÍN source data in accordance with the above
     mentioned terms. With reference to article 3 of the license terms, the data
     are redistributed in a proprietary binary format, exclusively as an integral
-    part of the Reynir project. *Any subsequent distribution of the data must be
+    part of the Greynir project. *Any subsequent distribution of the data must be
     done only in full compliance with the original BÍN license terms.*
 

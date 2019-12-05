@@ -3,19 +3,20 @@
 Quickstart
 ==========
 
-After :ref:`installing Reynir <installation>`, fire up your Python 3 interpreter::
+After :ref:`installing Greynir <installation>`, fire up your
+Python 3 interpreter::
 
     $ python3
 
 ...and try something like the following::
 
-    from reynir import Reynir
+    from reynir import Greynir
 
     my_text = "Litla gula hænan fann fræ. Það var hveitifræ."
 
-    # Initialize Reynir and submit the text as a parse job
-    r = Reynir()
-    job = r.submit(my_text)
+    # Initialize Greynir and submit the text as a parse job
+    g = Greynir()
+    job = g.submit(my_text)
 
     # Iterate through sentences and parse each one
     for sent in job:
@@ -57,12 +58,14 @@ The output of the program is as follows::
             +-no_et_nf_hk: 'hveitifræ'
     +-'.'
 
-The code first creates an instance of the :py:class:`Reynir` class and assigns
-it to the ``r`` object. The :py:class:`Reynir` class is Reynir's main service interface.
+The code first creates an instance of the :py:class:`Greynir` class
+and assigns it to the ``g`` object. The :py:class:`Greynir` class is
+Greynir's main service interface.
 
-Next, the program submits a piece of text containing two sentences to Reynir, which
-returns a job object. Each job object encapsulates a stream of sentences that
-will be, or have been, processed through Reynir's tokenizer and parser.
+Next, the program submits a piece of text containing two sentences to
+Greynir, which returns a job object. Each job object encapsulates a
+stream of sentences that will be, or have been, processed through
+Greynir's tokenizer and parser.
 
 A job object is a Python generator, and the ``for`` loop iterates through
 the job's sentence stream, returning each sentence in turn in the ``sent``

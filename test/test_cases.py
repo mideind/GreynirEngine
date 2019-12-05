@@ -2,7 +2,7 @@
 
     test_cases.py
 
-    Tests for Reynir module
+    Tests for Greynir module
 
     Copyright (C) 2019 by Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
@@ -27,9 +27,9 @@ import pytest
 
 @pytest.fixture(scope="module")
 def r():
-    """ Provide a module-scoped Reynir instance as a test fixture """
-    from reynir import Reynir
-    r = Reynir()
+    """ Provide a module-scoped Greynir instance as a test fixture """
+    from reynir import Greynir
+    r = Greynir()
     yield r
     # Do teardown here
     r.__class__.cleanup()
@@ -261,8 +261,8 @@ def test_casting():
 
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
-    from reynir import Reynir
-    r = Reynir()
+    from reynir import Greynir
+    r = Greynir()
     test_cases(r)
     test_casting()
     r.__class__.cleanup()

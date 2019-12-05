@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 
 """
-    Reynir: Natural language processing for Icelandic
+    Greynir: Natural language processing for Icelandic
 
     Setup.py
 
@@ -22,7 +22,7 @@
     along with this program.  If not, see http://www.gnu.org/licenses/.
 
 
-    This module sets up the Reynir package. It uses the cffi_modules
+    This module sets up the Greynir package. It uses the cffi_modules
     parameter, available in recent versions of setuptools, to
     automatically compile the eparser.cpp module to eparser.*.so/.pyd
     and build the required CFFI Python wrapper via eparser_build.py.
@@ -47,7 +47,7 @@ from setuptools import setup
 
 
 if sys.version_info < (3, 5):
-    print("Reynir requires Python >= 3.5")
+    print("Greynir requires Python >= 3.5")
     sys.exit(1)
 
 
@@ -65,7 +65,7 @@ setup(
     name="reynir",
     # Remember to modify version numbers in
     # doc/conf.py and src/reynir/__init__.py as well
-    version="2.0.0",
+    version="2.0.1",
     license="GNU GPLv3",
     description="A natural language parser for Icelandic",
     long_description="{0}\n{1}".format(

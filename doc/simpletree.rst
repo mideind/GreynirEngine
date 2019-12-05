@@ -58,9 +58,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Ása sá sól.")
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Ása sá sól.")
             print(s.tree.S.IP.VP.VP[0].all_variants)
 
         Output (the variants of the verb *sá* in the verb phrase)::
@@ -169,9 +169,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Ása sá sól.")
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Ása sá sól.")
             print(s.tree.view)
 
         outputs::
@@ -199,16 +199,16 @@ head (top) node, as well as about its children and contained subtrees.
         ``no_þf_kk_et`` for a noun, accusative case, masculine gender, singular.
 
         Note that the terminal identifiers returned by this property correspond
-        directly with the Reynir grammar. If you want all grammatical variants
+        directly with the Greynir grammar. If you want all grammatical variants
         (features) of the word that matched a terminal (for instance whether
         a verb was in the present (``_nt``) or past (``_þt``) tense), use the
         :py:attr:`SimpleTree.flat_with_all_variants` property instead.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Jón greiddi bænum 10 milljónir króna.")
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Jón greiddi bænum 10 milljónir króna.")
             print(s.tree.flat)
 
         Output (line breaks inserted)::
@@ -234,14 +234,14 @@ head (top) node, as well as about its children and contained subtrees.
 
         For each terminal in the tree, this property returns all grammatical variants
         (features) of the word that matched the terminal. If you only need the
-        variants that were actually specified in the Reynir grammar, use the
+        variants that were actually specified in the Greynir grammar, use the
         :py:attr:`SimpleTree.flat` property instead.
 
         Example::
 
             from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Jón greiddi bænum 10 milljónir króna.")
+            g = Greynir()
+            s = g.parse_single("Jón greiddi bænum 10 milljónir króna.")
             print(s.tree.flat_with_all_variants)
 
         Output (line breaks inserted)::
@@ -273,10 +273,10 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
+            from reynir import Greynir
+            g = Greynir()
             my_text = "Prakkarinn Ása í Garðastræti sá tvær gular sólir."
-            s = r.parse_single(my_text)
+            s = g.parse_single(my_text)
             print(s.tree[0]["IP"][1].lemmas)
 
         outputs (the lemmas of the verb phrase)::
@@ -298,10 +298,10 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
+            from reynir import Greynir
+            g = Greynir()
             my_text = "Prakkarinn Ása í Garðastræti sá sól."
-            s = r.parse_single(my_text)
+            s = g.parse_single(my_text)
             print(s.tree.S_MAIN.IP.NP_SUBJ.lemmas)
 
         outputs (the lemmas of the sentence's subject, *frumlag*)::
@@ -340,10 +340,10 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
+            from reynir import Greynir
+            g = Greynir()
             t = "María Jónsdóttir skuldaði leigusalanum 10.000 krónur."
-            s = r.parse_single(t)
+            s = g.parse_single(t)
             for token, ifd_tag in zip(s.text.split(), s.ifd_tags):
                 print("{0:13}: {1:6}".format(token, ifd_tag))
 
@@ -395,9 +395,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Góðglaða karlana langar í hest.")
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Góðglaða karlana langar í hest.")
             print(" ".join(n.nominative
                 for n in s.tree.descendants if n.is_terminal))
 
@@ -414,9 +414,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Góðglaða karlana langar í hest.")
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Góðglaða karlana langar í hest.")
             print(" ".join(n.accusative
                 for n in s.tree.descendants if n.is_terminal))
 
@@ -433,9 +433,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Góðglaða karlana langar í hest.")
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Góðglaða karlana langar í hest.")
             print(" ".join(n.dative
                 for n in s.tree.descendants if n.is_terminal))
 
@@ -452,9 +452,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Góðglaða karlana langar í hest.")
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Góðglaða karlana langar í hest.")
             print(" ".join(n.genitive
                 for n in s.tree.descendants if n.is_terminal))
 
@@ -471,9 +471,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Góðglaða karlana langar í hest.")
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Góðglaða karlana langar í hest.")
             print(" ".join(n.indefinite
                 for n in s.tree.descendants if n.is_terminal))
 
@@ -490,9 +490,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Góðglaða karlana langar í hest.")
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Góðglaða karlana langar í hest.")
             print(" ".join(n.canonical
                 for n in s.tree.descendants if n.is_terminal))
 
@@ -508,9 +508,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Ótrúlega frábærum bílstjórum "
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Ótrúlega frábærum bílstjórum "
                 "þriggja góðglöðu alþingismannanna "
                 "sem fóru út þykir þetta leiðinlegt.")
             print(s.tree.S_MAIN.IP.NP_SUBJ.nominative_np)
@@ -529,9 +529,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Ótrúlega frábærum bílstjórum "
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Ótrúlega frábærum bílstjórum "
                 "þriggja góðglöðu alþingismannanna "
                 "sem fóru út þykir þetta leiðinlegt.")
             print(s.tree.S_MAIN.IP.NP_SUBJ.accusative_np)
@@ -550,9 +550,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Ótrúlega frábærum bílstjórum "
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Ótrúlega frábærum bílstjórum "
                 "þriggja góðglöðu alþingismannanna "
                 "sem fóru út þykir þetta leiðinlegt.")
             print(s.tree.S_MAIN.IP.NP_SUBJ.dative_np)
@@ -571,9 +571,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Ótrúlega frábærum bílstjórum "
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Ótrúlega frábærum bílstjórum "
                 "þriggja góðglöðu alþingismannanna "
                 "sem fóru út þykir þetta leiðinlegt.")
             print(s.tree.S_MAIN.IP.NP_SUBJ.genitive_np)
@@ -596,9 +596,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Hinum ótrúlega frábæru bílstjórum "
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Hinum ótrúlega frábæru bílstjórum "
                 "þriggja góðglöðu alþingismannanna "
                 "sem fóru út þykir þetta leiðinlegt.")
             print(s.tree.S_MAIN.IP.NP_SUBJ.indefinite_np)
@@ -623,9 +623,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Hinum ótrúlega frábæru bílstjórum "
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Hinum ótrúlega frábæru bílstjórum "
                 "þriggja góðglöðu alþingismannanna "
                 "sem fóru út þykir þetta leiðinlegt.")
             print(s.tree.S_MAIN.IP.NP_SUBJ.canonical_np)
@@ -662,12 +662,12 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
+            from reynir import Greynir
+            g = Greynir()
             my_text = "Eftir síðustu kosningar ræddi " \
                 "Bjarni Benediktsson við Katrínu Jakobsdóttur " \
                 "um myndun ríkisstjórnar."
-            s = r.parse_single(my_text)
+            s = g.parse_single(my_text)
             print(s.tree.persons)
 
         outputs::
@@ -712,9 +712,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Kristín málaði hús Steingríms")
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Kristín málaði hús Steingríms")
             # Show the first possessive noun phrase ('Steingríms')
             print(s.tree.first_match("NP-POSS").nominative_np)
 
@@ -737,9 +737,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Stóri feiti jólasveinninn beislaði "
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Stóri feiti jólasveinninn beislaði "
                 "fjögur sætustu hreindýrin og ók rauða vagninum "
                 "með fjölda gjafa til spenntu barnanna sem biðu "
                 "milli vonar og ótta.")
@@ -778,9 +778,9 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
-            r = Reynir()
-            s = r.parse_single("Stóri feiti jólasveinninn beislaði "
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Stóri feiti jólasveinninn beislaði "
                 "fjögur sætustu hreindýrin og ók rauða vagninum "
                 "með fjölda gjafa til spenntu barnanna sem biðu "
                 "milli vonar og ótta.")

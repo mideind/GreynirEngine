@@ -3,7 +3,7 @@
 Overview
 ========
 
-**Reynir** parses sentences of Icelandic text into **parse trees**.
+**Greynir** parses sentences of Icelandic text into **parse trees**.
 A parse tree recursively describes the grammatical structure
 of the sentence, including its noun phrases, verb phrases,
 prepositional phrases, etc.
@@ -23,11 +23,11 @@ can be extracted from the sentence.
 Example
 -------
 
-Here is a short example of what can be done with Reynir::
+Here is a short example of what can be done with Greynir::
 
-    >>> from reynir import Reynir
-    >>> r = Reynir()
-    >>> sent = r.parse_single("Ása sá sól.")
+    >>> from reynir import Greynir
+    >>> g = Greynir()
+    >>> sent = g.parse_single("Ása sá sól.")
     >>> print(sent.tree.view)
     S0                              # Root
     +-S-MAIN                        # Main sentence
@@ -60,26 +60,26 @@ phrase *(beygingarliður)*, ``VP`` is a verb phrase *(sagnliður)*,
 ``NP_OBJ`` is an object noun phrase *(andlag)*.
 Nonterminal names are listed in the :ref:`nonterminals` section.
 
-What Reynir does
+What Greynir does
 ----------------
 
-Reynir starts by **tokenizing** your text, i.e. dividing it up into individual words,
+Greynir starts by **tokenizing** your text, i.e. dividing it up into individual words,
 numbers, punctuation and other tokens. For this, it uses the separate
 `Tokenizer <https://github.com/mideind/Tokenizer>`_ package, by the
-same authors, which is automatically installed with Reynir.
+same authors, which is automatically installed with Greynir.
 
-After tokenization, Reynir proceeds to **parse** the text according to a
+After tokenization, Greynir proceeds to **parse** the text according to a
 `context-free grammar <https://github.com/mideind/ReynirPackage/blob/master/src/reynir/Reynir.grammar>`_
 for the modern Icelandic language. This grammar contains rules describing
 how sentences and the various subparts thereof can be validly constructed.
 
 Almost all sentences are **ambiguous**. This means that there are multiple
 parse trees that can validly describe the sentence according to the grammar
-rules. Reynir thus has to choose a single best tree from the forest of possible
+rules. Greynir thus has to choose a single best tree from the forest of possible
 trees. It does this with a scoring heuristic which assigns higher scores to
 common word forms and grammatical constructs, and lower scores to rare word
 forms and uncommon constructs. The parse tree with the highest overall
-score wins and is returned from the :py:meth:`Reynir.parse_single()` function.
+score wins and is returned from the :py:meth:`Greynir.parse_single()` function.
 
 Once the best parse tree has been found, it is available for various kinds
 of **queries**. You can access word lemmas, extract noun and verb phrases

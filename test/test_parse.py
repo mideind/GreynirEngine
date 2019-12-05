@@ -2,7 +2,7 @@
 
     test_parse.py
 
-    Tests for Reynir module
+    Tests for Greynir module
 
     Copyright(C) 2019 by Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
@@ -28,9 +28,9 @@ from collections import defaultdict
 
 @pytest.fixture(scope="module")
 def r():
-    """ Provide a module-scoped Reynir instance as a test fixture """
-    from reynir import Reynir
-    r = Reynir()
+    """ Provide a module-scoped Greynir instance as a test fixture """
+    from reynir import Greynir
+    r = Greynir()
     yield r
     # Do teardown here
     r.__class__.cleanup()
@@ -1704,8 +1704,8 @@ def test_company(r):
 
 
 def test_kludgy_ordinals():
-    from reynir import Reynir, KLUDGY_ORDINALS_PASS_THROUGH
-    r2 = Reynir(handle_kludgy_ordinals=KLUDGY_ORDINALS_PASS_THROUGH)
+    from reynir import Greynir, KLUDGY_ORDINALS_PASS_THROUGH
+    r2 = Greynir(handle_kludgy_ordinals=KLUDGY_ORDINALS_PASS_THROUGH)
     s = r2.parse_single(
         "Hann keypti 3ja herbergja íbúð á 1stu hæð "
         "en hún átti 2ja strokka mótorhjól af 4ðu kynslóð."
@@ -1835,8 +1835,8 @@ def test_neutral_pronoun(r):
 
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
-    from reynir import Reynir
-    r = Reynir()
+    from reynir import Greynir
+    r = Greynir()
     test_compressed_bin()
     test_parse(r, verbose=True)
     test_properties(r)
