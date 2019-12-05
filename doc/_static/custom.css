@@ -1,2 +1,29 @@
 
-@import url('https://fonts.googleapis.com/css?family=Lato:100,300,400,400i,700,700i&display=swap')
+@import url('https://fonts.googleapis.com/css?family=Lato:100,300,400,400i,700,700i&display=swap');
+
+body {
+    font-weight: 300;
+    font-size: 16px;
+}
+
+strong {
+    font-weight: 400;
+}
+
+div.body h1, div.body h2, div.body h3, div.body h4, div.body h5, div.body h6 {
+    font-family: 'Lato', 'Garamond', 'Georgia', serif;
+    font-weight: normal;
+}
+
+div.body p, div.body dd, div.body li {
+    line-height: 1.5em;
+}
+
+pre, tt, code {
+    font-size: 0.8em;
+    line-height: 1.25em;
+}
+
+div.sphinxsidebarwrapper p.blurb {
+    font-size: 13px;
+}

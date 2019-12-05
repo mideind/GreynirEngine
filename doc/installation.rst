@@ -6,7 +6,7 @@ Installation
 Prerequisites
 -------------
 
-Greynir runs on **CPython 3.4** or newer, and on **PyPy 3.5**
+Greynir runs on **CPython 3.5** or newer, and on **PyPy 3.5**
 or newer (more info on PyPy `here <http://pypy.org/>`_).
 
 On GNU/Linux and similar systems, you may need to have ``python3-dev`` and/or
@@ -39,9 +39,8 @@ To install Greynir:
 
     $ pip3 install reynir
 
-...or if you want to be able to edit Greynir's source code in-place
-and perhaps submit pull requests (welcome!) to the project's
-`GitHub repository <https://github.com/mideind/ReynirPackage>`_:
+...or if you want to be able to edit Greynir's source code in-place,
+install ``git`` and ``git-lfs`` and do the following:
 
 .. code-block:: bash
 
@@ -54,6 +53,9 @@ and perhaps submit pull requests (welcome!) to the project's
 On the most common Linux x86_64/amd64 systems, ``pip`` will download and
 install a binary wheel. On other systems, a source distribution will be
 downloaded and compiled to binary.
+
+Pull requests are welcome in the project's
+`GitHub repository <https://github.com/mideind/ReynirPackage>`_.
 
 
 Install into a virtualenv
