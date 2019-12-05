@@ -3,9 +3,13 @@
 Copyright and licensing
 =======================
 
-Greynir is *copyright © 2019 Miðeind ehf.*
+.. figure:: _static/MideindLogoVert100.png
+    :align: left
+    :alt: Miðeind ehf.
 
-The project's original author is **Vilhjálmur Þorsteinsson**.
+Greynir is *copyright © 2019 Miðeind ehf.*, Reykjavík, Iceland.
+
+The project's original author is *Vilhjálmur Þorsteinsson*.
 
 This program is *free software*: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

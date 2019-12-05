@@ -27,3 +27,19 @@ pre, tt, code {
 div.sphinxsidebarwrapper p.blurb {
     font-size: 13px;
 }
+
+div.sphinxsidebar h3, div.sphinxsidebar h4 {
+    font-family: 'Lato', 'Garamond', 'Georgia', serif;
+    font-weight: 400;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+div.sphinxsidebar ul li.toctree-l1 > a {
+    font-size: 110%;
+    line-height: 1.7;
+}
+
+div.figure p.caption span.caption-text {
+    font-style: italic;
+}
