@@ -17,7 +17,7 @@ The following classes are documented herein:
 * The :py:class:`SimpleTree` class
 
 Initializing Greynir
--------------------
+--------------------
 
 After installing the ``reynir`` package (see :ref:`installation`),
 use the following code to import it and initialize an instance of

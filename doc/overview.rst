@@ -61,7 +61,7 @@ phrase *(beygingarliður)*, ``VP`` is a verb phrase *(sagnliður)*,
 Nonterminal names are listed in the :ref:`nonterminals` section.
 
 What Greynir does
-----------------
+-----------------
 
 Greynir starts by **tokenizing** your text, i.e. dividing it up into individual words,
 numbers, punctuation and other tokens. For this, it uses the separate
@@ -75,11 +75,12 @@ how sentences and the various subparts thereof can be validly constructed.
 
 Almost all sentences are **ambiguous**. This means that there are multiple
 parse trees that can validly describe the sentence according to the grammar
-rules. Greynir thus has to choose a single best tree from the forest of possible
-trees. It does this with a scoring heuristic which assigns higher scores to
-common word forms and grammatical constructs, and lower scores to rare word
-forms and uncommon constructs. The parse tree with the highest overall
-score wins and is returned from the :py:meth:`Greynir.parse_single()` function.
+rules. Greynir thus has to choose a single best tree from the forest of
+possible trees. It does this with a scoring heuristic which assigns higher
+scores to common word forms and grammatical constructs, and lower scores to
+rare word forms and uncommon constructs. The parse tree with the highest
+overall score wins and is returned from the :py:meth:`Greynir.parse_single()`
+function.
 
 Once the best parse tree has been found, it is available for various kinds
 of **queries**. You can access word lemmas, extract noun and verb phrases
