@@ -24,7 +24,7 @@ Along the way, Greynir tokenizes the text, finds **lemmas** and assigns
 Full documentation for Greynir is `available here <https://greynir.is/doc/>`_.
 
 Greynir is the engine of `Greynir.is <https://greynir.is>`_, a natural-language
-front end for a database of 8 million sentences parsed from Icelandic
+front end for a database of 9 million sentences parsed from Icelandic
 news articles, and `Embla <https://embla.is>`_, a natural-language query app
 for smart phones.
 
