@@ -7,8 +7,8 @@
     https://github.com/mideind/ReynirPackage
     for copyright and licensing information.
 
-    Override stuff from the standard Sphinx Alabaster style
-    to make it more compliant with the Mideind/Greynir branding
+    This style sheet overrides stuff from the standard Sphinx Alabaster
+    style to make it more compliant with the Mideind/Greynir branding
 
 */
 
@@ -33,6 +33,7 @@ div.body h1 {
     font-style: italic;
     font-size: 220%;
     color: #006eff;
+    margin-top: 20px;
 }
 
 div.body h2 {
