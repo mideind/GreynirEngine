@@ -1558,15 +1558,15 @@ def test_subj_op(r):
     s = r.parse_single("hestsins hrakaði hratt")
     assert s.tree is None
     # blöskra e-ð
-    s = r.parse_single("mér blöskraði vitleysan í Páli")
+    s = r.parse_single("hestinum blöskraði vitleysan í Páli")
     assert s.tree is not None
-    assert s.tree.nouns == ["vitleysa", "Páll"]
+    assert s.tree.nouns == ["hestur", "vitleysa", "Páll"]
     assert s.tree.verbs == ["blöskra"]
-    s = r.parse_single("ég blöskraði vitleysan í Páli")
+    s = r.parse_single("hesturinn blöskraði vitleysan í Páli")
     assert s.tree is None
-    s = r.parse_single("mig blöskraði vitleysan í Páli")
+    s = r.parse_single("hestinn blöskraði vitleysan í Páli")
     assert s.tree is None
-    s = r.parse_single("mín blöskraði vitleysan í Páli")
+    s = r.parse_single("hestsins blöskraði vitleysan í Páli")
     assert s.tree is None
     s = r.parse_single("mér blöskraði vitleysuna í Páli")
     assert s.tree is None
