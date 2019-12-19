@@ -887,8 +887,17 @@ class BIN_Token(Token):
         return terminal.startswith("talameðbókstaf")
 
     def matches_AMOUNT(self, terminal):
-        """ An amount token matches a noun terminal """
+        """ An amount token matches an amount terminal and a noun terminal """
         if terminal.startswith("amount"):
+            if terminal.num_variants >= 1 and terminal.variant(0).upper() != self.t2[1]:
+                # An ISO currency code is specified and it does not match the token
+                return False
+            if terminal.num_variants >= 2:
+                # A case is specified as well
+                if terminal.variant(1) not in self.t2[2]:
+                    # The case is not present in the token
+                    return False
+            # The token matches
             return True
         if not terminal.startswith("no"):
             return False

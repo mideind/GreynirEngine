@@ -738,7 +738,10 @@ def parse_phrases_2(token_stream, token_ctor):
                             genders = [CURRENCY_GENDERS.get(next_token.txt, "hk")]
                     if cur is not None:
                         # Use the case and gender information from the currency name
-                        if not cases:
+                        if not cases or "nf" in cases:
+                            # No case information from the number, or
+                            # it is nominative ('tólf hundruð pundum')
+                            # use the case of the currency name only
                             cases = all_cases(next_token)
                         if not genders:
                             genders = all_genders(next_token)
