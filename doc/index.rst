@@ -25,12 +25,12 @@ Along the way, Greynir tokenizes the text, finds **lemmas** and assigns
    Greynir is the engine of `Embla <https://embla.is>`_ and `Greynir.is <https://greynir.is>`_.
 
 Greynir has been used to parse text from Icelandic news websites since 2015,
-processing over 8 million sentences in over 400.000 articles. Its
+processing over 10 million sentences in over 515.000 articles. Its
 optimized C++ parsing core is fast and efficient enough to parse
 real-world text according to a
 `context-free grammar for the Icelandic
 language <https://github.com/mideind/ReynirPackage/blob/master/src/reynir/Reynir.grammar>`_
-with over 16,000 productions.
+with over 21,000 productions.
 
 To get acquainted with Greynir, we recommend that you start with
 the :ref:`overview`, proceed with the :ref:`installation` instructions,

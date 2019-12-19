@@ -2243,6 +2243,12 @@ Sögn_1/tala/pers/kyn →
     | HjSögnLhÞtSM/tala/pers FsAtv? so_2_þf_ef_lhþt/tala/kyn NlBeintAndlag_ef
     # Konan hefur verið/skal/mun kölluð öllum illum nöfnum
     | HjSögnLhÞtSM/tala/pers FsAtv? so_2_þf_þgf_lhþt/tala/kyn Nl_þgf
+    # Páll fékk [í snatri] [galvaskur] bílinn [að fullu / strax] endurgreiddan
+    | HjSögnFá/tala/pers FsRunaEftirSögn? LoTengtSögn_nf/tala/kyn? FáAndlag_þf
+
+FáAndlag_þf →
+    # Páll fékk bílinn strax endurgreiddan
+    NlBeintAndlag_þf/tala/pers/kyn AtvFs? so_lhþt_þf/tala/kyn
 
 # Býli í landinu eru/geta verið/verða/munu vera 3.000/tuttugu [talsins]
 Sögn_1_ft/pers/kyn →
@@ -2458,6 +2464,7 @@ SögnMeðF_2/tala/pers/kyn →
     | HjSögnNh/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? Sögn_2_nh   # (Á morgun) munu konurnar [ekki] krefja Pál svara
 
 # Hjálparsagnasambönd: vera, hafa, geta, skulu, munu...
+
 # Aðalsögnin er sagnbót (farið/gert/viljað/borðað...)
 HjSögn/tala/pers →
     'hafa:so'/tala/pers Geta_sagnb?                 # hafðir [í fátinu ekki getað] farið
@@ -2811,8 +2818,8 @@ HjSögnFinnst →
     | 'þykja:so'_gm_vh_p3_et # Okkur þyki/þætti skemmtilegt
 
 HjSögnFinnst_sagnb →
-    'finna:so'_mm_sagnb     # Okkur hefur fundist skemmtilegt
-    | 'þykja:so'_gm_sagnb   # Okkur hefur þótt skemmtilegt
+    'finna:so'_mm_sagnb      # Okkur hefur fundist skemmtilegt
+    | 'þykja:so'_gm_sagnb    # Okkur hefur þótt skemmtilegt
 
 HjSögnFinnst/tala/pers →
     'finna:so'_op_mm/tala/pers      # Konunum finnst Páll skemmtilegur
@@ -2823,6 +2830,24 @@ HjSögnFinnst/tala/pers →
 HjSögnVantaSkorta →
     'vanta:so'_nh           # Okkur þykir/þótti vanta mýkt í rödd Pálínu
     | 'skorta:so'_nh        # Páli þykir/þótti skorta samkvæmni í málflutningi Jóns
+
+HjSögnFá/tala/pers →
+    'fá:so'_1_þf_gm/tala/pers                   # Páll fékk bílinn endurgreiddan
+    | 'hafa:so'_gm/tala/pers 'fá:so'_gm_sagnb   # Páll hefur fengið bílinn endurgreiddan
+    | 'hafa:so'_gm/tala/pers 'geta:so'_gm_sagnb 'fá:so'_gm_sagnb # Páll hefur getað fengið bílinn endurgreiddan
+    | 'hafa:so'_gm/tala/pers 'vilja:so'_gm_sagnb 'fá:so'_nh # Páll hefur viljað fá bílinn endurgreiddan
+    | 'geta:so'_gm/tala/pers 'hafa:so'_nh? 'fá:so'_gm_sagnb # Páll getur [hafa] fengið bílinn endurgreiddan
+    | 'vilja:so'_gm/tala/pers 'fá:so'_nh        # Páll vill fá bílinn endurgreiddan
+    | 'vilja:so'_gm/tala/pers 'hafa:so'_nh 'fá:so'_gm_sagnb # Páll vill hafa fengið bílinn endurgreiddan
+    | 'vilja:so'_gm/tala/pers 'geta:so'_nh 'fá:so'_gm_sagnb # Páll vill geta fengið bílinn endurgreiddan
+    | 'mega:so'_gm/tala/pers 'fá:so'_nh         # Páll má fá bílinn endurgreiddan
+    | 'mega:so'_gm/tala/pers 'hafa:so'_nf 'fá:so'_gm_sagnb # Páll má hafa fengið bílinn endurgreiddan
+    | 'skulu:so'_gm/tala/pers 'fá:so'_nh        # Páll skal fá bílinn endurgreiddan
+    | 'skulu:so'_gm/tala/pers 'hafa:so'_nh 'fá:so'_gm_sagnb # Páll skal hafa fengið bílinn endurgreiddan
+    | 'skulu:so'_gm/tala/pers 'geta:so'_nh 'fá:so'_gm_sagnb # Páll skal geta fengið bílinn endurgreiddan
+    | 'munu:so'_gm/tala/pers 'vilja:so'_nh? 'fá:so'_nh      # Páll mun [vilja] fá bílinn endurgreiddan
+    | 'munu:so'_gm/tala/pers 'hafa:so'_nh 'fá:so'_gm_sagnb # Páll mun hafa fengið bílinn endurgreiddan
+    | 'munu:so'_gm/tala/pers 'geta:so'_nh 'fá:so'_gm_sagnb # Páll mun geta fengið bílinn endurgreiddan
 
 # HjSögnÞaðLo_et_p3 →
 #     'vera:so'_gm_p3_et 'verða:so'_sagnb? # Það er [orðið] brýnt að...
