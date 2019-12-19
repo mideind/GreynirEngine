@@ -708,6 +708,34 @@ def test_amounts(r):
     assert s.tokens[2].val[0] == 17
     assert s.tokens[2].val[1] == "GBP"
 
+    s = r.parse_single("Tjónið nam tólf hundruð pundum.")
+    t = s.terminals
+    assert len(t) == 4
+    check_terminal(
+        t[0],
+        text="Tjónið",
+        lemma="tjón",
+        category="no",
+        variants=["et", "nf", "hk", "gr"],
+    )
+    check_terminal(
+        t[1],
+        text="nam",
+        lemma="nema",
+        category="so",
+        variants=["1", "þgf", "et", "p3", "gm", "þt", "fh"],
+    )
+    check_terminal(
+        t[2],
+        text="tólf hundruð pundum",
+        lemma="tólf hundruð pundum",
+        category="no",
+        variants=["ft", "þgf", "hk"],
+    )
+    check_terminal(t[3], text=".", lemma=".", category="", variants=[])
+    assert s.tokens[2].val[0] == 1200
+    assert s.tokens[2].val[1] == "GBP"
+
     s = r.parse_single("Tjónið nam 17 pólskum zloty.")
     t = s.terminals
     assert len(t) == 4

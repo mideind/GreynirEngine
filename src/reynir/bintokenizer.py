@@ -742,7 +742,11 @@ def parse_phrases_2(token_stream, token_ctor):
                             # No case information from the number, or
                             # it is nominative ('tólf hundruð pundum')
                             # use the case of the currency name only
-                            cases = all_cases(next_token)
+                            new_cases = all_cases(next_token)
+                            # However, for 'sex milljónum punda', we use
+                            # the case of 'sex milljónum' and not 'punda'
+                            if "ef" not in new_cases:
+                                cases = new_cases
                         if not genders:
                             genders = all_genders(next_token)
                 elif next_token.kind == TOK.CURRENCY:
