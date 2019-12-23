@@ -806,7 +806,7 @@ class ParseForestNavigator:
 
         visited = dict()
 
-        def _nav_helper(w, index, level):
+        def _nav_helper(w, level):
             """ Navigate from w """
             if (
                 not self._visit_all
@@ -838,25 +838,17 @@ class ParseForestNavigator:
                         for ix, (prod, children) in enumerate(w._families):
                             # assert len(children) > 0
                             self.visit_family(results, level, w, ix, prod)
-                            if w._completed:
-                                # Completed nonterminal: restart children index
-                                child_ix = -1
-                            else:
-                                child_ix = index
-                            if len(children) > 1:
-                                child_ix -= len(children) - 1
                             for ch in children:
                                 self.add_result(
-                                    results, ix, _nav_helper(ch, child_ix, child_level)
+                                    results, ix, _nav_helper(ch, child_level)
                                 )
-                                child_ix += 1
                     v = self.process_results(results, w)
             if not self._visit_all:
                 # Mark the node as visited and store its result
                 visited[w] = v
             return v
 
-        return _nav_helper(root_node, 0, 0)
+        return _nav_helper(root_node, 0)
 
 
 class ParseForestPrinter(ParseForestNavigator):

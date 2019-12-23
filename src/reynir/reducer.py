@@ -353,11 +353,7 @@ class ParseForestReducer(ParseForestNavigator):
         # If no match, discourage
         return _VERB_PREP_PENALTY
 
-    def visit_epsilon(self, level):
-        """ At Epsilon node """
-        return dict(sc=0)  # Score 0
-
-    def visit_token(self, level, node):
+    def _optimized_visit_token(self, node):
         """ At token node """
         # Return the score of this token/terminal match
         d = dict()
@@ -394,39 +390,74 @@ class ParseForestReducer(ParseForestNavigator):
         d["sc"] = node.score = sc
         return d
 
-    def visit_nonterminal(self, level, node):
-        """ At nonterminal node """
-        # Return a fresh object to collect results, unless the
-        # node doesn't span any tokens, in which case we don't bother
-        return ReductionInfo(self, node) if node.is_span else None
-
-    def visit_family(self, results, level, node, ix, prod):
-        """ Add information about a family of children to the result object """
-        # if node.is_ambiguous:
-        #     print(f"Visiting family {ix} of head node {node}")
-        if results is not None:
-            results.add_child_production(ix, prod)
-
-    def add_result(self, results, ix, sc):
-        """ Append a single result to the result object """
-        # Add up scores for each family of children
-        # print(f"Node {results.node}: family {ix}, adding child score {sc}")
-        if results is not None:
-            results.add_child_score(ix, sc)
-
-    def process_results(self, results, node):
-        """ Sort scores after visiting children, then prune the child families
-            (productions) leaving only the top-scoring family (production) """
-        d = dict(sc=0) if results is None else results.process(node)
-        node.score = d["sc"]
-        return d
-
     def _check_stacks(self):
         """ Runtime sanity check of the reducer stacks """
         assert len(self._prep_bonus_stack) == 1 and self._prep_bonus_stack[0] is None
         assert (
             len(self._current_verb_stack) == 1 and self._current_verb_stack[0] is None
         )
+
+    def _optimized_go(self, root_node):
+        """ Run the reduction process with a non-recursive
+            tree navigator for maximum speed, since this is
+            time-critical, worst case O(N^3) code """
+
+        SCORE_NULL = dict(sc=0)
+        visited = { None: SCORE_NULL }
+        todo = []
+
+        # Each entry on the todo list is a task tuple, consisting
+        # of a node pointer and a flag. The flag is only significant
+        # in the case of a nonterminal, indicating whether its children
+        # have already been processed or not.
+        todo.append((root_node, False))
+
+        while todo:
+
+            w, children_done = todo.pop()
+
+            if w in visited:
+                # We have already computed the value of this node
+                continue
+
+            if w._token is not None:
+                # This is a token/terminal match
+                visited[w] = self._optimized_visit_token(w)
+                continue
+
+            # This is a nonterminal node
+            if not w._families:
+                # ...but with no descendant families
+                visited[w] = SCORE_NULL
+                continue
+
+            if children_done:
+                # The families of children of this node
+                # have now been processed, so we are ready
+                # to compare the families and select the
+                # highest-scoring one
+                results = ReductionInfo(self, w)
+                for ix, (prod, children) in enumerate(w._families):
+                    results.add_child_production(ix, prod)
+                    for ch in children:
+                        results.add_child_score(ix, visited[ch])
+                # Mark the node as visited and store its result
+                visited[w] = v = results.process(w)
+                w.score = v["sc"]
+                continue
+
+            # Children not done yet:
+            # Push a nonterminal task with the children_done flag
+            # set to True, then push the child tasks. This ensures
+            # that the children will be evaluated before we come
+            # back to the parent nonterminal task.
+            todo.append((w, True))
+            for _, children in w._families:
+                for ch in children:
+                    if ch not in visited:
+                        todo.append((ch, False))
+
+        return visited[root_node]
 
     def go(self, root_node):
         """ Perform the reduction, but first split the tree underneath
@@ -435,7 +466,7 @@ class ParseForestReducer(ParseForestNavigator):
         PrepositionUnpacker.navigate(root_node)
         # ParseForestPrinter.print_forest(root_node, skip_duplicates = True)
         # Start normal navigation of the tree after the split
-        result = super().go(root_node)
+        result = self._optimized_go(root_node)
         self._check_stacks()  # !!! DEBUG
         return result
 
