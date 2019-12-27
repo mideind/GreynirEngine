@@ -154,7 +154,7 @@ class BIN_Db:
         # plural after singular and 2p after 3p
         if m.ordfl != "so":
             # Prioritize forms with non-NULL utg
-            return 1 if m.utg is None else 0
+            return 1 if (m.utg is None or m.utg < 1) else 0
         prio = 4 if "VH" in m.beyging else 0
         prio += 2 if "ÞT" in m.beyging else 0
         prio += 1 if "FT" in m.beyging else 0
