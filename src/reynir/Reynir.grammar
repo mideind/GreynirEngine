@@ -4913,7 +4913,7 @@ $score(+4) LoSem/fall/tala/kyn
 LoSemSo/fall/tala/kyn →
     LoAtviksliður* LoSemSoBotn/fall/tala/kyn
     # '(hvort það gæfi vísbendingu um) hina [nýlega] eyddu (tölvupósta)'
-    | 'hinn:gr'/fall/tala/kyn LoAtviksliður* so_lhþt_vb/fall/tala/kyn
+    | 'hinn:gr'/fall/tala/kyn eo* so_lhþt_vb/fall/tala/kyn
 
 LoSemSoBotn/fall/tala/kyn →
     so_lhþt/fall/tala/kyn | so_lh_nt    # bráðlega verðandi brúður
@@ -4930,8 +4930,14 @@ $score(+6) LoSemLo/fall/tala/kyn    # Tilbrigði 3.1, eina sem þarf að toggla.
 # leyfa atviksorðið almennt sem einkunn með nafnliðum; það myndi
 # rekast á fornafnið.
 LoAtviksliður →
-    eo | 'enginn:fn'_hk_et_nf | "þó:ao"? "nokkuð:ao"
-    | 'sá:fn'_hk_nf_et
+    eo | 'enginn:fn'_hk_et_nf | "þó:ao"? "nokkuð:ao" | LoAtvÞað
+
+LoAtvÞað →
+    'sá:fn'_hk_nf_et
+
+# Koma í veg fyrir að 'það' sé túlkað fremur sem atviksliður með
+# lýsingarorði heldur en sem andlag sagnar
+$score(-64) LoAtvÞað
 
 # Við viljum yfirleitt frekar fá atviksorð framan við lýsingarorð
 # heldur en að fá mörg lýsingarorð í röð, þ.e. við viljum fremur
@@ -4963,9 +4969,9 @@ Lo_sb_nf/tala/kyn →
     # (Hann vann keppnina) fyrstur [karla/allra]
     # (Jóna var) glöðust [allra gesta] (í partíinu)
     LoAtviksliðir? lo_sb_nf/tala/kyn EfLiður_ft?
-    # (Hann var forsvarsmaður starfssviða sem eiga að vera) aðskilin
+    # (Hann var forsvarsmaður starfssviða sem eiga að vera) [algjörlega] aðskilin
     # 'aðskilja' er einungis til sem sagnorð í BÍN, ekki lýsingarorð
-    | LoAtviksliðir? so_lhþt_sb_nf/tala/kyn
+    | eo* so_lhþt_sb_nf/tala/kyn
     # (Bréfið var) dagsett 10. júlí
     | LoAtviksliðir? 'dagsetja:so'_lhþt_sb_nf/tala/kyn Dagsetningarliður
     # Jón hefur verið hlynntur málinu

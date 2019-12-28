@@ -148,7 +148,7 @@ class IncrementalParser:
         self._total_score = 0
         self._total_ambig = 0.0
         self._total_tokens = 0
-        self._start_time = time.time()
+        self._start_time = self._last_time = time.time()
         self._verbose = verbose
         self._toklist = toklist
         
@@ -167,13 +167,16 @@ class IncrementalParser:
             self._total_score += s.score
         # Debugging output, if requested and enabled
         if self._verbose and Settings.DEBUG:
-            print("Parsed sentence of length {0} with {1} combinations{3}{2}"
+            current_time = time.time()
+            print("Parsed sentence of length {0} with {1} combinations{3} in {4:.1f} seconds{2}"
                 .format(
                     slen, num,
                     ("\n" + s.text) if num >= _VERBOSE_AMBIGUITY_THRESHOLD else "",
-                    " and score " + str(s.score) if num >= 1 else ""
+                    " and score " + str(s.score) if num >= 1 else "",
+                    current_time - self._last_time
                 )
             )
+            self._last_time = current_time
 
     def paragraphs(self):
         """ Yield the paragraphs from the token stream """
