@@ -248,7 +248,7 @@ class ReductionInfo:
                 # a separate dict copy (we don't want to clobber the child's dict)
                 # Get score adjustment for this nonterminal, if any
                 # (This is the $score(+/-N) pragma from Reynir.grammar)
-                sc["sc"] += self.reducer._score_adj.get(self.nt, 0)
+                sc["sc"] += self.reducer.score_adj(self.nt)
 
                 if self.nt.has_tag("apply_length_bonus"):
                     # Give this nonterminal a bonus depending on how many tokens
@@ -301,6 +301,11 @@ class ParseForestReducer(ParseForestNavigator):
         self._prep_bonus_stack = [None]
         self._current_verb_stack = [None]
         self._bonus_cache = dict()
+
+    def score_adj(self, nt):
+        """ Returns the score adjustment ($score(...) pragma)
+            for the given nonterminal, or 0 if no pragma is present """
+        return self._score_adj.get(nt, 0)
 
     def push_prep_bonus(self, val):
         self._prep_bonus_stack.append(val)
@@ -403,7 +408,7 @@ class ParseForestReducer(ParseForestNavigator):
             time-critical, worst case O(N^3) code """
 
         SCORE_NULL = dict(sc=0)
-        visited = { None: SCORE_NULL }
+        visited = {None: SCORE_NULL}
         todo = []
 
         # Each entry on the todo list is a task tuple, consisting

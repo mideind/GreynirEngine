@@ -205,9 +205,7 @@ class BIN_Db:
             The set is unfiltered except for the presence of 'NF' in the beyging
             field. For new code, lookup_nominative() is likely to be a
             more efficient choice. """
-        return list(
-            map(BIN_Meaning._make, self._compressed_bin.raw_nominative(w))
-        )
+        return list(map(BIN_Meaning._make, self._compressed_bin.raw_nominative(w)))
 
     def lookup_nominative(self, w, **options):
         """ Return meaning tuples for all word forms in nominative
@@ -226,16 +224,12 @@ class BIN_Db:
     def lookup_dative(self, w, **options):
         """ Return meaning tuples for all word forms in dative
             case for all { kk, kvk, hk, lo } category stems of the given word """
-        return list(
-            map(BIN_Meaning._make, self._compressed_bin.dative(w, **options))
-        )
+        return list(map(BIN_Meaning._make, self._compressed_bin.dative(w, **options)))
 
     def lookup_genitive(self, w, **options):
         """ Return meaning tuples for all word forms in genitive
             case for all { kk, kvk, hk, lo } category stems of the given word """
-        return list(
-            map(BIN_Meaning._make, self._compressed_bin.genitive(w, **options))
-        )
+        return list(map(BIN_Meaning._make, self._compressed_bin.genitive(w, **options)))
 
     def lookup_word(self, w, at_sentence_start=False, auto_uppercase=False):
         """ Given a word form, look up all its possible meanings """
@@ -276,12 +270,7 @@ class BIN_Db:
         return (
             [
                 BIN_Meaning(
-                    concat(r.stofn),
-                    r.utg,
-                    r.ordfl,
-                    r.fl,
-                    concat(r.ordmynd),
-                    r.beyging,
+                    concat(r.stofn), r.utg, r.ordfl, r.fl, concat(r.ordmynd), r.beyging
                 )
                 for r in mlist
             ]
@@ -482,9 +471,7 @@ class BIN_Db:
                 mm = case_func(w, cat=m_word.ordfl, stem=m_word.stofn)
                 if not mm and w[0].isupper() and not w.isupper():
                     # Did not find an uppercase version: try a lowercase one
-                    mm = case_func(
-                        w.lower(), cat=m_word.ordfl, stem=m_word.stofn
-                    )
+                    mm = case_func(w.lower(), cat=m_word.ordfl, stem=m_word.stofn)
         if mm:
             # Likely successful: return the word after casting it
             if "ET" in m_word.beyging:
