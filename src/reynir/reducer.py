@@ -165,7 +165,7 @@ class PrepositionUnpacker(ParseForestNavigator):
         cls().go(root_node)
 
 
-class ReductionInfo:
+class ReductionScope:
 
     """ Class to accumulate information about a nonterminal and its
         child production(s) during reduction """
@@ -197,7 +197,9 @@ class ReductionInfo:
     def add_child_score(self, ix, sc):
         """ Add a child node's score to the parent family's score,
             where the parent family has index ix (0..n) """
-        self.sc[ix]["sc"] += sc["sc"]
+        sc_sc = sc.get("sc", 0)
+        if sc_sc != 0:
+            self.sc[ix]["sc"] += sc_sc
         # Carry information about contained prepositions ("fs") and verbs ("so")
         # up the tree
         for key in ("so", "sl"):
@@ -214,7 +216,8 @@ class ReductionInfo:
         # Initialize the score of this family of children, so that productions
         # with higher priorities (more negative prio values) get a starting bonus
         assert ix not in self.sc or "sc" not in self.sc[ix]
-        self.sc[ix]["sc"] = -10 * prod.priority
+        if prod.priority != 0:
+            self.sc[ix]["sc"] = -10 * prod.priority
         self.reducer.set_current_verb(self.start_verb)
 
     def process(self, node):
@@ -225,7 +228,7 @@ class ReductionInfo:
 
             csc = self.sc
             if not csc:
-                return dict(sc=0)  # Empty node
+                return dict()  # Empty node
 
             if len(csc) == 1:
                 # Not ambiguous: only one result, do a shortcut
@@ -234,7 +237,7 @@ class ReductionInfo:
                 # Eliminate all families except the best scoring one
                 # Sort in decreasing order by score, using the family index
                 # as a tie-breaker for determinism
-                s = sorted(csc.items(), key=lambda x: (x[1]["sc"], -x[0]), reverse=True)
+                s = sorted(csc.items(), key=lambda x: (x[1].get("sc", 0), -x[0]), reverse=True)
                 # This is the best scoring family
                 # (and the one with the lowest index
                 # if there are many with the same score)
@@ -248,7 +251,7 @@ class ReductionInfo:
                 # a separate dict copy (we don't want to clobber the child's dict)
                 # Get score adjustment for this nonterminal, if any
                 # (This is the $score(+/-N) pragma from Reynir.grammar)
-                sc["sc"] += self.reducer.score_adj(self.nt)
+                sc["sc"] = sc.get("sc", 0) + self.reducer.score_adj(self.nt)
 
                 if self.nt.has_tag("apply_length_bonus"):
                     # Give this nonterminal a bonus depending on how many tokens
@@ -392,7 +395,9 @@ class ParseForestReducer(ParseForestNavigator):
         elif node.terminal.matches_category("so"):  # !!! Was .startswith("so")
             # Verb terminal: pick up the verb
             d["so"] = [(node.terminal, node.token)]
-        d["sc"] = node.score = sc
+        node.score = sc
+        if sc != 0:
+            d["sc"] = sc
         return d
 
     def _check_stacks(self):
@@ -407,7 +412,7 @@ class ParseForestReducer(ParseForestNavigator):
             tree navigator for maximum speed, since this is
             time-critical, worst case O(N^3) code """
 
-        SCORE_NULL = dict(sc=0)
+        SCORE_NULL = dict()
         visited = {None: SCORE_NULL}
         todo = []
 
@@ -415,11 +420,11 @@ class ParseForestReducer(ParseForestNavigator):
         # of a node pointer and a flag. The flag is only significant
         # in the case of a nonterminal, indicating whether its children
         # have already been processed or not.
-        todo.append((root_node, False))
+        todo.append((root_node, None, 0))
 
         while todo:
 
-            w, children_done = todo.pop()
+            w, scope, family_ix = todo.pop()
 
             if w in visited:
                 # We have already computed the value of this node
@@ -434,34 +439,40 @@ class ParseForestReducer(ParseForestNavigator):
             if not w._families:
                 # ...but with no descendant families
                 visited[w] = SCORE_NULL
+                w.score = 0
                 continue
 
-            if children_done:
-                # The families of children of this node
-                # have now been processed, so we are ready
-                # to compare the families and select the
-                # highest-scoring one
-                results = ReductionInfo(self, w)
-                for ix, (prod, children) in enumerate(w._families):
-                    results.add_child_production(ix, prod)
-                    for ch in children:
-                        results.add_child_score(ix, visited[ch])
+            if scope is None:
+                # Children not done yet:
+                # Push a nonterminal task with the children_done flag
+                # set to True, then push the child tasks. This ensures
+                # that the children will be evaluated before we come
+                # back to the parent nonterminal task.
+                scope = ReductionScope(self, w)
+                todo.append((w, scope, -1))
+                for family_ix, (_, children) in enumerate(w._families):
+                    todo.append((w, scope, family_ix))
+                    for ch in reversed(children):
+                        # if ch not in visited:
+                        todo.append((ch, None, 0))
+                continue
+
+            # The families of children of this node
+            # have now been processed, so we are ready
+            # to compare the families and select the
+            # highest-scoring one
+            if family_ix == -1:
                 # Mark the node as visited and store its result
-                visited[w] = v = results.process(w)
-                w.score = v["sc"]
-                continue
-
-            # Children not done yet:
-            # Push a nonterminal task with the children_done flag
-            # set to True, then push the child tasks. This ensures
-            # that the children will be evaluated before we come
-            # back to the parent nonterminal task.
-            todo.append((w, True))
-            for _, children in w._families:
+                visited[w] = v = scope.process(w)
+                w.score = v.get("sc", 0)
+            else:
+                # Process a single family
+                prod, children = w._families[family_ix]
+                scope.add_child_production(family_ix, prod)
                 for ch in children:
-                    if ch not in visited:
-                        todo.append((ch, False))
+                    scope.add_child_score(family_ix, visited[ch])
 
+        assert len(SCORE_NULL) == 0
         return visited[root_node]
 
     def go(self, root_node):
@@ -771,7 +782,7 @@ class Reducer:
         # Third pass: navigate the tree bottom-up, eliminating lower-rated
         # options (subtrees) in favor of higher rated ones
         score = self._reduce(forest, scores)
-        return (forest, score["sc"])
+        return (forest, score.get("sc", 0))
 
     def go(self, forest):
         """ Return only the reduced forest, without its score """
