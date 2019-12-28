@@ -26,6 +26,7 @@
 
 """
 
+import sys
 import re
 from collections import namedtuple, defaultdict
 
@@ -47,6 +48,18 @@ from tokenizer import (
 from .settings import StaticPhrases, AmbigPhrases, DisallowedNames
 from .settings import NamePreferences
 from .bindb import BIN_Db, BIN_Meaning
+
+
+if "PyPy 7.3.0" in sys.version or "PyPy 7.2." in sys.version:
+    # Patch bug in PyPy 7.2/7.3.0, which may raise an erroneous exception on str.rsplit()
+    def all_except_suffix(s):
+        try:
+            return s[0 : s.rindex(" ")]
+        except ValueError:
+            # String does not contain a space: return it whole
+            return s
+else:
+    all_except_suffix = lambda s: s.rsplit(maxsplit=1)[0]
 
 
 # Person names that are not recognized at the start of sentences
@@ -664,7 +677,7 @@ def parse_phrases_1(db, token_ctor, token_stream):
                         txt = txt.replace(" -", "-").replace(" ,", ",")
                         # Create a fresh list of meanings with the full
                         # prefix in the ordmynd field
-                        prefix, _ = txt.rsplit(maxsplit=1)
+                        prefix = all_except_suffix(txt)
                         m = [
                             BIN_Meaning(
                                 prefix + " " + mm.stofn,
