@@ -233,6 +233,7 @@ class _Job:
         self._reducer = self._r.reducer
         self._tokens = tokens
         self._parse_time = 0.0
+        self._reduce_time = 0.0
         self._parse = parse
         self._num_sent = 0
         self._num_parsed = 0
@@ -240,8 +241,10 @@ class _Job:
         self._num_combinations = 0
         self._total_ambig = 0.0
         self._total_tokens = 0
+        # !!! TODO: Temporary debugging aid
+        self._last_tree_repr = None
 
-    def _add_sentence(self, s, num, parse_time):
+    def _add_sentence(self, s, num, parse_time, reduce_time):
         """ Add a processed sentence to the statistics """
         slen = len(s)
         self._num_sent += 1
@@ -253,8 +256,10 @@ class _Job:
             ambig_factor = num ** (1 / slen)
             self._total_ambig += ambig_factor * slen
             self._total_tokens += slen
-        # Accumulate the time spent on parsing
+        # Accumulate the total time spent on parsing and reduction
         self._parse_time += parse_time
+        # Accumulate the time thereof spent on reduction
+        self._reduce_time += reduce_time
 
     def _create_sentence(self, s):
         """ Create a fresh _Sentence object """
@@ -284,20 +289,20 @@ class _Job:
         t0 = time.time()
         try:
             forest = self.parser.go(tokens)  # May raise ParseError
+            # !!! TODO: Temporary debugging
+            self._last_tree_repr = repr(forest)
+            t1 = time.time()
             if forest is not None:
                 num = Fast_Parser.num_combinations(forest)
                 if num > 1:
                     # Reduce the parse forest to a single
                     # "best" (highest-scoring) parse tree
-                    forest, score = self.reduce(forest)
+                    forest, score = self.reducer.go_with_score(forest)
             return forest, num, score
         finally:
             # Accumulate statistics in the job object
-            self._add_sentence(tokens, num, time.time() - t0)
-
-    def reduce(self, forest):
-        """ Find the best parse tree and return it along with its score """
-        return self.reducer.go_with_score(forest)
+            now = time.time()
+            self._add_sentence(tokens, num, parse_time=now - t0, reduce_time=now - t1)
 
     def __iter__(self):
         """ Allow easy iteration of sentences within this job """
@@ -342,8 +347,14 @@ class _Job:
 
     @property
     def parse_time(self):
-        """ Total time spent on parsing during this job, in seconds """
+        """ Total time spent on parsing (including reduction) during this job,
+            in seconds """
         return self._parse_time
+
+    @property
+    def reduce_time(self):
+        """ Total time spent on tree reduction during this job, in seconds """
+        return self._reduce_time
 
 
 class Greynir:
@@ -451,6 +462,7 @@ class Greynir:
             num_tokens=job.num_tokens,
             ambiguity=job.ambiguity,
             parse_time=job.parse_time,
+            reduce_time=job.reduce_time,
         )
 
     def parse_single(self, sentence):

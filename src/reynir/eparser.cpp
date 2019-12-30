@@ -1305,7 +1305,7 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
 #endif
 
    // Cleanup
-   delete[] pbSeen;
+   delete [] pbSeen;
    for (i = 0; i < nTokens + 1; i++)
       delete pCol[i];
    delete [] pCol;

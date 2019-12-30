@@ -197,9 +197,7 @@ class ReductionScope:
     def add_child_score(self, ix, sc):
         """ Add a child node's score to the parent family's score,
             where the parent family has index ix (0..n) """
-        sc_sc = sc.get("sc", 0)
-        if sc_sc != 0:
-            self.sc[ix]["sc"] += sc_sc
+        self.sc[ix]["sc"] += sc["sc"]
         # Carry information about contained prepositions ("fs") and verbs ("so")
         # up the tree
         for key in ("so", "sl"):
@@ -216,8 +214,7 @@ class ReductionScope:
         # Initialize the score of this family of children, so that productions
         # with higher priorities (more negative prio values) get a starting bonus
         assert ix not in self.sc or "sc" not in self.sc[ix]
-        if prod.priority != 0:
-            self.sc[ix]["sc"] = -10 * prod.priority
+        self.sc[ix]["sc"] = -10 * prod.priority
         self.reducer.set_current_verb(self.start_verb)
 
     def process(self, node):
@@ -228,7 +225,7 @@ class ReductionScope:
 
             csc = self.sc
             if not csc:
-                return dict()  # Empty node
+                return dict(sc=0)  # Empty node
 
             if len(csc) == 1:
                 # Not ambiguous: only one result, do a shortcut
@@ -237,7 +234,7 @@ class ReductionScope:
                 # Eliminate all families except the best scoring one
                 # Sort in decreasing order by score, using the family index
                 # as a tie-breaker for determinism
-                s = sorted(csc.items(), key=lambda x: (x[1].get("sc", 0), -x[0]), reverse=True)
+                s = sorted(csc.items(), key=lambda x: (x[1]["sc"], -x[0]), reverse=True)
                 # This is the best scoring family
                 # (and the one with the lowest index
                 # if there are many with the same score)
@@ -251,7 +248,7 @@ class ReductionScope:
                 # a separate dict copy (we don't want to clobber the child's dict)
                 # Get score adjustment for this nonterminal, if any
                 # (This is the $score(+/-N) pragma from Reynir.grammar)
-                sc["sc"] = sc.get("sc", 0) + self.reducer.score_adj(self.nt)
+                sc["sc"] += self.reducer.score_adj(self.nt)
 
                 if self.nt.has_tag("apply_length_bonus"):
                     # Give this nonterminal a bonus depending on how many tokens
@@ -269,9 +266,9 @@ class ReductionScope:
                     sc["sc"] += _VERB_PREP_BONUS
 
                 if self.nt.has_tag("pick_up_verb"):
-                    verb = sc.get("so")
-                    if verb is not None:
-                        sc["sl"] = verb[:]
+                    verb_list = sc.get("so")
+                    if verb_list:
+                        sc["sl"] = verb_list[:]
 
                 if self.nt.has_any_tag({"begin_prep_scope", "purge_verb"}):
                     # Delete information about contained verbs
@@ -392,12 +389,10 @@ class ParseForestReducer(ParseForestNavigator):
                             final_bonus = max(final_bonus, bonus)
                 if final_bonus is not None:
                     sc += final_bonus
-        elif node.terminal.matches_category("so"):  # !!! Was .startswith("so")
+        elif node.terminal.matches_category("so"):
             # Verb terminal: pick up the verb
             d["so"] = [(node.terminal, node.token)]
-        node.score = sc
-        if sc != 0:
-            d["sc"] = sc
+        d["sc"] = node.score = sc
         return d
 
     def _check_stacks(self):
@@ -412,7 +407,7 @@ class ParseForestReducer(ParseForestNavigator):
             tree navigator for maximum speed, since this is
             time-critical, worst case O(N^3) code """
 
-        SCORE_NULL = dict()
+        SCORE_NULL = dict(sc=0)
         visited = {None: SCORE_NULL}
         todo = []
 
@@ -449,30 +444,44 @@ class ParseForestReducer(ParseForestNavigator):
                 # that the children will be evaluated before we come
                 # back to the parent nonterminal task.
                 scope = ReductionScope(self, w)
+                # Add a task to execute after all families have been processed
                 todo.append((w, scope, -1))
                 for family_ix, (_, children) in enumerate(w._families):
+                    # Add a task to execute after each family
                     todo.append((w, scope, family_ix))
                     for ch in reversed(children):
-                        # if ch not in visited:
-                        todo.append((ch, None, 0))
+                        if ch not in visited:
+                            todo.append((ch, None, 0))
+                    # Add a task to execute before each family
+                    # Hack: we map the family_ix to -2,-3,...
+                    # to distinguish the pre-processing task from
+                    # the post-processing task
+                    todo.append((w, scope, -2 - family_ix))
                 continue
 
-            # The families of children of this node
-            # have now been processed, so we are ready
-            # to compare the families and select the
-            # highest-scoring one
             if family_ix == -1:
+                # All families of children of this node have
+                # been processed: process the node itself,
+                # eliminating all families except the
+                # highest-scoring one.
                 # Mark the node as visited and store its result
                 visited[w] = v = scope.process(w)
-                w.score = v.get("sc", 0)
-            else:
-                # Process a single family
-                prod, children = w._families[family_ix]
+                w.score = v["sc"]
+            elif family_ix <= -2:
+                # Pre-processing for a single family:
+                # initialize the score keeping and the
+                # verb accounting
+                family_ix = -2 - family_ix
+                prod, _ = w._families[family_ix]
                 scope.add_child_production(family_ix, prod)
+            else:
+                # Post-processing for a single family:
+                # Add the scores of the children to the family score
+                _, children = w._families[family_ix]
                 for ch in children:
                     scope.add_child_score(family_ix, visited[ch])
 
-        assert len(SCORE_NULL) == 0
+        assert len(SCORE_NULL) == 1 and SCORE_NULL["sc"] == 0
         return visited[root_node]
 
     def go(self, root_node):

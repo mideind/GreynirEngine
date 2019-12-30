@@ -732,6 +732,7 @@ class Fast_Parser(BIN_Parser):
         """ Count the number of possible parse tree combinations in the given forest """
 
         nc = dict()
+        mul = operator.mul
 
         def _num_comb(w):
             if w is None or w._token is not None:
@@ -750,7 +751,7 @@ class Fast_Parser(BIN_Parser):
             nc[w] = NotImplemented  # Special marker for an unassigned cache entry
             comb = 0
             for _, f in w.enum_children():
-                comb += reduce(operator.mul, (_num_comb(ch) for ch in f), 1)
+                comb += reduce(mul, (_num_comb(ch) for ch in f), 1)
             result = nc[w] = comb if comb > 0 else 1
             return result
 
@@ -882,8 +883,9 @@ class ParseForestPrinter(ParseForestNavigator):
 
     def visit_epsilon(self, level):
         """ Epsilon (null) node """
-        indent = "  " * level  # Two spaces per indent level
-        print(indent + "(empty)", file=self._file)
+        if self._detailed:
+            indent = "  " * level  # Two spaces per indent level
+            print(indent + "(empty)", file=self._file)
         return None
 
     def visit_token(self, level, w):
