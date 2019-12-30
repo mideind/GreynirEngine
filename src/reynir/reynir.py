@@ -32,12 +32,13 @@ from typing import (
 )
 import time
 import operator
+import json
 from threading import Lock
+from tokenizer import TOK, Tok, correct_spaces, paragraphs, mark_paragraphs
 
-from tokenizer import TOK, correct_spaces, paragraphs, mark_paragraphs
-
+from .bindb import BIN_Meaning
 from .bintokenizer import (
-    tokenize as bin_tokenize, Tok, TokenList, tokens_are_foreign, StringIterable
+    tokenize as bin_tokenize, PersonName, TokenList, tokens_are_foreign, StringIterable
 )
 from .fastparser import Fast_Parser, ParseError
 from .reducer import Reducer
@@ -231,6 +232,41 @@ class _Sentence:
         # Flatten the ifd_tags lists for the individual nodes
         # (nonterminal nodes return an empty list in the ifd_tags property)
         return [ifd_tag for d in self.tree.descendants for ifd_tag in d.ifd_tags]
+
+    def dump(self):
+        """ Dump internal data of the class instance for serialization.
+            Useful for storing parsed data in a database. """
+
+        return {
+            'tokens': [Reynir._dump_token(t) for t in self._s],
+            'tree': None if self.tree is None else self.tree._head,
+        }
+
+    def dumps(self, **kwargs):
+        """ Dump internal data of the class instance as a json string.
+            Useful for storing parsed data in a database. """
+        return json.dumps(self.dump(), **kwargs)
+
+    @classmethod
+    def load(cls, tokens, tree):
+        """ Load previously dumped data.
+            Useful for retrieving parsed data from a database. """
+        instance = cls.__new__(cls)
+
+        instance.__dict__ = {
+            '_s': [Reynir._load_token(*t) for t in tokens],
+            'len': len(tokens),
+            '_simplified_tree': None if tree is None else SimpleTree([[tree]]),
+            '_terminals': None,
+        }
+        return instance
+
+    @classmethod
+    def loads(cls, string, **kwargs):
+        """ Load a previously dumped json string.
+            Useful for retrieving parsed data from a database. """
+        data = json.loads(string, **kwargs)
+        return cls.load(**data)
 
     def __str__(self) -> str:
         return self.text
@@ -578,6 +614,38 @@ class Greynir:
             that look to be foreign, i.e. not in Icelandic """
         return self._parse_foreign_sentences
 
+    @staticmethod
+    def _dump_token(tok):
+        """ This is here so that ReynirCorrect can override how tokens are dumped """
+
+        # Should look like this in ReynirCorrect
+        # def _dump_token(tok):
+        #     if hasattr(tok, '_err'):
+        #         err = tok._err
+        #         if isinstance(err, bool):
+        #             return tuple(*tok, err)
+        #         else:
+        #             return tuple(*tok, {
+        #                 **err.__dict__,
+        #                 'class_name': err.__class__.__name__,
+        #             })
+
+        #     return tuple(tok)
+
+        return tuple(tok)
+
+    @staticmethod
+    def _load_token(kind, txt, val):
+        """ Load token from serialized data """
+        if kind == TOK.WORD:
+            val = [BIN_Meaning(*v) for v in val]
+        elif kind == TOK.PERSON:
+            val = [PersonName(*v) for v in val]
+        else:
+            val = tuple(val)
+
+        return Tok(kind, txt, val)
+
     def tokenize(self, text: StringIterable) -> Iterable[Tok]:
         """ Call the tokenizer (overridable in derived classes) """
         return bin_tokenize(text, **self._options)
@@ -586,6 +654,11 @@ class Greynir:
         """ Override this in derived classes to modify how sentences
             are created or postprocessed """
         return _Sentence(job, s)
+
+    def load_single(self, *args, **kwargs):
+        """ Load previously dumped data of a single sentence.
+            Useful for retrieving parsed data from a database. """
+        return _Sentence.load(*args, **kwargs)
 
     @property
     def parser(self) -> Fast_Parser:
