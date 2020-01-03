@@ -154,5 +154,7 @@ and also available here: https://www.gnu.org/licenses/gpl-3.0.html.
 
 If you would like to use this software in ways that are incompatible
 with the standard GNU GPLv3 license, please contact
-Miðeind ehf. (*mideind@mideind.is*) to negotiate alternative
-arrangements.
+Miðeind ehf. (*mideind@mideind.is*) to negotiate a custom license.
+This applies for instance if you want to include or use this software,
+in part or in full, in other software that is not licensed under GNU GPLv3 or
+other compatible licenses.

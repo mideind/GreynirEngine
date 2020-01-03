@@ -286,7 +286,7 @@ class _Job:
             score of the best tree """
         num = 0
         score = 0
-        t0 = time.time()
+        t0 = t1 = time.time()
         try:
             forest = self.parser.go(tokens)  # May raise ParseError
             # !!! TODO: Temporary debugging

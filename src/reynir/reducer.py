@@ -2,7 +2,7 @@
 
     Reynir: Natural language processing for Icelandic
 
-    Reducer module
+    Parse forest reduction module
 
     Copyright (C) 2019 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
@@ -24,12 +24,13 @@
     multiple possible parses of a sentence to a single most likely
     parse tree.
 
-    The reduction uses five methods:
+    The reduction relies on five heuristics and data sources:
 
   * First, a dictionary of preferred token interpretations (fetched
     from config/Prefs.conf), where words like 'ekki' are classified
     as being more likely to be from one category than another
-    (in this case adverb rather than noun);
+    (in this case adverb rather than noun), giving preference to
+    certain token-terminal matches vis-a-vis others;
 
   * Second, a set of general heuristics (adverbs being by default less
     preferred than other categories, etc.);
@@ -198,16 +199,22 @@ class ReductionScope:
         """ Add a child node's score to the parent family's score,
             where the parent family has index ix (0..n) """
         self.sc[ix]["sc"] += sc["sc"]
-        # Carry information about contained prepositions ("fs") and verbs ("so")
-        # up the tree
-        for key in ("so", "sl"):
-            if key in sc:
-                if key in self.sc[ix]:
-                    self.sc[ix][key].extend(sc[key])
-                else:
-                    self.sc[ix][key] = sc[key][:]
-                if key == "sl":
-                    self.reducer.set_current_verb(sc[key])
+        # Carry information about seen verbs ("so")
+        # and picked-up verbs ("sl") up the tree. Verbs are first added to the
+        # 'seen' ("so") entry, and from there they are picked up (by nonterminals
+        # marked with $tag(pick_up_verb)) into the picked-up ("sl") entry.
+        if len(sc) > 1:
+            for key in ("so", "sl"):
+                if key in sc:
+                    if key in self.sc[ix]:
+                        self.sc[ix][key].extend(sc[key])
+                    else:
+                        self.sc[ix][key] = sc[key][:]
+            verb_list = self.sc[ix].get("sl")
+            # If one or more verbs have been picked up in child nodes,
+            # set the reducer's current verb list accordingly
+            if verb_list:
+                self.reducer.set_current_verb(verb_list)
 
     def add_child_production(self, ix, prod):
         """ Start the processing of a production (numbered ix) of a nonterminal """
@@ -225,6 +232,7 @@ class ReductionScope:
 
             csc = self.sc
             if not csc:
+                node.score = 0
                 return dict(sc=0)  # Empty node
 
             if len(csc) == 1:
@@ -267,7 +275,7 @@ class ReductionScope:
 
                 if self.nt.has_tag("pick_up_verb"):
                     verb_list = sc.get("so")
-                    if verb_list:
+                    if verb_list is not None:
                         sc["sl"] = verb_list[:]
 
                 if self.nt.has_any_tag({"begin_prep_scope", "purge_verb"}):
@@ -277,6 +285,7 @@ class ReductionScope:
                     sc.pop("so", None)  # Simpler than if "so" in sc: del sc["so"]
                     sc.pop("sl", None)
 
+            node.score = sc["sc"]
             return sc
 
         finally:
@@ -358,12 +367,13 @@ class ParseForestReducer(ParseForestNavigator):
         # If no match, discourage
         return _VERB_PREP_PENALTY
 
-    def _optimized_visit_token(self, node):
+    def _visit_token(self, node):
         """ At token node """
         # Return the score of this token/terminal match
         d = dict()
-        sc = self._scores[node.start][node.terminal]
-        if node.terminal.matches_category("fs"):
+        terminal = node.terminal
+        sc = self._scores[node.start][terminal]
+        if terminal.matches_category("fs"):
             # Preposition terminal - this is either a normal fs_case terminal
             # or a literal terminal such as "á:fs"
             prep_bonus = self.get_prep_bonus()
@@ -376,7 +386,7 @@ class ParseForestReducer(ParseForestNavigator):
                 # pylint: disable=not-an-iterable
                 for terminal, token in prep_bonus:
                     # Attempt to find the preposition matching bonus in the cache
-                    key = (node.terminal, node.token.lower, terminal, token)
+                    key = (terminal, node.token.lower, terminal, token)
                     bonus = self._bonus_cache.get(key)
                     if bonus is None:
                         bonus = self._bonus_cache[key] = self.verb_prep_bonus(*key)
@@ -389,9 +399,9 @@ class ParseForestReducer(ParseForestNavigator):
                             final_bonus = max(final_bonus, bonus)
                 if final_bonus is not None:
                     sc += final_bonus
-        elif node.terminal.matches_category("so"):
+        elif terminal.matches_category("so"):
             # Verb terminal: pick up the verb
-            d["so"] = [(node.terminal, node.token)]
+            d["so"] = [(terminal, node.token)]
         d["sc"] = node.score = sc
         return d
 
@@ -402,7 +412,7 @@ class ParseForestReducer(ParseForestNavigator):
             len(self._current_verb_stack) == 1 and self._current_verb_stack[0] is None
         )
 
-    def _optimized_go(self, root_node):
+    def _go(self, root_node):
         """ Run the reduction process with a non-recursive
             tree navigator for maximum speed, since this is
             time-critical, worst case O(N^3) code """
@@ -410,78 +420,109 @@ class ParseForestReducer(ParseForestNavigator):
         SCORE_NULL = dict(sc=0)
         visited = {None: SCORE_NULL}
         todo = []
+        scope_stack = []
+        # Stack pointer (last item in scope_stack)
+        sp = None
 
         # Each entry on the todo list is a task tuple, consisting
-        # of a node pointer and a flag. The flag is only significant
-        # in the case of a nonterminal, indicating whether its children
-        # have already been processed or not.
-        todo.append((root_node, None, 0))
+        # of a node pointer, a reduction scope, a family index,
+        # and a parent scope. The cases can be as follows:
+
+        # 1) The node has already been processed, in which case we
+        #    simply return its cached result. The parent reduction
+        #    scope is informed about its child's score.
+        # 2) The node is a token node, in which case its score is calculated
+        #    while considering the current verb scope. The parent reduction
+        #    scope is informed about its child's score.
+        # 3) The node is a nonterminal but with no child families.
+        #    No action needs to be taken.
+        # 4) A new nonterminal is being encountered. This causes a
+        #    number of tasks to be queued on the todo list. For each family
+        #    of children, a pre-processing task is queued, and for each child,
+        #    a processing task. Finally, a task that completes the
+        #    nonterminal processing and notifies the parent scope is
+        #    queued.
+        # 5) A child family pre-processing task initializes the
+        #    associated reduction scope for aggregating the score of a family
+        #    of children.
+        # 6) A nonterminal child completion task performs the actual reduction
+        #    (retaining the highest-scoring family of children) and notifies
+        #    the parent scope about the final score of the nonterminal.
+
+        # Push an initial nonterminal processing task for the root node
+        todo.append((root_node, True, 0))
 
         while todo:
 
-            w, scope, family_ix = todo.pop()
+            w, pre, family_ix = todo.pop()
 
             if w in visited:
                 # We have already computed the value of this node
+                sp.add_child_score(family_ix, visited[w])
                 continue
 
             if w._token is not None:
                 # This is a token/terminal match
-                visited[w] = self._optimized_visit_token(w)
+                visited[w] = v = self._visit_token(w)
+                sp.add_child_score(family_ix, v)
                 continue
 
             # This is a nonterminal node
-            if not w._families:
+            if not w._families or not w.is_span:
                 # ...but with no descendant families
                 visited[w] = SCORE_NULL
                 w.score = 0
+                # No need to call parent_scope.add_child_score() here
+                # since the score is zero and has no effect on the parent
                 continue
 
-            if scope is None:
-                # Children not done yet:
-                # Push a nonterminal task with the children_done flag
-                # set to True, then push the child tasks. This ensures
-                # that the children will be evaluated before we come
-                # back to the parent nonterminal task.
-                scope = ReductionScope(self, w)
-                # Add a task to execute after all families have been processed
-                todo.append((w, scope, -1))
-                for family_ix, (_, children) in enumerate(w._families):
-                    # Add a task to execute after each family
-                    todo.append((w, scope, family_ix))
+            if pre:
+                # We are starting to process a nonterminal, and the
+                # children are not done yet. Create a fresh reduction scope
+                # object that will accumulate results for this nonterminal.
+                sp = ReductionScope(self, w)
+                scope_stack.append(sp)
+                # Add a task to be executed after all families have been processed,
+                # which calculates the final score of this node (after reduction)
+                # and notifies the parent scope about the result
+                todo.append((w, False, family_ix))
+                # Schedule tasks for each family of children
+                for ch_family_ix, (_, children) in enumerate(w._families):
                     for ch in reversed(children):
-                        if ch not in visited:
-                            todo.append((ch, None, 0))
-                    # Add a task to execute before each family
-                    # Hack: we map the family_ix to -2,-3,...
-                    # to distinguish the pre-processing task from
-                    # the post-processing task
-                    todo.append((w, scope, -2 - family_ix))
+                        # Push a task for each child node, containing our family index
+                        # and the parent scope, to which the child's results
+                        # will be added
+                        todo.append((ch, True, ch_family_ix))
+                    # Add a pre-processing task to execute before each family
+                    # Hack: we use negative indices, i.e. -1,-2,... for the
+                    # family indices in this case
+                    todo.append((w, False, - 1 - ch_family_ix))
                 continue
 
-            if family_ix == -1:
+            if family_ix >= 0:
                 # All families of children of this node have
                 # been processed: process the node itself,
                 # eliminating all families except the
                 # highest-scoring one.
-                # Mark the node as visited and store its result
-                visited[w] = v = scope.process(w)
-                w.score = v["sc"]
-            elif family_ix <= -2:
+                # Mark the node as visited and store its result,
+                # then notify the parent scope about it
+                visited[w] = v = sp.process(w)
+                scope_stack.pop()
+                if scope_stack:
+                    sp = scope_stack[-1]
+                    sp.add_child_score(family_ix, v)
+                else:
+                    sp = None
+            elif family_ix <= -1:
                 # Pre-processing for a single family:
                 # initialize the score keeping and the
                 # verb accounting
-                family_ix = -2 - family_ix
+                family_ix = -1 - family_ix
                 prod, _ = w._families[family_ix]
-                scope.add_child_production(family_ix, prod)
-            else:
-                # Post-processing for a single family:
-                # Add the scores of the children to the family score
-                _, children = w._families[family_ix]
-                for ch in children:
-                    scope.add_child_score(family_ix, visited[ch])
+                sp.add_child_production(family_ix, prod)
 
         assert len(SCORE_NULL) == 1 and SCORE_NULL["sc"] == 0
+        # print(f"Finished reduction, created {scopes} reduction scopes")
         return visited[root_node]
 
     def go(self, root_node):
@@ -491,7 +532,7 @@ class ParseForestReducer(ParseForestNavigator):
         PrepositionUnpacker.navigate(root_node)
         # ParseForestPrinter.print_forest(root_node, skip_duplicates = True)
         # Start normal navigation of the tree after the split
-        result = self._optimized_go(root_node)
+        result = self._go(root_node)
         self._check_stacks()  # !!! DEBUG
         return result
 
@@ -748,8 +789,6 @@ class Reducer:
                         sc[t] += 12
                     else:
                         # BÍN meanings are available: discourage this
-                        # print(f"Discouraging sérnafn {txt}, "
-                        #     "BÍN meanings are {tokens[i].t2}")
                         sc[t] -= 10
                         if i == w.start:
                             # First token in sentence, and we have BÍN meanings:

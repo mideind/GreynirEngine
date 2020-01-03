@@ -997,18 +997,18 @@ def test_attachment(r, verbose=False):
         print("Testing attachment of prepositions")
     for _ in range(20):
         # Test consistency for 20 iterations
-        s = r.parse_single("Ég setti dæmi um þetta í bókina mína.")
+        s = r.parse_single("Ég setti dæmin um þetta í bókina mína.")
         assert (
             s.tree.flat == "S0 S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ "  # Ég
-            "VP VP VP so_1_þf_et_p1 /VP NP-OBJ no_et_þf_hk "  # setti dæmi
+            "VP VP VP so_1_þf_et_p1 /VP NP-OBJ no_ft_þf_hk "  # setti dæmin
             "PP P fs_þf /P NP fn_et_þf_hk /NP /PP "  # um þetta
             "/NP-OBJ /VP PP P fs_þf /P NP no_et_þf_kvk fn_et_þf_kvk /NP /PP /VP "  # í bókina mína
             "/IP /S-MAIN p /S0"
         )  # .
-        s = r.parse_single("Ég setti dæmi í bókina mína um þetta.")
+        s = r.parse_single("Ég setti dæmin í bókina mína um þetta.")
         assert (
             s.tree.flat == "S0 S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ "  # Ég
-            "VP VP VP so_1_þf_et_p1 /VP NP-OBJ no_et_þf_hk "  # setti dæmi
+            "VP VP VP so_1_þf_et_p1 /VP NP-OBJ no_ft_þf_hk "  # setti dæmin
             "/NP-OBJ /VP PP P fs_þf /P NP no_et_þf_kvk fn_et_þf_kvk "  # í bókina mína
             "PP P fs_þf /P NP fn_et_þf_hk /NP /PP /NP /PP /VP /IP /S-MAIN p /S0"
         )  # um þetta .
