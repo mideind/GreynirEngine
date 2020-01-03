@@ -93,6 +93,8 @@ _BIN_DELETIONS = None
 CASES = ("NF", "ÞF", "ÞGF", "EF")
 CASES_LATIN = tuple(case.encode("latin-1") for case in CASES)
 
+GENDERS_SET = frozenset(("kk", "kvk", "hk"))
+
 FILENAME = "ord.compressed"
 
 
@@ -1001,7 +1003,7 @@ class BIN_Compressed:
             cats = None
         elif cat == "no":
             # Allow a cat of "no" to mean a noun of any gender
-            cats = {"kk", "kvk", "hk"}
+            cats = GENDERS_SET
         else:
             cats = {cat}
         result = []
@@ -1054,7 +1056,7 @@ class BIN_Compressed:
             cats = None
         elif cat == "no":
             # Allow a cat of "no" to mean a noun of any gender
-            cats = {"kk", "kvk", "hk"}
+            cats = GENDERS_SET
         else:
             cats = {cat}
         wanted_beyging = ""

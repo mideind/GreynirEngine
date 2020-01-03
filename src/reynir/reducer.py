@@ -172,20 +172,18 @@ class ReductionInfo:
 
     def __init__(self, reducer, node):
         self.reducer = reducer
-        self.node = node
         self.sc = defaultdict(lambda: dict(sc=0))  # Child tree scores
         # We are only interested in completed nonterminals
-        self.nt = node.nonterminal if node.is_completed else None
-        self.name = self.nt.name if self.nt else None
+        nt = node.nonterminal if node.is_completed else None
         # Verb/preposition matching stuff
         self.pushed_prep_bonus = False
         verb = reducer.get_current_verb()
-        if self.nt:
-            if self.nt.has_tag("enable_prep_bonus"):
+        if nt:
+            if nt.has_tag("enable_prep_bonus"):
                 # SagnInnskot has this tag
                 reducer.push_prep_bonus(None if verb is None else verb[:])
                 self.pushed_prep_bonus = True
-            elif self.nt.has_tag("begin_prep_scope") or self.nt.is_noun_phrase:
+            elif nt.has_tag("begin_prep_scope") or nt.is_noun_phrase:
                 # Setning and SetningÁnF have this tag, and we also
                 # enter a new prep bonus scope in noun phrases
                 reducer.push_prep_bonus(None)
@@ -243,21 +241,22 @@ class ReductionInfo:
                 # Eliminate all other families
                 node.reduce_to(ix)
 
-            if self.nt is not None:
+            nt = node.nonterminal if node.is_completed else None
+            if nt is not None:
                 # We will be adjusting the result: make sure we do so on
                 # a separate dict copy (we don't want to clobber the child's dict)
                 # Get score adjustment for this nonterminal, if any
                 # (This is the $score(+/-N) pragma from Reynir.grammar)
-                sc["sc"] += self.reducer._score_adj.get(self.nt, 0)
+                sc["sc"] += self.reducer._score_adj.get(nt, 0)
 
-                if self.nt.has_tag("apply_length_bonus"):
+                if nt.has_tag("apply_length_bonus"):
                     # Give this nonterminal a bonus depending on how many tokens
                     # it encloses
-                    bonus = (self.node.end - self.node.start - 1) * _LENGTH_BONUS_FACTOR
+                    bonus = (node.end - node.start - 1) * _LENGTH_BONUS_FACTOR
                     sc["sc"] += bonus
 
                 if (
-                    self.nt.has_tag("apply_prep_bonus")
+                    nt.has_tag("apply_prep_bonus")
                     and self.reducer.get_prep_bonus() is not None
                 ):
                     # This is a nonterminal that we like to see in a verb/prep context
@@ -265,12 +264,12 @@ class ReductionInfo:
                     # with a verb rather than a noun phrase
                     sc["sc"] += _VERB_PREP_BONUS
 
-                if self.nt.has_tag("pick_up_verb"):
+                if nt.has_tag("pick_up_verb"):
                     verb = sc.get("so")
                     if verb is not None:
                         sc["sl"] = verb[:]
 
-                if self.nt.has_any_tag({"begin_prep_scope", "purge_verb"}):
+                if nt.has_any_tag({"begin_prep_scope", "purge_verb"}):
                     # Delete information about contained verbs
                     # SagnRuna, EinSetningÁnF, SagnHluti, NhFyllingAtv
                     # and Setning have this tag
@@ -286,7 +285,49 @@ class ReductionInfo:
             self.reducer.pop_current_verb()
 
 
-class ParseForestReducer(ParseForestNavigator):
+class MinimalNavigator(ParseForestNavigator):
+
+    """ A specialized implementation of ParseForestNavigator
+        with minimal overhead, used in the ParseForestReducer,
+        which is time-critical code """
+
+    def go(self, root_node):
+        """ Navigate the forest from the root node """
+
+        visited = dict()
+
+        def _nav_helper(w):
+            """ Navigate from w """
+            if w in visited:
+                # Already seen: return the previously calculated result
+                return visited[w]
+            if w is None:
+                # Epsilon node
+                v = dict(sc=0)
+            elif w._token is not None:
+                # Return the score of this terminal option
+                v = self._visit_token(w)
+            elif w.is_span:
+                # Init container for child results
+                results = ReductionInfo(self, w)
+                if w._families:
+                    for ix, (prod, children) in enumerate(w._families):
+                        results.add_child_production(ix, prod)
+                        for ch in children:
+                            results.add_child_score(ix, _nav_helper(ch))
+                v = results.process(w)
+            else:
+                v = dict(sc=0)
+            # Mark the node as visited and store its result
+            visited[w] = v
+            if w is not None:
+                w.score = v["sc"]
+            return v
+
+        return _nav_helper(root_node)
+
+
+class ParseForestReducer(MinimalNavigator):
 
     """ Subclass to navigate a parse forest and reduce it
         so that the highest-scoring alternative production of a nonterminal
@@ -353,11 +394,7 @@ class ParseForestReducer(ParseForestNavigator):
         # If no match, discourage
         return _VERB_PREP_PENALTY
 
-    def visit_epsilon(self, level):
-        """ At Epsilon node """
-        return dict(sc=0)  # Score 0
-
-    def visit_token(self, level, node):
+    def _visit_token(self, node):
         """ At token node """
         # Return the score of this token/terminal match
         d = dict()
@@ -392,33 +429,6 @@ class ParseForestReducer(ParseForestNavigator):
             # Verb terminal: pick up the verb
             d["so"] = [(node.terminal, node.token)]
         d["sc"] = node.score = sc
-        return d
-
-    def visit_nonterminal(self, level, node):
-        """ At nonterminal node """
-        # Return a fresh object to collect results, unless the
-        # node doesn't span any tokens, in which case we don't bother
-        return ReductionInfo(self, node) if node.is_span else None
-
-    def visit_family(self, results, level, node, ix, prod):
-        """ Add information about a family of children to the result object """
-        # if node.is_ambiguous:
-        #     print(f"Visiting family {ix} of head node {node}")
-        if results is not None:
-            results.add_child_production(ix, prod)
-
-    def add_result(self, results, ix, sc):
-        """ Append a single result to the result object """
-        # Add up scores for each family of children
-        # print(f"Node {results.node}: family {ix}, adding child score {sc}")
-        if results is not None:
-            results.add_child_score(ix, sc)
-
-    def process_results(self, results, node):
-        """ Sort scores after visiting children, then prune the child families
-            (productions) leaving only the top-scoring family (production) """
-        d = dict(sc=0) if results is None else results.process(node)
-        node.score = d["sc"]
         return d
 
     def _check_stacks(self):

@@ -182,7 +182,8 @@ class BIN_Token(Token):
     FBIT_MASK = VBIT_ABBREV | VBIT_SUBJ | VBIT_SCASES
 
     CASES = ["nf", "þf", "þgf", "ef"]
-    CASES_SET = set(CASES)
+    CASES_SET = frozenset(CASES)
+
     GENDERS = ["kk", "kvk", "hk"]
     GENDERS_SET = NOUNS_SET = frozenset(GENDERS)
     GENDERS_MAP = {"kk": "KK", "kvk": "KVK", "hk": "HK"}
@@ -1258,7 +1259,7 @@ class BIN_Token(Token):
                 return False
             # Be careful not to match alternative abbreviations, such as
             # 'ASA' meaning 'aust-suð-austan' (which is an adverb)
-            return m.ordfl in {"kk", "kvk", "hk"}
+            return m.ordfl in BIN_Token.GENDERS_SET
 
         def matcher_sérnafn(m):
             """ Proper name terminal """
@@ -2089,7 +2090,7 @@ def simplify_terminal(terminal, cat=None):
     elif cat is not None:
         # Get the word category from the meaning
         first = cat
-    if first in {"kk", "kvk", "hk"}:
+    if first in BIN_Token.GENDERS_SET:
         first = "no_" + first
     return first + rest
 
