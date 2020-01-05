@@ -165,10 +165,12 @@ class PrepositionUnpacker(ParseForestNavigator):
         cls().go(root_node)
 
 
-class ReductionInfo:
+class _ReductionScope:
 
     """ Class to accumulate information about a nonterminal and its
-        child production(s) during reduction """
+        child productions during reduction """
+
+    __slots__ = ("reducer", "sc", "pushed_prep_bonus", "start_verb")
 
     def __init__(self, reducer, node):
         self.reducer = reducer
@@ -192,28 +194,28 @@ class ReductionInfo:
         reducer.push_current_verb(verb)
         self.start_verb = verb
 
-    def add_child_score(self, ix, sc):
+    def start_family(self, ix, prod):
+        """ Start the processing of a production (numbered ix) of a nonterminal """
+        # Initialize the score of this family of children, so that productions
+        # with higher priorities (more negative prio values) get a starting bonus
+        self.sc[ix]["sc"] = -10 * prod.priority
+        self.reducer.set_current_verb(self.start_verb)
+
+    def add_child(self, ix, sc):
         """ Add a child node's score to the parent family's score,
             where the parent family has index ix (0..n) """
-        self.sc[ix]["sc"] += sc["sc"]
+        d = self.sc[ix]
+        d["sc"] += sc["sc"]
         # Carry information about contained prepositions ("fs") and verbs ("so")
         # up the tree
         for key in ("so", "sl"):
             if key in sc:
-                if key in self.sc[ix]:
-                    self.sc[ix][key].extend(sc[key])
+                if key in d:
+                    d[key].extend(sc[key])
                 else:
-                    self.sc[ix][key] = sc[key][:]
+                    d[key] = sc[key][:]
                 if key == "sl":
                     self.reducer.set_current_verb(sc[key])
-
-    def add_child_production(self, ix, prod):
-        """ Start the processing of a production (numbered ix) of a nonterminal """
-        # Initialize the score of this family of children, so that productions
-        # with higher priorities (more negative prio values) get a starting bonus
-        assert ix not in self.sc or "sc" not in self.sc[ix]
-        self.sc[ix]["sc"] = -10 * prod.priority
-        self.reducer.set_current_verb(self.start_verb)
 
     def process(self, node):
         """ After accumulating scores for all possible productions
@@ -285,49 +287,7 @@ class ReductionInfo:
             self.reducer.pop_current_verb()
 
 
-class MinimalNavigator(ParseForestNavigator):
-
-    """ A specialized implementation of ParseForestNavigator
-        with minimal overhead, used in the ParseForestReducer,
-        which is time-critical code """
-
-    def go(self, root_node):
-        """ Navigate the forest from the root node """
-
-        visited = dict()
-
-        def _nav_helper(w):
-            """ Navigate from w """
-            if w in visited:
-                # Already seen: return the previously calculated result
-                return visited[w]
-            if w is None:
-                # Epsilon node
-                v = dict(sc=0)
-            elif w._token is not None:
-                # Return the score of this terminal option
-                v = self._visit_token(w)
-            elif w.is_span:
-                # Init container for child results
-                results = ReductionInfo(self, w)
-                if w._families:
-                    for ix, (prod, children) in enumerate(w._families):
-                        results.add_child_production(ix, prod)
-                        for ch in children:
-                            results.add_child_score(ix, _nav_helper(ch))
-                v = results.process(w)
-            else:
-                v = dict(sc=0)
-            # Mark the node as visited and store its result
-            visited[w] = v
-            if w is not None:
-                w.score = v["sc"]
-            return v
-
-        return _nav_helper(root_node)
-
-
-class ParseForestReducer(MinimalNavigator):
+class ParseForestReducer:
 
     """ Subclass to navigate a parse forest and reduce it
         so that the highest-scoring alternative production of a nonterminal
@@ -431,23 +391,45 @@ class ParseForestReducer(MinimalNavigator):
         d["sc"] = node.score = sc
         return d
 
-    def _check_stacks(self):
-        """ Runtime sanity check of the reducer stacks """
-        assert len(self._prep_bonus_stack) == 1 and self._prep_bonus_stack[0] is None
-        assert (
-            len(self._current_verb_stack) == 1 and self._current_verb_stack[0] is None
-        )
-
     def go(self, root_node):
         """ Perform the reduction, but first split the tree underneath
             nodes that have the enable_prep_bonus tag """
-        self._check_stacks()  # !!! DEBUG
+
         PrepositionUnpacker.navigate(root_node)
-        # ParseForestPrinter.print_forest(root_node, skip_duplicates = True)
-        # Start normal navigation of the tree after the split
-        result = super().go(root_node)
-        self._check_stacks()  # !!! DEBUG
-        return result
+
+        visited = dict()
+        NULL_SC = dict(sc=0)
+
+        def _nav_helper(w):
+            """ Navigate from w """
+            if w in visited:
+                # Already seen: return the previously calculated result
+                return visited[w]
+            if w is None:
+                # Epsilon node
+                v = NULL_SC
+            elif w._token is not None:
+                # Return the score of this terminal option
+                v = self._visit_token(w)
+            elif w.is_span:
+                # Init container for child results
+                scope = _ReductionScope(self, w)
+                if w._families:
+                    for ix, (prod, children) in enumerate(w._families):
+                        scope.start_family(ix, prod)
+                        for ch in children:
+                            scope.add_child(ix, _nav_helper(ch))
+                v = scope.process(w)
+            else:
+                v = NULL_SC
+            # Mark the node as visited and store its result
+            visited[w] = v
+            if w is not None:
+                w.score = v["sc"]
+            return v
+
+        # Perform the actual scoring and reduction after splitting the tree
+        return _nav_helper(root_node)
 
 
 class OptionFinder(ParseForestNavigator):

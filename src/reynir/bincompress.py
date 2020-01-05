@@ -66,16 +66,14 @@ import functools
 import mmap
 from collections import defaultdict
 
+# pylint: disable=no-name-in-module
+# pylint: disable=import-error
 if __package__:
     # Import the CFFI wrapper for the bin.cpp C++ module (see also build_bin.py)
     # This is not needed for command-line invocation of bincompress.py,
     # i.e. when generating a new ord.compressed file.
-    # pylint: disable=no-name-in-module
-    # pylint: disable=import-error
     from ._bin import lib as bin_cffi, ffi
 else:
-    # pylint: disable=no-name-in-module
-    # pylint: disable=import-error
     from _bin import lib as bin_cffi, ffi
 
 
@@ -820,9 +818,8 @@ class BIN_Compressed:
             self._b = mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ)
         # Check that the file version matches what we expect
         assert (
-            self._b[0:16] == BIN_Compressor.VERSION,
-            "Invalid signature in ord.compressed (git-lfs might be missing)"
-        )
+            self._b[0:16] == BIN_Compressor.VERSION
+        ), "Invalid signature in ord.compressed (git-lfs might be missing)"
         (
             mappings_offset,
             forms_offset,

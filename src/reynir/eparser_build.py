@@ -84,7 +84,7 @@ declarations = """
         struct Label label;
         struct FamilyEntry* pHead;
         UINT nRefCount;
-    } Node;
+    };
 
     typedef BOOL (*MatchingFunc)(UINT nHandle, UINT nToken, UINT nTerminal);
     typedef BYTE* (*AllocFunc)(UINT nHandle, UINT nToken, UINT nSize);

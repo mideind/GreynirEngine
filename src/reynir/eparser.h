@@ -106,7 +106,7 @@ class Nonterminal {
 
    // A Nonterminal has an associated list of owned Productions
 
-friend class AllocReporter;
+   friend class AllocReporter;
 
 private:
 
@@ -142,7 +142,7 @@ class Production {
    // positive terminal index. Attempts to index past the
    // end of the production yield a 0 item.
 
-friend class AllocReporter;
+   friend class AllocReporter;
 
 private:
 
@@ -186,7 +186,7 @@ class Grammar {
    // A Grammar is a collection of Nonterminals
    // with their Productions.
 
-friend class AllocReporter;
+   friend class AllocReporter;
 
 private:
 
@@ -229,7 +229,7 @@ class Label {
 
    // A Label is associated with a Node.
 
-friend class Node;
+   friend class Node;
 
 private:
 
@@ -253,7 +253,7 @@ public:
 
 class Node {
 
-friend class AllocReporter;
+   friend class AllocReporter;
 
 private:
 
@@ -310,8 +310,8 @@ class Parser {
 
    // Earley-Scott parser for a given Grammar
 
-friend class AllocReporter;
-friend class Column;
+   friend class AllocReporter;
+   friend class Column;
 
 private:
 

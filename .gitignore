@@ -24,6 +24,8 @@ __pycache__/
 
 # Experimental Python stuff
 test.py
+*.new.py
+*.old.py
 
 # Doc stuff
 doc/Makefile
