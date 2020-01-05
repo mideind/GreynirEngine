@@ -34,19 +34,22 @@
 """
 
 import os
+import stat
 import tempfile
 
 
 class LockError(Exception):
     """ Lock could not be obtained """
-
     pass
 
 
+POSIX = False
+
 try:
-    # Try Unix/POSIX
+    # Try Linux/POSIX
     import fcntl
 except ImportError:
+
     try:
         # Try Windows
         import msvcrt
@@ -62,6 +65,7 @@ except ImportError:
     else:
 
         # Windows
+
         def _lock_file(file, block):
             # Lock just the first byte of the file
             retry = True
@@ -69,7 +73,7 @@ except ImportError:
                 retry = False
                 try:
                     msvcrt.locking(
-                        file.fileno(), msvcrt.LK_LOCK if block else msvcrt.NBLCK, 1
+                        file.fileno(), msvcrt.LK_LOCK if block else msvcrt.LK_NBLCK, 1
                     )
                 except OSError as e:
                     if block and e.errno == 36:
@@ -91,7 +95,10 @@ except ImportError:
                 )
 
 else:
-    # Unix/POSIX
+
+    # Linux/POSIX
+
+    POSIX = True
 
     def _lock_file(file, block):
         try:
@@ -134,6 +141,14 @@ class GlobalLock:
             # could fail on the r+ open and open the file a+, but only
             # one will get the the lock and write a pid.
             fp = open(path, "a+")
+            # Make sure that the file is readable and writable by others
+            if POSIX and fp is not None:
+                os.fchmod(
+                    fp.fileno(),
+                    stat.S_IRUSR | stat.S_IWUSR
+                    | stat.S_IRGRP | stat.S_IWGRP
+                    | stat.S_IROTH | stat.S_IWOTH
+                )
 
         if fp is None:
             raise LockError("Couldn't open or create lock file {0}".format(path))
