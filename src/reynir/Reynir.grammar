@@ -3938,6 +3938,52 @@ NlStak_p3_et_ef_hk → Myllumerki_ef
 
 Myllumerki/fall → myllumerki/fall
 
+# Notandanafn
+
+NlStak_p3_et_nf_hk → Notandanafn_nf
+NlStak_p3_et_þf_hk → Notandanafn_þf
+NlStak_p3_et_þgf_hk → Notandanafn_þgf
+NlStak_p3_et_ef_hk → Notandanafn_ef
+
+Notandanafn/fall → notandanafn/fall
+
+# Kennitala
+
+NlStak_p3_et_nf_hk → Kennitala_nf
+NlStak_p3_et_þf_hk → Kennitala_þf
+NlStak_p3_et_þgf_hk → Kennitala_þgf
+NlStak_p3_et_ef_hk → Kennitala_ef
+
+Kennitala/fall → kennitala/fall
+
+NlStak_p3_et_nf_hk → Símanúmer_nf
+NlStak_p3_et_þf_hk → Símanúmer_þf
+NlStak_p3_et_þgf_hk → Símanúmer_þgf
+NlStak_p3_et_ef_hk → Símanúmer_ef
+
+Símanúmer/fall → símanúmer/fall
+
+NlStak_p3_et_nf_hk → Sameind_nf
+NlStak_p3_et_þf_hk → Sameind_þf
+NlStak_p3_et_þgf_hk → Sameind_þgf
+NlStak_p3_et_ef_hk → Sameind_ef
+
+Sameind/fall → sameind/fall
+
+NlStak_p3_et_nf_hk → Tölvupóstfang_nf
+NlStak_p3_et_þf_hk → Tölvupóstfang_þf
+NlStak_p3_et_þgf_hk → Tölvupóstfang_þgf
+NlStak_p3_et_ef_hk → Tölvupóstfang_ef
+
+Tölvupóstfang/fall → tölvupóstfang/fall
+
+NlStak_p3_et_nf_hk → Vörunúmer_nf
+NlStak_p3_et_þf_hk → Vörunúmer_þf
+NlStak_p3_et_þgf_hk → Vörunúmer_þgf
+NlStak_p3_et_ef_hk → Vörunúmer_ef
+
+Vörunúmer/fall → vörunúmer/fall
+
 NlStak_p3_et/fall → NlStak_p3_et/fall/kyn # Samtenging tveggja eintöluliða með 'eða' krefst ekki sama kyns báðum megin
 
 # 3p. fleirtala
