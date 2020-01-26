@@ -1016,6 +1016,18 @@ class BIN_Token(Token):
         """ A username token matches a username (notandanafn) terminal """
         return terminal.startswith("notandanafn")
 
+    def matches_URL(self, terminal):
+        return terminal.startswith("vefslóð")
+
+    def matches_EMAIL(self, terminal):
+        return terminal.startswith("tölvupóstfang")
+
+    def matches_SERIALNUMBER(self, terminal):
+        return terminal.startswith("vörunúmer")
+
+    def matches_TELNO(self, terminal):
+        return terminal.startswith("símanúmer")
+
     def matches_WORD(self, terminal):
         """ Match a word token, having the potential part-of-speech meanings
             from the BIN database, with the terminal """
@@ -1388,6 +1400,10 @@ class BIN_Token(Token):
         TOK.SSN: matches_SSN,
         TOK.MOLECULE: matches_MOLECULE,
         TOK.USERNAME: matches_USERNAME,
+        TOK.URL: matches_URL,
+        TOK.EMAIL: matches_EMAIL,
+        TOK.SERIALNUMBER: matches_SERIALNUMBER,
+        TOK.TELNO: matches_TELNO,
         TOK.WORD: matches_WORD,
     }
 
