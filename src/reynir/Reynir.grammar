@@ -3984,6 +3984,14 @@ NlStak_p3_et_ef_hk → Vörunúmer_ef
 
 Vörunúmer/fall → vörunúmer/fall
 
+NlStak_p3_et_nf_hk → Vefslóð_nf
+NlStak_p3_et_þf_hk → Vefslóð_þf
+NlStak_p3_et_þgf_hk → Vefslóð_þgf
+NlStak_p3_et_ef_hk → Vefslóð_ef
+
+Vefslóð/fall → vefslóð/fall
+
+
 NlStak_p3_et/fall → NlStak_p3_et/fall/kyn # Samtenging tveggja eintöluliða með 'eða' krefst ekki sama kyns báðum megin
 
 # 3p. fleirtala
