@@ -882,13 +882,13 @@ def test_terminal_types(r):
         category="notandanafn",
         variants=["nf"],
     ),
-    s = r.parse_single("Hér er H2S04.")
+    s = r.parse_single("Hér er H2SO4.")
     t = s.terminals
     assert len(t) == 4
     check_terminal(
         t[2],
-        text="H2S04",
-        lemma="H2S04",
+        text="H2SO4",
+        lemma="H2SO4",
         category="sameind",
         variants=["nf"],
     ),
