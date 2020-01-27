@@ -850,6 +850,68 @@ def test_year_range(r):
     check_terminal(t[6], text="50", lemma="50", category="tala", variants=[]),
     check_terminal(t[7], text=".", lemma=".", category="", variants=[])
 
+def test_terminal_types(r):
+    # tölvupóstfang = email
+    s = r.parse_single("Netfangið er valid@my-domain.reallylongtld.")
+    t = s.terminals
+    assert len(t) == 4
+    check_terminal(
+        t[2],
+        text="valid@my-domain.reallylongtld",
+        lemma="valid@my-domain.reallylongtld",
+        category="tölvupóstfang",
+        variants=["nf"],
+    ),
+    s = r.parse_single("Vefslóðin er http://www.vefur.is.")
+    t = s.terminals
+    assert len(t) == 4
+    check_terminal(
+        t[2],
+        text="http://www.vefur.is",
+        lemma="http://www.vefur.is",
+        category="vefslóð",
+        variants=["nf"],
+    ),
+    s = r.parse_single("@notandi2 er betri en @notandi1.")
+    t = s.terminals
+    assert len(t) == 6
+    check_terminal(
+        t[0],
+        text="@notandi2",
+        lemma="@notandi2",
+        category="notandanafn",
+        variants=["nf"],
+    ),
+    s = r.parse_single("Hér er H2S04.")
+    t = s.terminals
+    assert len(t) == 4
+    check_terminal(
+        t[2],
+        text="H2S04",
+        lemma="H2S04",
+        category="sameind",
+        variants=["nf"],
+    ),
+    s = r.parse_single("570607-6859 er kennitala fyrirtækisins.")
+    t = s.terminals
+    assert len(t) == 5
+    check_terminal(
+        t[0],
+        text="570607-6859",
+        lemma="570607-6859",
+        category="kennitala",
+        variants=["nf"],
+    ),
+    s = r.parse_single("867-6998 er símanúmerið hans.")
+    t = s.terminals
+    assert len(t) == 5
+    check_terminal(
+        t[0],
+        text="867-6998",
+        lemma="867-6998",
+        category="símanúmer",
+        variants=["nf"],
+    ),
 
 def test_single(r):
     s = r.parse_single("Jón greiddi bænum 10 milljónir króna í skaðabætur.")
