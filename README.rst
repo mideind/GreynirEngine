@@ -47,8 +47,8 @@ P                               # Root
     +-VP                        # Verb phrase containing arguments
       +-VP                      # Verb phrase containing verb
         +-so_1_þf_et_p3: 'sá'   # Verb, 1 accusative arg, singular, 3rd p
-      +-NP-OBJ                # Noun phrase, object
-        +-no_et_þf_kvk: 'sól' # Noun, singular, accusative, feminine
+      +-NP-OBJ                  # Noun phrase, object
+        +-no_et_þf_kvk: 'sól'   # Noun, singular, accusative, feminine
 +-'.'                           # Punctuation
 >>> sent.tree.nouns
 ['Ása', 'sól']
@@ -73,37 +73,47 @@ Prerequisites
 
 This package runs on CPython 3.5 or newer, and on PyPy 3.5 or newer.
 
+To find out which version of Python you have, enter::
+
+    $ python --version
+
 If a binary wheel package isn't available on `PyPi <https://pypi.org>`_
 for your system, you may need to have the ``python3-dev`` and/or potentially
-``python3.6-dev`` packages (or their Windows equivalents) installed on your
+``python3.X-dev`` packages (where X is your Python sub-version,
+such as 6 for 3.6), or their Windows equivalents, installed on your
 system to set up Greynir successfully. This is because a source distribution
 install requires a C++ compiler and linker::
 
-    # Debian or Ubuntu:
-    sudo apt-get install python3-dev
-    sudo apt-get install python3.6-dev
+    $ # Debian or Ubuntu:
+    $ sudo apt-get install python3-dev
+    $ sudo apt-get install python3.6-dev
+
+Depending on your system, you may also need to install ``libffi-dev``::
+
+    $ # Debian or Ubuntu
+    $ sudo apt-get install libffi-dev
 
 ************
 Installation
 ************
 
-To install this package::
+To install this package, assuming Python 3 is your default Python::
 
-    $ pip3 install reynir   # or pip install reynir if Python3 is your default
+    $ pip install reynir
 
-If you want to be able to edit the source, do like so (assuming
-you have **git** and **git-lfs** installed)::
+If you have **git** and **git-lfs** installed and want to be able to edit
+the source, do like so::
 
     $ git clone https://github.com/mideind/ReynirPackage
     $ cd ReynirPackage
     $ # [ Activate your virtualenv here if you have one ]
-    $ python setup.py develop
+    $ pip install -e .
 
 The package source code is now in ``ReynirPackage/src/reynir``.
 
 Note that **git-lfs** is required to clone and pull the full compressed binary
 files for the *Beygingarlýsing íslensks nútímamáls* (BÍN) database. If it is
-missing, you will get assertion errors.
+missing, you will get assertion errors when you try to run Greynir.
 
 *****
 Tests
@@ -130,7 +140,7 @@ about `copyright and licensing <https://greynir.is/doc/copyright.html>`_.
 Copyright and licensing
 ***********************
 
-Greynir is *copyright (C) 2019 by Miðeind ehf.*
+Greynir is *copyright (C) 2020 by Miðeind ehf.*
 The original author of this software is *Vilhjálmur Þorsteinsson*.
 
 .. image:: https://raw.githubusercontent.com/mideind/Reynir/master/static/img/GPLv3.png
@@ -154,5 +164,5 @@ and also available here: https://www.gnu.org/licenses/gpl-3.0.html.
 
 If you would like to use this software in ways that are incompatible
 with the standard GNU GPLv3 license, please contact
-Miðeind ehf. (*mideind@mideind.is*) to negotiate alternative
+`Miðeind ehf. <mailto:mideind@mideind.is>`_ to negotiate alternative
 arrangements.
