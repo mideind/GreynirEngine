@@ -5784,6 +5784,7 @@ OgÁratugum →
     | TímaÁkvæðisliður_þf_et_kk Vikudagur_et_þf             # næsta fimmtudag
     | TímaÁkvæðisliður_þf_et/kyn Árstíð_þf_et/kyn           # næsta haust, þann sama vetur
     | TímaNafnorðStærri_gr_þf/tala FsFyrirEftir             # daginn fyrir útskriftina, mánuðina eftir jarðskjálftann
+    | HinnSá_þf? RaðTala_þf_et_kk MánaðarNafn_þf            # [hinn/þann] sjöunda febrúar
 
 VísiDagsetning → 
     'á:fs'_þf Vikudagur_et_þf               # á föstudag
@@ -5803,18 +5804,34 @@ VísiDagsetning →
 
 # Hér eru aðeins orð yfir mánuði sem ekki tengjast við 'dagsafs' lauf
 Mánuður_et/fall →
-    'janúarmánuður:kk'/fall
-    | 'febrúarmánuður:kk'/fall
-    | 'marsmánuður:kk'/fall
-    | 'aprílmánuður:kk'/fall
-    | 'maímánuður:kk'/fall
-    | 'júnímánuður:kk'/fall
-    | 'júlímánuður:kk'/fall
-    | 'ágústmánuður:kk'/fall
-    | 'septembermánuður:kk'/fall
-    | 'októbermánuður:kk'/fall
-    | 'nóvembermánuður:kk'/fall
-    | 'desembermánuður:kk'/fall
+    'janúarmánuður:kk'_et/fall
+    | 'febrúarmánuður:kk'_et/fall
+    | 'marsmánuður:kk'_et/fall
+    | 'aprílmánuður:kk'_et/fall
+    | 'maímánuður:kk'_et/fall
+    | 'júnímánuður:kk'_et/fall
+    | 'júlímánuður:kk'_et/fall
+    | 'ágústmánuður:kk'_et/fall
+    | 'septembermánuður:kk'_et/fall
+    | 'októbermánuður:kk'_et/fall
+    | 'nóvembermánuður:kk'_et/fall
+    | 'desembermánuður:kk'_et/fall
+
+# Ath: Hér þýðir ekki að nota 'janúar:kk'_et/fall eða álíka,
+# þar sem tókinn er DATEREL en ekki WORD
+MánaðarNafn_þf →
+    "janúar"
+    | "febrúar"
+    | "mars"
+    | "apríl"
+    | "maí"
+    | "júní"
+    | "júlí"
+    | "ágúst"
+    | "september"
+    | "október"
+    | "nóvember"
+    | "desember"
 
 DaganaAfs → 
     'dagur:kk'_gr_ft_þf? dagsafs Til dagsafs       # (dagana) 13. október og/til/- 14. nóvember
@@ -5915,6 +5932,10 @@ AfstæðurTími →
     'á:fs'_þgf RaðKlukkuTala_þgf_et_kk 'tími:kk'_þgf_et_gr  # Á sjötta tímanum
 
 RaðKlukkuTala/fall/tala/kyn →
+    RaðTala1til9/fall/tala/kyn
+    | RaðTala10til12/fall/tala/kyn
+
+RaðTala1til9/fall/tala/kyn →
     'fyrstur:lo'/fall/tala/kyn
     | 'annar:lo'/fall/tala/kyn
     | 'þriðji:lo'/fall/tala/kyn
@@ -5924,9 +5945,37 @@ RaðKlukkuTala/fall/tala/kyn →
     | 'sjöundi:lo'/fall/tala/kyn
     | 'áttundi:lo'/fall/tala/kyn
     | 'níundi:lo'/fall/tala/kyn
-    | 'tíundi:lo'/fall/tala/kyn
-    | 'ellefti:lo'/fall/tala/kyn
+
+RaðTala10til12/fall/tala/kyn →
+    'tíundi:lo'/fall/tala/kyn
+    |'ellefti:lo'/fall/tala/kyn
     | 'tólfti:lo'/fall/tala/kyn
+
+OgRaðTala1til9/fall/tala/kyn →
+    "og:st" RaðTala1til9/fall/tala/kyn
+
+RaðTala13til100/fall/tala/kyn →
+    'þrettándi:lo'/fall/tala/kyn
+    | 'fjórtándi:lo'/fall/tala/kyn
+    | 'fimmtándi:lo'/fall/tala/kyn
+    | 'sextándi:lo'/fall/tala/kyn
+    | 'sautjándi:lo'/fall/tala/kyn
+    | 'átjándi:lo'/fall/tala/kyn
+    | 'nítjándi:lo'/fall/tala/kyn
+    | 'tuttugasti:lo'/fall/tala/kyn OgRaðTala1til9/fall/tala/kyn?
+    | 'þrítugasti:lo'/fall/tala/kyn OgRaðTala1til9/fall/tala/kyn?
+    | 'fertugasti:lo'/fall/tala/kyn OgRaðTala1til9/fall/tala/kyn?
+    | 'fimmtugasti:lo'/fall/tala/kyn OgRaðTala1til9/fall/tala/kyn?
+    | 'sextugasti:lo'/fall/tala/kyn OgRaðTala1til9/fall/tala/kyn?
+    | 'sjötugasti:lo'/fall/tala/kyn OgRaðTala1til9/fall/tala/kyn?
+    | 'áttugasti:lo'/fall/tala/kyn OgRaðTala1til9/fall/tala/kyn?
+    | 'nítugasti:lo'/fall/tala/kyn OgRaðTala1til9/fall/tala/kyn?
+    | 'hundraðasti:lo'/fall/tala/kyn OgRaðTala1til9/fall/tala/kyn?
+
+RaðTala/fall/tala/kyn →
+    RaðTala1til9/fall/tala/kyn
+    | RaðTala10til12/fall/tala/kyn
+    | RaðTala13til100/fall/tala/kyn
 
 ParturHluti/fall/tala →
     'fyrripartur:kk'/fall/tala
