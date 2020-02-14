@@ -198,6 +198,34 @@ def test_cases(r):
         "Póstsins Páls og kattarins Njáls , tveggja sívinsælla gleðigjafa"
     )
 
+    s = r.parse_single("Rauð viðvörun hefur verið gefin út.")
+    assert (s.tree.S_MAIN.IP.NP_SUBJ.nominative_np ==
+        "Rauð viðvörun"
+    )
+    assert (s.tree.S_MAIN.IP.NP_SUBJ.accusative_np ==
+        "Rauða viðvörun"
+    )
+    assert (s.tree.S_MAIN.IP.NP_SUBJ.dative_np ==
+        "Rauðri viðvörun"
+    )
+    assert (s.tree.S_MAIN.IP.NP_SUBJ.genitive_np ==
+        "Rauðrar viðvörunar"
+    )
+
+    s = r.parse_single("Rauða viðvörunin hefur verið gefin út.")
+    assert (s.tree.S_MAIN.IP.NP_SUBJ.nominative_np ==
+        "Rauða viðvörunin"
+    )
+    assert (s.tree.S_MAIN.IP.NP_SUBJ.accusative_np ==
+        "Rauðu viðvörunina"
+    )
+    assert (s.tree.S_MAIN.IP.NP_SUBJ.dative_np ==
+        "Rauðu viðvöruninni"
+    )
+    assert (s.tree.S_MAIN.IP.NP_SUBJ.genitive_np ==
+        "Rauðu viðvörunarinnar"
+    )
+
 
 def test_casting():
     """ Test functions to cast words in nominative case to other cases """
