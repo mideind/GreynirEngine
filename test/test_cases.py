@@ -4,7 +4,7 @@
 
     Tests for Greynir module
 
-    Copyright (C) 2019 by Miðeind ehf.
+    Copyright (C) 2020 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
         This program is free software: you can redistribute it and/or modify
@@ -227,6 +227,79 @@ def test_cases(r):
     )
 
 
+def test_noun_phrases(r):
+    """ Test functions for easy manipulation of noun phrases """
+    np = r.parse_noun_phrase("þrír lúxus-miðar á Star Wars klukkan þrjú í dag")
+    assert np.tree is not None
+    assert np.nominative == "þrír lúxus-miðar á Star Wars klukkan þrjú í dag"
+    assert np.accusative == "þrjá lúxus-miða á Star Wars klukkan þrjú í dag"
+    assert np.dative == "þremur lúxus-miðum á Star Wars klukkan þrjú í dag"
+    assert np.genitive == "þriggja lúxus-miða á Star Wars klukkan þrjú í dag"
+    assert np.indefinite == "þrír lúxus-miðar á Star Wars klukkan þrjú í dag"
+    assert np.canonical == "lúxus-miði"
+
+    from reynir import NounPhrase
+    np = NounPhrase(
+        "þrír glæsilegir lúxus-bíómiðar á Star Wars "
+        "og að auki tveir stútfullir pokar af ilmandi poppi"
+    )
+    assert np.parsed
+    assert len(np) == len(str(np))
+    assert (
+        "Hér er kvittunin þín fyrir {np:þgf}. "
+        "Þar með ertu búin(n) að kaupa {np:þf}.".format(np=np)
+        == "Hér er kvittunin þín fyrir þremur glæsilegum lúxus-bíómiðum "
+        "á Star Wars og að auki tveimur stútfullum pokum af ilmandi poppi. "
+        "Þar með ertu búin(n) að kaupa þrjá glæsilega lúxus-bíómiða "
+        "á Star Wars og að auki tvo stútfulla poka af ilmandi poppi."
+    )
+    np = NounPhrase('skjótti hesturinn')
+    assert np.parsed
+    assert np.case == "nf"
+    assert np.person == "p3"
+    assert np.number == "et"
+    assert np.gender == "kk"
+    assert str(np) == "skjótti hesturinn"
+    assert "Hér er {np:nf}".format(np=np) == 'Hér er skjótti hesturinn'
+    assert "Um {np:þf}".format(np=np) == 'Um skjótta hestinn'
+    assert "Frá {np:þgf}".format(np=np) == 'Frá skjótta hestinum'
+    assert "Til {np:ef}".format(np=np) == 'Til skjótta hestsins'
+    assert "Hér er {np:ángr}".format(np=np) == 'Hér er skjóttur hestur'
+    np = NounPhrase("þrír skjóttir hestar")
+    assert np.parsed
+    assert np.number == "ft"
+    assert np.case == "nf"
+    assert np.person == "p3"
+    assert np.gender == "kk"
+    assert str(np) == "þrír skjóttir hestar"
+    assert len(np) == len(str(np))
+    assert "Umræðuefnið er {np:stofn}".format(np=np) == 'Umræðuefnið er skjóttur hestur'
+    try:
+        "Óleyfilegt {np:.2f}".format(np=np)
+    except ValueError:
+        pass
+    else:
+        assert False, "Should have raised ValueError"
+    try:
+        "Óleyfilegt {np:abc}".format(np=np)
+    except ValueError:
+        pass
+    else:
+        assert False, "Should have raised ValueError"
+    np = NounPhrase("Doddi át kökuna")
+    assert not np.parsed
+    assert np.gender is None
+    assert np.number is None
+    assert np.case is None
+    assert np.person is None
+    np = NounPhrase("")
+    assert not np.parsed
+    assert np.gender is None
+    assert np.number is None
+    assert np.case is None
+    assert np.person is None
+
+
 def test_casting():
     """ Test functions to cast words in nominative case to other cases """
     from reynir.bindb import BIN_Db
@@ -292,5 +365,6 @@ if __name__ == "__main__":
     from reynir import Greynir
     r = Greynir()
     test_cases(r)
+    test_noun_phrases(r)
     test_casting()
     r.__class__.cleanup()

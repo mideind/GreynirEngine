@@ -4,7 +4,7 @@
 
     Python wrapper for C++ Earley/Scott parser
 
-    Copyright (C) 2019 Miðeind ehf.
+    Copyright (C) 2020 Miðeind ehf.
 
        This program is free software: you can redistribute it and/or modify
        it under the terms of the GNU General Public License as published by
@@ -638,7 +638,7 @@ class Fast_Parser(BIN_Parser):
             c_grammar = self._load_binary_grammar()
             # Create a C++ parser object for the grammar
             self._c_parser = eparser.newParser(c_grammar, matching_func, alloc_func)
-            # Find the index of the root nonterminal for this parser instance
+            # Find the index of the default root nonterminal for this parser instance
             self._root_index = (
                 0 if root is None else self.grammar.nonterminals[root].index
             )
@@ -659,8 +659,10 @@ class Fast_Parser(BIN_Parser):
         self.cleanup()
         return False
 
-    def go(self, tokens):
-        """ Call the C++ parser module to parse the tokens """
+    def go(self, tokens, *, root=None):
+        """ Call the C++ parser module to parse the tokens. The parser's
+            default root nonterminal can be overridden by passing its
+            name in the root parameter. """
 
         wrapped_tokens = self._wrap(tokens)  # Inherited from BIN_Parser
         lw = len(wrapped_tokens)
@@ -674,8 +676,16 @@ class Fast_Parser(BIN_Parser):
             self.grammar, wrapped_tokens, self._terminals, self._matching_cache
         ) as job:
 
+            # Determine the root nonterminal to be used for this parse
+            if root is None:
+                # Use the parser's default root
+                root_index = self._root_index
+            else:
+                # Override the default root for this parse
+                root_index = self.grammar.nonterminals[root].index
+
             node = eparser.earleyParse(
-                self._c_parser, lw, self._root_index, job.handle, err
+                self._c_parser, lw, root_index, job.handle, err
             )
 
             if node == ffi.NULL:
@@ -704,10 +714,10 @@ class Fast_Parser(BIN_Parser):
         eparser.deleteForest(node)
         return result
 
-    def go_no_exc(self, tokens):
+    def go_no_exc(self, tokens, **kwargs):
         """ Simple version of go() that returns None instead of throwing ParseError """
         try:
-            return self.go(tokens)
+            return self.go(tokens, **kwargs)
         except ParseError:
             return None
 

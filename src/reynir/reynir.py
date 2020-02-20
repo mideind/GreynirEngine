@@ -4,7 +4,7 @@
 
     High-level wrapper for the Greynir tokenizer, parser and reducer
 
-    Copyright (c) 2019 Miðeind ehf.
+    Copyright (c) 2020 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
        This program is free software: you can redistribute it and/or modify
@@ -27,6 +27,7 @@
 """
 
 import time
+import operator
 from threading import Lock
 from collections import namedtuple
 
@@ -199,6 +200,54 @@ class _Sentence:
         return self.text
 
 
+class _NounPhrase(_Sentence):
+
+    """ A specialization for parsed noun phrases,
+        providing easy access to inflectional forms """
+
+    _nom = operator.attrgetter('nominative_np')
+    _acc = operator.attrgetter('accusative_np')
+    _dat = operator.attrgetter('dative_np')
+    _gen = operator.attrgetter('genitive_np')
+    _ind = operator.attrgetter('indefinite_np')
+    _can = operator.attrgetter('canonical_np')
+
+    def _get(self, getter):
+        if self.tree is None:
+            return None
+        return correct_spaces(getter(self.tree))
+
+    @cached_property
+    def nominative(self):
+        """ Return nominative form (nefnifall) """
+        return self._get(self._nom)
+
+    @cached_property
+    def indefinite(self):
+        """ Return indefinite form (nefnifall án greinis) """
+        return self._get(self._ind)
+
+    @cached_property
+    def canonical(self):
+        """ Return canonical form (nefnifall eintölu án greinis) """
+        return self._get(self._can)
+
+    @cached_property
+    def accusative(self):
+        """ Return accusative form (þolfall) """
+        return self._get(self._acc)
+
+    @cached_property
+    def dative(self):
+        """ Return dative form (þágufall) """
+        return self._get(self._dat)
+
+    @cached_property
+    def genitive(self):
+        """ Return genitive form (eignarfall) """
+        return self._get(self._gen)
+
+
 class _Paragraph:
 
     """ Encapsulates a paragraph that contains sentences """
@@ -227,7 +276,7 @@ class _Job:
         by paragraph and/or sentence.
     """
 
-    def __init__(self, greynir, tokens, parse):
+    def __init__(self, greynir, tokens, *, parse=False, root=None):
         self._r = greynir
         self._parser = self._r.parser
         self._reducer = self._r.reducer
@@ -241,6 +290,9 @@ class _Job:
         self._num_combinations = 0
         self._total_ambig = 0.0
         self._total_tokens = 0
+        # The grammar root nonterminal to be used
+        # for parsing within this job
+        self._root = root
 
     def _add_sentence(self, s, num, parse_time, reduce_time):
         """ Add a processed sentence to the statistics """
@@ -286,7 +338,7 @@ class _Job:
         score = 0
         t0 = t1 = time.time()
         try:
-            forest = self.parser.go(tokens)  # May raise ParseError
+            forest = self.parser.go(tokens, root=self._root)  # May raise ParseError
             t1 = time.time()
             if forest is not None:
                 num = Fast_Parser.num_combinations(forest)
@@ -351,6 +403,21 @@ class _Job:
     def reduce_time(self):
         """ Total time spent on tree reduction during this job, in seconds """
         return self._reduce_time
+
+
+class _Job_NP(_Job):
+
+    """ Specialized _Job class that creates _NounPhrase objects
+        instead of _Sentence objects """
+
+    def __init__(self, greynir, tokens):
+        # Parse the tokens with 'Nl' (noun phrase) as the root nonterminal
+        # instead of the usual default 'S0' (sentence) root
+        super().__init__(greynir, tokens, parse=True, root="Nl")
+
+    def _create_sentence(self, s):
+        """ Create a fresh _NounPhrase object """
+        return _NounPhrase(self, s)
 
 
 class Greynir:
@@ -465,6 +532,14 @@ class Greynir:
         """ Convenience function to parse a single sentence only """
         tokens = self.tokenize(sentence)
         job = _Job(self, tokens, parse=True)
+        # Raises StopIteration if no sentence was parsed
+        return next(iter(job))
+
+    def parse_noun_phrase(self, noun_phrase):
+        """ Convenience function to parse a noun phrase """
+        tokens = self.tokenize(noun_phrase)
+        # Use a _Job_NP to generate _NounPhrase objects instead of _Sentence objects
+        job = _Job_NP(self, tokens)
         # Raises StopIteration if no sentence was parsed
         return next(iter(job))
 

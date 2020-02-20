@@ -56,7 +56,7 @@ class LRU_Cache:
         self.cache = cache = {}
 
         last = root
-        for i in range(maxsize):
+        for _ in range(maxsize):
             key = object()
             cache[key] = last[1] = last = [last, root, key, None]
         root[0] = last
@@ -80,7 +80,7 @@ class LRU_Cache:
         oldroot = root
         root = self.root = root[1]
         root[2], oldkey = None, root[2]
-        root[3], oldvalue = None, root[3]
+        root[3] = None
         del cache[oldkey]
         cache[key] = oldroot
         return result

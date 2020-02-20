@@ -12,14 +12,13 @@ A fast, efficient natural language parser for Icelandic
 Overview
 ********
 
-**Greynir** is a Python 3.x package for
-**parsing Icelandic text into sentence trees** (i.e. full
-constituency parse trees). The trees can then be used to extract
-information from the text, for instance about people, titles, entities,
-facts, actions and opinions.
+Greynir is a Python 3.x package for **working with Icelandic text**,
+including parsing it into **sentence trees**, finding **lemmas**,
+inflecting **noun phrases**, assigning **part-of-speech tags** and much more.
 
-Along the way, Greynir tokenizes the text, finds **lemmas** and assigns
-**part-of-speech (POS) tags** to every word.
+Greynir's sentence trees can *inter alia* be used to extract information
+from text, for instance about people, titles, entities, facts, actions
+and opinions.
 
 Full documentation for Greynir is `available here <https://greynir.is/doc/>`_.
 
@@ -31,41 +30,65 @@ for smart phones.
 Greynir uses the `Tokenizer <https://pypi.org/project/tokenizer/>`_ package,
 by the same authors, to tokenize text.
 
-*******
-Example
-*******
+********
+Examples
+********
 
->>> from reynir import Greynir
->>> g = Greynir()
->>> sent = g.parse_single("Ása sá sól.")
->>> print(sent.tree.view)
-P                               # Root
-+-S-MAIN                        # Main sentence
-  +-IP                          # Inflected phrase
-    +-NP-SUBJ                   # Noun phrase, subject
-      +-no_et_nf_kvk: 'Ása'     # Noun, singular, nominative, feminine
-    +-VP                        # Verb phrase containing arguments
-      +-VP                      # Verb phrase containing verb
-        +-so_1_þf_et_p3: 'sá'   # Verb, 1 accusative arg, singular, 3rd p
-      +-NP-OBJ                  # Noun phrase, object
-        +-no_et_þf_kvk: 'sól'   # Noun, singular, accusative, feminine
-+-'.'                           # Punctuation
->>> sent.tree.nouns
-['Ása', 'sól']
->>> sent.tree.verbs
-['sjá']
->>> sent.tree.flat
-'P S-MAIN IP NP-SUBJ no_et_nf_kvk /NP-SUBJ VP so_1_þf_et_p3
-    NP-OBJ no_et_þf_kvk /NP-OBJ /VP /IP /S-MAIN p /P'
->>> # The subject noun phrase (S.IP.NP also works)
->>> sent.tree.S.IP.NP_SUBJ.lemmas
-['Ása']
->>> # The verb phrase
->>> sent.tree.S.IP.VP.lemmas
-['sjá', 'sól']
->>> # The object within the verb phrase (S.IP.VP.NP also works)
->>> sent.tree.S.IP.VP.NP_OBJ.lemmas
-['sól']
+Easily inflecting noun phrases:
+
+.. code-block:: python
+
+    from reynir import NounPhrase as Nl
+
+    # Create a NounPhrase ('nafnliður') object
+    nl = Nl("þrír lúxus-miðar á Star Wars og tveir brimsaltir pokar af poppi")
+
+    # Print the NounPhrase in the correct case for each context
+    # (þf=þolfall/accusative, þgf=þágufall/dative)
+
+    print("Þú keyptir {nl:þf}.".format(nl=nl))
+    print("Hér er kvittunin þín fyrir {nl:þgf}.".format(nl=nl))
+
+The program outputs the following text, correctly inflected::
+
+    Þú keyptir þrjá lúxus-miða á Star Wars og tvo brimsalta poka af poppi.
+    Hér er kvittunin þín fyrir þremur lúxus-miðum á Star Wars og tveimur brimsöltum pokum af poppi.
+
+Parsing a sentence:
+
+.. code-block:: python
+
+    >>> from reynir import Greynir
+    >>> g = Greynir()
+    >>> sent = g.parse_single("Ása sá sól.")
+    >>> print(sent.tree.view)
+    P                               # Root
+    +-S-MAIN                        # Main sentence
+    +-IP                          # Inflected phrase
+        +-NP-SUBJ                   # Noun phrase, subject
+        +-no_et_nf_kvk: 'Ása'     # Noun, singular, nominative, feminine
+        +-VP                        # Verb phrase containing arguments
+        +-VP                      # Verb phrase containing verb
+            +-so_1_þf_et_p3: 'sá'   # Verb, 1 accusative arg, singular, 3rd p
+        +-NP-OBJ                  # Noun phrase, object
+            +-no_et_þf_kvk: 'sól'   # Noun, singular, accusative, feminine
+    +-'.'                           # Punctuation
+    >>> sent.tree.nouns
+    ['Ása', 'sól']
+    >>> sent.tree.verbs
+    ['sjá']
+    >>> sent.tree.flat
+    'P S-MAIN IP NP-SUBJ no_et_nf_kvk /NP-SUBJ VP so_1_þf_et_p3
+        NP-OBJ no_et_þf_kvk /NP-OBJ /VP /IP /S-MAIN p /P'
+    >>> # The subject noun phrase (S.IP.NP also works)
+    >>> sent.tree.S.IP.NP_SUBJ.lemmas
+    ['Ása']
+    >>> # The verb phrase
+    >>> sent.tree.S.IP.VP.lemmas
+    ['sjá', 'sól']
+    >>> # The object within the verb phrase (S.IP.VP.NP also works)
+    >>> sent.tree.S.IP.VP.NP_OBJ.lemmas
+    ['sól']
 
 *************
 Prerequisites
@@ -78,15 +101,13 @@ To find out which version of Python you have, enter::
     $ python --version
 
 If a binary wheel package isn't available on `PyPi <https://pypi.org>`_
-for your system, you may need to have the ``python3-dev`` and/or potentially
-``python3.X-dev`` packages (where X is your Python sub-version,
-such as 6 for 3.6), or their Windows equivalents, installed on your
-system to set up Greynir successfully. This is because a source distribution
-install requires a C++ compiler and linker::
+for your system, you may need to have the ``python3-dev`` package
+(or its Windows equivalent) installed on your
+system to set up Greynir successfully. This is
+because a source distribution install requires a C++ compiler and linker::
 
     $ # Debian or Ubuntu:
     $ sudo apt-get install python3-dev
-    $ sudo apt-get install python3.6-dev
 
 Depending on your system, you may also need to install ``libffi-dev``::
 
@@ -107,6 +128,8 @@ the source, do like so::
     $ git clone https://github.com/mideind/ReynirPackage
     $ cd ReynirPackage
     $ # [ Activate your virtualenv here if you have one ]
+    $ git lfs install
+    $ git pull
     $ pip install -e .
 
 The package source code is now in ``ReynirPackage/src/reynir``.

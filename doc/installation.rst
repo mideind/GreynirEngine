@@ -9,20 +9,26 @@ Prerequisites
 Greynir runs on **CPython 3.5** or newer, and on **PyPy 3.5**
 or newer (more info on PyPy `here <http://pypy.org/>`_).
 
-On GNU/Linux and similar systems, you may need to have ``python3-dev`` and/or
-potentially ``python3.6-dev`` (or other version corresponding to your Python
-interpreter) installed on your system:
+On GNU/Linux and similar systems, you may need to have ``python3-dev``
+installed on your system:
 
 .. code-block:: bash
 
     # Debian or Ubuntu:
     $ sudo apt-get install python3-dev
-    $ sudo apt-get install python3.6-dev
+
+Depending on your system, you may also need to install ``libffi-dev``:
+
+.. code-block:: bash
+
+    # Debian or Ubuntu:
+    $ sudo apt-get install libffi-dev
 
 On Windows, you may need the latest
 `Visual Studio Build Tools <https://www.visualstudio.com/downloads/?q=build+tools+for+visual+studio>`_,
 specifically the Visual C++ build tools, installed on your PC along
 with the Windows 10 SDK.
+
 
 Install with pip
 ----------------
@@ -40,7 +46,8 @@ To install Greynir:
     $ pip3 install reynir
 
 ...or if you want to be able to edit Greynir's source code in-place,
-install ``git`` and ``git-lfs`` and do the following:
+install ``git`` and ``git-lfs`` (as `described here <https://git-lfs.github.com/>`_)
+and do the following:
 
 .. code-block:: bash
 
@@ -48,7 +55,9 @@ install ``git`` and ``git-lfs`` and do the following:
     $ cd ~/github
     $ git clone https://github.com/mideind/ReynirPackage
     $ cd ReynirPackage
-    $ python setup.py develop
+    $ git lfs install
+    $ git pull
+    $ pip install -e .
 
 On the most common Linux x86_64/amd64 systems, ``pip`` will download and
 install a binary wheel. On other systems, a source distribution will be

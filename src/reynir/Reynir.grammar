@@ -5,7 +5,7 @@
 #
 # Reynir - a natural language processor for Icelandic
 #
-# Copyright (C) 2019 Miðeind ehf.
+# Copyright (C) 2020 Miðeind ehf.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -6274,8 +6274,8 @@ MagnFs_ef →
 
 # Forsetningar sem standa með TNL sem sýna fastan punkt - 14. nóvember 2016, kl. 14:00
 PunkturFs_þf →
-    'fyrir:fs'_þf       # Ath. með þgf táknar það dagsetningu/tíma.
-    | 'eftir:fs'_þf
+    'rétt:ao'? 'fyrir:fs'_þf       # Ath. með þgf táknar það dagsetningu/tíma.
+    | 'rétt:ao'? 'eftir:fs'_þf
     | 'síðan:fs'_þf
 
 PunkturFs_þgf →

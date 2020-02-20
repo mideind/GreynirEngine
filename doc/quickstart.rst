@@ -10,11 +10,33 @@ Python 3 interpreter::
 
 ...and try something like the following::
 
+    from reynir import NounPhrase as Nl
+
+    # Create a NounPhrase ('nafnliður') object
+    nl = Nl("þrír lúxus-miðar á Star Wars og tveir brimsaltir pokar af poppi")
+
+    # Print the NounPhrase in the correct case for each context
+    # (þf=þolfall/accusative, þgf=þágufall/dative)
+
+    print("Þú keyptir {nl:þf}.".format(nl=nl))
+    print("Hér er kvittunin þín fyrir {nl:þgf}.".format(nl=nl))
+
+The program outputs the following text, correctly inflected::
+
+    Þú keyptir þrjá lúxus-miða á Star Wars og tvo brimsalta poka af poppi.
+    Hér er kvittunin þín fyrir þremur lúxus-miðum á Star Wars og tveimur brimsöltum pokum af poppi.
+
+Use the :py:class:`NounPhrase` class to easily inflect Icelandic noun phrases
+and to convert them between cases, for instance in user interfaces, in chatbot
+conversations and in printouts.
+
+A more detailed, lower-level example is as follows::
+
     from reynir import Greynir
 
     my_text = "Litla gula hænan fann fræ. Það var hveitifræ."
 
-    # Initialize Greynir and submit the text as a parse job
+    # Initialize the Greynir parser and submit the text as a parse job
     g = Greynir()
     job = g.submit(my_text)
 
@@ -25,7 +47,7 @@ Python 3 interpreter::
         print("Lemmas:   {0}".format(sent.lemmas))
         print("Parse tree:\n{0}\n".format(sent.tree.view))
 
-The output of the program is as follows::
+The output of the program is::
 
     Sentence: Litla gula hænan fann fræ.
     Lemmas:   ['lítill', 'gulur', 'hæna', 'finna', 'fræ', '.']

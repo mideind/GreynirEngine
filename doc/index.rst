@@ -10,13 +10,13 @@ Welcome to Greynir
 *Til að gagnast sem flestum er skjölun Greynis á ensku. - In order to serve
 the widest possible audience, Greynir's documentation is in English.*
 
-Greynir is a Python 3.x package for **parsing Icelandic text into**
-**sentence trees**. The trees can then be used to extract information
-from the text, for instance about people, titles, entities, facts, actions
-and opinions.
+Greynir is a Python 3.x package for **working with Icelandic text**,
+including parsing it into **sentence trees**, finding **lemmas**,
+inflecting **noun phrases**, assigning **part-of-speech tags** and much more.
 
-Along the way, Greynir tokenizes the text, finds **lemmas** and assigns
-**part-of-speech (POS) tags** to every word.
+Greynir's sentence trees can *inter alia* be used to extract information
+from text, for instance about people, titles, entities, facts, actions
+and opinions.
 
 .. figure:: _static/GreynirTreeExampleSmall2.png
    :align: center

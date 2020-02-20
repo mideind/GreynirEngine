@@ -14,6 +14,7 @@ The following classes are documented herein:
 * The :py:class:`_Job` class
 * The :py:class:`_Paragraph` class
 * The :py:class:`_Sentence` class
+* The :py:class:`NounPhrase` class
 * The :py:class:`SimpleTree` class
 
 Initializing Greynir
@@ -29,6 +30,9 @@ the :py:class:`Greynir` class::
 Now you can use the ``g`` instance to parse text, by calling
 the :py:meth:`Greynir.submit()`, :py:meth:`Greynir.parse()` and/or
 :py:meth:`Greynir.parse_single()` methods on it.
+
+Note that if you are only going to be using the :py:class:`NounPhrase` class,
+you don't need to initialize a :py:class:`Greynir` instance.
 
 .. topic:: The Greynir instance
 
@@ -581,5 +585,163 @@ hence the leading underscore in the class name.
 
         If the sentence has not yet been parsed, or no parse tree was found
         for it, this property is ``None``.
+
+
+The NounPhrase class
+--------------------
+
+The :py:class:`NounPhrase` class conveniently encapsulates an Icelandic
+noun phrase (*nafnliður*), making it easy to obtain correctly inflected
+forms of the phrase, as required in various contexts.
+
+.. py:class:: NounPhrase
+
+    .. py:method:: __init__(self, np_string)
+
+        Creates a :py:class:`NounPhrase` instance.
+
+        :param str np_string: The text string containing the noun phrase
+            (*nafnliður*). The noun phrase must conform to the grammar
+            specified for the ``Nl`` nonterminal in ``Reynir.grammar``.
+            This grammar allows e.g. number, adjective and adverb prefixes,
+            referential phrases (*...sem...*) and prepositional
+            phrases (*...í...*). Examples of valid noun phrases include:
+
+            * *stóri kraftalegi maðurinn sem ég sá í bænum*,
+            * *ofboðslega bragðgóði lakkrísinn í nýju umbúðunum*, and
+            * *rúmlega 20 millilítrar af kardemommudropum með vanillu*.
+
+            If the noun phrase cannot be parsed or is empty, the
+            :py:attr:`NounPhrase.parsed` property will be ``False`` and all
+            inflection properties will return ``None``.
+
+    .. py:method:: __str__(self) -> str
+
+        Returns the original noun phrase string as passed to the constructor.
+
+    .. py:method:: __len__(self) -> int
+
+        Returns the length of the original noun phrase string.
+
+    .. py:method:: __format__(self, spec) -> str
+
+        Formats a noun phrase using a requested inflection form.
+        Works with Python's ``format()`` function as well as in f-strings
+        (available starting with Python 3.6).
+
+        :param str spec: An inflection specification for the string
+            to be returned. This can be one of the following:
+
+            * ``nf`` or ``nom``: Nominative case (*nefnifall*).
+            * ``þf`` or ``acc``: Accusative case (*þolfall*).
+            * ``þgf`` or ``dat``: Dative case (*þágufall*).
+            * ``ef`` or ``gen``: Genitive case (*eignarfall*).
+            * ``ángr`` or ``ind``: Indefinite, nominative form
+              (*nefnifall án greinis*).
+            * ``stofn`` or ``can``: Canonical, nominative singular form
+              without attached prepositions or referential phrases
+              (*nefnifall eintölu án greinis, án forsetningarliða*
+              *og tilvísunarsetninga*).
+
+        Example::
+
+            from reynir import NounPhrase as Nl
+
+            nl = Nl("blesóttu hestarnir mínir")
+
+            print("Hér eru {nl:nf}.".format(nl=nl))
+            print("Mér þykir vænt um {nl:þf}.".format(nl=nl))
+            print("Ég segi öllum frá {nl:þgf}.".format(nl=nl))
+            print("Ég vil tryggja velferð {nl:ef}.".format(nl=nl))
+            print("Já, {nl:ángr}, þannig er það.".format(nl=nl))
+            print("Umræðuefnið hér er {nl:stofn}.".format(nl=nl))
+
+            # Starting with Python 3.6, f-strings are supported:
+            print(f"Hér eru {nl:nf}.")  # etc.
+
+        Output::
+
+            Hér eru blesóttu hestarnir mínir.
+            Mér þykir vænt um blesóttu hestana mína.
+            Ég segi öllum frá blesóttu hestunum mínum.
+            Ég vil tryggja velferð blesóttu hestanna minna.
+            Já, blesóttir hestar mínir, þannig er það.
+            Umræðuefnið hér er blesóttur hestur minn.
+
+    .. py:attribute:: parsed
+
+        Returns ``True`` if the noun phrase was successfully parsed,
+        or ``False`` if not.
+
+    .. py:attribute:: tree
+
+        Returns a :py:class:`SimpleTree` object encapsulating the parse
+        tree for the noun phrase.
+
+    .. py:attribute:: case
+
+        Returns a string denoting the case of the noun phrase, as originally passed
+        to the constructor. The case is one of ``"nf"``, ``"þf"``, ``"þgf"``
+        or ``"ef"``, denoting nominative, accusative, dative or genitive
+        case, respectively. If the noun phrase could not be parsed,
+        the property returns ``None``.
+
+    .. py:attribute:: number
+
+        Returns a string denoting the number (singular/plural) of the noun phrase,
+        as originally passed to
+        the constructor. The number is either ``"et"`` (singular, *eintala*) or
+        ``"ft"`` (plural, *fleirtala*). If the noun phrase could not be parsed,
+        the property returns ``None``.
+
+    .. py:attribute:: person
+
+        Returns a string denoting the person (1st, 2nd, 3rd) of the noun phrase,
+        as originally passed to
+        the constructor. The returned string is one of ``"p1"``, ``"p2"`` or
+        ``"p3"`` for first, second or third person, respectively.
+        If the noun phrase could not be parsed, the property returns ``None``.
+
+    .. py:attribute:: gender
+
+        Returns a string denoting the gender (masculine, feminine, neutral) of
+        the noun phrase, as originally passed to
+        the constructor. The returned string is one of ``"kk"``, ``"kvk"`` or
+        ``"hk"`` for masculine (*karlkyn*), feminine (*kvenkyn*) or
+        neutral (*hvorugkyn*), respectively.
+        If the noun phrase could not be parsed, the property returns ``None``.
+
+    .. py:attribute:: nominative
+
+        Returns a string with the noun phrase in nominative case (*nefnifall*),
+        or ``None`` if the noun phrase could not be parsed.
+
+    .. py:attribute:: accusative
+
+        Returns a string with the noun phrase in accusative case (*þolfall*),
+        or ``None`` if the noun phrase could not be parsed.
+
+    .. py:attribute:: dative
+
+        Returns a string with the noun phrase in dative case (*þágufall*),
+        or ``None`` if the noun phrase could not be parsed.
+
+    .. py:attribute:: genitive
+
+        Returns a string with the noun phrase in genitive case (*eignarfall*),
+        or ``None`` if the noun phrase could not be parsed.
+
+    .. py:attribute:: indefinite
+
+        Returns a string with the noun phrase in indefinite form,
+        nominative case (*nefnifall án greinis*),
+        or ``None`` if the noun phrase could not be parsed.
+
+    .. py:attribute:: canonical
+
+        Returns a string with the noun phrase in singular, indefinite form,
+        nominative case, where referential phrases (*...sem...*) and
+        prepositional phrases (*...í...*) have been removed.
+        If the noun phrase could not be parsed, ``None`` is returned.
 
 

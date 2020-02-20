@@ -4,7 +4,7 @@
 
     Matcher module
 
-    Copyright (c) 2019 Miðeind ehf.
+    Copyright (c) 2020 Miðeind ehf.
 
        This program is free software: you can redistribute it and/or modify
        it under the terms of the GNU General Public License as published by
@@ -1547,9 +1547,9 @@ class SimpleTree:
         def prop_func(node):
             if node.is_terminal:
                 return case_property.fget(node)
-            if node.tag == "NP-TITLE":
-                # For NP-TITLE, recurse into it, since we
-                # also want to cast it to the requested case
+            if node.tag == "NP-TITLE" or node.tag == "NP-MEASURE":
+                # For these NP types, recurse into them, since we
+                # also want to cast them to the requested case
                 return node._np_form(prop_func)
             return node.text
 
@@ -1618,10 +1618,20 @@ class SimpleTree:
                     # ('hinir ungu alþingismenn' -> 'ungur alþingismaður')
                     return ""
                 return node.canonical
+
+            if node.tag == "NP-MEASURE":
+                # For these NP types, recurse into them, since we
+                # want their canonical form
+                return node._np_form(prop_func)
+
             # Cut off connected explanatory sentences, possessive noun phrases,
             # and prepositional phrases
-            if any(node.match_tag(tag) for tag in ("S", "NP-POSS", "PP", "ADVP", "CP")):
+            if any(
+                node.match_tag(tag)
+                for tag in ("S", "NP-POSS", "PP", "ADVP", "CP", "NP-TITLE")
+            ):
                 return None
+
             return node.text
 
         return cut_definite_pronouns(self._np_form(prop_func))

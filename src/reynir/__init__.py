@@ -2,7 +2,7 @@
 
     Greynir: Natural language processing for Icelandic
 
-    Copyright(C) 2019 Miðeind ehf.
+    Copyright (C) 2020 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
         This program is free software: you can redistribute it and/or modify
@@ -26,6 +26,7 @@
 # Expose the Greynir API
 
 from .reynir import Greynir, Reynir, Terminal
+from .nounphrase import NounPhrase
 from .fastparser import ParseForestPrinter, ParseForestDumper, ParseForestFlattener
 from .fastparser import ParseError, ParseForestNavigator
 from .settings import Settings
@@ -42,9 +43,9 @@ from tokenizer import (
 )
 
 __author__ = "Miðeind ehf."
-__copyright__ = "(C) 2019 Miðeind ehf."
+__copyright__ = "(C) 2020 Miðeind ehf."
 # Remember to update the version in doc/conf.py as well
-__version__ = "2.0.2"
+__version__ = "2.1.0"
 
 Abbreviations.initialize()
 Settings.read("config/ReynirPackage.conf")
