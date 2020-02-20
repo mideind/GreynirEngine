@@ -1,9 +1,9 @@
 
 .. image:: https://github.com/mideind/ReynirPackage/blob/master/doc/_static/GreynirLogo220.png?raw=true
 
-=======================================================
-A fast, efficient natural language parser for Icelandic
-=======================================================
+==========================================================
+A fast, efficient natural language processor for Icelandic
+==========================================================
 
 .. image:: https://travis-ci.com/mideind/ReynirPackage.svg?branch=master
     :target: https://travis-ci.com/mideind/ReynirPackage
@@ -12,13 +12,14 @@ A fast, efficient natural language parser for Icelandic
 Overview
 ********
 
-Greynir is a Python 3.x package for **working with Icelandic text**,
-including parsing it into **sentence trees**, finding **lemmas**,
-inflecting **noun phrases**, assigning **part-of-speech tags** and much more.
+Greynir is a Python 3.x package for
+**working with Icelandic natural language text**.
+Greynir can parse text into **sentence trees**, find **lemmas**,
+inflect **noun phrases**, assign **part-of-speech tags** and much more.
 
-Greynir's sentence trees can *inter alia* be used to extract information
-from text, for instance about people, titles, entities, facts, actions
-and opinions.
+Greynir's sentence trees can *inter alia* be used to extract
+information from text, for instance about people, titles, entities, facts,
+actions and opinions.
 
 Full documentation for Greynir is `available here <https://greynir.is/doc/>`_.
 
@@ -34,7 +35,8 @@ by the same authors, to tokenize text.
 Examples
 ********
 
-Easily inflecting noun phrases:
+Use Greynir to easily inflect noun phrases:
+-------------------------------------------
 
 .. code-block:: python
 
@@ -54,7 +56,8 @@ The program outputs the following text, correctly inflected::
     Þú keyptir þrjá lúxus-miða á Star Wars og tvo brimsalta poka af poppi.
     Hér er kvittunin þín fyrir þremur lúxus-miðum á Star Wars og tveimur brimsöltum pokum af poppi.
 
-Parsing a sentence:
+Use Greynir to parse a sentence:
+--------------------------------
 
 .. code-block:: python
 
