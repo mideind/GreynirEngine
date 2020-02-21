@@ -137,6 +137,7 @@ Segjandi →
     Segir                            # "Allt er klappað og klárt", segir Jón.
     | AðSögn                         # Allt er klappað og klárt að sögn ráðuneytisins.
     | AðÞvíErSegir                   # Allt er klappað og klárt að því er ráðuneytið segir.
+    | SamkvæmtHeimild                # ...samkvæmt heimildum mbl.is
 
 Forskeyti →
     "-:em"? Samtenging "bara:ao"? StrikEðaKomma?    # 'En - þegar allt er skoðað, var þetta fínt.'
@@ -190,7 +191,7 @@ SögnSegja/tala/pers →
     | 'viðurkenna:so'_0_gm_fh/tala/pers
 
 AðSögn →
-    # , að [sögn fulltrúa lögregluyfirvalda]
+    # , að sögn fulltrúa lögregluyfirvalda
     ","? 'að:fs'_þgf 'sögn:kvk'_et_þgf Heimild_ef/tala/pers AtvFsAuka?
 
 AðÞvíErSegir →
@@ -199,9 +200,13 @@ AðÞvíErSegir →
 
 AðÞvíEr →
     'að:fs'_þgf 'það:pfn'_hk_þgf_et "er:stt" # að því er [segir í tilkynningu]
+    | 'samkvæmt:fs'_þgf 'það:pfn'_hk_þgf_et "er:stt" # samkvæmt því er
 
 SegirÍ →
     'segja:so'_0_gm_fh_et_p3 'í:fs'_þgf Heimild_þgf/tala/pers
+
+SamkvæmtHeimild →
+    'samkvæmt:fs'_þgf Lo_sb_ft_þgf_kvk? 'heimild:kvk'_þgf_ft Heimild_ef/tala/pers?
 
 $score(+72) Sagt # Þarf að vera meiri plús en t.d. SagnFramhald
 
@@ -436,6 +441,12 @@ SkýringarBotn →
     | SetningUmAðRæða           # Ég taldi að um hefði verið að ræða mistök af hans hálfu
     | SetningÞað                # Ég taldi að ætíð yrði að gæta hagsmuna almennings
     | SetningSoÞað              # Ég taldi að farið hefði verið ofan í saumana á málinu
+    | AtvSkýring                # Ég taldi að hér væri vandamál á ferðinni
+
+# AtvSkýring er eins og BeygingarliðurMeðUmröðun nema hvað forskeytis er krafist,
+# það er ekki valfrjálst eins og BeygingarliðMeðUmröðun
+AtvSkýring →
+    SetningForskeyti SagnHluti/tala/pers/kyn KommaAtvikssetning?
 
 # (Þess er krafist að Jón borgi bílinn) [,] og að Guðrún greiði kostnaðinn
 SkýringarFramhald →

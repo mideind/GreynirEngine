@@ -17,5 +17,6 @@ python setup.py sdist
 # Create the binary wheels
 source wheels.sh
 # Upload the new release
-twine upload dist/reynir-$1*
+deactivate
+python -m twine upload dist/reynir-$1*
 echo "Upload of" "$1" "done"
