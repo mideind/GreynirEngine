@@ -550,19 +550,28 @@ class BIN_Token(Token):
         return verb if verb.endswith("st") else verb + "st"
 
     @staticmethod
-    def verb_is_strictly_impersonal(verb):
+    def verb_is_strictly_impersonal(verb, form):
         """ Return True if the given verb is strictly impersonal,
             i.e. never appears with a nominative subject """
+        # This is overridden in reynir_correct.checker
+        # Note that we don't need to check the form for "OP" here,
+        # since that check is done in the _RESTRICTIVE_VARIANTS loop.
         return VerbSubjects.is_strictly_impersonal(verb)
 
     @staticmethod
     def verb_cannot_be_impersonal(verb, form):
         """ Return True if this verb cannot match an so_xxx_op terminal """
+        # If the verb doesn't have OP (impersonal) in its form, it
+        # can't match an _op terminal
         return "OP" not in form
 
     def verb_subject_matches(self, verb, subj):
         """ Returns True if the given subject type/case is allowed for this verb """
         return subj in self._VERB_SUBJECTS.get(verb, set())
+
+    # Variants that must be present in the verb form if they
+    # are present in the terminal
+    _RESTRICTIVE_VARIANTS = ("sagnb", "lhþt", "bh", "op")
 
     def verb_matches(self, verb, terminal, form):
         """ Return True if the infinitive in question matches the verb category,
@@ -640,7 +649,10 @@ class BIN_Token(Token):
             return self.verb_subject_matches(verb, terminal.variant(-1))
 
         # Not a _subj terminal: no match of strictly impersonal verbs
-        if self.verb_is_strictly_impersonal(verb):
+        # Note that this is overridden in reynir_correct to
+        # allow impersonal verbs to be used as normal verbs
+        # for grammar checking purposes
+        if self.verb_is_strictly_impersonal(verb, form):
             return False
 
         if terminal.is_singular and "FT" in form:
@@ -660,7 +672,7 @@ class BIN_Token(Token):
         # Check restrictive variants, i.e. we don't accept meanings
         # that have those unless they are explicitly present in the terminal
         # Be careful with "lh" here
-        for v in ("sagnb", "lhþt", "bh", "op"):
+        for v in self._RESTRICTIVE_VARIANTS:
             if BIN_Token.VARIANT[v] in form and not terminal.has_variant(v):
                 return False
         if terminal.is_lh:

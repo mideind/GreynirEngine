@@ -1034,7 +1034,7 @@ Sem → "sem:st"
 $score(+10) VirðistSem # Sennilega rétt greint
 
 SögnFinnstBotn →
-     'vera:so'_1_nf_nh NlSagnfylling_nf                     # Finnst þeim vera slagsíða í umfjölluninni
+     'vera:so'_1_nf_nh NlSagnfylling_nf                 # Finnst þeim vera slagsíða í umfjölluninni
      | NlFrumlagÞað? LoSamanb_et_nf_hk AðLiður?
 
 Sagnliður_lhþt →
