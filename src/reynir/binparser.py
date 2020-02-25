@@ -1211,7 +1211,7 @@ class BIN_Token(Token):
             fs = self.t1_lower
             if "." in fs:
                 fs = m.stofn
-            # !!! Note that this will match a word and return True even if the
+            # !!! BUG: Note that this will match a word and return True even if the
             # meanings of the token (the list in self.t2) do not include
             # the fs category. This effectively makes the prepositions
             # exempt from the ambiguous_phrases optimization.

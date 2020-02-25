@@ -1353,12 +1353,9 @@ class DisambiguationStream(MatchingStream):
     def key(self, token):
         """ Generate a phrase key from the given token """
         # Construct a set of all possible lemmas of this word form
-        stems = (
-            frozenset(m.stofn + "*" for m in token.val)
-            if token.kind == TOK.WORD
-            else frozenset()
-        )
-        return (token.txt.lower(), stems)
+        if token.kind == TOK.WORD:
+            return token.txt.lower(), frozenset(m.stofn + "*" for m in token.val)
+        return token.txt.lower(), frozenset()
 
     def match_state(self, key, state):
         """ Called to see if the current token's key matches
@@ -1384,9 +1381,10 @@ class DisambiguationStream(MatchingStream):
             queue, but with their meanings filtered down to only
             the word categories specified in the phrase configration """
         cats = AmbigPhrases.get_cats(ix)
+        words = AmbigPhrases.get_words(ix)
         token_ctor = self._token_ctor
         assert len(tq) == len(cats)
-        for t, cat_set in zip(tq, cats):
+        for t, cat_set, word in zip(tq, cats, words):
             # Yield a new token with fewer meanings for each
             # original token in the queue
             if t.kind != TOK.WORD or "*" in cat_set:
@@ -1401,10 +1399,20 @@ class DisambiguationStream(MatchingStream):
                 w = t.txt.lower()
                 mm = [BIN_Meaning(w, 0, "fs", "alm", w, "-")]
                 cat_set = cat_set - frozenset(("fs",))
+                # !!! BUG: constraining the meanings of prepositions (ordfl=fs)
+                # !!! isn't currently meaningful, since the matcher in binparser.py
+                # !!! for fs terminals doesn't look at the token meanings
             else:
                 mm = []
             if cat_set:
-                mm.extend([m for m in t.val if m.ordfl in cat_set])
+                # Eliminate meanings that are not in the allowed category
+                # set, or that have stems that don't match a stem specification
+                # (i.e. phrase components marked with an asterisk, such as 'eiga*')
+                stem = word[:-1] if word[-1] == "*" else None
+                mm.extend(
+                    m for m in t.val
+                    if m.ordfl in cat_set and (stem is None or m.stofn == stem)
+                )
             yield token_ctor.Word(t.txt, mm, token=t)
 
 
