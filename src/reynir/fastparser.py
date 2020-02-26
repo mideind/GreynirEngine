@@ -597,7 +597,7 @@ class Fast_Parser(BIN_Parser):
         after using the fast_p parser instance, preferably in a try/finally block.
     """
 
-    _c_grammar = None
+    _c_grammar = ffi.NULL
     _c_grammar_ts = None
 
     @classmethod
@@ -611,15 +611,15 @@ class Fast_Parser(BIN_Parser):
                 "Binary grammar file {0} not found"
                 .format(fname)
             )
-        if cls._c_grammar is None or cls._c_grammar_ts != ts:
+        if cls._c_grammar == ffi.NULL or cls._c_grammar_ts != ts:
             # Need to load or reload the grammar
-            if cls._c_grammar is not None:
+            if cls._c_grammar != ffi.NULL:
                 # Delete previous grammar instance, if any
                 eparser.deleteGrammar(cls._c_grammar)
-                cls._c_grammar = None
+                cls._c_grammar = ffi.NULL
             cls._c_grammar = eparser.newGrammar(fname.encode("utf-8"))
             cls._c_grammar_ts = ts
-            if cls._c_grammar is None or cls._c_grammar == ffi.NULL:
+            if cls._c_grammar == ffi.NULL:
                 raise GrammarError(
                     "Unable to load binary grammar file {0}"
                     .format(fname)
@@ -725,16 +725,18 @@ class Fast_Parser(BIN_Parser):
         """ Delete C++ objects. Must call after last use of Fast_Parser
             to avoid memory leaks. The context manager protocol is recommended
             to guarantee cleanup. """
-        eparser.deleteParser(self._c_parser)
-        self._c_parser = None
+        if self._c_parser is not ffi.NULL:
+            eparser.deleteParser(self._c_parser)
+        self._c_parser = ffi.NULL
         if Settings.DEBUG:
             eparser.printAllocationReport()
 
     @classmethod
     def discard_grammar(cls):
         """ Discard the C grammar object instance held as a class attribute """
-        eparser.deleteGrammar(cls._c_grammar)
-        cls._c_grammar = None
+        if cls._c_grammar != ffi.NULL:
+            eparser.deleteGrammar(cls._c_grammar)
+        cls._c_grammar = ffi.NULL
         cls._c_grammar_ts = None
 
     @classmethod

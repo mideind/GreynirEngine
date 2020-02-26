@@ -547,7 +547,7 @@ class Greynir:
     def cleanup(cls):
         """ Discard memory resources held by the Greynir class object """
         cls._reducer = None
-        if cls._parser:
+        if cls._parser is not None:
             Fast_Parser.discard_grammar()
             cls._parser.cleanup()
             cls._parser = None
