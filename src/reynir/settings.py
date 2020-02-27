@@ -527,7 +527,8 @@ class AmbigPhrases:
     """ Wrapper around dictionary of potentially ambiguous phrases,
         initialized from the config file """
 
-    # List of tuples of ambiguous phrases and their word category lists
+    # List of tuples of ambiguous phrases and their word category lists,
+    # i.e. (words, cats) where words and cats are tuples
     LIST = []
     # Parsing dictionary keyed by first word of phrase
     DICT = defaultdict(list)
@@ -558,6 +559,11 @@ class AmbigPhrases:
     def get_cats(ix):
         """ Return the word categories for the phrase with index ix """
         return AmbigPhrases.LIST[ix][1]
+
+    @staticmethod
+    def get_words(ix):
+        """ Return the words for the phrase with index ix """
+        return AmbigPhrases.LIST[ix][0]
 
 
 class NoIndexWords:
