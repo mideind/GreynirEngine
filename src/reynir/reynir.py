@@ -276,7 +276,10 @@ class _Job:
         by paragraph and/or sentence.
     """
 
-    def __init__(self, greynir, tokens, *, parse=False, root=None):
+    def __init__(
+        self, greynir, tokens, *,
+        parse=False, root=None, progress_func=None,
+    ):
         self._r = greynir
         self._parser = self._r.parser
         self._reducer = self._r.reducer
@@ -284,6 +287,9 @@ class _Job:
         self._parse_time = 0.0
         self._reduce_time = 0.0
         self._parse = parse
+        # Pre-counted number of sentences (used for progress monitoring)
+        self._cnt_sent = 0
+        # Accumulated number of sentences generated so far
         self._num_sent = 0
         self._num_parsed = 0
         self._num_tokens = 0
@@ -293,6 +299,8 @@ class _Job:
         # The grammar root nonterminal to be used
         # for parsing within this job
         self._root = root
+        # A progress function to call during processing
+        self._progress_func = progress_func
 
     def _add_sentence(self, s, num, parse_time, reduce_time):
         """ Add a processed sentence to the statistics """
@@ -310,6 +318,11 @@ class _Job:
         self._parse_time += parse_time
         # Accumulate the time thereof spent on reduction
         self._reduce_time += reduce_time
+        # Call the progress function, if any
+        if self._progress_func is not None:
+            assert self._cnt_sent > 0
+            assert self._num_sent <= self._cnt_sent
+            self._progress_func(self._num_sent / self._cnt_sent)
 
     def _create_sentence(self, s):
         """ Create a fresh _Sentence object """
@@ -322,7 +335,22 @@ class _Job:
 
     def paragraphs(self):
         """ Yield the paragraphs from the token stream """
-        for p in paragraphs(self._tokens):
+        if self._progress_func is not None:
+            # We have a progress function, so we must pre-count
+            # the sentences to be processed. This means that all input
+            # data must be converted to lists, exhausting generators.
+            # Note that the paragraph splitting phase applies the
+            # token-level corrections, so they are not really
+            # counted in the progress.
+            plist = [
+                [(ix, list(sent)) for ix, sent in p]
+                for p in paragraphs(self._tokens)
+            ]
+            self._cnt_sent = sum(len(p) for p in plist)
+        else:
+            # No progress function: use generators throughout
+            plist = paragraphs(self._tokens)
+        for p in plist:
             yield _Paragraph(self, p)
 
     def sentences(self):
@@ -495,26 +523,36 @@ class Greynir:
         assert Greynir._reducer is not None
         return Greynir._reducer
 
-    def submit(self, text, parse=False, *, split_paragraphs=False):
+    def submit(
+        self, text, parse=False, *,
+        split_paragraphs=False,
+        progress_func=None,
+    ):
         """ Submit a text to the tokenizer and parser, yielding a job object.
             The paragraphs and sentences of the text can then be iterated
             through via the job object. If parse is set to True, the
             sentences are automatically parsed before being returned.
             Otherwise, they need to be explicitly parsed by calling
             sent.parse(). This is a more incremental, asynchronous
-            approach than Greynir.parse(). """
+            approach than Greynir.parse().
+            
+            If progress_func is given, it will be called during processing
+            with a single float parameter between 0.0..1.0 indicating the
+            ratio of progress so far with the parsing job. """
+
         if split_paragraphs:
             # Original text consists of paragraphs separated by newlines:
             # insert paragraph separators before tokenization
             text = mark_paragraphs(text)
         tokens = self.tokenize(text)
-        return _Job(self, tokens, parse=parse)
+        return _Job(self, tokens, parse=parse, progress_func=progress_func)
 
-    def parse(self, text):
+    def parse(self, text, *, progress_func=None):
         """ Convenience function to parse text synchronously and return
-            a summary of all contained sentences. """
+            a summary of all contained sentences. The progress_func parameter
+            works as described for Greynir.submit(). """
         tokens = self.tokenize(text)
-        job = _Job(self, tokens, parse=True)
+        job = _Job(self, tokens, parse=True, progress_func=progress_func)
         # Iterating through the sentences in the job causes
         # them to be parsed and their statistics collected
         sentences = [sent for sent in job]

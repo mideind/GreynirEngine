@@ -245,6 +245,7 @@ _DEFAULT_NT_MAP = {
     "ÍNl": "PP",
     "SpurnarForsetningarliður": "PP",
     "MagnAfLiður": "PP",
+    "AfLiður": "PP",
     "Atviksliður": "ADVP",
     "AlHvortSemUmErAðRæða": "ADVP",
     "LoAtviksliðir": "ADVP",
@@ -607,11 +608,16 @@ class SimpleTree:
         return "<SimpleTree with tag {0} and length {1}>".format(self.tag, len_self)
 
     @classmethod
-    def from_deep_tree(cls, deep_tree, toklist):
+    def from_deep_tree(cls, deep_tree, toklist, first_token_index=0):
         """ Construct a SimpleTree from a deep (detailed) parse tree """
+        # If the deep_tree has nodes referring to tokens with a different
+        # index range than the given toklist, pass the difference in the
+        # first_token_index parameter. For instance, if the toklist spans
+        # tokens 5..10 within the original toklist that was used to construct
+        # deep_tree, first_token_index would be 5.
         if deep_tree is None or not toklist:
             return None
-        s = Simplifier(toklist)
+        s = Simplifier(toklist, first_token_index=first_token_index)
         s.go(deep_tree)
         return s.tree
 
@@ -2246,17 +2252,22 @@ class Simplifier(ParseForestNavigator):
     """ Utility class to construct a simplified, condensed representation of
         a parse tree in a nested dictionary structure """
 
-    def __init__(self, tokens, nt_map=None, id_map=None, terminal_map=None):
+    def __init__(
+        self, tokens, *,
+        nt_map=None, id_map=None, terminal_map=None, first_token_index=0
+    ):
         super().__init__(visit_all=True)
         self._tokens = tokens
         self._builder = SimpleTreeBuilder(nt_map, id_map, terminal_map)
+        self._first_token_index = first_token_index
 
     def visit_token(self, level, node):
         """ At terminal node, matching a token """
         meaning = node.token.match_with_meaning(node.terminal)
+        token_index = node.token.index - self._first_token_index
         d = describe_token(
-            node.token.index,
-            self._tokens[node.token.index],
+            token_index,
+            self._tokens[token_index],
             node.terminal,
             None if isinstance(meaning, bool) else meaning,
         )
