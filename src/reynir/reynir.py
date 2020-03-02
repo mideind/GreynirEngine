@@ -278,7 +278,7 @@ class _Job:
 
     def __init__(
         self, greynir, tokens, *,
-        parse=False, root=None, progress_func=None,
+        parse=False, root=None, progress_func=None
     ):
         self._r = greynir
         self._parser = self._r.parser
