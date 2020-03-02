@@ -526,7 +526,7 @@ class Greynir:
     def submit(
         self, text, parse=False, *,
         split_paragraphs=False,
-        progress_func=None,
+        progress_func=None
     ):
         """ Submit a text to the tokenizer and parser, yielding a job object.
             The paragraphs and sentences of the text can then be iterated
