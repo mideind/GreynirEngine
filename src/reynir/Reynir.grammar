@@ -119,7 +119,7 @@
 # Merkið > gefur til kynna forgangsröðun.
 # Ef báðar koma til greina er Málsgrein alltaf tekin fram yfir Grein o.s.frv.
 
-S0 → Málsgrein > Grein > Fyrirsögn
+S0 → Málsgrein > Grein > Fyrirsögn > StaðurDags > Heimilisfang > FyrirHönd
 
 Málsgrein →
     MgrInnihald
@@ -146,6 +146,7 @@ Forskeyti →
     | "-:em"                                        # Þankastrik á undan setningu (allar gerðir strika varpast í "-")
     | 'mynd:kvk'_nf_et Tala_kvk_nf AfTala? ":"?     # Mynd 2 af 10
     | 'dæmi:hk'_et_nf Tala_hk_nf? ":"
+    | 'nýr:lo'_esb_nf_hk_et ":"                     # Nýjast:
     | 'sjá:so'_0_gm_nh "einnig:ao"? ":"
     | "semsagt:ao" ":"
     | "sem:st" 'segja:so'_lhþt_sb_hk_nf_et ":"      # sem sagt
@@ -225,6 +226,18 @@ FyrirsögnInnihald →
     # Nafnliður í nefnifalli
     Nl_nf Atviksliður? Eignun? Lokatákn?
     | SetningÁnF Lokatákn?
+
+StaðurDags →
+    # Staður og dagsetning, oft í bréfhaus eða undirritun
+    Nl_þgf "," dagsföst     # Reykjavík, 29. ágúst 2020
+
+FyrirHönd →
+    # Fyrir hönd X, oft í undirritun
+    'fyrir_hönd:fs'_ef Nl_ef ","?
+
+Heimilisfang →
+    # Heimilisfang, oft í bréfhaus
+    Heimilisfang_þgf/kyn | Heimilisfang_nf/kyn
 
 Eignun →
     # Mynd: Jón Stefánsson
@@ -795,7 +808,8 @@ Sjálfur/tala/kyn → 'sjálfur:fn'_nf/tala/kyn
 # 'Aðeins einn nemandi var með þetta rétt; strákurinn í rauðu skyrtunni.'
 Formerki → ":" | ";" | "-:em" | ","
 
-Upptalning/tala → Formerki Nl_nf/tala
+# (Tíu greindust með veiruna), tveir í morgun og átta [nú síðdegis]
+Upptalning/tala → Formerki Nl_nf/tala Atviksliður?
 
 Setning/tala/pers/kyn →
     # Venjuleg setningarskipan með frumlagi (í nefnifalli) fremst:
@@ -3891,6 +3905,7 @@ LangtSérnafn →
     | sérnafn+ "-"? entity+ sérnafn* tala?  # Eining með nafni sem þekkt er úr gagnagrunni eða runu slíkra
     | entity+ "-"? sérnafn+ tala?           # Eining með nafni sem þekkt er úr gagnagrunni eða runu slíkra
     | entity "-" entity tala?               # Villeneuve-Loubet
+    | entity "-" tala                       # COVID-19
     | entity entity+ tala?                  # !!! Til prófunar
     | SérnafnFyrirtæki
 
@@ -4052,7 +4067,9 @@ Skst →
 
 $score(+8) Skst
 
-Skst_abbrev → no_abbrev "-"?    # FIH bankann
+Skst_abbrev →
+    no_abbrev "-"?    # FIH bankann
+    | no_abbrev "-" tala  # COVID-19 veiran
 
 $score(+8) Skst_abbrev
 
@@ -4343,6 +4360,7 @@ EfLiðurForskeyti →
     | 'minni:lo'_mst_kk_ef_et 'háttur:kk'_ef_et     # minni háttar vandamál
     | Prósentubil               # (Spáð er) a.m.k. 10-20% (aukningu)
     | eo* Prósenta              # (eigi) nú 50% (hlut í fjarskiptafyrirtækinu) / rúmlega 690 MW (virkjun)
+    | eo* 'hálfur:lo'_sb_ef/tala/kyn EfLiðurForskeytiKjarni/tala/kyn # [rúmlega] hálfs mánaðar bið
     | Magn_ef/tala/kyn          # 100 fermetra (einbýlishúsum), 10 tonna (trukk)
 
 Prósenta →
@@ -6643,7 +6661,7 @@ $if(include_errors)
 /fallxef = nf þf þgf
 
 # Regla fyrir villu þar sem fornafn í einkunn
-# er ekki í sama falli og nafnorð, t.d. 'þessi maðurinn'
+# er ekki í sama falli og nafnorð, t.d. 'þessum mann'
 
 Einkunn/tala/fall/kyn →
     > VillaEinkunn/fall/tala/kyn
