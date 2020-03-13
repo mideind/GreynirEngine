@@ -2461,29 +2461,34 @@ Sögn_2/tala/pers/kyn →
 
 SögnMeðF_2/tala/pers/kyn →
 
-    # Þágufall + þolfall ('að gefa einhverjum kött')
-    so_2_þgf_þf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þgf_þf      # (Í dag) gáfu konurnar [bersýnilega] Páli [ekki] gjöfina
+    # Þolfall + þolfall ('að kosta einhvern eitthvað')
+    so_2_þf_þf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þf_þf        # (Í gær) kostuðu konurnar Pál [ekki] skildinginn
 
-    # 'gera' + lo ('að gera einhverjum eitthvað kleift')
-    | 'gera:so'_1_þgf/tala/pers NlFrumlag_nf/tala/pers/kyn NlÓbeintAndlag_þgf LoTengtSögn_nf_et_hk NhFyllingAtv # (Í dag) gerðu konurnar Páli kleift að matast með reisn
+    # Þolfall + þágufall ('að kalla einhvern illum nöfnum')
+    | so_2_þf_þgf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þf_þgf    # (Í gær) kölluðu konurnar Pál [ekki] illum nöfnum
 
     # Þolfall + eignarfall ('að spyrja einhvern einhvers')
     | so_2_þf_ef/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þf_ef      # (Í gær) kröfðu konurnar Pál [ekki] svars
 
-    # Þágufall + eignarfall ('að óska einhverjum einhvers')
-    | so_2_þgf_ef/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þgf_ef    # (Í gær) óskuðu konurnar Páli [ekki] góðs bata
-
     # Þágufall + nefnifall ('að vera einhverjum eitthvað')
     | so_2_þgf_nf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þgf_nf    # (Í gær) voru konurnar Páli [ekki] stoð og stytta
 
-    # Þolfall + þolfall ('að kosta einhvern eitthvað')
-    | so_2_þf_þf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þf_þf      # (Í gær) kostuðu konurnar Pál [ekki] skildinginn
+    # Þágufall + þolfall ('að gefa einhverjum kött')
+    | so_2_þgf_þf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þgf_þf      # (Í dag) gáfu konurnar [bersýnilega] Páli [ekki] gjöfina
 
     # Þágufall + þágufall ('að skila einhverjum einhverju')
     | so_2_þgf_þgf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þgf_þgf  # (Í gær) skiluðu konurnar Páli [ekki] bílnum
 
-    # Þolfall + þágufall ('að kalla einhvern illum nöfnum')
-    | so_2_þf_þgf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þf_þgf    # (Í gær) kölluðu konurnar Pál [ekki] illum nöfnum
+    # Þágufall + eignarfall ('að óska einhverjum einhvers')
+    | so_2_þgf_ef/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þgf_ef    # (Í gær) óskuðu konurnar Páli [ekki] góðs bata
+
+    # 'gera' + lo ('að gera einhverjum eitthvað kleift')
+     # (Í dag) gerðu konurnar Páli kleift að matast með reisn
+    | 'gera:so'_1_þgf/tala/pers NlFrumlag_nf/tala/pers/kyn NlÓbeintAndlag_þgf LoTengtSögn_nf_et_hk NhFyllingAtv
+
+    # 'eiga' + abfn
+    # (Í dag) átti sér stað atburður
+    | 'eiga:so'_2_þgf_þf/tala/pers Andlög_þgf_þf NlFrumlag_nf/tala/pers/kyn
 
     # Sagnbót og nafnháttur    
     | HjSögn/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? Sögn_2_sagnb  # (Í morgun) höfðu konurnar [ekki] krafið Pál svara
