@@ -119,7 +119,7 @@
 # Merkið > gefur til kynna forgangsröðun.
 # Ef báðar koma til greina er Málsgrein alltaf tekin fram yfir Grein o.s.frv.
 
-S0 → Málsgrein > Grein > Fyrirsögn
+S0 → Málsgrein > Grein > Fyrirsögn > StaðurDags > Heimilisfang > FyrirHönd
 
 Málsgrein →
     MgrInnihald
@@ -146,6 +146,7 @@ Forskeyti →
     | "-:em"                                        # Þankastrik á undan setningu (allar gerðir strika varpast í "-")
     | 'mynd:kvk'_nf_et Tala_kvk_nf AfTala? ":"?     # Mynd 2 af 10
     | 'dæmi:hk'_et_nf Tala_hk_nf? ":"
+    | 'nýr:lo'_esb_nf_hk_et ":"                     # Nýjast:
     | 'sjá:so'_0_gm_nh "einnig:ao"? ":"
     | "semsagt:ao" ":"
     | "sem:st" 'segja:so'_lhþt_sb_hk_nf_et ":"      # sem sagt
@@ -226,6 +227,18 @@ FyrirsögnInnihald →
     Nl_nf Atviksliður? Eignun? Lokatákn?
     | SetningÁnF Lokatákn?
 
+StaðurDags →
+    # Staður og dagsetning, oft í bréfhaus eða undirritun
+    Nl_þgf "," dagsföst     # Reykjavík, 29. ágúst 2020
+
+FyrirHönd →
+    # Fyrir hönd X, oft í undirritun
+    'fyrir_hönd:fs'_ef Nl_ef ","?
+
+Heimilisfang →
+    # Heimilisfang, oft í bréfhaus
+    Heimilisfang_þgf/kyn | Heimilisfang_nf/kyn
+
 Eignun →
     # Mynd: Jón Stefánsson
     # Erlendur: Friðgeir er frábær
@@ -274,7 +287,7 @@ Samtenging →
     | "enda:st" | "en:st" | "hvorki:st"
     | 'það:pfn'_hk_nf_et 'vera:so'_0_gm_fh_et_p3 # það er
     | "þar:ao" 'á_meðal:ao'
-    | 'auk_þess:ao' "sem:st" VillaAð?
+    | 'auk_þess:ao' "sem:st" AðvörunAð?
     | 'það_er_að_segja:ao' Tengimerki? "að:st"?
     | "svo:st" "sem:st"
     | "eins:ao" "og:st"
@@ -479,7 +492,7 @@ SpurnarForsetningarliður →
 SpurnarAtviksorð →
     "hvernig:ao" | 'af:fs'_þgf 'hver:fn'_þgf_et_hk | "hví:ao" | "afhverju:ao"
     | 'til:fs'_ef 'hver:fn'_ef_et_hk | 'hver:fn'_ef_et_hk 'vegna:fs'_ef
-    | "hvort:st" VillaAð? | 'hvar:ao' | 'hvaðan:ao' | 'hvenær:ao' | 'hví:ao'
+    | "hvort:st" AðvörunAð? | 'hvar:ao' | 'hvaðan:ao' | 'hvenær:ao' | 'hví:ao'
     | 'hvert:ao'
 
 HversuHve →
@@ -504,7 +517,7 @@ BeygingarliðurÁnUmröðunar →
     | SetningAukafallForgangur
 
 BeygingarliðurÁnUmröðunar/tala/pers/kyn →
-    Frumlag/pers/tala/kyn VillaKomma? BeygingarliðurMegin/tala/pers/kyn
+    Frumlag/pers/tala/kyn AðvörunKomma? BeygingarliðurMegin/tala/pers/kyn
 
 BeygingarliðurMegin/tala/pers/kyn →
     FrumlagsInnskot/tala/pers/kyn? AtviksliðurEinkunn*
@@ -513,7 +526,7 @@ BeygingarliðurMegin/tala/pers/kyn →
 
 # Það er alls ekki víst, sem Jón hélt fram, að flokkurinn muni tapa í kosningunum
 BeygingarliðurÁnUmröðunar_et_p3_hk →
-    NlFrumlagÞað BeygingarliðurMegin_et_p3_hk VillaKomma? Skýringarsetning
+    NlFrumlagÞað BeygingarliðurMegin_et_p3_hk AðvörunKomma? Skýringarsetning
 
 # Sögn kemur fremst, svo frumlag. Enginn annar liður leyfist fremst, tengingin situr þar.
 BeygingarliðurSögnFremst →
@@ -540,30 +553,30 @@ BeygingarliðurMeðUmröðun/tala/pers/kyn →
 
 # Mögulegar tengingar í aukasetningum eftir gerð aukasetningar
 Tíðartenging →
-    "löngu:ao"? "áður:ao" "en:st" VillaAð?
+    "löngu:ao"? "áður:ao" "en:st" AðvörunAð?
     | "löngu:ao"? "eftir:ao" "að:st"
     | Allt? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"
     | VillaFráÞvíAð # frá því X
     | Allt? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "er:st"?
-    | 'snemma:ao'_mst "en:st" VillaAð?  # fyrr en
-    | 'ótt:ao'_mst "en:st" VillaAð? # óðar en
+    | 'snemma:ao'_mst "en:st" AðvörunAð?  # fyrr en
+    | 'ótt:ao'_mst "en:st" AðvörunAð? # óðar en
     | "þá:ao" "er:st"
     | 'um:fs'_þf 'leið:kvk'_þf_et "og:st" # um leið og
     | 'um:fs'_þf 'svipaður:lo'_sb_hk_þf_et 'leyti:hk'_þf_et "og:st" # um svipað leyti og
     | 'um:fs'_þf 'samur:fn'_hk_þf_et 'leyti:hk'_þf_et "og:st" # um sama leyti og
     | 'á_sama_tíma:ao' "og:st"
     | 'í_sömu_andrá:ao' "og:st"
-    | "síðan:st" VillaAð?
-    | "nema:st"? "þegar:st" VillaAð?
+    | "síðan:st" AðvörunAð?
+    | "nema:st"? "þegar:st" AðvörunAð?
     | "uns:st"
-    | "meðan:st" VillaAð?
-    | 'á_meðan:ao' VillaAð? # á meðan
-    | "þangað:ao" "til:st" VillaAð?
-    | "þar:ao" "til:st" VillaAð?
-    | 'allar_götur_síðan:ao' VillaAð?
-    | 'í_fyrsta_sinn:ao' "sem:st" VillaAð?
-    | 'í_síðasta_sinn:ao' "sem:st" VillaAð?
-    | 'í_allra_síðasta_sinn:ao' "sem:st" VillaAð?
+    | "meðan:st" AðvörunAð?
+    | 'á_meðan:ao' AðvörunAð? # á meðan
+    | "þangað:ao" "til:st" AðvörunAð?
+    | "þar:ao" "til:st" AðvörunAð?
+    | 'allar_götur_síðan:ao' AðvörunAð?
+    | 'í_fyrsta_sinn:ao' "sem:st" AðvörunAð?
+    | 'í_síðasta_sinn:ao' "sem:st" AðvörunAð?
+    | 'í_allra_síðasta_sinn:ao' "sem:st" AðvörunAð?
     | TengiorðEr # "er:stt", líka tilvísunartenging - fær mínus
 
 $tag(apply_length_bonus) Tíðartenging
@@ -581,8 +594,8 @@ Tilgangstenging →
     | SvoTenging
 
 Viðurkenningartenging →
-    "enda:st" "þótt:st" VillaAð?
-    | "jafnvel:ao"? "þótt:st" VillaAð?
+    "enda:st" "þótt:st" AðvörunAð?
+    | "jafnvel:ao"? "þótt:st" AðvörunAð?
     | "jafnvel:ao"? "þó:st" "að:st"
     | VillaÞóAð
     | 'þrátt_fyrir:ao' 'það:pfn'_hk_þf_et? "að:st"
@@ -595,12 +608,12 @@ Afleiðingartenging →
     | SvoTenging
 
 Orsakartenging →
-    "fyrst:ao" VillaAð?
+    "fyrst:ao" AðvörunAð?
     | VillaVístAð
     | 'úr:fs'_þgf 'það:pfn'_hk_þgf_et   # úr því ("að" er höndlað neðar)
     | 'af:fs'_þgf 'það:pfn'_hk_þgf_et   # af því ("að" er höndlað neðar)
     | 'þar_eð:st'
-    | "þar:ao" "sem:st" VillaAð?
+    | "þar:ao" "sem:st" AðvörunAð?
     | "því:st"
 
 # Orsakartengingar sem leyfa umröðun eftirfarandi beygingarliðar,
@@ -618,9 +631,9 @@ OrsakartengingUmröðun →
 $score(+2) OrsakartengingUmröðun
 
 Skilyrðistenging →
-    "ef:st" VillaAð?
-    | "svo:ao" "framarlega:ao" "sem:st" VillaAð?
-    | "nema:st" VillaAð?
+    "ef:st" AðvörunAð?
+    | "svo:ao" "framarlega:ao" "sem:st" AðvörunAð?
+    | "nema:st" AðvörunAð?
     | 'koma:so'_0_gm_vh_p3_et 'til:fs'_ef 'það:pfn'_hk_ef_et "að:st" # komi til þess að
     | 'fara:so'_0_gm_vh_p3_et "svo:ao" "að:st" # fari svo að
 
@@ -737,13 +750,13 @@ $score(-4) KommulaustInnskot
 # (sé mengið of vítt eykst margræðni verulega)
 InnskotsSamtenging →
     # (Lögheimili á Íslandi), þegar sótt er um atvinnuleyfi, (er skilyrði)
-    "þegar:st" VillaAð?
+    "þegar:st" AðvörunAð?
     # (Lögheimili á Íslandi), meðan atvinna er stunduð, (er skilyrði)
-    | "meðan:st" VillaAð?
+    | "meðan:st" AðvörunAð?
     # (Lögheimili á Íslandi), á meðan atvinna er stunduð, (er skilyrði)
-    | 'á_meðan:ao' VillaAð?
+    | 'á_meðan:ao' AðvörunAð?
     # (Lögheimili á Íslandi), þar sem gott er að búa, (er skilyrði)
-    | "þar:ao" "sem:st" VillaAð?
+    | "þar:ao" "sem:st" AðvörunAð?
     # (Lögheimili á Íslandi), þrátt fyrir að margur efist um það, (er skilyrði)
     | 'þrátt_fyrir:ao' "að:st"
     # (Lögheimili á Íslandi), þ.e.a.s. að búið sé á landinu, (er skilyrði)
@@ -783,7 +796,7 @@ SamanburðarNlTenging →
     | SamanburðarTengingOg
 
 SamanburðarTengingOg →
-    ","? "og:st"                            # Erfitt fjarskiptasamband er á staðnum og mikil snjóþyngsli
+    ","? AðvörunSem? "og:st"                # Erfitt fjarskiptasamband er á staðnum og mikil snjóþyngsli
 
 $score(-8) SamanburðurNl
 $score(+4) SamanburðarNlTenging
@@ -795,7 +808,8 @@ Sjálfur/tala/kyn → 'sjálfur:fn'_nf/tala/kyn
 # 'Aðeins einn nemandi var með þetta rétt; strákurinn í rauðu skyrtunni.'
 Formerki → ":" | ";" | "-:em" | ","
 
-Upptalning/tala → Formerki Nl_nf/tala
+# (Tíu greindust með veiruna), tveir í morgun og átta [nú síðdegis]
+Upptalning/tala → Formerki Nl_nf/tala Atviksliður?
 
 Setning/tala/pers/kyn →
     # Venjuleg setningarskipan með frumlagi (í nefnifalli) fremst:
@@ -835,7 +849,7 @@ SögnÞað →
     'vera:so'_0_gm_p3_et 'vera:so'_sagnb NhFyllingAtv
     # (Það) tekur mig tvö ár að eignast bílinn
     # (Það) kostaði mig blóð, svita og tár [í gær] að standa í þessu
-    | so_2_þf_þf_gm_p3_et NlBeintAndlag_þf NlÓbeintAndlag_þf NhFyllingAtv
+    | so_2_þf_þf_gm_p3_et NlBeintAndlag_þf NlÓbeintAndlag_þf AðvörunKomma? NhFyllingAtv
     # (Það) verður [strax] að segjast/viðurkennast að Jón er fær á sínu sviði
     | 'verða:so'_0_gm_p3_et FsAtv? NhEinfaldur_mm ","? Skýringarsetning
 
@@ -1014,7 +1028,7 @@ SetningSoÞað →
 
     # Með lögum megi tryggja rétt almennings
     # Áður en ég fer má sækja tölvuna
-    | AtvFsAuka VillaKomma? SagnliðurÁnF
+    | AtvFsAuka AðvörunKomma? SagnliðurÁnF
 
     # Endurnýja þarf/skal/má [í snatri] leigusamninginn í ár
     | So_1_nh/fall HjSögnMegiSkuliÞurfi_et_p3 FsRuna?
@@ -1027,7 +1041,7 @@ VirðistSem →
     'virða:so'_op_mm_fh_p3_et SamanburðurSemSetning     # virtist/virðist [sem Björn hafi fengið aðsvif á sviðinu]
 
 SamanburðurSemSetning →
-    Sem VillaAð? HreinYfirsetning
+    Sem AðvörunAð? HreinYfirsetning
 
 Sem → "sem:st"
 
@@ -1056,7 +1070,7 @@ Sagnliður_sagnb →
 SagnliðurBotn_sagnb →
     NhFylling
     | SagnInnskot
-    | VillaKomma? Skýringarsetning
+    | AðvörunKomma? Skýringarsetning
 
 $tag(begin_prep_scope) Sagnliður_sagnb
 $score(+12) Sagnliður_sagnb
@@ -1079,24 +1093,24 @@ SetningAukafall →
 
     # Manninn langaði [mjög í ferðina / að fara til útlanda strax]
     # Köttum [í landinu] fjölgar
-    NlFrumlag/aukafall ÓpSagnliður/aukafall
+    NlFrumlag/aukafall AðvörunKomma? ÓpSagnliður/aukafall
 
     # Mig/Þig/Hann/Mennina hefur [lengi] langað [til útlanda]
-    | NlFrumlag/aukafall HjSögn_et_p3 FsAtv? so_subj_sagnb/aukafall ÓpSagnarBotn?
+    | NlFrumlag/aukafall AðvörunKomma? HjSögn_et_p3 FsAtv? so_subj_sagnb/aukafall ÓpSagnarBotn?
 
     # Mig er [búið] að dreyma um ferð til útlanda
     | NlFrumlag_þf 'vera:so'_0_gm_fh_et_p3 'búa:so'_lhþt_sb_nf_et_hk?
         Nhm so_subj_nh_þf ÓpSagnarBotn?
 
     # Mér hafa ofboðið lætin í hundinum [alla daga]
-    | NlFrumlag/aukafall HjSögn/tala/pers FsAtv? so_subj_sagnb/aukafall
+    | NlFrumlag/aukafall AðvörunKomma? HjSögn/tala/pers FsAtv? so_subj_sagnb/aukafall
         NlBeintAndlag_nf/tala/pers AtvFsAuka?
 
     # Mér [algjörlega] blöskraði [af öllu hjarta] vitleysan (í Páli), Mig þraut örendið
-    | NlFrumlag/aukafall SögnÓp/aukafall
+    | NlFrumlag/aukafall AðvörunKomma? SögnÓp/aukafall
 
     # Þann auð ber okkur að nýta (til góðra verka)
-    | NlBeintAndlag/aukafall2 so_subj_op/aukafall NlFrumlag/aukafall AtvFs? Nhm So_1_nh/aukafall2 FsAtv?
+    | NlBeintAndlag/aukafall2 AðvörunKomma? so_subj_op/aukafall NlFrumlag/aukafall AtvFs? Nhm So_1_nh/aukafall2 FsAtv?
 
     # Öfug orðaröð: 'Eignarrétti fylgja [í auknum mæli] skyldur' (í stað 'Skyldur fylgja eignarrétti')
     # 'Þetta skrifar Bjarni á Facebook-síðu sinni og bendir [galvaskur] á frammistöðu stjórnarinnar'
@@ -1104,36 +1118,36 @@ SetningAukafall →
 
     # Þessar skuldir hefur 365 ekki greitt
     # Þessa bók hef ég aldrei skilið
-    | NlBeintAndlag/aukafall HjSögn/tala/pers NlFrumlag_nf/tala/pers/kyn
+    | NlBeintAndlag/aukafall AðvörunKomma? HjSögn/tala/pers NlFrumlag_nf/tala/pers/kyn
         AtvFs? So_1_sagnb/aukafall FsAtv?
 
     # Köttum hefur [ekki] fjölgað á árinu (= ?Það hefur ekki fjölgað köttum á árinu)
     # Páli hefur [ekki] batnað [síðan í gær]
-    | NlFrumlag_þgf SögnSagnbBreyting AtvFsAuka?
+    | NlFrumlag_þgf AðvörunKomma? SögnSagnbBreyting AtvFsAuka?
 
     # Köttum í landinu mun [ekki/enn] fjölga á árinu
     # Páli mun [ekki] vaxa skegg
-    | NlFrumlag_þgf SögnNhBreyting AtvFsAuka?
+    | NlFrumlag_þgf AðvörunKomma? SögnNhBreyting AtvFsAuka?
 
     # Hælisleitendum fer/hefur farið fækkandi/fjölgandi
-    | NlFrumlag_þgf_ft SögnLhNtBreyting AtvFsAuka?
+    | NlFrumlag_þgf_ft AðvörunKomma? SögnLhNtBreyting AtvFsAuka?
 
     # Miðmynd sagna: Mér áskotnaðist, mér fyrirgefst, mér gremst, okkur finnst [öllum]...
     | NlFrumlag_þgf/tala/kyn so_0_mm LoÞgf/tala/kyn? MiðmyndarBotn?
     # Viðreisn hefur [ekki] borist/hlotnast/áskotnast [að þessu sinni] öflugur liðsauki [í dag]
-    | NlFrumlag_þgf HjSögnMM FsAtv? so_mm_sagnb FsRunaEftirSögn? NlBeintAndlag_nf/tala/pers AtvFsAuka?
+    | NlFrumlag_þgf AðvörunKomma? HjSögnMM FsAtv? so_mm_sagnb FsRunaEftirSögn? NlBeintAndlag_nf/tala/pers AtvFsAuka?
     # Bönkunum hefur/hafði/hefði [flestum] tekist að halda í horfinu
-    | NlFrumlag_þgf/tala/kyn HjSögnMM LoÞgf/tala/kyn? so_mm_sagnb MiðmyndarBotn?
+    | NlFrumlag_þgf/tala/kyn AðvörunKomma? HjSögnMM LoÞgf/tala/kyn? so_mm_sagnb MiðmyndarBotn?
 
     # Öllum hefur verið/skal/mun tryggð heilbrigðisþjónusta / réttur til að lifa með reisn
-    | NlFrumlag_þgf HjSögnLhÞtSM_p3/tala FsAtv? so_2_þgf_þf_lhþt/tala/kyn
+    | NlFrumlag_þgf AðvörunKomma? HjSögnLhÞtSM_p3/tala FsAtv? so_2_þgf_þf_lhþt/tala/kyn
         FsRunaEftirSögn? AukafallLhÞtAndlag/tala/pers/kyn AtvFsAuka?
     # Páli eru þröngar skorður [kyrfilega] settar [í þessu efni]
-    | NlFrumlag_þgf HjSögnLhÞtSM_p3/tala FsAtv? AukafallLhÞtAndlag/tala/pers/kyn
+    | NlFrumlag_þgf AðvörunKomma? HjSögnLhÞtSM_p3/tala FsAtv? AukafallLhÞtAndlag/tala/pers/kyn
         AtvFs? so_2_þgf_þf_lhþt/tala/kyn FsAtv?
 
     # Hjónunum var [í fyrra] [báðum] (falið að stýra rannsóknaverkefni)
-    | NlFrumlag_þgf/tala/kyn SögnAukafallÞgf/tala/kyn
+    | NlFrumlag_þgf/tala/kyn AðvörunKomma? SögnAukafallÞgf/tala/kyn
 
     # Þess skal [ekki] gætt (að fara varlega með sprengiefnið)
     # Nánari upplýsinga er [ekki] að vænta
@@ -1142,10 +1156,10 @@ SetningAukafall →
     # Þá ályktun má strax draga í dag (að Páll sé ekki með öllum mjalla)
     # Engan má skylda til að láta eign sína af hendi
     # Miklu má veðja að Guðný snúi aftur í pólitík
-    | NlFrumlag/aukafall HjSögnMegiSkuli_et_p3 FsAtv? So_1_nh/aukafall AðLiður?
+    | NlFrumlag/aukafall AðvörunKomma? HjSögnMegiSkuli_et_p3 FsAtv? So_1_nh/aukafall AðLiður?
 
     # Nauðungarvinnu skal engum gert að leysa af hendi
-    | NlFrumlag/aukafall HjSögnMegiSkuli_et_p3 FsAtv? AukafallÖfugSögn Nhm So_1_nh/aukafall FsAtv?
+    | NlFrumlag/aukafall AðvörunKomma? HjSögnMegiSkuli_et_p3 FsAtv? AukafallÖfugSögn Nhm So_1_nh/aukafall FsAtv?
 
     # Engan þarf/ætti að undra (að mig langi í ís)
     # Greinarmun verður [ekki] að gera (á Jóni og séra Jóni)
@@ -1162,19 +1176,19 @@ SetningAukafall →
 
     # Mér/okkur/ykkur/börnunum finnst/þykir [mörgum [það]] [ekki] skemmtilegt
     # [að borða góðan mat / hérna í kvöld / að Jón lesi bók]
-    | NlFrumlag_þgf/tala/kyn HjSögnFinnst FinnstÞað/tala/kyn? FinnstAndlag AðLiður?
+    | NlFrumlag_þgf/tala/kyn AðvörunKomma? HjSögnFinnst FinnstÞað/tala/kyn? FinnstAndlag AðLiður?
 
     # Konunum þykir/finnst Páll algjör viðbjóður
-    | NlFrumlag_þgf/tala/pers HjSögnFinnst/tala/pers ÞykirAndlag
+    | NlFrumlag_þgf/tala/pers AðvörunKomma? HjSögnFinnst/tala/pers ÞykirAndlag
 
     # Mér hefur [ekki] þótt [það] vont að sofa á nýju dýnunni
     | NlFrumlag_þgf HjSögn_et_p3 FsAtv? HjSögnFinnst_sagnb 'það:pfn'_hk_nf_et? FinnstAndlag AðLiður?
 
     # Þann auð eigum við [ekki] að nýta (í þágu lands og þjóðar)
-    | NlBeintAndlag/aukafall so_0/tala/pers NlFrumlag_nf/tala/pers AtvFs? Nhm So_1_nh/aukafall FsAtv?
+    | NlBeintAndlag/aukafall AðvörunKomma? so_0/tala/pers NlFrumlag_nf/tala/pers AtvFs? Nhm So_1_nh/aukafall FsAtv?
 
     # Þann auð munum/skulum við [ekki] nýta (í þágu lands og þjóðar)
-    | NlBeintAndlag/aukafall HjSögnNh/tala/pers NlFrumlag_nf/tala/pers AtvFs? So_1_nh/aukafall FsAtv?
+    | NlBeintAndlag/aukafall AðvörunKomma? HjSögnNh/tala/pers NlFrumlag_nf/tala/pers AtvFs? So_1_nh/aukafall FsAtv?
 
     # Nöfn ráðherra var [ekki] að finna [í Panamaskjölunum]
     | NlBeintAndlag_þf 'vera:so'_0_gm_fh_p3_et FsAtv? Nhm 'finna:so'_0_gm_nh FsAtv?
@@ -1186,7 +1200,7 @@ SetningAukafallForgangur →
     # Forseta er [algerlega] óheimilt [í bráð og lengd] að hafa önnur launuð störf á hendi
     BeygingarliðurLoÞgf AðLiður?
     # Mér sýndist [eftir íhugun] að málið hefði fengið eðlilega meðferð
-    | NlFrumlag_þgf so_0_mm FsAtv? VillaKomma? Skýringarsetning
+    | NlFrumlag_þgf so_0_mm FsAtv? AðvörunKomma? Skýringarsetning
     # Þess ber að geta að... / Því ber að fagna að...
     # Þess verður að geta að...
     # !!! TODO: 'Því bæri að fagna ef Jón hefði sannfærst'
@@ -1746,7 +1760,7 @@ MiðstigEðaAnnar/fall/tala/kyn →
 
 SamanburðarNafnliður → HeldurEn Nl/fall
 
-HeldurEn → VillaHeldur? "en:st"
+HeldurEn → AðvörunHeldur? "en:st"
 
 # Gefa auka stig hér (enda er oft tvíræðni milli sagna í nafnhætti og nafnorða)
 $score(+2) Sögn_nh/tala/pers/kyn
@@ -2001,7 +2015,7 @@ SögnMeðF_0/tala/pers/kyn →
     | HjSögnSkuluMunu/tala/pers NlFrumlag_nf/tala/pers/kyn VeraVerðaAtv? HreinSögn_lhþt/tala/kyn
 
     # (Í svarinu) segir [jafnframt] að Jón sé ómögulegur
-    | 'segja:so'_0_gm_et_p3 FsAtv? VillaKomma? Skýringarsetning
+    | 'segja:so'_0_gm_et_p3 FsAtv? AðvörunKomma? Skýringarsetning
 
 SögnMeðF_nh/tala/pers/kyn →
     HjSögnNh/tala/pers NlFrumlag_nf/tala/pers/kyn Atviksliður? SögnMeðFNhBotn/tala/pers/kyn
@@ -2447,29 +2461,34 @@ Sögn_2/tala/pers/kyn →
 
 SögnMeðF_2/tala/pers/kyn →
 
-    # Þágufall + þolfall ('að gefa einhverjum kött')
-    so_2_þgf_þf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þgf_þf      # (Í dag) gáfu konurnar [bersýnilega] Páli [ekki] gjöfina
+    # Þolfall + þolfall ('að kosta einhvern eitthvað')
+    so_2_þf_þf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þf_þf        # (Í gær) kostuðu konurnar Pál [ekki] skildinginn
 
-    # 'gera' + lo ('að gera einhverjum eitthvað kleift')
-    | 'gera:so'_1_þgf/tala/pers NlFrumlag_nf/tala/pers/kyn NlÓbeintAndlag_þgf LoTengtSögn_nf_et_hk NhFyllingAtv # (Í dag) gerðu konurnar Páli kleift að matast með reisn
+    # Þolfall + þágufall ('að kalla einhvern illum nöfnum')
+    | so_2_þf_þgf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þf_þgf    # (Í gær) kölluðu konurnar Pál [ekki] illum nöfnum
 
     # Þolfall + eignarfall ('að spyrja einhvern einhvers')
     | so_2_þf_ef/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þf_ef      # (Í gær) kröfðu konurnar Pál [ekki] svars
 
-    # Þágufall + eignarfall ('að óska einhverjum einhvers')
-    | so_2_þgf_ef/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þgf_ef    # (Í gær) óskuðu konurnar Páli [ekki] góðs bata
-
     # Þágufall + nefnifall ('að vera einhverjum eitthvað')
     | so_2_þgf_nf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þgf_nf    # (Í gær) voru konurnar Páli [ekki] stoð og stytta
 
-    # Þolfall + þolfall ('að kosta einhvern eitthvað')
-    | so_2_þf_þf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þf_þf      # (Í gær) kostuðu konurnar Pál [ekki] skildinginn
+    # Þágufall + þolfall ('að gefa einhverjum kött')
+    | so_2_þgf_þf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þgf_þf      # (Í dag) gáfu konurnar [bersýnilega] Páli [ekki] gjöfina
 
     # Þágufall + þágufall ('að skila einhverjum einhverju')
     | so_2_þgf_þgf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þgf_þgf  # (Í gær) skiluðu konurnar Páli [ekki] bílnum
 
-    # Þolfall + þágufall ('að kalla einhvern illum nöfnum')
-    | so_2_þf_þgf/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þf_þgf    # (Í gær) kölluðu konurnar Pál [ekki] illum nöfnum
+    # Þágufall + eignarfall ('að óska einhverjum einhvers')
+    | so_2_þgf_ef/tala/pers NlFrumlag_nf/tala/pers/kyn Andlög_þgf_ef    # (Í gær) óskuðu konurnar Páli [ekki] góðs bata
+
+    # 'gera' + lo ('að gera einhverjum eitthvað kleift')
+     # (Í dag) gerðu konurnar Páli kleift að matast með reisn
+    | 'gera:so'_1_þgf/tala/pers NlFrumlag_nf/tala/pers/kyn NlÓbeintAndlag_þgf LoTengtSögn_nf_et_hk NhFyllingAtv
+
+    # 'eiga' + abfn
+    # (Í dag) átti sér stað atburður
+    | 'eiga:so'_2_þgf_þf/tala/pers Andlög_þgf_þf NlFrumlag_nf/tala/pers/kyn
 
     # Sagnbót og nafnháttur    
     | HjSögn/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? Sögn_2_sagnb  # (Í morgun) höfðu konurnar [ekki] krafið Pál svara
@@ -2925,13 +2944,13 @@ AðLiður →
     NhFylling SagnInnskotAtv?
     | SagnInnskotAtv
     # Málinu væri stillt upp þannig að Sjálfstæðisflokkurinn bæri ábyrgð
-    | Atviksliður? VillaKomma? Skýringarsetning
+    | Atviksliður? AðvörunKomma? Skýringarsetning
 
 # Mér var sagt að fara út / að Jón væri farinn
 AðAndlag →
     NhFyllingAtv
     # Málinu væri stillt upp þannig að Sjálfstæðisflokkurinn bæri ábyrgð
-    | Atviksliður? VillaKomma? Skýringarsetning
+    | Atviksliður? AðvörunKomma? Skýringarsetning
 
 # Nafnháttarliður
 # 'að lenda snarlega á flugvellinum'
@@ -3050,7 +3069,7 @@ $tag(pick_up_verb) NhLiður
 # Nafnliðir
 
 # (Kötturinn ákvað) [strax] [,] að Jón væri farinn heim
-NlSkýringarsetning → AtviksliðurEinkunn* VillaKomma? Skýringarsetning
+NlSkýringarsetning → AtviksliðurEinkunn* AðvörunKomma? Skýringarsetning
 $score(-2) NlSkýringarsetning
 
 # (Lögreglan rannsakar) [nú] hvort Jón hafi ekið bílnum
@@ -3891,6 +3910,7 @@ LangtSérnafn →
     | sérnafn+ "-"? entity+ sérnafn* tala?  # Eining með nafni sem þekkt er úr gagnagrunni eða runu slíkra
     | entity+ "-"? sérnafn+ tala?           # Eining með nafni sem þekkt er úr gagnagrunni eða runu slíkra
     | entity "-" entity tala?               # Villeneuve-Loubet
+    | entity "-" tala                       # COVID-19
     | entity entity+ tala?                  # !!! Til prófunar
     | SérnafnFyrirtæki
 
@@ -3962,8 +3982,8 @@ NlStak_p3_et/fall → NlStak_p3_et/fall/kyn # Samtenging tveggja eintöluliða m
 NlStak_ft_p3/fall/kyn →
     NlStak_p3_ft/fall/kyn VeikSögnLhÞt_ft/fall/kyn? FsRunaEftirNl?  # fulltrúar bankans í nefndinni
     | 'allur:fn'_ft/fall/kyn 'sá:fn'_ft/fall/kyn                    # Allir þeir, allar þær, öll þau
-    | VillaEinnAf_ft_p3/fall/kyn        # Einn af mönnunum *gengu á vegg; ein af hverjum fjórum stúlkum stóðu sig vel
-    | VillaFjöldiHluti_ft/fall/kyn      # Mikill fjöldi/meirihluti/minnihluti unglinga reyndust hæfir → reyndist hæfur; 
+    | VillaEinnAf/fall/kyn           # Einn af mönnunum *gengu á vegg; ein af hverjum fjórum stúlkum *stóðu sig vel
+    | VillaFjöldiHluti/fall/kyn      # Mikill fjöldi/meirihluti/minnihluti unglinga [reyndust hæfir → reyndist hæfur]
 
 # Hvorki X né Y
 # Bæði X og Y
@@ -4052,7 +4072,9 @@ Skst →
 
 $score(+8) Skst
 
-Skst_abbrev → no_abbrev "-"?    # FIH bankann
+Skst_abbrev →
+    no_abbrev "-"?    # FIH bankann
+    | no_abbrev "-" tala  # COVID-19 veiran
 
 $score(+8) Skst_abbrev
 
@@ -4343,6 +4365,7 @@ EfLiðurForskeyti →
     | 'minni:lo'_mst_kk_ef_et 'háttur:kk'_ef_et     # minni háttar vandamál
     | Prósentubil               # (Spáð er) a.m.k. 10-20% (aukningu)
     | eo* Prósenta              # (eigi) nú 50% (hlut í fjarskiptafyrirtækinu) / rúmlega 690 MW (virkjun)
+    | eo* 'hálfur:lo'_sb_ef/tala/kyn EfLiðurForskeytiKjarni/tala/kyn # [rúmlega] hálfs mánaðar bið
     | Magn_ef/tala/kyn          # 100 fermetra (einbýlishúsum), 10 tonna (trukk)
 
 Prósenta →
@@ -4444,9 +4467,9 @@ Tilvísunarsetning_p3_ft/kyn →
 Tilvísunartenging →
     TengiorðSem | TengiorðEr | TengiorðÞarSem
 
-TengiorðSem → "eða:st"? "sem:stt" VillaAð?
+TengiorðSem → "eða:st"? "sem:stt" AðvörunAð?
 
-TengiorðÞarSem → "þar:ao" "sem:stt" VillaAð? # í landinu þar sem Jón átti heima
+TengiorðÞarSem → "þar:ao" "sem:stt" AðvörunAð? # í landinu þar sem Jón átti heima
 
 $score(-4) TengiorðÞarSem # Þetta er oftar samtenging setninga ofar í trénu
 
@@ -4690,7 +4713,7 @@ Skýringarliður →
 OgEða →
     "og:st" OgAo?
     | "eða:st" | "ellegar:st" | "eður:st"
-    | "svo:st" "og:st" | VillaSem "og:st" | "né:st"
+    | "svo:st" "og:st" | AðvörunSem "og:st" | "né:st"
     | ÞarÁMeðal | 'meðal_annars:ao'
     | 'það:pfn'_hk_et_nf 'vera:so'_0_gm_fh_et_p3
     | "eins:ao" "og:st" | "líkt:ao" "og:st"
@@ -4699,8 +4722,8 @@ OgEða →
     | EnÍOgEða
 
 # 'sem og'
-VillaSem → "sem:st" 
-$tag(error) VillaSem
+AðvörunSem → "sem:st"
+$tag(error) AðvörunSem
 
 # Við þurfum að hætta að meta fólk út frá aldri heldur meta það út frá hæfileikum
 OgEðaHeldur → OgEða | "heldur:ao"
@@ -4737,7 +4760,7 @@ $score(-8) KommaOgEðaStrik
 
 Aðaltenging →
     "og:st" | "svo:st" "og:st" | "eða:st" | "ellegar:st" | "heldur:st"
-    | "eins:ao" "og:st" | "en:st"
+    | "eins:ao" "og:st" | "en:st" | AðvörunSem "og:st"
 
 En → "en:st"
 
@@ -6548,16 +6571,16 @@ AnnaðhvortSt →
 
 # Villureglur // Error rules
 
-VillaKomma →
+AðvörunKomma →
     ","
 
-$tag(error) VillaKomma
-$score(-999) VillaKomma
+$tag(error) AðvörunKomma
+$score(-999) AðvörunKomma
 
-VillaAð →
+AðvörunAð →
     "að:st"
 
-$tag(error) VillaAð
+$tag(error) AðvörunAð
 
 # 'annað hvort' í tveimur orðum en á að vera eitt
 VillaAnnaðHvort →
@@ -6590,25 +6613,25 @@ VillaVístAð →
 $tag(error) VillaVístAð
 $score(-24) VillaVístAð
 
-VillaHeldur →
+AðvörunHeldur →
     "heldur:st"
 
-$tag(error) VillaHeldur
-$score(+4) VillaHeldur
+$tag(error) AðvörunHeldur
+$score(+4) AðvörunHeldur
 
 VillaSíðan →
     "síðan:ao"
 $tag(error) VillaSíðan
 
 # Villa í tölu: Einn af drengjunum sem tóku þátt unnu keppnina → vann keppnina
-VillaEinnAf_ft_p3/fall/kyn →
+VillaEinnAf/fall/kyn →
     'einn:fn'_et/fall/kyn AfLiður/kyn
-$tag(error) VillaEinnAf_ft_p3/fall/kyn
+$tag(error) VillaEinnAf/fall/kyn
 
 # Villa í kyni: Hún er ein af þátttakendum → einn
 # Hef þá kk → kvk, kvk → kk, kk → hk, hk → kk, hk → kvk, kvk → hk
 
-VillaFjöldiHluti_ft/fall/kyn →
+VillaFjöldiHluti/fall/kyn →
     'mikill:lo'_et_kk/fall? FjöldiHluti_et_kk/fall EfLiður_ft/kyn
     | 'stór:lo'_et_kk/fall? 'hluti:kk'_et/fall EfLiður_ft/kyn
 
@@ -6618,8 +6641,8 @@ FjöldiHluti_et_kk/fall →
     | 'meirihluti:kk'_et/fall
     | 'helmingur:kk'_et/fall
 
-$tag(error) VillaFjöldiHluti_ft/fall/kyn
-$score(-4) VillaFjöldiHluti_ft/fall/kyn
+$tag(error) VillaFjöldiHluti/fall/kyn
+$score(-4) VillaFjöldiHluti/fall/kyn
 
 
 # ----------------------------------------------
@@ -6643,7 +6666,7 @@ $if(include_errors)
 /fallxef = nf þf þgf
 
 # Regla fyrir villu þar sem fornafn í einkunn
-# er ekki í sama falli og nafnorð, t.d. 'þessi maðurinn'
+# er ekki í sama falli og nafnorð, t.d. 'þessum mann'
 
 Einkunn/tala/fall/kyn →
     > VillaEinkunn/fall/tala/kyn
