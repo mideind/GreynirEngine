@@ -204,6 +204,7 @@ _DEFAULT_NT_MAP = {
     "TímaMagnNafnliðurStærri": "NP",
     "TímaMagnNafnliðurMinni": "NP",
     "Heimild": "NP-SOURCE",
+    "NlFjárhæð": "NP",
     "Sagnliður": "VP",
     "SagnliðurMeðF": "VP",
     "So": "VP",

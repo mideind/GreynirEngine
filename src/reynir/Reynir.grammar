@@ -291,7 +291,7 @@ Samtenging →
     | 'það_er_að_segja:ao' Tengimerki? "að:st"?
     | "svo:st" "sem:st"
     | "eins:ao" "og:st"
-    | "því:st" "að:st"
+    | "því:st" "að:st"?
     | "þannig:ao" "að:st"
     | "og:st" "loks:ao" "að:st"
 
@@ -5288,6 +5288,7 @@ FsMeðFallstjórn →
     | AtvFsSaman    # inn eftir firðinum, fram undan rúminu
     | FsUmLeið
     | FsMilli
+    | FsAðFjárhæð                                       # 'að fjárhæð/upphæð 10 milljónir króna'
     # 'hvorki við stjórn spítalans né ráðherrann'
     # 'hvorki til mín né stjórnarinnar'
     | Hvorki fs/fall Nl/fall Né Nl/fall
@@ -5375,6 +5376,13 @@ FsTilÞgf →
 
 FsTilÞgfOrð →
     'stuðningur:kk'_ef_et | 'heiður:kk'_ef_et | 'háðung:kvk'_ef_et
+
+# að fjárhæð [rúmlega] 10 milljónir króna
+
+FsAðFjárhæð →
+     'að:fs'_þgf NlFjárhæð_þgf
+
+NlFjárhæð_þgf → 'fjárhæð:kvk'_þgf_et ao* amount | 'upphæð:kvk'_þgf_et ao* amount
 
 So_1_gm_fh_p3_et_nf → so_1_nf_gm_fh_p3_et
 So_1_gm_fh_p3_et_þf → so_1_þf_gm_fh_p3_et
@@ -5497,6 +5505,7 @@ $score(+4) FsInnanKommu
 
 FsRunaEftirNl →
     # í Danmörku og hérlendis
+    # !!! ATH: Þetta leyfir ekki 'hérlendis og í Danmörku'
     FsRuna OgAtvEftirNl*
     # hérlendis og erlendis
     | AtvEftirNl OgAtvEftirNl*
