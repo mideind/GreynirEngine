@@ -289,7 +289,7 @@ Samtenging →
     | "þar:ao" 'á_meðal:ao'
     | 'auk_þess:ao' "sem:st" AðvörunAð?
     | 'það_er_að_segja:ao' Tengimerki? "að:st"?
-    | "svo:st" "sem:st"
+    | "svo:st" "lengi:ao"? "sem:st"
     | "eins:ao" "og:st"
     | "því:st" "að:st"?
     | "þannig:ao" "að:st"
@@ -4360,18 +4360,31 @@ TilTölu/tala/kyn →
 EfLiðurForskeyti →
     Fornafn_ef/tala/kyn* eo* EfLiðurForskeytiTala/tala/kyn? EfLiðurForskeytiKjarni/tala/kyn
     | Fornafn_ef/tala/kyn+ eo* EfLiðurForskeytiTala/tala/kyn?
-    | eo* EfLiðurForskeytiTala/tala/kyn ÓbeygðEining? # 'rúmlega sjö prósent (hækkun frá fyrra ári)'
+    | eo* EfLiðurForskeytiTala/tala/kyn ÓbeygðEining? # rúmlega tveggja prósenta (hækkun frá fyrra ári)
     | 'meiri:lo'_mst_kk_ef_et 'háttur:kk'_ef_et     # meiri háttar vandræði
     | 'minni:lo'_mst_kk_ef_et 'háttur:kk'_ef_et     # minni háttar vandamál
     | Prósentubil               # (Spáð er) a.m.k. 10-20% (aukningu)
-    | eo* Prósenta              # (eigi) nú 50% (hlut í fjarskiptafyrirtækinu) / rúmlega 690 MW (virkjun)
+    | eo* Prósenta              # (eigi) nú 50% (hlut í fjarskiptafyrirtækinu)
     | eo* 'hálfur:lo'_sb_ef/tala/kyn EfLiðurForskeytiKjarni/tala/kyn # [rúmlega] hálfs mánaðar bið
-    | Magn_ef/tala/kyn          # 100 fermetra (einbýlishúsum), 10 tonna (trukk)
+    | eo* lo_ef_et/kyn EfLiðurForskeytiStig/kyn # fjórða árs (nemendur), annars stigs (brunasár)
+    | Magn_ef/tala/kyn          # 100 fermetra (einbýlishúsum), 10 tonna (trukk), rúmlega 690 MW (virkjun)
 
 Prósenta →
     prósenta
 
 $score(+8) Prósenta
+
+EfLiðurForskeytiStig_hk →
+    'ár:hk'_ef_et | 'stig:hk'_ef_et # fjórða árs nemendur, annars stigs brunasár
+
+EfLiðurForskeytiStig_kvk →
+    'gráða:kvk'_ef_et       # þriðju gráðu yfirheyrsla
+
+EfLiðurForskeytiStig_kk →
+    'flokkur:kk'_ef_et      # fyrsta flokks hótel
+
+# Sennilega rétt greint
+$score(+4) EfLiðurForskeytiStig/kyn
 
 ÓbeygðEining →
     'prósent:hk'_ef_ft
