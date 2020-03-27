@@ -205,6 +205,7 @@ _DEFAULT_NT_MAP = {
     "TímaMagnNafnliðurMinni": "NP",
     "Heimild": "NP-SOURCE",
     "NlFjárhæð": "NP",
+    "Skst": "NP-PREFIX",  # Noun phrase prefix, such as 'COVID-19 smitið'
     "Sagnliður": "VP",
     "SagnliðurMeðF": "VP",
     "So": "VP",
@@ -341,6 +342,7 @@ _DEFAULT_ID_MAP = {
     "NP-COMPANY": dict(name="Fyrirtæki", overrides="NP"),
     "NP-TITLE": dict(name="Titill", overrides="NP"),
     "NP-SOURCE": dict(name="Heimild"),
+    "NP-PREFIX": dict(name="Forskeyti"),
     "NP-AGE": dict(name="Aldur"),
     "NP-MEASURE": dict(name="Magnliður", overrides="NP"),
     "NP-SUBJ": dict(name="Frumlag", subject_to={"NP-SUBJ"}),
@@ -1288,6 +1290,15 @@ class SimpleTree:
                 # We don't find this form in BÍN:
                 # if upper case, try a lower case version of it
                 meanings = lookup_func(txt.lower(), **options)
+
+            if not meanings and canonical:
+                # Might be a word that only exists in plural, such as
+                # 'landsteinar': retry
+                options["singular"] = False
+                meanings = lookup_func(txt, **options)
+                if not meanings and not txt.islower():
+                    # Try the lower case version as well, for good measure
+                    meanings = lookup_func(txt.lower(), **options)
 
             # The following functions filter the nominative list in a
             # final step that is required because some word forms can

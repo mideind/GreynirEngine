@@ -1257,7 +1257,10 @@ class BIN_Token(Token):
 
         def matcher_gata(m):
             """ Check street name """
-            if m.fl != "göt":  # Götuheiti
+            # Note: we allow street names as well as place names ('örn')
+            # since some street names are also place names, such as 'Einarsnes',
+            # and place names tend to have priority in BÍN.
+            if m.fl != "göt" and m.fl != "örn":  # Götuheiti eða örnefni
                 return False
             if BIN_Token.KIND.get(m.ordfl, m.ordfl) != "no":
                 return False

@@ -3308,9 +3308,13 @@ NlStak_ft_ef/kyn → NlStak_ft_p1_ef/kyn | NlStak_ft_p2_ef/kyn | NlStak_ft_p3_ef
 # Nafnliðir
 
 NlStak_et_p1/fall/kyn →
-    'ég:pfn'_et/fall 'sjálfur:fn'_et/fall/kyn? FsRunaEftirNl?   # Ég í öllu mínu veldi / (Hvað) mig sjálfan (varðar)
-    | 'ég:pfn'_et/fall 'persónulega:ao'                         # Mér persónulega hefur aldrei þótt smjör gott
+    'ég:pfn'_et/fall PfnTagl/fall/kyn? FsRunaEftirNl?           # Ég í öllu mínu veldi / (Hvað) mig sjálfan (varðar)
     | 'sjálfur:fn'_et/fall/kyn 'ég:pfn'_et/fall FsRunaEftirNl?  # Sjálfan mig hef ég aldrei þolað
+
+PfnTagl/fall/kyn →
+    'sjálfur:fn'_et/fall/kyn
+    | 'undirritaður:lo'_et/fall/kyn
+    | 'persónulega:ao'
 
 # Gefa lægra skor fyrir 'ég' í hvorugkyni
 # ('ég er reitt', 'ég fór sjálft út í búð')
@@ -3320,8 +3324,8 @@ $score(-4) NlStak_et_p1_þgf_hk
 $score(-4) NlStak_et_p1_ef_hk
 
 NlStak_et_p2/fall/kyn →
-    'þú:pfn'_et/fall 'sjálfur:fn'_et/fall/kyn? FsRunaEftirNl?   # Þú [sjálfur] ert ekki sem verstur
-    | 'þú:pfn'_et/fall 'persónulega:ao'                         # Ég meinti ekki þig persónulega
+    'þú:pfn'_et/fall PfnTagl/fall/kyn? FsRunaEftirNl?           # Þú [sjálfur/persónulega] ert ekki sem verstur
+    | 'sjálfur:fn'_et/fall/kyn 'þú:pfn'_et/fall FsRunaEftirNl?  # Þú horfist í augu við sjálfan þig
 
 NlStak_p1_ft/fall/kyn →
     'ég:pfn'_ft/fall NlStakViðbót/fall/kyn?     # Við gömlu hjónin, við Sigmundur, við flest, við sjálfar
@@ -3335,12 +3339,14 @@ NlStakViðbót/fall/kyn →
     | 'sumur:fn'_ft/fall/kyn            # við sum, okkur sumra, okkar sumra
     | 'margur:lo'_ft/fall/kyn           # við mörg/flest, okkur margra/flestra, okkar margra/flestra
     | 'sjálfur:fn'_ft/fall/kyn          # við sjálf, okkur sjálfra, okkar sjálfra
+    | 'undirritaður:lo'_ft/fall/kyn     # við undirritaðar, okkur undirritaða, okkar undirritaðra
+    | 'persónulega:ao'                  # við persónulega
 
 $score(+8) NlStakViðbót/fall/kyn
 
 NlStakViðbótNl/fall/kyn →
-    NlStak_ft_p3/fall/kyn               # við fóstbræður, við alþingismennirnir
-    | no_gr_et/fall/kyn                 # við fjölskyldan, við hópurinn
+    NlStak_ft_p3/fall/kyn               # (ft.) við fóstbræður, við alþingismennirnir
+    | no_gr_et/fall/kyn                 # (et.) við fjölskyldan, við hópurinn
 
 NlStakViðbótNl/fall/kyn →
     Manneskja/fall/kyn                  # (við) Sóley Tómasdóttir (fórum), (hann ræddi við okkur) Pál dómkirkjuprest
@@ -3766,6 +3772,7 @@ TöluorðForskeyti →
 TöluorðForskeyti/tala/fall/kyn →
     TöluorðForskeyti
     | lo_sb/tala/fall/kyn # tæpar/rúmar 115 milljónir
+    | 'sá:fn'/tala/fall/kyn # þeim tæpu 120 milljónum
 
 TöluorðForskeyti_ef_et_kk → TöluorðForskeyti_et_ef_kk
 TöluorðForskeyti_ef_et_kvk → TöluorðForskeyti_et_ef_kvk
@@ -3946,14 +3953,14 @@ $score(+10) LangtSérnafn/fall
 
 NlStak_et_p3/fall/kyn → Heimilisfang/fall/kyn
 
+# Ath: 'gata' getur tengst við fl='göt' og fl='örn'
 Heimilisfang/fall/kyn → gata/fall/kyn Húsnúmer
 
 Húsnúmer → tala | talameðbókstaf
 
 $score(+4) Heimilisfang/fall/kyn
 
-
-# Þetta er hakk til að þurfa ekki að taka fram hvert einasta fall.
+# Hér er '/fall/hk' hakk til að þurfa ekki að taka fram hvert einasta fall með hvorugkyni
 NlStak_p3_et/fall/hk → 
     Lén/fall
     | Myllumerki/fall
@@ -4378,7 +4385,7 @@ EfLiðurForskeytiStig_hk →
     'ár:hk'_ef_et | 'stig:hk'_ef_et # fjórða árs nemendur, annars stigs brunasár
 
 EfLiðurForskeytiStig_kvk →
-    'gráða:kvk'_ef_et       # þriðju gráðu yfirheyrsla
+    'gráða:kvk'_ef_et | 'öld:kvk'_ef_et # þriðju gráðu yfirheyrsla, sautjándu aldar heimspeki
 
 EfLiðurForskeytiStig_kk →
     'flokkur:kk'_ef_et      # fyrsta flokks hótel
@@ -4732,6 +4739,7 @@ OgEða →
     | "eins:ao" "og:st" | "líkt:ao" "og:st"
     | "og:st"? "þar:ao" "með:ao" 'telja:so'_lhþt_sb_hk_nf_et?
     | "svo:st" "sem:st" | "jafnt:ao" "sem:st"
+    | 'og_fleiri:ao'  # (Vísbendingar eru um að samkomubann) o.fl. (aðgerðir séu á döfinni)
     | EnÍOgEða
 
 # 'sem og'
@@ -5589,6 +5597,7 @@ EinnAl →
     | Úrslit                # KR sigraði Val 6:0
     | AlMiðstig             # [mun] hraðar en augað sér
     | AlHvortSemUmErAðRæða  # Hvort sem um er að ræða X eða Y
+    | ÁMóti                 # Á móti er hann oft viljugur að sækja börnin
 
     # Fjölyrtir atviksliðir sem ekki er unnt að búa til fasta frasa úr
 
@@ -5618,6 +5627,11 @@ EkkiNeitt →
     "ekki:ao" "neitt:ao"    # (Ég þekki þetta) ekki neitt
 
 $score(-6) EkkiNeitt
+
+ÁMóti →
+    'á_móti:fs'             # Á móti er hann stundum viljugur að elda
+
+$score(-6) ÁMóti
 
 FyrirLöngu →
     'fyrir:fs'_þgf 'langur:lo'_þgf_et_hk # 'fyrir löngu'
