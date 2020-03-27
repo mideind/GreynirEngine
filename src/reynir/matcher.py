@@ -1291,8 +1291,8 @@ class SimpleTree:
                 # if upper case, try a lower case version of it
                 meanings = lookup_func(txt.lower(), **options)
 
-            if not meanings and canonical:
-                # Might be a word that only exists in plural, such as
+            if not meanings and canonical and self._cat in _GENDERS:
+                # Might be a noun that only exists in plural, such as
                 # 'landsteinar': retry
                 options["singular"] = False
                 meanings = lookup_func(txt, **options)

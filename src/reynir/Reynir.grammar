@@ -119,7 +119,7 @@
 # Merkið > gefur til kynna forgangsröðun.
 # Ef báðar koma til greina er Málsgrein alltaf tekin fram yfir Grein o.s.frv.
 
-S0 → Málsgrein > Grein > Fyrirsögn > StaðurDags > Heimilisfang > FyrirHönd
+S0 → Málsgrein > Grein > Fyrirsögn > StaðurDags > Heimilisfang > Undirritun
 
 Málsgrein →
     MgrInnihald
@@ -229,11 +229,12 @@ FyrirsögnInnihald →
 
 StaðurDags →
     # Staður og dagsetning, oft í bréfhaus eða undirritun
-    Nl_þgf "," dagsföst     # Reykjavík, 29. ágúst 2020
+    Nl_þgf "," dagsföst "."?    # Reykjavík, 29. ágúst 2020
 
-FyrirHönd →
+Undirritun →
     # Fyrir hönd X, oft í undirritun
     'fyrir_hönd:fs'_ef Nl_ef ","?
+    | 'virðingarfyllst:ao'_est ","?
 
 Heimilisfang →
     # Heimilisfang, oft í bréfhaus
