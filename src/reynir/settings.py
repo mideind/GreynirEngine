@@ -355,6 +355,10 @@ class Prepositions:
     # Prepositions that can be followed by an infinitive verb phrase
     # 'Beiðnin um að handtaka manninn var send lögreglunni'
     PP_NH = set()
+    # Set of common, 'plain' prepositions that require matching with BÍN meanings,
+    # cf. logic in matcher_fs() in binparser.py. If filtering according to Phrases.conf
+    # is important for a preposition, include it here.
+    PP_COMMON = set()
     # A dictionary containing information from $error() pragmas associated
     # with the preposition. Each entry is again a dict of {case: error} specifications,
     # where each error spec is usually a tuple.
@@ -363,6 +367,15 @@ class Prepositions:
     @staticmethod
     def add(prep, case, nh):
         """ Add a preposition and its case. Called from the config file handler. """
+        if prep.endswith("*"):
+            # Star-marked prepositions are 'plain'
+            prep = prep[:-1]
+            if not prep:
+                raise ConfigError("Asterisk should be affixed to a preposition")
+            if " " in prep:
+                raise ConfigError("An asterisk-marked preposition must be a single word")
+            # Add to set of 'common'/'plain' prepositions
+            Prepositions.PP_COMMON.add(prep)
         Prepositions.PP[prep].add(case)
         if nh:
             Prepositions.PP_NH.add(prep)
@@ -1127,7 +1140,8 @@ class Settings:
             c = a[-1]
         if c not in {"nf", "þf", "þgf", "ef"}:  # Not a valid case
             raise ConfigError("Preposition must have a case argument (nf/þf/þgf/ef)")
-        pp = " ".join(a[:-1])  # Preposition, possibly multi-word
+        # Preposition, possibly multi-word, and possibly suffixed by an asterisk
+        pp = " ".join(a[:-1])
         Prepositions.add(pp, c, nh)
         if error:
             Prepositions.add_error(pp, c, corr)

@@ -6651,7 +6651,7 @@ VillaVístAð →
     "víst:ao" "að:st"  
 
 $tag(error) VillaVístAð
-$score(-24) VillaVístAð
+$score(-32) VillaVístAð
 
 AðvörunHeldur →
     "heldur:st"

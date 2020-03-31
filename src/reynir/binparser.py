@@ -1222,7 +1222,15 @@ class BIN_Token(Token):
             if var0 == "nh":
                 # Only prepositions marked as nh can match
                 return fs in Prepositions.PP_NH
-            return var0 in Prepositions.PP[fs]
+            if var0 not in Prepositions.PP[fs]:
+                # This preposition cannot govern the required case
+                return False
+            if fs in Prepositions.PP_COMMON and m.ordfl != "fs":
+                # For a certain set of common, 'plain' prepositions,
+                # that are tagged as such in BÍN, we do in fact
+                # require the meaning to match
+                return False
+            return True
 
         def matcher_töl(m):
             """ Undeclinable number word ('fimm', 'sex', 'tuttugu'...) """
