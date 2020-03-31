@@ -389,6 +389,9 @@ $score(+15) Atvikssetning
 KommaAtvikssetning →
     ","? Atvikssetning
 
+# Gott ef komma er greind næst á undan tengingu inn í atvikssetningu
+$score(+10) KommaAtvikssetning
+
 $tag(begin_prep_scope) Atvikssetning # Nýtt undirtré fyrir tengingu sagnar og forsetningar
 
 Tíðarsetning → 
@@ -3382,7 +3385,7 @@ NlStakTagl/tala/fall/kyn →
     | EinnOgSér/tala/fall/kyn
 
 EinnOgSér/tala/fall/kyn →
-    'einn:fn'/tala/fall/kyn "og:st" "sér:ao"           # skipulagsbreytingar einar og sér
+    'einn:fn'/tala/fall/kyn "og:st"? "sér:ao"           # skipulagsbreytingar einar [og] sér
 
 $score(+50) EinnOgSér/tala/fall/kyn # Þarf hærra skor en FornafnEinkunn
 
