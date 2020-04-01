@@ -108,7 +108,9 @@
 # Person (1st, 2nd, 3rd) variant
 /pers = p1 p2 p3
 
+# Hacks to generate single variants only
 /hk = hk
+/kvk = kvk
 
 # GRAMMAR RULES
 
@@ -3409,11 +3411,14 @@ NlStak_ft_p3/fall/kyn → Fjölskylda_ft/kyn/fall FsRunaEftirNl?
 $score(+8) Fjölskylda_ft/kyn/fall
 
 # Sértilvik fyrir "vinstri-græn" (ath: stutt bandstrik, ekki en- eða em-dash)
-
 NlStak_ft_p3_nf_hk → 'vinstri:lo'_ft_nf_hk "-"? 'grænn:lo'_ft_nf_hk
 NlStak_ft_p3_þf_hk → 'vinstri:lo'_ft_þf_hk "-"? 'grænn:lo'_ft_þf_hk
 NlStak_ft_p3_þgf_hk → 'vinstri:lo'_ft_þgf_hk "-"? 'grænn:lo'_ft_þgf_hk
 NlStak_ft_p3_ef_hk → 'vinstri:lo'_ft_ef_hk "-"? 'grænn:lo'_ft_ef_hk
+
+# Sértilvik fyrir "COVID-19" (ath: stutt bandstrik, ekki en- eða em-dash)
+NlStak_et_p3/fall/kvk → NlCovid/fall
+NlCovid/fall → "covid:kvk" "-" "19"
 
 # 'hvorugt okkar systkinanna', 'enginn okkar', 'einhver ykkar bræðranna', 'einn liðsmanna', 'annar mannanna'
 NlStak_et_p3/fall/kyn → OkkarFornafn/fall/kyn OkkarFramhald/kyn
@@ -5611,14 +5616,15 @@ EinnAl →
     | "sem:ao" 'segja:so'_lhþt_sb_hk_nf_et  # sem sagt
     | "svo:ao" "sem:ao"
     | "sem:ao" "fyrst:ao"
-    | 'vinsamlegur:lo'_esb_hk_nf_et     # (Þátttakendur eru) vinsamlegast (beðnir að fylla út eyðublað)
-    | 'náðarsamlegur:lo'_esb_hk_nf_et   # (Þátttakendur eru) náðarsamlegast (beðnir að fylla út eyðublað)
+    | 'vinsamlegur:lo'_esb_nf_et_hk     # (Þátttakendur eru) vinsamlegast (beðnir að fylla út eyðublað)
+    | 'náðarsamlegur:lo'_esb_nf_et_hk   # (Þátttakendur eru) náðarsamlegast (beðnir að fylla út eyðublað)
     | "mest:ao" Allra     # (Ferðamönnum hefur fjölgað) mest allra
     | Allra "mest:ao"     # (Ferðamönnum hefur fjölgað) allra mest
     | "minnst:ao" Allra   # (Ferðamönnum hefur fjölgað) minnst allra
     | Allra "minnst:ao"   # (Ferðamönnum hefur fjölgað) allra minnst
     | 'allur:fn'_et_þf_kk 'tími:kk'_gr_et_þf # Allan tímann var mér ljóst að þetta var vonlaust
     | 'allur:fn'_ft_þf_kk "jafna:ao"    # Alla jafna eru menn rólegir yfir þessu
+    | 'heill:lo'_sb_nf_et_hk "yfir:ao"  # Heilt yfir eru menn rólegir yfir þessu
 
 $tag(no_prep) EinnAl        # Engar forsetningar hér inni - óþarfi að skoða dótturgreinar
 
