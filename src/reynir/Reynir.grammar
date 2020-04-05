@@ -111,6 +111,8 @@
 # Hacks to generate single variants only
 /hk = hk
 /kvk = kvk
+/þf = þf
+/et = et
 
 # GRAMMAR RULES
 
@@ -6300,6 +6302,7 @@ AfstættTímabil →
     | 'út:fs'_þf TímaMagnNafnliðurStærri_þf/tala/kyn                # út árið
     | 'út:fs'_þf ártal
     | 'yfir:fs'_þf TímaMagnNafnliðurStærri_þf/tala/kyn              # yfir mánuðinn
+    | 'allur:fn'_þf_et/kyn TímaNafnorðStærri/kyn/þf/et        # allan daginn/vikuna/mánuðinn
     | PunkturFs/aukafall AfsPunkturTNL/aukafall
     | TímaNafnorðStærri_þf/tala/kyn ÁðurEftir
     | TímaNafnorðStærri_þgf_ft/kyn "saman:ao"                       # Nefndin fundaði ekki mánuðum saman
