@@ -11,7 +11,7 @@ python:
 
 install:
   - python -m pip install git+https://github.com/mideind/Tokenizer#egg=tokenizer
-  - python setup.py develop
+  - python -m pip install -e .
 
 script:
   - python -m pytest
