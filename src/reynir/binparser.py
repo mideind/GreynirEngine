@@ -795,7 +795,8 @@ class BIN_Token(Token):
         self.t1 = txt  # Token text
         self.t1_lower = txt.lower()  # Token text, lower case
         self.is_compound = False
-        # t2 contains auxiliary token information, such as part-of-speech annotation, numbers, etc.
+        # t2 contains auxiliary token information,
+        # such as part-of-speech annotation, numbers, etc.
         if isinstance(t[2], list):
             self.t2 = tuple(t[2])
             if self.t0 == TOK.WORD:
@@ -1403,13 +1404,8 @@ class BIN_Token(Token):
         # We have a match if any of the possible part-of-speech meanings
         # of this token match the terminal
         if self.t2:
-            # Find the matching function for the terminal by looking
-            # it up in the WordMatchers namespace
             # Return the first matching meaning, or False if none
-            for m in self.t2:
-                if terminal.matcher(self, terminal, m):
-                    return m
-            return False
+            return terminal.matches_token_meaning(self)
 
         # Unknown word, i.e. no meanings in BÍN (might be foreign, unknown name, etc.)
         if self.is_upper:
@@ -1600,6 +1596,18 @@ class VariantHandler:
         # Convert 'kk', 'kvk', 'hk' to 'no' before doing the compare
         return self._first == BIN_Token.KIND.get(t_kind, t_kind)
 
+    def matches_token_meaning(self, token):
+        """ Return the meaning of the token which matches this terminal,
+            if any, or False if none """
+        for m in token.t2:
+            # self._matcher is a reference to a matching function within
+            # the WordMatchers class
+            if self._matcher(token, self, m):
+                # This meaning of the token matches the terminal: return it
+                return m
+        # No meaning of the token matches this terminal: return False
+        return False
+
     @property
     def first(self):
         """ Return the first part of the terminal name (without variants) """
@@ -1745,7 +1753,6 @@ class BIN_Terminal(VariantHandler, Terminal):
         # This type of terminal always requires full matching
         # as appropriate for each token kind
         self.shortcut_match = None
-
 
 class SequenceTerminal(BIN_Terminal):
 

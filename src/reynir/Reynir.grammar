@@ -1749,6 +1749,7 @@ Sögn_nh/tala/pers/kyn →
     HjSögnNh/tala/pers LoTengtSögn_nf/tala/kyn? HreinSögn_nh/tala/kyn
     # Páll á/ætti/verður/þarf [ekki] [galvaskur/allur] að skrifa bréfið
     | HjSögnNhMeðSagnb/tala/pers FsAtv? LoTengtSögn_nf/tala/kyn? Nhm HreinSögn_nh/tala/kyn
+    # Hann segist munu borða kökuna
     | Sögn_nh_mm/tala/pers/kyn
     # Jón hefur [haft] sögu að segja
     | HjSögnHafaNh/tala/pers SögnNhBotn
@@ -1783,9 +1784,12 @@ Sögn_nh_mm/tala/pers/kyn →
     | So_1_þf_mm HjSögnNh_ft_p3 HreinSögn_nh/tala/kyn
 
 Botn_nh_mm/tala/kyn →
-     FsAtv? HreinSögn_nh/tala/kyn      # (Páll hyggst/þykist/telst) skrifa söguna
-     | FsAtv? HreinSögn_lhþt/tala/kyn  # (Kvennalistakonur virðast [ekki]) taldar sigurstranglegar
-     | AtvFs? HjSögnVera? LoTengtSögn_nf/tala/kyn  # Þær segjast [[ekki] vera] samþykkar málinu
+    # (Páll hyggst/þykist/telst) skrifa söguna
+     HreinSögn_nh/tala/kyn
+     # (Kvennalistakonur virðast [ekki]) taldar sigurstranglegar
+     | HreinSögn_lhþt/tala/kyn
+     # Þær segjast [ekki] [vera] samþykkar málinu
+     | FsAtv? HjSögnVera? LoTengtSögn_nf/tala/kyn
      # (Jón sagðist) þeirrar skoðunar [að múslimar væru óalandi og óferjandi]
      # (Maðurinn reyndist) þeirrar innréttingar að ekki var á hann treystandi
      | Botn_nh_ef
