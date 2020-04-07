@@ -58,7 +58,7 @@ The Greynir class
             for the `Tokenizer <https://github.com/mideind/Tokenizer>`_
             package for further information.
 
-    .. py:method:: submit(self, text : string, parse : bool = False, *, split_paragraphs = False) -> _Job
+    .. py:method:: submit(self, text : string, parse : bool = False, *, split_paragraphs : bool = False, progress_func = None) -> _Job
 
         Submits a text string to Greynir for parsing and returns
         a :py:class:`_Job` object.
@@ -70,6 +70,10 @@ The Greynir class
         :param bool split_paragraphs: Indicates that the text should be
             split into paragraps, with paragraph breaks at newline
             characters (``\n``). Defaults to ``False``.
+        :param function progress_func: If given, this function will be called
+            periodically during the parse job. The call will have a single
+            ``float`` parameter, ranging from ``0.0`` at the beginning of the parse
+            job, to ``1.0`` at the end. Defaults to ``None``.
         :return: A fresh :py:class:`_Job` object.
 
         The given text string is tokenized and split into paragraphs and sentences.
@@ -83,12 +87,16 @@ The Greynir class
         (via :py:meth:`_Job.sentences()` or :py:meth:`_Job.__iter__()`) of
         the parse job.
 
-    .. py:method:: parse(self, text : string) -> dict
+    .. py:method:: parse(self, text : string, *, progress_func = None) -> dict
 
         Parses a text string and returns a dictionary with the parse job results.
 
         :param str text: The text to parse. Can be a single sentence
             or multiple sentences.
+        :param function progress_func: If given, this function will be called
+            periodically during the parse job. The call will have a single
+            ``float`` parameter, ranging from ``0.0`` at the beginning of the parse
+            job, to ``1.0`` at the end. Defaults to ``None``.
         :return: A dictionary containing the parse results as well as statistics
             from the parse job.
 
