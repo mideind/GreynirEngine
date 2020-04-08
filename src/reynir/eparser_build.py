@@ -102,6 +102,16 @@ declarations = """
 
 """
 
+# Declare the Python callbacks from fastparser.py that will be called by the C code
+# See: https://cffi.readthedocs.io/en/latest/using.html#extern-python-new-style-callbacks
+
+callbacks = """
+
+    extern "Python" BOOL matching_func(UINT, UINT, UINT);
+    extern "Python" BYTE* alloc_func(UINT, UINT, UINT);
+
+"""
+
 # Do the magic CFFI incantations necessary to get CFFI and setuptools
 # to compile eparser.cpp at setup time, generate a .so library and
 # wrap it so that it is callable from Python and PyPy as _eparser
@@ -110,6 +120,8 @@ if WINDOWS:
     extra_compile_args = ["/Zc:offsetof-"]
 else:
     extra_compile_args = ["-std=c++11"]
+
+ffibuilder.cdef(declarations + callbacks)
 
 ffibuilder.set_source(
     "reynir._eparser",
@@ -120,8 +132,6 @@ ffibuilder.set_source(
     sources=["src/reynir/eparser.cpp"],
     extra_compile_args=extra_compile_args,
 )
-
-ffibuilder.cdef(declarations)
 
 if __name__ == "__main__":
     ffibuilder.compile(verbose=True)

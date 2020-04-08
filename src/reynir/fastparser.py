@@ -44,7 +44,8 @@
     The C++ source code is found in eparser.h and eparser.cpp.
 
     This wrapper uses the CFFI module (http://cffi.readthedocs.org/en/latest/)
-    to call C++ code from CPython and PyPy.
+    to call C++ code from CPython and PyPy, also allowing the C++ code to
+    call back into Python.
 
 """
 
@@ -101,7 +102,6 @@ class ParseJob:
                 # No: create a fresh one (assumed to be initialized to zero)
                 b = self.matching_cache[key] = ffi.new("BYTE[]", size)
         except TypeError:
-            # b = ffi.NULL
             assert False, "alloc_cache() unable to hash key: {0}".format(repr(key))
         return b
 
@@ -152,9 +152,10 @@ class ParseJob:
         return cls._jobs[handle].alloc_cache(token, size)
 
 
-# CFFI callback functions
+# Declare CFFI callback functions to be called from the C++ code
+# See: https://cffi.readthedocs.io/en/latest/using.html#extern-python-new-style-callbacks
 
-@ffi.callback("BOOL(UINT, UINT, UINT)")
+@ffi.def_extern()
 def matching_func(handle, token, terminal):
     """ This function is called from the C++ parser to determine
         whether a token matches a terminal. The token is referenced
@@ -165,7 +166,7 @@ def matching_func(handle, token, terminal):
     return ParseJob.dispatch(handle, token, terminal)
 
 
-@ffi.callback("BYTE*(UINT, UINT, UINT)")
+@ffi.def_extern()
 def alloc_func(handle, token, size):
     """ Allocate a token/terminal matching cache buffer, at least size bytes.
         If the callback returns ffi.NULL, the parser will allocate its own buffer.
@@ -582,8 +583,9 @@ class ParseError(Exception):
 
 class Fast_Parser(BIN_Parser):
 
-    """ This class wraps an Earley-Scott parser written in C++.
-        It is called via CFFI.
+    """ This class wraps an Earley-Scott parser written in C++,
+        which is called via CFFI.
+
         The class supports the context manager protocol so you can say:
 
         with Fast_Parser() as fast_p:
@@ -597,7 +599,9 @@ class Fast_Parser(BIN_Parser):
         after using the fast_p parser instance, preferably in a try/finally block.
     """
 
+    # The C++ grammar object (a binary blob)
     _c_grammar = ffi.NULL
+    # The C++ grammar timestamp
     _c_grammar_ts = None
 
     @classmethod
@@ -636,8 +640,11 @@ class Fast_Parser(BIN_Parser):
             super().__init__(verbose)
             # Create instances of the C++ Grammar and Parser classes
             c_grammar = self._load_binary_grammar()
-            # Create a C++ parser object for the grammar
-            self._c_parser = eparser.newParser(c_grammar, matching_func, alloc_func)
+            # Create a C++ parser object for the grammar, passing the proxies for the
+            # two Python callback functions into it
+            self._c_parser = eparser.newParser(
+                c_grammar, eparser.matching_func, eparser.alloc_func
+            )
             # Find the index of the default root nonterminal for this parser instance
             self._root_index = (
                 0 if root is None else self.grammar.nonterminals[root].index
@@ -730,6 +737,7 @@ class Fast_Parser(BIN_Parser):
         self._c_parser = ffi.NULL
         if Settings.DEBUG:
             eparser.printAllocationReport()
+            print("Matching cache contains {0} entries".format(len(self._matching_cache)))
 
     @classmethod
     def discard_grammar(cls):
