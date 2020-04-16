@@ -6306,9 +6306,9 @@ AfstættTímabil →
     | 'út:fs'_þf TímaMagnNafnliðurStærri_þf/tala/kyn                # út árið
     | 'út:fs'_þf ártal
     | 'yfir:fs'_þf TímaMagnNafnliðurStærri_þf/tala/kyn              # yfir mánuðinn
-    | 'allur:fn'_þf_et/kyn TímaNafnorðStærri/kyn/þf/et        # allan daginn/vikuna/mánuðinn
+    | 'allur:fn'_þf_et/kyn TímaNafnorðStærri/kyn/þf/et              # allan daginn/vikuna/mánuðinn
     | PunkturFs/aukafall AfsPunkturTNL/aukafall
-    | TímaNafnorðStærri_þf/tala/kyn ÁðurEftir
+    | TímaNafnorðStærri_þf/tala/kyn "þar:ao"? ÁðurEftir
     | TímaNafnorðStærri_þgf_ft/kyn "saman:ao"                       # Nefndin fundaði ekki mánuðum saman
     | "svo:ao" TímaNafnorðStærri_þgf_ft/kyn 'skipta:so'_1_þgf_gm_fh_et_p3 # svo mánuðum skiptir/skipti
     | ÞegarLíðaTekurÁ
@@ -6335,7 +6335,7 @@ TímabilTími →
     | PunkturFs/aukafall TímiPunkturTNL                             # eftir kl. 14:00
     | 'milli:fs'_ef TímiPunkturTNL Og TímiPunkturTNL
     | 'frá:fs'_þgf TímiPunkturTNL 'til:fs'_ef TímiPunkturTNL
-    | TímaNafnorðMinni_þf/tala/kyn ÁðurEftir
+    | TímaNafnorðMinni_þf/tala/kyn "þar:ao"? ÁðurEftir
     | TímaNafnorðMinni_þgf_ft/kyn "saman:ao"                        # Hann kom ekki heim klukkutímunum saman
     | "svo:ao" TímaNafnorðMinni_þgf_ft/kyn 'skipta:so'_1_þgf_gm_fh_et_p3  # svo mínútum skiptir/skipti
 

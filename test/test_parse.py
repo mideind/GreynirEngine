@@ -1676,7 +1676,16 @@ def test_names(r):
 def test_prepositions(r):
     s = r.parse_single("Ég fór niðrá bryggjuna.")
     assert s.tree is not None
-    assert s.tree.match("S0 >> { IP > { VP > { PP > { P > { fs } } } } } ")
+    assert s.tree.match("S0 >> { IP > { VP > { PP > { P > { fs_þf } NP > { no_þf } } } } } ")
+    s = r.parse_single("Ég var fjarri bílnum.")
+    assert s.tree is not None
+    assert s.tree.match("S0 >> { IP > { VP > { PP > { P > { fs_þgf } NP > { no_þgf } } } } } ")
+    s = r.parse_single("Ég var víðsfjarri bílnum.")
+    assert s.tree is not None
+    assert s.tree.match("S0 >> { IP > { VP > { PP > { P > { fs_þgf } NP > { no_þgf } } } } } ")
+    s = r.parse_single("Ég var allfjarri bílnum.")
+    assert s.tree is not None
+    assert s.tree.match("S0 >> { IP > { VP > { PP > { P > { fs_þgf } NP > { no_þgf } } } } } ")
 
 
 def test_personally(r):
