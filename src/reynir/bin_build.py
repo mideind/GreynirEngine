@@ -59,6 +59,8 @@ if WINDOWS:
 else:
     extra_compile_args = ["-std=c++11"]
 
+ffibuilder.cdef(declarations)
+
 ffibuilder.set_source(
     "reynir._bin",
     # bin.cpp is written in C++ but must export a pure C interface.
@@ -68,8 +70,6 @@ ffibuilder.set_source(
     sources=["src/reynir/bin.cpp"],
     extra_compile_args=extra_compile_args,
 )
-
-ffibuilder.cdef(declarations)
 
 if __name__ == "__main__":
     ffibuilder.compile(verbose=False)

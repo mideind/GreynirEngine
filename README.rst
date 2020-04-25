@@ -162,6 +162,12 @@ and `reference information <https://greynir.is/doc/reference.html>`_,
 as well as important information
 about `copyright and licensing <https://greynir.is/doc/copyright.html>`_.
 
+**********************
+Contributing
+**********************
+
+See `Contributing to ReynirPackage <https://github.com/mideind/ReynirPackage/blob/master/CONTRIBUTING.md>`_.
+
 ***********************
 Copyright and licensing
 ***********************
@@ -183,7 +189,7 @@ or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
 more details.
 
 The full text of the GNU General Public License v3 is
-`included here <https://github.com/mideind/Reynir/blob/master/LICENSE.txt>`_
+`included here <https://github.com/mideind/ReynirPackage/blob/master/LICENSE>`_
 and also available here: https://www.gnu.org/licenses/gpl-3.0.html.
 
 .. image:: https://github.com/mideind/ReynirPackage/blob/master/doc/_static/MideindLogoVert100.png?raw=true

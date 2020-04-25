@@ -65,7 +65,7 @@ setup(
     name="reynir",
     # Remember to modify version numbers in
     # doc/conf.py and src/reynir/__init__.py as well
-    version="2.1.0",
+    version="2.2.0",
     license="GNU GPLv3",
     description="A natural language parser for Icelandic",
     long_description="{0}\n{1}".format(
@@ -105,8 +105,8 @@ setup(
         "Topic :: Text Processing :: Linguistic",
     ],
     keywords=["nlp", "parser", "icelandic"],
-    setup_requires=["cffi>=1.10.0"],
-    install_requires=["cffi>=1.10.0", "tokenizer>=2.0.5"],
+    setup_requires=["cffi>=1.13.2"],
+    install_requires=["cffi>=1.13.2", "tokenizer>=2.0.5"],
     cffi_modules=[
         "src/reynir/eparser_build.py:ffibuilder",
         "src/reynir/bin_build.py:ffibuilder"

@@ -37,7 +37,7 @@ from .bintokenizer import tokenize as bin_tokenize
 from .fastparser import Fast_Parser, ParseError
 from .reducer import Reducer
 from .cache import cached_property
-from .matcher import SimpleTree
+from .simpletree import SimpleTree
 
 
 # The Sentence.terminals attribute returns a list of Terminal objects

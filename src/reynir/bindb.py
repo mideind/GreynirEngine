@@ -185,20 +185,6 @@ class BIN_Db:
         m.sort(key=self._priority)
         return m
 
-    def forms(self, w):
-        """ Return a list of all possible forms of a particular root (stem) """
-        assert False, "This feature is not supported in the Reynir module"
-
-    def is_undeclinable(self, stem, fl):
-        """ Return True if the given stem, of the given word category,
-            is undeclinable, i.e. all word forms are identical.
-            This is presently only used in the POS tagger (postagger.py). """
-        assert False, "This feature is not supported in the Reynir module"
-
-    def lookup_utg(self, stofn, ordfl, utg, beyging=None):
-        """ Return a list of meanings with the given integer id ('utg' column) """
-        assert False, "This feature is not supported in the Reynir module"
-
     @lru_cache(maxsize=CACHE_SIZE)
     def lookup_raw_nominative(self, w):
         """ Return a set of meaning tuples for all word forms in nominative case.
@@ -240,10 +226,6 @@ class BIN_Db:
     def lookup_word(self, w, at_sentence_start=False, auto_uppercase=False):
         """ Given a word form, look up all its possible meanings """
         return self._lookup(w, at_sentence_start, auto_uppercase, self._meanings_func)
-
-    def lookup_form(self, w, at_sentence_start=False):
-        """ Given a word root (stem), look up all its forms """
-        assert False, "This feature is not supported in the Reynir module"
 
     @lru_cache(maxsize=CACHE_SIZE)
     def lookup_name_gender(self, name):
@@ -294,6 +276,32 @@ class BIN_Db:
         """ Return a list of meanings filtered down to
             open (extensible) word categories """
         return [mm for mm in mlist if mm.ordfl in BIN_Db._OPEN_CATS]
+
+    @staticmethod
+    def _compound_meanings(w, lower_w, at_sentence_start, lookup):
+        """ Return a list of meanings of this word,
+            when interpreted as a compound word """
+        cw = Wordbase.slice_compound_word(w)
+        if not cw and lower_w != w:
+            # If not able to slice in original case, try lower case
+            cw = Wordbase.slice_compound_word(lower_w)
+        if not cw:
+            return []
+        # This looks like a compound word:
+        # use the meaning of its last part
+        prefix = "-".join(cw[0:-1])
+        # Lookup the potential meanings of the last part
+        m = lookup(cw[-1])
+        if lower_w != w and not at_sentence_start:
+            # If this is an uppercase word in the middle of a
+            # sentence, allow only nouns as possible interpretations
+            # (it wouldn't be correct to capitalize verbs, adjectives, etc.)
+            m = [mm for mm in m if mm.ordfl in BIN_Db._NOUNS]
+        # Only allows meanings from open word categories
+        # (nouns, verbs, adjectives, adverbs)
+        m = BIN_Db.open_cats(m)
+        # Add the prefix to the remaining word stems
+        return BIN_Db.prefix_meanings(m, prefix)
 
     @staticmethod
     def _lookup(w, at_sentence_start, auto_uppercase, lookup):
@@ -378,26 +386,7 @@ class BIN_Db:
 
         if not m:
             # Still nothing: check compound words
-            cw = Wordbase.slice_compound_word(w)
-            if not cw and lower_w != w:
-                # If not able to slice in original case, try lower case
-                cw = Wordbase.slice_compound_word(lower_w)
-            if cw:
-                # This looks like a compound word:
-                # use the meaning of its last part
-                prefix = "-".join(cw[0:-1])
-                # Lookup the potential meanings of the last part
-                m = lookup(cw[-1])
-                if lower_w != w and not at_sentence_start:
-                    # If this is an uppercase word in the middle of a
-                    # sentence, allow only nouns as possible interpretations
-                    # (it wouldn't be correct to capitalize verbs, adjectives, etc.)
-                    m = [mm for mm in m if mm.ordfl in BIN_Db._NOUNS]
-                # Only allows meanings from open word categories
-                # (nouns, verbs, adjectives, adverbs)
-                m = BIN_Db.open_cats(m)
-                # Add the prefix to the remaining word stems
-                m = BIN_Db.prefix_meanings(m, prefix)
+            m = BIN_Db._compound_meanings(w, lower_w, at_sentence_start, lookup)
 
         if not m and lower_w.startswith("ó"):
             # Check whether an adjective without the 'ó' prefix is found in BÍN
@@ -419,10 +408,23 @@ class BIN_Db:
                         if r.ordfl == "lo"
                     ]
 
+        if not m and "z" in w:
+            # Special case: the word contains a 'z' and may be using
+            # older Icelandic spelling ('lízt', 'íslenzk'). Try to assign
+            # a meaning by substituting an 's' instead, or 'st' instead of
+            # 'tzt'. Call ourselves recursively to do this.
+            # Note: We don't do this for uppercase 'Z' because those are
+            # much more likely to indicate a person or entity name
+            _, m = BIN_Db._lookup(
+                w.replace("tzt", "st").replace("z", "s"),
+                at_sentence_start, auto_uppercase, lookup
+            )
+
         if auto_uppercase and not m and w.islower():
             # If still no meaning found and we're auto-uppercasing,
             # convert this to upper case (probably an entity name)
             w = w.capitalize()
+
         return w, m
 
     @staticmethod
