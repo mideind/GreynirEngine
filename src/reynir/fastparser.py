@@ -49,6 +49,7 @@
 
 """
 
+from typing import Dict
 import os
 import operator
 from threading import Lock
@@ -75,7 +76,7 @@ class ParseJob:
     # Parse jobs have rotating integer IDs, reaching _MAX_JOBS before cycling back
     _MAX_JOBS = 10000
     _seq = 0
-    _jobs = dict()
+    _jobs = dict()  # type: Dict[int, ParseJob]
     _lock = Lock()
 
     def __init__(self, handle, grammar, tokens, terminals, matching_cache):

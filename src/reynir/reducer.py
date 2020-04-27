@@ -586,6 +586,12 @@ class Reducer:
                         # If this is a composite word, it's less likely
                         # to be an adjective, so give it a penalty
                         sc[t] -= 3
+                    # For adjectives ending with 'andi', we strongly prefer verbs in
+                    # present participle (lýsingarháttur nútíðar)
+                    if txt.endswith("andi") and any(
+                        (m.ordfl == "so" and m.beyging == "LH-NT") for m in token.t2
+                    ):
+                        sc[t] -= 50
                 elif tfirst == "so":
                     if t.num_variants > 0 and t.variant(0) in "012":
                         # Consider verb arguments

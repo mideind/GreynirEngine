@@ -1427,7 +1427,7 @@ def disambiguate_phrases(token_stream, token_ctor):
     yield from ds.process(token_stream)
 
 
-class _Bin_TOK(TOK):
+class Bin_TOK(TOK):
 
     """ Override the TOK class from tokenizer.py to allow a dummy
         token parameter to be passed into token constructors where
@@ -1471,7 +1471,7 @@ class DefaultPipeline:
             self.disambiguate_phrases,
         ]
 
-    _token_ctor = _Bin_TOK
+    _token_ctor = Bin_TOK
 
     def tokenize_without_annotation(self):
         """ The basic, raw tokenization from the tokenizer package """

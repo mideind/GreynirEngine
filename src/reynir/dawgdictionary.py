@@ -31,6 +31,7 @@
 
 """
 
+from typing import Dict
 import os
 import threading
 import time
@@ -318,7 +319,7 @@ class PackedNavigation:
     _UINT32 = struct.Struct("<L")
 
     # Dictionary of edge iteration caches, keyed by byte buffer
-    _iter_caches = dict()
+    _iter_caches = dict()  # type: Dict[int, Dict[str, int]]
 
     def __init__(self, nav, b, root_offset, encoding):
         # Store the associated navigator

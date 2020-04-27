@@ -37,6 +37,13 @@
     `terminal` matches the given terminal
     `terminal_var1_var2` matches a terminal having at least the given variants
 
+    `%macro` is resolved by looking up the key 'macro' in the context
+    dictionary, which is an optional parameter to match_pattern(). The corresponding
+    value can be either a string, in which case the string is used as the pattern,
+    or a callable (function) which is then called with a tree node as an argument.
+    If the function returns a bool, that is the result of the match. Otherwise, it
+    should return a string, which is used as the pattern.
+
     `Any1 Any2 Any3` matches the given sequence as-is, in-order
 
     `Any+` matches one or more sequential instances of Any
@@ -90,7 +97,7 @@
 
 """
 
-
+from typing import Dict
 import re
 
 
@@ -127,7 +134,7 @@ class _CompiledPattern:
     _NEST = {"(": ")", "[": "]", "{": "}"}
     _FINISHERS = frozenset(_NEST.values())
 
-    _pattern_cache = dict()
+    _pattern_cache = dict()  # type: Dict[str, _CompiledPattern]
 
     @classmethod
     def compile(cls, pattern):
@@ -232,16 +239,37 @@ class _CompiledPattern:
         return nest(list(gen2()))
 
 
-def single_match(item, tree):
+def single_match(item, tree, context):
     """ Does the subtree match with item, in and of itself? """
     if isinstance(item, _NestedList):
         if item.kind == "(":
             # A list of choices separated by '|': OR
             return any(
-                single_match(item[i], tree) for i in range(0, len(item), 2)
+                single_match(item[i], tree, context) for i in range(0, len(item), 2)
             )
         return False
     assert isinstance(item, str)
+    if context is not None and item.startswith("%"):
+        # The item has the form %identifier (it's a macro-type item):
+        # Look it up in the context dictionary, which can either return a
+        # string directly, or a function to call with the tree
+        # as an argument. This function can either return a bool result, or
+        # a string that we use for the item.
+        result = context.get(item[1:])
+        if callable(result):
+            # The macro resolves to a function: call it with the tree as an argument
+            result = result(tree)
+            if isinstance(result, bool):
+                # The function yielded a bool result: return it
+                return result
+        if result is None:
+            raise ValueError("Macro '{0}' not found in context".format(item[1:]))
+        if not isinstance(result, str):
+            raise ValueError(
+                "Macro '{0}' must yield a callable or string".format(item[1:])
+            )
+        # Use the string retrieved from the context as the item to match
+        item = result
     if item in _NOT_ITEMS:
         raise ValueError("Spurious '{0}' in pattern".format(item))
     if item == ".":
@@ -257,6 +285,7 @@ def single_match(item, tree):
         # Single quote: word lemma(s)
         if not tree.is_terminal:
             return False
+        # Case-significant compare
         return item[1:-1] == tree.own_lemma
     if tree.terminal:
         if tree.terminal == item:
@@ -284,7 +313,7 @@ def unpack(items, ix):
     return items[ix : ix + 1], "{"  # Single item: assume set
 
 
-def contained(tree, items, pc, deep):
+def contained(tree, items, pc, deep, context):
     """ Returns True if the tree has children that match the subsequence
         in items[pc], either directly (deep = False) or at any deeper
         level (deep = True) """
@@ -300,14 +329,14 @@ def contained(tree, items, pc, deep):
     # a generator of children generators(!)
     if deep:
         return any(
-            f_run(gen_children, subseq)
+            f_run(gen_children, subseq, context)
             for gen_children in tree.deep_children
         )
     # Shallow containment: iterate through direct children
-    return f_run(tree.children, subseq)
+    return f_run(tree.children, subseq, context)
 
 
-def run_sequence(gen, items):
+def run_sequence(gen, items, context):
     """ Match the child nodes of gen with the items, in sequence """
     len_items = len(items)
     # Program counter (index into items)
@@ -337,7 +366,7 @@ def run_sequence(gen, items):
                 # Only matches at the end of the list
                 result = pc >= len_items
             else:
-                result = single_match(item, tree)
+                result = single_match(item, tree, context)
             if repeat is None:
                 # Plain item-for-item match
                 if not result:
@@ -349,21 +378,21 @@ def run_sequence(gen, items):
                 while result:
                     tree = next(gen)
                     if stopper is not None:
-                        result = not single_match(stopper, tree)
+                        result = not single_match(stopper, tree, context)
                     else:
-                        result = single_match(item, tree)
+                        result = single_match(item, tree, context)
             elif repeat == "*":
                 if stopper is not None:
-                    result = not single_match(stopper, tree)
+                    result = not single_match(stopper, tree, context)
                 while result:
                     tree = next(gen)
                     if stopper is not None:
-                        result = not single_match(stopper, tree)
+                        result = not single_match(stopper, tree, context)
                     else:
-                        result = single_match(item, tree)
+                        result = single_match(item, tree, context)
             elif repeat == "?":
                 if stopper is not None:
-                    result = not single_match(stopper, tree)
+                    result = not single_match(stopper, tree, context)
                 if result:
                     tree = next(gen)
             elif repeat == ">":
@@ -379,7 +408,7 @@ def run_sequence(gen, items):
                     raise ValueError(
                         "Missing argument to '{0}' operator".format(op)
                     )
-                result = contained(tree, items, pc, op == ">>")
+                result = contained(tree, items, pc, op == ">>", context)
                 if not result:
                     return False
                 pc += 1
@@ -408,7 +437,7 @@ def run_sequence(gen, items):
     return pc >= len_items
 
 
-def run_set(gen, items):
+def run_set(gen, items, context):
     """ Run through the subtrees (children) yielded by gen,
         matching them set-wise (unordered) with the items.
         If all items are eventually matched, return True,
@@ -423,7 +452,7 @@ def run_set(gen, items):
             item_pc = pc
             item = items[pc]
             pc += 1
-            result = single_match(item, tree)
+            result = single_match(item, tree, context)
             if pc < len_items and items[pc] == ">":
                 # Containment: Not a match unless the children match as well
                 pc += 1
@@ -438,7 +467,7 @@ def run_set(gen, items):
                     )
                 if result:
                     # Further constrained by containment
-                    result = contained(tree, items, pc, op == ">>")
+                    result = contained(tree, items, pc, op == ">>", context)
                 pc += 1
                 # Always cut away the 'dummy' extra items corresponding
                 # to the '>' (or '>>') and its argument
@@ -456,7 +485,7 @@ def run_set(gen, items):
     return False
 
 
-def match_pattern(tree, pattern):
+def match_pattern(tree, pattern, context=None):
     """ Return the result of a pattern match on a SimpleTree instance """
     cp = _CompiledPattern.compile(pattern)
-    return run_set(iter([tree]), cp.items)
+    return run_set(iter([tree]), cp.items, context)
