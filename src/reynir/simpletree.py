@@ -1674,34 +1674,53 @@ class SimpleTree:
 
     @property
     def own_lemma(self):
+        """ Return the lemma of the word token matching this terminal,
+            or an empty string if this is not a terminal """
         return self._lemma if self.is_terminal else ""
 
-    def all_matches(self, pattern):
+    @property
+    def own_lemma_mm(self):
+        """ Return the middle voice lemma of the word token matching
+            this terminal, or an empty string if this is not a terminal """
+        # A middle voice lemma is the same as the ordinary lemma except
+        # in the case of middle voice verbs; there the lemma is the
+        # MM-NH form ('eignast' instead of 'eiga' for a word form
+        # such as 'eignaðist'; 'dást' instead of 'dá' for a word form
+        # such as 'dáðst').
+        if not self.is_terminal:
+            return ""
+        if self.tcat != "so" or "mm" not in self.all_variants:
+            # Not a middle voice verb
+            return self._lemma
+        # Construct and return the "-st" middle voice stem
+        return BIN_Token.mm_verb_stem(self._lemma)
+
+    def all_matches(self, pattern, context=None):
         """ Return all subtree roots, including self, that match the given pattern """
         for subtree in chain([self], self.descendants):
-            if match_pattern(subtree, pattern):
+            if match_pattern(subtree, pattern, context):
                 yield subtree
 
-    def first_match(self, pattern):
+    def first_match(self, pattern, context=None):
         """ Return the first subtree root, including self, that matches the given
             pattern. If no subtree matches, return None. """
         try:
-            return next(self.all_matches(pattern))
+            return next(self.all_matches(pattern, context))
         except StopIteration:
             return None
 
-    def top_matches(self, pattern):
+    def top_matches(self, pattern, context=None):
         """ Return all subtree roots, including self, that match the given pattern,
             but not recursively, i.e. we don't include matches within matches """
-        if match_pattern(self, pattern):
+        if match_pattern(self, pattern, context):
             yield self
         else:
             for child in self.children:
-                yield from child.top_matches(pattern)
+                yield from child.top_matches(pattern, context)
 
-    def match(self, pattern):
+    def match(self, pattern, context=None):
         """ Return True if this subtree matches the given pattern """
-        return match_pattern(self, pattern)
+        return match_pattern(self, pattern, context)
 
 
 class SimpleTreeBuilder:

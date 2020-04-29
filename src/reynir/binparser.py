@@ -34,6 +34,7 @@
 
 """
 
+from typing import Dict, Set, Tuple
 import os
 import time
 import re
@@ -777,8 +778,8 @@ class BIN_Token(Token):
     # of each punctuation token.
     _UNDERSTOOD_PUNCTUATION = ".?!,:;-()[]"
 
-    _MEANING_CACHE = {}
-    _VARIANT_CACHE = {}
+    _MEANING_CACHE = {}  # type: Dict[str, int]
+    _VARIANT_CACHE = {}  # type: Dict[str, Set[str]]
 
     def __init__(self, t, original_index):
 
@@ -928,7 +929,7 @@ class BIN_Token(Token):
 
     # Variants that must be present in the verb form if they
     # are present in the terminal
-    _RESTRICTIVE_VARIANTS = ("sagnb", "lhþt", "bh", "op")
+    _RESTRICTIVE_VARIANTS = ("sagnb", "lhþt", "bh", "op")  # type: Tuple
 
     def verb_matches(self, verb, terminal, form):
         """ Return True if the infinitive in question matches the verb category,

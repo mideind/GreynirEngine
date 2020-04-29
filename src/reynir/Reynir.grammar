@@ -604,7 +604,7 @@ Tilgangstenging →
 Viðurkenningartenging →
     "enda:st" "þótt:st" AðvörunAð?
     | "jafnvel:ao"? "þótt:st" AðvörunAð?
-    | "jafnvel:ao"? "þó:st" "að:st"
+    | "jafnvel:ao"? "þó:st" "svo:ao"? "að:st"
     | VillaÞóAð
     | 'þrátt_fyrir:ao' 'það:pfn'_hk_þf_et? "að:st"
 
@@ -2625,6 +2625,9 @@ HjSögnNh/tala/pers →
     | 'munu:so'/tala/pers      # munu fara
     | 'mega:so'/tala/pers      # mega fara
     | 'þykja:so'/tala/pers     # þykja/þykjast setja (leiðinlegan svip á bæinn)
+    | 'sjá:so'/tala/pers       # sjá glitta [í eitthvað]
+    | 'hyggja:so'_mm/tala/pers # hyggjast fara
+    | 'segja:so'_mm/tala/pers  # segjast fara
     | 'mega:so'/tala/pers FsAtv? 'láta:so'_nh     # mætti láta fara
     | 'skulu:so'/tala/pers FsAtv? 'þykja:so'_nh   # (flegni kjóllinn) skuli [ekki] þykja vera (í lagi)
     | 'skulu:so'/tala/pers FsAtv? 'mega:so'_nh    # skyldu [ekki] mega fara
@@ -5723,8 +5726,9 @@ AtviksliðurKomma →
 AtviksliðurEinkunn →
     eo                              # Einkunnarorð = atviksorð sem geta ekki jafnframt verið forsetningar
     | Aldur                         # Hin 29 ára gamla fyrirsæta
-    | Allt "að:ao"   # 'fjárfesta fyrir allt að 100 milljónir króna'
+    | Allt "að:ao"                  # 'fjárfesta fyrir allt að 100 milljónir króna'
     | "svo:ao" "sem:ao"             # 'enda kemur kynlíf þeirra svo sem engum við'
+    | "innan_við:fs"
     | UmEðaYfir
 
 UmEðaYfir →
@@ -5846,7 +5850,7 @@ AfstæðDagsetning →
     | TímaNafnliðurStærri_þgf/tala/kyn ÁðurSíðarSeinna             # (hér um bil) 10 vikum síðar
     | 'einhver:fn'_hk_þgf_et ÁðurSíðarSeinna                       # Einhverju síðar (var bíllinn færður)
     | 'einn:fn'_kk_et_þf 'dagur:kk'_et_þf_gr                       # Einn daginn (var bíllinn færður)
-    | 'fyrir:fs'_þgf TímaNafnliðurStærri_þgf/tala/kyn VillaSíðan?  # fyrir (rúmlega) 10 árum (síðan)
+    | 'fyrir:fs'_þgf TímaNafnliðurStærri_þgf/tala/kyn AðvörunSíðan?  # fyrir (rúmlega) 10 árum (síðan)
     | 'eftir:fs'_þf TímaNafnliðurStærri_þf/tala/kyn                # eftir tæplega átta daga
 
     | FyrrSíðarSeinna? AfstæðDagsetningFs                          # fyrr á árinu, síðar á árinu
@@ -6672,9 +6676,9 @@ AðvörunHeldur →
 $tag(error) AðvörunHeldur
 $score(+4) AðvörunHeldur
 
-VillaSíðan →
+AðvörunSíðan →
     "síðan:ao"
-$tag(error) VillaSíðan
+$tag(error) AðvörunSíðan
 
 # Villa í tölu: Einn af drengjunum sem tóku þátt unnu keppnina → vann keppnina
 VillaEinnAf/fall/kyn →

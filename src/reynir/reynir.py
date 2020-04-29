@@ -26,6 +26,10 @@
 
 """
 
+from typing import (
+    Any, Iterable, Iterator, Optional, Callable,
+    Dict, List, Tuple, Sized, cast
+)
 import time
 import operator
 from threading import Lock
@@ -47,6 +51,9 @@ Terminal = namedtuple(
     ("text", "lemma", "category", "variants", "index")
 )
 
+# Progress function parameter type
+ProgressFunc = Optional[Callable[[float], None]]
+
 
 class _Sentence:
 
@@ -55,26 +62,29 @@ class _Sentence:
         sentence.parse(). After parsing, a number of query functions
         are available on the parse tree. """
 
-    def __init__(self, job, s):
+    def __init__(self, job: "_Job", s: List):
         self._job = job
         # s is a token list
         self._s = s
         self._len = len(s)
         assert self._len > 0  # Input should be already sanitized
-        self._err_index = None
+        self._err_index = None  # type: Optional[int]
         self._tree = self._simplified_tree = None
-        self._num = None  # Number of possible combinations
-        self._score = None  # Score of best parse tree
-        self._terminals = None  # Cached terminals
+        # Number of possible combinations
+        self._num = None  # type: Optional[int]
+        # Score of best parse tree
+        self._score = None  # type: Optional[int]
+        # Cached terminals
+        self._terminals = None  # type: Optional[List[Terminal]]
         if self._job.parse_immediately:
             # We want an immediate parse of the sentence
             self.parse()
 
-    def __len__(self):
+    def __len__(self) -> int:
         """ Return the number of tokens in the sentence """
         return self._len
 
-    def parse(self):
+    def parse(self) -> bool:
         """ Parse the sentence """
         if self._num is not None:
             # Already parsed
@@ -99,62 +109,63 @@ class _Sentence:
         return num > 0
 
     @property
-    def err_index(self):
+    def err_index(self) -> Optional[int]:
         """ Return the index of the error token, if an error occurred;
             otherwise None """
         return self._err_index
 
     @property
-    def tokens(self):
+    def tokens(self) -> List:
         """ Return the tokens in the sentence """
         return self._s
 
     @property
-    def combinations(self):
+    def combinations(self) -> Optional[int]:
         """ Return the number of different parse tree combinations for the sentence,
             or 0 if no parse tree was found, or None if the sentence hasn't been parsed """
         return self._num
 
     @property
-    def score(self):
+    def score(self) -> Optional[int]:
         """ The score of the best parse tree for the sentence """
         return self._score
 
     @property
-    def tree(self):
+    def tree(self) -> Optional[SimpleTree]:
         """ Return the simplified parse tree, or None if the sentence hasn't been parsed """
         return self._simplified_tree
 
     @property
-    def deep_tree(self):
+    def deep_tree(self) -> Any:
         """ Return the original deep tree, as constructed by the parser, corresponding
             directly to grammar nonterminals and terminals """
         return self._tree
 
     @property
-    def flat_tree(self):
+    def flat_tree(self) -> Optional[str]:
         """ Return a flat text representation of the simplified parse tree """
         return None if self.tree is None else self.tree.flat
 
     @cached_property
-    def text(self):
+    def text(self) -> str:
         """ Return a raw text representation of the sentence,
             with spaces between all tokens """
         return " ".join(t.txt for t in self._s if t.txt)
 
     @property
-    def tidy_text(self):
+    def tidy_text(self) -> str:
         """ Return a [more] correctly spaced text representation of the sentence """
-        if self.tree is None:
+        terminals = self.terminals
+        if terminals is None:
             # Not parsed (yet)
             txt = self.text
         else:
             # Use the terminal text representation - it's got fancy em/en-dashes and stuff
-            txt = " ".join(t.text for t in self.terminals)
+            txt = " ".join(t.text for t in terminals)
         return correct_spaces(txt)
 
     @property
-    def terminals(self):
+    def terminals(self) -> Optional[List[Terminal]]:
         """ Return a list of tuples, one for each terminal in the sentence.
             The tuples contain the original text of the token that matched
             the terminal, the associated word lemma, the category, and a set
@@ -173,21 +184,21 @@ class _Sentence:
         return self._terminals
 
     @cached_property
-    def terminal_nodes(self):
+    def terminal_nodes(self) -> List[SimpleTree]:
         """ Return a list of the terminal nodes within the parse tree
             for this sentence """
         if self.tree is None:
-            return None
+            return []
         return [d for d in self.tree.descendants if d.is_terminal]
 
     @property
-    def lemmas(self):
+    def lemmas(self) -> Optional[List[str]]:
         """ Convenience property to return the lemmas only """
         t = self.terminals
         return None if t is None else [terminal[1] for terminal in t]
 
     @property
-    def ifd_tags(self):
+    def ifd_tags(self) -> Optional[List[str]]:
         """ Return a list of Icelandic Frequency Dictionary (IFD) tags for
             the terminals/tokens in this sentence. """
         if self.tree is None:
@@ -196,7 +207,7 @@ class _Sentence:
         # (nonterminal nodes return an empty list in the ifd_tags property)
         return [ifd_tag for d in self.tree.descendants for ifd_tag in d.ifd_tags]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.text
 
 
@@ -212,38 +223,38 @@ class _NounPhrase(_Sentence):
     _ind = operator.attrgetter('indefinite_np')
     _can = operator.attrgetter('canonical_np')
 
-    def _get(self, getter):
+    def _get(self, getter: Any) -> Optional[str]:
         if self.tree is None:
             return None
         return correct_spaces(getter(self.tree))
 
     @cached_property
-    def nominative(self):
+    def nominative(self) -> Optional[str]:
         """ Return nominative form (nefnifall) """
         return self._get(self._nom)
 
     @cached_property
-    def indefinite(self):
+    def indefinite(self) -> Optional[str]:
         """ Return indefinite form (nefnifall án greinis) """
         return self._get(self._ind)
 
     @cached_property
-    def canonical(self):
+    def canonical(self) -> Optional[str]:
         """ Return canonical form (nefnifall eintölu án greinis) """
         return self._get(self._can)
 
     @cached_property
-    def accusative(self):
+    def accusative(self) -> Optional[str]:
         """ Return accusative form (þolfall) """
         return self._get(self._acc)
 
     @cached_property
-    def dative(self):
+    def dative(self) -> Optional[str]:
         """ Return dative form (þágufall) """
         return self._get(self._dat)
 
     @cached_property
-    def genitive(self):
+    def genitive(self) -> Optional[str]:
         """ Return genitive form (eignarfall) """
         return self._get(self._gen)
 
@@ -252,11 +263,11 @@ class _Paragraph:
 
     """ Encapsulates a paragraph that contains sentences """
 
-    def __init__(self, job, p):
+    def __init__(self, job: "_Job", p: Iterable):
         self._job = job
         self._p = p
 
-    def sentences(self):
+    def sentences(self) -> Iterable[_Sentence]:
         """ Yield the sentences within the paragraph, nicely wrapped """
         # self._p is a generator that yields (ix, toklist) tuples,
         # where ix is a starting index of the sentence within the
@@ -265,7 +276,7 @@ class _Paragraph:
         for _, sent in self._p:
             yield self._job._create_sentence(sent)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[_Sentence]:
         """ Allow easy iteration of sentences within this paragraph """
         return iter(self.sentences())
 
@@ -277,8 +288,9 @@ class _Job:
     """
 
     def __init__(
-        self, greynir, tokens, *,
-        parse=False, root=None, progress_func=None
+        self, greynir: "Greynir", tokens: Iterable, *,
+        parse: bool=False, root: Optional[str]=None,
+        progress_func: ProgressFunc=None
     ):
         self._r = greynir
         self._parser = self._r.parser
@@ -288,6 +300,8 @@ class _Job:
         self._reduce_time = 0.0
         self._parse = parse
         # Pre-counted number of sentences (used for progress monitoring)
+        # This count includes one initial step, indicating completion of
+        # tokenization, so it is the number of sentences + 1
         self._cnt_sent = 0
         # Accumulated number of sentences generated so far
         self._num_sent = 0
@@ -302,7 +316,9 @@ class _Job:
         # A progress function to call during processing
         self._progress_func = progress_func
 
-    def _add_sentence(self, s, num, parse_time, reduce_time):
+    def _add_sentence(
+        self, s: Sized, num: int, parse_time: float, reduce_time: float
+    ) -> None:
         """ Add a processed sentence to the statistics """
         slen = len(s)
         self._num_sent += 1
@@ -321,19 +337,21 @@ class _Job:
         # Call the progress function, if any
         if self._progress_func is not None:
             assert self._cnt_sent > 0
-            assert self._num_sent <= self._cnt_sent
-            self._progress_func(self._num_sent / self._cnt_sent)
+            assert (self._num_sent + 1) <= self._cnt_sent
+            # We add one to the _num_sent counter because we
+            # have an additional first step that we call after tokenization
+            self._progress_func((self._num_sent + 1) / self._cnt_sent)
 
-    def _create_sentence(self, s):
+    def _create_sentence(self, s: List) -> _Sentence:
         """ Create a fresh _Sentence object """
         return self._r.create_sentence(self, s)
 
     @property
-    def parse_immediately(self):
+    def parse_immediately(self) -> bool:
         """ Return True if sentences in the job should be parsed immediately """
         return self._parse
 
-    def paragraphs(self):
+    def paragraphs(self) -> Iterable[_Paragraph]:
         """ Yield the paragraphs from the token stream """
         if self._progress_func is not None:
             # We have a progress function, so we must pre-count
@@ -346,19 +364,22 @@ class _Job:
                 [(ix, list(sent)) for ix, sent in p]
                 for p in paragraphs(self._tokens)
             ]
-            self._cnt_sent = sum(len(p) for p in plist)
+            self._cnt_sent = sum(len(p) for p in plist) + 1
+            # Make an "first step" initial call to the progress function
+            # with a progress of 1, after we've tokenized the input
+            self._progress_func(1 / self._cnt_sent)
         else:
             # No progress function: use generators throughout
             plist = paragraphs(self._tokens)
         for p in plist:
             yield _Paragraph(self, p)
 
-    def sentences(self):
+    def sentences(self) -> Iterable[_Sentence]:
         """ Yield the sentences from the token stream """
         for p in self.paragraphs():
             yield from p.sentences()
 
-    def parse(self, tokens):
+    def parse(self, tokens: Sized) -> Tuple[Any, int, int]:
         """ Parse the token sequence, returning a parse tree,
             the number of trees in the parse forest, and the
             score of the best tree """
@@ -380,55 +401,55 @@ class _Job:
             now = time.time()
             self._add_sentence(tokens, num, parse_time=now - t0, reduce_time=now - t1)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[_Sentence]:
         """ Allow easy iteration of sentences within this job """
         return iter(self.sentences())
 
     @property
-    def parser(self):
+    def parser(self) -> Fast_Parser:
         """ The job's associated parser object """
         return self._parser
 
     @property
-    def reducer(self):
+    def reducer(self) -> Reducer:
         """ The job's associated reducer object """
         return self._reducer
 
     @property
-    def num_tokens(self):
+    def num_tokens(self) -> int:
         """ Total number of tokens in sentences submitted to this job """
         return self._num_tokens
 
     @property
-    def num_sentences(self):
+    def num_sentences(self) -> int:
         """ Total number of sentences submitted to this job """
         return self._num_sent
 
     @property
-    def num_parsed(self):
+    def num_parsed(self) -> int:
         """ Total number of sentences successfully parsed within this job """
         return self._num_parsed
 
     @property
-    def num_combinations(self):
+    def num_combinations(self) -> int:
         """ Sum of the total number of parse tree combinations for sentences within this job """
         return self._num_combinations
 
     @property
-    def ambiguity(self):
+    def ambiguity(self) -> float:
         """ The weighted average total ambiguity of parsed sentences within this job """
         return (
             (self._total_ambig / self._total_tokens) if self._total_tokens > 0 else 1.0
         )
 
     @property
-    def parse_time(self):
+    def parse_time(self) -> float:
         """ Total time spent on parsing (including reduction) during this job,
             in seconds """
         return self._parse_time
 
     @property
-    def reduce_time(self):
+    def reduce_time(self) -> float:
         """ Total time spent on tree reduction during this job, in seconds """
         return self._reduce_time
 
@@ -438,12 +459,12 @@ class _Job_NP(_Job):
     """ Specialized _Job class that creates _NounPhrase objects
         instead of _Sentence objects """
 
-    def __init__(self, greynir, tokens):
+    def __init__(self, greynir: "Greynir", tokens: Iterable):
         # Parse the tokens with 'Nl' (noun phrase) as the root nonterminal
         # instead of the usual default 'S0' (sentence) root
         super().__init__(greynir, tokens, parse=True, root="Nl")
 
-    def _create_sentence(self, s):
+    def _create_sentence(self, s: List) -> _NounPhrase:
         """ Create a fresh _NounPhrase object """
         return _NounPhrase(self, s)
 
@@ -491,22 +512,22 @@ class Greynir:
     _reducer = None
     _lock = Lock()
 
-    def __init__(self, **options):
+    def __init__(self, **options: Any):
         """ Tokenization options can be passed as keyword arguments to the
             Greynir constructor """
         self._options = options
 
-    def tokenize(self, text):
+    def tokenize(self, text: str) -> Iterable:
         """ Call the tokenizer (overridable in derived classes) """
         return bin_tokenize(text, **self._options)
 
-    def create_sentence(self, job, s):
+    def create_sentence(self, job: _Job, s: List) -> _Sentence:
         """ Override this in derived classes to modify how sentences
             are created or postprocessed """
         return _Sentence(job, s)
 
     @property
-    def parser(self):
+    def parser(self) -> Fast_Parser:
         """ Return the parser instance to be used """
         with self._lock:
             if Greynir._parser is None:
@@ -517,17 +538,17 @@ class Greynir:
             return Greynir._parser
 
     @property
-    def reducer(self):
+    def reducer(self) -> Reducer:
         """ Return the reducer instance to be used """
         # Should always retrieve the parser attribute first
         assert Greynir._reducer is not None
         return Greynir._reducer
 
     def submit(
-        self, text, parse=False, *,
-        split_paragraphs=False,
-        progress_func=None
-    ):
+        self, text: str, parse: bool=False, *,
+        split_paragraphs: bool=False,
+        progress_func: ProgressFunc=None
+    ) -> _Job:
         """ Submit a text to the tokenizer and parser, yielding a job object.
             The paragraphs and sentences of the text can then be iterated
             through via the job object. If parse is set to True, the
@@ -547,7 +568,10 @@ class Greynir:
         tokens = self.tokenize(text)
         return _Job(self, tokens, parse=parse, progress_func=progress_func)
 
-    def parse(self, text, *, progress_func=None):
+    def parse(
+        self, text: str, *,
+        progress_func: ProgressFunc=None
+    ) -> Dict:
         """ Convenience function to parse text synchronously and return
             a summary of all contained sentences. The progress_func parameter
             works as described for Greynir.submit(). """
@@ -566,23 +590,23 @@ class Greynir:
             reduce_time=job.reduce_time,
         )
 
-    def parse_single(self, sentence):
+    def parse_single(self, sentence: str) -> _Sentence:
         """ Convenience function to parse a single sentence only """
         tokens = self.tokenize(sentence)
         job = _Job(self, tokens, parse=True)
         # Raises StopIteration if no sentence was parsed
         return next(iter(job))
 
-    def parse_noun_phrase(self, noun_phrase):
+    def parse_noun_phrase(self, noun_phrase: str) -> _NounPhrase:
         """ Convenience function to parse a noun phrase """
         tokens = self.tokenize(noun_phrase)
         # Use a _Job_NP to generate _NounPhrase objects instead of _Sentence objects
         job = _Job_NP(self, tokens)
         # Raises StopIteration if no sentence was parsed
-        return next(iter(job))
+        return cast(_NounPhrase, next(iter(job)))
 
     @classmethod
-    def cleanup(cls):
+    def cleanup(cls) -> None:
         """ Discard memory resources held by the Greynir class object """
         cls._reducer = None
         if cls._parser is not None:

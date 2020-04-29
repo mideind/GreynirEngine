@@ -53,11 +53,14 @@ BIN_Meaning = namedtuple(
 )
 
 # Compact string representation
-BIN_Meaning.__str__ = BIN_Meaning.__repr__ = lambda self: (
+_meaning_repr = lambda self: (
     "(stofn='{0}', {2}/{3}/{1}, ordmynd='{4}', {5})".format(
         self.stofn, self.utg, self.ordfl, self.fl, self.ordmynd, self.beyging
     )
 )
+
+setattr(BIN_Meaning, "__str__", _meaning_repr)
+setattr(BIN_Meaning, "__repr__", _meaning_repr)
 
 # The set of word subcategories (fl) for person names
 # (i.e. first names or complete names)

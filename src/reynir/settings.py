@@ -31,6 +31,7 @@
 
 """
 
+from typing import Union
 import os
 import codecs
 import locale
@@ -818,7 +819,8 @@ class Settings:
 
     # Postgres SQL database server hostname and port
     DB_HOSTNAME = os.environ.get("GREYNIR_DB_HOST", "localhost")
-    DB_PORT = os.environ.get("GREYNIR_DB_PORT", "5432")  # Default PostgreSQL port
+    # Default PostgreSQL port
+    DB_PORT = os.environ.get("GREYNIR_DB_PORT", "5432")  # type: Union[str,int]
 
     try:
         DB_PORT = int(DB_PORT)
@@ -828,7 +830,7 @@ class Settings:
         )
 
     BIN_DB_HOSTNAME = os.environ.get("GREYNIR_BIN_DB_HOST", DB_HOSTNAME)
-    BIN_DB_PORT = os.environ.get("GREYNIR_BIN_DB_PORT", DB_PORT)
+    BIN_DB_PORT = os.environ.get("GREYNIR_BIN_DB_PORT", DB_PORT)  # type: Union[str,int]
 
     try:
         BIN_DB_PORT = int(BIN_DB_PORT)
@@ -839,7 +841,7 @@ class Settings:
 
     # Flask server host and port
     HOST = os.environ.get("GREYNIR_HOST", "localhost")
-    PORT = os.environ.get("GREYNIR_PORT", "5000")
+    PORT = os.environ.get("GREYNIR_PORT", "5000")  # type: Union[str,int]
     try:
         PORT = int(PORT)
     except ValueError:
@@ -852,7 +854,7 @@ class Settings:
 
     # Similarity server
     SIMSERVER_HOST = os.environ.get("SIMSERVER_HOST", "localhost")
-    SIMSERVER_PORT = os.environ.get("SIMSERVER_PORT", "5001")
+    SIMSERVER_PORT = os.environ.get("SIMSERVER_PORT", "5001")  # type: Union[str,int]
     try:
         SIMSERVER_PORT = int(SIMSERVER_PORT)
     except ValueError:
