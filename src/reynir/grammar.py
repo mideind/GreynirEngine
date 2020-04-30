@@ -64,7 +64,7 @@ from collections import defaultdict, OrderedDict
 if __package__:
     from .settings import Settings, changedlocale
 else:
-    from settings import Settings, changedlocale, ConfigError
+    from settings import Settings, changedlocale, ConfigError  # type: ignore
 
 
 class GrammarError(Exception):

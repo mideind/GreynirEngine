@@ -991,7 +991,7 @@ SetningSo →
     | So_1_nh/fall HjSögnNhMeðSo/tala/pers NlFrumlag_nf/tala/pers/kyn
         NlBeintAndlag/fall AtvFsAuka?
 
-    # Farðu galvaskur að sækja kaffi strax
+    # Farðu [galvaskur] að sækja kaffi strax
     | Sögn_bh SögnFrh_bh?
 
     # Má með sanni segja (að þeir hafi sloppið með skrekkinn)
@@ -1813,10 +1813,10 @@ EinSögn_nh/tala/kyn →
 # Boðháttur
 
 Sögn_bh →
-    # Farðu [út] að þvo bílinn [strax]
-    so_0_bh BhBotn?
-    # Förum [út] að þvo bílinn [strax]
-    | so_0_gm_fh_p1_ft_nt BhBotn?
+    # Farðu [sjálfur] ([út] að þvo bílinn [fullur eldmóðs])
+    so_0_bh/tala LoTengtSögn_nf/tala/kyn? BhBotnTagl/tala/kyn?
+    # Förum [sjálfar] ([út] að þvo bílinn [fullar eldmóðs])
+    | so_0_gm_fh_p1_ft_nt LoTengtSögn_nf_ft/kyn? BhBotnTagl_ft/kyn?
     # Lofið barninu [að borða] [í friði]
     | Sögn_1_bh BhBotn?
     # Skrifaðu jólasveininum bréf
@@ -1827,6 +1827,9 @@ Sögn_bh →
 # Boðháttur er sjaldgæfur - viljum aðra kosti frekar
 $score(-14) Sögn_bh
 $tag(begin_prep_scope) Sögn_bh
+
+BhBotnTagl/tala/kyn →
+    BhBotn LoTengtSögn_nf/tala/kyn?
 
 BhBotn →
     # að borða í friði

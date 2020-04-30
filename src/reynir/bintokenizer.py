@@ -26,12 +26,13 @@
 
 """
 
+from typing import Optional
 import sys
 import re
 from collections import namedtuple, defaultdict
 
 from tokenizer import (
-    TOK,
+    TOK, Tok,
     tokenize_without_annotation,
     normalized_text,
 )
@@ -1435,11 +1436,11 @@ class Bin_TOK(TOK):
         to add token error information."""
 
     @staticmethod
-    def Word(w, m=None, token=None):
+    def Word(w: str, m=None, token: Optional[Tok]=None) -> Tok:
         return TOK.Word(w, m)
 
     @staticmethod
-    def Number(w, n, cases=None, genders=None, token=None):
+    def Number(w: str, n: float, cases=None, genders=None, token: Optional[Tok]=None) -> Tok:
         return TOK.Number(w, n, cases, genders)
 
 
