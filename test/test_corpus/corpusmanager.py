@@ -38,31 +38,31 @@ class Comparison():
 	def start(self):
 
 		# Hef (1)
-		# Útbý (13A) með annoparse, eins og í Maker
-		#helpers.get_annoparse(CLEAN, GENPSD, ".txt", ".psd")
+		# Útbý (2) með annoparse, eins og í Maker
+		helpers.get_annoparse(CLEAN, GENPSD, ".txt", ".psd")
 		
-		# Hef (13A)
-		# Útbý (13B) með map_to_iceparser()
+		# Hef (2)
+		# Útbý (5B) með map_to_iceparser()
 		# TODO
 
-		# Hef (13A)
-		# Útbý (13C) með map_to_general()
+		# Hef (2)
+		# Útbý (5C) með map_to_general()
 		# TODO
 
-		# Hef (13A), (13B) og (13C)
-		# Útbý (9), (10) og (11) með to_brackets()
-		#helpers.to_brackets(GENPSD, TESTFILES, '.psd', '.grbr')
+		# Hef (2), (5B) og (5C)
+		# Útbý (6A), (6B) og (6C) með to_brackets()
+		# helpers.to_brackets(GENPSD, TESTFILES, '.psd', '.grbr')
 		#helpers.to_brackets(GENPSD, TESTFILES, '.ippsd', '.ipbr')
 		#helpers.to_brackets(GENPSD, TESTFILES, '.afpsd', '.afbr')
 
-		# Hef (6), (7) og (8) úr Maker
-		# Og (9), (10) og (11) héðan
-		# Útbý (12A)
-		helpers.get_results(BRACKETS, TESTFILES, REPORTS, ".out")
+		# Hef (4A), (4B) og (4C) úr Maker
+		# Og (6A), (6B) og (6C) héðan
+		# Útbý (7A)
+		#helpers.get_results(BRACKETS, TESTFILES, REPORTS, ".out")
 		
-		# Hef (12A)
-		# Útbý (12B)
-		suffixlist = [".grbr"]
+		# Hef (7A)
+		# Útbý (7B)
+		# suffixlist = [".grbr"]
 		# helpers.combine_reports(REPORTS, suffixlist)
 
 
@@ -70,19 +70,6 @@ class Comparison():
 
 
 	# Þáttar skjölin, útbýr vélþáttað skjal á slóðinni pgen
-	def parse(self, pclean, pgen, grbr):
-		parses = []
-		for line in pclean.open():
-			print(line)
-			sent = g.parse_single(line)
-			brackets = sent.tree.bracket_form if sent.tree else ""
-			# Safna saman
-			# Ath. hvort lendi í setningum sem fleiri en ein setning
-			# len(sent) > 1 virkar ekki, hvað virkar?
-			# Hér set ég inn forvinnsluna ef hún á að vera til staðar
-			parses.append(brackets)
-		pgen.write_text("\n".join(parses))
-
 
 class Maker():
 
@@ -93,26 +80,26 @@ class Maker():
 		# Taka út þau sem eru með öllum setningunum! Fyrir hvert genre, setja í /original
 		# bý til annoparse skjal með helpers.get_annoparse()
 		# tiltek rétta möppu -- /genpsd og endinguna .psd
-		helpers.get_annoparse(CLEAN, GENPSD, '.txt', '.psd')
+		# helpers.get_annoparse(CLEAN, GENPSD, '.txt', '.psd')
 
 		# hef þá (2)
-		# Handþátta skjölin, geymi í /handpsd .grgld
-		# Komið að miklu leyti
+		# Útbý (3A) með handþáttun, geymi í /handpsd .grgld
 
-		# Hef (3)
-		# Útbúa (4) með map_to_iceparser
+
+		# Hef (3A)
+		# Útbúa (3B) með map_to_iceparser
 		# TODO
 
-		# Hef (3)
-		# Útbúa (5) með map_to_general
+		# Hef (3A)
+		# Útbúa (3C) með map_to_general
 		# TODO
 
-		# Hef þá (4) og (5)
+		# Hef þá (3B) og (3C)
 		# Handþátta og lagfæra helstu villur
 		# TODO
 
-		# Hef þá (3), (4) og (5)
-		# Fæ (6), (7) og (8) með to_brackets
+		# Hef þá (3A), (3B) og (3C)
+		# Fæ (4A), (4B) og (4C) með to_brackets
 		# Passa að setja réttar endingar á allt, þarf mögulega að gera í 3 fallaköllum
 		helpers.to_brackets(HANDPSD, BRACKETS, '.grgld', '.grbr')
 		#helpers.to_brackets(HANDPSD, BRACKETS, '.ipgld', '.ipbr')
@@ -123,10 +110,10 @@ class Maker():
 
 
 if __name__ == "__main__":
+	start = timer()
 	#maker = Maker()
 	#maker.start()
 
-	start = timer()
 	comp = Comparison()
 	comp.start()
 	end = timer()
