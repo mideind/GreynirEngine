@@ -56,7 +56,9 @@ Terminal = namedtuple(
 ProgressFunc = Optional[Callable[[float], None]]
 
 # The type of a parse result
-ParseResult = Dict[str, Union[int, float, Iterable["_Sentence"]]]
+ParseResult = Dict[str,
+    Union[int, float, Iterable["_Sentence"], Iterable[Iterable["_Sentence"]]]
+]
 
 
 class _Sentence:
