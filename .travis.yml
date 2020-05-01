@@ -11,13 +11,17 @@ python:
   - "3.8"
   - "pypy3"
 
-install:
+before_install:
+  - python -m pip install --upgrade pip
+  - python -m pip install --upgrade pytest
   - python -m pip install mypy
   - python -m pip install git+https://github.com/mideind/Tokenizer#egg=tokenizer
 
-script:
+install:
   - python -m pip install -e .
-  - mypy src/reynir/__init__.py
+
+script:
+  - if [ "$TRAVIS_PYTHON_VERSION" == "3.5" ]; then mypy src/reynir/__init__.py; fi
   - python -m pytest
 
 notifications:
