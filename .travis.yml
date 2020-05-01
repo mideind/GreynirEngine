@@ -1,5 +1,7 @@
 language: python
 
+cache: pip
+
 dist: xenial
 
 python:
@@ -10,10 +12,12 @@ python:
   - "pypy3"
 
 install:
+  - python -m pip install mypy
   - python -m pip install git+https://github.com/mideind/Tokenizer#egg=tokenizer
-  - python -m pip install -e .
 
 script:
+  - python -m pip install -e .
+  - mypy src/reynir/__init__.py
   - python -m pytest
 
 notifications:
