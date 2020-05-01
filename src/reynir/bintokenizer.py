@@ -26,10 +26,10 @@
 
 """
 
-from typing import Optional
+from typing import Optional, NamedTuple
 import sys
 import re
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 
 from tokenizer import (
     TOK, Tok,
@@ -85,7 +85,10 @@ NOT_NAME_AT_SENTENCE_START = {
 ALL_CASES = frozenset(["nf", "þf", "þgf", "ef"])
 
 # Named tuple for person names, including case and gender
-PersonName = namedtuple("PersonName", ["name", "gender", "case"])
+PersonName = NamedTuple(
+    "PersonName",
+    [("name", str), ("gender", str), ("case", str)]
+)
 
 HYPHEN = "-"  # Normal hyphen
 EN_DASH = "\u2013"  # "–"
