@@ -43,15 +43,6 @@ LABELED 1
 ##    children).                            ##
 ##------------------------------------------##
 DELETE_LABEL TOP
-DELETE_LABEL S1
-DELETE_LABEL -NONE-
-DELETE_LABEL ,
-DELETE_LABEL :
-DELETE_LABEL ``
-DELETE_LABEL ''
-DELETE_LABEL .
-DELETE_LABEL ?
-DELETE_LABEL !
 
 ##------------------------------------------##
 ## Delete labels for length calculation     ##
