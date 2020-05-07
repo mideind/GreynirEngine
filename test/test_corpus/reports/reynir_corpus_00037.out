@@ -1,20 +1,19 @@
   Sent.                        Matched  Bracket   Cross        Correct Tag
  ID  Len.  Stat. Recal  Prec.  Bracket gold test Bracket Words  Tags Accracy
 ============================================================================
-   1   10    0   93.75  93.75    15     16   16      0     10     2    20.00
--<1>---(wn1= 10, bn1= 16)-           -<2>---(wn2= 10, bn2= 16)-
-  0 : 0 : lo_ft_nf_hk_esb_sb  Næstflest              0 : 0 : lo_esb_ft_hk_nf  Næstflest      
-  1 : 0 : no_ft_nf_hk  hjólreiðaslys         1 : 0 : no_ft_hk_nf  hjólreiðaslys 
-  2 : 0 : so_0_fh_p3_ft_þt_gm  urðu                   2 : 0 : so_0_fh_ft_gm_p3_þt  urðu           
+   1   10    0   93.75  93.75    15     16   16      0      9     9   100.00
+-<1>---(wn1=  9, bn1= 16)-           -<2>---(wn2=  9, bn2= 16)-
+  0 : 1 : lo      Næstflest              0 : 1 : lo      Næstflest      
+  1 : 1 : no      hjólreiðaslys         1 : 1 : no      hjólreiðaslys 
+  2 : 1 : so      urðu                   2 : 1 : so      urðu           
   3 : 1 : st      þegar                  3 : 1 : st      þegar          
-  4 : 0 : no_et_nf_kk  hjólreiðamaður        4 : 0 : no_et_kk_nf  hjólreiðamaður
-  5 : 0 : so_0_fh_p3_et_þt_gm  hjólaði               5 : 0 : so_0_et_fh_gm_p3_þt  hjólaði       
-  6 : 0 : ao_fst  þvert                  6 : 0 : ao      þvert          
-  7 : 0 : fs_þf  yfir                    7 : 0 : fs_þgf  yfir            
-  8 : 0 : no_et_þf_kvk  akbraut                 8 : 0 : no_et_kvk_þgf  akbraut         
-  9 : 1 : grm     .                       9 : 1 : grm     .               
+  4 : 1 : no      hjólreiðamaður        4 : 1 : no      hjólreiðamaður
+  5 : 1 : so      hjólaði               5 : 1 : so      hjólaði       
+  6 : 1 : ao      þvert                  6 : 1 : ao      þvert          
+  7 : 1 : fs      yfir                    7 : 1 : fs      yfir            
+  8 : 1 : no      akbraut                 8 : 1 : no      akbraut         
 
-  0 : 1 :   0   10  S0            0 : 1 :   0   10  S0    
+  0 : 1 :   0    9  S0            0 : 1 :   0    9  S0    
   1 : 1 :   0    9  S             1 : 1 :   0    9  S     
   2 : 1 :   0    9  IP            2 : 1 :   0    9  IP    
   3 : 1 :   0    2  NP            3 : 1 :   0    2  NP    
@@ -32,19 +31,18 @@
  15 : 1 :   8    9  NP           15 : 1 :   8    9  NP    
 
 ========
-   2    9    0   50.00  53.85     7     14   13      0      9     2    22.22
--<1>---(wn1=  9, bn1= 14)-           -<2>---(wn2=  9, bn2= 13)-
-  0 : 0 : eo_fst  Bara                    0 : 0 : eo      Bara            
-  1 : 0 : no_et_nf_kk  stormur                 1 : 0 : no_et_kk_nf  stormur         
+   2    9    0   50.00  53.85     7     14   13      0      8     6    75.00
+-<1>---(wn1=  8, bn1= 14)-           -<2>---(wn2=  8, bn2= 13)-
+  0 : 1 : eo      Bara                    0 : 1 : eo      Bara            
+  1 : 1 : no      stormur                 1 : 1 : no      stormur         
   2 : 0 : st      eins                    2 : 0 : ao      eins            
   3 : 1 : st      og                      3 : 1 : st      og              
-  4 : 0 : so_0_fh_p3_et_nt_gm  kemur                   4 : 0 : so_0_et_fh_gm_nt_p3  kemur           
-  5 : 0 : ao_fst  reglulega               5 : 0 : ao      reglulega       
-  6 : 0 : fs_þf  á                      6 : 0 : so_1_þf_et_fh_gm_nt_p3  á              
-  7 : 0 : no_ft_þf_hk_gr  haustin                 7 : 0 : no_ft_gr_hk_þf  haustin         
-  8 : 1 : grm     .                       8 : 1 : grm     .               
+  4 : 1 : so      kemur                   4 : 1 : so      kemur           
+  5 : 1 : ao      reglulega               5 : 1 : ao      reglulega       
+  6 : 0 : fs      á                      6 : 0 : so      á              
+  7 : 1 : no      haustin                 7 : 1 : no      haustin         
 
-  0 : 1 :   0    9  S0            0 : 1 :   0    9  S0    
+  0 : 1 :   0    8  S0            0 : 1 :   0    8  S0    
   1 : 1 :   0    8  S             1 : 1 :   0    8  S     
   2 : 1 :   0    8  IP            2 : 1 :   0    8  IP    
   3 : 0 :   0    8  NP            3 : 0 :   0    2  NP    
@@ -60,18 +58,17 @@
  13 : 1 :   7    8  NP          
 
 ========
-   3    8    0   83.33  90.91    10     12   11      0      8     2    25.00
--<1>---(wn1=  8, bn1= 12)-           -<2>---(wn2=  8, bn2= 11)-
-  0 : 0 : pfn_et_nf_kk_p1  Ég                     0 : 0 : pfn_et_nf_p1  Ég             
-  1 : 0 : so_0_fh_p1_et_þt_gm  ákvað                 1 : 0 : so_0_et_fh_gm_p1_þt  ákvað         
+   3    8    0   83.33  90.91    10     12   11      0      7     7   100.00
+-<1>---(wn1=  7, bn1= 12)-           -<2>---(wn2=  7, bn2= 11)-
+  0 : 1 : pfn     Ég                     0 : 1 : pfn     Ég             
+  1 : 1 : so      ákvað                 1 : 1 : so      ákvað         
   2 : 1 : nhm     að                     2 : 1 : nhm     að             
-  3 : 0 : so_1_þf_nh_gm  hafa                    3 : 0 : so_1_þf_gm_nh  hafa            
-  4 : 0 : eo_fst  ekki                    4 : 0 : eo      ekki            
-  5 : 0 : no_et_þf_kk  þjálfara              5 : 0 : no_et_kk_þf  þjálfara      
-  6 : 0 : ao_fst  í_ár                  6 : 0 : ao      í_ár          
-  7 : 1 : grm     .                       7 : 1 : grm     .               
+  3 : 1 : so      hafa                    3 : 1 : so      hafa            
+  4 : 1 : eo      ekki                    4 : 1 : eo      ekki            
+  5 : 1 : no      þjálfara              5 : 1 : no      þjálfara      
+  6 : 1 : ao      í_ár                  6 : 1 : ao      í_ár          
 
-  0 : 1 :   0    8  S0            0 : 1 :   0    8  S0    
+  0 : 1 :   0    7  S0            0 : 1 :   0    7  S0    
   1 : 1 :   0    7  S             1 : 1 :   0    7  S     
   2 : 1 :   0    7  IP            2 : 1 :   0    7  IP    
   3 : 1 :   0    1  NP            3 : 1 :   0    1  NP    
@@ -85,20 +82,19 @@
  11 : 0 :   6    7  ADVP        
 
 ========
-   4   10    0  100.00 100.00    14     14   14      0     10     2    20.00
--<1>---(wn1= 10, bn1= 14)-           -<2>---(wn2= 10, bn2= 14)-
-  0 : 0 : no_et_nf_kvk_gr  Vélin                  0 : 0 : no_et_gr_kvk_nf  Vélin          
-  1 : 0 : so_1_nf_fh_p3_et_nt_gm  er                      1 : 0 : so_1_nf_et_fh_gm_nt_p3  er              
-  2 : 0 : eo_fst  um                      2 : 0 : ao      um              
-  3 : 0 : tala_ft_nf_hk  238                     3 : 0 : tala_ft_hk_nf  238             
-  4 : 0 : no_ft_nf_hk  hestöfl                4 : 0 : no_ft_hk_nf  hestöfl        
+   4   10    0  100.00 100.00    14     14   14      0      9     9   100.00
+-<1>---(wn1=  9, bn1= 14)-           -<2>---(wn2=  9, bn2= 14)-
+  0 : 1 : no      Vélin                  0 : 1 : no      Vélin          
+  1 : 1 : so      er                      1 : 1 : so      er              
+  2 : 1 : eo      um                      2 : 1 : ao      um              
+  3 : 1 : tala    238                     3 : 1 : tala    238             
+  4 : 1 : no      hestöfl                4 : 1 : no      hestöfl        
   5 : 1 : st      og                      5 : 1 : st      og              
-  6 : 0 : no_et_nf_hk_gr  togið                  6 : 0 : no_et_gr_hk_nf  togið          
-  7 : 0 : so_1_nf_fh_p3_et_nt_gm  er                      7 : 0 : so_et_fh_gm_nt_p3  er              
-  8 : 0 : lo_et_nf_hk_fst_sb  mikið                  8 : 0 : lo_et_hk_nf_sb  mikið          
-  9 : 1 : grm     .                       9 : 1 : grm     .               
+  6 : 1 : no      togið                  6 : 1 : no      togið          
+  7 : 1 : so      er                      7 : 1 : so      er              
+  8 : 1 : lo      mikið                  8 : 1 : lo      mikið          
 
-  0 : 1 :   0   10  S0            0 : 1 :   0   10  S0    
+  0 : 1 :   0    9  S0            0 : 1 :   0    9  S0    
   1 : 1 :   0    5  S             1 : 1 :   0    5  S     
   2 : 1 :   0    5  IP            2 : 1 :   0    5  IP    
   3 : 1 :   0    1  NP            3 : 1 :   0    1  NP    
@@ -114,20 +110,19 @@
  13 : 1 :   8    9  NP           13 : 1 :   8    9  NP    
 
 ========
-   5   10    0   88.24  83.33    15     17   18      2     10     4    40.00
--<1>---(wn1= 10, bn1= 17)-           -<2>---(wn2= 10, bn2= 18)-
-  0 : 0 : pfn_et_nf_hk_p3  Það                   0 : 0 : pfn_et_hk_nf_p3  Það           
-  1 : 0 : so_0_fh_p3_et_nt_gm  þarf                   1 : 0 : so_0_et_fh_gm_nt_p3  þarf           
+   5   10    0   88.24  83.33    15     17   18      2      9     9   100.00
+-<1>---(wn1=  9, bn1= 17)-           -<2>---(wn2=  9, bn2= 18)-
+  0 : 1 : pfn     Það                   0 : 1 : pfn     Það           
+  1 : 1 : so      þarf                   1 : 1 : so      þarf           
   2 : 1 : nhm     að                     2 : 1 : nhm     að             
-  3 : 0 : so_1_þf_nh_gm  setja                   3 : 0 : so_1_þf_gm_nh  setja           
-  4 : 0 : no_et_þf_kk  pening                  4 : 0 : no_et_kk_þf  pening          
-  5 : 1 : fs_þf  í                      5 : 1 : fs_þf  í              
-  6 : 0 : no_et_þf_hk_gr  heilbrigðiskerfið        6 : 0 : no_et_gr_hk_þf  heilbrigðiskerfið
-  7 : 1 : fs_þf  yfir                    7 : 1 : fs_þf  yfir            
-  8 : 0 : no_et_þf_hk  höfuð                 8 : 0 : no_et_hk_þf  höfuð         
-  9 : 1 : grm     .                       9 : 1 : grm     .               
+  3 : 1 : so      setja                   3 : 1 : so      setja           
+  4 : 1 : no      pening                  4 : 1 : no      pening          
+  5 : 1 : fs      í                      5 : 1 : fs      í              
+  6 : 1 : no      heilbrigðiskerfið        6 : 1 : no      heilbrigðiskerfið
+  7 : 1 : fs      yfir                    7 : 1 : fs      yfir            
+  8 : 1 : no      höfuð                 8 : 1 : no      höfuð         
 
-  0 : 1 :   0   10  S0            0 : 1 :   0   10  S0    
+  0 : 1 :   0    9  S0            0 : 1 :   0    9  S0    
   1 : 1 :   0    9  S             1 : 1 :   0    9  S     
   2 : 1 :   0    9  IP            2 : 1 :   0    9  IP    
   3 : 1 :   0    1  NP            3 : 1 :   0    1  NP    
@@ -147,20 +142,19 @@
                                  17 : 1 :   8    9  NP    
 
 ========
-   6   10    0   66.67  71.43    10     15   14      2     10     3    30.00
--<1>---(wn1= 10, bn1= 15)-           -<2>---(wn2= 10, bn2= 14)-
-  0 : 1 : fs_ef   Vegna                   0 : 1 : fs_ef   Vegna           
-  1 : 0 : lo_et_ef_kk_fst_sb  mikils                  1 : 0 : lo_ef_et_kk_sb  mikils          
-  2 : 0 : no_et_ef_kk  áhuga                  2 : 0 : no_ef_et_kk  áhuga          
-  3 : 0 : so_0_fh_p3_ft_nt_gm  eru                     3 : 0 : so_1_nf_fh_ft_gm_nt_p3  eru             
-  4 : 0 : no_ft_nf_kk  höfundar               4 : 0 : no_ft_kk_nf  höfundar       
-  5 : 0 : so_0_lhþt_ft  byrjaðir               5 : 0 : so_ft_kk_lhþt_nf_sb  byrjaðir       
-  6 : 1 : fs_þgf  á                      6 : 1 : fs_þgf  á              
-  7 : 0 : no_et_þgf_kvk  seríu                  7 : 0 : no_et_kvk_þgf  seríu          
-  8 : 0 : to_ft_ef_hk  þrjú                  8 : 0 : to_ft_hk_nf  þrjú          
-  9 : 1 : grm     .                       9 : 1 : grm     .               
+   6   10    0   66.67  71.43    10     15   14      2      9     9   100.00
+-<1>---(wn1=  9, bn1= 15)-           -<2>---(wn2=  9, bn2= 14)-
+  0 : 1 : fs      Vegna                   0 : 1 : fs      Vegna           
+  1 : 1 : lo      mikils                  1 : 1 : lo      mikils          
+  2 : 1 : no      áhuga                  2 : 1 : no      áhuga          
+  3 : 1 : so      eru                     3 : 1 : so      eru             
+  4 : 1 : no      höfundar               4 : 1 : no      höfundar       
+  5 : 1 : so      byrjaðir               5 : 1 : so      byrjaðir       
+  6 : 1 : fs      á                      6 : 1 : fs      á              
+  7 : 1 : no      seríu                  7 : 1 : no      seríu          
+  8 : 1 : to      þrjú                  8 : 1 : to      þrjú          
 
-  0 : 1 :   0   10  S0            0 : 1 :   0   10  S0    
+  0 : 1 :   0    9  S0            0 : 1 :   0    9  S0    
   1 : 1 :   0    9  S             1 : 1 :   0    9  S     
   2 : 1 :   0    9  IP            2 : 1 :   0    9  IP    
   3 : 1 :   0    3  PP            3 : 1 :   0    3  PP    
@@ -178,18 +172,17 @@
 
 ========
    7    8    1    0.00   0.00     0      0    0      0      0     0     0.00
--<1>---(wn1=  8, bn1= 13)-           -<2>---(wn2=  9, bn2= 12)-
-  0 : 9 : no_et_þf_kvk  Skýrslu                0 : 9 : no_et_kvk_þf  Skýrslu        
-  1 : 9 : fs_þf  um                      1 : 9 : fs_þf  um              
-  2 : 9 : no_ft_þf_kvk  niðurstöður          2 : 9 : no_ft_kvk_þf  niðurstöður  
-  3 : 9 : no_et_ef_kvk_gr  könnunarinnar          3 : 9 : no_ef_et_gr_kvk  könnunarinnar  
-  4 : 9 : so_0_fh_p3_et_nt_gm  má                     4 : 9 : so_et_fh_gm_nt_p3  má             
-  5 : 9 : so_1_þf_nh_gm  finna                   5 : 9 : so_1_þf_gm_nh  finna           
-  6 : 9 : ao_fst  hér_að_neðan         6 : 9 : ao      að             
-  7 : 9 : grm     .                       7 : 9 : ao      neðan          
-                                          8 : 9 : grm     .               
+-<1>---(wn1=  7, bn1= 13)-           -<2>---(wn2=  8, bn2= 12)-
+  0 : 9 : no      Skýrslu                0 : 9 : no      Skýrslu        
+  1 : 9 : fs      um                      1 : 9 : fs      um              
+  2 : 9 : no      niðurstöður          2 : 9 : no      niðurstöður  
+  3 : 9 : no      könnunarinnar          3 : 9 : no      könnunarinnar  
+  4 : 9 : so      má                     4 : 9 : so      má             
+  5 : 9 : so      finna                   5 : 9 : so      finna           
+  6 : 9 : ao      hér_að_neðan         6 : 9 : ao      að             
+                                          7 : 9 : ao      neðan          
 
-  0 : 9 :   0    8  S0            0 : 9 :   0    9  S0    
+  0 : 9 :   0    7  S0            0 : 9 :   0    8  S0    
   1 : 9 :   0    7  S-MAIN        1 : 9 :   0    8  S-MAIN
   2 : 9 :   0    7  IP            2 : 9 :   0    8  IP    
   3 : 9 :   0    4  NP-OBJ        3 : 9 :   0    4  NP-SUBJ
@@ -204,20 +197,19 @@
  12 : 9 :   6    7  ADVP        
 
 ========
-   8   10    0  100.00 100.00    14     14   14      0     10     2    20.00
--<1>---(wn1= 10, bn1= 14)-           -<2>---(wn2= 10, bn2= 14)-
-  0 : 0 : person_et_nf_kk  Erling                  0 : 0 : person_kk_nf  Erling          
-  1 : 0 : so_1_þf_fh_p3_et_nt_gm  segir                   1 : 0 : so_1_þf_et_fh_gm_nt_p3  segir           
-  2 : 0 : eo_fst  þó                    2 : 0 : eo      þó            
-  3 : 0 : fn_et_þf_kvk  enga                    3 : 0 : fn_et_kvk_þf  enga            
-  4 : 0 : no_et_þf_kvk  ástæðu               4 : 0 : no_et_kvk_þf  ástæðu       
-  5 : 0 : fs      til                     5 : 0 : fs_nh   til             
+   8   10    0  100.00 100.00    14     14   14      0      9     9   100.00
+-<1>---(wn1=  9, bn1= 14)-           -<2>---(wn2=  9, bn2= 14)-
+  0 : 1 : person  Erling                  0 : 1 : person  Erling          
+  1 : 1 : so      segir                   1 : 1 : so      segir           
+  2 : 1 : eo      þó                    2 : 1 : eo      þó            
+  3 : 1 : fn      enga                    3 : 1 : fn      enga            
+  4 : 1 : no      ástæðu               4 : 1 : no      ástæðu       
+  5 : 1 : fs      til                     5 : 1 : fs      til             
   6 : 1 : nhm     að                     6 : 1 : nhm     að             
-  7 : 0 : so_1_þf_nh_gm  hafa                    7 : 0 : so_1_þf_gm_nh  hafa            
-  8 : 0 : no_ft_þf_kvk  áhyggjur               8 : 0 : no_ft_kvk_þf  áhyggjur       
-  9 : 1 : grm     .                       9 : 1 : grm     .               
+  7 : 1 : so      hafa                    7 : 1 : so      hafa            
+  8 : 1 : no      áhyggjur               8 : 1 : no      áhyggjur       
 
-  0 : 1 :   0   10  S0            0 : 1 :   0   10  S0    
+  0 : 1 :   0    9  S0            0 : 1 :   0    9  S0    
   1 : 1 :   0    9  S             1 : 1 :   0    9  S     
   2 : 1 :   0    9  IP            2 : 1 :   0    9  IP    
   3 : 1 :   0    1  NP            3 : 1 :   0    1  NP    
@@ -233,20 +225,19 @@
  13 : 1 :   8    9  NP           13 : 1 :   8    9  NP    
 
 ========
-   9   10    0   35.71  50.00     5     14   10      3     10     2    20.00
--<1>---(wn1= 10, bn1= 14)-           -<2>---(wn2= 10, bn2= 10)-
-  0 : 0 : lo_ft_nf_hk_mst  Eldri                   0 : 0 : lo_et_kvk_mst_nf  Eldri           
+   9   10    0   35.71  50.00     5     14   10      3      9     7    77.78
+-<1>---(wn1=  9, bn1= 14)-           -<2>---(wn2=  9, bn2= 10)-
+  0 : 1 : lo      Eldri                   0 : 1 : lo      Eldri           
   1 : 1 : st      en                      1 : 1 : st      en              
-  2 : 0 : tala_ft_ef_hk  18                      2 : 0 : tala_ef_ft_hk  18              
-  3 : 0 : no_ft_ef_hk  ára                    3 : 0 : no_ef_ft_hk  ára            
-  4 : 0 : so_1_þf_fh_p3_ft_nt_gm  greiða                 4 : 0 : lo_et_hk_nf_vb  greiða         
-  5 : 0 : lo_et_þf_hk_fst_sb  venjulegt               5 : 0 : lo_et_hk_nf_sb  venjulegt       
-  6 : 0 : no_et_þf_hk  komugjald               6 : 0 : no_et_hk_nf  komugjald       
-  7 : 0 : fs_þf  á                      7 : 0 : so_0_et_fh_gm_nt_p3  á              
-  8 : 0 : no_et_þf_kvk  stöð                  8 : 0 : no_et_kvk_nf  stöð          
-  9 : 1 : grm     .                       9 : 1 : grm     .               
+  2 : 1 : tala    18                      2 : 1 : tala    18              
+  3 : 1 : no      ára                    3 : 1 : no      ára            
+  4 : 0 : so      greiða                 4 : 0 : lo      greiða         
+  5 : 1 : lo      venjulegt               5 : 1 : lo      venjulegt       
+  6 : 1 : no      komugjald               6 : 1 : no      komugjald       
+  7 : 0 : fs      á                      7 : 0 : so      á              
+  8 : 1 : no      stöð                  8 : 1 : no      stöð          
 
-  0 : 1 :   0   10  S0            0 : 1 :   0   10  S0    
+  0 : 1 :   0    9  S0            0 : 1 :   0    9  S0    
   1 : 1 :   0    9  S             1 : 1 :   0    9  S     
   2 : 0 :   0    9  IP            2 : 0 :   0    7  NP    
   3 : 0 :   0    4  NP            3 : 0 :   1    7  CP    
@@ -262,19 +253,18 @@
  13 : 1 :   8    9  NP          
 
 ========
-  10    9    0   76.47  81.25    13     17   16      3      9     4    44.44
--<1>---(wn1=  9, bn1= 17)-           -<2>---(wn2=  9, bn2= 16)-
-  0 : 0 : pfn_et_nf_kk_p1  Ég                     0 : 0 : pfn_et_nf_p1  Ég             
-  1 : 0 : so_0_fh_p1_et_nt_gm  verð                   1 : 0 : so_et_fh_gm_nt_p1  verð           
+  10    9    0   76.47  81.25    13     17   16      3      8     8   100.00
+-<1>---(wn1=  8, bn1= 17)-           -<2>---(wn2=  8, bn2= 16)-
+  0 : 1 : pfn     Ég                     0 : 1 : pfn     Ég             
+  1 : 1 : so      verð                   1 : 1 : so      verð           
   2 : 1 : nhm     að                     2 : 1 : nhm     að             
-  3 : 0 : so_0_nh_gm  fá                     3 : 0 : so_0_gm_nh  fá             
+  3 : 1 : so      fá                     3 : 1 : so      fá             
   4 : 1 : nhm     að                     4 : 1 : nhm     að             
-  5 : 0 : so_0_nh_gm  hlæja                  5 : 0 : so_0_gm_nh  hlæja          
-  6 : 1 : fs_þgf  að                     6 : 1 : fs_þgf  að             
-  7 : 0 : fn_et_þgf_hk  þessu                  7 : 0 : fn_et_hk_þgf  þessu          
-  8 : 1 : grm     .                       8 : 1 : grm     .               
+  5 : 1 : so      hlæja                  5 : 1 : so      hlæja          
+  6 : 1 : fs      að                     6 : 1 : fs      að             
+  7 : 1 : fn      þessu                  7 : 1 : fn      þessu          
 
-  0 : 1 :   0    9  S0            0 : 1 :   0    9  S0    
+  0 : 1 :   0    8  S0            0 : 1 :   0    8  S0    
   1 : 1 :   0    8  S             1 : 1 :   0    8  S     
   2 : 1 :   0    8  IP            2 : 1 :   0    8  IP    
   3 : 1 :   0    1  NP            3 : 1 :   0    1  NP    
@@ -294,7 +284,7 @@
 
 ========
 ============================================================================
-                 77.44  81.75    103   133   126     10     86    23    26.74
+                 77.44  81.75    103   133   126     10     77    73    94.81
 === Summary ===
 
 -- All --
@@ -309,7 +299,7 @@ Complete match            =  22.22
 Average crossing          =   1.11
 No crossing               =  55.56
 2 or less crossing        =  77.78
-Tagging accuracy          =  26.74
+Tagging accuracy          =  94.81
 
 -- len<=100 --
 Number of sentence        =     10
@@ -323,4 +313,4 @@ Complete match            =  22.22
 Average crossing          =   1.11
 No crossing               =  55.56
 2 or less crossing        =  77.78
-Tagging accuracy          =  26.74
+Tagging accuracy          =  94.81

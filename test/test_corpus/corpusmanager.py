@@ -94,23 +94,19 @@ class Comparison():
 
 		# Hef (2), (5B) og (5C)
 		# Útbý (6A), (6B) og (6C) með to_brackets()
-		#helpers.to_brackets(GENPSD, TESTFILES, '.psd', '.grbr', False)
+		#helpers.to_brackets(GENPSD, TESTFILES, '.psd', '.grbr', True)
 		# helpers.to_brackets(GENPSD, TESTFILES, '.ippsd', '.ipbr', overwrite)
 		# helpers.to_brackets(GENPSD, TESTFILES, '.afpsd', '.afbr', overwrite)
 
 		# Hef (4A), (4B) og (4C) úr Maker
 		# Og (6A), (6B) og (6C) héðan
 		# Útbý (7A)
-		#helpers.get_results(BRACKETS, TESTFILES, REPORTS, ".out")
+		helpers.get_results(BRACKETS, TESTFILES, REPORTS, ".out")
 		
 		# Hef (7A)
 		# Útbý (7B)
 		suffixlist = [".grbr"]
 		helpers.combine_reports(REPORTS, suffixlist)
-
-
-
-
 
 	# Þáttar skjölin, útbýr vélþáttað skjal á slóðinni pgen
 
@@ -120,8 +116,8 @@ if __name__ == "__main__":
 	# TODO eftir að breyta ans í True/False gildi!
 	ans = False
 	start = timer()
-	maker = Maker()
-	maker.start(ans)
+	#maker = Maker()
+	#maker.start(ans)
 
 
 	comp = Comparison()

@@ -1,31 +1,29 @@
   Sent.                        Matched  Bracket   Cross        Correct Tag
  ID  Len.  Stat. Recal  Prec.  Bracket gold test Bracket Words  Tags Accracy
 ============================================================================
-   1   18    0   68.97  74.07    20     29   27      2     18     7    38.89
--<1>---(wn1= 18, bn1= 29)-           -<2>---(wn2= 18, bn2= 27)-
-  0 : 0 : pfn_et_nf_kk_p3  Hann                    0 : 0 : pfn_et_kk_nf_p3  Hann            
-  1 : 0 : so_1_nf_fh_p3_et_nt_gm  er                      1 : 0 : so_et_fh_gm_nt_p3  er              
-  2 : 0 : lo_et_nf_kk_sb  góður                 2 : 0 : lo_et_kk_nf_sb  góður         
-  3 : 1 : fs_þf  fyrir                   3 : 1 : fs_þf  fyrir           
-  4 : 0 : no_et_þf_kvk_gr  deildina                4 : 0 : no_et_gr_kvk_þf  deildina        
+   1   18    0   65.52  70.37    19     29   27      2     16    16   100.00
+-<1>---(wn1= 16, bn1= 29)-           -<2>---(wn2= 16, bn2= 27)-
+  0 : 1 : pfn     Hann                    0 : 1 : pfn     Hann            
+  1 : 1 : so      er                      1 : 1 : so      er              
+  2 : 1 : lo      góður                 2 : 1 : lo      góður         
+  3 : 1 : fs      fyrir                   3 : 1 : fs      fyrir           
+  4 : 1 : no      deildina                4 : 1 : no      deildina        
   5 : 1 : st      en                      5 : 1 : st      en              
-  6 : 0 : pfn_et_nf_kk_p3  hann                    6 : 0 : pfn_et_kk_nf_p3  hann            
-  7 : 0 : so_0_fh_p3_et_nt_gm  mun                     7 : 0 : so_et_fh_gm_nt_p3  mun             
-  8 : 0 : so_0_nh_gm  snúa                   8 : 0 : so_0_gm_nh  snúa           
+  6 : 1 : pfn     hann                    6 : 1 : pfn     hann            
+  7 : 1 : so      mun                     7 : 1 : so      mun             
+  8 : 1 : so      snúa                   8 : 1 : so      snúa           
   9 : 1 : ao      aftur                   9 : 1 : ao      aftur           
- 10 : 1 : fs_þf  í                     10 : 1 : fs_þf  í              
- 11 : 0 : lo_et_þf_kvk_vb  ensku                  11 : 0 : lo_et_kvk_vb_þf  ensku           
- 12 : 0 : no_et_þf_kvk_gr  úrvalsdeildina        12 : 0 : no_et_gr_kvk_þf  úrvalsdeildina 
- 13 : 1 : grm     ,                      13 : 1 : grm     ,               
- 14 : 0 : so_1_þf_fh_p3_et_þt_gm  bætti                 14 : 0 : so_1_þf_et_fh_gm_p3_þt  bætti          
- 15 : 0 : person_et_nf_kk  Raiola                 15 : 0 : no_et_hk_þf  Raiola          
- 16 : 1 : ao      við                   16 : 1 : ao      við            
- 17 : 1 : grm     .                      17 : 1 : grm     .               
+ 10 : 1 : fs      í                     10 : 1 : fs      í              
+ 11 : 1 : lo      ensku                  11 : 1 : lo      ensku           
+ 12 : 1 : no      úrvalsdeildina        12 : 1 : no      úrvalsdeildina 
+ 13 : 1 : so      bætti                 13 : 1 : so      bætti          
+ 14 : 1 : person  Raiola                 14 : 1 : no      Raiola          
+ 15 : 1 : ao      við                   15 : 1 : ao      við            
 
-  0 : 1 :   0   18  S0            0 : 1 :   0   18  S0    
-  1 : 0 :   0   17  S             1 : 1 :   0    5  S     
-  2 : 0 :   0   17  IP            2 : 1 :   0    5  IP    
-  3 : 1 :   0    5  CP            3 : 1 :   0    1  NP    
+  0 : 1 :   0   16  S0            0 : 1 :   0   16  S0    
+  1 : 0 :   0   16  S             1 : 0 :   0    5  S     
+  2 : 0 :   0   16  IP            2 : 1 :   0    5  IP    
+  3 : 0 :   0    5  CP            3 : 1 :   0    1  NP    
   4 : 1 :   0    5  IP            4 : 1 :   1    5  VP    
   5 : 1 :   0    1  NP            5 : 1 :   1    2  VP    
   6 : 1 :   1    5  VP            6 : 1 :   2    5  NP    
@@ -34,10 +32,10 @@
   9 : 1 :   3    5  PP            9 : 1 :   3    4  P     
  10 : 1 :   3    4  P            10 : 1 :   4    5  NP    
  11 : 1 :   4    5  NP           11 : 1 :   5    6  C     
- 12 : 1 :   5    6  C            12 : 0 :   6   17  S     
- 13 : 0 :   6   13  CP           13 : 0 :   6   17  IP    
+ 12 : 1 :   5    6  C            12 : 0 :   6   16  S     
+ 13 : 0 :   6   13  CP           13 : 0 :   6   16  IP    
  14 : 0 :   6   13  IP           14 : 1 :   6    7  NP    
- 15 : 1 :   6    7  NP           15 : 0 :   7   17  VP    
+ 15 : 1 :   6    7  NP           15 : 0 :   7   16  VP    
  16 : 0 :   7   13  VP           16 : 0 :   7    9  VP    
  17 : 1 :   7    8  VP           17 : 1 :   7    8  VP    
  18 : 0 :   8   13  VP           18 : 1 :   8    9  VP    
@@ -45,41 +43,40 @@
  20 : 1 :   9   10  ADVP         20 : 1 :   9   10  ADVP  
  21 : 0 :  10   13  PP           21 : 1 :  10   11  P     
  22 : 1 :  10   11  P            22 : 1 :  11   13  NP    
- 23 : 1 :  11   13  NP           23 : 0 :  14   16  VP    
- 24 : 0 :  14   17  CP           24 : 1 :  14   15  VP    
- 25 : 0 :  14   17  VP           25 : 1 :  15   16  NP    
- 26 : 1 :  14   15  VP           26 : 1 :  16   17  ADVP  
- 27 : 1 :  15   16  NP          
- 28 : 1 :  16   17  ADVP        
+ 23 : 1 :  11   13  NP           23 : 0 :  13   15  VP    
+ 24 : 0 :  13   16  CP           24 : 1 :  13   14  VP    
+ 25 : 0 :  13   16  VP           25 : 1 :  14   15  NP    
+ 26 : 1 :  13   14  VP           26 : 1 :  15   16  ADVP  
+ 27 : 1 :  14   15  NP          
+ 28 : 1 :  15   16  ADVP        
 
 ========
-   2   23    0   50.00  51.35    19     38   37     10     23     7    30.43
--<1>---(wn1= 23, bn1= 38)-           -<2>---(wn2= 23, bn2= 37)-
+   2   23    0   50.00  51.35    19     38   37     10     22    20    90.91
+-<1>---(wn1= 22, bn1= 38)-           -<2>---(wn2= 22, bn2= 37)-
   0 : 0 : nhm     Að                     0 : 0 : st      Að             
-  1 : 0 : so_1_þf_nh_gm  ræða                  1 : 0 : lo_et_hk_nf_vb  ræða          
-  2 : 0 : no_ft_þf_hk  kynferðisbrot          2 : 0 : no_et_hk_nf  kynferðisbrot  
-  3 : 1 : fs_þf  á                      3 : 1 : fs_þf  á              
-  4 : 0 : lo_et_þf_kk_sb  opinskáan              4 : 0 : lo_et_kk_sb_þf  opinskáan      
-  5 : 0 : no_et_þf_kk  hátt                   5 : 0 : no_et_kk_þf  hátt           
-  6 : 0 : so_1_nf_fh_p3_et_nt_gm  er                      6 : 0 : so_et_fh_gm_nt_p3  er              
-  7 : 0 : lo_et_nf_hk_sb  eitt                    7 : 0 : lo_et_hk_nf_sb  eitt            
-  8 : 1 : fs_þgf  af                      8 : 1 : fs_þgf  af              
-  9 : 0 : pfn_et_þgf_hk_p3  því                   9 : 0 : fn_et_hk_þgf  því           
+  1 : 0 : so      ræða                  1 : 0 : lo      ræða          
+  2 : 1 : no      kynferðisbrot          2 : 1 : no      kynferðisbrot  
+  3 : 1 : fs      á                      3 : 1 : fs      á              
+  4 : 1 : lo      opinskáan              4 : 1 : lo      opinskáan      
+  5 : 1 : no      hátt                   5 : 1 : no      hátt           
+  6 : 1 : so      er                      6 : 1 : so      er              
+  7 : 1 : lo      eitt                    7 : 1 : lo      eitt            
+  8 : 1 : fs      af                      8 : 1 : fs      af              
+  9 : 1 : pfn     því                   9 : 1 : fn      því           
  10 : 1 : stt     sem                    10 : 1 : stt     sem             
- 11 : 0 : so_1_þgf_sagnb_gm  hjálpað              11 : 0 : so_1_þgf_gm_sagnb  hjálpað       
- 12 : 0 : so_0_fh_p3_et_nt_gm  getur                  12 : 0 : so_et_fh_gm_nt_p3  getur           
- 13 : 0 : no_ft_þgf_hk  fórnarlömbum         13 : 0 : no_ft_hk_þgf  fórnarlömbum  
+ 11 : 1 : so      hjálpað              11 : 1 : so      hjálpað       
+ 12 : 1 : so      getur                  12 : 1 : so      getur           
+ 13 : 1 : no      fórnarlömbum         13 : 1 : no      fórnarlömbum  
  14 : 1 : nhm     að                    14 : 1 : nhm     að             
- 15 : 0 : so_1_þgf_nh_gm  skila                  15 : 0 : so_1_þgf_gm_nh  skila           
- 16 : 0 : no_et_þgf_kvk_gr  skömminni             16 : 0 : no_et_gr_kvk_þgf  skömminni      
+ 15 : 1 : so      skila                  15 : 1 : so      skila           
+ 16 : 1 : no      skömminni             16 : 1 : no      skömminni      
  17 : 1 : ao      þangað               17 : 1 : ao      þangað        
- 18 : 0 : stt     sem                    18 : 0 : st      sem             
- 19 : 0 : pfn_et_nf_kvk_p3  hún                   19 : 0 : pfn_et_kvk_nf_p3  hún            
- 20 : 0 : so_0_fh_p3_et_nt_gm  á                     20 : 0 : so_0_et_fh_gm_nt_p3  á              
+ 18 : 1 : stt     sem                    18 : 1 : st      sem             
+ 19 : 1 : pfn     hún                   19 : 1 : pfn     hún            
+ 20 : 1 : so      á                     20 : 1 : so      á              
  21 : 1 : ao      heima                  21 : 1 : ao      heima           
- 22 : 1 : grm     .                      22 : 1 : grm     .               
 
-  0 : 1 :   0   23  S0            0 : 1 :   0   23  S0    
+  0 : 1 :   0   22  S0            0 : 1 :   0   22  S0    
   1 : 1 :   0   22  S             1 : 1 :   0   22  S     
   2 : 1 :   0   22  IP            2 : 1 :   0   22  IP    
   3 : 0 :   0    6  NP            3 : 0 :   0   20  NP    
@@ -119,33 +116,32 @@
  37 : 1 :  21   22  ADVP        
 
 ========
-   3   23    0   84.21  82.05    32     38   39      1     23     7    30.43
--<1>---(wn1= 23, bn1= 38)-           -<2>---(wn2= 23, bn2= 39)-
+   3   23    0   84.21  82.05    32     38   39      1     22    21    95.45
+-<1>---(wn1= 22, bn1= 38)-           -<2>---(wn2= 22, bn2= 39)-
   0 : 1 : st      Og                      0 : 1 : st      Og              
-  1 : 0 : pfn_et_nf_kk_p3  hann                    1 : 0 : pfn_et_kk_nf_p3  hann            
-  2 : 0 : so_1_nf_fh_p3_et_nt_gm  er                      2 : 0 : so_et_fh_gm_nt_p3  er              
-  3 : 0 : lo_et_nf_kk_sb  hreinskilinn            3 : 0 : lo_et_kk_nf_sb  hreinskilinn    
+  1 : 1 : pfn     hann                    1 : 1 : pfn     hann            
+  2 : 1 : so      er                      2 : 1 : so      er              
+  3 : 1 : lo      hreinskilinn            3 : 1 : lo      hreinskilinn    
   4 : 1 : st      þegar                  4 : 1 : st      þegar          
-  5 : 0 : pfn_et_nf_kk_p3  hann                    5 : 0 : pfn_et_kk_nf_p3  hann            
-  6 : 0 : so_0_fh_p3_et_nt_gm  er                      6 : 0 : so_et_fh_gm_nt_p3  er              
-  7 : 0 : so_2_þf_ef_lhþt_et  spurður                7 : 0 : so_et_kk_lhþt_nf_sb  spurður        
+  5 : 1 : pfn     hann                    5 : 1 : pfn     hann            
+  6 : 1 : so      er                      6 : 1 : so      er              
+  7 : 1 : so      spurður                7 : 1 : so      spurður        
   8 : 1 : st      hvort                   8 : 1 : st      hvort           
-  9 : 0 : no_et_nf_kvk  fjarvera                9 : 0 : no_et_kvk_nf  fjarvera        
- 10 : 0 : lo_ft_ef_kk_sb  íslenskra             10 : 0 : lo_ef_ft_kk_sb  íslenskra      
- 11 : 0 : no_ft_ef_kk  ráðamanna            11 : 0 : no_ef_ft_kk  ráðamanna     
- 12 : 1 : fs_þgf  á                     12 : 1 : fs_þgf  á              
- 13 : 0 : abbrev  HM                     13 : 0 : no_et_hk_þgf  HM              
- 14 : 1 : fs_þf  í                     14 : 1 : fs_þf  í              
- 15 : 0 : no_et_þf_hk  sumar                  15 : 0 : no_et_hk_þf  sumar           
- 16 : 0 : so_0_vh_p3_et_nt_gm  muni                   16 : 0 : so_et_gm_nt_p3_vh  muni            
- 17 : 0 : so_1_þf_nh_gm  setja                  17 : 0 : so_1_þf_gm_nh  setja           
- 18 : 0 : no_et_þf_hk  mark                   18 : 0 : no_et_hk_þf  mark            
- 19 : 0 : fn_et_þf_hk  sitt                   19 : 0 : fn_et_hk_þf  sitt            
- 20 : 1 : fs_þf  á                     20 : 1 : fs_þf  á              
- 21 : 0 : no_ft_þf_kk_gr  leikmennina            21 : 0 : no_ft_gr_kk_þf  leikmennina     
- 22 : 1 : grm     .                      22 : 1 : grm     .               
+  9 : 1 : no      fjarvera                9 : 1 : no      fjarvera        
+ 10 : 1 : lo      íslenskra             10 : 1 : lo      íslenskra      
+ 11 : 1 : no      ráðamanna            11 : 1 : no      ráðamanna     
+ 12 : 1 : fs      á                     12 : 1 : fs      á              
+ 13 : 0 : abbrev  HM                     13 : 0 : no      HM              
+ 14 : 1 : fs      í                     14 : 1 : fs      í              
+ 15 : 1 : no      sumar                  15 : 1 : no      sumar           
+ 16 : 1 : so      muni                   16 : 1 : so      muni            
+ 17 : 1 : so      setja                  17 : 1 : so      setja           
+ 18 : 1 : no      mark                   18 : 1 : no      mark            
+ 19 : 1 : fn      sitt                   19 : 1 : fn      sitt            
+ 20 : 1 : fs      á                     20 : 1 : fs      á              
+ 21 : 1 : no      leikmennina            21 : 1 : no      leikmennina     
 
-  0 : 1 :   0   23  S0            0 : 1 :   0   23  S0    
+  0 : 1 :   0   22  S0            0 : 1 :   0   22  S0    
   1 : 1 :   0    1  S             1 : 1 :   0    1  S     
   2 : 1 :   0    1  C             2 : 1 :   0    1  C     
   3 : 1 :   1   22  S             3 : 1 :   1   22  S     
@@ -186,29 +182,28 @@
                                  38 : 1 :  21   22  NP    
 
 ========
-   4   19    0   93.33  87.50    28     30   32      1     19     6    31.58
--<1>---(wn1= 19, bn1= 30)-           -<2>---(wn2= 19, bn2= 32)-
-  0 : 0 : no_ft_nf_hk  Verðlaun               0 : 0 : no_ft_hk_nf  Verðlaun       
-  1 : 0 : so_0_fh_p3_ft_þt_gm  voru                    1 : 0 : so_fh_ft_gm_p3_þt  voru            
-  2 : 0 : so_0_lhþt_ft  veitt                   2 : 0 : so_ft_hk_lhþt_nf_sb  veitt           
-  3 : 1 : fs_þf  fyrir                   3 : 1 : fs_þf  fyrir           
-  4 : 0 : no_et_þf_hk  uppgjafartak            4 : 0 : no_et_hk_þf  uppgjafartak    
-  5 : 0 : no_et_ef_hk_gr  mótsins                5 : 0 : no_ef_et_gr_hk  mótsins        
+   4   19    0   93.33  87.50    28     30   32      1     18    17    94.44
+-<1>---(wn1= 18, bn1= 30)-           -<2>---(wn2= 18, bn2= 32)-
+  0 : 1 : no      Verðlaun               0 : 1 : no      Verðlaun       
+  1 : 1 : so      voru                    1 : 1 : so      voru            
+  2 : 1 : so      veitt                   2 : 1 : so      veitt           
+  3 : 1 : fs      fyrir                   3 : 1 : fs      fyrir           
+  4 : 1 : no      uppgjafartak            4 : 1 : no      uppgjafartak    
+  5 : 1 : no      mótsins                5 : 1 : no      mótsins        
   6 : 1 : st      og                      6 : 1 : st      og              
-  7 : 0 : so_1_þf_fh_p3_et_þt_gm  hlaut                   7 : 0 : so_1_þf_et_fh_gm_p3_þt  hlaut           
-  8 : 0 : pfn_ft_þf_hk_p3  þau                    8 : 0 : pfn_ft_hk_p3_þf  þau            
-  9 : 0 : person_nf_kk  Jóhann_Ingi_Bjarnason        9 : 0 : person_kk_nf  Jóhann_Ingi_Bjarnason
+  7 : 1 : so      hlaut                   7 : 1 : so      hlaut           
+  8 : 1 : pfn     þau                    8 : 1 : pfn     þau            
+  9 : 1 : person  Jóhann_Ingi_Bjarnason        9 : 1 : person  Jóhann_Ingi_Bjarnason
  10 : 1 : ao      eftir                  10 : 1 : ao      eftir           
  11 : 1 : st      að                    11 : 1 : st      að             
- 12 : 0 : pfn_et_nf_kk_p3  hann                   12 : 0 : pfn_et_kk_nf_p3  hann            
- 13 : 0 : so_1_þgf_fh_p3_et_þt_gm  náði                 13 : 0 : so_0_et_fh_gm_p3_þt  náði          
- 14 : 0 : lo_et_þgf_kk  fljúgandi             14 : 0 : so_1_þgf_lh_nt  fljúgandi      
- 15 : 0 : no_et_þgf_kk  armlás                15 : 0 : no_et_kk_þgf  armlás         
- 16 : 1 : fs_þf  á                     16 : 1 : fs_þf  á              
- 17 : 0 : person_þf_kk  Friðjón_Inga_Sigurjónsson       17 : 0 : person_kk_þf  Friðjón_Inga_Sigurjónsson
- 18 : 1 : grm     .                      18 : 1 : grm     .               
+ 12 : 1 : pfn     hann                   12 : 1 : pfn     hann            
+ 13 : 1 : so      náði                 13 : 1 : so      náði          
+ 14 : 0 : lo      fljúgandi             14 : 0 : so      fljúgandi      
+ 15 : 1 : no      armlás                15 : 1 : no      armlás         
+ 16 : 1 : fs      á                     16 : 1 : fs      á              
+ 17 : 1 : person  Friðjón_Inga_Sigurjónsson       17 : 1 : person  Friðjón_Inga_Sigurjónsson
 
-  0 : 1 :   0   19  S0            0 : 1 :   0   19  S0    
+  0 : 1 :   0   18  S0            0 : 1 :   0   18  S0    
   1 : 1 :   0    6  S             1 : 1 :   0    6  S     
   2 : 1 :   0    6  IP            2 : 1 :   0    6  IP    
   3 : 1 :   0    1  NP            3 : 1 :   0    1  NP    
@@ -242,91 +237,87 @@
                                  31 : 1 :  17   18  NP    
 
 ========
-   5   22    0   83.33  80.65    25     30   31      3     22     9    40.91
--<1>---(wn1= 22, bn1= 30)-           -<2>---(wn2= 22, bn2= 31)-
-  0 : 0 : person_nf_kvk  Svanhildur_Sigurjónsdóttir        0 : 0 : person_kvk_nf  Svanhildur_Sigurjónsdóttir
-  1 : 1 : grm     ,                       1 : 1 : grm     ,               
-  2 : 0 : no_et_nf_kk  aðstoðardeildarstjóri        2 : 0 : no_et_kk_nf  aðstoðardeildarstjóri
-  3 : 0 : no_et_ef_kvk  bráðalyflækningadeildar        3 : 0 : no_ef_et_kvk  bráðalyflækningadeildar
-  4 : 0 : fyrirtæki_et_ef_kk_gr  Landspítalans          4 : 0 : no_ef_et_gr_kk  Landspítalans  
-  5 : 1 : grm     ,                       5 : 1 : grm     ,               
-  6 : 0 : so_1_þf_fh_p3_et_nt_gm  segir                   6 : 0 : so_1_þf_et_fh_gm_nt_p3  segir           
-  7 : 0 : no_et_þf_kvk_gr  deildina                7 : 0 : no_et_gr_kvk_þf  deildina        
-  8 : 0 : so_0_nh_gm  finna                   8 : 0 : so_0_gm_nh  finna           
-  9 : 1 : ao      gríðarlega            9 : 1 : ao      gríðarlega    
- 10 : 1 : fs_þgf  fyrir                  10 : 1 : fs_þgf  fyrir           
- 11 : 0 : fn_et_þgf_hk  því                  11 : 0 : fn_et_hk_þgf  því           
- 12 : 1 : st      að                    12 : 1 : st      að             
- 13 : 0 : lo_ft_nf_kk_sb  nýútskrifaðir       13 : 0 : lo_ft_kk_nf_sb  nýútskrifaðir
- 14 : 0 : no_ft_nf_kk  hjúkrunarfræðingar       14 : 0 : no_ft_kk_nf  hjúkrunarfræðingar
- 15 : 0 : so_0_vh_p3_ft_nt_gm  hafi                   15 : 0 : so_ft_gm_nt_p3_vh  hafi            
- 16 : 1 : ao      ekki                   16 : 1 : ao      ekki            
- 17 : 0 : so_1_þgf_sagnb_gm  skilað                17 : 0 : so_1_þgf_gm_sagnb  skilað         
- 18 : 1 : abfn_þgf  sér                   18 : 1 : abfn_þgf  sér            
- 19 : 1 : fs_þf  á                     19 : 1 : fs_þf  á              
- 20 : 0 : no_et_þf_kk_gr  spítalann             20 : 0 : no_et_gr_kk_þf  spítalann      
- 21 : 1 : grm     .                      21 : 1 : grm     .               
+   5   22    0   90.00  87.10    27     30   31      2     19    19   100.00
+-<1>---(wn1= 19, bn1= 30)-           -<2>---(wn2= 19, bn2= 31)-
+  0 : 1 : person  Svanhildur_Sigurjónsdóttir        0 : 1 : person  Svanhildur_Sigurjónsdóttir
+  1 : 1 : no      aðstoðardeildarstjóri        1 : 1 : no      aðstoðardeildarstjóri
+  2 : 1 : no      bráðalyflækningadeildar        2 : 1 : no      bráðalyflækningadeildar
+  3 : 1 : fyrirtæki  Landspítalans          3 : 1 : no      Landspítalans  
+  4 : 1 : so      segir                   4 : 1 : so      segir           
+  5 : 1 : no      deildina                5 : 1 : no      deildina        
+  6 : 1 : so      finna                   6 : 1 : so      finna           
+  7 : 1 : ao      gríðarlega            7 : 1 : ao      gríðarlega    
+  8 : 1 : fs      fyrir                   8 : 1 : fs      fyrir           
+  9 : 1 : fn      því                   9 : 1 : fn      því           
+ 10 : 1 : st      að                    10 : 1 : st      að             
+ 11 : 1 : lo      nýútskrifaðir       11 : 1 : lo      nýútskrifaðir
+ 12 : 1 : no      hjúkrunarfræðingar       12 : 1 : no      hjúkrunarfræðingar
+ 13 : 1 : so      hafi                   13 : 1 : so      hafi            
+ 14 : 1 : ao      ekki                   14 : 1 : ao      ekki            
+ 15 : 1 : so      skilað                15 : 1 : so      skilað         
+ 16 : 1 : abfn    sér                   16 : 1 : abfn    sér            
+ 17 : 1 : fs      á                     17 : 1 : fs      á              
+ 18 : 1 : no      spítalann             18 : 1 : no      spítalann      
 
-  0 : 1 :   0   22  S0            0 : 1 :   0   22  S0    
-  1 : 1 :   0   21  S             1 : 1 :   0   21  S     
-  2 : 1 :   0   21  IP            2 : 1 :   0   21  IP    
-  3 : 0 :   0    5  NP            3 : 0 :   0    6  NP    
-  4 : 0 :   2    5  NP            4 : 0 :   1    6  NP    
-  5 : 1 :   3    5  NP            5 : 1 :   3    5  NP    
-  6 : 1 :   4    5  NP            6 : 1 :   4    5  NP    
-  7 : 1 :   6   21  VP            7 : 1 :   6   21  VP    
-  8 : 1 :   6    7  VP            8 : 0 :   6    9  VP    
-  9 : 0 :   7   21  IP            9 : 1 :   6    7  VP    
- 10 : 1 :   7    8  NP           10 : 0 :   7    9  IP    
- 11 : 0 :   8   21  VP           11 : 1 :   7    8  NP    
- 12 : 1 :   8    9  VP           12 : 1 :   8    9  VP    
- 13 : 1 :   9   10  ADVP         13 : 1 :   9   10  ADVP  
- 14 : 1 :  10   21  PP           14 : 1 :  10   21  PP    
- 15 : 1 :  10   11  P            15 : 1 :  10   11  P     
- 16 : 1 :  11   21  NP           16 : 1 :  11   21  NP    
- 17 : 1 :  12   21  CP           17 : 1 :  12   21  CP    
- 18 : 1 :  12   13  C            18 : 1 :  12   13  C     
- 19 : 1 :  13   21  IP           19 : 1 :  13   21  IP    
- 20 : 1 :  13   15  NP           20 : 1 :  13   15  NP    
- 21 : 1 :  15   21  VP           21 : 1 :  15   21  VP    
- 22 : 1 :  15   16  VP           22 : 1 :  15   16  VP    
- 23 : 1 :  16   17  ADVP         23 : 0 :  16   21  VP    
- 24 : 1 :  17   21  VP           24 : 1 :  16   17  ADVP  
- 25 : 1 :  17   18  VP           25 : 1 :  17   21  VP    
- 26 : 0 :  18   19  NP           26 : 1 :  17   18  VP    
- 27 : 1 :  19   21  PP           27 : 0 :  18   21  NP    
- 28 : 1 :  19   20  P            28 : 1 :  19   21  PP    
- 29 : 1 :  20   21  NP           29 : 1 :  19   20  P     
-                                 30 : 1 :  20   21  NP    
+  0 : 1 :   0   19  S0            0 : 1 :   0   19  S0    
+  1 : 1 :   0   19  S             1 : 1 :   0   19  S     
+  2 : 1 :   0   19  IP            2 : 1 :   0   19  IP    
+  3 : 1 :   0    4  NP            3 : 1 :   0    4  NP    
+  4 : 1 :   1    4  NP            4 : 1 :   1    4  NP    
+  5 : 1 :   2    4  NP            5 : 1 :   2    4  NP    
+  6 : 1 :   3    4  NP            6 : 1 :   3    4  NP    
+  7 : 1 :   4   19  VP            7 : 1 :   4   19  VP    
+  8 : 1 :   4    5  VP            8 : 0 :   4    7  VP    
+  9 : 0 :   5   19  IP            9 : 1 :   4    5  VP    
+ 10 : 1 :   5    6  NP           10 : 0 :   5    7  IP    
+ 11 : 0 :   6   19  VP           11 : 1 :   5    6  NP    
+ 12 : 1 :   6    7  VP           12 : 1 :   6    7  VP    
+ 13 : 1 :   7    8  ADVP         13 : 1 :   7    8  ADVP  
+ 14 : 1 :   8   19  PP           14 : 1 :   8   19  PP    
+ 15 : 1 :   8    9  P            15 : 1 :   8    9  P     
+ 16 : 1 :   9   19  NP           16 : 1 :   9   19  NP    
+ 17 : 1 :  10   19  CP           17 : 1 :  10   19  CP    
+ 18 : 1 :  10   11  C            18 : 1 :  10   11  C     
+ 19 : 1 :  11   19  IP           19 : 1 :  11   19  IP    
+ 20 : 1 :  11   13  NP           20 : 1 :  11   13  NP    
+ 21 : 1 :  13   19  VP           21 : 1 :  13   19  VP    
+ 22 : 1 :  13   14  VP           22 : 1 :  13   14  VP    
+ 23 : 1 :  14   15  ADVP         23 : 0 :  14   19  VP    
+ 24 : 1 :  15   19  VP           24 : 1 :  14   15  ADVP  
+ 25 : 1 :  15   16  VP           25 : 1 :  15   19  VP    
+ 26 : 0 :  16   17  NP           26 : 1 :  15   16  VP    
+ 27 : 1 :  17   19  PP           27 : 0 :  16   19  NP    
+ 28 : 1 :  17   18  P            28 : 1 :  17   19  PP    
+ 29 : 1 :  18   19  NP           29 : 1 :  17   18  P     
+                                 30 : 1 :  18   19  NP    
 
 ========
-   6   23    0   91.43  91.43    32     35   35      1     23     9    39.13
--<1>---(wn1= 23, bn1= 35)-           -<2>---(wn2= 23, bn2= 35)-
-  0 : 0 : person_et_nf_kk  Kristinn                0 : 0 : lo_et_kk_nf_sb  Kristinn        
-  1 : 0 : so_1_þf_fh_p3_et_þt_gm  sagði                  1 : 0 : so_0_et_fh_gm_p3_þt  sagði          
+   6   23    0   91.43  91.43    32     35   35      1     22    21    95.45
+-<1>---(wn1= 22, bn1= 35)-           -<2>---(wn2= 22, bn2= 35)-
+  0 : 0 : person  Kristinn                0 : 0 : lo      Kristinn        
+  1 : 1 : so      sagði                  1 : 1 : so      sagði          
   2 : 1 : st      að                     2 : 1 : st      að             
-  3 : 0 : fn_ft_nf_kk  þeir                   3 : 0 : fn_ft_kk_nf  þeir           
-  4 : 0 : no_ft_nf_kk  bræður                4 : 0 : no_ft_kk_nf  bræður        
-  5 : 0 : so_0_vh_p3_ft_þt_gm  hefðu                  5 : 0 : so_ft_gm_p3_vh_þt  hefðu          
+  3 : 1 : fn      þeir                   3 : 1 : fn      þeir           
+  4 : 1 : no      bræður                4 : 1 : no      bræður        
+  5 : 1 : so      hefðu                  5 : 1 : so      hefðu          
   6 : 1 : ao      ekki                    6 : 1 : ao      ekki            
   7 : 1 : ao      alltaf                  7 : 1 : ao      alltaf          
-  8 : 0 : so_0_sagnb_gm  getað                  8 : 0 : so_gm_sagnb  getað          
-  9 : 0 : so_0_sagnb_gm  verið                  9 : 0 : so_gm_sagnb  verið          
- 10 : 1 : fs_þgf  í                     10 : 1 : fs_þgf  í              
- 11 : 0 : no_ft_þgf_hk  húsunum               11 : 0 : no_ft_gr_kk_þgf  húsunum        
- 12 : 1 : fs_þf  við                   12 : 1 : fs_þf  við            
- 13 : 0 : lo_et_þf_hk_sb  nægilegt              13 : 0 : lo_et_hk_sb_þf  nægilegt       
- 14 : 0 : no_et_þf_hk  eftirlit               14 : 0 : no_et_hk_þf  eftirlit        
+  8 : 1 : so      getað                  8 : 1 : so      getað          
+  9 : 1 : so      verið                  9 : 1 : so      verið          
+ 10 : 1 : fs      í                     10 : 1 : fs      í              
+ 11 : 1 : no      húsunum               11 : 1 : no      húsunum        
+ 12 : 1 : fs      við                   12 : 1 : fs      við            
+ 13 : 1 : lo      nægilegt              13 : 1 : lo      nægilegt       
+ 14 : 1 : no      eftirlit               14 : 1 : no      eftirlit        
  15 : 1 : st      og                     15 : 1 : st      og              
  16 : 1 : st      að                    16 : 1 : st      að             
- 17 : 0 : fn_et_nf_hk  sumt                   17 : 0 : fn_et_hk_nf  sumt            
- 18 : 0 : so_0_vh_p3_et_þt_gm  hefði                 18 : 0 : so_et_gm_p3_vh_þt  hefði          
- 19 : 0 : so_0_sagnb_gm  mátt                  19 : 0 : so_gm_sagnb  mátt           
- 20 : 1 : ao_mst  betur                  20 : 1 : ao_mst  betur           
- 21 : 0 : so_0_nh_gm  fara                   21 : 0 : so_0_gm_nh  fara            
- 22 : 1 : grm     .                      22 : 1 : grm     .               
+ 17 : 1 : fn      sumt                   17 : 1 : fn      sumt            
+ 18 : 1 : so      hefði                 18 : 1 : so      hefði          
+ 19 : 1 : so      mátt                  19 : 1 : so      mátt           
+ 20 : 1 : ao      betur                  20 : 1 : ao      betur           
+ 21 : 1 : so      fara                   21 : 1 : so      fara            
 
-  0 : 1 :   0   23  S0            0 : 1 :   0   23  S0    
+  0 : 1 :   0   22  S0            0 : 1 :   0   22  S0    
   1 : 1 :   0   22  S             1 : 1 :   0   22  S     
   2 : 0 :   0   22  IP            2 : 1 :   0    1  NP    
   3 : 1 :   0    1  NP            3 : 1 :   1   22  VP    
@@ -363,32 +354,30 @@
  34 : 1 :  21   22  VP           34 : 1 :  21   22  VP    
 
 ========
-   7   20    0   76.67  79.31    23     30   29      0     20     8    40.00
--<1>---(wn1= 20, bn1= 30)-           -<2>---(wn2= 20, bn2= 29)-
-  0 : 0 : pfn_et_nf_kk_p3  Hann                    0 : 0 : pfn_et_kk_nf_p3  Hann            
-  1 : 0 : so_1_þf_fh_p3_et_þt_gm  sagði                  1 : 0 : so_1_þf_et_fh_gm_p3_þt  sagði          
-  2 : 1 : abfn_þf  sig                     2 : 1 : abfn_þf  sig             
-  3 : 1 : fs_þgf  úr                     3 : 1 : fs_þgf  úr             
-  4 : 0 : lo_et_þgf_kk_vb  Breska                  4 : 0 : lo_et_kk_vb_þgf  Breska          
-  5 : 0 : no_et_þgf_kk_gr  alpaklúbbnum           5 : 0 : no_et_gr_kk_þgf  alpaklúbbnum   
+   7   20    0   83.33  86.21    25     30   29      0     18    18   100.00
+-<1>---(wn1= 18, bn1= 30)-           -<2>---(wn2= 18, bn2= 29)-
+  0 : 1 : pfn     Hann                    0 : 1 : pfn     Hann            
+  1 : 1 : so      sagði                  1 : 1 : so      sagði          
+  2 : 1 : abfn    sig                     2 : 1 : abfn    sig             
+  3 : 1 : fs      úr                     3 : 1 : fs      úr             
+  4 : 1 : lo      Breska                  4 : 1 : lo      Breska          
+  5 : 1 : no      alpaklúbbnum           5 : 1 : no      alpaklúbbnum   
   6 : 1 : ártal  árið_1877             6 : 1 : ártal  árið_1877     
   7 : 1 : st      og                      7 : 1 : st      og              
-  8 : 1 : fs_þf  eftir                   8 : 1 : fs_þf  eftir           
-  9 : 0 : pfn_et_þf_hk_p3  það                   9 : 0 : pfn_et_hk_p3_þf  það           
- 10 : 0 : so_1_þf_fh_p3_ft_nt_gm  hafa                   10 : 0 : so_1_þf_fh_ft_gm_nt_p3  hafa            
- 11 : 0 : pfn_ft_nf_kk_p3  þeir                  11 : 0 : pfn_ft_kk_nf_p3  þeir           
- 12 : 0 : fn_ft_þf_kvk  engar                  12 : 0 : fn_ft_kvk_þf  engar           
- 13 : 0 : no_ft_þf_kvk  upplýsingar           13 : 0 : no_ft_kvk_þf  upplýsingar    
- 14 : 1 : fs_þf  um                     14 : 1 : fs_þf  um              
- 15 : 0 : pfn_et_þf_kk_p3  hann                   15 : 0 : pfn_et_kk_p3_þf  hann            
- 16 : 1 : grm     ,                      16 : 1 : grm     ,               
- 17 : 0 : so_0_fh_p3_et_nt_gm  segir                  17 : 0 : so_0_et_fh_gm_nt_p3  segir           
- 18 : 0 : person_nf_kvk  Gerður                18 : 0 : person_kvk_nf  Gerður         
- 19 : 1 : grm     .                      19 : 1 : grm     .               
+  8 : 1 : fs      eftir                   8 : 1 : fs      eftir           
+  9 : 1 : pfn     það                   9 : 1 : pfn     það           
+ 10 : 1 : so      hafa                   10 : 1 : so      hafa            
+ 11 : 1 : pfn     þeir                  11 : 1 : pfn     þeir           
+ 12 : 1 : fn      engar                  12 : 1 : fn      engar           
+ 13 : 1 : no      upplýsingar           13 : 1 : no      upplýsingar    
+ 14 : 1 : fs      um                     14 : 1 : fs      um              
+ 15 : 1 : pfn     hann                   15 : 1 : pfn     hann            
+ 16 : 1 : so      segir                  16 : 1 : so      segir           
+ 17 : 1 : person  Gerður                17 : 1 : person  Gerður         
 
-  0 : 1 :   0   20  S0            0 : 1 :   0   20  S0    
-  1 : 0 :   0   19  S             1 : 0 :   0   20  S     
-  2 : 0 :   0   19  IP            2 : 0 :   0   16  CP    
+  0 : 1 :   0   18  S0            0 : 1 :   0   18  S0    
+  1 : 1 :   0   18  S             1 : 1 :   0   18  S     
+  2 : 0 :   0   18  IP            2 : 0 :   0   16  CP    
   3 : 0 :   0    7  CP            3 : 1 :   0    7  IP    
   4 : 1 :   0    7  IP            4 : 1 :   0    1  NP    
   5 : 1 :   0    1  NP            5 : 1 :   1    7  VP    
@@ -411,40 +400,38 @@
  22 : 1 :  12   16  NP           22 : 1 :  14   16  PP    
  23 : 1 :  14   16  PP           23 : 1 :  14   15  P     
  24 : 1 :  14   15  P            24 : 1 :  15   16  NP    
- 25 : 1 :  15   16  NP           25 : 0 :  16   19  CP    
- 26 : 0 :  17   19  CP           26 : 1 :  17   18  VP    
- 27 : 0 :  17   19  VP           27 : 1 :  18   19  NP    
- 28 : 1 :  17   18  VP           28 : 0 :  18   19  NP    
- 29 : 1 :  18   19  NP          
+ 25 : 1 :  15   16  NP           25 : 1 :  16   18  CP    
+ 26 : 1 :  16   18  CP           26 : 1 :  16   17  VP    
+ 27 : 0 :  16   18  VP           27 : 1 :  17   18  NP    
+ 28 : 1 :  16   17  VP           28 : 0 :  17   18  NP    
+ 29 : 1 :  17   18  NP          
 
 ========
-   8   23    0   95.00  95.00    38     40   40      2     23     8    34.78
--<1>---(wn1= 23, bn1= 40)-           -<2>---(wn2= 23, bn2= 40)-
-  0 : 0 : to_ft_nf_kk  Tveir                   0 : 0 : to_ft_kk_nf  Tveir           
-  1 : 0 : so_1_nf_fh_p3_ft_nt_gm  eru                     1 : 0 : so_0_fh_ft_gm_nt_p3  eru             
-  2 : 1 : fs_þgf  í                      2 : 1 : fs_þgf  í              
-  3 : 0 : no_et_þgf_hk  haldi                   3 : 0 : no_et_hk_þgf  haldi           
-  4 : 0 : lo_et_ef_kvk_vb  norsku                  4 : 0 : lo_ef_et_kvk_vb  norsku          
-  5 : 0 : no_et_ef_kvk_gr  lögreglunnar           5 : 0 : no_ef_et_gr_kvk  lögreglunnar   
-  6 : 1 : fs_ef   vegna                   6 : 1 : fs_ef   vegna           
-  7 : 0 : no_et_ef_hk_gr  málsins                7 : 0 : no_ef_et_gr_hk  málsins        
-  8 : 1 : grm     ,                       8 : 1 : grm     ,               
-  9 : 0 : fn_et_nf_kk  annar                   9 : 0 : fn_et_kk_nf  annar           
- 10 : 0 : so_0_fh_p3_et_nt_gm  er                     10 : 0 : so_et_fh_gm_nt_p3  er              
- 11 : 0 : so_0_lhþt_et  grunaður              11 : 0 : so_et_kk_lhþt_nf_sb  grunaður       
- 12 : 1 : fs_þf  um                     12 : 1 : fs_þf  um              
- 13 : 0 : no_et_þf_hk  morð                  13 : 0 : no_et_hk_þf  morð           
- 14 : 1 : st      og                     14 : 1 : st      og              
- 15 : 0 : fn_et_nf_kk  hinn                   15 : 0 : fn_et_kk_nf  hinn            
- 16 : 0 : so_0_fh_p3_et_nt_gm  er                     16 : 0 : so_et_fh_gm_nt_p3  er              
- 17 : 0 : so_0_lhþt_et  grunaður              17 : 0 : so_et_kk_lhþt_nf_sb  grunaður       
- 18 : 1 : fs_nh   um                     18 : 1 : fs_nh   um              
- 19 : 1 : nhm     að                    19 : 1 : nhm     að             
- 20 : 0 : so_1_nf_nh_gm  vera                   20 : 0 : so_gm_nh  vera            
- 21 : 0 : lo_et_nf_kk_sb  meðsekur              21 : 0 : lo_et_kk_nf_sb  meðsekur       
- 22 : 1 : grm     .                      22 : 1 : grm     .               
+   8   23    0   95.00  95.00    38     40   40      2     21    21   100.00
+-<1>---(wn1= 21, bn1= 40)-           -<2>---(wn2= 21, bn2= 40)-
+  0 : 1 : to      Tveir                   0 : 1 : to      Tveir           
+  1 : 1 : so      eru                     1 : 1 : so      eru             
+  2 : 1 : fs      í                      2 : 1 : fs      í              
+  3 : 1 : no      haldi                   3 : 1 : no      haldi           
+  4 : 1 : lo      norsku                  4 : 1 : lo      norsku          
+  5 : 1 : no      lögreglunnar           5 : 1 : no      lögreglunnar   
+  6 : 1 : fs      vegna                   6 : 1 : fs      vegna           
+  7 : 1 : no      málsins                7 : 1 : no      málsins        
+  8 : 1 : fn      annar                   8 : 1 : fn      annar           
+  9 : 1 : so      er                      9 : 1 : so      er              
+ 10 : 1 : so      grunaður              10 : 1 : so      grunaður       
+ 11 : 1 : fs      um                     11 : 1 : fs      um              
+ 12 : 1 : no      morð                  12 : 1 : no      morð           
+ 13 : 1 : st      og                     13 : 1 : st      og              
+ 14 : 1 : fn      hinn                   14 : 1 : fn      hinn            
+ 15 : 1 : so      er                     15 : 1 : so      er              
+ 16 : 1 : so      grunaður              16 : 1 : so      grunaður       
+ 17 : 1 : fs      um                     17 : 1 : fs      um              
+ 18 : 1 : nhm     að                    18 : 1 : nhm     að             
+ 19 : 1 : so      vera                   19 : 1 : so      vera            
+ 20 : 1 : lo      meðsekur              20 : 1 : lo      meðsekur       
 
-  0 : 1 :   0   23  S0            0 : 1 :   0   23  S0    
+  0 : 1 :   0   21  S0            0 : 1 :   0   21  S0    
   1 : 1 :   0    8  S             1 : 1 :   0    8  S     
   2 : 1 :   0    8  IP            2 : 1 :   0    8  IP    
   3 : 1 :   0    1  NP            3 : 1 :   0    1  NP    
@@ -457,62 +444,61 @@
  10 : 1 :   6    8  PP           10 : 1 :   6    8  PP    
  11 : 1 :   6    7  P            11 : 1 :   6    7  P     
  12 : 1 :   7    8  NP           12 : 1 :   7    8  NP    
- 13 : 1 :   9   14  S            13 : 1 :   9   14  S     
- 14 : 1 :   9   14  IP           14 : 1 :   9   14  IP    
- 15 : 1 :   9   10  NP           15 : 1 :   9   10  NP    
- 16 : 1 :  10   14  VP           16 : 1 :  10   14  VP    
- 17 : 1 :  10   11  VP           17 : 0 :  10   12  VP    
- 18 : 0 :  11   14  VP           18 : 1 :  10   11  VP    
- 19 : 1 :  11   12  NP           19 : 1 :  11   12  NP    
- 20 : 1 :  11   12  VP           20 : 1 :  11   12  VP    
- 21 : 1 :  12   14  PP           21 : 1 :  12   14  PP    
- 22 : 1 :  12   13  P            22 : 1 :  12   13  P     
- 23 : 1 :  13   14  NP           23 : 1 :  13   14  NP    
- 24 : 1 :  14   15  C            24 : 1 :  14   15  C     
- 25 : 1 :  15   22  S            25 : 1 :  15   22  S     
- 26 : 1 :  15   22  IP           26 : 1 :  15   22  IP    
- 27 : 1 :  15   16  NP           27 : 1 :  15   16  NP    
- 28 : 1 :  16   22  VP           28 : 1 :  16   22  VP    
- 29 : 1 :  16   17  VP           29 : 0 :  16   18  VP    
- 30 : 0 :  17   22  VP           30 : 1 :  16   17  VP    
- 31 : 1 :  17   18  NP           31 : 1 :  17   18  NP    
- 32 : 1 :  17   18  VP           32 : 1 :  17   18  VP    
- 33 : 1 :  18   22  PP           33 : 1 :  18   22  PP    
- 34 : 1 :  18   19  P            34 : 1 :  18   19  P     
- 35 : 1 :  19   22  IP           35 : 1 :  19   22  IP    
- 36 : 1 :  19   20  TO           36 : 1 :  19   20  TO    
- 37 : 1 :  20   22  VP           37 : 1 :  20   22  VP    
- 38 : 1 :  20   21  VP           38 : 1 :  20   21  VP    
- 39 : 1 :  21   22  NP           39 : 1 :  21   22  NP    
+ 13 : 1 :   8   13  S            13 : 1 :   8   13  S     
+ 14 : 1 :   8   13  IP           14 : 1 :   8   13  IP    
+ 15 : 1 :   8    9  NP           15 : 1 :   8    9  NP    
+ 16 : 1 :   9   13  VP           16 : 1 :   9   13  VP    
+ 17 : 1 :   9   10  VP           17 : 0 :   9   11  VP    
+ 18 : 0 :  10   13  VP           18 : 1 :   9   10  VP    
+ 19 : 1 :  10   11  NP           19 : 1 :  10   11  NP    
+ 20 : 1 :  10   11  VP           20 : 1 :  10   11  VP    
+ 21 : 1 :  11   13  PP           21 : 1 :  11   13  PP    
+ 22 : 1 :  11   12  P            22 : 1 :  11   12  P     
+ 23 : 1 :  12   13  NP           23 : 1 :  12   13  NP    
+ 24 : 1 :  13   14  C            24 : 1 :  13   14  C     
+ 25 : 1 :  14   21  S            25 : 1 :  14   21  S     
+ 26 : 1 :  14   21  IP           26 : 1 :  14   21  IP    
+ 27 : 1 :  14   15  NP           27 : 1 :  14   15  NP    
+ 28 : 1 :  15   21  VP           28 : 1 :  15   21  VP    
+ 29 : 1 :  15   16  VP           29 : 0 :  15   17  VP    
+ 30 : 0 :  16   21  VP           30 : 1 :  15   16  VP    
+ 31 : 1 :  16   17  NP           31 : 1 :  16   17  NP    
+ 32 : 1 :  16   17  VP           32 : 1 :  16   17  VP    
+ 33 : 1 :  17   21  PP           33 : 1 :  17   21  PP    
+ 34 : 1 :  17   18  P            34 : 1 :  17   18  P     
+ 35 : 1 :  18   21  IP           35 : 1 :  18   21  IP    
+ 36 : 1 :  18   19  TO           36 : 1 :  18   19  TO    
+ 37 : 1 :  19   21  VP           37 : 1 :  19   21  VP    
+ 38 : 1 :  19   20  VP           38 : 1 :  19   20  VP    
+ 39 : 1 :  20   21  NP           39 : 1 :  20   21  NP    
 
 ========
-   9   23    0   62.50  68.97    20     32   29      2     23     7    30.43
--<1>---(wn1= 23, bn1= 32)-           -<2>---(wn2= 23, bn2= 29)-
-  0 : 0 : pfn_ft_nf_kk_p3  Þeir                   0 : 0 : pfn_ft_kk_nf_p3  Þeir           
-  1 : 0 : so_0_fh_p3_ft_nt_gm  eru                     1 : 0 : so_fh_ft_gm_nt_p3  eru             
-  2 : 0 : ao      því                   2 : 0 : eo      því           
-  3 : 0 : fn_ft_nf_kk  báðir                 3 : 0 : fn_ft_kk_nf  báðir         
-  4 : 0 : lo_ft_nf_kk_sb  jafnir                  4 : 0 : lo_ft_kk_nf_sb  jafnir          
-  5 : 1 : fs_þf  með                    5 : 1 : fs_þf  með            
-  6 : 0 : no_ft_þf_kk  sex                     6 : 0 : no_ft_hk_þf  sex             
-  7 : 0 : no_ft_þf_kk  vinninga                7 : 0 : no_ef_ft_kk  vinninga        
-  8 : 0 : fn_ft_nf_kk  hvor                    8 : 0 : fn_ft_hk_þf  hvor            
+   9   23    0   62.50  68.97    20     32   29      2     22    22   100.00
+-<1>---(wn1= 22, bn1= 32)-           -<2>---(wn2= 22, bn2= 29)-
+  0 : 1 : pfn     Þeir                   0 : 1 : pfn     Þeir           
+  1 : 1 : so      eru                     1 : 1 : so      eru             
+  2 : 1 : ao      því                   2 : 1 : eo      því           
+  3 : 1 : fn      báðir                 3 : 1 : fn      báðir         
+  4 : 1 : lo      jafnir                  4 : 1 : lo      jafnir          
+  5 : 1 : fs      með                    5 : 1 : fs      með            
+  6 : 1 : no      sex                     6 : 1 : no      sex             
+  7 : 1 : no      vinninga                7 : 1 : no      vinninga        
+  8 : 1 : fn      hvor                    8 : 1 : fn      hvor            
   9 : 1 : st      og                      9 : 1 : st      og              
- 10 : 0 : so_0_fh_p3_ft_nt_gm  þurfa                 10 : 0 : so_fh_ft_gm_nt_p3  þurfa          
+ 10 : 1 : so      þurfa                 10 : 1 : so      þurfa          
  11 : 1 : nhm     að                    11 : 1 : nhm     að             
- 12 : 0 : so_1_þf_nh_gm  tefla                  12 : 0 : so_1_þf_gm_nh  tefla           
- 13 : 0 : no_ft_þf_kvk  atskákir              13 : 0 : no_ft_kvk_þf  atskákir       
+ 12 : 1 : so      tefla                  12 : 1 : so      tefla           
+ 13 : 1 : no      atskákir              13 : 1 : no      atskákir       
  14 : 1 : ao      þar                   14 : 1 : ao      þar            
  15 : 1 : st      til                    15 : 1 : st      til             
- 16 : 0 : fn_et_nf_kk  einn                   16 : 0 : fn_et_kk_nf  einn            
- 17 : 0 : pfn_ft_ef_kk_p3  þeirra                17 : 0 : pfn_ef_ft_kk_p3  þeirra         
- 18 : 0 : so_0_fh_p3_et_nt_gm  stendur                18 : 0 : so_0_et_fh_gm_nt_p3  stendur         
+ 16 : 1 : fn      einn                   16 : 1 : fn      einn            
+ 17 : 1 : pfn     þeirra                17 : 1 : pfn     þeirra         
+ 18 : 1 : so      stendur                18 : 1 : so      stendur         
  19 : 1 : ao      uppi                   19 : 1 : ao      uppi            
- 20 : 0 : stt     sem                    20 : 0 : st      sem             
- 21 : 0 : no_et_nf_kk  sigurvegari            21 : 0 : no_et_kk_nf  sigurvegari     
- 22 : 1 : grm     .                      22 : 1 : grm     .               
+ 20 : 1 : stt     sem                    20 : 1 : st      sem             
+ 21 : 1 : no      sigurvegari            21 : 1 : no      sigurvegari     
 
-  0 : 1 :   0   23  S0            0 : 1 :   0   23  S0    
+  0 : 1 :   0   22  S0            0 : 1 :   0   22  S0    
   1 : 1 :   0   22  S             1 : 1 :   0   22  S     
   2 : 1 :   0   22  IP            2 : 1 :   0   22  IP    
   3 : 1 :   0    1  NP            3 : 1 :   0    1  NP    
@@ -546,34 +532,32 @@
  31 : 1 :  21   22  NP          
 
 ========
-  10   22    0   71.05  77.14    27     38   35      3     22     8    36.36
--<1>---(wn1= 22, bn1= 38)-           -<2>---(wn2= 22, bn2= 35)-
-  0 : 1 : pfn_et_nf_p1  Ég                     0 : 1 : pfn_et_nf_p1  Ég             
-  1 : 0 : so_1_ef_fh_p1_et_þt_gm  naut                    1 : 0 : so_1_ef_et_fh_gm_p1_þt  naut            
-  2 : 0 : fn_et_ef_hk  þess                   2 : 0 : fn_ef_et_kk  þess           
+  10   22    0   76.32  82.86    29     38   35      3     20    20   100.00
+-<1>---(wn1= 20, bn1= 38)-           -<2>---(wn2= 20, bn2= 35)-
+  0 : 1 : pfn     Ég                     0 : 1 : pfn     Ég             
+  1 : 1 : so      naut                    1 : 1 : so      naut            
+  2 : 1 : fn      þess                   2 : 1 : fn      þess           
   3 : 1 : nhm     að                     3 : 1 : nhm     að             
-  4 : 0 : so_0_nh_gm  starfa                  4 : 0 : so_0_gm_nh  starfa          
-  5 : 1 : fs_þgf  á                      5 : 1 : fs_þgf  á              
-  6 : 0 : no_et_þgf_hk  Íslandi                6 : 0 : no_et_hk_þgf  Íslandi        
+  4 : 1 : so      starfa                  4 : 1 : so      starfa          
+  5 : 1 : fs      á                      5 : 1 : fs      á              
+  6 : 1 : no      Íslandi                6 : 1 : no      Íslandi        
   7 : 1 : st      og                      7 : 1 : st      og              
-  8 : 0 : fn_et_nf_hk  það                   8 : 0 : fn_et_hk_nf  það           
-  9 : 0 : so_0_fh_p3_ft_nt_gm  hafa                    9 : 0 : so_fh_ft_gm_nt_p3  hafa            
- 10 : 0 : so_1_nf_sagnb_gm  verið                 10 : 0 : so_1_nf_gm_sagnb  verið          
- 11 : 0 : no_ft_nf_hk  forréttindi           11 : 0 : no_ft_hk_nf  forréttindi    
+  8 : 1 : fn      það                   8 : 1 : fn      það           
+  9 : 1 : so      hafa                    9 : 1 : so      hafa            
+ 10 : 1 : so      verið                 10 : 1 : so      verið          
+ 11 : 1 : no      forréttindi           11 : 1 : no      forréttindi    
  12 : 1 : nhm     að                    12 : 1 : nhm     að             
- 13 : 0 : so_1_þf_nh_gm  taka                   13 : 0 : so_1_þf_gm_nh  taka            
- 14 : 0 : no_et_þf_kk  þátt                 14 : 0 : no_et_kk_þf  þátt          
- 15 : 1 : fs_þgf  í                     15 : 1 : fs_þgf  í              
- 16 : 0 : fn_et_þgf_hk  þessu                 16 : 0 : fn_et_hk_þgf  þessu          
- 17 : 0 : no_et_þgf_hk  ferðalagi             17 : 0 : no_et_hk_þgf  ferðalagi      
- 18 : 1 : grm     ,                      18 : 1 : grm     ,               
- 19 : 0 : so_0_fh_p3_et_þt_gm  sagði                 19 : 0 : so_0_et_fh_gm_p3_þt  sagði          
- 20 : 0 : pfn_et_nf_kk_p3  hann                   20 : 0 : pfn_et_kk_nf_p3  hann            
- 21 : 1 : grm     .                      21 : 1 : grm     .               
+ 13 : 1 : so      taka                   13 : 1 : so      taka            
+ 14 : 1 : no      þátt                 14 : 1 : no      þátt          
+ 15 : 1 : fs      í                     15 : 1 : fs      í              
+ 16 : 1 : fn      þessu                 16 : 1 : fn      þessu          
+ 17 : 1 : no      ferðalagi             17 : 1 : no      ferðalagi      
+ 18 : 1 : so      sagði                 18 : 1 : so      sagði          
+ 19 : 1 : pfn     hann                   19 : 1 : pfn     hann            
 
-  0 : 1 :   0   22  S0            0 : 1 :   0   22  S0    
-  1 : 0 :   0   21  S             1 : 0 :   0   22  S     
-  2 : 0 :   0   21  IP            2 : 0 :   0   18  CP    
+  0 : 1 :   0   20  S0            0 : 1 :   0   20  S0    
+  1 : 1 :   0   20  S             1 : 1 :   0   20  S     
+  2 : 0 :   0   20  IP            2 : 0 :   0   18  CP    
   3 : 0 :   0    7  CP            3 : 1 :   0    7  IP    
   4 : 1 :   0    7  IP            4 : 1 :   0    1  NP    
   5 : 1 :   0    1  NP            5 : 1 :   1    7  VP    
@@ -602,17 +586,17 @@
  28 : 1 :  13   18  VP           28 : 1 :  15   18  PP    
  29 : 1 :  13   14  VP           29 : 1 :  15   16  P     
  30 : 0 :  14   15  NP           30 : 1 :  16   18  NP    
- 31 : 1 :  15   18  PP           31 : 0 :  18   21  CP    
- 32 : 1 :  15   16  P            32 : 1 :  19   20  VP    
- 33 : 1 :  16   18  NP           33 : 1 :  20   21  NP    
- 34 : 0 :  19   21  CP           34 : 0 :  20   21  NP    
- 35 : 0 :  19   21  VP          
- 36 : 1 :  19   20  VP          
- 37 : 1 :  20   21  NP          
+ 31 : 1 :  15   18  PP           31 : 1 :  18   20  CP    
+ 32 : 1 :  15   16  P            32 : 1 :  18   19  VP    
+ 33 : 1 :  16   18  NP           33 : 1 :  19   20  NP    
+ 34 : 1 :  18   20  CP           34 : 0 :  19   20  NP    
+ 35 : 0 :  18   20  VP          
+ 36 : 1 :  18   19  VP          
+ 37 : 1 :  19   20  NP          
 
 ========
 ============================================================================
-                 77.65  79.04    264   340   334     25    216    76    35.19
+                 79.12  80.54    269   340   334     24    200   195    97.50
 === Summary ===
 
 -- All --
@@ -620,25 +604,25 @@ Number of sentence        =     10
 Number of Error sentence  =      0
 Number of Skip  sentence  =      0
 Number of Valid sentence  =     10
-Bracketing Recall         =  77.65
-Bracketing Precision      =  79.04
-Bracketing FMeasure       =  78.34
+Bracketing Recall         =  79.12
+Bracketing Precision      =  80.54
+Bracketing FMeasure       =  79.82
 Complete match            =   0.00
-Average crossing          =   2.50
+Average crossing          =   2.40
 No crossing               =  10.00
-2 or less crossing        =  70.00
-Tagging accuracy          =  35.19
+2 or less crossing        =  80.00
+Tagging accuracy          =  97.50
 
 -- len<=100 --
 Number of sentence        =     10
 Number of Error sentence  =      0
 Number of Skip  sentence  =      0
 Number of Valid sentence  =     10
-Bracketing Recall         =  77.65
-Bracketing Precision      =  79.04
-Bracketing FMeasure       =  78.34
+Bracketing Recall         =  79.12
+Bracketing Precision      =  80.54
+Bracketing FMeasure       =  79.82
 Complete match            =   0.00
-Average crossing          =   2.50
+Average crossing          =   2.40
 No crossing               =  10.00
-2 or less crossing        =  70.00
-Tagging accuracy          =  35.19
+2 or less crossing        =  80.00
+Tagging accuracy          =  97.50

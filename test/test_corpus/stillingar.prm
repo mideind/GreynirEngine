@@ -14,7 +14,7 @@ DEBUG 1
 ##    The process will stop when this number##
 ##    of errors are accumulated.            ##
 ##------------------------------------------##
-MAX_ERROR 5
+MAX_ERROR 11
 
 ##------------------------------------------##
 ## Cut-off length for statistics            ##
@@ -43,6 +43,7 @@ LABELED 1
 ##    children).                            ##
 ##------------------------------------------##
 DELETE_LABEL TOP
+DELETE_LABEL grm
 
 ##------------------------------------------##
 ## Delete labels for length calculation     ##
@@ -74,28 +75,21 @@ DELETE_LABEL_FOR_LENGTH -NONE-
 ##     This is non-directional.             ##
 ##------------------------------------------##
 
-EQ_LABEL ANNAR ADJ
-EQ_LABEL ANNAR PRON
-EQ_LABEL ANNAR NUM
-EQ_LABEL EINN ADJ
-EQ_LABEL EINN PRON
-EQ_LABEL EINN NUM
-EQ_LABEL ENGINN ADJ
-EQ_LABEL ENGINN PRON
-EQ_LABEL ÝMIS ADJ
-EQ_LABEL ÝMIS PRON
-EQ_LABEL SJÁLFUR PRON
-EQ_LABEL SJÁLFUR ADJ
-EQ_LABEL ES PRON
-EQ_LABEL ALLUR PRON
-EQ_LABEL ALLUR ADJ
-EQ_LABEL PCL ADV
-EQ_LABEL PRÓ N
-EQ_LABEL SEM C
-EQ_LABEL SEM P
-EQ_LABEL CP S
-EQ_LABEL M S0
+EQ_LABEL abfn fn
+EQ_LABEL abfn pfn
+EQ_LABEL fn pfn
 
+EQ_LABEL no person
+EQ_LABEL no sérnafn
+EQ_LABEL no entity
+EQ_LABEL no fyrirtæki
+EQ_LABEL no gata
+EQ_LABEL lo raðnr
+EQ_LABEL tala to
+EQ_LABEL tala töl
+EQ_LABEL to töl
+EQ_LABEL ao eo
+EQ_LABEL st stt
 
 
 

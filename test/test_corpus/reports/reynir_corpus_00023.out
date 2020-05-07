@@ -1,16 +1,15 @@
   Sent.                        Matched  Bracket   Cross        Correct Tag
  ID  Len.  Stat. Recal  Prec.  Bracket gold test Bracket Words  Tags Accracy
 ============================================================================
-   1    6    0  100.00 100.00     9      9    9      0      6     3    50.00
--<1>---(wn1=  6, bn1=  9)-           -<2>---(wn2=  6, bn2=  9)-
+   1    6    0  100.00 100.00     9      9    9      0      5     5   100.00
+-<1>---(wn1=  5, bn1=  9)-           -<2>---(wn2=  5, bn2=  9)-
   0 : 1 : ao      Þannig                 0 : 1 : ao      Þannig         
-  1 : 0 : so_2_þgf_þf_fh_p3_et_nt_gm  tryggir                 1 : 0 : so_2_þgf_þf_et_fh_gm_nt_p3  tryggir         
-  2 : 0 : no_et_nf_kk_gr  bankinn                 2 : 0 : no_et_gr_kk_nf  bankinn         
-  3 : 1 : abfn_þgf  sér                    3 : 1 : abfn_þgf  sér            
-  4 : 0 : no_ft_þf_kvk  þóknana-_og_vaxtatekjur        4 : 0 : no_ft_kvk_þf  þóknana-_og_vaxtatekjur
-  5 : 1 : grm     .                       5 : 1 : grm     .               
+  1 : 1 : so      tryggir                 1 : 1 : so      tryggir         
+  2 : 1 : no      bankinn                 2 : 1 : no      bankinn         
+  3 : 1 : abfn    sér                    3 : 1 : abfn    sér            
+  4 : 1 : no      þóknana-_og_vaxtatekjur        4 : 1 : no      þóknana-_og_vaxtatekjur
 
-  0 : 1 :   0    6  S0            0 : 1 :   0    6  S0    
+  0 : 1 :   0    5  S0            0 : 1 :   0    5  S0    
   1 : 1 :   0    5  S             1 : 1 :   0    5  S     
   2 : 1 :   0    5  IP            2 : 1 :   0    5  IP    
   3 : 1 :   0    1  ADVP          3 : 1 :   0    1  ADVP  
@@ -21,18 +20,17 @@
   8 : 1 :   4    5  NP            8 : 1 :   4    5  NP    
 
 ========
-   2    8    0   92.31  92.31    12     13   13      1      8     4    50.00
--<1>---(wn1=  8, bn1= 13)-           -<2>---(wn2=  8, bn2= 13)-
+   2    8    0   92.31  92.31    12     13   13      1      7     7   100.00
+-<1>---(wn1=  7, bn1= 13)-           -<2>---(wn2=  7, bn2= 13)-
   0 : 1 : ao      Þá                    0 : 1 : ao      Þá            
-  1 : 0 : so_0_fh_p3_et_nt_gm  hefur                   1 : 0 : so_et_fh_gm_nt_p3  hefur           
-  2 : 0 : no_ft_þgf_kk  olíuborpöllum         2 : 0 : no_ft_kk_þgf  olíuborpöllum 
-  3 : 1 : fs_þgf  í                      3 : 1 : fs_þgf  í              
-  4 : 0 : sérnafn_et_þgf_kk  Norðursjó             4 : 0 : no_et_kk_þgf  Norðursjó     
-  5 : 0 : so_0_op_subj__sagnb_gm  fækkað                5 : 0 : so_subj_sagnb_þgf_gm  fækkað        
+  1 : 1 : so      hefur                   1 : 1 : so      hefur           
+  2 : 1 : no      olíuborpöllum         2 : 1 : no      olíuborpöllum 
+  3 : 1 : fs      í                      3 : 1 : fs      í              
+  4 : 1 : sérnafn  Norðursjó             4 : 1 : no      Norðursjó     
+  5 : 1 : so      fækkað                5 : 1 : so      fækkað        
   6 : 1 : ao      mikið                  6 : 1 : ao      mikið          
-  7 : 1 : grm     .                       7 : 1 : grm     .               
 
-  0 : 1 :   0    8  S0            0 : 1 :   0    8  S0    
+  0 : 1 :   0    7  S0            0 : 1 :   0    7  S0    
   1 : 1 :   0    7  S             1 : 1 :   0    7  S     
   2 : 1 :   0    7  IP            2 : 1 :   0    7  IP    
   3 : 1 :   0    1  ADVP          3 : 1 :   0    1  ADVP  
@@ -47,18 +45,17 @@
  12 : 1 :   6    7  ADVP         12 : 1 :   6    7  ADVP  
 
 ========
-   3    8    0   91.67  91.67    11     12   12      0      8     2    25.00
--<1>---(wn1=  8, bn1= 12)-           -<2>---(wn2=  8, bn2= 12)-
-  0 : 0 : tala_et_nf_kk  Einn                    0 : 0 : fn_et_kk_nf  Einn            
-  1 : 0 : no_et_nf_kk  maður                  1 : 0 : no_et_kk_nf  maður          
-  2 : 0 : so_0_fh_p3_et_nt_gm  hefur                   2 : 0 : so_et_fh_gm_nt_p3  hefur           
-  3 : 0 : so_1_þf_sagnb_gm  látið                 3 : 0 : so_1_þf_gm_sagnb  látið         
-  4 : 0 : no_et_þf_hk_gr  lífið                 4 : 0 : no_et_gr_hk_þf  lífið         
-  5 : 1 : fs_þgf  í                      5 : 1 : fs_þgf  í              
-  6 : 0 : no_et_þgf_kk_gr  storminum               6 : 0 : no_et_gr_kk_þgf  storminum       
-  7 : 1 : grm     .                       7 : 1 : grm     .               
+   3    8    0   91.67  91.67    11     12   12      0      7     6    85.71
+-<1>---(wn1=  7, bn1= 12)-           -<2>---(wn2=  7, bn2= 12)-
+  0 : 0 : tala    Einn                    0 : 0 : fn      Einn            
+  1 : 1 : no      maður                  1 : 1 : no      maður          
+  2 : 1 : so      hefur                   2 : 1 : so      hefur           
+  3 : 1 : so      látið                 3 : 1 : so      látið         
+  4 : 1 : no      lífið                 4 : 1 : no      lífið         
+  5 : 1 : fs      í                      5 : 1 : fs      í              
+  6 : 1 : no      storminum               6 : 1 : no      storminum       
 
-  0 : 1 :   0    8  S0            0 : 1 :   0    8  S0    
+  0 : 1 :   0    7  S0            0 : 1 :   0    7  S0    
   1 : 1 :   0    7  S             1 : 1 :   0    7  S     
   2 : 1 :   0    7  IP            2 : 1 :   0    7  IP    
   3 : 1 :   0    2  NP            3 : 1 :   0    2  NP    
@@ -72,17 +69,16 @@
  11 : 1 :   6    7  NP           11 : 1 :   6    7  NP    
 
 ========
-   4    7    0  100.00 100.00    12     12   12      0      7     3    42.86
--<1>---(wn1=  7, bn1= 12)-           -<2>---(wn2=  7, bn2= 12)-
+   4    7    0  100.00 100.00    12     12   12      0      6     6   100.00
+-<1>---(wn1=  6, bn1= 12)-           -<2>---(wn2=  6, bn2= 12)-
   0 : 1 : ao      Nú                     0 : 1 : ao      Nú             
-  1 : 0 : so_0_fh_p3_et_nt_gm  reynir                  1 : 0 : so_0_et_fh_gm_nt_p3  reynir          
-  2 : 0 : entity_et_nf_hk  Real_Madrid             2 : 0 : entity  Real_Madrid     
+  1 : 1 : so      reynir                  1 : 1 : so      reynir          
+  2 : 1 : entity  Real_Madrid             2 : 1 : entity  Real_Madrid     
   3 : 1 : nhm     að                     3 : 1 : nhm     að             
-  4 : 0 : so_1_þf_nh_gm  selja                   4 : 0 : so_1_þf_gm_nh  selja           
-  5 : 0 : pfn_et_þf_kk_p3  hann                    5 : 0 : pfn_et_kk_p3_þf  hann            
-  6 : 1 : grm     .                       6 : 1 : grm     .               
+  4 : 1 : so      selja                   4 : 1 : so      selja           
+  5 : 1 : pfn     hann                    5 : 1 : pfn     hann            
 
-  0 : 1 :   0    7  S0            0 : 1 :   0    7  S0    
+  0 : 1 :   0    6  S0            0 : 1 :   0    6  S0    
   1 : 1 :   0    6  S             1 : 1 :   0    6  S     
   2 : 1 :   0    6  IP            2 : 1 :   0    6  IP    
   3 : 1 :   0    1  ADVP          3 : 1 :   0    1  ADVP  
@@ -96,15 +92,14 @@
  11 : 1 :   5    6  NP           11 : 1 :   5    6  NP    
 
 ========
-   5    5    0  100.00 100.00     9      9    9      0      5     2    40.00
--<1>---(wn1=  5, bn1=  9)-           -<2>---(wn2=  5, bn2=  9)-
-  0 : 0 : no_et_nf_hk  Hljóð-_og_myndstreymi        0 : 0 : no_et_hk_nf  Hljóð-_og_myndstreymi
-  1 : 0 : so_0_fh_p3_et_þt_mm  jókst                  1 : 0 : so_0_et_fh_mm_p3_þt  jókst          
-  2 : 1 : fs_þf  um                      2 : 1 : fs_þf  um              
-  3 : 0 : no_ft_þf_hk  sex_prósent            3 : 0 : no_et_hk_þf  sex_prósent    
-  4 : 1 : grm     .                       4 : 1 : grm     .               
+   5    5    0  100.00 100.00     9      9    9      0      4     4   100.00
+-<1>---(wn1=  4, bn1=  9)-           -<2>---(wn2=  4, bn2=  9)-
+  0 : 1 : no      Hljóð-_og_myndstreymi        0 : 1 : no      Hljóð-_og_myndstreymi
+  1 : 1 : so      jókst                  1 : 1 : so      jókst          
+  2 : 1 : fs      um                      2 : 1 : fs      um              
+  3 : 1 : no      sex_prósent            3 : 1 : no      sex_prósent    
 
-  0 : 1 :   0    5  S0            0 : 1 :   0    5  S0    
+  0 : 1 :   0    4  S0            0 : 1 :   0    4  S0    
   1 : 1 :   0    4  S             1 : 1 :   0    4  S     
   2 : 1 :   0    4  IP            2 : 1 :   0    4  IP    
   3 : 1 :   0    1  NP            3 : 1 :   0    1  NP    
@@ -115,18 +110,17 @@
   8 : 1 :   3    4  NP            8 : 1 :   3    4  NP    
 
 ========
-   6    8    0   75.00  69.23     9     12   13      1      8     3    37.50
--<1>---(wn1=  8, bn1= 12)-           -<2>---(wn2=  8, bn2= 13)-
-  0 : 0 : so_0_fh_p3_et_nt_mm  Kemst                   0 : 0 : so_0_et_fh_mm_nt_p3  Kemst           
+   6    8    0   75.00  69.23     9     12   13      1      7     4    57.14
+-<1>---(wn1=  7, bn1= 12)-           -<2>---(wn2=  7, bn2= 13)-
+  0 : 1 : so      Kemst                   0 : 1 : so      Kemst           
   1 : 1 : ao      ekki                    1 : 1 : ao      ekki            
-  2 : 0 : fs_þf  á                      2 : 0 : ao      á              
-  3 : 0 : no_et_þf_kvk  deild                   3 : 0 : no_et_kvk_nf  deild           
-  4 : 1 : fs_þf  fyrir                   4 : 1 : fs_þf  fyrir           
-  5 : 0 : lo_ft_þf_kk  unga                    5 : 0 : no_ft_kk_þf  unga            
-  6 : 0 : lo_ft_þf_kk  heilabilaða            6 : 0 : so_ft_kk_lhþt_sb_þf  heilabilaða    
-  7 : 1 : grm     .                       7 : 1 : grm     .               
+  2 : 0 : fs      á                      2 : 0 : ao      á              
+  3 : 1 : no      deild                   3 : 1 : no      deild           
+  4 : 1 : fs      fyrir                   4 : 1 : fs      fyrir           
+  5 : 0 : lo      unga                    5 : 0 : no      unga            
+  6 : 0 : lo      heilabilaða            6 : 0 : so      heilabilaða    
 
-  0 : 1 :   0    8  S0            0 : 1 :   0    8  S0    
+  0 : 1 :   0    7  S0            0 : 1 :   0    7  S0    
   1 : 1 :   0    7  S             1 : 1 :   0    7  S     
   2 : 1 :   0    7  IP            2 : 1 :   0    7  IP    
   3 : 1 :   0    7  VP            3 : 1 :   0    7  VP    
@@ -141,41 +135,38 @@
                                  12 : 0 :   6    7  VP    
 
 ========
-   7    8    0   62.50  50.00     5      8   10      0      8     2    25.00
--<1>---(wn1=  8, bn1=  8)-           -<2>---(wn2=  8, bn2= 10)-
-  0 : 0 : no_et_nf_hk_gr  Hatrið                 0 : 0 : no_et_gr_hk_nf  Hatrið         
-  1 : 0 : so_0_fh_p3_et_nt_gm  mun                     1 : 0 : so_et_fh_gm_nt_p3  mun             
-  2 : 0 : so_0_nh_gm  sigra                   2 : 0 : so_0_gm_nh  sigra           
-  3 : 1 : grm     ,                       3 : 1 : grm     ,               
-  4 : 0 : foreign  hate                    4 : 0 : no_et_hk_nf  hate            
-  5 : 0 : foreign  will                    5 : 0 : no_ef_et_hk  will            
-  6 : 0 : foreign  prevail                 6 : 0 : no_ef_et_hk  prevail         
-  7 : 1 : grm     .                       7 : 1 : grm     .               
+   7    8    0   62.50  50.00     5      8   10      0      6     3    50.00
+-<1>---(wn1=  6, bn1=  8)-           -<2>---(wn2=  6, bn2= 10)-
+  0 : 1 : no      Hatrið                 0 : 1 : no      Hatrið         
+  1 : 1 : so      mun                     1 : 1 : so      mun             
+  2 : 1 : so      sigra                   2 : 1 : so      sigra           
+  3 : 0 : foreign  hate                    3 : 0 : no      hate            
+  4 : 0 : foreign  will                    4 : 0 : no      will            
+  5 : 0 : foreign  prevail                 5 : 0 : no      prevail         
 
-  0 : 1 :   0    8  S0            0 : 1 :   0    8  S0    
-  1 : 0 :   0    3  S             1 : 0 :   0    7  S     
-  2 : 0 :   0    3  IP            2 : 0 :   0    7  IP    
+  0 : 1 :   0    6  S0            0 : 1 :   0    6  S0    
+  1 : 0 :   0    3  S             1 : 0 :   0    6  S     
+  2 : 0 :   0    3  IP            2 : 0 :   0    6  IP    
   3 : 1 :   0    1  NP            3 : 1 :   0    1  NP    
   4 : 1 :   1    3  VP            4 : 1 :   1    3  VP    
   5 : 1 :   1    2  VP            5 : 1 :   1    2  VP    
   6 : 1 :   2    3  VP            6 : 1 :   2    3  VP    
-  7 : 0 :   4    7  FOREIGN        7 : 0 :   4    7  NP    
-                                  8 : 0 :   5    7  NP    
-                                  9 : 0 :   6    7  NP    
+  7 : 0 :   3    6  FOREIGN        7 : 0 :   3    6  NP    
+                                  8 : 0 :   4    6  NP    
+                                  9 : 0 :   5    6  NP    
 
 ========
-   8    8    0  100.00 100.00    11     11   11      0      8     4    50.00
--<1>---(wn1=  8, bn1= 11)-           -<2>---(wn2=  8, bn2= 11)-
-  0 : 1 : fs_þgf  Í                      0 : 1 : fs_þgf  Í              
-  1 : 0 : no_et_þgf_kvk_gr  minningunni             1 : 0 : no_et_gr_kvk_þgf  minningunni     
-  2 : 0 : so_1_nf_fh_p3_et_þt_gm  var                     2 : 0 : so_1_nf_et_fh_gm_p3_þt  var             
+   8    8    0  100.00 100.00    11     11   11      0      7     7   100.00
+-<1>---(wn1=  7, bn1= 11)-           -<2>---(wn2=  7, bn2= 11)-
+  0 : 1 : fs      Í                      0 : 1 : fs      Í              
+  1 : 1 : no      minningunni             1 : 1 : no      minningunni     
+  2 : 1 : so      var                     2 : 1 : so      var             
   3 : 1 : st      annaðhvort             3 : 1 : st      annaðhvort     
-  4 : 0 : no_et_nf_kk  snjór                  4 : 0 : no_et_kk_nf  snjór          
+  4 : 1 : no      snjór                  4 : 1 : no      snjór          
   5 : 1 : st      eða                    5 : 1 : st      eða            
-  6 : 0 : no_et_nf_kvk  sól                    6 : 0 : no_et_kvk_nf  sól            
-  7 : 1 : grm     .                       7 : 1 : grm     .               
+  6 : 1 : no      sól                    6 : 1 : no      sól            
 
-  0 : 1 :   0    8  S0            0 : 1 :   0    8  S0    
+  0 : 1 :   0    7  S0            0 : 1 :   0    7  S0    
   1 : 1 :   0    7  S             1 : 1 :   0    7  S     
   2 : 1 :   0    7  IP            2 : 1 :   0    7  IP    
   3 : 1 :   0    2  PP            3 : 1 :   0    2  PP    
@@ -188,19 +179,18 @@
  10 : 1 :   5    6  C            10 : 1 :   5    6  C     
 
 ========
-   9    8    0   75.00  81.82     9     12   11      0      8     3    37.50
--<1>---(wn1=  8, bn1= 12)-           -<2>---(wn2=  8, bn2= 11)-
-  0 : 1 : fs_þgf  Af                      0 : 1 : fs_þgf  Af              
-  1 : 0 : fn_et_þgf_hk  hverju                  1 : 0 : fn_et_hk_þgf  hverju          
-  2 : 0 : so_0_fh_p3_ft_þt_gm  ertu                    2 : 0 : so_0_fh_ft_gm_p3_þt  ertu            
+   9    8    0   75.00  81.82     9     12   11      0      7     6    85.71
+-<1>---(wn1=  7, bn1= 12)-           -<2>---(wn2=  7, bn2= 11)-
+  0 : 1 : fs      Af                      0 : 1 : fs      Af              
+  1 : 1 : fn      hverju                  1 : 1 : fn      hverju          
+  2 : 1 : so      ertu                    2 : 1 : so      ertu            
   3 : 1 : ao      ekki                    3 : 1 : ao      ekki            
-  4 : 0 : fs_þf  með                    4 : 0 : ao      með            
-  5 : 0 : lo_ft_þf_kvk  beinar                  5 : 0 : lo_ft_kvk_nf_sb  beinar          
-  6 : 0 : no_ft_þf_kvk  augabrúnir             6 : 0 : no_ft_kvk_nf  augabrúnir     
-  7 : 1 : grm     ?                       7 : 1 : grm     ?               
+  4 : 0 : fs      með                    4 : 0 : ao      með            
+  5 : 1 : lo      beinar                  5 : 1 : lo      beinar          
+  6 : 1 : no      augabrúnir             6 : 1 : no      augabrúnir     
 
-  0 : 1 :   0    8  S0            0 : 1 :   0    8  S0    
-  1 : 1 :   0    8  S             1 : 1 :   0    8  S     
+  0 : 1 :   0    7  S0            0 : 1 :   0    7  S0    
+  1 : 1 :   0    7  S             1 : 1 :   0    7  S     
   2 : 0 :   0    7  IP            2 : 1 :   0    2  PP    
   3 : 1 :   0    2  PP            3 : 1 :   0    1  P     
   4 : 1 :   0    1  P             4 : 1 :   1    2  NP    
@@ -213,18 +203,17 @@
  11 : 1 :   5    7  NP          
 
 ========
-  10    8    0   58.33  77.78     7     12    9      1      8     3    37.50
--<1>---(wn1=  8, bn1= 12)-           -<2>---(wn2=  8, bn2=  9)-
-  0 : 0 : ao      Um                      0 : 0 : fs_þf  Um              
-  1 : 0 : so_0_fh_p3_et_nt_gm  er                      1 : 0 : so_0_et_fh_gm_nt_p3  er              
+  10    8    0   58.33  77.78     7     12    9      1      7     6    85.71
+-<1>---(wn1=  7, bn1= 12)-           -<2>---(wn2=  7, bn2=  9)-
+  0 : 0 : ao      Um                      0 : 0 : fs      Um              
+  1 : 1 : so      er                      1 : 1 : so      er              
   2 : 1 : nhm     að                     2 : 1 : nhm     að             
-  3 : 0 : so_1_þf_gm  ræða                  3 : 0 : so_0_gm_nh  ræða          
-  4 : 0 : no_ft_þf_hk  laun                    4 : 0 : no_ft_hk_þf  laun            
+  3 : 1 : so      ræða                  3 : 1 : so      ræða          
+  4 : 1 : no      laun                    4 : 1 : no      laun            
   5 : 1 : st      og                      5 : 1 : st      og              
-  6 : 0 : no_ft_þf_hk  bifreiðahlunnindi        6 : 0 : no_ft_hk_þf  bifreiðahlunnindi
-  7 : 1 : grm     .                       7 : 1 : grm     .               
+  6 : 1 : no      bifreiðahlunnindi        6 : 1 : no      bifreiðahlunnindi
 
-  0 : 1 :   0    8  S0            0 : 1 :   0    8  S0    
+  0 : 1 :   0    7  S0            0 : 1 :   0    7  S0    
   1 : 1 :   0    7  S             1 : 1 :   0    7  S     
   2 : 0 :   0    7  IP            2 : 0 :   0    1  P     
   3 : 0 :   0    1  ADVP          3 : 0 :   1    4  VP    
@@ -239,7 +228,7 @@
 
 ========
 ============================================================================
-                 85.45  86.24     94   110   109      3     74    29    39.19
+                 85.45  86.24     94   110   109      3     63    54    85.71
 === Summary ===
 
 -- All --
@@ -254,7 +243,7 @@ Complete match            =  40.00
 Average crossing          =   0.30
 No crossing               =  70.00
 2 or less crossing        = 100.00
-Tagging accuracy          =  39.19
+Tagging accuracy          =  85.71
 
 -- len<=100 --
 Number of sentence        =     10
@@ -268,4 +257,4 @@ Complete match            =  40.00
 Average crossing          =   0.30
 No crossing               =  70.00
 2 or less crossing        = 100.00
-Tagging accuracy          =  39.19
+Tagging accuracy          =  85.71

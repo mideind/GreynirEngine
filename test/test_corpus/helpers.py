@@ -151,6 +151,8 @@ def clean(trees):
 						numofskipsegs = 0
 						break # Ignore other stuff in rest, just the lemma etc.
 				elif item.startswith("("): # Case 3 and 4
+					# If lo_kvk_nf_et, delete all but lo
+					item = item.split("_")[0]
 					if text:
 						item = "_".join(text) + " " + item
 						text = []
@@ -236,15 +238,7 @@ def get_results(goldfolder, testfolder, reportfolder, reportsuffix):
 		print(skil)
 
 def combine_reports(reportfolder, suffixlist):
-	# byrja á að safna saman eftirfarandi eigindum
-	# Number of sentences
-	# Number of error sentences
-	# Bracketing recall
-	# Bracketing precision
-	# Bracketing Fmeasure
-	# Tagging accuracy
-
-	# Síðar:
+	# TODO:
 	# Telja hve margar setningar byrja á S0-X
 	# Bæta við víddum fyrir hvern textaflokk -- news, science, parliament, literature
 	# Telja öll eigindi líka fyrir hvern flokk, eftir því hvort preport.stem inniheldur rétt nafn
