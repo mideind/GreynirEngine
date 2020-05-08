@@ -72,9 +72,9 @@ if __package__:
     # Import the CFFI wrapper for the bin.cpp C++ module (see also build_bin.py)
     # This is not needed for command-line invocation of bincompress.py,
     # i.e. when generating a new ord.compressed file.
-    from ._bin import lib as bin_cffi, ffi
+    from ._bin import lib as bin_cffi, ffi  # type: ignore
 else:
-    from _bin import lib as bin_cffi, ffi
+    from _bin import lib as bin_cffi, ffi  # type: ignore
 
 
 _PATH = os.path.dirname(__file__) or "."
@@ -1176,7 +1176,7 @@ if __name__ == "__main__":
     print("Welcome to the Reynir compressed vocabulary file generator")
 
     # Read BÍN errata and deletions from BinErrata.conf
-    from settings import Settings, BinErrata, BinDeletions
+    from settings import Settings, BinErrata, BinDeletions  # type: ignore
 
     Settings.read(os.path.join(_PATH, "config", "BinErrata.conf"))
     _BIN_ERRATA = BinErrata.DICT

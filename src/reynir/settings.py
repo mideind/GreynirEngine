@@ -31,7 +31,7 @@
 
 """
 
-from typing import Union
+from typing import Optional, Union, Dict, Tuple, Set, List
 import os
 import codecs
 import locale
@@ -53,8 +53,8 @@ _ALL_NUMBERS = frozenset(("et", "ft"))
 _SUBCLAUSES = frozenset(("nh", "mnh", "falls"))
 _REFLPRN = {"sig": "sig_hk_et_þf", "sér": "sig_hk_et_þgf", "sín": "sig_hk_et_ef"}
 
-
-# Magic stuff to change locale context temporarily
+# Type of meaning tuples for static phrases
+MeaningTuple = Tuple[str, str, str]
 
 
 @contextmanager
@@ -175,22 +175,22 @@ class VerbObjects:
     # Dictionary of verbs by object (argument) number, 0, 1 or 2
     # Verbs can control zero, one or two arguments (noun phrases),
     # where each argument must have a particular case
-    VERBS = [set(), defaultdict(list), defaultdict(list)]
+    VERBS = [set(), defaultdict(list), defaultdict(list)]  # type: List[Union[Set[str], Dict[str, List[str]]]]
     # Dictionary of verb forms with associated scores
     # The key is the normal form of the verb + the associated cases,
     # separated by underscores, e.g. "vera_þgf_ef"
-    SCORES = dict()
+    SCORES = dict()  # type: Dict[str, int]
     # Dictionary of verbs where, for each verb + argument cases, we store a set of
     # preposition_case keys, i.e. "frá_þgf"
-    PREPOSITIONS = defaultdict(set)
+    PREPOSITIONS = defaultdict(set)  # type: Dict[str, Set[str]]
 
     # dict { verb + argument cases : verb particle}
-    VERB_PARTICLES = defaultdict(set)
+    VERB_PARTICLES = defaultdict(set)  # type: Dict[str, Set[str]]
 
-    VERBS_ERRORS = [set(), defaultdict(dict), defaultdict(dict)]
-    VERB_PARTICLES_ERRORS = defaultdict(dict)
-    PREPOSITIONS_ERRORS = defaultdict(dict)
-    WRONG_VERBS = defaultdict(list)
+    VERBS_ERRORS = [set(), defaultdict(dict), defaultdict(dict)]  # type: List[Union[Set[str], Dict[str, Dict[str, str]]]]
+    VERB_PARTICLES_ERRORS = defaultdict(dict)  # type: Dict[str, Dict[str, str]]
+    PREPOSITIONS_ERRORS = defaultdict(dict)  # type: Dict[str, Dict[str, str]]
+    WRONG_VERBS = defaultdict(list)  # type: Dict[str, List[str]]
 
     @staticmethod
     def add(verb, args, prepositions, particle, score):
@@ -300,10 +300,10 @@ class VerbSubjects:
         initialized from the config file """
 
     # Dictionary of verbs and their associated set of subject cases
-    VERBS = defaultdict(set)
+    VERBS = defaultdict(set)  # type: Dict[str, Set[str]]
     _CASE = "þgf"  # Default subject case
     # dict { verb : (wrong_case, correct_case) }
-    VERBS_ERRORS = defaultdict(dict)
+    VERBS_ERRORS = defaultdict(dict)  # type: Dict[str, Dict[str, str]]
 
     @staticmethod
     def set_case(case):
@@ -352,18 +352,18 @@ class Prepositions:
     """ Wrapper around dictionary of prepositions, initialized from the config file """
 
     # Dictionary of prepositions: preposition -> { set of cases that it controls }
-    PP = defaultdict(set)
+    PP = defaultdict(set)  # type: Dict[str, Set[str]]
     # Prepositions that can be followed by an infinitive verb phrase
     # 'Beiðnin um að handtaka manninn var send lögreglunni'
-    PP_NH = set()
+    PP_NH = set()  # type: Set[str]
     # Set of common, 'plain' prepositions that require matching with BÍN meanings,
     # cf. logic in matcher_fs() in binparser.py. If filtering according to Phrases.conf
     # is important for a preposition, include it here.
-    PP_COMMON = set()
+    PP_COMMON = set()  # type: Set[str]
     # A dictionary containing information from $error() pragmas associated
     # with the preposition. Each entry is again a dict of {case: error} specifications,
     # where each error spec is usually a tuple.
-    PP_ERRORS = defaultdict(dict)
+    PP_ERRORS = defaultdict(dict)  # type: Dict[str, Dict[str, Tuple]]
 
     @staticmethod
     def add(prep, case, nh):
@@ -393,7 +393,7 @@ class AdjectiveTemplate:
     """ Wrapper around template list of adjective endings """
 
     # List of tuples: (ending, form_spec)
-    ENDINGS = []
+    ENDINGS = []  # type: List[Tuple[str, str]]
 
     @classmethod
     def add(cls, ending, form):
@@ -406,7 +406,7 @@ class DisallowedNames:
     """ Wrapper around list of disallowed person name forms """
 
     # Dictionary of name stems : sets of cases
-    STEMS = {}
+    STEMS = {}  # type: Dict[str, Set[str]]
 
     @classmethod
     def add(cls, name, cases):
@@ -419,7 +419,7 @@ class UndeclinableAdjectives:
     """ Wrapper around list of undeclinable adjectives """
 
     # Set of adjectives
-    ADJECTIVES = set()
+    ADJECTIVES = set()  # type: Set[str]
 
     @classmethod
     def add(cls, wrd):
@@ -432,18 +432,18 @@ class StaticPhrases:
     """ Wrapper around dictionary of static phrases, initialized from the config file """
 
     # Default meaning for static phrases
-    MEANING = ("ao", "frasi", "-")
+    MEANING = ("ao", "frasi", "-")  # type: MeaningTuple
     # Dictionary of the static phrases with their meanings
-    MAP = {}
+    MAP = {}  # type: Dict[str, List[MeaningTuple]]
     # Dictionary of the static phrases with their IFD tags and lemmas
     # { static_phrase : (tag string, lemma string) }
-    DETAILS = {}
+    DETAILS = {}  # type: Dict[str, Tuple[str, str]]
     # List of all static phrases and their meanings
-    LIST = []
+    LIST = []  # type: List[Tuple[str, List[MeaningTuple]]]
     # Parsing dictionary keyed by first word of phrase
-    DICT = defaultdict(list)
+    DICT = defaultdict(list)  # type: Dict[str, List[str]]
     # Error dictionary, { phrase : (error_code, right_phrase, right_tag_string, right_lemma_string) }
-    ERROR_DICT = {}
+    ERROR_DICT = {}  # type: Dict[str, Tuple[str, str, str, str]]
 
     @staticmethod
     def add(spec):
@@ -543,11 +543,11 @@ class AmbigPhrases:
 
     # List of tuples of ambiguous phrases and their word category lists,
     # i.e. (words, cats) where words and cats are tuples
-    LIST = []
+    LIST = []  # type: List[Tuple[Tuple[str, ...], Tuple[str, ...]]]
     # Parsing dictionary keyed by first word of phrase
-    DICT = defaultdict(list)
+    DICT = defaultdict(list)  # type: Dict[str, List[Tuple[List[str], int]]]
     # Error dictionary, { phrase : (error_code, right_phrase, right_parts_of_speech) }
-    ERROR_DICT = defaultdict(list)
+    ERROR_DICT = defaultdict(list)  # type: Dict[str, List[Tuple[str, ...]]]
 
     @staticmethod
     def add(words, cats):
@@ -567,7 +567,7 @@ class AmbigPhrases:
     def add_error(words, error):
         # Dictionary structure:
         # dict { phrase : (error_code, right_phrase, right_parts_of_speech) }
-        AmbigPhrases.ERROR_DICT[words] = error
+        AmbigPhrases.ERROR_DICT[words].append(error)
 
     @staticmethod
     def get_cats(ix):
@@ -585,13 +585,15 @@ class NoIndexWords:
     """ Wrapper around set of word stems and categories that should
         not be indexed """
 
-    SET = set()  # Set of (stem, cat) tuples
-    _CAT = "so"  # Default category
+    # Set of (stem, cat) tuples
+    SET = set()  # type: Set[Tuple[str, str]]
+    # Default category
+    _CAT = "so"
 
     # The word categories that are indexed in the words table
     CATEGORIES_TO_INDEX = frozenset(
         ("kk", "kvk", "hk", "person_kk", "person_kvk", "entity", "lo", "so")
-    )
+    )  # Type: Set[str]
 
     @staticmethod
     def set_cat(cat):
@@ -608,10 +610,13 @@ class Topics:
 
     """ Wrapper around topics, represented as a dict (name: set) """
 
-    DICT = defaultdict(set)  # Dict of topic name: set
-    ID = dict()  # Dict of identifier: topic name
-    THRESHOLD = dict()  # Dict of identifier: threshold (as a float)
-    _name = None
+    # Dict of topic name: set
+    DICT = defaultdict(set)  # type: Dict[str, Set[str]]
+    # Dict of identifier: topic name
+    ID = dict()  # type: Dict[str, str]
+    # Dict of identifier: threshold (as a float)
+    THRESHOLD = dict()  # type: Dict[str, float]
+    _name = None  # type: Optional[str]
 
     @staticmethod
     def set_name(name):
@@ -669,15 +674,15 @@ class AdjectivePredicates:
         the [adjective_predicates] section of AdjectivePredicates.conf """
 
     # dict { adjective lemma : set of possible argument cases }
-    ARGUMENTS = defaultdict(set)
+    ARGUMENTS = defaultdict(set)  # type: Dict[str, Set[str]]
     # dict { adjective lemma : set of (preposition, case) }
-    PREPOSITIONS = defaultdict(set)
+    PREPOSITIONS = defaultdict(set)  # type: Dict[str, Set[Tuple[str, str]]]
 
     # dict { adjective lemma : [ (argument case, error code) ] }
-    ERROR_DICT = defaultdict(list)
+    ERROR_DICT = defaultdict(list)  # type: Dict[str, List[Tuple[str, str]]]
 
     # dict { adjective lemma : set of (preposition, case) }
-    ERROR_PREPOSITIONS = defaultdict(set)
+    ERROR_PREPOSITIONS = defaultdict(set)  # type: Dict[str, Set[Tuple[str, str]]]
 
     @staticmethod
     def add(adj, arg, prepositions):
@@ -697,14 +702,13 @@ class AdjectivePredicates:
             AdjectivePredicates.ERROR_PREPOSITIONS[adj].update(prepositions)
 
 
-
 class Preferences:
 
     """ Wrapper around disambiguation hints, initialized from the config file """
 
     # Dictionary keyed by word containing a list of tuples (worse, better)
     # where each is a list of terminal prefixes
-    DICT = defaultdict(list)
+    DICT = defaultdict(list)  # type: Dict[str, List[Tuple[List[str], List[str]]]]
 
     @staticmethod
     def add(word, worse, better, factor):
@@ -721,9 +725,9 @@ class StemPreferences:
 
     """ Wrapper around stem disambiguation hints, initialized from the config file """
 
-    # Dictionary keyed by word form containing a list of tuples (worse, better)
+    # Dictionary keyed by word form containing a tuple (worse, better)
     # where each is a list word stems
-    DICT = dict()
+    DICT = dict()  # type: Dict[str, Tuple[List[str], List[str]]]
 
     @staticmethod
     def add(word, worse, better):
@@ -736,7 +740,7 @@ class StemPreferences:
 
     @staticmethod
     def get(word):
-        """ Return a list of (worse, better) tuples for the given word form """
+        """ Return a (worse, better) tuple for the given word form """
         return StemPreferences.DICT.get(word, None)
 
 
@@ -747,7 +751,7 @@ class NounPreferences:
 
     # This is a dict of noun word forms, giving the relative priorities
     # of different genders
-    DICT = defaultdict(dict)
+    DICT = defaultdict(dict)  # type: Dict[str, Dict[str, int]]
 
     @staticmethod
     def add(word, worse, better):
@@ -775,7 +779,7 @@ class NamePreferences:
 
     """ Wrapper around well-known person names, initialized from the config file """
 
-    SET = set()
+    SET = set()  # type: Set[str]
 
     @staticmethod
     def add(name):
@@ -787,7 +791,7 @@ class BinErrata:
 
     """ Wrapper around BÍN errata, initialized from the config file """
 
-    DICT = dict()
+    DICT = dict()  # type: Dict[Tuple[str, str], str]
 
     @staticmethod
     def add(stem, ordfl, fl):
@@ -800,7 +804,7 @@ class BinDeletions:
 
     """ Wrapper around BÍN deletions, initialized from the config file """
 
-    SET = set()
+    SET = set()  # type: Set[Tuple[str, str, str]]
 
     @staticmethod
     def add(stem, ordfl, fl):

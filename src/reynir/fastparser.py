@@ -63,7 +63,7 @@ from .glock import GlobalLock
 # Import the CFFI wrapper module for the _eparser.*.so library
 # which is compiled from eparser.cpp (see eparser_build.py)
 # pylint: disable=no-name-in-module
-from ._eparser import lib as eparser, ffi
+from ._eparser import lib as eparser, ffi  # type: ignore
 
 
 _PATH = os.path.dirname(__file__) or "."

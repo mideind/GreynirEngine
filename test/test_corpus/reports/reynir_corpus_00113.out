@@ -1,0 +1,546 @@
+  Sent.                        Matched  Bracket   Cross        Correct Tag
+ ID  Len.  Stat. Recal  Prec.  Bracket gold test Bracket Words  Tags Accracy
+============================================================================
+   1   19    0   61.54  69.57    16     26   23      2     16    13    81.25
+-<1>---(wn1= 16, bn1= 26)-           -<2>---(wn2= 16, bn2= 23)-
+  0 : 1 : person  Einar_Ágúst           0 : 1 : person  Einar_Ágúst   
+  1 : 1 : fs      úr                     1 : 1 : fs      úr             
+  2 : 1 : sérnafn  Skítamóral            2 : 1 : no      Skítamóral    
+  3 : 1 : so      spilar                  3 : 1 : so      spilar          
+  4 : 1 : fs      frá                    4 : 1 : fs      frá            
+  5 : 1 : tala    21                      5 : 1 : tala    21              
+  6 : 1 : tala    00                      6 : 1 : tala    00              
+  7 : 1 : st      og                      7 : 1 : st      og              
+  8 : 1 : pfn     það                   8 : 1 : pfn     það           
+  9 : 1 : so      verður                 9 : 1 : so      verður         
+ 10 : 0 : lo      rjúkandi              10 : 0 : so      rjúkandi       
+ 11 : 0 : foreign  happy                  11 : 0 : no      happy           
+ 12 : 0 : foreign  hour                   12 : 0 : no      hour            
+ 13 : 1 : fs      frá                   13 : 1 : fs      frá            
+ 14 : 1 : tala    21                     14 : 1 : tala    21              
+ 15 : 1 : tala    23                     15 : 1 : tala    23              
+
+  0 : 1 :   0   16  S0            0 : 1 :   0   16  S0    
+  1 : 1 :   0    7  S             1 : 1 :   0    7  S     
+  2 : 1 :   0    7  IP            2 : 1 :   0    7  IP    
+  3 : 1 :   0    3  NP            3 : 1 :   0    3  NP    
+  4 : 1 :   1    3  PP            4 : 1 :   1    3  PP    
+  5 : 1 :   1    2  P             5 : 1 :   1    2  P     
+  6 : 1 :   2    3  NP            6 : 1 :   2    3  NP    
+  7 : 1 :   3    7  VP            7 : 1 :   3    7  VP    
+  8 : 1 :   3    4  VP            8 : 1 :   3    4  VP    
+  9 : 0 :   4    7  ADVP          9 : 0 :   4    7  PP    
+ 10 : 0 :   4    6  PP           10 : 1 :   4    5  P     
+ 11 : 1 :   4    5  P            11 : 0 :   5    7  NP    
+ 12 : 0 :   5    6  NP           12 : 1 :   7    8  C     
+ 13 : 0 :   6    7  NP           13 : 1 :   8   16  S     
+ 14 : 1 :   7    8  C            14 : 1 :   8    9  NP    
+ 15 : 1 :   8   16  S            15 : 1 :   9   16  VP    
+ 16 : 0 :   8   16  IP           16 : 1 :   9   10  VP    
+ 17 : 1 :   8    9  NP           17 : 0 :  10   11  VP    
+ 18 : 1 :   9   16  VP           18 : 0 :  11   16  NP    
+ 19 : 1 :   9   10  VP           19 : 0 :  12   16  NP    
+ 20 : 0 :  10   16  NP           20 : 0 :  13   16  PP    
+ 21 : 0 :  13   16  ADVP         21 : 1 :  13   14  P     
+ 22 : 0 :  13   15  PP           22 : 0 :  14   16  NP    
+ 23 : 1 :  13   14  P           
+ 24 : 0 :  14   15  NP          
+ 25 : 0 :  15   16  NP          
+
+========
+   2   20    0   83.33  83.33    25     30   30      2     19    19   100.00
+-<1>---(wn1= 19, bn1= 30)-           -<2>---(wn2= 19, bn2= 30)-
+  0 : 1 : no      Þyrla                  0 : 1 : no      Þyrla          
+  1 : 1 : fyrirtæki  Landhelgisgæslunnar        1 : 1 : no      Landhelgisgæslunnar
+  2 : 1 : so      hífði                 2 : 1 : so      hífði         
+  3 : 1 : pfn     hann                    3 : 1 : pfn     hann            
+  4 : 1 : ao      upp                     4 : 1 : ao      upp             
+  5 : 1 : st      og                      5 : 1 : st      og              
+  6 : 1 : pfn     hann                    6 : 1 : pfn     hann            
+  7 : 1 : so      lenti                   7 : 1 : so      lenti           
+  8 : 1 : fs      á                      8 : 1 : fs      á              
+  9 : 1 : no      flugvellinum            9 : 1 : no      flugvellinum    
+ 10 : 1 : fs      á                     10 : 1 : fs      á              
+ 11 : 1 : sérnafn  Egilsstöðum          11 : 1 : no      Egilsstöðum   
+ 12 : 1 : ao      þar                   12 : 1 : ao      þar            
+ 13 : 1 : stt     sem                    13 : 1 : st      sem             
+ 14 : 1 : no      læknir                14 : 1 : no      læknir         
+ 15 : 1 : st      og                     15 : 1 : st      og              
+ 16 : 1 : no      sjúkrabíll           16 : 1 : no      sjúkrabíll    
+ 17 : 1 : so      biðu                  17 : 1 : so      biðu           
+ 18 : 1 : pfn     hans                   18 : 1 : pfn     hans            
+
+  0 : 1 :   0   19  S0            0 : 1 :   0   19  S0    
+  1 : 1 :   0    5  S             1 : 1 :   0    5  S     
+  2 : 1 :   0    5  IP            2 : 1 :   0    5  IP    
+  3 : 1 :   0    2  NP            3 : 1 :   0    2  NP    
+  4 : 1 :   1    2  NP            4 : 1 :   1    2  NP    
+  5 : 1 :   2    5  VP            5 : 1 :   2    5  VP    
+  6 : 1 :   2    3  VP            6 : 0 :   2    4  VP    
+  7 : 1 :   3    4  NP            7 : 1 :   2    3  VP    
+  8 : 1 :   4    5  ADVP          8 : 1 :   3    4  NP    
+  9 : 1 :   5    6  C             9 : 1 :   4    5  ADVP  
+ 10 : 1 :   6   19  S            10 : 1 :   5    6  C     
+ 11 : 1 :   6   19  IP           11 : 1 :   6   19  S     
+ 12 : 1 :   6    7  NP           12 : 1 :   6   19  IP    
+ 13 : 1 :   7   19  VP           13 : 1 :   6    7  NP    
+ 14 : 1 :   7    8  VP           14 : 1 :   7   19  VP    
+ 15 : 0 :   8   19  PP           15 : 1 :   7    8  VP    
+ 16 : 1 :   8    9  P            16 : 0 :   8   10  PP    
+ 17 : 0 :   9   19  NP           17 : 1 :   8    9  P     
+ 18 : 1 :  10   12  PP           18 : 0 :   9   10  NP    
+ 19 : 1 :  10   11  P            19 : 1 :  10   12  PP    
+ 20 : 1 :  11   12  NP           20 : 1 :  10   11  P     
+ 21 : 0 :  12   19  ADVP         21 : 1 :  11   12  NP    
+ 22 : 0 :  13   19  CP           22 : 0 :  12   19  CP    
+ 23 : 0 :  13   14  C            23 : 0 :  12   14  C     
+ 24 : 1 :  14   19  IP           24 : 1 :  14   19  IP    
+ 25 : 1 :  14   17  NP           25 : 1 :  14   17  NP    
+ 26 : 1 :  15   16  C            26 : 1 :  15   16  C     
+ 27 : 1 :  17   19  VP           27 : 1 :  17   19  VP    
+ 28 : 1 :  17   18  VP           28 : 1 :  17   18  VP    
+ 29 : 1 :  18   19  NP           29 : 1 :  18   19  NP    
+
+========
+   3   20    0   71.43  66.67    20     28   30      5     18    17    94.44
+-<1>---(wn1= 18, bn1= 28)-           -<2>---(wn2= 18, bn2= 30)-
+  0 : 1 : fs      Við                    0 : 1 : fs      Við            
+  1 : 1 : no      ákvörðun             1 : 1 : no      ákvörðun     
+  2 : 1 : fn      sína                   2 : 1 : fn      sína           
+  3 : 1 : so      studdist                3 : 1 : so      studdist        
+  4 : 1 : no      ráðherra              4 : 1 : no      ráðherra      
+  5 : 1 : ao      einnig                  5 : 1 : ao      einnig          
+  6 : 1 : fs      við                    6 : 1 : fs      við            
+  7 : 1 : no      minnisblað             7 : 1 : no      minnisblað     
+  8 : 1 : fs      frá                    8 : 1 : fs      frá            
+  9 : 1 : fyrirtæki  Hafrannsóknastofnun        9 : 1 : no      Hafrannsóknastofnun
+ 10 : 0 : stt     sem                    10 : 0 : fs      sem             
+ 11 : 1 : pfn     hann                   11 : 1 : pfn     hann            
+ 12 : 1 : so      óskaði               12 : 1 : so      óskaði        
+ 13 : 1 : ao      eftir                  13 : 1 : ao      eftir           
+ 14 : 1 : fs      í                     14 : 1 : fs      í              
+ 15 : 1 : no      kjölfar               15 : 1 : no      kjölfar        
+ 16 : 1 : no      skýrslu               16 : 1 : no      skýrslu        
+ 17 : 1 : fyrirtæki  Hagfræðistofnunar       17 : 1 : no      Hagfræðistofnunar
+
+  0 : 1 :   0   18  S0            0 : 1 :   0   18  S0    
+  1 : 0 :   0   18  S             1 : 0 :   0   10  S     
+  2 : 0 :   0   18  IP            2 : 0 :   0   10  IP    
+  3 : 1 :   0    3  PP            3 : 1 :   0    3  PP    
+  4 : 1 :   0    1  P             4 : 1 :   0    1  P     
+  5 : 1 :   1    3  NP            5 : 1 :   1    3  NP    
+  6 : 0 :   3   18  VP            6 : 0 :   3   10  VP    
+  7 : 1 :   3    4  VP            7 : 0 :   3    5  VP    
+  8 : 1 :   4    5  NP            8 : 1 :   3    4  VP    
+  9 : 1 :   5    6  ADVP          9 : 1 :   4    5  NP    
+ 10 : 0 :   6   18  PP           10 : 1 :   5    6  ADVP  
+ 11 : 1 :   6    7  P            11 : 0 :   6   10  PP    
+ 12 : 0 :   7   18  NP           12 : 1 :   6    7  P     
+ 13 : 1 :   8   10  PP           13 : 0 :   7   10  NP    
+ 14 : 1 :   8    9  P            14 : 1 :   8   10  PP    
+ 15 : 1 :   9   10  NP           15 : 1 :   8    9  P     
+ 16 : 0 :  10   18  CP           16 : 1 :   9   10  NP    
+ 17 : 0 :  10   11  C            17 : 0 :  10   18  S     
+ 18 : 0 :  11   18  IP           18 : 0 :  10   18  IP    
+ 19 : 1 :  11   12  NP           19 : 0 :  10   12  PP    
+ 20 : 1 :  12   18  VP           20 : 0 :  10   11  P     
+ 21 : 1 :  12   13  VP           21 : 1 :  11   12  NP    
+ 22 : 1 :  13   14  ADVP         22 : 1 :  12   18  VP    
+ 23 : 1 :  14   18  PP           23 : 1 :  12   13  VP    
+ 24 : 1 :  14   15  P            24 : 1 :  13   14  ADVP  
+ 25 : 1 :  15   18  NP           25 : 1 :  14   18  PP    
+ 26 : 1 :  16   18  NP           26 : 1 :  14   15  P     
+ 27 : 1 :  17   18  NP           27 : 1 :  15   18  NP    
+                                 28 : 1 :  16   18  NP    
+                                 29 : 1 :  17   18  NP    
+
+========
+   4   20    0   75.76  75.76    25     33   33      5     19    19   100.00
+-<1>---(wn1= 19, bn1= 33)-           -<2>---(wn2= 19, bn2= 33)-
+  0 : 1 : no      Fyrirtækið            0 : 1 : no      Fyrirtækið    
+  1 : 1 : so      nefnist                 1 : 1 : so      nefnist         
+  2 : 1 : fyrirtæki  Neuralink               2 : 1 : no      Neuralink       
+  3 : 1 : st      og                      3 : 1 : st      og              
+  4 : 1 : so      mun                     4 : 1 : so      mun             
+  5 : 1 : so      þróa                  5 : 1 : so      þróa          
+  6 : 1 : no      efni                    6 : 1 : no      efni            
+  7 : 1 : stt     sem                     7 : 1 : stt     sem             
+  8 : 1 : so      á                      8 : 1 : so      á              
+  9 : 1 : nhm     að                     9 : 1 : nhm     að             
+ 10 : 1 : so      gera                   10 : 1 : so      gera            
+ 11 : 1 : no      fólki                 11 : 1 : no      fólki          
+ 12 : 1 : lo      kleift                 12 : 1 : lo      kleift          
+ 13 : 1 : nhm     að                    13 : 1 : nhm     að             
+ 14 : 1 : so      stjórna               14 : 1 : so      stjórna        
+ 15 : 1 : no      tækjum                15 : 1 : no      tækjum         
+ 16 : 1 : fs      með                   16 : 1 : fs      með            
+ 17 : 1 : no      huganum                17 : 1 : no      huganum         
+ 18 : 1 : fn      einum                  18 : 1 : fn      einum           
+
+  0 : 1 :   0   19  S0            0 : 1 :   0   19  S0    
+  1 : 1 :   0   19  S             1 : 1 :   0   19  S     
+  2 : 1 :   0   19  IP            2 : 1 :   0   19  IP    
+  3 : 1 :   0    1  NP            3 : 1 :   0    1  NP    
+  4 : 1 :   1   19  VP            4 : 1 :   1   19  VP    
+  5 : 1 :   1    3  VP            5 : 1 :   1    3  VP    
+  6 : 1 :   1    2  VP            6 : 1 :   1    2  VP    
+  7 : 1 :   2    3  NP            7 : 1 :   2    3  NP    
+  8 : 1 :   3    4  C             8 : 1 :   3    4  C     
+  9 : 1 :   4   19  VP            9 : 1 :   4   19  VP    
+ 10 : 1 :   4    5  VP           10 : 1 :   4    5  VP    
+ 11 : 1 :   5   19  VP           11 : 1 :   5   19  VP    
+ 12 : 1 :   5    6  VP           12 : 1 :   5    6  VP    
+ 13 : 0 :   6   19  NP           13 : 0 :   6   13  NP    
+ 14 : 0 :   7   19  CP           14 : 0 :   7   13  CP    
+ 15 : 1 :   7    8  C            15 : 1 :   7    8  C     
+ 16 : 0 :   8   19  IP           16 : 0 :   8   13  IP    
+ 17 : 0 :   8   19  VP           17 : 0 :   8   13  S     
+ 18 : 1 :   8    9  VP           18 : 0 :   8   12  VP    
+ 19 : 0 :   9   19  IP           19 : 1 :   8    9  VP    
+ 20 : 1 :   9   10  TO           20 : 1 :   9   10  TO    
+ 21 : 0 :  10   19  VP           21 : 0 :  10   12  VP    
+ 22 : 1 :  10   11  VP           22 : 1 :  10   11  VP    
+ 23 : 1 :  11   12  NP           23 : 1 :  11   12  NP    
+ 24 : 0 :  12   19  NP           24 : 0 :  12   13  NP    
+ 25 : 1 :  13   19  IP           25 : 1 :  13   19  IP    
+ 26 : 1 :  13   14  TO           26 : 1 :  13   14  TO    
+ 27 : 1 :  14   19  VP           27 : 1 :  14   19  VP    
+ 28 : 1 :  14   15  VP           28 : 1 :  14   15  VP    
+ 29 : 0 :  15   16  NP           29 : 0 :  15   19  NP    
+ 30 : 1 :  16   19  PP           30 : 1 :  16   19  PP    
+ 31 : 1 :  16   17  P            31 : 1 :  16   17  P     
+ 32 : 1 :  17   19  NP           32 : 1 :  17   19  NP    
+
+========
+   5   19    0   74.07  80.00    20     27   25      4     18    18   100.00
+-<1>---(wn1= 18, bn1= 27)-           -<2>---(wn2= 18, bn2= 25)-
+  0 : 1 : no      Kannanir                0 : 1 : no      Kannanir        
+  1 : 1 : so      benda                   1 : 1 : so      benda           
+  2 : 1 : fs      til                     2 : 1 : fs      til             
+  3 : 1 : fn      þess                   3 : 1 : fn      þess           
+  4 : 1 : st      að                     4 : 1 : st      að             
+  5 : 1 : no      sjarmatröllið         5 : 1 : no      sjarmatröllið 
+  6 : 1 : st      og                      6 : 1 : st      og              
+  7 : 1 : no      ólíkindatólið        7 : 1 : no      ólíkindatólið
+  8 : 1 : person  Emmanuel_Macron         8 : 1 : person  Emmanuel_Macron 
+  9 : 1 : so      mæti                   9 : 1 : so      mæti           
+ 10 : 1 : pfn     henni                  10 : 1 : pfn     henni           
+ 11 : 1 : fs      í                     11 : 1 : fs      í              
+ 12 : 1 : lo      seinni                 12 : 1 : lo      seinni          
+ 13 : 1 : no      umferð                13 : 1 : no      umferð         
+ 14 : 1 : no      kosninganna            14 : 1 : no      kosninganna     
+ 15 : 1 : st      og                     15 : 1 : st      og              
+ 16 : 1 : so      hafi                   16 : 1 : so      hafi            
+ 17 : 1 : no      sigur                  17 : 1 : no      sigur           
+
+  0 : 1 :   0   18  S0            0 : 1 :   0   18  S0    
+  1 : 1 :   0   18  S             1 : 1 :   0   18  S     
+  2 : 1 :   0   18  IP            2 : 1 :   0   18  IP    
+  3 : 1 :   0    1  NP            3 : 1 :   0    1  NP    
+  4 : 1 :   1   18  VP            4 : 1 :   1   18  VP    
+  5 : 1 :   1    2  VP            5 : 1 :   1    2  VP    
+  6 : 0 :   2   18  PP            6 : 0 :   2   15  PP    
+  7 : 1 :   2    3  P             7 : 1 :   2    3  P     
+  8 : 0 :   3   18  NP            8 : 0 :   3   15  NP    
+  9 : 0 :   4   18  CP            9 : 0 :   4   15  CP    
+ 10 : 1 :   4    5  C            10 : 1 :   4    5  C     
+ 11 : 0 :   5   18  IP           11 : 0 :   5   15  IP    
+ 12 : 1 :   5    9  NP           12 : 1 :   5    9  NP    
+ 13 : 0 :   5    8  NP           13 : 1 :   6    7  C     
+ 14 : 1 :   6    7  C            14 : 1 :   9   15  VP    
+ 15 : 0 :   9   18  VP           15 : 1 :   9   10  VP    
+ 16 : 1 :   9   15  VP           16 : 0 :  10   15  NP    
+ 17 : 1 :   9   10  VP           17 : 1 :  11   15  PP    
+ 18 : 0 :  10   11  NP           18 : 1 :  11   12  P     
+ 19 : 1 :  11   15  PP           19 : 1 :  12   15  NP    
+ 20 : 1 :  11   12  P            20 : 1 :  14   15  NP    
+ 21 : 1 :  12   15  NP           21 : 1 :  15   16  C     
+ 22 : 1 :  14   15  NP           22 : 1 :  16   18  VP    
+ 23 : 1 :  15   16  C            23 : 1 :  16   17  VP    
+ 24 : 1 :  16   18  VP           24 : 1 :  17   18  NP    
+ 25 : 1 :  16   17  VP          
+ 26 : 1 :  17   18  NP          
+
+========
+   6   17    1    0.00   0.00     0      0    0      0      0     0     0.00
+-<1>---(wn1= 14, bn1= 24)-           -<2>---(wn2= 15, bn2= 26)-
+  0 : 9 : fyrirtæki  Hyundai_i30             0 : 9 : entity  Hyundai         
+  1 : 9 : stt     sem                     1 : 9 : no      i               
+  2 : 9 : so      hlaut                   2 : 9 : tala    30              
+  3 : 9 : ao      á_dögunum             3 : 9 : stt     sem             
+  4 : 9 : no      hönnunarverðlaun        4 : 9 : so      hlaut           
+  5 : 9 : fyrirtæki  iF                      5 : 9 : eo      á_dögunum     
+  6 : 9 : so      verður                 6 : 9 : no      hönnunarverðlaun
+  7 : 9 : so      frumsýndur             7 : 9 : so      verður         
+  8 : 9 : lo      næskomandi             8 : 9 : so      frumsýndur     
+  9 : 9 : no      laugardag               9 : 9 : so      næskomandi     
+ 10 : 9 : fs      hjá                   10 : 9 : no      laugardag       
+ 11 : 9 : fyrirtæki  Hyundai                11 : 9 : fs      hjá            
+ 12 : 9 : fs      í                     12 : 9 : entity  Hyundai         
+ 13 : 9 : no      Garðabæ              13 : 9 : fs      í              
+                                         14 : 9 : no      Garðabæ       
+
+  0 : 9 :   0   14  S0-X          0 : 9 :   0   15  S0    
+  1 : 9 :   0   14  S-MAIN        1 : 9 :   0   15  S-HEADING
+  2 : 9 :   0   14  IP            2 : 9 :   0   15  S-MAIN
+  3 : 9 :   0    6  NP-SUBJ        3 : 9 :   0    9  VP    
+  4 : 9 :   1    6  CP-REL        4 : 9 :   0    7  NP-PRD
+  5 : 9 :   1    2  C             5 : 9 :   0    1  NP-PREFIX
+  6 : 9 :   2    6  IP            6 : 9 :   2    3  NP-POSS
+  7 : 9 :   2    6  VP            7 : 9 :   3    7  CP-REL
+  8 : 9 :   2    3  VP            8 : 9 :   3    4  C     
+  9 : 9 :   3    4  ADVP-TIMESTAMP-REL        9 : 9 :   4    7  IP    
+ 10 : 9 :   4    6  NP-OBJ       10 : 9 :   4    7  S-MAIN
+ 11 : 9 :   5    6  NP-POSS       11 : 9 :   4    7  VP    
+ 12 : 9 :   6   14  VP           12 : 9 :   4    5  VP    
+ 13 : 9 :   6    7  VP-AUX       13 : 9 :   5    7  NP-OBJ
+ 14 : 9 :   7   14  VP           14 : 9 :   7    8  VP    
+ 15 : 9 :   7    8  VP           15 : 9 :   8    9  NP-PRD
+ 16 : 9 :   8   10  ADVP-DATE-REL       16 : 9 :   8    9  VP    
+ 17 : 9 :   8   10  NP           17 : 9 :   9   15  VP    
+ 18 : 9 :  10   14  PP-LOC       18 : 9 :   9   10  VP    
+ 19 : 9 :  10   11  P            19 : 9 :  10   15  NP-OBJ
+ 20 : 9 :  11   14  NP           20 : 9 :  11   15  PP    
+ 21 : 9 :  12   14  PP-LOC       21 : 9 :  11   12  P     
+ 22 : 9 :  12   13  P            22 : 9 :  12   15  NP    
+ 23 : 9 :  13   14  NP           23 : 9 :  13   15  PP    
+                                 24 : 9 :  13   14  P     
+                                 25 : 9 :  14   15  NP    
+
+========
+   7   19    0   70.00  72.41    21     30   29      4     18    18   100.00
+-<1>---(wn1= 18, bn1= 30)-           -<2>---(wn2= 18, bn2= 29)-
+  0 : 1 : no      Hótelið               0 : 1 : no      Hótelið       
+  1 : 1 : stt     sem                     1 : 1 : stt     sem             
+  2 : 1 : pfn     við                    2 : 1 : pfn     við            
+  3 : 1 : so      gistum                  3 : 1 : so      gistum          
+  4 : 1 : ao      á                      4 : 1 : ao      á              
+  5 : 1 : so      er                      5 : 1 : so      er              
+  6 : 1 : no      hluti                   6 : 1 : no      hluti           
+  7 : 1 : fs      af                      7 : 1 : fs      af              
+  8 : 1 : fn      sömu                   8 : 1 : fn      sömu           
+  9 : 1 : no      hótelkeðju            9 : 1 : no      hótelkeðju    
+ 10 : 1 : st      og                     10 : 1 : st      og              
+ 11 : 1 : fn      nokkur                 11 : 1 : fn      nokkur          
+ 12 : 1 : no      hótelanna             12 : 1 : no      hótelanna      
+ 13 : 1 : ao      þar                   13 : 1 : ao      þar            
+ 14 : 1 : stt     sem                    14 : 1 : st      sem             
+ 15 : 1 : no      árásir               15 : 1 : no      árásir        
+ 16 : 1 : so      voru                   16 : 1 : so      voru            
+ 17 : 1 : so      gerðar                17 : 1 : so      gerðar         
+
+  0 : 1 :   0   18  S0            0 : 1 :   0   18  S0    
+  1 : 1 :   0   18  S             1 : 1 :   0   18  S     
+  2 : 1 :   0   18  IP            2 : 1 :   0   18  IP    
+  3 : 1 :   0    5  NP            3 : 1 :   0    5  NP    
+  4 : 1 :   1    5  CP            4 : 1 :   1    5  CP    
+  5 : 1 :   1    2  C             5 : 1 :   1    2  C     
+  6 : 1 :   2    5  IP            6 : 0 :   2    5  S     
+  7 : 1 :   2    3  NP            7 : 1 :   2    5  IP    
+  8 : 1 :   3    5  VP            8 : 1 :   2    3  NP    
+  9 : 1 :   3    4  VP            9 : 1 :   3    5  VP    
+ 10 : 1 :   4    5  ADVP         10 : 1 :   3    4  VP    
+ 11 : 1 :   5   18  VP           11 : 1 :   4    5  ADVP  
+ 12 : 1 :   5    6  VP           12 : 1 :   5   18  VP    
+ 13 : 0 :   6   18  NP           13 : 0 :   5   13  VP    
+ 14 : 0 :   7   18  PP           14 : 1 :   5    6  VP    
+ 15 : 1 :   7    8  P            15 : 0 :   6   13  NP    
+ 16 : 0 :   8   18  NP           16 : 0 :   7   10  PP    
+ 17 : 0 :  10   18  CP           17 : 1 :   7    8  P     
+ 18 : 1 :  10   11  C            18 : 0 :   8   10  NP    
+ 19 : 0 :  11   18  NP           19 : 1 :  10   11  C     
+ 20 : 0 :  12   18  NP           20 : 0 :  12   13  NP    
+ 21 : 0 :  13   18  ADVP         21 : 0 :  13   18  CP    
+ 22 : 0 :  14   18  CP           22 : 0 :  13   15  C     
+ 23 : 0 :  14   15  C            23 : 1 :  15   18  IP    
+ 24 : 1 :  15   18  IP           24 : 1 :  15   16  NP    
+ 25 : 1 :  15   16  NP           25 : 1 :  16   18  VP    
+ 26 : 1 :  16   18  VP           26 : 1 :  16   17  VP    
+ 27 : 1 :  16   17  VP           27 : 1 :  17   18  NP    
+ 28 : 1 :  17   18  NP           28 : 1 :  17   18  VP    
+ 29 : 1 :  17   18  VP          
+
+========
+   8   20    1    0.00   0.00     0      0    0      0      0     0     0.00
+-<1>---(wn1= 15, bn1= 24)-           -<2>---(wn2= 18, bn2=  2)-
+  0 : 9 : abbrev  S                       0 : 9 : x       S               
+  1 : 9 : fn      Hvað                   1 : 9 : x       :               
+  2 : 9 : so      ert                     2 : 9 : x       „             
+  3 : 9 : pfn     þú                    3 : 9 : x       Hvað           
+  4 : 9 : so      búin                   4 : 9 : x       ert             
+  5 : 9 : nhm     að                     5 : 9 : x       þú            
+  6 : 9 : so      vera                    6 : 9 : x       búin           
+  7 : 9 : nhm     að                     7 : 9 : x       að             
+  8 : 9 : so      gera                    8 : 9 : x       vera            
+  9 : 9 : fs      í                      9 : 9 : x       að             
+ 10 : 9 : fn      öll                   10 : 9 : x       gera            
+ 11 : 9 : fn      þessi                 11 : 9 : x       í              
+ 12 : 9 : töl    sex                    12 : 9 : x       öll            
+ 13 : 9 : foreign  ish                    13 : 9 : x       þessi          
+ 14 : 9 : no      ár                    14 : 9 : x       sex-ish         
+                                         15 : 9 : x       ár             
+                                         16 : 9 : x       ?               
+                                         17 : 9 : x       “             
+
+  0 : 9 :   0   15  S0            0 : 9 :   0   18  S0    
+  1 : 9 :   0   15  S-QUOTE        1 : 9 :   0   18  S-MAIN
+  2 : 9 :   0    1  CP-SOURCE      
+  3 : 9 :   0    1  NP-SUBJ      
+  4 : 9 :   1   15  CP-QUOTE      
+  5 : 9 :   1   15  IP          
+  6 : 9 :   1    2  NP-OBJ      
+  7 : 9 :   2   15  VP          
+  8 : 9 :   2    3  VP-AUX      
+  9 : 9 :   3    4  NP-SUBJ      
+ 10 : 9 :   4   15  VP          
+ 11 : 9 :   4    5  NP-PRD      
+ 12 : 9 :   4    5  VP          
+ 13 : 9 :   5   15  IP-INF      
+ 14 : 9 :   5    6  TO          
+ 15 : 9 :   6   15  VP          
+ 16 : 9 :   6    7  VP          
+ 17 : 9 :   7   15  IP-INF      
+ 18 : 9 :   7    8  TO          
+ 19 : 9 :   8   15  VP          
+ 20 : 9 :   8    9  VP          
+ 21 : 9 :   9   15  ADVP-DUR-REL      
+ 22 : 9 :   9   10  P           
+ 23 : 9 :  10   15  NP          
+
+========
+   9   19    1    0.00   0.00     0      0    0      0      0     0     0.00
+-<1>---(wn1= 17, bn1= 25)-           -<2>---(wn2= 19, bn2=  2)-
+  0 : 9 : fyrirtæki  Vísir                  0 : 9 : x       Vísir          
+  1 : 9 : so      mun                     1 : 9 : x       mun             
+  2 : 9 : ao      að_sjálfsögðu        2 : 9 : x       að_sjálfsögðu
+  3 : 9 : so      gera                    3 : 9 : x       gera            
+  4 : 9 : no      mótinu                 4 : 9 : x       mótinu         
+  5 : 9 : lo      góð                   5 : 9 : x       góð           
+  6 : 9 : no      skil                    6 : 9 : x       skil            
+  7 : 9 : st      en                      7 : 9 : x       ,               
+  8 : 9 : so      fluttar                 8 : 9 : x       en              
+  9 : 9 : so      verða                  9 : 9 : x       fluttar         
+ 10 : 9 : lo      daglegir               10 : 9 : x       verða          
+ 11 : 9 : no      fréttir               11 : 9 : x       daglegir        
+ 12 : 9 : fs      af                     12 : 9 : x       fréttir        
+ 13 : 9 : no      mótinu                13 : 9 : x       af              
+ 14 : 9 : fs      á                     14 : 9 : x       mótinu         
+ 15 : 9 : fn      öllum                 15 : 9 : x       á              
+ 16 : 9 : no      miðlum                16 : 9 : x       öllum          
+                                         17 : 9 : x       miðlum         
+                                         18 : 9 : x       .               
+
+  0 : 9 :   0   17  S0-X          0 : 9 :   0   19  S0    
+  1 : 9 :   0    7  S-MAIN        1 : 9 :   0   19  S-MAIN
+  2 : 9 :   0    7  IP          
+  3 : 9 :   0    1  NP-SUBJ      
+  4 : 9 :   1    7  VP          
+  5 : 9 :   1    2  VP-AUX      
+  6 : 9 :   2    3  ADVP        
+  7 : 9 :   3    7  VP          
+  8 : 9 :   3    4  VP          
+  9 : 9 :   4    5  NP-IOBJ      
+ 10 : 9 :   5    7  NP-OBJ      
+ 11 : 9 :   7    8  C           
+ 12 : 9 :   8   17  S-MAIN      
+ 13 : 9 :   8   17  IP          
+ 14 : 9 :   8   17  VP          
+ 15 : 9 :   8    9  NP-PRD      
+ 16 : 9 :   8    9  VP          
+ 17 : 9 :   9   10  VP-AUX      
+ 18 : 9 :  10   14  NP-SUBJ      
+ 19 : 9 :  12   14  PP          
+ 20 : 9 :  12   13  P           
+ 21 : 9 :  13   14  NP          
+ 22 : 9 :  14   17  PP-LOC      
+ 23 : 9 :  14   15  P           
+ 24 : 9 :  15   17  NP          
+
+========
+  10   19    0   57.58  70.37    19     33   27      3     18    15    83.33
+-<1>---(wn1= 18, bn1= 33)-           -<2>---(wn2= 18, bn2= 27)-
+  0 : 1 : no      Embættismennirnir        0 : 1 : no      Embættismennirnir
+  1 : 1 : so      segjast                 1 : 1 : so      segjast         
+  2 : 1 : so      hafa                    2 : 1 : so      hafa            
+  3 : 0 : so      flutt                   3 : 0 : lo      flutt           
+  4 : 1 : no      skilaboð               4 : 1 : no      skilaboð       
+  5 : 1 : fs      frá                    5 : 1 : fs      frá            
+  6 : 1 : person  Donald_Trump            6 : 1 : person  Donald_Trump    
+  7 : 0 : fs      til                     7 : 0 : eo      til             
+  8 : 1 : person  Kim                     8 : 1 : person  Kim             
+  9 : 1 : st      og                      9 : 1 : st      og              
+ 10 : 0 : st      að                    10 : 0 : fs      að             
+ 11 : 1 : person  Trump                  11 : 1 : person  Trump           
+ 12 : 1 : so      muni                   12 : 1 : so      muni            
+ 13 : 1 : so      fá                    13 : 1 : so      fá             
+ 14 : 1 : no      svar                   14 : 1 : no      svar            
+ 15 : 1 : no      einræðisherrans       15 : 1 : no      einræðisherrans
+ 16 : 1 : fs      í                     16 : 1 : fs      í              
+ 17 : 1 : no      dag                    17 : 1 : no      dag             
+
+  0 : 1 :   0   18  S0            0 : 1 :   0   18  S0    
+  1 : 1 :   0   18  S             1 : 1 :   0   18  S     
+  2 : 1 :   0   18  IP            2 : 1 :   0   18  IP    
+  3 : 1 :   0    1  NP            3 : 1 :   0    1  NP    
+  4 : 1 :   1   18  VP            4 : 1 :   1   18  VP    
+  5 : 1 :   1    2  VP            5 : 0 :   1    9  VP    
+  6 : 0 :   2    9  IP            6 : 1 :   1    2  VP    
+  7 : 1 :   2    9  VP            7 : 1 :   2    9  VP    
+  8 : 1 :   2    3  VP            8 : 1 :   2    3  VP    
+  9 : 0 :   3    9  VP            9 : 0 :   3    9  NP    
+ 10 : 0 :   3    4  VP           10 : 0 :   5    9  PP    
+ 11 : 0 :   4    5  NP           11 : 1 :   5    6  P     
+ 12 : 0 :   5    7  PP           12 : 0 :   6    9  NP    
+ 13 : 1 :   5    6  P            13 : 1 :   6    7  NP    
+ 14 : 1 :   6    7  NP           14 : 1 :   9   10  C     
+ 15 : 0 :   7    9  PP           15 : 0 :  10   12  PP    
+ 16 : 0 :   7    8  P            16 : 0 :  10   11  P     
+ 17 : 0 :   8    9  NP           17 : 1 :  11   12  NP    
+ 18 : 1 :   9   10  C            18 : 0 :  12   16  VP    
+ 19 : 0 :  10   18  CP           19 : 1 :  12   13  VP    
+ 20 : 0 :  10   11  C            20 : 0 :  13   16  VP    
+ 21 : 0 :  11   18  IP           21 : 1 :  13   14  VP    
+ 22 : 1 :  11   12  NP           22 : 1 :  14   16  NP    
+ 23 : 0 :  12   18  VP           23 : 1 :  15   16  NP    
+ 24 : 1 :  12   13  VP           24 : 1 :  16   18  ADVP  
+ 25 : 0 :  13   18  VP           25 : 1 :  16   17  P     
+ 26 : 1 :  13   14  VP           26 : 1 :  17   18  NP    
+ 27 : 1 :  14   16  NP          
+ 28 : 1 :  15   16  NP          
+ 29 : 1 :  16   18  ADVP        
+ 30 : 0 :  16   18  PP          
+ 31 : 1 :  16   17  P           
+ 32 : 1 :  17   18  NP          
+
+========
+============================================================================
+                 70.53  74.11    146   207   197     25    126   119    94.44
+=== Summary ===
+
+-- All --
+Number of sentence        =     10
+Number of Error sentence  =      3
+Number of Skip  sentence  =      0
+Number of Valid sentence  =      7
+Bracketing Recall         =  70.53
+Bracketing Precision      =  74.11
+Bracketing FMeasure       =  72.28
+Complete match            =   0.00
+Average crossing          =   3.57
+No crossing               =   0.00
+2 or less crossing        =  28.57
+Tagging accuracy          =  94.44
+
+-- len<=100 --
+Number of sentence        =     10
+Number of Error sentence  =      3
+Number of Skip  sentence  =      0
+Number of Valid sentence  =      7
+Bracketing Recall         =  70.53
+Bracketing Precision      =  74.11
+Bracketing FMeasure       =  72.28
+Complete match            =   0.00
+Average crossing          =   3.57
+No crossing               =   0.00
+2 or less crossing        =  28.57
+Tagging accuracy          =  94.44

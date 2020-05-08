@@ -32,8 +32,8 @@
 
 """
 
+from typing import NamedTuple
 from functools import lru_cache
-from collections import namedtuple
 
 from .settings import AdjectiveTemplate, StemPreferences, StaticPhrases, NounPreferences
 from .cache import LFU_Cache
@@ -48,8 +48,16 @@ CACHE_SIZE_MEANINGS = 2048
 CACHE_SIZE_UNDECLINABLE = 2048
 
 # Named tuple for word meanings fetched from the BÍN database (lexicon)
-BIN_Meaning = namedtuple(
-    "BIN_Meaning", ["stofn", "utg", "ordfl", "fl", "ordmynd", "beyging"]
+BIN_Meaning = NamedTuple(
+    "BIN_Meaning",
+    [
+        ("stofn", str),
+        ("utg", int),
+        ("ordfl", str),
+        ("fl", str),
+        ("ordmynd", str),
+        ("beyging", str),
+    ]
 )
 
 # Compact string representation

@@ -518,7 +518,7 @@ hence the leading underscore in the class name.
         Returns a ``list`` of the terminals in the best parse tree for the
         sentence, in the order in which they occur in the sentence (token order).
         Each terminal corresponds to a token in the sentence. The entry for each
-        terminal is a ``namedtuple`` called ``Terminal``, having five fields:
+        terminal is a ``typing.NamedTuple`` called ``Terminal``, having five fields:
 
         0. **text**: The token text.
 
