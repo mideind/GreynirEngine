@@ -31,56 +31,16 @@ TESTFILES = pathlib.Path().absolute() / 'testfiles'
 REPORTS = pathlib.Path().absolute() / 'reports'
 
 
-class Comparison():
-	def __init__(self):
-		self.results = {}
-
-	def start(self):
-
-		# Hef (1)
-		# Útbý (2) með annoparse, eins og í Maker
-		helpers.get_annoparse(CLEAN, GENPSD, ".txt", ".psd")
-		
-		# Hef (2)
-		# Útbý (5B) með map_to_iceparser()
-		# TODO
-
-		# Hef (2)
-		# Útbý (5C) með map_to_general()
-		# TODO
-
-		# Hef (2), (5B) og (5C)
-		# Útbý (6A), (6B) og (6C) með to_brackets()
-		# helpers.to_brackets(GENPSD, TESTFILES, '.psd', '.grbr')
-		#helpers.to_brackets(GENPSD, TESTFILES, '.ippsd', '.ipbr')
-		#helpers.to_brackets(GENPSD, TESTFILES, '.afpsd', '.afbr')
-
-		# Hef (4A), (4B) og (4C) úr Maker
-		# Og (6A), (6B) og (6C) héðan
-		# Útbý (7A)
-		#helpers.get_results(BRACKETS, TESTFILES, REPORTS, ".out")
-		
-		# Hef (7A)
-		# Útbý (7B)
-		# suffixlist = [".grbr"]
-		# helpers.combine_reports(REPORTS, suffixlist)
-
-
-
-
-
-	# Þáttar skjölin, útbýr vélþáttað skjal á slóðinni pgen
-
 class Maker():
 
-	def start(self):
+	def start(self, overwrite=False):
 		# Hef (1)
 		# Bý til (2) vélþáttuð skjöl á Annotaldsformi
 		# fyrir hvert skjal í /clean
 		# Taka út þau sem eru með öllum setningunum! Fyrir hvert genre, setja í /original
 		# bý til annoparse skjal með helpers.get_annoparse()
 		# tiltek rétta möppu -- /genpsd og endinguna .psd
-		# helpers.get_annoparse(CLEAN, GENPSD, '.txt', '.psd')
+		#helpers.get_annoparse(CLEAN, GENPSD, '.txt', '.psd', False)
 
 		# hef þá (2)
 		# Útbý (3A) með handþáttun, geymi í /handpsd .grgld
@@ -88,6 +48,10 @@ class Maker():
 
 		# Hef (3A)
 		# Útbúa (3B) með map_to_iceparser
+		# Ath. í Comparison() er þetta útbúið með get_ipparse()
+		# Hér er óþarfi að handþátta sama textann tvisvar
+		# Líklega betra að varpa réttri þáttun á milli
+		# En get borið saman og séð hvort gengur betur!
 		# TODO
 
 		# Hef (3A)
@@ -101,21 +65,63 @@ class Maker():
 		# Hef þá (3A), (3B) og (3C)
 		# Fæ (4A), (4B) og (4C) með to_brackets
 		# Passa að setja réttar endingar á allt, þarf mögulega að gera í 3 fallaköllum
-		helpers.to_brackets(HANDPSD, BRACKETS, '.grgld', '.grbr')
-		#helpers.to_brackets(HANDPSD, BRACKETS, '.ipgld', '.ipbr')
-		#helpers.to_brackets(HANDPSD, BRACKETS, '.afgld', '.afbr')
+		helpers.to_brackets(HANDPSD, BRACKETS, '.grgld', '.grbr', True)
+		#helpers.to_brackets(HANDPSD, BRACKETS, '.ipgld', '.ipbr', overwrite)
+		#helpers.to_brackets(HANDPSD, BRACKETS, '.afgld', '.afbr', overwrite)
 
 		# Þá ætti allt að vera tilbúið fyrir þróunarmálheildina!
 		# Passa í hverju skrefi að ef skjalið er þegar til á ekki að yfirskrifa það.
 
 
+class Comparison():
+	def __init__(self):
+		self.results = {}
+
+	def start(self, overwrite=False):
+
+		# Hef (1)
+		# Útbý (2) með annoparse, eins og í Maker
+		#helpers.get_annoparse(CLEAN, GENPSD, ".txt", ".psd", False)
+		
+		# Hef (2)
+		# Útbý (5B) með get_ipparse()
+		# Ath. í Maker() er þetta útbúið með vörpun úr Greynisskemanu
+		# TODO
+
+		# Hef (2)
+		# Útbý (5C) með map_to_general()
+		# TODO
+
+		# Hef (2), (5B) og (5C)
+		# Útbý (6A), (6B) og (6C) með to_brackets()
+		#helpers.to_brackets(GENPSD, TESTFILES, '.psd', '.grbr', True)
+		# helpers.to_brackets(GENPSD, TESTFILES, '.ippsd', '.ipbr', overwrite)
+		# helpers.to_brackets(GENPSD, TESTFILES, '.afpsd', '.afbr', overwrite)
+
+		# Hef (4A), (4B) og (4C) úr Maker
+		# Og (6A), (6B) og (6C) héðan
+		# Útbý (7A)
+		helpers.get_results(BRACKETS, TESTFILES, REPORTS, ".out")
+		
+		# Hef (7A)
+		# Útbý (7B)
+		suffixlist = [".grbr"]
+		helpers.combine_reports(REPORTS, suffixlist)
+
+	# Þáttar skjölin, útbýr vélþáttað skjal á slóðinni pgen
+
 if __name__ == "__main__":
+	# Spyrja hvort eigi að yfirskrifa skjöl sem þegar eru tilbúin
+	#ans = input("Do you want to overwrite existing files? (y/n)\n")	
+	# TODO eftir að breyta ans í True/False gildi!
+	ans = False
 	start = timer()
 	#maker = Maker()
-	#maker.start()
+	#maker.start(ans)
+
 
 	comp = Comparison()
-	comp.start()
+	comp.start(ans)
 	end = timer()
 	duration = end - start
 	print("")

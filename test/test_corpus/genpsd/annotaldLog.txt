@@ -1,4 +1,0 @@
-1586948080.3868287: {"type": "program-start", "filename": "reynir_corpus_00002.psd"}
-1586948081.9749017: {"type": "page-load", "loc": "inner_index", "filename": "reynir_corpus_00002.psd"}
-1586948082.1117716: {"eventData": {"type": "page-load"}, "filename": "reynir_corpus_00002.psd"}
-1586948112.1256607: {"eventData": {"type": "auto-idle"}, "filename": "reynir_corpus_00002.psd"}
