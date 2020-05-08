@@ -3432,6 +3432,8 @@ NlStak_ft_p3_ef_hk → 'vinstri:lo'_ft_ef_hk "-"? 'grænn:lo'_ft_ef_hk
 NlStak_et_p3/fall/kvk → NlCovid/fall
 NlCovid/fall → "covid:kvk" "-" "19"
 
+$score(+4) NlCovid/fall
+
 # 'hvorugt okkar systkinanna', 'enginn okkar', 'einhver ykkar bræðranna', 'einn liðsmanna', 'annar mannanna'
 NlStak_et_p3/fall/kyn → OkkarFornafn/fall/kyn OkkarFramhald/kyn
 
@@ -4101,8 +4103,8 @@ Skst →
 $score(+8) Skst
 
 Skst_abbrev →
-    no_abbrev "-"?    # FIH bankann
-    | no_abbrev "-" tala  # COVID-19 veiran
+    no_abbrev "-"?          # FIH bankann
+    | no_abbrev "-" tala    # COVID-19 veiran
 
 $score(+8) Skst_abbrev
 
@@ -6635,7 +6637,7 @@ AðvörunKomma →
     ","
 
 $tag(error) AðvörunKomma
-$score(-999) AðvörunKomma
+$score(-99) AðvörunKomma
 
 AðvörunAð →
     "að:st"
