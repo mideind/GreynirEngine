@@ -31,8 +31,8 @@
  15 : 1 :   8    9  NP           15 : 1 :   8    9  NP    
 
 ========
-   2    9    0   50.00  53.85     7     14   13      0      8     6    75.00
--<1>---(wn1=  8, bn1= 14)-           -<2>---(wn2=  8, bn2= 13)-
+   2    9    0   50.00  58.33     7     14   12      0      8     6    75.00
+-<1>---(wn1=  8, bn1= 14)-           -<2>---(wn2=  8, bn2= 12)-
   0 : 1 : eo      Bara                    0 : 1 : eo      Bara            
   1 : 1 : no      stormur                 1 : 1 : no      stormur         
   2 : 0 : st      eins                    2 : 0 : ao      eins            
@@ -47,14 +47,14 @@
   2 : 1 :   0    8  IP            2 : 1 :   0    8  IP    
   3 : 0 :   0    8  NP            3 : 0 :   0    2  NP    
   4 : 0 :   2    8  CP            4 : 1 :   2    4  C     
-  5 : 1 :   2    4  C             5 : 0 :   4    6  S     
-  6 : 0 :   4    8  IP            6 : 0 :   4    6  IP    
-  7 : 0 :   4    8  VP            7 : 0 :   4    6  VP    
-  8 : 1 :   4    5  VP            8 : 1 :   4    5  VP    
-  9 : 1 :   5    6  ADVP          9 : 1 :   5    6  ADVP  
- 10 : 0 :   6    8  ADVP         10 : 0 :   6    8  VP    
- 11 : 0 :   6    8  PP           11 : 0 :   6    7  VP    
- 12 : 0 :   6    7  P            12 : 1 :   7    8  NP    
+  5 : 1 :   2    4  C             5 : 0 :   4    6  IP    
+  6 : 0 :   4    8  IP            6 : 0 :   4    6  VP    
+  7 : 0 :   4    8  VP            7 : 1 :   4    5  VP    
+  8 : 1 :   4    5  VP            8 : 1 :   5    6  ADVP  
+  9 : 1 :   5    6  ADVP          9 : 0 :   6    8  VP    
+ 10 : 0 :   6    8  ADVP         10 : 0 :   6    7  VP    
+ 11 : 0 :   6    8  PP           11 : 1 :   7    8  NP    
+ 12 : 0 :   6    7  P           
  13 : 1 :   7    8  NP          
 
 ========
@@ -284,7 +284,7 @@
 
 ========
 ============================================================================
-                 77.44  81.75    103   133   126     10     77    73    94.81
+                 77.44  82.40    103   133   125     10     77    73    94.81
 === Summary ===
 
 -- All --
@@ -293,8 +293,8 @@ Number of Error sentence  =      1
 Number of Skip  sentence  =      0
 Number of Valid sentence  =      9
 Bracketing Recall         =  77.44
-Bracketing Precision      =  81.75
-Bracketing FMeasure       =  79.54
+Bracketing Precision      =  82.40
+Bracketing FMeasure       =  79.84
 Complete match            =  22.22
 Average crossing          =   1.11
 No crossing               =  55.56
@@ -307,8 +307,8 @@ Number of Error sentence  =      1
 Number of Skip  sentence  =      0
 Number of Valid sentence  =      9
 Bracketing Recall         =  77.44
-Bracketing Precision      =  81.75
-Bracketing FMeasure       =  79.54
+Bracketing Precision      =  82.40
+Bracketing FMeasure       =  79.84
 Complete match            =  22.22
 Average crossing          =   1.11
 No crossing               =  55.56

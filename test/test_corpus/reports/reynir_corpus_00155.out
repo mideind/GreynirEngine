@@ -2,7 +2,7 @@
  ID  Len.  Stat. Recal  Prec.  Bracket gold test Bracket Words  Tags Accracy
 ============================================================================
    1   25    1    0.00   0.00     0      0    0      0      0     0     0.00
--<1>---(wn1= 24, bn1= 44)-           -<2>---(wn2= 22, bn2= 40)-
+-<1>---(wn1= 24, bn1= 44)-           -<2>---(wn2= 22, bn2= 41)-
   0 : 9 : pfn     Við                    0 : 9 : pfn     Við            
   1 : 9 : so      ætluðum               1 : 9 : so      ætluðum       
   2 : 9 : nhm     að                     2 : 9 : nhm     að             
@@ -66,9 +66,9 @@
  35 : 9 :  19   20  C            35 : 9 :  18   19  NP-SUBJ
  36 : 9 :  20   24  IP           36 : 9 :  19   22  VP    
  37 : 9 :  20   21  NP-SUBJ       37 : 9 :  19   20  VP    
- 38 : 9 :  21   24  VP           38 : 9 :  20   22  ADVP-DATE-REL
+ 38 : 9 :  21   24  VP           38 : 9 :  20   22  ADVP-DUR-REL
  39 : 9 :  21   22  VP           39 : 9 :  20   21  P     
- 40 : 9 :  22   24  ADVP-DUR-REL      
+ 40 : 9 :  22   24  ADVP-DUR-REL       40 : 9 :  21   22  NP    
  41 : 9 :  22   24  PP          
  42 : 9 :  22   23  P           
  43 : 9 :  23   24  NP          
@@ -135,8 +135,8 @@
  33 : 0 :  20   22  ADVP        
 
 ========
-   3   26    0   47.62  48.78    20     42   41     13     25    20    80.00
--<1>---(wn1= 25, bn1= 42)-           -<2>---(wn2= 25, bn2= 41)-
+   3   26    0   47.62  50.00    20     42   40     12     25    20    80.00
+-<1>---(wn1= 25, bn1= 42)-           -<2>---(wn2= 25, bn2= 40)-
   0 : 1 : fs      Í                      0 : 1 : fs      Í              
   1 : 1 : no      umsögn                 1 : 1 : no      umsögn         
   2 : 1 : no      Embættis               2 : 1 : no      Embættis       
@@ -187,23 +187,23 @@
  21 : 0 :  12   25  CP           21 : 0 :  11   15  CP    
  22 : 0 :  12   13  C            22 : 0 :  11   13  C     
  23 : 0 :  13   25  IP           23 : 0 :  13   15  IP    
- 24 : 0 :  13   20  NP           24 : 0 :  13   15  S     
- 25 : 0 :  14   20  PP           25 : 0 :  13   15  VP    
- 26 : 0 :  14   15  P            26 : 0 :  13   14  NP    
- 27 : 0 :  15   20  NP           27 : 0 :  14   15  VP    
- 28 : 0 :  16   20  PP           28 : 0 :  15   16  NP    
- 29 : 0 :  16   17  P            29 : 0 :  16   20  VP    
- 30 : 1 :  17   20  NP           30 : 0 :  16   17  VP    
- 31 : 1 :  18   20  PP           31 : 1 :  17   20  NP    
- 32 : 1 :  18   19  P            32 : 1 :  18   20  PP    
- 33 : 1 :  19   20  NP           33 : 1 :  18   19  P     
- 34 : 1 :  20   25  VP           34 : 1 :  19   20  NP    
- 35 : 1 :  20   21  VP           35 : 0 :  20   25  CP    
- 36 : 0 :  21   23  PP           36 : 1 :  20   25  VP    
- 37 : 0 :  21   22  P            37 : 1 :  20   21  VP    
- 38 : 0 :  22   23  NP           38 : 0 :  21   24  NP    
- 39 : 0 :  23   25  PP           39 : 0 :  21   23  NP    
- 40 : 0 :  23   24  P            40 : 1 :  24   25  NP    
+ 24 : 0 :  13   20  NP           24 : 0 :  13   15  VP    
+ 25 : 0 :  14   20  PP           25 : 0 :  13   14  NP    
+ 26 : 0 :  14   15  P            26 : 0 :  14   15  VP    
+ 27 : 0 :  15   20  NP           27 : 0 :  15   16  NP    
+ 28 : 0 :  16   20  PP           28 : 0 :  16   20  VP    
+ 29 : 0 :  16   17  P            29 : 0 :  16   17  VP    
+ 30 : 1 :  17   20  NP           30 : 1 :  17   20  NP    
+ 31 : 1 :  18   20  PP           31 : 1 :  18   20  PP    
+ 32 : 1 :  18   19  P            32 : 1 :  18   19  P     
+ 33 : 1 :  19   20  NP           33 : 1 :  19   20  NP    
+ 34 : 1 :  20   25  VP           34 : 0 :  20   25  CP    
+ 35 : 1 :  20   21  VP           35 : 1 :  20   25  VP    
+ 36 : 0 :  21   23  PP           36 : 1 :  20   21  VP    
+ 37 : 0 :  21   22  P            37 : 0 :  21   24  NP    
+ 38 : 0 :  22   23  NP           38 : 0 :  21   23  NP    
+ 39 : 0 :  23   25  PP           39 : 1 :  24   25  NP    
+ 40 : 0 :  23   24  P           
  41 : 1 :  24   25  NP          
 
 ========
@@ -474,8 +474,8 @@
  40 : 9 :  24   25  NP          
 
 ========
-   8   25    0   83.33  75.00    30     36   40      2     23    22    95.65
--<1>---(wn1= 23, bn1= 36)-           -<2>---(wn2= 23, bn2= 40)-
+   8   25    0   75.00  72.97    27     36   37      4     23    22    95.65
+-<1>---(wn1= 23, bn1= 36)-           -<2>---(wn2= 23, bn2= 37)-
   0 : 1 : ao      Einmitt                 0 : 1 : ao      Einmitt         
   1 : 1 : ao      þess_vegna             1 : 1 : ao      þess_vegna     
   2 : 1 : so      komum                   2 : 1 : so      komum           
@@ -492,10 +492,10 @@
  13 : 1 : fs      við                   13 : 1 : fs      við            
  14 : 1 : fn      aðra                  14 : 1 : fn      aðra           
  15 : 1 : st      og                     15 : 1 : st      og              
- 16 : 1 : so      göngum                16 : 1 : so      göngum         
+ 16 : 0 : so      göngum                16 : 0 : no      göngum         
  17 : 1 : fs      af                     17 : 1 : fs      af              
  18 : 1 : no      stað                  18 : 1 : no      stað           
- 19 : 0 : fs      til                    19 : 0 : ao      til             
+ 19 : 1 : fs      til                    19 : 1 : fs      til             
  20 : 1 : nhm     að                    20 : 1 : nhm     að             
  21 : 1 : so      heilsa                 21 : 1 : so      heilsa          
  22 : 1 : no      deginum                22 : 1 : no      deginum         
@@ -514,32 +514,29 @@
  11 : 1 :   7    9  IP           11 : 1 :   5    7  C     
  12 : 1 :   7    8  NP           12 : 1 :   7    9  IP    
  13 : 1 :   8    9  VP           13 : 1 :   7    8  NP    
- 14 : 1 :   9   15  VP           14 : 1 :   8    9  VP    
- 15 : 1 :   9   10  VP           15 : 0 :   9   15  S     
- 16 : 0 :  10   11  NP           16 : 0 :   9   15  IP    
- 17 : 1 :  11   15  PP           17 : 1 :   9   15  VP    
+ 14 : 0 :   9   15  VP           14 : 1 :   8    9  VP    
+ 15 : 1 :   9   10  VP           15 : 0 :   9   23  S     
+ 16 : 0 :  10   11  NP           16 : 0 :   9   23  IP    
+ 17 : 1 :  11   15  PP           17 : 0 :   9   23  VP    
  18 : 1 :  11   12  P            18 : 1 :   9   10  VP    
- 19 : 1 :  12   15  NP           19 : 0 :  10   15  NP    
+ 19 : 1 :  12   15  NP           19 : 0 :  10   23  NP    
  20 : 1 :  13   15  PP           20 : 1 :  11   15  PP    
  21 : 1 :  13   14  P            21 : 1 :  11   12  P     
  22 : 1 :  14   15  NP           22 : 1 :  12   15  NP    
  23 : 1 :  15   16  C            23 : 1 :  13   15  PP    
- 24 : 1 :  16   23  VP           24 : 1 :  13   14  P     
- 25 : 1 :  16   17  VP           25 : 1 :  14   15  NP    
- 26 : 1 :  17   19  PP           26 : 1 :  15   16  C     
- 27 : 1 :  17   18  P            27 : 0 :  16   23  S     
- 28 : 1 :  18   19  NP           28 : 0 :  16   23  IP    
- 29 : 0 :  19   23  PP           29 : 1 :  16   23  VP    
- 30 : 0 :  19   20  P            30 : 1 :  16   17  VP    
- 31 : 1 :  20   23  IP           31 : 1 :  17   19  PP    
- 32 : 1 :  20   21  TO           32 : 1 :  17   18  P     
- 33 : 1 :  21   23  VP           33 : 1 :  18   19  NP    
- 34 : 1 :  21   22  VP           34 : 0 :  19   20  ADVP  
- 35 : 1 :  22   23  NP           35 : 1 :  20   23  IP    
-                                 36 : 1 :  20   21  TO    
-                                 37 : 1 :  21   23  VP    
-                                 38 : 1 :  21   22  VP    
-                                 39 : 1 :  22   23  NP    
+ 24 : 0 :  16   23  VP           24 : 1 :  13   14  P     
+ 25 : 0 :  16   17  VP           25 : 1 :  14   15  NP    
+ 26 : 0 :  17   19  PP           26 : 1 :  15   16  C     
+ 27 : 1 :  17   18  P            27 : 0 :  17   23  PP    
+ 28 : 0 :  18   19  NP           28 : 1 :  17   18  P     
+ 29 : 1 :  19   23  PP           29 : 0 :  18   23  NP    
+ 30 : 1 :  19   20  P            30 : 1 :  19   23  PP    
+ 31 : 1 :  20   23  IP           31 : 1 :  19   20  P     
+ 32 : 1 :  20   21  TO           32 : 1 :  20   23  IP    
+ 33 : 1 :  21   23  VP           33 : 1 :  20   21  TO    
+ 34 : 1 :  21   22  VP           34 : 1 :  21   23  VP    
+ 35 : 1 :  22   23  NP           35 : 1 :  21   22  VP    
+                                 36 : 1 :  22   23  NP    
 
 ========
    9   26    0   90.91  93.75    30     33   32      0     24    24   100.00
@@ -674,7 +671,7 @@
 
 ========
 ============================================================================
-                 72.54  74.05    214   295   289     31    188   175    93.09
+                 71.53  74.04    211   295   285     32    188   175    93.09
 === Summary ===
 
 -- All --
@@ -682,13 +679,13 @@ Number of sentence        =     10
 Number of Error sentence  =      2
 Number of Skip  sentence  =      0
 Number of Valid sentence  =      8
-Bracketing Recall         =  72.54
-Bracketing Precision      =  74.05
-Bracketing FMeasure       =  73.29
+Bracketing Recall         =  71.53
+Bracketing Precision      =  74.04
+Bracketing FMeasure       =  72.76
 Complete match            =   0.00
-Average crossing          =   3.88
+Average crossing          =   4.00
 No crossing               =  12.50
-2 or less crossing        =  50.00
+2 or less crossing        =  37.50
 Tagging accuracy          =  93.09
 
 -- len<=100 --
@@ -696,11 +693,11 @@ Number of sentence        =     10
 Number of Error sentence  =      2
 Number of Skip  sentence  =      0
 Number of Valid sentence  =      8
-Bracketing Recall         =  72.54
-Bracketing Precision      =  74.05
-Bracketing FMeasure       =  73.29
+Bracketing Recall         =  71.53
+Bracketing Precision      =  74.04
+Bracketing FMeasure       =  72.76
 Complete match            =   0.00
-Average crossing          =   3.88
+Average crossing          =   4.00
 No crossing               =  12.50
-2 or less crossing        =  50.00
+2 or less crossing        =  37.50
 Tagging accuracy          =  93.09

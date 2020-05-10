@@ -81,7 +81,7 @@ class Comparison():
 
 		# Hef (1)
 		# Útbý (2) með annoparse, eins og í Maker
-		#helpers.get_annoparse(CLEAN, GENPSD, ".txt", ".psd", False)
+		helpers.get_annoparse(CLEAN, GENPSD, ".txt", ".psd", True)
 		
 		# Hef (2)
 		# Útbý (5B) með get_ipparse()
@@ -94,7 +94,7 @@ class Comparison():
 
 		# Hef (2), (5B) og (5C)
 		# Útbý (6A), (6B) og (6C) með to_brackets()
-		#helpers.to_brackets(GENPSD, TESTFILES, '.psd', '.grbr', True)
+		helpers.to_brackets(GENPSD, TESTFILES, '.psd', '.grbr', True)
 		# helpers.to_brackets(GENPSD, TESTFILES, '.ippsd', '.ipbr', overwrite)
 		# helpers.to_brackets(GENPSD, TESTFILES, '.afpsd', '.afbr', overwrite)
 
@@ -116,8 +116,8 @@ if __name__ == "__main__":
 	# TODO eftir að breyta ans í True/False gildi!
 	ans = False
 	start = timer()
-	#maker = Maker()
-	#maker.start(ans)
+	maker = Maker()
+	maker.start(ans)
 
 
 	comp = Comparison()

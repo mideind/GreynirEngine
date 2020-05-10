@@ -6,5 +6,5 @@
 (S0 (S-MAIN (IP (NP-SUBJ (pfn Hann)) (VP (VP (VP-AUX (so hefur)) (VP (so setið))) (PP (P (fs á)) (NP (no þingi))) (ADVP-DUR-REL (P (fs frá)) (ártal árinu_1994))))) (grm .))
 (S0 (S-MAIN (IP (NP-SUBJ (lo Áætlaður) (no heildarávinningur) (NP-POSS (no ríkisins)) (VP (so metinn))) (VP (VP (so á)) (NP-OBJ (lo ríflega) (no 150_milljarða_króna))))))
 (S0 (S-MAIN (IP (NP-SUBJ (sérnafn Jamie) (sérnafn Vardy)) (VP (VP (so skorar)) (PP (P (fs af)) (NP (lo miklu) (no öryggi) (PP (P (fs úr)) (NP (no vítaspyrnunni)))))))) (grm .))
-(S0 (S-MAIN (IP (NP-SUBJ (no Íþróttafélög)) (VP (VP (so fá)) (NP-OBJ (eo til_dæmis) (no bakkelsi) (CP-REL (C (stt sem)) (IP (S-MAIN (VP (VP (so er)) (NP-PRD (lo óselt)))))))))) (grm .))
+(S0 (S-MAIN (IP (NP-SUBJ (no Íþróttafélög)) (VP (VP (so fá)) (NP-OBJ (eo til_dæmis) (no bakkelsi) (CP-REL (C (stt sem)) (IP (VP (VP (so er)) (NP-PRD (lo óselt))))))))) (grm .))
 (S0 (S-MAIN (IP (NP-SUBJ (no Líf) (NP-POSS (pfn okkar))) (VP (VP (so líður)) (ADVP (ao hjá))))) (C (st og)) (S-MAIN (IP (NP-SUBJ (fn aðrir)) (VP (VP (so taka)) (ADVP (ao við))))) (grm .))

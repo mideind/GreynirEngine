@@ -104,8 +104,8 @@
  24 : 1 :  16   17  NP           24 : 1 :  16   17  NP    
 
 ========
-   3   21    0   87.50  84.85    28     32   33      0     20    19    95.00
--<1>---(wn1= 20, bn1= 32)-           -<2>---(wn2= 20, bn2= 33)-
+   3   20    0   90.62  90.62    29     32   32      0     19    19   100.00
+-<1>---(wn1= 19, bn1= 32)-           -<2>---(wn2= 19, bn2= 32)-
   0 : 1 : person  Klara                   0 : 1 : person  Klara           
   1 : 1 : so      vildi                   1 : 1 : so      vildi           
   2 : 1 : ao      einnig                  2 : 1 : ao      einnig          
@@ -118,48 +118,46 @@
   9 : 1 : st      sem                     9 : 1 : stt     sem             
  10 : 1 : so      keyptir                10 : 1 : so      keyptir         
  11 : 1 : so      eru                    11 : 1 : so      eru             
- 12 : 0 : fs      í                     12 : 0 : ao      í              
- 13 : 1 : fs      gegnum                 13 : 1 : fs      gegnum          
- 14 : 1 : lén    fifa.com               14 : 1 : lén    fifa.com        
- 15 : 1 : so      eru                    15 : 1 : so      eru             
- 16 : 1 : lo      gildir                 16 : 1 : lo      gildir          
- 17 : 1 : ao      inn                    17 : 1 : ao      inn             
- 18 : 1 : fs      á                     18 : 1 : fs      á              
- 19 : 1 : no      leikvangana            19 : 1 : no      leikvangana     
+ 12 : 1 : fs      í_gegnum              12 : 1 : fs      í_gegnum       
+ 13 : 1 : lén    fifa.com               13 : 1 : lén    fifa.com        
+ 14 : 1 : so      eru                    14 : 1 : so      eru             
+ 15 : 1 : lo      gildir                 15 : 1 : lo      gildir          
+ 16 : 1 : ao      inn                    16 : 1 : ao      inn             
+ 17 : 1 : fs      á                     17 : 1 : fs      á              
+ 18 : 1 : no      leikvangana            18 : 1 : no      leikvangana     
 
-  0 : 1 :   0   20  S0            0 : 1 :   0   20  S0    
-  1 : 1 :   0   20  S             1 : 1 :   0   20  S     
-  2 : 1 :   0   20  IP            2 : 1 :   0   20  IP    
+  0 : 1 :   0   19  S0            0 : 1 :   0   19  S0    
+  1 : 1 :   0   19  S             1 : 1 :   0   19  S     
+  2 : 1 :   0   19  IP            2 : 1 :   0   19  IP    
   3 : 1 :   0    1  NP            3 : 1 :   0    1  NP    
-  4 : 1 :   1   20  VP            4 : 1 :   1   20  VP    
+  4 : 1 :   1   19  VP            4 : 1 :   1   19  VP    
   5 : 1 :   1    2  VP            5 : 1 :   1    2  VP    
-  6 : 1 :   2    3  ADVP          6 : 0 :   2   20  VP    
-  7 : 0 :   3   20  IP            7 : 1 :   2    3  ADVP  
-  8 : 1 :   3   20  VP            8 : 1 :   3   20  VP    
+  6 : 1 :   2    3  ADVP          6 : 0 :   2   19  VP    
+  7 : 0 :   3   19  IP            7 : 1 :   2    3  ADVP  
+  8 : 1 :   3   19  VP            8 : 1 :   3   19  VP    
   9 : 1 :   3    4  VP            9 : 1 :   3    4  VP    
- 10 : 1 :   4   20  NP           10 : 1 :   4   20  NP    
- 11 : 1 :   5   20  CP           11 : 1 :   5   20  CP    
+ 10 : 1 :   4   19  NP           10 : 1 :   4   19  NP    
+ 11 : 1 :   5   19  CP           11 : 1 :   5   19  CP    
  12 : 1 :   5    6  C            12 : 1 :   5    6  C     
- 13 : 1 :   6   20  IP           13 : 1 :   6   20  IP    
- 14 : 1 :   6   15  NP           14 : 1 :   6   15  NP    
- 15 : 1 :   9   15  CP           15 : 1 :   9   15  CP    
+ 13 : 1 :   6   19  IP           13 : 1 :   6   19  IP    
+ 14 : 1 :   6   14  NP           14 : 1 :   6   14  NP    
+ 15 : 1 :   9   14  CP           15 : 1 :   9   14  CP    
  16 : 1 :   9   10  C            16 : 1 :   9   10  C     
- 17 : 1 :  10   15  IP           17 : 1 :  10   15  IP    
- 18 : 0 :  10   15  VP           18 : 0 :  10   15  S     
- 19 : 0 :  10   11  NP           19 : 0 :  10   12  VP    
- 20 : 1 :  10   11  VP           20 : 1 :  10   11  VP    
- 21 : 1 :  11   12  VP           21 : 1 :  11   12  VP    
- 22 : 1 :  12   15  PP           22 : 1 :  12   15  PP    
- 23 : 0 :  12   14  P            23 : 0 :  13   14  P     
- 24 : 1 :  14   15  NP           24 : 1 :  14   15  NP    
- 25 : 1 :  15   20  VP           25 : 1 :  15   20  VP    
- 26 : 1 :  15   16  VP           26 : 1 :  15   16  VP    
- 27 : 1 :  16   20  NP           27 : 1 :  16   20  NP    
- 28 : 1 :  17   20  PP           28 : 0 :  16   17  NP    
- 29 : 1 :  17   18  ADVP         29 : 1 :  17   20  PP    
- 30 : 1 :  18   19  P            30 : 1 :  17   18  ADVP  
- 31 : 1 :  19   20  NP           31 : 1 :  18   19  P     
-                                 32 : 1 :  19   20  NP    
+ 17 : 1 :  10   14  IP           17 : 1 :  10   14  IP    
+ 18 : 0 :  10   14  VP           18 : 0 :  10   12  VP    
+ 19 : 0 :  10   11  NP           19 : 1 :  10   11  VP    
+ 20 : 1 :  10   11  VP           20 : 1 :  11   12  VP    
+ 21 : 1 :  11   12  VP           21 : 1 :  12   14  PP    
+ 22 : 1 :  12   14  PP           22 : 1 :  12   13  P     
+ 23 : 1 :  12   13  P            23 : 1 :  13   14  NP    
+ 24 : 1 :  13   14  NP           24 : 1 :  14   19  VP    
+ 25 : 1 :  14   19  VP           25 : 1 :  14   15  VP    
+ 26 : 1 :  14   15  VP           26 : 1 :  15   19  NP    
+ 27 : 1 :  15   19  NP           27 : 0 :  15   16  NP    
+ 28 : 1 :  16   19  PP           28 : 1 :  16   19  PP    
+ 29 : 1 :  16   17  ADVP         29 : 1 :  16   17  ADVP  
+ 30 : 1 :  17   18  P            30 : 1 :  17   18  P     
+ 31 : 1 :  18   19  NP           31 : 1 :  18   19  NP    
 
 ========
    4   19    0   52.17  50.00    12     23   24      2     17    14    82.35
@@ -301,8 +299,8 @@
  24 : 9 :  15   16  NP          
 
 ========
-   7   21    0   61.90  54.17    13     21   24      8     17    13    76.47
--<1>---(wn1= 17, bn1= 21)-           -<2>---(wn2= 17, bn2= 24)-
+   7   21    0   61.90  56.52    13     21   23      7     17    13    76.47
+-<1>---(wn1= 17, bn1= 21)-           -<2>---(wn2= 17, bn2= 23)-
   0 : 0 : ao      Svo                     0 : 0 : st      Svo             
   1 : 1 : so      nægir                  1 : 1 : so      nægir          
   2 : 1 : nhm     að                     2 : 1 : nhm     að             
@@ -326,25 +324,24 @@
   2 : 0 :   0   17  IP            2 : 0 :   0    4  CP    
   3 : 0 :   0    1  ADVP          3 : 0 :   0    1  C     
   4 : 0 :   1   17  VP            4 : 0 :   1    4  IP    
-  5 : 1 :   1    2  VP            5 : 0 :   1    4  S     
-  6 : 0 :   2    7  IP            6 : 0 :   1    4  VP    
-  7 : 1 :   2    3  TO            7 : 1 :   1    2  VP    
-  8 : 0 :   3    7  VP            8 : 0 :   2    4  IP    
-  9 : 1 :   3    4  VP            9 : 1 :   2    3  TO    
- 10 : 0 :   4    7  PP           10 : 1 :   3    4  VP    
- 11 : 0 :   4    5  P            11 : 0 :   4   17  IP    
- 12 : 0 :   5    7  NP           12 : 0 :   4   17  VP    
- 13 : 1 :   7   17  PP           13 : 0 :   4    5  VP    
- 14 : 1 :   7    8  P            14 : 0 :   5    6  NP    
- 15 : 1 :   8   17  IP           15 : 0 :   6   17  NP    
- 16 : 1 :   8    9  TO           16 : 1 :   7   17  PP    
- 17 : 1 :   9   17  VP           17 : 1 :   7    8  P     
- 18 : 1 :   9   10  VP           18 : 1 :   8   17  IP    
- 19 : 1 :  10   17  NP           19 : 1 :   8    9  TO    
- 20 : 1 :  15   16  C            20 : 1 :   9   17  VP    
-                                 21 : 1 :   9   10  VP    
-                                 22 : 1 :  10   17  NP    
-                                 23 : 1 :  15   16  C     
+  5 : 1 :   1    2  VP            5 : 0 :   1    4  VP    
+  6 : 0 :   2    7  IP            6 : 1 :   1    2  VP    
+  7 : 1 :   2    3  TO            7 : 0 :   2    4  IP    
+  8 : 0 :   3    7  VP            8 : 1 :   2    3  TO    
+  9 : 1 :   3    4  VP            9 : 1 :   3    4  VP    
+ 10 : 0 :   4    7  PP           10 : 0 :   4   17  IP    
+ 11 : 0 :   4    5  P            11 : 0 :   4   17  VP    
+ 12 : 0 :   5    7  NP           12 : 0 :   4    5  VP    
+ 13 : 1 :   7   17  PP           13 : 0 :   5    6  NP    
+ 14 : 1 :   7    8  P            14 : 0 :   6   17  NP    
+ 15 : 1 :   8   17  IP           15 : 1 :   7   17  PP    
+ 16 : 1 :   8    9  TO           16 : 1 :   7    8  P     
+ 17 : 1 :   9   17  VP           17 : 1 :   8   17  IP    
+ 18 : 1 :   9   10  VP           18 : 1 :   8    9  TO    
+ 19 : 1 :  10   17  NP           19 : 1 :   9   17  VP    
+ 20 : 1 :  15   16  C            20 : 1 :   9   10  VP    
+                                 21 : 1 :  10   17  NP    
+                                 22 : 1 :  15   16  C     
 
 ========
    8   21    1    0.00   0.00     0      0    0      0      0     0     0.00
@@ -405,8 +402,8 @@
                                  33 : 9 :  16   17  ADVP  
 
 ========
-   9   21    0   55.17  51.61    16     29   31     11     20    19    95.00
--<1>---(wn1= 20, bn1= 29)-           -<2>---(wn2= 20, bn2= 31)-
+   9   21    0   55.17  53.33    16     29   30     10     20    19    95.00
+-<1>---(wn1= 20, bn1= 29)-           -<2>---(wn2= 20, bn2= 30)-
   0 : 1 : no      Strákarnir             0 : 1 : no      Strákarnir     
   1 : 1 : pfn     okkar                   1 : 1 : pfn     okkar           
   2 : 1 : so      hafa                    2 : 1 : so      hafa            
@@ -454,11 +451,10 @@
  23 : 0 :  16   20  CP           23 : 0 :  16   19  CP    
  24 : 1 :  16   17  C            24 : 1 :  16   17  C     
  25 : 0 :  17   20  IP           25 : 0 :  17   19  IP    
- 26 : 0 :  17   20  VP           26 : 0 :  17   19  S     
- 27 : 1 :  17   18  VP           27 : 0 :  17   19  VP    
- 28 : 0 :  18   20  NP           28 : 1 :  17   18  VP    
-                                 29 : 0 :  18   19  NP    
-                                 30 : 0 :  19   20  NP    
+ 26 : 0 :  17   20  VP           26 : 0 :  17   19  VP    
+ 27 : 1 :  17   18  VP           27 : 1 :  17   18  VP    
+ 28 : 0 :  18   20  NP           28 : 0 :  18   19  NP    
+                                 29 : 0 :  19   20  NP    
 
 ========
   10   20    0   76.92  76.92    20     26   26      3     19    19   100.00
@@ -512,7 +508,7 @@
 
 ========
 ============================================================================
-                 73.81  72.43    155   210   214     27    146   137    93.84
+                 74.29  73.93    156   210   211     25    145   137    94.48
 === Summary ===
 
 -- All --
@@ -520,25 +516,25 @@ Number of sentence        =     10
 Number of Error sentence  =      2
 Number of Skip  sentence  =      0
 Number of Valid sentence  =      8
-Bracketing Recall         =  73.81
-Bracketing Precision      =  72.43
-Bracketing FMeasure       =  73.11
+Bracketing Recall         =  74.29
+Bracketing Precision      =  73.93
+Bracketing FMeasure       =  74.11
 Complete match            =   0.00
-Average crossing          =   3.38
+Average crossing          =   3.12
 No crossing               =  25.00
 2 or less crossing        =  62.50
-Tagging accuracy          =  93.84
+Tagging accuracy          =  94.48
 
 -- len<=100 --
 Number of sentence        =     10
 Number of Error sentence  =      2
 Number of Skip  sentence  =      0
 Number of Valid sentence  =      8
-Bracketing Recall         =  73.81
-Bracketing Precision      =  72.43
-Bracketing FMeasure       =  73.11
+Bracketing Recall         =  74.29
+Bracketing Precision      =  73.93
+Bracketing FMeasure       =  74.11
 Complete match            =   0.00
-Average crossing          =   3.38
+Average crossing          =   3.12
 No crossing               =  25.00
 2 or less crossing        =  62.50
-Tagging accuracy          =  93.84
+Tagging accuracy          =  94.48

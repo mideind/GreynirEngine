@@ -51,8 +51,8 @@
  28 : 1 :  15   16  ADVP        
 
 ========
-   2   23    0   50.00  51.35    19     38   37     10     22    20    90.91
--<1>---(wn1= 22, bn1= 38)-           -<2>---(wn2= 22, bn2= 37)-
+   2   23    0   50.00  52.78    19     38   36     10     22    20    90.91
+-<1>---(wn1= 22, bn1= 38)-           -<2>---(wn2= 22, bn2= 36)-
   0 : 0 : nhm     Að                     0 : 0 : st      Að             
   1 : 0 : so      ræða                  1 : 0 : lo      ræða          
   2 : 1 : no      kynferðisbrot          2 : 1 : no      kynferðisbrot  
@@ -98,21 +98,21 @@
  19 : 1 :  10   11  C            19 : 0 :  10   14  CP    
  20 : 0 :  11   22  IP           20 : 1 :  10   11  C     
  21 : 0 :  11   22  VP           21 : 0 :  11   14  IP    
- 22 : 1 :  11   12  VP           22 : 0 :  11   14  S     
- 23 : 1 :  12   13  VP           23 : 0 :  11   14  VP    
- 24 : 1 :  13   14  NP           24 : 1 :  11   12  VP    
- 25 : 0 :  14   22  IP           25 : 1 :  12   13  VP    
- 26 : 1 :  14   15  TO           26 : 1 :  13   14  NP    
- 27 : 0 :  15   22  VP           27 : 0 :  14   17  IP    
- 28 : 1 :  15   16  VP           28 : 1 :  14   15  TO    
- 29 : 1 :  16   17  NP           29 : 0 :  15   17  VP    
- 30 : 0 :  17   22  ADVP         30 : 1 :  15   16  VP    
- 31 : 0 :  18   22  CP           31 : 1 :  16   17  NP    
- 32 : 0 :  18   19  C            32 : 0 :  17   18  ADVP  
- 33 : 0 :  19   22  IP           33 : 1 :  19   20  NP    
- 34 : 1 :  19   20  NP           34 : 1 :  20   22  VP    
- 35 : 1 :  20   22  VP           35 : 1 :  20   21  VP    
- 36 : 1 :  20   21  VP           36 : 1 :  21   22  ADVP  
+ 22 : 1 :  11   12  VP           22 : 0 :  11   14  VP    
+ 23 : 1 :  12   13  VP           23 : 1 :  11   12  VP    
+ 24 : 1 :  13   14  NP           24 : 1 :  12   13  VP    
+ 25 : 0 :  14   22  IP           25 : 1 :  13   14  NP    
+ 26 : 1 :  14   15  TO           26 : 0 :  14   17  IP    
+ 27 : 0 :  15   22  VP           27 : 1 :  14   15  TO    
+ 28 : 1 :  15   16  VP           28 : 0 :  15   17  VP    
+ 29 : 1 :  16   17  NP           29 : 1 :  15   16  VP    
+ 30 : 0 :  17   22  ADVP         30 : 1 :  16   17  NP    
+ 31 : 0 :  18   22  CP           31 : 0 :  17   18  ADVP  
+ 32 : 0 :  18   19  C            32 : 1 :  19   20  NP    
+ 33 : 0 :  19   22  IP           33 : 1 :  20   22  VP    
+ 34 : 1 :  19   20  NP           34 : 1 :  20   21  VP    
+ 35 : 1 :  20   22  VP           35 : 1 :  21   22  ADVP  
+ 36 : 1 :  20   21  VP          
  37 : 1 :  21   22  ADVP        
 
 ========
@@ -596,7 +596,7 @@
 
 ========
 ============================================================================
-                 79.12  80.54    269   340   334     24    200   195    97.50
+                 79.12  80.78    269   340   333     24    200   195    97.50
 === Summary ===
 
 -- All --
@@ -605,8 +605,8 @@ Number of Error sentence  =      0
 Number of Skip  sentence  =      0
 Number of Valid sentence  =     10
 Bracketing Recall         =  79.12
-Bracketing Precision      =  80.54
-Bracketing FMeasure       =  79.82
+Bracketing Precision      =  80.78
+Bracketing FMeasure       =  79.94
 Complete match            =   0.00
 Average crossing          =   2.40
 No crossing               =  10.00
@@ -619,8 +619,8 @@ Number of Error sentence  =      0
 Number of Skip  sentence  =      0
 Number of Valid sentence  =     10
 Bracketing Recall         =  79.12
-Bracketing Precision      =  80.54
-Bracketing FMeasure       =  79.82
+Bracketing Precision      =  80.78
+Bracketing FMeasure       =  79.94
 Complete match            =   0.00
 Average crossing          =   2.40
 No crossing               =  10.00
