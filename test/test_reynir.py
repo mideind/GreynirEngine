@@ -26,6 +26,7 @@ import functools
 
 from reynir.binparser import augment_terminal
 from reynir.bincompress import BIN_Compressed
+from reynir.bindb import BIN_Db
 
 
 def test_augment_terminal():
@@ -225,6 +226,64 @@ def test_bin():
         "Vestur-Þýskalandi",
         "Vestur-Þýskalands",
     )
+
+
+def test_bindb():
+    db = BIN_Db()
+    # Test the lemma lookup functionality
+    w, m = db.lookup_lemma("eignast")
+    assert w == "eignast"
+    assert len(m) > 0
+    assert m[0].stofn == "eigna"
+    w, m = db.lookup_lemma("ábyrgjast")
+    assert w == "ábyrgjast"
+    assert len(m) > 0
+    assert m[0].stofn == "ábyrgjast"
+    w, m = db.lookup_lemma("ábyrgja")
+    assert w == "ábyrgja"
+    assert len(m) > 0
+    assert m[0].stofn == "á-byrgja"
+    w, m = db.lookup_lemma("ábyrgir")
+    assert w == "ábyrgir"
+    assert len(m) == 0
+    w, m = db.lookup_lemma("stór")
+    assert w == "stór"
+    assert len(m) > 0
+    assert m[0].stofn == "stór"
+    w, m = db.lookup_lemma("stórar")
+    assert w == "stórar"
+    assert len(m) == 0
+    w, m = db.lookup_lemma("sig")
+    assert w == "sig"
+    assert len(m) > 0
+    assert any(mm.ordfl == "abfn" for mm in m)
+    w, m = db.lookup_lemma("sér")
+    assert w == "sér"
+    assert len(m) > 0
+    assert not any(mm.ordfl == "abfn" for mm in m)
+    w, m = db.lookup_lemma("hann")
+    assert w == "hann"
+    assert len(m) > 0
+    assert any(mm.ordfl == "pfn" for mm in m)
+    w, m = db.lookup_lemma("hán")
+    assert w == "hán"
+    assert len(m) > 0
+    assert any(mm.ordfl == "pfn" for mm in m)
+    w, m = db.lookup_lemma("háns")
+    assert w == "háns"
+    assert len(m) == 0
+    w, m = db.lookup_lemma("hinn")
+    assert w == "hinn"
+    assert len(m) > 0
+    assert any(mm.ordfl == "gr" for mm in m)
+    w, m = db.lookup_lemma("einn")
+    assert w == "einn"
+    assert len(m) > 0
+    assert any(mm.ordfl == "to" for mm in m)
+    w, m = db.lookup_lemma("núll")
+    assert w == "núll"
+    assert len(m) > 0
+    assert any(mm.ordfl == "to" for mm in m)
 
 
 if __name__ == "__main__":
