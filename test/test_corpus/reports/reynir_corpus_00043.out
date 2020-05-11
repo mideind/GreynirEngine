@@ -154,8 +154,8 @@
  16 : 1 :   9   10  NP           16 : 1 :   9   10  NP    
 
 ========
-   6   11    0   76.47  65.00    13     17   20      5     10    10   100.00
--<1>---(wn1= 10, bn1= 17)-           -<2>---(wn2= 10, bn2= 20)-
+   6   11    0   76.47  68.42    13     17   19      5     10    10   100.00
+-<1>---(wn1= 10, bn1= 17)-           -<2>---(wn2= 10, bn2= 19)-
   0 : 1 : lo      Ljóst                  0 : 1 : lo      Ljóst          
   1 : 1 : so      er                      1 : 1 : so      er              
   2 : 1 : st      að                     2 : 1 : st      að             
@@ -171,22 +171,21 @@
   1 : 1 :   0   10  S             1 : 1 :   0   10  S     
   2 : 0 :   0   10  IP            2 : 1 :   0    1  NP    
   3 : 1 :   0    1  NP            3 : 0 :   1   10  VP    
-  4 : 1 :   1    2  VP            4 : 0 :   1    7  VP    
+  4 : 1 :   1    2  VP            4 : 0 :   1    5  VP    
   5 : 0 :   2   10  CP            5 : 1 :   1    2  VP    
-  6 : 1 :   2    3  C             6 : 0 :   2    7  NP    
-  7 : 0 :   3   10  IP            7 : 0 :   2    7  CP    
+  6 : 1 :   2    3  C             6 : 0 :   2    5  NP    
+  7 : 0 :   3   10  IP            7 : 0 :   2    5  CP    
   8 : 1 :   3    4  ADVP          8 : 1 :   2    3  C     
-  9 : 0 :   4   10  VP            9 : 0 :   3    7  IP    
- 10 : 1 :   4    5  VP           10 : 0 :   3    7  IP    
+  9 : 0 :   4   10  VP            9 : 0 :   3    5  IP    
+ 10 : 1 :   4    5  VP           10 : 0 :   3    5  IP    
  11 : 1 :   5    7  PP           11 : 1 :   3    4  ADVP  
- 12 : 1 :   5    6  P            12 : 0 :   4    7  VP    
- 13 : 1 :   6    7  NP           13 : 1 :   4    5  VP    
- 14 : 1 :   7   10  PP           14 : 1 :   5    7  PP    
- 15 : 1 :   7    8  P            15 : 1 :   5    6  P     
- 16 : 1 :   8   10  NP           16 : 1 :   6    7  NP    
-                                 17 : 1 :   7   10  PP    
-                                 18 : 1 :   7    8  P     
-                                 19 : 1 :   8   10  NP    
+ 12 : 1 :   5    6  P            12 : 1 :   4    5  VP    
+ 13 : 1 :   6    7  NP           13 : 1 :   5    7  PP    
+ 14 : 1 :   7   10  PP           14 : 1 :   5    6  P     
+ 15 : 1 :   7    8  P            15 : 1 :   6    7  NP    
+ 16 : 1 :   8   10  NP           16 : 1 :   7   10  PP    
+                                 17 : 1 :   7    8  P     
+                                 18 : 1 :   8   10  NP    
 
 ========
    7   11    0   73.33  73.33    11     15   15      0     10     8    80.00
@@ -309,7 +308,7 @@
 
 ========
 ============================================================================
-                 80.62  81.25    104   129   128     10     76    73    96.05
+                 80.62  81.89    104   129   127     10     76    73    96.05
 === Summary ===
 
 -- All --
@@ -318,8 +317,8 @@ Number of Error sentence  =      2
 Number of Skip  sentence  =      0
 Number of Valid sentence  =      8
 Bracketing Recall         =  80.62
-Bracketing Precision      =  81.25
-Bracketing FMeasure       =  80.93
+Bracketing Precision      =  81.89
+Bracketing FMeasure       =  81.25
 Complete match            =  12.50
 Average crossing          =   1.25
 No crossing               =  50.00
@@ -332,8 +331,8 @@ Number of Error sentence  =      2
 Number of Skip  sentence  =      0
 Number of Valid sentence  =      8
 Bracketing Recall         =  80.62
-Bracketing Precision      =  81.25
-Bracketing FMeasure       =  80.93
+Bracketing Precision      =  81.89
+Bracketing FMeasure       =  81.25
 Complete match            =  12.50
 Average crossing          =   1.25
 No crossing               =  50.00

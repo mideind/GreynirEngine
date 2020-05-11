@@ -114,8 +114,8 @@
                         (NP-OBJ (eo til dæmis (lemma til dæmis))
                                 (no_et_hk_þf bakkelsi (lemma bakkelsi))
                                 (CP-REL (C (stt sem (lemma sem)))
-                                        (IP (S-MAIN (VP (VP (so_et_fh_gm_nt_p3 er (lemma vera)))
-                                                        (NP-PRD (lo_et_hk_nf_sb óselt (lemma óseldur)))))))))))
+                                        (IP (VP (VP (so_et_fh_gm_nt_p3 er (lemma vera)))
+                                                (NP-PRD (lo_et_hk_nf_sb óselt (lemma óseldur))))))))))
         (grm .))))
 
 ( (META (ID-CORPUS reynir_corpus_00030.txt.9)

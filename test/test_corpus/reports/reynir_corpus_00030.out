@@ -204,8 +204,8 @@
  11 : 9 :   6    7  NP           11 : 9 :   7    8  NP    
 
 ========
-   9    8    0  100.00  92.86    13     13   14      0      7     7   100.00
--<1>---(wn1=  7, bn1= 13)-           -<2>---(wn2=  7, bn2= 14)-
+   9    8    0  100.00 100.00    13     13   13      0      7     7   100.00
+-<1>---(wn1=  7, bn1= 13)-           -<2>---(wn2=  7, bn2= 13)-
   0 : 1 : no      Íþróttafélög        0 : 1 : no      Íþróttafélög
   1 : 1 : so      fá                     1 : 1 : so      fá             
   2 : 1 : eo      til_dæmis              2 : 1 : eo      til_dæmis      
@@ -224,10 +224,9 @@
   7 : 1 :   4    7  CP            7 : 1 :   4    7  CP    
   8 : 1 :   4    5  C             8 : 1 :   4    5  C     
   9 : 1 :   5    7  IP            9 : 1 :   5    7  IP    
- 10 : 1 :   5    7  VP           10 : 0 :   5    7  S     
- 11 : 1 :   5    6  VP           11 : 1 :   5    7  VP    
- 12 : 1 :   6    7  NP           12 : 1 :   5    6  VP    
-                                 13 : 1 :   6    7  NP    
+ 10 : 1 :   5    7  VP           10 : 1 :   5    7  VP    
+ 11 : 1 :   5    6  VP           11 : 1 :   5    6  VP    
+ 12 : 1 :   6    7  NP           12 : 1 :   6    7  NP    
 
 ========
   10    9    0  100.00 100.00    15     15   15      0      8     8   100.00
@@ -259,7 +258,7 @@
 
 ========
 ============================================================================
-                 85.19  87.62     92   108   105      5     59    58    98.31
+                 85.19  88.46     92   108   104      5     59    58    98.31
 === Summary ===
 
 -- All --
@@ -268,9 +267,9 @@ Number of Error sentence  =      2
 Number of Skip  sentence  =      0
 Number of Valid sentence  =      8
 Bracketing Recall         =  85.19
-Bracketing Precision      =  87.62
-Bracketing FMeasure       =  86.38
-Complete match            =  12.50
+Bracketing Precision      =  88.46
+Bracketing FMeasure       =  86.79
+Complete match            =  25.00
 Average crossing          =   0.62
 No crossing               =  50.00
 2 or less crossing        = 100.00
@@ -282,9 +281,9 @@ Number of Error sentence  =      2
 Number of Skip  sentence  =      0
 Number of Valid sentence  =      8
 Bracketing Recall         =  85.19
-Bracketing Precision      =  87.62
-Bracketing FMeasure       =  86.38
-Complete match            =  12.50
+Bracketing Precision      =  88.46
+Bracketing FMeasure       =  86.79
+Complete match            =  25.00
 Average crossing          =   0.62
 No crossing               =  50.00
 2 or less crossing        = 100.00

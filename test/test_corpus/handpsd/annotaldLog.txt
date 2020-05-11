@@ -1,0 +1,10 @@
+1589143942.3680048: {"type": "program-start", "filename": "reynir_corpus_00163.grgld"}
+1589143948.2013617: {"type": "page-load", "loc": "inner_index", "filename": "reynir_corpus_00163.grgld"}
+1589143948.7136476: {"eventData": {"type": "page-load"}, "filename": "reynir_corpus_00163.grgld"}
+1589143974.4302785: {"eventData": {"button": 0, "type": "mouse-click"}, "filename": "reynir_corpus_00163.grgld"}
+1589143976.288507: {"eventData": {"button": 0, "type": "mouse-click"}, "filename": "reynir_corpus_00163.grgld"}
+1589143995.7356105: {"type": "page-load", "loc": "inner_index", "filename": "reynir_corpus_00163.grgld"}
+1589143995.8427281: {"eventData": {"type": "page-unload"}, "filename": "reynir_corpus_00163.grgld"}
+1589143996.0250306: {"eventData": {"type": "page-load"}, "filename": "reynir_corpus_00163.grgld"}
+1589144026.0476193: {"eventData": {"type": "auto-idle"}, "filename": "reynir_corpus_00163.grgld"}
+1589144069.6835752: {"eventData": {"type": "page-unload"}, "filename": "reynir_corpus_00163.grgld"}

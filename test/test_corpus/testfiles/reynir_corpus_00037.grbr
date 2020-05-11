@@ -1,5 +1,5 @@
 (S0 (S-MAIN (IP (NP-SUBJ (lo Næstflest) (no hjólreiðaslys)) (VP (VP (so urðu)) (CP-ADV-TEMP (C (st þegar)) (IP (NP-SUBJ (no hjólreiðamaður)) (VP (VP (so hjólaði)) (ADVP (ao þvert)) (PP (P (fs yfir)) (NP (no akbraut))))))))) (grm .))
-(S0 (S-MAIN (IP (NP-SUBJ (eo Bara) (no stormur)) (C (ao eins) (st og)) (S-MAIN (IP (VP (VP (so kemur)) (ADVP-TMP-SET (ao reglulega))))) (VP (VP (so á)) (NP-OBJ (no haustin))))) (grm .))
+(S0 (S-MAIN (IP (NP-SUBJ (eo Bara) (no stormur)) (C (ao eins) (st og)) (IP (VP (VP (so kemur)) (ADVP-TMP-SET (ao reglulega)))) (VP (VP (so á)) (NP-OBJ (no haustin))))) (grm .))
 (S0 (S-MAIN (IP (NP-SUBJ (pfn Ég)) (VP (VP (so ákvað)) (IP-INF (TO (nhm að)) (VP (VP (so hafa)) (NP-OBJ (eo ekki) (no þjálfara) (ao í_ár))))))) (grm .))
 (S0 (S-MAIN (IP (NP-SUBJ (no Vélin)) (VP (VP (so er)) (NP-PRD (ao um) (tala 238) (no hestöfl))))) (C (st og)) (S-MAIN (IP (NP-SUBJ (no togið)) (VP (VP (so er)) (NP-PRD (lo mikið))))) (grm .))
 (S0 (S-MAIN (IP (NP-SUBJ (pfn Það)) (VP (VP (VP (so þarf)) (IP-INF (TO (nhm að)) (VP (VP (so setja)) (NP-OBJ (no pening))))) (PP (P (fs í)) (NP (no heilbrigðiskerfið))) (PP (P (fs yfir)) (NP (no höfuð)))))) (grm .))
