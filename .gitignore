@@ -38,6 +38,9 @@ src/reynir/resources/*.csv
 !src/reynir/resources/ord.auka.csv
 !src/reynir/resources/systematic_additions.csv
 
+# Test files
+test/test_corpus/handpsd/annotaldLog.txt
+
 # Scratch work files
 src/reynir/_eparser.cpp
 *.bin

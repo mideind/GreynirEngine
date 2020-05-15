@@ -12,7 +12,7 @@ A fast, efficient natural language processor for Icelandic
 Overview
 ********
 
-Greynir is a Python 3.x package for
+Greynir is a Python 3 (>= 3.5) package for
 **working with Icelandic natural language text**.
 Greynir can parse text into **sentence trees**, find **lemmas**,
 inflect **noun phrases**, assign **part-of-speech tags** and much more.

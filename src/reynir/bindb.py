@@ -232,12 +232,50 @@ class BIN_Db:
         """ Given a word form, look up all its possible meanings """
         return self._lookup(w, at_sentence_start, auto_uppercase, self._meanings_func)
 
+    # A dictionary of functions, one for each word category, that return
+    # True for declension (beyging) strings of canonical/lemma forms
+    LEMMA_FILTERS = dict(
+        # Nouns: Nominative, singular
+        kk=lambda b: b == "NFET",
+        kvk=lambda b: b == "NFET",
+        hk=lambda b: b == "NFET",
+        # Pronouns: Masculine, nominative, singular
+        fn=lambda b: b == "KK-NFET" or b == "KK_NFET" or b == "fn_KK_NFET",
+        # Personal pronouns: Nominative, singular
+        pfn=lambda b: b == "NFET",
+        # Definite article: Masculine, nominative, singular
+        gr=lambda b: b == "KK-NFET" or b == "KK_NFET",
+        # Verbs: infinitive
+        so=lambda b: b == "GM-NH",
+        # Adjectives: Masculine, singular, first degree, strong declension
+        lo=lambda b: b == "FSB-KK-NFET" or b == "KK-NFET",
+        # Number words: Masculine, nominative case; or no inflection
+        to=lambda b: b.startswith("KK_NF") or b == "-",
+    )
+
     def lookup_lemma(self, w, at_sentence_start=False, auto_uppercase=False):
         """ Given a word lemma, look up all its possible meanings """
-        meanings = self.lookup_word(
+        # Note: we consider middle voice infinitive verbs to be lemmas,
+        # i.e. 'eignast' is recognized as a lemma as well as 'eigna'.
+        # This is done for consistency, as some middle voice verbs have
+        # their own separate lemmas in BÍN, such as 'ábyrgjast'.
+        final_w, meanings = self.lookup_word(
             w, at_sentence_start=at_sentence_start, auto_uppercase=auto_uppercase
         )
-        return list(filter(lambda x: x.stofn == w, meanings))
+
+        def match(m):
+            """ Return True for meanings that are canonical as lemmas """
+            if m.ordfl == "so" and m.beyging == "MM-NH":
+                # This is a middle voice verb infinitive meaning
+                # ('eignast', 'komast'): accept it as a lemma
+                return True
+            if m.stofn.replace("-", "") != final_w:
+                # This lemma does not agree with the passed-in word
+                return False
+            # Do a check of the canonical lemma inflection forms
+            return self.LEMMA_FILTERS.get(m.ordfl, lambda b: True)(m.beyging)
+
+        return final_w, [m for m in meanings if match(m)]
 
     @lru_cache(maxsize=CACHE_SIZE)
     def lookup_name_gender(self, name):
