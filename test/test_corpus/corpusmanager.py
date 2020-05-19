@@ -65,7 +65,7 @@ class Maker():
 		# Hef þá (3A), (3B) og (3C)
 		# Fæ (4A), (4B) og (4C) með to_brackets
 		# Passa að setja réttar endingar á allt, þarf mögulega að gera í 3 fallaköllum
-		helpers.to_brackets(HANDPSD, BRACKETS, '.grgld', '.grbr', True)
+		helpers.greynir_to_brackets(HANDPSD, BRACKETS, '.grgld', '.grbr', True)
 		#helpers.to_brackets(HANDPSD, BRACKETS, '.ipgld', '.ipbr', overwrite)
 		#helpers.to_brackets(HANDPSD, BRACKETS, '.afgld', '.afbr', overwrite)
 
@@ -81,12 +81,12 @@ class Comparison():
 
 		# Hef (1)
 		# Útbý (2) með annoparse, eins og í Maker
-		helpers.get_annoparse(CLEAN, GENPSD, ".txt", ".psd", True)
+		#helpers.get_annoparse(CLEAN, GENPSD, ".txt", ".psd", True)
 		
 		# Hef (2)
 		# Útbý (5B) með get_ipparse()
 		# Ath. í Maker() er þetta útbúið með vörpun úr Greynisskemanu
-		# TODO
+		# helpers.get_ipparse(CLEAN, GENPSD, '.txt', '.ippsd', True)
 
 		# Hef (2)
 		# Útbý (5C) með map_to_general()
@@ -94,30 +94,30 @@ class Comparison():
 
 		# Hef (2), (5B) og (5C)
 		# Útbý (6A), (6B) og (6C) með to_brackets()
-		helpers.to_brackets(GENPSD, TESTFILES, '.psd', '.grbr', True)
+		#helpers.greynir_to_brackets(GENPSD, TESTFILES, '.psd', '.grbr', True)
 		# helpers.to_brackets(GENPSD, TESTFILES, '.ippsd', '.ipbr', overwrite)
 		# helpers.to_brackets(GENPSD, TESTFILES, '.afpsd', '.afbr', overwrite)
 
 		# Hef (4A), (4B) og (4C) úr Maker
 		# Og (6A), (6B) og (6C) héðan
 		# Útbý (7A)
-		helpers.get_results(BRACKETS, TESTFILES, REPORTS, ".out")
+		#helpers.get_results(BRACKETS, TESTFILES, REPORTS, ".out")
 		
 		# Hef (7A)
 		# Útbý (7B)
-		suffixlist = [".grbr"]
-		helpers.combine_reports(REPORTS, suffixlist)
+		#suffixlist = [".grbr"]
+		#helpers.combine_reports(REPORTS, suffixlist)
 
 	# Þáttar skjölin, útbýr vélþáttað skjal á slóðinni pgen
 
 if __name__ == "__main__":
 	# Spyrja hvort eigi að yfirskrifa skjöl sem þegar eru tilbúin
 	#ans = input("Do you want to overwrite existing files? (y/n)\n")	
-	# TODO eftir að breyta ans í True/False gildi!
+	# TODO eftir að breyta ans í True/False gildi
 	ans = False
 	start = timer()
-	maker = Maker()
-	maker.start(ans)
+	#maker = Maker()
+	#maker.start(ans)
 
 
 	comp = Comparison()

@@ -1,14 +1,30 @@
 #!/usr/bin/env python
 
+import os
 import pathlib
 import subprocess
 from reynir.simpletree import SimpleTree
 import annotald.util as util
 
 EVALBCOMMAND = ' -p ./stillingar.prm' # handpsd is first argument, then genpsd
+ICENLP = pathlib.Path("/home/hulda/github/icenlp/IceNLPCore/bat")
+IPFOLDER = ICENLP / 'iceparser'
+ICEPARSER = './iceparser.sh'
+TAGFOLDER = ICENLP / 'icetagger'
+TAGGER = './icetagger.sh'  # TODO change to another tagger, IceStagger or ABLtagger
+
 
 SKIP_PHRASES = set(["(META", "(ID-CORPUS", "(ID-LOCAL", "(URL", "(COMMENT"])
 SKIP_SEGS = set(["(lemma", "(exp_seg", "(exp_abbrev"])
+
+
+# Map phrases and leaves in Greynir to the generalized schema
+GENERALIZE = {
+	
+
+
+
+}
 
 def get_annoparse(infolder, outfolder, insuffix=".txt", outsuffix=".psd", overwrite=False):
 	# Fær inn möppu með textum, mögulega einhver skilyrði um suffix eða stem sem á að velja
@@ -31,21 +47,62 @@ def get_annoparse(infolder, outfolder, insuffix=".txt", outsuffix=".psd", overwr
 def get_ipparse(infolder, outfolder, insuffix=".txt", outsuffix=".ippsd", overwrite=False):
 	# Fær inn möppu með textum, mögulega einhver skilyrði um suffix eða stem sem á að velja
 	# Sækir IceNLP-þáttun fyrir hvert skjal og skrifar í skjal í tiltekna möppu
-	pass
+	
+	origpath = pathlib.Path().absolute()
 
-def map_to_icenlp():
+	# Nauðsynlegt til að IceTagger virki rétt
+	os.chdir(TAGFOLDER)
+	tagsuffix = '.tagged'
+	tagfolder = origpath / 'gentag'
+
+	for p in infolder.iterdir():
+		ptext = p.stem + insuffix
+		ptext = infolder / ptext
+		ptag = p.stem + tagsuffix
+		ptag = tagfolder / ptag
+
+		if ptag.exists() and not overwrite:
+			continue
+
+		command = "{} -i {} -o {} -lf 2 -of 2".format(TAGGER, ptext, ptag)
+		skil = subprocess.Popen([command], shell=True, stdout=subprocess.PIPE).communicate()[0]
+		print(skil)
+
+
+	# Nauðsynlegt til að IceParser virki rétt
+	os.chdir(IPFOLDER)
+
+	for p in infolder.iterdir():
+		ptext = p.stem + tagsuffix
+		ptext = tagfolder / ptext
+		pout = p.stem + outsuffix
+		pout = outfolder / pout
+
+		if pout.exists() and not overwrite:
+			continue
+
+		command = "{} -i {} -o {}".format(ICEPARSER, ptext, pout)
+		skil = subprocess.Popen([command], shell=True, stdout=subprocess.PIPE).communicate()[0]
+		print(skil)
+
+	# Back to original
+	os.chdir(origpath)
+
+
+def greynir_to_icenlp():
 	# Fær inn möppu með greynisþáttuðum skjölum á Annotaldsforminu
 	# Býr til skjöl á IceNLP-forminu fyrir Annotald
 	# Setur í tiltekna möppu
 	pass
 
-def map_to_general():
+def greynir_to_general():
+	# Greynisskema varpað í almenna skemað (djúpþáttun)
 	# Fær inn möppu með greynisþáttuðum skjölum á Annotaldsforminu
 	# Býr til skjöl á almenna þáttunarforminu fyrir Annotald
 	# Setur í tiltekna möppu
 	pass
 
-def to_brackets(infolder, outfolder, insuffix='.psd', outsuffix='.psd', overwrite=False):
+def greynir_to_brackets(infolder, outfolder, insuffix='.psd', outsuffix='.psd', overwrite=False):
 	# Fær inn möppu með þáttuðum skjölum á Annotaldsforminu
 	# Býr til skjöl á svigaformi
 	# Setur í tiltekna möppu
@@ -247,11 +304,12 @@ def combine_reports(reportfolder, suffixlist):
 	# Bæta við skoðun á setningarhlutverki -- NP-OBJ, ... En þarf sérniðurstöður fyrir það, sérútgáfu af to_brackets...
 	numsents = []
 	numerrorsents = []
-	br = []
-	bp = []
-	bf = []
-	cm = []
-	ta = []
+	br = []  # Bracketing recall
+	bp = []  # Bracketing precision
+	bf = []  # Bracketing F-measure
+	cm = []  # Complete match
+	ta = []  # Tagging accuracy
+	ac = []  # Average crossing
 	filenames = []
 
 	numsentsall = 0.0
@@ -260,6 +318,7 @@ def combine_reports(reportfolder, suffixlist):
 	bpall = 0.0
 	bfall = 0.0
 	cmall = 0.0
+	acall = 0.0
 	taall = 0.0
 
 	for preport in reportfolder.iterdir():
@@ -278,7 +337,9 @@ def combine_reports(reportfolder, suffixlist):
 				if line.startswith("Bracketing FMeasure "):
 					bf.append(float(line.split(" ")[-1]))
 				if line.startswith("Complete match "):
-					cm.append(float(line.split(" ")[-1]))					
+					cm.append(float(line.split(" ")[-1]))
+				if line.startswith("Average crossing "):
+					ac.append(float(line.split(" ")[-1]))
 				if line.startswith("Tagging accuracy "):
 					ta.append(float(line.split(" ")[-1]))
 					break # No information needed after this
@@ -303,8 +364,12 @@ def combine_reports(reportfolder, suffixlist):
 	for i in cm:
 		cmall +=i
 
+	for i in ac:
+		acall +=i
+
 	for i in ta:
 		taall +=i
+
 
 	print("==== Niðurstöður ====")
 	print("Fjöldi setninga:{}".format(numsentsall))
@@ -313,6 +378,7 @@ def combine_reports(reportfolder, suffixlist):
 	print("Precision:{}".format(bpall/files))
 	print("Fskor:{}".format(bfall/files))
 	print("Alveg eins:{}".format(cmall/files))
+	print("Average crossing: {}".format(acall/files))
 	print("Tagging accuracy:{}".format(taall/files))
 
 if __name__ == "__main__":
