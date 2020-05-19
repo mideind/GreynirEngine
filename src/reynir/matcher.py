@@ -277,16 +277,12 @@ def single_match(item, tree, context):
         return True
     if item.startswith('"'):
         # Double quote: literal string
-        if not tree.is_terminal:
-            return False
-        # Case-neutral compare
-        return item[1:-1].lower() == tree.own_text.lower()
+        # Note that this is a case-neutral compare
+        return item[1:-1].casefold() == tree.text.casefold()
     if item.startswith("'"):
-        # Single quote: word lemma(s)
-        if not tree.is_terminal:
-            return False
-        # Case-significant compare
-        return item[1:-1] == tree.own_lemma
+        # Single quote: match word lemma(s) of the subtree
+        # Note that this is a case-significant compare
+        return item[1:-1] == tree.lemma
     if tree.terminal:
         if tree.terminal == item:
             return True
@@ -415,7 +411,8 @@ def run_sequence(gen, items, context):
                 tree = next(gen)
     except StopIteration:
         # Skip any nullable items
-        while pc + 1 < len_items and items[pc + 1] in {"*", "?"}:
+        # Note: we are deliberately not using a set here; items[] may be non-hashable
+        while pc + 1 < len_items and items[pc + 1] in ("*", "?"):
             item = items[pc]
             # Do error checking while we're at it
             if isinstance(item, str) and item in _NOT_ITEMS:

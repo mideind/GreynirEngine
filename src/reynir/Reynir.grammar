@@ -3246,6 +3246,11 @@ NlKjarni_et_þf_kvk → 'hún:pfn'_kvk_et_þf
 NlKjarni_et_þgf_kvk → 'hún:pfn'_kvk_et_þgf
 NlKjarni_et_ef_kvk → 'hún:pfn'_kvk_et_ef
 
+NlKjarni_et_nf_hk → 'það:pfn'_hk_et_nf
+NlKjarni_et_þf_hk → 'það:pfn'_hk_et_þf
+NlKjarni_et_þgf_hk → 'það:pfn'_hk_et_þgf
+NlKjarni_et_ef_hk → 'það:pfn'_hk_et_ef
+
 NlKjarni_et_nf_hk → 'hán:pfn'_hk_et_nf
 NlKjarni_et_þf_hk → 'hán:pfn'_hk_et_þf
 NlKjarni_et_þgf_hk → 'hán:pfn'_hk_et_þgf
@@ -5636,6 +5641,7 @@ EinnAl →
     | Allra "mest:ao"     # (Ferðamönnum hefur fjölgað) allra mest
     | "minnst:ao" Allra   # (Ferðamönnum hefur fjölgað) minnst allra
     | Allra "minnst:ao"   # (Ferðamönnum hefur fjölgað) allra minnst
+    | 'nokkur:fn'_et_þf_kk 'tími:kk'_et_þf # Þetta er meira en við höfum nokkurn tíma[nn] gert
     | 'allur:fn'_et_þf_kk 'tími:kk'_gr_et_þf # Allan tímann var mér ljóst að þetta var vonlaust
     | 'allur:fn'_ft_þf_kk "jafna:ao"    # Alla jafna eru menn rólegir yfir þessu
     | 'heill:lo'_sb_nf_et_hk "yfir:ao"  # Heilt yfir eru menn rólegir yfir þessu

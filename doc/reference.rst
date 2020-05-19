@@ -108,21 +108,21 @@ The Greynir class
         The result dictionary contains the following items:
 
         * ``sentences``: A list of :py:class:`_Sentence` objects corresponding
-            to the sentences found in the text. If a sentence could
-            not be parsed, the corresponding object's
-            ``tree`` property will be ``None``.
+          to the sentences found in the text. If a sentence could
+          not be parsed, the corresponding object's
+          ``tree`` property will be ``None``.
 
         * ``num_sentences``: The number of sentences found in the text.
 
         * ``num_parsed``: The number of sentences that were successfully parsed.
 
         * ``ambiguity``: A ``float`` weighted average of the ambiguity of the parsed
-            sentences. Ambiguity is defined as the *n*-th root of the number
-            of possible parse trees for the sentence, where *n* is the number
-            of tokens in the sentence.
+          sentences. Ambiguity is defined as the *n*-th root of the number
+          of possible parse trees for the sentence, where *n* is the number
+          of tokens in the sentence.
 
         * ``parse_time``: A ``float`` with the wall clock time, in seconds,
-            spent on tokenizing and parsing the sentences.
+          spent on tokenizing and parsing the sentences.
 
 
         Example *(try it!)*::
