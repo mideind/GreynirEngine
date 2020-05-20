@@ -1,5 +1,7 @@
 graft src
 prune src/reynir/__pycache__
+prune src/reynir/.mypy_cache
+prune test/test_corpus
 include src/reynir/Reynir.grammar
 include src/reynir/Reynir.grammar.bin
 include src/reynir/eparser.h

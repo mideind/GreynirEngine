@@ -196,6 +196,6 @@ and also available here: https://www.gnu.org/licenses/gpl-3.0.html.
 
 If you would like to use this software in ways that are incompatible
 with the standard GNU GPLv3 license, take a look at
-our `alternative license offerings<https://greynir.is/buy>`_,
+our `alternative license offerings <https://greynir.is/buy>`_,
 and/or `contact Miðeind ehf. <mailto:mideind@mideind.is>`_ to negotiate
 custom arrangements.
