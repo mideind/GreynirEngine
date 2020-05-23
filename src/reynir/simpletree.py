@@ -130,6 +130,7 @@ _DEFAULT_NT_MAP = {
     "Frumlag": "NP-SUBJ",
     "NlFrumlag": "NP-SUBJ",
     "NlFrumlagÞað": "NP-SUBJ",
+    "NlFrumlagLeppur": "NP-ES",
     "NlBeintAndlag": "NP-OBJ",
     "NlEnginnAndlag": "NP-OBJ",  # 'hann getur enga samninga gert'
     "NlAnnar": "NP-OBJ",  # '[Jón hefur] aðra sögu [að segja]'
@@ -274,7 +275,7 @@ _DEFAULT_ID_MAP = {
     "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
     "NP": dict(
         name="Nafnliður",
-        subject_to={"NP-SUBJ", "NP-OBJ", "NP-IOBJ", "NP-PRD", "NP-ADP"},
+        subject_to={"NP-SUBJ", "NP-ES", "NP-OBJ", "NP-IOBJ", "NP-PRD", "NP-ADP"},
     ),
     "NP-POSS": dict(name="Eignarfallsliður", overrides="NP"),
     "NP-DAT": dict(name="Þágufallsliður", overrides="NP"),
@@ -286,6 +287,7 @@ _DEFAULT_ID_MAP = {
     "NP-AGE": dict(name="Aldur"),
     "NP-MEASURE": dict(name="Magnliður", overrides="NP"),
     "NP-SUBJ": dict(name="Frumlag", subject_to={"NP-SUBJ"}),
+    "NP-ES": dict(name="Frumlagsleppur"),
     "NP-OBJ": dict(name="Beint andlag"),
     "NP-IOBJ": dict(name="Óbeint andlag"),
     "NP-PRD": dict(name="Sagnfylling"),

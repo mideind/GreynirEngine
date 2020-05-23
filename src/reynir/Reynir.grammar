@@ -831,8 +831,8 @@ Setning/tala/pers/kyn →
     # Frumlag fyrir aftan sögn
     | BeygingarliðurMeðUmröðun/tala/pers/kyn
 
-    # 'Það fara 40 mínútur í pappírsvinnuna'
-    | NlFrumlagÞað SagnHluti/tala/pers/kyn Upptalning/tala?
+    # 'Það fer allt of mikill tími í pappírsvinnuna'
+    | NlFrumlagLeppur SagnHluti/tala/pers/kyn Upptalning/tala?
 
 Setning_et_p3_hk →
     # 'Að raða frímerkjum er góð skemmtun'
@@ -850,6 +850,7 @@ Setning_et_p3_hk →
     # Það (var verið að eyðileggja menningarverðmæti)
     # Það (tekur mig þrjú ár að eignast bílinn)
     # Það (verður að viðurkennast að Jón er fær á sínu sviði)
+    # Það (mun skapast hætta)
     | NlFrumlagÞað SögnÞað
 
 SögnÞað →
@@ -1981,6 +1982,9 @@ SögnMeðF_0/tala/pers/kyn →
     # (Um árabil) hefur verið [í gildi] yfirlýsing
     | HjSögn/tala/pers FsAtv? so_sagnb FsRunaInnskot? NlFrumlag_nf/tala/pers/kyn NhFylling/tala/kyn?
 
+    # (Í dag) mun [ekki] skapast [af þessu] veruleg hætta
+    | HjSögnSkuluMunu/tala/pers FsAtv? so_0_mm_nh FsRunaInnskot? NlFrumlag_nf/tala/pers
+
     # (Í dag) hafa mennirnir [ekki getað] lent
     | HjSögn/tala/pers NlFrumlag_nf/tala/pers/kyn GetaAtv_sagnb? HreinSögnAtv_sagnb/tala/kyn
 
@@ -3095,6 +3099,12 @@ NlSpurnaraukasetning → AtviksliðurEinkunn* Spurnaraukasetning
 
 NlFrumlagÞað → 'það:pfn'_hk_nf_et
 
+# Hafa sérstakan hnút fyrir frumlagslepp (NP-ES)
+NlFrumlagLeppur → 'það:pfn'_hk_nf_et
+# Merkja til að koma í veg fyrir að hnúturinn sé fjarlægður,
+# þar sem hann bendir beint á annan hnút
+$tag(keep) NlFrumlagLeppur
+
 NlFrumlag/fall → Nl/fall | NlSkýringarsetning
 NlFrumlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
 NlFrumlag_nf_et_p3_hk → NlSkýringarsetning
@@ -3467,7 +3477,16 @@ NlFornafn/tala/fall/kyn →
         Fornafn/tala/fall/kyn FornafnViðskeyti/tala/fall/kyn? LoLiður/tala/fall/kyn*
     # 'okkar besta' / 'óumdeilanlega hans versta'
     | AtviksliðurEinkunn* EignarFornafn LoLiður/tala/fall/kyn
-    | AtviksliðurEinkunn* 'margur:fn'/tala/fall/kyn 'annar:fn'/tala/fall/kyn
+
+# 'Hann hafði aldrei heyrt neitt slíkt'
+NlFornafn_et_nf_hk → NeittSlíkt_nf
+NlFornafn_et_þf_hk → NeittSlíkt_þf
+NlFornafn_et_þgf_hk → NeittSlíkt_þgf
+NlFornafn_et_ef_hk → NeittSlíkt_ef
+
+NeittSlíkt/fall → 'neinn:fn'_et_hk/fall 'slíkur:fn'_et_hk/fall
+
+$score(+4) NeittSlíkt/fall
 
 NlFornafn_et_nf_hk → AllurFornafn_nf
 NlFornafn_et_þf_hk → AllurFornafn_þf
@@ -3504,9 +3523,9 @@ Pfn/tala/fall/kyn → Pfn/kyn/tala/fall
 
 FornafnViðskeyti/tala/fall/kyn →
     AtviksliðurAuka? LoFornafn/fall/tala/kyn # (hafa þeir) [þó] báðir (lýst yfir sigri)
-    | Pfn/kyn/tala/fall     # öllu því, ýmsum þeim
-    | Töluorð/tala/fall/kyn # öllum fjórum, þeirra tveggja
-    | 'hinn:gr'/tala/fall/kyn # allt hið versta
+    | Pfn/kyn/tala/fall         # öllu því, ýmsum þeim
+    | Töluorð/tala/fall/kyn     # öllum fjórum, þeirra tveggja
+    | 'hinn:gr'/tala/fall/kyn   # allt hið versta
 
 FornafnViðskeyti_et/fall/kyn →
     # neinum þeirra þriggja, öllum þeirra, hvern þeirra fjögurra
@@ -3535,11 +3554,11 @@ NlFornafn/tala/fall/kyn →
     # margt annað / mörgu öðru / margs annars
     # margir aðrir / marga aðra / mörgum öðrum / margra annarra
     # fáir aðrir / örfáir aðrir
-    'margur:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
+    AtviksliðurEinkunn* 'margur:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
     | 'allmargur:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
     | 'fjölmargur:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
-    | 'fár:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
-    | 'örfár:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
+    | AtviksliðurEinkunn* 'fár:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
+    | AtviksliðurEinkunn* 'örfár:lo'_sb/tala/fall/kyn 'annar:fn'/tala/fall/kyn
 
 # Sértilvik þar sem "ýmislegt annað" er sjálfstæður nafnliður:
 # 'Ýmislegt annað (bendir til þess að Jón sé þjófurinn)'
