@@ -21,7 +21,7 @@ Greynir's sentence trees can *inter alia* be used to extract
 information from text, for instance about people, titles, entities, facts,
 actions and opinions.
 
-Full documentation for Greynir is `available here <https://greynir.is/doc/>`_.
+Full documentation for Greynir is `available here <https://greynir.is/doc/>`__.
 
 Greynir is the engine of `Greynir.is <https://greynir.is>`_, a natural-language
 front end for a database of 9 million sentences parsed from Icelandic
@@ -103,7 +103,7 @@ To find out which version of Python you have, enter::
 
     $ python --version
 
-If a binary wheel package isn't available on `PyPi <https://pypi.org>`_
+If a binary wheel package isn't available on `PyPi <https://pypi.org>`__
 for your system, you may need to have the ``python3-dev`` package
 (or its Windows equivalent) installed on your
 system to set up Greynir successfully. This is
@@ -145,7 +145,7 @@ missing, you will get assertion errors when you try to run Greynir.
 Tests
 *****
 
-To run the built-in tests, install `pytest <https://docs.pytest.org/en/latest/>`_,
+To run the built-in tests, install `pytest <https://docs.pytest.org/en/latest/>`__,
 ``cd`` to your ``ReynirPackage`` subdirectory (and optionally activate your
 virtualenv), then run::
 
@@ -155,28 +155,29 @@ virtualenv), then run::
 Documentation
 *************
 
-Please consult `Greynir's documentation <https://greynir.is/doc/>`_ for detailed
+Please consult `Greynir's documentation <https://greynir.is/doc/>`__ for detailed
 `installation instructions <https://greynir.is/doc/installation.html>`_,
 a `quickstart guide <https://greynir.is/doc/quickstart.html>`_,
 and `reference information <https://greynir.is/doc/reference.html>`_,
 as well as important information
 about `copyright and licensing <https://greynir.is/doc/copyright.html>`_.
 
-**********************
+************
 Contributing
-**********************
+************
 
-See `Contributing to ReynirPackage <https://github.com/mideind/ReynirPackage/blob/master/CONTRIBUTING.md>`_.
+See `Contributing to ReynirPackage <https://github.com/mideind/ReynirPackage/blob/master/CONTRIBUTING.md>`__.
 
 ***********************
 Copyright and licensing
 ***********************
 
-Greynir is *copyright (C) 2020 by Miðeind ehf.*
+Greynir is *copyright © 2020 by Miðeind ehf.*
 The original author of this software is *Vilhjálmur Þorsteinsson*.
 
 .. image:: https://raw.githubusercontent.com/mideind/Reynir/master/static/img/GPLv3.png
-    :target: https://github.com/mideind/Reynir/blob/master/LICENSE.txt
+   :target: https://github.com/mideind/Reynir/blob/master/LICENSE.txt
+   :alt: GNU GPLv3
 
 This set of programs is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the Free
@@ -189,13 +190,15 @@ or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
 more details.
 
 The full text of the GNU General Public License v3 is
-`included here <https://github.com/mideind/ReynirPackage/blob/master/LICENSE>`_
+`included here <https://github.com/mideind/ReynirPackage/blob/master/LICENSE>`__
 and also available here: https://www.gnu.org/licenses/gpl-3.0.html.
 
 .. image:: https://github.com/mideind/ReynirPackage/blob/master/doc/_static/MideindLogoVert100.png?raw=true
+   :align: right
+   :alt: Miðeind ehf.
 
 If you would like to use this software in ways that are incompatible
 with the standard GNU GPLv3 license, take a look at
-our `alternative license offerings <https://greynir.is/buy>`_,
-and/or `contact Miðeind ehf. <mailto:mideind@mideind.is>`_ to negotiate
+our `alternative license offerings <https://greynir.is/buy>`__,
+and/or `contact Miðeind ehf. <mailto:mideind@mideind.is>`__ to negotiate
 custom arrangements.
