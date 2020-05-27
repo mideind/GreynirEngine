@@ -984,7 +984,8 @@ def test_complex(r, verbose=False):
         "að móta eigin skoðanir, þjálfa gagnrýna hugsun og læsi, læra að lifa í "
         "margbreytilegu samfélagi, mynda tengsl við aðra, mótast sem einstaklingur "
         "í hnattrænu samfélagi, og takast á við ólík viðhorf, skoðanir og gildi — svo "
-        "fátt eitt sé nefnt."
+        "fátt eitt sé nefnt.",
+        max_sent_tokens=None
     )
     assert d["num_parsed"] == 1
     if verbose:

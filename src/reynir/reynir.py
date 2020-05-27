@@ -66,6 +66,9 @@ ParseResult = Dict[str,
     Union[int, float, Iterable["_Sentence"], Iterable[Iterable["_Sentence"]]]
 ]
 
+# The default maximum length of a sentence, in tokens, that we attempt to parse
+DEFAULT_MAX_SENT_TOKENS = 90
+
 
 class _Sentence:
 
@@ -302,7 +305,8 @@ class _Job:
     def __init__(
         self, greynir: "Greynir", tokens: Iterator[Tok], *,
         parse: bool=False, root: Optional[str]=None,
-        progress_func: ProgressFunc=None
+        progress_func: ProgressFunc=None,
+        max_sent_tokens: int=DEFAULT_MAX_SENT_TOKENS
     ) -> None:
         self._r = greynir
         self._parser = self._r.parser
@@ -327,6 +331,8 @@ class _Job:
         self._root = root
         # A progress function to call during processing
         self._progress_func = progress_func
+        # The maximum length, in tokens, of a sentence that we will attempt to parse
+        self._max_sent_tokens = max_sent_tokens
 
     def _add_sentence(
         self, s: Sized, num: int, parse_time: float, reduce_time: float
@@ -400,7 +406,11 @@ class _Job:
         score = 0
         t0 = t1 = time.time()
         try:
-            forest = self.parser.go(tokens, root=self._root)  # May raise ParseError
+            if self._max_sent_tokens and len(tokens) > self._max_sent_tokens:
+                # Sentence is above the maximum length: don't attempt to parse it
+                forest = None
+            else:
+                forest = self.parser.go(tokens, root=self._root)  # May raise ParseError
             t1 = time.time()
             if forest is not None:
                 num = Fast_Parser.num_combinations(forest)
@@ -560,7 +570,8 @@ class Greynir:
     def submit(
         self, text: str, parse: bool=False, *,
         split_paragraphs: bool=False,
-        progress_func: ProgressFunc=None
+        progress_func: ProgressFunc=None,
+        max_sent_tokens: int=DEFAULT_MAX_SENT_TOKENS
     ) -> _Job:
         """ Submit a text to the tokenizer and parser, yielding a job object.
             The paragraphs and sentences of the text can then be iterated
@@ -579,17 +590,24 @@ class Greynir:
             # insert paragraph separators before tokenization
             text = mark_paragraphs(text)
         tokens = self.tokenize(text)
-        return _Job(self, tokens, parse=parse, progress_func=progress_func)
+        return _Job(
+            self, tokens,
+            parse=parse, progress_func=progress_func, max_sent_tokens=max_sent_tokens
+        )
 
     def parse(
         self, text: str, *,
-        progress_func: ProgressFunc=None
+        progress_func: ProgressFunc=None,
+        max_sent_tokens: int=DEFAULT_MAX_SENT_TOKENS
     ) -> ParseResult:
         """ Convenience function to parse text synchronously and return
             a summary of all contained sentences. The progress_func parameter
             works as described for Greynir.submit(). """
         tokens = self.tokenize(text)
-        job = _Job(self, tokens, parse=True, progress_func=progress_func)
+        job = _Job(
+            self, tokens,
+            parse=True, progress_func=progress_func, max_sent_tokens=max_sent_tokens
+        )
         # Iterating through the sentences in the job causes
         # them to be parsed and their statistics collected
         sentences = [sent for sent in job]
@@ -603,10 +621,13 @@ class Greynir:
             reduce_time=job.reduce_time,
         )
 
-    def parse_single(self, sentence: str) -> _Sentence:
+    def parse_single(
+        self, sentence: str, *,
+        max_sent_tokens: int=DEFAULT_MAX_SENT_TOKENS
+    ) -> _Sentence:
         """ Convenience function to parse a single sentence only """
         tokens = self.tokenize(sentence)
-        job = _Job(self, tokens, parse=True)
+        job = _Job(self, tokens, parse=True, max_sent_tokens=max_sent_tokens)
         # Raises StopIteration if no sentence was parsed
         return next(iter(job))
 

@@ -58,7 +58,11 @@ The Greynir class
             for the `Tokenizer <https://github.com/mideind/Tokenizer>`_
             package for further information.
 
-    .. py:method:: submit(self, text : string, parse : bool = False, *, split_paragraphs : bool = False, progress_func = None) -> _Job
+    .. py:method:: submit( \
+        self, text: string, parse: bool=False, *, \
+        split_paragraphs: bool=False, progress_func=None, \
+        max_sent_length: int=90 \
+        ) -> _Job
 
         Submits a text string to Greynir for parsing and returns
         a :py:class:`_Job` object.
@@ -74,6 +78,14 @@ The Greynir class
             periodically during the parse job. The call will have a single
             ``float`` parameter, ranging from ``0.0`` at the beginning of the parse
             job, to ``1.0`` at the end. Defaults to ``None``.
+        :param int max_sent_length: If given, this specifies the maximum number
+            of tokens that a sentence may contain for Greynir to attempt to parse it.
+            The default is 90 tokens. In practice, sentences longer than this are
+            expensive to parse in terms of memory use and processor time.
+            This parameter can be used to make Greynir more brave in its parsing
+            attempts, by specifying a higher number than 90. Setting it to ``None``
+            or zero disables the length limit. Note that the default may be
+            increased from 90 in future versions of Greynir.
         :return: A fresh :py:class:`_Job` object.
 
         The given text string is tokenized and split into paragraphs and sentences.
@@ -87,7 +99,11 @@ The Greynir class
         (via :py:meth:`_Job.sentences()` or :py:meth:`_Job.__iter__()`) of
         the parse job.
 
-    .. py:method:: parse(self, text : string, *, progress_func = None) -> dict
+    .. py:method:: parse( \
+        self, text: string, *, \
+        progress_func = None, \
+        max_sent_length: int=90 \
+        ) -> dict
 
         Parses a text string and returns a dictionary with the parse job results.
 
@@ -97,6 +113,14 @@ The Greynir class
             periodically during the parse job. The call will have a single
             ``float`` parameter, ranging from ``0.0`` at the beginning of the parse
             job, to ``1.0`` at the end. Defaults to ``None``.
+        :param int max_sent_length: If given, this specifies the maximum number
+            of tokens that a sentence may contain for Greynir to attempt to parse it.
+            The default is 90 tokens. In practice, sentences longer than this are
+            expensive to parse in terms of memory use and processor time.
+            This parameter can be used to make Greynir more brave in its parsing
+            attempts, by specifying a higher number than 90. Setting it to ``None``
+            or zero disables the length limit. Note that the default may be
+            increased from 90 in future versions of Greynir.
         :return: A dictionary containing the parse results as well as statistics
             from the parse job.
 
@@ -141,12 +165,23 @@ The Greynir class
                 )
 
 
-    .. py:method:: parse_single(self, sentence : string) -> _Sentence
+    .. py:method:: parse_single( \
+        self, sentence: string, *, \
+        max_sent_length_length: int=90 \
+        ) -> _Sentence
 
         Parses a single sentence from a string and returns a corresponding
         :py:class:`_Sentence` object.
 
         :param str sentence: The single sentence to parse.
+        :param int max_sent_length: If given, this specifies the maximum number
+            of tokens that a sentence may contain for Greynir to attempt to parse it.
+            The default is 90 tokens. In practice, sentences longer than this are
+            expensive to parse in terms of memory use and processor time.
+            This parameter can be used to make Greynir more brave in its parsing
+            attempts, by specifying a higher number than 90. Setting it to ``None``
+            or zero disables the length limit. Note that the default may be
+            increased from 90 in future versions of Greynir.
         :return: A :py:class:`_Sentence` object. Raises ``StopIteration`` if
             no sentence could be extracted from the string.
 
@@ -667,6 +702,7 @@ forms of the phrase, as required in various contexts.
             # Starting with Python 3.6, f-strings are supported:
             print(f"Hér eru {nl:nf}.")  # etc.
 
+
         Output::
 
             Hér eru blesóttu hestarnir mínir.
@@ -675,6 +711,7 @@ forms of the phrase, as required in various contexts.
             Ég vil tryggja velferð blesóttu hestanna minna.
             Já, blesóttir hestar mínir, þannig er það.
             Umræðuefnið hér er blesóttur hestur minn.
+
 
     .. py:attribute:: parsed
 
