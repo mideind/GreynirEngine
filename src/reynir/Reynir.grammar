@@ -5348,7 +5348,6 @@ FsMeðFallstjórn →
     | 'af:fs'_þgf Nl_þgf NhEinfaldur                    # Af fyrstu fregnum að dæma (virðist veiðitímabilið byrja vel)
     | 'með:fs'_þgf Eða 'án:fs'_ef Nl_ef                 # 'með eða án greindarskerðingar'
     | FsÚtFrá
-    | FsMiðaðVið
     | FsÍGegnUm
     | FsUmOgEftir
     | FsAðBaki
@@ -5395,12 +5394,6 @@ FsÞgfTilEf →
 
 # Ekki velja þetta nema nauðsyn beri til
 $score(-6) FsÞgfTilEf
-
-FsMiðaðVið →
-    'miða:so'_lhþt_sb_hk_nf_et 'við:fs'_þf Nl_þf
-    | 'miðað_við:fs'_þf Nl_þf # Skammstöfunin m.v.
-
-$score(+12) FsMiðaðVið
 
 FsUmOgEftir →
     # 'kvikmyndir um og eftir konur'
@@ -5644,7 +5637,6 @@ EinnAl →
     | Úrslit                # KR sigraði Val 6:0
     | AlMiðstig             # [mun] hraðar en augað sér
     | AlHvortSemUmErAðRæða  # Hvort sem um er að ræða X eða Y
-    | ÁMóti                 # Á móti er hann oft viljugur að sækja börnin
 
     # Fjölyrtir atviksliðir sem ekki er unnt að búa til fasta frasa úr
 
@@ -5676,11 +5668,6 @@ EkkiNeitt →
     "ekki:ao" "neitt:ao"    # (Ég þekki þetta) ekki neitt
 
 $score(-6) EkkiNeitt
-
-ÁMóti →
-    'á_móti:fs'             # Á móti er hann stundum viljugur að elda
-
-$score(-6) ÁMóti
 
 FyrirLöngu →
     'fyrir:fs'_þgf 'langur:lo'_þgf_et_hk # 'fyrir löngu'
