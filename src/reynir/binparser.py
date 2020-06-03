@@ -62,7 +62,7 @@ from .grammar import (
     GrammarError,
 )
 from .baseparser import Base_Parser
-
+from .version import __version__
 
 # This is the base path where we expect to find the Reynir.grammar file
 _PATH = os.path.dirname(__file__)
@@ -1991,7 +1991,7 @@ class BIN_Parser(Base_Parser):
 
     # BIN_Parser version - change when logic is modified so that it
     # affects the parse tree
-    _VERSION = "1.0"
+    _VERSION = __version__
     _GRAMMAR_NAME = "Reynir.grammar"
     _GRAMMAR_FILE = os.path.join(_PATH, _GRAMMAR_NAME)
     _GRAMMAR_BINARY_FILE = _GRAMMAR_FILE + ".bin"
