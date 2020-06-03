@@ -57,7 +57,7 @@ author = u"Miðeind ehf."
 
 # Get version string from "../src/reynir/version.py"
 basepath, _ = os.path.split(os.path.realpath(__file__))
-version_path = "{0}{1}..{2}src{3}reynir{4}version.py".format(basepath, s, s, s, s)
+version_path = os.path.join(basepath, "..", "src", "reynir", "version.py")
 exec(open(version_path).read())
 
 # The full version, including alpha/beta/rc tags.

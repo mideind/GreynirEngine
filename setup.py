@@ -61,7 +61,7 @@ def read(*names, **kwargs):
         return ""
 
 # Load version string from file
-exec(open('src/reynir/version.py').read())
+exec(open(join("src", "reynir", "version.py")).read())
 
 setup(
     name="reynir",
