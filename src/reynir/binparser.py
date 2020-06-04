@@ -615,6 +615,7 @@ class BIN_Token(Token):
     # '... bjó fyrir vestan'
     # '... fór vestur'
     # '... hefur því áhrif'
+    # 'Lögmaður sendi þá tryggingafélaginu bréf'
 
     _NOT_NOT_EO = frozenset(
         [
@@ -635,6 +636,7 @@ class BIN_Token(Token):
             "fyrir",
             "því",
             "saman",
+            "þá",
         ]
     )
 
@@ -731,44 +733,6 @@ class BIN_Token(Token):
             "AG",
             "SARL",
             "S.à.r.l.",
-        ]
-    )
-
-    # Interrogative adverbs
-    _SPAO = frozenset(
-        ["hvar", "hvenær", "hvernig", "hvaðan", "hvert", "hví", "hve", "hversu"]
-    )
-
-    # Temporal sentential adverbs
-    _TAO = frozenset(
-        [
-            "daglega",
-            "dagsdaglega",
-            "alltaf",
-            "aldrei",
-            "fyrr",
-            "fyrrum",
-            "loks",
-            "loksins",
-            "mánaðarlega",
-            "nú",
-            "núna",
-            "næst",
-            "oft",
-            "reglulega",
-            "seint",
-            "snemma",
-            "sjaldan",
-            "stundum",
-            "síðar",
-            "síðla",
-            "títt",
-            "undanfarið",
-            "vikulega",
-            "árla",
-            "árlega",
-            "áður",
-            "þá",
         ]
     )
 

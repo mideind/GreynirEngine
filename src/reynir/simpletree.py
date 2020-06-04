@@ -100,6 +100,7 @@ _DEFAULT_NT_MAP = {
     "BeygingarliðurMeðUmröðun": "IP",
     "BeygingarliðurSögnFremst": "IP",
     "BeygingarliðurLoÞgf": "IP",  # Mér er frjálst (að fara ferða minna)
+    "BeygingarliðurTími": ("IP", "VP"),  # (Þegar) líða fer að jólum
     "SagnarBotn": "IP",
     "ÞóBotn": "IP",
     "SkýringarBotn": "IP",

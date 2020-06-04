@@ -402,6 +402,7 @@ Tíðarsetning →
     Tíðartenging BeygingarliðurÁnUmröðunar
     | Tíðartenging BeygingarliðurÁnF
     | Tíðartenging BeygingarliðurMeðUmröðun
+    | Tíðartenging BeygingarliðurTími
 
 Tilgangssetning → 
     Tilgangstenging BeygingarliðurÁnUmröðunar
@@ -561,7 +562,8 @@ BeygingarliðurMeðUmröðun/tala/pers/kyn →
 
 # Mögulegar tengingar í aukasetningum eftir gerð aukasetningar
 Tíðartenging →
-    "löngu:ao"? "áður:ao" "en:st" AðvörunAð?
+    "nema:st"? "þegar:st" AðvörunAð?
+    | "löngu:ao"? "áður:ao" "en:st" AðvörunAð?
     | "löngu:ao"? "eftir:ao" "að:st"
     | Allt? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"
     | VillaFráÞvíAð # frá því X
@@ -575,7 +577,6 @@ Tíðartenging →
     | 'á_sama_tíma:ao' "og:st"
     | 'í_sömu_andrá:ao' "og:st"
     | "síðan:st" AðvörunAð?
-    | "nema:st"? "þegar:st" AðvörunAð?
     | "uns:st"
     | "meðan:st" AðvörunAð?
     | 'á_meðan:ao' AðvörunAð? # á meðan
@@ -4600,7 +4601,7 @@ TengiYfirsetning →
 # séu alltaf í 3p et hk, sbr. 'þegar kallað var eftir lækni',
 # 'meðan farið var yfir málið'
 BeygingarliðurÁnF →
-    BeygingarliðurÁnF_et_p3_hk # Var BeygingarliðurÁnF/tala/pers/kyn
+    BeygingarliðurÁnF_et_p3_hk
 
 $score(-8) BeygingarliðurÁnF
 
@@ -4608,6 +4609,20 @@ BeygingarliðurÁnF/tala/pers/kyn →
     SetningÁnF/tala/pers/kyn
 
 $score(+8) BeygingarliðurÁnF/tala/pers/kyn
+
+# '(þegar) líða/síga/saxast fer/tekur á daginn'
+BeygingarliðurTími →
+    HjSögnTímiNh HjSögnTími FsAtv
+
+HjSögnTímiNh →
+    'líða:so'_0_nh          # þegar líða tekur á daginn
+    | 'síga:so'_0_nh        # þegar síga fer á seinni partinn
+    | 'saxa:so'_0_mm_nh     # þegar saxast fer á þolinmæðina
+    | 'lengja:so'_0_mm_nh   # þegar lengjast fer í sólarhringnum
+    | 'stytta:so'_0_mm_nh   # þegar styttast tekur í jólin
+
+HjSögnTími →
+    'fara:so'_0_gm_et_p3 | 'taka:so'_0_gm_et_p3
 
 # Nota frekar SetningÁnF heldur en HreinYfirsetning, ef völ er á hvoru tveggja
 $score(-96) TengiYfirsetning
@@ -6621,6 +6636,19 @@ TímaÁkvæðisliður/fall/tala/kyn →
     | 'síðastliðinn:lo'_sb/fall/tala/kyn
     | 'undanfarinn:lo'_sb/fall/tala/kyn
     | 'undangenginn:lo'_sb/fall/tala/kyn
+    | 'fyrstur:lo'_sb/fall/tala/kyn     # fyrstu tvö árin
+    # !!! Neðangreind tölu-lýsingarorð eru hvorki merkt með veikri né sterkri beygingu í BÍN
+    | 'annar:lo'/fall/tala/kyn          # annan daginn [í röð]
+    | 'þriðji:lo'/fall/tala/kyn         # þriðja daginn [í röð]
+    | 'fjórði:lo'/fall/tala/kyn         # fjórða daginn [í röð]
+    | 'fimmti:lo'/fall/tala/kyn         # fimmta daginn [í röð]
+    | 'sjötti:lo'/fall/tala/kyn         # sjötta daginn [í röð]
+    | 'sjöundi:lo'/fall/tala/kyn        # sjöunda daginn [í röð]
+    | 'áttundi:lo'/fall/tala/kyn        # áttunda daginn [í röð]
+    | 'níundi:lo'/fall/tala/kyn         # níunda daginn [í röð]
+    | 'tíundi:lo'/fall/tala/kyn         # tíunda daginn [í röð]
+    | 'ellefti:lo'/fall/tala/kyn        # ellefta daginn [í röð]
+    | 'tólfti:lo'/fall/tala/kyn         # tólfta daginn [í röð]
     | SáÞessi/fall/tala/kyn
 
 # Lýsingarorð sem ganga á eftir dagsetningum
