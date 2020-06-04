@@ -60,12 +60,12 @@ def read(*names, **kwargs):
     except (IOError, OSError):
         return ""
 
+# Load version string from file
+exec(open(join("src", "reynir", "version.py")).read())
 
 setup(
     name="reynir",
-    # Remember to modify version numbers in
-    # doc/conf.py and src/reynir/__init__.py as well
-    version="2.3.1",
+    version=__version__,
     license="GNU GPLv3",
     description="A natural language parser for Icelandic",
     long_description="{0}\n{1}".format(
