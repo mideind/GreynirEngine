@@ -160,7 +160,7 @@ Please consult `Greynir's documentation <https://greynir.is/doc/>`__ for detaile
 a `quickstart guide <https://greynir.is/doc/quickstart.html>`_,
 and `reference information <https://greynir.is/doc/reference.html>`_,
 as well as important information
-about `copyright and licensing <https://greynir.is/doc/copyright.html>`_.
+about `copyright and licensing <https://greynir.is/doc/copyright.html>`__.
 
 ************
 Contributing

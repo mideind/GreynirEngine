@@ -140,6 +140,7 @@ def test_parse(r, verbose=False):
         assert sent.tidy_text == sentences[i], "'{0}' != '{1}'".format(
             sent.tidy_text, sentences[i]
         )
+        assert not sent.is_foreign()
         if sent.parse():
             # Sentence parsed successfully
             assert i != 2
@@ -475,6 +476,7 @@ def test_long_parse(r, verbose=False):
             print("Paragraph {0}".format(pg_count))
         for sent in pg:
             sent_count += 1
+            assert not sent.is_foreign()
             assert sent.parse(), "Could not parse sentence {0}".format(sent_count)
             persons.extend(sent.tree.persons)
     assert pg_count == 4
@@ -498,6 +500,23 @@ def test_properties(r):
         assert False, "Should have raised exception"
     except AttributeError:
         pass
+
+
+def test_foreign(r):
+    s = r.parse_single(
+        "Linie lotnicze WOW Air ogłosiły wznowienie lotów, "
+        "ale tym razem firma będzie zajmowała się przewozem towarowym "
+        "w ramach usługi cargo."
+    )
+    assert s.is_foreign()
+    s = r.parse_single(
+        "Linie lotnicze"
+    )
+    assert not s.is_foreign()
+    s = r.parse_single(
+        "Linie lotnicze WOW Air ogłosiły"
+    )
+    assert s.is_foreign()
 
 
 def check_terminal(t, text, lemma, category, variants):
@@ -1970,4 +1989,5 @@ if __name__ == "__main__":
     test_ambig_phrases(r)
     test_relative_clause(r)
     test_neutral_pronoun(r)
+    test_foreign(r)
     r.__class__.cleanup()

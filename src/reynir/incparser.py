@@ -33,13 +33,19 @@ from collections import defaultdict
 
 from tokenizer import TOK, paragraphs
 
+from .bintokenizer import tokens_are_foreign
 from .fastparser import Fast_Parser, ParseError
 from .reducer import Reducer
 from .settings import Settings
 
+
 # Number of tree combinations that must be exceeded for a verbose
 # parse dump to include the sentence text (as opposed to just basic stats)
 _VERBOSE_AMBIGUITY_THRESHOLD = 1000
+
+# The ratio of words in a sentence that must be found in BÍN
+# for it to be analyzed as an Icelandic sentence
+ICELANDIC_RATIO = 0.6
 
 
 class IncrementalParser:
@@ -83,14 +89,19 @@ class IncrementalParser:
             """ Parse the sentence """
             num = 0
             score = 0
+            forest = None
             try:
+                if tokens_are_foreign(self._s, min_icelandic_ratio=ICELANDIC_RATIO):
+                    raise ParseError(
+                        "Sentence is probably not in Icelandic",
+                        token_index=0
+                    )
                 forest = self._ip._parser.go(self._s)
                 if forest is not None:
                     num = Fast_Parser.num_combinations(forest)
                     if num > 1:
                         forest, score = self._ip._reducer.go_with_score(forest)
             except ParseError as e:
-                forest = None
                 self._err_index = e.token_index
             self._tree = forest
             self._score = score

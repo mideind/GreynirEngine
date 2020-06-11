@@ -580,8 +580,12 @@ class BIN_Token(Token):
     # Cache the dictionary of adjective predicates/arguments from settings.py
     _ADJ_ARGUMENTS = AdjectivePredicates.ARGUMENTS
 
-    # Set of adverbs that cannot be an "eo" (prepositions and pronouns are already excluded)
-    _NOT_EO = frozenset(["og", "eða", "sem", "ekkert"])
+    # Set of adverbs that cannot be an "eo"
+    # (prepositions and pronouns are already excluded)
+    # !!! NOTE: This set should probably include all abbreviations that
+    # !!! can represent adverbial phrases as well as other meanings,
+    # !!! such as 'f.h.' which is both 'fyrir hádegi' and 'fyrir hönd'.
+    _NOT_EO = frozenset(["og", "eða", "sem", "ekkert", "f.h.", "m.v."])
 
     # Prepositions that nevertheless must be allowed as adverbs
     # 'Fyrirtækið hefur skilað inn ársreikningi'

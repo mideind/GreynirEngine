@@ -55,7 +55,7 @@ The Greynir class
 
         :param options: Tokenizer options can be passed via keyword arguments,
             as in ``g = Greynir(convert_numbers=True)``. See the documentation
-            for the `Tokenizer <https://github.com/mideind/Tokenizer>`_
+            for the `Tokenizer <https://github.com/mideind/Tokenizer>`__
             package for further information.
 
     .. py:method:: submit( \
@@ -628,6 +628,18 @@ hence the leading underscore in the class name.
 
         If the sentence has not yet been parsed, or no parse tree was found
         for it, this property is ``None``.
+
+    .. py:method:: is_foreign(self, min_icelandic_ratio: float=0.6) -> bool
+
+        :param float min_icelandic_ratio: The minimum ratio of word tokens that must
+            be found in BÍN for a sentence to be considered Icelandic.
+            Defaults to ``0.6``.
+
+        Returns ``True`` if the sentence is probably in a foreign language,
+        i.e. not Icelandic. A sentence is probably foreign if it contains
+        at least three word tokens and, out of those, less than 60% are found
+        in the BÍN database. The 60% threshold is adjustable by overriding
+        the ``min_icelandic_ratio`` parameter.
 
 
 The NounPhrase class

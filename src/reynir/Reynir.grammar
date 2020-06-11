@@ -5341,13 +5341,9 @@ FsMeðFallstjórn →
 
     # Fleiryrtar forsetningar sem eru ekki dregnar saman í Phrases.conf
     | 'nær:fs'_þgf 'draga:so'_op_gm_et_p3 Nl_þgf    # 'þegar nær dró/dregur jólum'
-    | 'fyrir_hönd:fs'_ef Nl_ef                      # Skammstöfunin f.h.
     | 'beggja:fn'_hk_ef_ft 'vegna:fs'_ef Nl_ef      # 'beggja vegna vegarins'
-    | 'með_tilliti_til:fs'_ef Nl_ef                 # Skammstöfunin m.t.t.
-    | 'samanbera:so'_lhþt_sb_hk_nf_et 'við:fs'_þf Nl_þf        # samanborið við (fyrra ár)
     | 'bera:so'_lhþt_sb_hk_nf_et "saman:ao" 'við:fs'_þf Nl_þf  # borið saman við (fyrra ár)
     | "fyrir:ao" "nú:ao"? 'utan:fs'_þf Nl_þf
-    | "innan:ao" 'við:fs'_þf Nl_þf
     | "innan:ao" "sem:st" 'utan:fs'_ef Nl_ef
     | "hvað:ao" FsHvaðVarðar
     # allt frá hruni, allt frá börnum til fullorðinna
@@ -6395,11 +6391,18 @@ MagnFs_þgf →
 MagnFs_ef →
     'innan:fs'_ef
 
+PunkturAtv →
+    "rétt:ao"
+
 # Forsetningar sem standa með TNL sem sýna fastan punkt - 14. nóvember 2016, kl. 14:00
 PunkturFs_þf →
-    'rétt:ao'? 'fyrir:fs'_þf       # Ath. með þgf táknar það dagsetningu/tíma.
-    | 'rétt:ao'? 'eftir:fs'_þf
+    PunkturAtv? 'fyrir:fs'_þf       # Ath. með þgf táknar það dagsetningu/tíma.
+    | PunkturAtv? 'eftir:fs'_þf
     | 'síðan:fs'_þf
+    | 'skömmu_fyrir:fs'_þf
+    | 'skömmu_eftir:fs'_þf
+    | 'örskömmu_fyrir:fs'_þf
+    | 'örskömmu_eftir:fs'_þf
 
 PunkturFs_þgf →
     'frá:fs'_þgf OgMeð?

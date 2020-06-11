@@ -26,7 +26,7 @@
 
 """
 
-from typing import Optional, NamedTuple
+from typing import Optional, NamedTuple, List
 import sys
 import re
 from collections import defaultdict
@@ -62,6 +62,9 @@ if "PyPy 7.3.0" in sys.version or "PyPy 7.2." in sys.version:
 else:
     all_except_suffix = lambda s: s.rsplit(maxsplit=1)[0]
 
+
+# The type of a list of tokens
+TokenList = List[Tok]
 
 # Person names that are not recognized at the start of sentences
 NOT_NAME_AT_SENTENCE_START = {
@@ -1557,6 +1560,28 @@ def tokenize(text, **options):
     """ Tokenize text using the default pipeline """
     pipeline = DefaultPipeline(text, **options)
     return pipeline.tokenize()
+
+
+def tokens_are_foreign(tokens: TokenList, min_icelandic_ratio: float) -> bool:
+    """ Return True if the given tokens are probably not in Icelandic """
+    words_in_bin = 0
+    words_not_in_bin = 0
+    # Enumerate through the tokens
+    for ix, t in enumerate(tokens):
+        if t.kind == TOK.WORD:
+            if t.val:
+                # The word has at least one meaning
+                words_in_bin += 1
+            else:
+                # The word has no recognized meaning
+                words_not_in_bin += 1
+        elif t.kind == TOK.PERSON:
+            # Person names count as recognized words
+            words_in_bin += 1
+    # Return True if the sentence has at least three words
+    # but less than 60% of them are found in BÍN
+    num_words = words_in_bin + words_not_in_bin
+    return num_words > 2 and words_in_bin / num_words < min_icelandic_ratio
 
 
 def stems_of_token(t):
