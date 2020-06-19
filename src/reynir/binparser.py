@@ -1351,16 +1351,24 @@ class BIN_Token(Token):
         return terminal.startswith("notandanafn")
 
     def matches_URL(self, terminal):
+        """ A URL token matches a URL (vefslóð) terminal """
         return terminal.startswith("vefslóð")
 
     def matches_EMAIL(self, terminal):
+        """ A e-mail token matches a e-mail (tölvupóstfang) terminal """
         return terminal.startswith("tölvupóstfang")
 
     def matches_SERIALNUMBER(self, terminal):
+        """ A serial number token matches a serial number (vörunúmer) terminal """
         return terminal.startswith("vörunúmer")
 
     def matches_TELNO(self, terminal):
+        """ A telephone number token matches a telephone number (símanúmer) terminal """
         return terminal.startswith("símanúmer")
+
+    def matches_COMPANY(self, terminal):
+        """ A company token matches a company (fyrirtæki) terminal """
+        return terminal.startswith("fyrirtæki")
 
     def matches_WORD(self, terminal):
         """ Match a word token, having the potential part-of-speech meanings
@@ -1420,6 +1428,7 @@ class BIN_Token(Token):
         TOK.EMAIL: matches_EMAIL,
         TOK.SERIALNUMBER: matches_SERIALNUMBER,
         TOK.TELNO: matches_TELNO,
+        TOK.COMPANY: matches_COMPANY,
         TOK.WORD: matches_WORD,
     }
 
