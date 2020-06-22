@@ -1191,6 +1191,7 @@ def parse_phrases_3(token_stream, token_ctor):
                 # Can also be a corporation ending
                 # TODO allow more than one name to be merged?
                 entitytxt = token.txt
+                found = False
                 while True:
                     if next_token.txt in _CORPORATION_ENDINGS:
                         # Form Company-token, stop searching
@@ -1204,10 +1205,18 @@ def parse_phrases_3(token_stream, token_ctor):
                     ):
                         entitytxt = entitytxt + " " + next_token.txt
                         next_token = next(token_stream)
+                        found = True
                     else:
                         break
-                if entitytxt != token.txt:  # Have merged tokens, need to update token
+                if found:  # Have merged tokens, need to update token
                     token = token_ctor.Entity(entitytxt)
+
+            elif token.txt and token.txt[0].isupper() and next_token.txt in _CORPORATION_ENDINGS and not " " in token.txt:
+                # Lastly, allow merging *one* token and a corporation ending 
+                # if the former token is capitalized
+                token = token_ctor.Company(token.txt + " " + next_token.txt)
+                next_token = next(token_stream)
+
             # Yield the current token and advance to the lookahead
             yield token
             token = next_token

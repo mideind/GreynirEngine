@@ -199,7 +199,7 @@ def test_parse(r, verbose=False):
     assert results[23].tree.nouns == ["vetur"]
     assert results[24].tree.nouns == ["loforð", "áhersla"]
     assert results[32].tree.nouns == ["mynd", "þjóðskjalasafn", "Bandaríkin",
-        "skyn", "flugmaður", "saga", "flugslys", "Kyrrahaf"]
+        "skyn", "flugmaður", "saga", "Amelia Earhart", "flugslys", "Kyrrahaf"]
 
     # Test that the parser finds the correct verbs
     assert results[0].tree.verbs == ["vera", "vera", "gera"]
@@ -299,8 +299,7 @@ def test_parse(r, verbose=False):
     assert results[9].tree.lemmas == ["barn", "fara", "í", "loðfíla-rannsókn", "."]
     assert results[10].tree.lemmas == [
         "eðlisfræðingur",
-        "Stephen",
-        "Hawking",
+        "Stephen Hawking",
         "láta",
         "í",
         "dagur",
@@ -1797,12 +1796,12 @@ def test_company(r):
         s.tree.flat_with_all_variants ==
         "S0 S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP VP so_0_et_fh_mm_p3_þt "
         "/VP PP ADVP-DIR ao /ADVP-DIR P fs_þf /P NP no_et_kvk_þf NP-POSS NP-COMPANY "
-        "sérnafn_ef fyrirtæki /NP-COMPANY /NP-POSS /NP /PP C st /C VP VP "
+        "fyrirtæki fyrirtæki /NP-COMPANY /NP-POSS /NP /PP C st /C VP VP "
         "so_1_þgf_et_fh_gm_p3_þt /VP NP-OBJ no_ft_hk_þgf /NP-OBJ /VP /VP /IP /S-MAIN p /S0"
     )
 
     # !!! Note that lemmas of words found in BÍN are in lower case
-    assert [t.lemma for t in s.tree.all_matches("NP-COMPANY")] == ["samherji hf."]
+    assert [t.lemma for t in s.tree.all_matches("NP-COMPANY")] == ["Samherja hf."]
 
 
 def test_kludgy_ordinals():
