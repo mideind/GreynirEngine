@@ -4,7 +4,7 @@
 
     IFD tagger module
 
-    Copyright (C) 2018 Miðeind ehf.
+    Copyright (C) 2020 Miðeind ehf.
 
        This program is free software: you can redistribute it and/or modify
        it under the terms of the GNU General Public License as published by
@@ -172,7 +172,8 @@ class IFD_Tagset:
         "hvaða": "s",
         "hvílíkur": "s",
     }
-    FN_SAMFALL = {  # Beygingarmyndir sem tilheyra bæði 'sá' og pfn.
+    # Beygingarmyndir sem tilheyra bæði 'sá' og pfn.
+    FN_SAMFALL = {
         "það",
         "því",
         "þess",
@@ -189,6 +190,7 @@ class IFD_Tagset:
         "þú": "2",
         "hann": "k",
         "hún": "v",
+        "hán": "h",
         "það": "h",
         "þér": "2",
         "vér": "1",

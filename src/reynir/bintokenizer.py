@@ -26,7 +26,7 @@
 
 """
 
-from typing import Optional, NamedTuple, List
+from typing import Optional, NamedTuple, List, Union, Iterable
 import sys
 import re
 from collections import defaultdict
@@ -65,6 +65,9 @@ else:
 
 # The type of a list of tokens
 TokenList = List[Tok]
+# The input argument type for the tokenize() function and derivatives thereof
+StringIterable = Union[str, Iterable[str]]
+
 
 # Person names that are not recognized at the start of sentences
 NOT_NAME_AT_SENTENCE_START = {
@@ -1458,7 +1461,7 @@ class DefaultPipeline:
         output stream. Individual phases in the sequence can
         easily be overridden in derived classes. """
 
-    def __init__(self, text, **options):
+    def __init__(self, text: StringIterable, **options):
         self._text = text
         self._auto_uppercase = options.pop("auto_uppercase", False)
         self._options = options
@@ -1556,7 +1559,7 @@ class DefaultPipeline:
                 self._db = None
 
 
-def tokenize(text, **options):
+def tokenize(text: StringIterable, **options) -> Iterable[Tok]:
     """ Tokenize text using the default pipeline """
     pipeline = DefaultPipeline(text, **options)
     return pipeline.tokenize()

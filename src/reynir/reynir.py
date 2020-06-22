@@ -36,7 +36,9 @@ from threading import Lock
 
 from tokenizer import TOK, correct_spaces, paragraphs, mark_paragraphs
 
-from .bintokenizer import tokenize as bin_tokenize, Tok, TokenList, tokens_are_foreign
+from .bintokenizer import (
+    tokenize as bin_tokenize, Tok, TokenList, tokens_are_foreign, StringIterable
+)
 from .fastparser import Fast_Parser, ParseError
 from .reducer import Reducer
 from .cache import cached_property
@@ -311,7 +313,7 @@ class _Job:
     """
 
     def __init__(
-        self, greynir: "Greynir", tokens: Iterator[Tok], *,
+        self, greynir: "Greynir", tokens: Iterable[Tok], *,
         parse: bool=False, root: Optional[str]=None,
         progress_func: ProgressFunc=None,
         max_sent_tokens: int=DEFAULT_MAX_SENT_TOKENS
@@ -507,7 +509,7 @@ class _Job_NP(_Job):
     """ Specialized _Job class that creates _NounPhrase objects
         instead of _Sentence objects """
 
-    def __init__(self, greynir: "Greynir", tokens: Iterator[Tok]) -> None:
+    def __init__(self, greynir: "Greynir", tokens: Iterable[Tok]) -> None:
         # Parse the tokens with 'Nl' (noun phrase) as the root nonterminal
         # instead of the usual default 'S0' (sentence) root
         super().__init__(greynir, tokens, parse=True, root="Nl")
@@ -576,7 +578,7 @@ class Greynir:
             that look to be foreign, i.e. not in Icelandic """
         return self._parse_foreign_sentences
 
-    def tokenize(self, text: str) -> Iterator[Tok]:
+    def tokenize(self, text: StringIterable) -> Iterable[Tok]:
         """ Call the tokenizer (overridable in derived classes) """
         return bin_tokenize(text, **self._options)
 
