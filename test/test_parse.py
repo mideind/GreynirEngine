@@ -182,7 +182,7 @@ def test_parse(r, verbose=False):
     assert results[7].tree.nouns == ["hús", "strönd"]
     assert results[8].tree.nouns == ["barn", "augnrannsókn", "húsnæðiskaup"]
     assert results[9].tree.nouns == ["barn", "loðfíla-rannsókn"]
-    assert results[10].tree.nouns == ["eðlisfræðingur", "dagur", "pí-dagur"]
+    assert results[10].tree.nouns == ["eðlisfræðingur", "Stephen Hawking", "dagur", "pí-dagur"]
     assert results[11].tree.nouns == [
         "Jón",
         "ís",
@@ -1782,13 +1782,14 @@ def test_company(r):
     assert s.tree is not None
     assert (
         s.tree.flat_with_all_variants ==
-        "S0 S-MAIN IP NP-SUBJ NP-COMPANY sérnafn fyrirtæki /NP-COMPANY /NP-SUBJ "
+        "S0 S-MAIN IP NP-SUBJ NP-COMPANY fyrirtæki fyrirtæki /NP-COMPANY /NP-SUBJ "
         "VP VP so_1_nf_et_fh_gm_nt_p3 /VP NP-PRD no_et_hk_nf NP-POSS "
-        "NP-COMPANY sérnafn fyrirtæki /NP-COMPANY /NP-POSS /NP-PRD /VP /IP /S-MAIN p /S0"
+        "NP-COMPANY fyrirtæki fyrirtæki /NP-COMPANY /NP-POSS /NP-PRD /VP /IP /S-MAIN p /S0"
     )
+
     assert (
         [t.lemma for t in s.tree.all_matches("NP-COMPANY")] ==
-        ['Hands Allmennaksjeselskap', 'Celestial Incorporated']
+        ['Hands ASA', 'Celestial Inc']
     )
     s = r.parse_single("Hann réðst inn á skrifstofu Samherja hf. og rændi gögnum.")
     assert s.tree is not None
@@ -1799,6 +1800,7 @@ def test_company(r):
         "sérnafn_ef fyrirtæki /NP-COMPANY /NP-POSS /NP /PP C st /C VP VP "
         "so_1_þgf_et_fh_gm_p3_þt /VP NP-OBJ no_ft_hk_þgf /NP-OBJ /VP /VP /IP /S-MAIN p /S0"
     )
+
     # !!! Note that lemmas of words found in BÍN are in lower case
     assert [t.lemma for t in s.tree.all_matches("NP-COMPANY")] == ["samherji hf."]
 

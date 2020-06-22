@@ -1159,7 +1159,6 @@ def parse_phrases_3(token_stream, token_ctor):
 
         while True:
             next_token = next(token_stream)
-
             if (
                 (token.kind == TOK.ENTITY or (token.kind == TOK.WORD and not token.val))
                 and token.txt[0].isupper() and token.txt[1:].islower()
