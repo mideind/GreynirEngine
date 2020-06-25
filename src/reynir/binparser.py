@@ -1723,6 +1723,7 @@ class BIN_Terminal(VariantHandler, Terminal):
         # as appropriate for each token kind
         self.shortcut_match = None
 
+
 class SequenceTerminal(BIN_Terminal):
 
     """ Subclass of BIN_Terminal that shortcuts matching for

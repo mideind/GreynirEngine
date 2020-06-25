@@ -222,6 +222,17 @@ The Greynir class
                     +-no_et_þf_hk: 'fræ'
 
 
+    .. py:method:: parse_tokens( \
+        self, tokens: Iterable[Tok], *, \
+        max_sent_length_length: int=90 \
+        ) -> _Sentence
+
+        Parses a single sentence from an iterable of tokens,
+        and returns a corresponding :py:class:`_Sentence` object. Except
+        for the input parameter type, the functionality is identical to
+        :py:meth:`parse_single`.
+
+
     .. py:classmethod:: cleanup(cls)
 
         Deallocates memory resources allocated by :py:meth:`__init__`.
@@ -616,6 +627,43 @@ hence the leading underscore in the class name.
 
         Lemmas of composite words include hyphens ``-`` at the component boundaries.
         Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
+
+        If the sentence has not yet been parsed, or no parse tree was found
+        for it, this property is ``None``.
+
+    .. py:attribute:: categories
+
+        Returns a ``list`` of the categories of the words in the sentence, or
+        ``""`` for non-word tokens. ``sent.categories`` is a shorthand for
+        ``[ d.cat for d in sent.terminal_nodes ]``.
+
+        The categories returned are those of the token associated with each
+        terminal, according to BÍN's category scheme. Nouns (including person names)
+        thus have categories of ``kk``, ``kvk`` or ``hk``, for masculine, feminine
+        and neutral gender, respectively. Unrecognized words have the ``entity``
+        category.
+
+        If the sentence has not yet been parsed, or no parse tree was found
+        for it, this property is ``None``.
+
+    .. py:attribute:: lemmas_and_cats
+
+        Returns a ``list`` of (lemma, category) tuples corresponding to the 
+        tokens in the sentence. ``sent.lemmas_and_cats`` is a shorthand for
+        ``[ (d.lemma, d.lemma_cat) for d in sent.terminal_nodes ]``.
+
+        For non-word tokens, the lemma is the original token text and the
+        category is an empty string (``""``).
+
+        For person names, the category is ``person_kk``, ``person_kvk`` or
+        ``person_hk`` for masculine, feminine or neutral gender names,
+        respectively. For unknown words, the category is ``entity``.
+
+        Lemmas of composite words include hyphens ``-`` at the component boundaries.
+        Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
+
+        This property is intended to be useful *inter alia* for topic indexing
+        of text.
 
         If the sentence has not yet been parsed, or no parse tree was found
         for it, this property is ``None``.

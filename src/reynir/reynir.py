@@ -220,7 +220,27 @@ class _Sentence:
     def lemmas(self) -> Optional[List[str]]:
         """ Convenience property to return the lemmas only """
         t = self.terminals
-        return None if t is None else [terminal[1] for terminal in t]
+        return None if t is None else [terminal.lemma for terminal in t]
+
+    @property
+    def categories(self) -> Optional[List[str]]:
+        """ Convenience property to return the categories only """
+        if self.tree is None:
+            return None
+        # Note that here we return the BÍN category,
+        # not the terminal category (tcat)
+        return [d.cat for d in self.terminal_nodes]
+
+    @property
+    def lemmas_and_cats(self) -> Optional[List[Tuple[str, str]]]:
+        """ Convenience property to return (lemma, category) tuples """
+        if self.tree is None:
+            return None
+        # Note that we return the "lemma category", which is suitable for
+        # topic indexing and similar applications. Unknown words and entity
+        # names have the category 'entity' in this case, and person names
+        # have one of 'person_kk'/'person_kvk'/'person_hk'.
+        return [(d.lemma, d.lemma_cat) for d in self.terminal_nodes]
 
     @property
     def ifd_tags(self) -> Optional[List[str]]:
@@ -665,6 +685,15 @@ class Greynir:
     ) -> _Sentence:
         """ Convenience function to parse a single sentence only """
         tokens = self.tokenize(sentence)
+        job = _Job(self, tokens, parse=True, max_sent_tokens=max_sent_tokens)
+        # Raises StopIteration if no sentence was parsed
+        return next(iter(job))
+
+    def parse_tokens(
+        self, tokens: Iterable[Tok], *,
+        max_sent_tokens: int=DEFAULT_MAX_SENT_TOKENS
+    ) -> _Sentence:
+        """ Convenience function to parse a single sentence from tokens """
         job = _Job(self, tokens, parse=True, max_sent_tokens=max_sent_tokens)
         # Raises StopIteration if no sentence was parsed
         return next(iter(job))

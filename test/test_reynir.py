@@ -286,6 +286,36 @@ def test_bindb():
     assert any(mm.ordfl == "to" for mm in m)
 
 
+def test_lemmas():
+    from reynir import Greynir
+    g = Greynir()
+    s = g.parse_single(
+        "Hallbjörn borðaði ísinn kl. 14 meðan Icelandair át 3 teppi "
+        "frá Íran og Xochitl var tilbeðin."
+    )
+    assert (
+        list(zip(s.lemmas, s.categories)) == [
+            ('Hallbjörn', 'kk'), ('borða', 'so'), ('ís', 'kk'), ('kl. 14', ''),
+            ('meðan', 'st'), ('Icelandair', 'entity'), ('éta', 'so'), ('3', ''),
+            ('teppi', 'hk'), ('frá', 'fs'), ('Íran', 'hk'), ('og', 'st'),
+            ('Xochitl', 'entity'), ('vera', 'so'), ('tilbiðja', 'so'), ('.', '')
+        ]
+    )
+    assert (
+        s.lemmas_and_cats == [
+            ('Hallbjörn', 'person_kk'), ('borða', 'so'), ('ís', 'kk'), ('kl. 14', ''),
+            ('meðan', 'st'), ('Icelandair', 'entity'), ('éta', 'so'), ('3', ''),
+            ('teppi', 'hk'), ('frá', 'fs'), ('Íran', 'hk'), ('og', 'st'),
+            ('Xochitl', 'entity'), ('vera', 'so'), ('tilbiðja', 'so'), ('.', '')
+        ]
+    )
+    s = g.parse_single("Sigurður langaði í köttur")
+    assert s.tree is None
+    assert s.lemmas is None
+    assert s.categories is None
+    assert s.lemmas_and_cats is None
+
+
 if __name__ == "__main__":
 
     test_augment_terminal()

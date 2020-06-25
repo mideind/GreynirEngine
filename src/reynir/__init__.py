@@ -38,7 +38,9 @@ from .version import __version__
 
 # Expose the tokenizer API
 
-from tokenizer import TOK, Tok, correct_spaces, mark_paragraphs, Abbreviations
+from tokenizer import (
+    TOK, Tok, paragraphs, correct_spaces, mark_paragraphs, Abbreviations
+)
 from tokenizer import (
     TP_LEFT, TP_CENTER, TP_RIGHT, TP_NONE, TP_WORD,
     KLUDGY_ORDINALS_PASS_THROUGH,

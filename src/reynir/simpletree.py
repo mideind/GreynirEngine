@@ -34,7 +34,7 @@ import re
 from pprint import pformat
 from itertools import chain
 
-from tokenizer import correct_spaces
+from tokenizer import TOK, correct_spaces
 
 from .cache import cached_property
 from .settings import StaticPhrases
@@ -1412,17 +1412,61 @@ class SimpleTree:
         # category. The terminal category is available in the .tcat property)
         return self._head.get("c")
 
+    # Set of token kind description strings for tokens that contain text
+    _TEXT_TOKEN_DESC = frozenset(TOK.descr[kind] for kind in TOK.TEXT)
+
     @property
     def cat(self):
         """ Return the word category of this node, if it is a terminal,
             or an empty string otherwise """
-        return self._head.get("c") or ""
+        cat = self._head.get("c", "")
+        if cat:
+            return cat
+        if self.terminal is not None and self.kind in self._TEXT_TOKEN_DESC:
+            # For unknown words, we return a category of 'entity'
+            return "entity"
+        return ""
+
+    @property
+    def lemma_cat(self):
+        """ Return the word category of this node, to be paired with a lemma.
+            This is different from cat in the case of unknown words, where
+            there is no BÍN category, and we return "entity". For non-text
+            tokens/terminals, we return "". """
+        if self.terminal is None:
+            return ""
+        k = self.kind
+        if k not in self._TEXT_TOKEN_DESC:
+            # For non-text token types, we return "" for the category
+            return ""
+        if k == "PERSON":
+            # Return person_kk, person_kvk or person_hk for person names
+            return "person_" + self._head.get("c")
+        # Unknown words by convention get a category of 'entity'
+        return self._head.get("c", "entity")
+
+    @property
+    def categories(self):
+        """ Return a list of word categories within this subtree """
+        if self._len > 1 or self._children:
+            # Concatenate the categories from the children
+            t = []
+            for ch in self.children:
+                t.extend(ch.categories)
+            return t
+        # Terminal node: return the associated word category
+        c = self._head.get("c")
+        if c:
+            return [c]
+        # If we have a lemma, we must return a corresponding category
+        # to ensure that zip(t.lemmas, t.categories) always works
+        return [""] if self._lemma else []
 
     @property
     def fl(self):
         """ Return the BÍN 'fl' field of this node, if it is a terminal,
             or an empty string otherwise """
-        return self._head.get("f") or ""
+        return self._head.get("f", "")
 
     @cached_property
     def text(self):
@@ -1666,6 +1710,20 @@ class SimpleTree:
     def lemmas(self):
         """ Returns the lemmas of all words in the subtree """
         return self._list(lambda t: True)
+
+    @property
+    def lemmas_and_cats(self):
+        """ Return a list of (lemma, category) tuples for words within this subtree """
+        if self._len > 1 or self._children:
+            # Concatenate the categories from the children
+            t = []
+            for ch in self.children:
+                t.extend(ch.lemmas_and_cats)
+            return t
+        # Terminal node: return its (lemma, category) tuple
+        if not self._lemma:
+            return []
+        return [(self._lemma, self.lemma_cat)]
 
     @property
     def lemma(self):
