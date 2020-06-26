@@ -559,6 +559,20 @@ hence the leading underscore in the class name.
         If the sentence has not yet been parsed, or no parse tree was found
         for it, this property is ``None``.
 
+        Example::
+
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single("Seldum fasteignum hefur fjölgað.")
+            print(s.flat_tree)
+
+        Output:
+
+        .. code-block:: none
+
+            S0 S-MAIN IP NP-SUBJ lo_þgf_ft_kvk no_ft_þgf_kvk /NP-SUBJ VP VP-AUX so_et_p3 /VP-AUX VP so_sagnb /VP /VP /IP /S-MAIN p /S0
+
+
     .. py:attribute:: terminals
 
         Returns a ``list`` of the terminals in the best parse tree for the
@@ -599,7 +613,7 @@ hence the leading underscore in the class name.
                         ", ".join(t.variants)))
 
 
-        outputs:
+        Output:
 
         .. code-block:: none
 
@@ -631,6 +645,24 @@ hence the leading underscore in the class name.
         If the sentence has not yet been parsed, or no parse tree was found
         for it, this property is ``None``.
 
+        Example::
+
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single(
+                "Gullsópur ehf. keypti árið 1984 verðlaunafasteignina "
+                "að Laugavegi 26."
+            )
+            print(s.lemmas)
+
+        Output:
+
+        .. code-block:: none
+
+            ['gullsópur', 'ehf.', 'kaupa', 'árið 1984', 'verðlauna-fasteign',
+            'að', 'Laugavegur', '26', '.']
+
+
     .. py:attribute:: categories
 
         Returns a ``list`` of the categories of the words in the sentence, or
@@ -645,6 +677,23 @@ hence the leading underscore in the class name.
 
         If the sentence has not yet been parsed, or no parse tree was found
         for it, this property is ``None``.
+
+        Example::
+
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single(
+                "Gullsópur ehf. keypti árið 1984 verðlaunafasteignina "
+                "að Laugavegi 26."
+            )
+            print(s.categories)
+
+        Output:
+
+        .. code-block:: none
+
+            ['kk', 'hk', 'so', '', 'kvk', 'fs', 'kk', '', '']
+
 
     .. py:attribute:: lemmas_and_cats
 
@@ -663,10 +712,33 @@ hence the leading underscore in the class name.
         Examples: ``borgar-stjórnarmál``, ``skugga-kosning``.
 
         This property is intended to be useful *inter alia* for topic indexing
-        of text.
+        of text. A good strategy for that purpose could be to index all lemmas having
+        a non-empty category, perhaps also discarding some less significant
+        categories (such as conjunctions).
 
         If the sentence has not yet been parsed, or no parse tree was found
         for it, this property is ``None``.
+
+        Example::
+
+            from reynir import Greynir
+            g = Greynir()
+            s = g.parse_single(
+                "Hallbjörn borðaði ísinn kl. 14 meðan Icelandair át 3 teppi "
+                "frá Íran og Xochitl var tilbeðin."
+            )
+            print(s.lemmas_and_cats)
+
+        Output:
+
+        .. code-block:: none
+
+            [('Hallbjörn', 'person_kk'), ('borða', 'so'), ('ís', 'kk'),
+            ('kl. 14', ''), ('meðan', 'st'), ('Icelandair', 'entity'),
+            ('éta', 'so'), ('3', ''), ('teppi', 'hk'), ('frá', 'fs'),
+            ('Íran', 'hk'), ('og', 'st'), ('Xochitl', 'entity'),
+            ('vera', 'so'), ('tilbiðja', 'so'), ('.', '')]
+
 
     .. py:attribute:: terminal_nodes
 
