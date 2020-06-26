@@ -13,12 +13,12 @@ chmod -x src/reynir/*.grammar.bin
 chmod -x src/reynir/config/*
 chmod -x src/reynir/resources/*
 # Create the base source distribution
-python setup.py sdist
+python3 setup.py sdist
 # Create the binary wheels
 source wheels.sh
 # Upload the new release
 # Note: twine must be installed into the current venv
 # for the following to work, and twine doesn't seem to work on PyPy,
 # so a CPython venv is required
-python -m twine upload dist/reynir-$1*
+twine upload dist/reynir-$1*
 echo "Upload of" "$1" "done"
