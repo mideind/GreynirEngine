@@ -26,9 +26,11 @@
 
 """
 
+from typing import Optional
+
 import operator
 
-from .reynir import Greynir
+from .reynir import Greynir, _NounPhrase
 
 
 # Format specifiers and how they relate to properties
@@ -57,7 +59,7 @@ class NounPhrase:
         allowing it to be easily inflected and formatted """
 
     # Singleton parser instance
-    _greynir = None
+    _greynir = None  # type: Greynir
 
     def __init__(self, np_string):
         """ Initialize a NounPhrase from a text string """
@@ -66,6 +68,7 @@ class NounPhrase:
         self._person = None
         self._case = None
         self._gender = None
+        self._np = None  # type: Optional[_NounPhrase]
         if self._np_string:
             if self._greynir is None:
                 # Initialize our parser singleton
@@ -84,9 +87,6 @@ class NounPhrase:
                 self._person = (variants & {"p1", "p2", "p3"}).pop()
                 self._case = (variants & {"nf", "þf", "þgf", "ef"}).pop()
                 self._gender = (variants & {"kk", "kvk", "hk"}).pop()
-        else:
-            # No string: no tree, no _NounPhrase
-            self._np = None
 
     def __str__(self):
         """ Return the contained string as-is """

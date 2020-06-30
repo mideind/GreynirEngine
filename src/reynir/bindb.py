@@ -32,7 +32,8 @@
 
 """
 
-from typing import NamedTuple
+from typing import NamedTuple, Optional
+
 from functools import lru_cache
 
 from .settings import AdjectiveTemplate, StemPreferences, StaticPhrases, NounPreferences
@@ -92,7 +93,7 @@ class BIN_Db:
     _meanings_cache = LFU_Cache(maxsize=CACHE_SIZE_MEANINGS)
 
     # Singleton instance of BIN_Db, returned by get_db()
-    _singleton = None
+    _singleton = None  # type: Optional[BIN_Db]
 
     @classmethod
     def get_db(cls):
@@ -136,7 +137,7 @@ class BIN_Db:
         """ Close the BIN_Compressed() instance """
         if self._compressed_bin is not None:
             self._compressed_bin.close()
-            self._compressed_bin = None
+            self._compressed_bin = None  # type: ignore
 
     def contains(self, w):
         """ Returns True if the given word form is found in BÍN """

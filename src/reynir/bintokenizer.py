@@ -26,7 +26,11 @@
 
 """
 
-from typing import Optional, NamedTuple, List, Union, Iterable
+from typing import (
+    cast, Optional, NamedTuple, Tuple, List, Dict,
+    Union, Iterable, Set, FrozenSet, Callable
+)
+
 import sys
 import re
 from collections import defaultdict
@@ -67,7 +71,12 @@ else:
 TokenList = List[Tok]
 # The input argument type for the tokenize() function and derivatives thereof
 StringIterable = Union[str, Iterable[str]]
-
+# The type of a stream of tokens
+TokenIterable = Iterable[Tok]
+# The type of a tokenization pipeline phase
+FirstPhaseFunction = Callable[[], TokenIterable]
+FollowingPhaseFunction = Callable[[TokenIterable], TokenIterable]
+PhaseFunction = Union[FirstPhaseFunction, FollowingPhaseFunction]
 
 # Person names that are not recognized at the start of sentences
 NOT_NAME_AT_SENTENCE_START = {
@@ -93,7 +102,7 @@ ALL_CASES = frozenset(["nf", "þf", "þgf", "ef"])
 # Named tuple for person names, including case and gender
 PersonName = NamedTuple(
     "PersonName",
-    [("name", str), ("gender", str), ("case", str)]
+    [("name", str), ("gender", Optional[str]), ("case", Optional[str])]
 )
 
 HYPHEN = "-"  # Normal hyphen
@@ -456,7 +465,7 @@ def add_cases(cases, bin_spec, default="nf"):
 
 def all_cases(token, filter_func=None):
     """ Return a list of all cases that the token can be in """
-    cases = set()
+    cases = set()  # type: Union[FrozenSet[str], Set[str]]
     if token.kind == TOK.WORD and token.val:
         # Roll through the potential meanings and extract the cases therefrom
         for m in token.val:
@@ -845,7 +854,7 @@ def parse_phrases_2(token_stream, token_ctor):
                             result.append(
                                 PersonName(name=m.stofn, gender=m.ordfl, case=c)
                             )
-                return result if result else None
+                return result or None
 
             def has_category(tok, categories):
                 """ Return True if the token matches a meaning
@@ -928,6 +937,7 @@ def parse_phrases_2(token_stream, token_ctor):
                     return False
                 return True
 
+            gn = None  # type: Optional[List[PersonName]]
             if token.kind == TOK.WORD and token.val and token.val[0].fl == "nafn":
                 # Convert a WORD with fl="nafn" to a PERSON with the correct gender,
                 # in all cases
@@ -936,7 +946,6 @@ def parse_phrases_2(token_stream, token_ctor):
                     token.txt,
                     [PersonName(token.txt, gender, case) for case in ALL_CASES],
                 )
-                gn = None
             else:
                 gn = given_names(token)
 
@@ -951,6 +960,7 @@ def parse_phrases_2(token_stream, token_ctor):
                         break
                     # Look through the stuff we got and see what is compatible
                     r = []
+                    # pylint: disable=not-an-iterable
                     for p in gn:
                         # noinspection PyTypeChecker
                         for np in ngn:
@@ -988,6 +998,7 @@ def parse_phrases_2(token_stream, token_ctor):
                         # Found surname: append it to the accumulated name,
                         # if compatible
                         for p in gn:
+                            # pylint: disable=not-an-iterable
                             for np in sn:
                                 if compatible(p, np):
                                     gender = (
@@ -1015,6 +1026,7 @@ def parse_phrases_2(token_stream, token_ctor):
                 gn, w, patronym, next_token = eat_surnames(gn, w, patronym, next_token)
 
                 # Must have at least one possible name
+                assert gn is not None
                 assert len(gn) >= 1
 
                 if not patronym:
@@ -1038,6 +1050,7 @@ def parse_phrases_2(token_stream, token_ctor):
                         # We still might have surnames coming up:
                         # eat them too, if present
                         gn, w, _, next_token = eat_surnames(gn, w, patronym, next_token)
+                        assert gn is not None
 
                 found_name = False
                 # If we have a full name with patronym, store it
@@ -1187,8 +1200,10 @@ class MatchingStream:
 
     def process(self, token_stream):
         """ Generate an output stream from the input token stream """
-        tq = []  # Token queue
-        state = defaultdict(list)  # Phrases we're considering
+        # Token queue
+        tq = []  # type: List[Tok]
+        # Phrases we're considering
+        state = defaultdict(list)  # type: Dict[str, List[Tuple[List[str], int]]]
         pdict = self._pdict  # The phrase dictionary
 
         try:
@@ -1461,8 +1476,8 @@ class DefaultPipeline:
         output stream. Individual phases in the sequence can
         easily be overridden in derived classes. """
 
-    def __init__(self, text: StringIterable, **options):
-        self._text = text
+    def __init__(self, text_or_gen: StringIterable, **options) -> None:
+        self._text_or_gen = text_or_gen
         self._auto_uppercase = options.pop("auto_uppercase", False)
         self._options = options
         self._db = None
@@ -1479,54 +1494,54 @@ class DefaultPipeline:
             self.parse_phrases_2,
             self.parse_phrases_3,
             self.disambiguate_phrases,
-        ]
+        ]  # type: List[PhaseFunction]
 
     _token_ctor = Bin_TOK
 
-    def tokenize_without_annotation(self):
+    def tokenize_without_annotation(self) -> TokenIterable:
         """ The basic, raw tokenization from the tokenizer package """
-        return tokenize_without_annotation(self._text, **self._options)
+        return tokenize_without_annotation(self._text_or_gen, **self._options)
 
-    def parse_static_phrases(self, stream):
+    def parse_static_phrases(self, stream: TokenIterable) -> TokenIterable:
         """ Static multiword phrases """
         return parse_static_phrases(stream, self._token_ctor, self._auto_uppercase)
 
-    def correct_tokens(self, stream):
+    def correct_tokens(self, stream: TokenIterable) -> TokenIterable:
         """ Token-level correction can be plugged in here (default stack doesn't do
             any corrections, but this is overridden in ReynirCorrect) """
         return stream
 
-    def annotate(self, stream):
+    def annotate(self, stream: TokenIterable) -> TokenIterable:
         """ Lookup meanings from dictionary """
         return annotate(self._db, self._token_ctor, stream, self._auto_uppercase)
 
-    def recognize_entities(self, stream):
+    def recognize_entities(self, stream: TokenIterable) -> TokenIterable:
         """ Recognize named entities. Default stack doesn't do anything,
             but derived classes can override this. """
         return stream
 
-    def check_spelling(self, stream):
+    def check_spelling(self, stream: TokenIterable) -> TokenIterable:
         """ Spelling correction can be plugged in here (default stack doesn't do
             any corrections, but this is overridden in ReynirCorrect) """
         return stream
 
-    def parse_phrases_1(self, stream):
+    def parse_phrases_1(self, stream: TokenIterable) -> TokenIterable:
         """ Numbers and amounts """
         return parse_phrases_1(self._db, self._token_ctor, stream)
 
-    def parse_phrases_2(self, stream):
+    def parse_phrases_2(self, stream: TokenIterable) -> TokenIterable:
         """ Currencies, person names """
         return parse_phrases_2(stream, self._token_ctor)
 
-    def parse_phrases_3(self, stream):
+    def parse_phrases_3(self, stream: TokenIterable) -> TokenIterable:
         """ Additional person name logic """
         return parse_phrases_3(stream, self._token_ctor)
 
-    def disambiguate_phrases(self, stream):
+    def disambiguate_phrases(self, stream: TokenIterable) -> TokenIterable:
         """ Eliminate very uncommon meanings """
         return disambiguate_phrases(stream, self._token_ctor)
 
-    def tokenize(self):
+    def tokenize(self) -> TokenIterable:
         """ Tokenize text in several phases, returning a generator of tokens
             that processes the text on-demand. If auto_uppercase is True, the tokenizer
             attempts to correct lowercase words that probably should be uppercase.
@@ -1549,10 +1564,10 @@ class DefaultPipeline:
             try:
                 self._db = db
                 # First tokenization phase
-                token_stream = self._phases[0]()
+                token_stream = cast(FirstPhaseFunction, self._phases[0])()
                 # Stack the other phases on top of each other
                 for phase in self._phases[1:]:
-                    token_stream = phase(token_stream)
+                    token_stream = cast(FollowingPhaseFunction, phase)(token_stream)
                 # ...and return the resulting chained generator
                 return token_stream
             finally:
@@ -1570,7 +1585,7 @@ def tokens_are_foreign(tokens: TokenList, min_icelandic_ratio: float) -> bool:
     words_in_bin = 0
     words_not_in_bin = 0
     # Enumerate through the tokens
-    for ix, t in enumerate(tokens):
+    for t in tokens:
         if t.kind == TOK.WORD:
             if t.val:
                 # The word has at least one meaning

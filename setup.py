@@ -42,8 +42,8 @@ import sys
 from glob import glob
 from os.path import basename, dirname, join, splitext
 
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import find_packages  # type: ignore
+from setuptools import setup  # type: ignore
 
 
 if sys.version_info < (3, 5):
@@ -61,6 +61,7 @@ def read(*names, **kwargs):
         return ""
 
 # Load version string from file
+__version__ = "[missing]"
 exec(open(join("src", "reynir", "version.py")).read())
 
 setup(

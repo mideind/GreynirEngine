@@ -31,7 +31,8 @@
 
 """
 
-from typing import Dict
+from typing import Dict, List, Optional, Union, Tuple, Iterator, ItemsView
+
 import os
 import threading
 import time
@@ -47,14 +48,17 @@ class Wordbase:
 
     """ Container for a singleton instance of the word database """
 
-    _dawg_all = None        # All word forms
-    _dawg_formers = None    # Word forms allowed as former parts of compounds
-    _dawg_last = None       # Word forms allowed as last part of compounds
+    # All word forms
+    _dawg_all = None  # type: PackedDawgDictionary
+    # Word forms allowed as former parts of compounds
+    _dawg_formers = None  # type: PackedDawgDictionary
+    # Word forms allowed as last part of compounds
+    _dawg_last = None  # type: PackedDawgDictionary
 
     _lock = threading.Lock()
 
     @staticmethod
-    def _load_resource(resource):
+    def _load_resource(resource: str) -> "PackedDawgDictionary":
         """ Load a PackedDawgDictionary from a file """
         # Assumes that the appropriate lock has been acquired
         if __package__:
@@ -75,7 +79,7 @@ class Wordbase:
         return dawg
 
     @classmethod
-    def dawg(cls):
+    def dawg(cls) -> "PackedDawgDictionary":
         """ Load the combined dictionary """
         with cls._lock:
             if cls._dawg_all is None:
@@ -84,7 +88,7 @@ class Wordbase:
             return cls._dawg_all
 
     @classmethod
-    def dawg_formers(cls):
+    def dawg_formers(cls) -> "PackedDawgDictionary":
         """ Load the dictionary of words allowed as prefixes
             in a compound word (i.e. can occur in any part except
             the last part of the compound word) """
@@ -95,7 +99,7 @@ class Wordbase:
             return cls._dawg_formers
 
     @classmethod
-    def dawg_last(cls):
+    def dawg_last(cls) -> "PackedDawgDictionary":
         """ Load the dictionary of words that are allowed as the last
             part of a compound word """
         with cls._lock:
@@ -105,7 +109,7 @@ class Wordbase:
             return cls._dawg_last
 
     @classmethod
-    def slice_compound_word(cls, word):
+    def slice_compound_word(cls, word: str) -> Optional[List[str]]:
         """ Get best combination of word parts if such a combination exists """
         # We get back a list of lists, i.e. all possible compound word combinations
         # where each combination is a list of word parts. 
@@ -135,23 +139,23 @@ class FindNavigator:
         to find a particular word in the dictionary by exact match
     """
 
-    def __init__(self, word):
+    def __init__(self, word: str) -> None:
         self._word = word
         self._len = len(word)
         self._index = 0
         self._found = False
 
-    def push_edge(self, firstchar):
+    def push_edge(self, firstchar: str) -> bool:
         """ Returns True if the edge should be entered or False if not """
         # Enter the edge if it fits where we are in the word
         return self._word[self._index] == firstchar
 
-    def accepting(self):
+    def accepting(self) -> bool:
         """ Returns False if the navigator does not want more characters """
         # Don't go too deep
         return self._index < self._len
 
-    def accepts(self, newchar):
+    def accepts(self, newchar: str) -> bool:
         """ Returns True if the navigator will accept the new character """
         if newchar != self._word[self._index]:
             return False
@@ -159,7 +163,7 @@ class FindNavigator:
         self._index += 1
         return True
 
-    def accept(self, matched, final):
+    def accept(self, matched: str, final: bool) -> None:
         """ Called to inform the navigator of a match and whether it is a final word """
         if final and self._index == self._len:
             # Yes, this is what we were looking for
@@ -167,12 +171,12 @@ class FindNavigator:
             self._found = True
 
     # noinspection PyMethodMayBeStatic
-    def pop_edge(self):
+    def pop_edge(self) -> bool:
         """ Called when leaving an edge that has been navigated """
         # We only need to visit one outgoing edge, so short-circuit the edge loop
         return False
 
-    def is_found(self):
+    def is_found(self) -> bool:
         return self._found
 
 
@@ -183,32 +187,32 @@ class CompoundNavigator:
         together form a long (compound) word.
     """
 
-    def __init__(self, dawg, word):
+    def __init__(self, dawg: "PackedDawgDictionary", word: str) -> None:
         self._dawg = dawg
         self._word = word
         self._len = len(word)
         self._index = 0
-        self._parts = []
+        self._parts = []  # type: List[List[str]]
 
-    def push_edge(self, firstchar):
+    def push_edge(self, firstchar: str) -> bool:
         """ Returns True if the edge should be entered or False if not """
         # Follow all edges that match a letter in the compound word
         return self._word[self._index] == firstchar
 
-    def accepting(self):
+    def accepting(self) -> bool:
         """ Returns False if the navigator does not want more characters """
         # Continue until we have generated all left parts possible from the
         # rack but leaving at least one tile
         return self._index < self._len
 
-    def accepts(self, newchar):
+    def accepts(self, newchar: str) -> bool:
         """ Returns True if the navigator will accept the new character """
         if newchar != self._word[self._index]:
             return False
         self._index += 1
         return True
 
-    def accept(self, matched, final):
+    def accept(self, matched: str, final: bool) -> None:
         """ Called to inform the navigator of a match and whether it is a final word """
         if final:
             # We have a valid word so far: attempt to resolve the following text
@@ -224,11 +228,11 @@ class CompoundNavigator:
                     self._parts.extend([[matched] + tail for tail in result])
 
     # noinspection PyMethodMayBeStatic
-    def pop_edge(self):
+    def pop_edge(self) -> bool:
         """ Called when leaving an edge that has been navigated """
         return False
 
-    def result(self):
+    def result(self) -> List[List[str]]:
         return self._parts
 
 
@@ -237,14 +241,14 @@ class PackedDawgDictionary:
     """ Encapsulates a DAWG dictionary that is initialized from a packed
         binary file on disk and navigated as a byte buffer. """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # The packed byte buffer
-        self._b = None
-        self._vocabulary = None
+        self._b = None  # type: Optional[mmap.mmap]
+        self._vocabulary = None  # type: Optional[str]
         self._root_offset = 0
-        self._encoding = dict()
+        self._encoding = dict()  # type: Dict[int, str]
 
-    def load(self, fname):
+    def load(self, fname: str) -> None:
         """ Load a packed DAWG from a binary file """
         if self._b is not None:
             # Already loaded
@@ -270,25 +274,25 @@ class PackedDawgDictionary:
             }
         )
 
-    def find(self, word):
+    def find(self, word: str) -> bool:
         """ Look for a word in the graph, returning True
             if it is found or False if not """
         return self.__contains__(word)
 
-    def __contains__(self, word):
+    def __contains__(self, word: str) -> bool:
         """ Enable simple lookup syntax: "word" in dawgdict """
         nav = FindNavigator(word)
         self.navigate(nav)
         return nav.is_found()
 
-    def find_combinations(self, word):
+    def find_combinations(self, word: str):
         """ Attempt to slice an unknown word into parts, where each part is
             a valid word form in itself, and the parts form a valid compound word. """
         nav = CompoundNavigator(self, word)
         self.navigate(nav)
         return nav.result()
 
-    def navigate(self, nav):
+    def navigate(self, nav: Union[FindNavigator, CompoundNavigator]) -> None:
         """ A generic function to navigate through the DAWG under
             the control of a navigation object.
 
@@ -319,9 +323,14 @@ class PackedNavigation:
     _UINT32 = struct.Struct("<L")
 
     # Dictionary of edge iteration caches, keyed by byte buffer
-    _iter_caches = dict()  # type: Dict[int, Dict[str, int]]
+    _iter_caches = dict()  # type: Dict[int, Dict[int, Dict[str, int]]]
 
-    def __init__(self, nav, b, root_offset, encoding):
+    def __init__(self,
+        nav: Union[FindNavigator, CompoundNavigator],
+        b: mmap.mmap,
+        root_offset: int,
+        encoding: Dict[int, str]
+    ) -> None:
         # Store the associated navigator
         self._nav = nav
         # The DAWG bytearray
@@ -335,7 +344,7 @@ class PackedNavigation:
             # Create a fresh cache for this byte buffer
             self._iter_cache = self._iter_caches[id(b)] = dict()
 
-    def _iter_from_node(self, offset):
+    def _iter_from_node(self, offset: int) -> Iterator[Tuple[str, int]]:
         """ A generator for yielding prefixes and next node offset along an edge
             starting at the given offset in the DAWG bytearray """
         b = self._b
@@ -356,7 +365,7 @@ class PackedNavigation:
                 offset += 4
             yield prefix, nextnode
 
-    def _make_iter_from_node(self, offset):
+    def _make_iter_from_node(self, offset: int) -> ItemsView[str, int]:
         """ Return an iterator over the prefixes and next node pointers
             of the edge at the given offset. If this is the first time
             that the edge is iterated, cache its unpacked contents
@@ -371,7 +380,7 @@ class PackedNavigation:
             self._iter_cache[offset] = d
         return d.items()
 
-    def _navigate_from_node(self, offset, matched):
+    def _navigate_from_node(self, offset: int, matched: str) -> None:
         """ Starting from a given node, navigate outgoing edges """
         # Go through the edges of this node and follow the ones
         # okayed by the navigator

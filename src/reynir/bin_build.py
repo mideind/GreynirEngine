@@ -29,7 +29,7 @@
 
 import os
 import platform
-import cffi
+import cffi  # type: ignore
 
 
 # Don't change the name of this variable unless you

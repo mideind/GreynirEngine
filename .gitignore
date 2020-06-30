@@ -28,6 +28,9 @@ test.py
 *.new.py
 *.old.py
 
+# Mypy
+mypy.ini
+
 # Doc stuff
 doc/Makefile
 doc/make.bat

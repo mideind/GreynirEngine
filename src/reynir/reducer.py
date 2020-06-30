@@ -73,12 +73,20 @@
 
 """
 
+from typing import Dict, Union, List, Set
+
 import copy
 from collections import defaultdict
 
+from .grammar import Production
 from .fastparser import Node, ParseForestNavigator, ParseForestPrinter
 from .settings import Preferences, NounPreferences, VerbObjects
-from .binparser import BIN_Token
+from .binparser import BIN_Token, BIN_Terminal
+
+
+# Types for data used in the reduction process
+ScopeDict=Dict[str, Union[int, List[str]]]
+ChildDict=Dict[int, ScopeDict]
 
 
 _PREP_SCOPE_SET = frozenset(("begin_prep_scope", "purge_prep", "no_prep"))
@@ -174,7 +182,8 @@ class _ReductionScope:
 
     def __init__(self, reducer, node):
         self.reducer = reducer
-        self.sc = defaultdict(lambda: dict(sc=0))  # Child tree scores
+        # Child tree scores
+        self.sc = defaultdict(lambda: dict(sc=0))  # type: ChildDict
         # We are only interested in completed nonterminals
         nt = node.nonterminal if node.is_completed else None
         # Verb/preposition matching stuff
@@ -194,26 +203,26 @@ class _ReductionScope:
         reducer.push_current_verb(verb)
         self.start_verb = verb
 
-    def start_family(self, ix, prod):
+    def start_family(self, ix: int, prod: Production) -> None:
         """ Start the processing of a production (numbered ix) of a nonterminal """
         # Initialize the score of this family of children, so that productions
         # with higher priorities (more negative prio values) get a starting bonus
         self.sc[ix]["sc"] = -10 * prod.priority
         self.reducer.set_current_verb(self.start_verb)
 
-    def add_child(self, ix, sc):
+    def add_child(self, ix: int, sc: ScopeDict) -> None:
         """ Add a child node's score to the parent family's score,
             where the parent family has index ix (0..n) """
         d = self.sc[ix]
-        d["sc"] += sc["sc"]
+        d["sc"] += sc["sc"]  # type: ignore
         # Carry information about contained prepositions ("fs") and verbs ("so")
         # up the tree
         for key in ("so", "sl"):
             if key in sc:
                 if key in d:
-                    d[key].extend(sc[key])
+                    d[key].extend(sc[key])  # type: ignore
                 else:
-                    d[key] = sc[key][:]
+                    d[key] = sc[key][:]  # type: ignore
                 if key == "sl":
                     self.reducer.set_current_verb(sc[key])
 
@@ -264,12 +273,12 @@ class _ReductionScope:
                     # This is a nonterminal that we like to see in a verb/prep context
                     # An example is Dagsetning which we like to be associated
                     # with a verb rather than a noun phrase
-                    sc["sc"] += _VERB_PREP_BONUS
+                    sc["sc"] += _VERB_PREP_BONUS  # type: ignore
 
                 if nt.has_tag("pick_up_verb"):
                     verb = sc.get("so")
                     if verb is not None:
-                        sc["sl"] = verb[:]
+                        sc["sl"] = verb[:]  # type: ignore
 
                 if nt.has_any_tag({"begin_prep_scope", "purge_verb"}):
                     # Delete information about contained verbs
@@ -397,7 +406,7 @@ class ParseForestReducer:
 
         PrepositionUnpacker.navigate(root_node)
 
-        visited = dict()
+        visited = dict()  # type: Dict[Node, Dict[str, int]]
         NULL_SC = dict(sc=0)
 
         def _nav_helper(w):
@@ -466,8 +475,8 @@ class Reducer:
 
         # First pass: for each token, find the possible terminals that
         # can correspond to that token
-        finals = defaultdict(set)
-        tokens = dict()
+        finals = defaultdict(set)  # type: Dict[int, Set[BIN_Terminal]]
+        tokens = dict()  # type: Dict[int, BIN_Token]
         self._find_options(w, finals, tokens)
 
         # Second pass: find a (partial) ordering by scoring
@@ -503,8 +512,8 @@ class Reducer:
             prefs = None if same_first else Preferences.get(txt_last)
             sc = scores[i]
             if prefs:
-                adj_worse = defaultdict(int)
-                adj_better = defaultdict(int)
+                adj_worse = defaultdict(int)  # type: Dict[BIN_Terminal, int]
+                adj_better = defaultdict(int)  # type: Dict[BIN_Terminal, int]
                 for worse, better, factor in prefs:
                     for wt in s:
                         if wt.first in worse:

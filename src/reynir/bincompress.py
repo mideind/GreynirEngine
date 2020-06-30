@@ -58,6 +58,8 @@
 
 """
 
+from typing import Any, Set, Tuple, Dict, List, Optional, Callable
+
 import os
 import io
 import time
@@ -77,6 +79,8 @@ else:
     from _bin import lib as bin_cffi, ffi  # type: ignore
 
 
+MeaningTuple = Tuple[str, str, str, str, str, str]
+
 _PATH = os.path.dirname(__file__) or "."
 
 INT32 = struct.Struct("<i")
@@ -84,9 +88,9 @@ UINT32 = struct.Struct("<I")
 
 # A dictionary of BÍN errata, loaded from BinErrata.conf if
 # bincompress.py is invoked as a main program
-_BIN_ERRATA = None
+_BIN_ERRATA = {}  # type: Dict[Tuple[str, str], str]
 # A set of BÍN deletions, loaded from BinErrata.conf
-_BIN_DELETIONS = None
+_BIN_DELETIONS = set()  # type: Set[Tuple[str, str, str]]
 
 CASES = ("NF", "ÞF", "ÞGF", "EF")
 CASES_LATIN = tuple(case.encode("latin-1") for case in CASES)
@@ -100,14 +104,14 @@ class _Node:
 
     """ A Node within a Trie """
 
-    def __init__(self, fragment, value):
+    def __init__(self, fragment: bytes, value: Any) -> None:
         # The key fragment that leads into this node (and value)
         self.fragment = fragment
         self.value = value
         # List of outgoing nodes
-        self.children = None
+        self.children = None  # type: Optional[List[_Node]]
 
-    def add(self, fragment, value):
+    def add(self, fragment: bytes, value: Any) -> Any:
         """ Add the given remaining key fragment to this node """
         if len(fragment) == 0:
             if self.value is not None:
@@ -197,7 +201,7 @@ class _Node:
         self.children[mid] = node
         return None
 
-    def lookup(self, fragment):
+    def lookup(self, fragment: bytes) -> Any:
         """ Lookup the given key fragment in this node and its children
             as necessary """
         if not fragment:
@@ -216,8 +220,8 @@ class _Node:
         # No route matches: the key was not found
         return None
 
-    def __str__(self):
-        s = "Fragment: '{0}', value '{1}'\n".format(self.fragment, self.value)
+    def __str__(self) -> str:
+        s = "Fragment: '{0!r}', value '{1}'\n".format(self.fragment, self.value)
         c = ["   {0}".format(child) for child in self.children] if self.children else []
         return s + "\n".join(c)
 
@@ -228,15 +232,15 @@ class Trie:
         Each node in the trie contains a prefix string, leading
         to its children. """
 
-    def __init__(self, root_fragment=b""):
+    def __init__(self, root_fragment: bytes=b"") -> None:
         self._cnt = 0
         self._root = _Node(root_fragment, None)
 
     @property
-    def root(self):
+    def root(self) -> _Node:
         return self._root
 
-    def add(self, key, value=None):
+    def add(self, key: bytes, value: Any=None) -> Any:
         """ Add the given (key, value) pair to the trie.
             Duplicates are not allowed and not added to the trie.
             If the value is None, it is set to the number of entries
@@ -254,20 +258,20 @@ class Trie:
         self._cnt += 1
         return value
 
-    def get(self, key, default=None):
+    def get(self, key: bytes, default: Any=None) -> Any:
         """ Lookup the given key and return the associated value,
             or the default if the key is not found. """
         value = self._root.lookup(key)
         return default if value is None else value
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: bytes) -> Any:
         """ Lookup in square bracket notation """
         value = self._root.lookup(key)
         if value is None:
             raise KeyError(key)
         return value
 
-    def __len__(self):
+    def __len__(self) -> int:
         """ Return the number of unique keys within the trie """
         return self._cnt
 
@@ -277,10 +281,10 @@ class Indexer:
     """ A thin dict wrapper that maps unique keys to indices,
         and is invertible, i.e. can be converted to a index->key map """
 
-    def __init__(self):
-        self._d = dict()
+    def __init__(self) -> None:
+        self._d = dict()  # type: Dict[Any, Any]
 
-    def add(self, s):
+    def add(self, s: Any) -> int:
         try:
             return self._d[s]
         except KeyError:
@@ -288,20 +292,20 @@ class Indexer:
             self._d[s] = ix
             return ix
 
-    def invert(self):
+    def invert(self) -> None:
         """ Invert the index, so it is index->key instead of key->index """
         self._d = {v: k for k, v in self._d.items()}
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._d)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Any) -> Any:
         return self._d[key]
 
-    def get(self, key, default=None):
+    def get(self, key: Any, default: Any=None) -> Any:
         return self._d.get(key, default)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self._d)
 
 
@@ -340,10 +344,11 @@ class BIN_Compressor:
         self._stems = Indexer()  # stofn
         self._meanings = Indexer()  # beyging
         self._alphabet = set()
+        self._alphabet_bytes = bytes()
         # map form index -> { (stem, meaning) }
         self._lookup_form = defaultdict(set)
         # map stem index -> { case: { form } }
-        self._lookup_stem = defaultdict(lambda: defaultdict(set))
+        self._lookup_stem = defaultdict(lambda: defaultdict(set))  # type: Dict[int, Dict[bytes, Set[bytes]]]
         # Count of stem word categories
         self._stem_cat_count = defaultdict(int)
         # Count of word forms for each case for each stem
@@ -366,29 +371,29 @@ class BIN_Compressor:
                         # Empty line or comment: skip
                         continue
                     t = line.split(";")
-                    stem, wid, ordfl, fl, form, meaning = t
+                    s_stem, wid, s_ordfl, s_fl, s_form, s_meaning = t
                     # Skip this if present in _BIN_DELETIONS
-                    if (stem, ordfl, fl) in _BIN_DELETIONS or " " in line:
+                    if (s_stem, s_ordfl, s_fl) in _BIN_DELETIONS or " " in line:
                         print(
                             "Skipping {stem} {wid} {ordfl} {fl} {form} {meaning}"
                             .format(
-                                stem=stem,
+                                stem=s_stem,
                                 wid=wid,
-                                ordfl=ordfl,
-                                fl=fl,
-                                form=form,
-                                meaning=meaning,
+                                ordfl=s_ordfl,
+                                fl=s_fl,
+                                form=s_form,
+                                meaning=s_meaning,
                             )
                         )
                         continue
                     # Apply a fix if we have one for this
                     # particular (stem, ordfl) combination
-                    fl = _BIN_ERRATA.get((stem, ordfl), fl)
-                    stem = stem.encode("latin-1")
-                    ordfl = ordfl.encode("latin-1")
-                    fl = fl.encode("latin-1")
-                    form = form.encode("latin-1")
-                    meaning = meaning.encode("latin-1")
+                    s_fl = _BIN_ERRATA.get((s_stem, s_ordfl), s_fl)
+                    stem = s_stem.encode("latin-1")
+                    ordfl = s_ordfl.encode("latin-1")
+                    fl = s_fl.encode("latin-1")
+                    form = s_form.encode("latin-1")
+                    meaning = s_meaning.encode("latin-1")
                     # Cut off redundant ending of meaning (beyging),
                     # e.g. ÞGF2
                     if meaning and meaning[-1] in {b"2", b"3"}:
@@ -420,7 +425,7 @@ class BIN_Compressor:
         self._stems.invert()
         self._meanings.invert()
         # Convert alphabet set to contiguous byte array, sorted by ordinal
-        self._alphabet = bytes(sorted(self._alphabet))
+        self._alphabet_bytes = bytes(sorted(self._alphabet))
 
     def print_stats(self):
         """ Print a few key statistics about the dictionary """
@@ -438,8 +443,8 @@ class BIN_Compressor:
                 )
             )
         print("Meanings are {0}".format(len(self._meanings)))
-        print("The alphabet is '{0}'".format(self._alphabet))
-        print("It contains {0} characters".format(len(self._alphabet)))
+        print("The alphabet is '{0!r}'".format(self._alphabet_bytes))
+        print("It contains {0} characters".format(len(self._alphabet_bytes)))
 
     def lookup(self, form):
         """ Test lookup from uncompressed data """
@@ -673,8 +678,8 @@ class BIN_Compressor:
         # Write the alphabet
         write_padded(b"[alphabet]", 16)
         fixup(alphabet_offset)
-        f.write(UINT32.pack(len(self._alphabet)))
-        write_aligned(self._alphabet)
+        f.write(UINT32.pack(len(self._alphabet_bytes)))
+        write_aligned(self._alphabet_bytes)
 
         # Write the form to meaning mapping
         write_padded(b"[mapping]", 16)
@@ -701,7 +706,7 @@ class BIN_Compressor:
         # holds the word forms themselves, mapping them
         # to indices
         fixup(forms_offset)
-        self.write_forms(f, self._alphabet, lookup_map)
+        self.write_forms(f, self._alphabet_bytes, lookup_map)
 
         # Write the stems
         write_padded(b"[stems]", 16)
@@ -809,7 +814,7 @@ class BIN_Compressed:
     # (needed since None is a valid utg value)
     NoUtg = object()
 
-    def __init__(self):
+    def __init__(self) -> None:
         """ We use a memory map, provided by the mmap module, to
             directly map the compressed file into memory without
             having to read it into a byte buffer. This also allows
@@ -841,37 +846,38 @@ class BIN_Compressed:
         # The alphabet header occupies the next 16 bytes
         # Read the alphabet length
         alphabet_length = self._UINT(alphabet_offset)
-        self._alphabet = bytes(
+        self._alphabet_bytes = bytes(
             self._b[alphabet_offset + 4 : alphabet_offset + 4 + alphabet_length]
         )
         # Create a CFFI buffer object pointing to the memory map
         self._mmap_buffer = ffi.from_buffer(self._b)
 
-    def _UINT(self, offset):
+    def _UINT(self, offset: int) -> int:
         """ Return the 32-bit UINT at the indicated offset
             in the memory-mapped buffer """
         return self._partial_UINT(offset)[0]
 
-    def close(self):
+    def close(self) -> None:
         """ Close the memory map """
         if self._b is not None:
-            self._mappings = None
-            self._stems = None
-            self._meanings = None
-            self._alphabet = None
+            self._mappings = None  # type: ignore
+            self._stems = None  # type: ignore
+            self._meanings = None  # type: ignore
+            self._alphabet = set()  # type: Set[str]
+            self._alphabet_bytes = bytes()
             self._mmap_buffer = None
             self._b.close()
-            self._b = None
+            self._b = None  # type: ignore
 
-    def meaning(self, ix):
+    def meaning(self, ix: int) -> Tuple[str, str, str]:
         """ Find and decode a meaning (ordfl, fl, beyging) tuple,
             given its index """
         off, = UINT32.unpack_from(self._meanings, ix * 4)
         b = bytes(self._b[off : off + 24])
         s = b.decode("latin-1").split(maxsplit=4)
-        return tuple(s[0:3])  # ordfl, fl, beyging
+        return s[0], s[1], s[2]  # ordfl, fl, beyging
 
-    def stem(self, ix):
+    def stem(self, ix:int) -> Tuple[str, int]:
         """ Find and decode a stem (utg, stofn) tuple, given its index """
         off, = UINT32.unpack_from(self._stems, ix * 4)
         wid = self._UINT(off)
@@ -883,11 +889,11 @@ class BIN_Compressed:
         b = bytes(self._b[p : p + lw])
         return b.decode("latin-1"), wid  # stofn, utg
 
-    def case_variants(self, ix, case=b"NF"):
+    def case_variants(self, ix: int, case: bytes=b"NF") -> List[bytes]:
         """ Return all word forms having the given case, that are
             associated with the stem whose index is in ix """
 
-        def read_set(p, base=None):
+        def read_set(p: int, base: Optional[bytes]=None) -> Tuple[List[bytes], int]:
             """ Decompress a set of strings compressed by compress_set() """
             b = self._case_variants
             if base is None:
@@ -949,7 +955,7 @@ class BIN_Compressed:
         assert False, "Unknown case requested in case_variants()"
         return []
 
-    def _mapping_cffi(self, word):
+    def _mapping_cffi(self, word: str) -> Optional[int]:
         """ Call the C++ mapping() function that has been wrapped using CFFI"""
         try:
             m = bin_cffi.mapping(
@@ -961,7 +967,7 @@ class BIN_Compressed:
             # it can't be in the trie
             return None
 
-    def _raw_lookup(self, word):
+    def _raw_lookup(self, word: str) -> List[Tuple[int, int]]:
         """ Return a list of stem/meaning tuples for the word, or
             an empty list if it is not found in the trie """
         mapping = self._mapping_cffi(word)
@@ -982,15 +988,22 @@ class BIN_Compressed:
             mapping += 1
         return result
 
-    def contains(self, word):
+    def contains(self, word: str) -> bool:
         """ Returns True if the trie contains the given word form"""
         return self._mapping_cffi(word) is not None
 
-    def __contains__(self, word):
+    def __contains__(self, word: str) -> bool:
         """ Returns True if the trie contains the given word form"""
         return self._mapping_cffi(word) is not None
 
-    def lookup(self, word, cat=None, stem=None, utg=NoUtg, beyging_func=None):
+    def lookup(
+        self,
+        word: str,
+        cat: Optional[str]=None,
+        stem: Optional[str]=None,
+        utg: Any=NoUtg,
+        beyging_func: Optional[Callable[[str], bool]]=None
+    ):
         """ Returns a list of BÍN meanings for the given word form,
             eventually constrained to the requested word category,
             stem, utg number and/or the given beyging_func filter function,
@@ -1002,7 +1015,7 @@ class BIN_Compressed:
             # Allow a cat of "no" to mean a noun of any gender
             cats = GENDERS_SET
         else:
-            cats = {cat}
+            cats = frozenset([cat])
         result = []
         for stem_index, meaning_index in self._raw_lookup(word):
             meaning = self.meaning(meaning_index)
@@ -1028,10 +1041,15 @@ class BIN_Compressed:
         return result
 
     def lookup_case(
-        self, word, case, *,
-        singular=False, indefinite=False,
-        cat=None, stem=None, utg=NoUtg,
-        beyging_filter=None
+        self,
+        word: str,
+        case: str, *,
+        singular: bool=False,
+        indefinite: bool=False,
+        cat: Optional[str]=None,
+        stem: Optional[str]=None,
+        utg: Any=NoUtg,
+        beyging_filter: Optional[Callable[[str], bool]]=None
     ):
         """ Returns a set of meanings, in the requested case, derived
             from the lemmas of the given word form, optionally constrained
@@ -1046,7 +1064,7 @@ class BIN_Compressed:
         # simply means that no forcing to singular occurs.
         # The same applies to indefinite=True and False, mutatis mutandis.
 
-        result = set()
+        result = set()  # type: Set[MeaningTuple]
         case_latin = case.encode("latin-1")
         # Category set
         if cat is None:
@@ -1055,10 +1073,10 @@ class BIN_Compressed:
             # Allow a cat of "no" to mean a noun of any gender
             cats = GENDERS_SET
         else:
-            cats = {cat}
+            cats = frozenset([cat])
         wanted_beyging = ""
 
-        def simplify_beyging(beyging):
+        def simplify_beyging(beyging: str) -> str:
             """ Removes case-related information from a beyging string """
             # Note that we also remove '2' and '3' in cases like
             # 'ÞGF2' and 'EF2', where alternate declination forms are
@@ -1075,7 +1093,7 @@ class BIN_Compressed:
                 beyging = beyging.replace("EVB", "ESB").replace("FVB", "FSB")
             return beyging
 
-        def beyging_func(beyging):
+        def beyging_func(beyging: str) -> bool:
             """ This function is passed to self.lookup() as a filter
                 on the beyging field """
             if case not in beyging:
@@ -1135,10 +1153,10 @@ class BIN_Compressed:
                 )
         return result
 
-    def raw_nominative(self, word):
+    def raw_nominative(self, word: str) -> Set[MeaningTuple]:
         """ Returns a set of all nominative forms of the stems of the given word form.
             Note that the word form is case-sensitive. """
-        result = set()
+        result = set()  # type: Set[MeaningTuple]
         for stem_index, _ in self._raw_lookup(word):
             for c_latin in self.case_variants(stem_index):
                 c = c_latin.decode("latin-1")
@@ -1146,25 +1164,25 @@ class BIN_Compressed:
                 result.update(m for m in self.lookup(c) if "NF" in m[5])
         return result
 
-    def nominative(self, word, **options):
+    def nominative(self, word: str, **options) -> Set[MeaningTuple]:
         """ Returns a set of all nominative forms of the stems of the given word form,
             subject to the constraints in **options.
             Note that the word form is case-sensitive. """
         return self.lookup_case(word, "NF", **options)
 
-    def accusative(self, word, **options):
+    def accusative(self, word: str, **options) -> Set[MeaningTuple]:
         """ Returns a set of all accusative forms of the stems of the given word form,
             subject to the given constraints on the beyging field.
             Note that the word form is case-sensitive. """
         return self.lookup_case(word, "ÞF", **options)
 
-    def dative(self, word, **options):
+    def dative(self, word: str, **options) -> Set[MeaningTuple]:
         """ Returns a set of all dative forms of the stems of the given word form,
             subject to the given constraints on the beyging field.
             Note that the word form is case-sensitive. """
         return self.lookup_case(word, "ÞGF", **options)
 
-    def genitive(self, word, **options):
+    def genitive(self, word: str, **options) -> Set[MeaningTuple]:
         """ Returns a set of all genitive forms of the stems of the given word form,
             subject to the given constraints on the beyging field.
             Note that the word form is case-sensitive. """

@@ -31,7 +31,8 @@
 
 """
 
-from typing import Optional, Union, Dict, Tuple, Set, List
+from typing import cast, Iterable, Optional, Union, Dict, Tuple, Set, List
+
 import os
 import codecs
 import locale
@@ -54,7 +55,12 @@ _SUBCLAUSES = frozenset(("nh", "mnh", "falls"))
 _REFLPRN = {"sig": "sig_hk_et_þf", "sér": "sig_hk_et_þgf", "sín": "sig_hk_et_ef"}
 
 # Type of meaning tuples for static phrases
-MeaningTuple = Tuple[str, str, str]
+# stofn, utg, ordfl, fl, ordmynd, beyging
+MeaningTuple = Tuple[str, int, str, str, str, str]
+# ordfl, fl, beyging
+StaticPhraseTuple = Tuple[str, str, str]
+# Type for preference specifications
+PreferenceTuple = Tuple[List[str], List[str], int]
 
 
 @contextmanager
@@ -210,13 +216,15 @@ class VerbObjects:
                                 "Invalid verb argument: '{0}'".format(kind)
                             )
             # Append a possible argument list
-            arglists = VerbObjects.VERBS[la][verb]
+            vargs = cast(Dict[str, List[str]], VerbObjects.VERBS[la])
+            arglists = vargs[verb]
             if args not in arglists:
                 # Avoid adding the same argument list twice
                 arglists.append(args)
         else:
             # Note that the verb can be argument-free
-            VerbObjects.VERBS[0].add(verb)
+            argset = cast(Set[str], VerbObjects.VERBS[0])
+            argset.add(verb)
         # Store the score, if nonzero
         verb_with_cases = "_".join([verb] + args)
         if score != 0:
@@ -239,7 +247,8 @@ class VerbObjects:
         errkind = errlist[0].strip()
         verb_with_cases = "_".join([verb] + args)
         if errkind == "OBJ":
-            arglists = VerbObjects.VERBS_ERRORS[len(args)][verb]
+            vargs = cast(Dict[str, Dict[str, str]], VerbObjects.VERBS_ERRORS[len(args)])
+            arglists = vargs[verb]
             arglists[verb_with_cases] = corr
         elif errkind == "PP":
             d = VerbObjects.PREPOSITIONS_ERRORS[verb_with_cases]
@@ -366,7 +375,7 @@ class Prepositions:
     PP_ERRORS = defaultdict(dict)  # type: Dict[str, Dict[str, Tuple]]
 
     @staticmethod
-    def add(prep, case, nh):
+    def add(prep: str, case: str, nh: bool) -> None:
         """ Add a preposition and its case. Called from the config file handler. """
         if prep.endswith("*"):
             # Star-marked prepositions are 'plain'
@@ -382,7 +391,7 @@ class Prepositions:
             Prepositions.PP_NH.add(prep)
 
     @staticmethod
-    def add_error(prep, case, corr):
+    def add_error(prep: str, case: str, corr: Tuple) -> None:
         """ Add an error correction entry for a preposition and a case.
             An error correction entry is usually a tuple. """
         Prepositions.PP_ERRORS[prep][case] = corr
@@ -396,7 +405,7 @@ class AdjectiveTemplate:
     ENDINGS = []  # type: List[Tuple[str, str]]
 
     @classmethod
-    def add(cls, ending, form):
+    def add(cls, ending: str, form: str) -> None:
         """ Add an adjective ending and its associated form. """
         cls.ENDINGS.append((ending, form))
 
@@ -409,7 +418,7 @@ class DisallowedNames:
     STEMS = {}  # type: Dict[str, Set[str]]
 
     @classmethod
-    def add(cls, name, cases):
+    def add(cls, name: str, cases: Iterable[str]) -> None:
         """ Add an adjective ending and its associated form. """
         cls.STEMS[name] = set(cases)
 
@@ -422,7 +431,7 @@ class UndeclinableAdjectives:
     ADJECTIVES = set()  # type: Set[str]
 
     @classmethod
-    def add(cls, wrd):
+    def add(cls, wrd: str) -> None:
         """ Add an adjective """
         cls.ADJECTIVES.add(wrd)
 
@@ -432,21 +441,21 @@ class StaticPhrases:
     """ Wrapper around dictionary of static phrases, initialized from the config file """
 
     # Default meaning for static phrases
-    MEANING = ("ao", "frasi", "-")  # type: MeaningTuple
+    MEANING = ("ao", "frasi", "-")  # type: StaticPhraseTuple
     # Dictionary of the static phrases with their meanings
-    MAP = {}  # type: Dict[str, List[MeaningTuple]]
+    MAP = {}  # type: Dict[str, MeaningTuple]
     # Dictionary of the static phrases with their IFD tags and lemmas
     # { static_phrase : (tag string, lemma string) }
     DETAILS = {}  # type: Dict[str, Tuple[str, str]]
     # List of all static phrases and their meanings
-    LIST = []  # type: List[Tuple[str, List[MeaningTuple]]]
+    LIST = []  # type: List[Tuple[str, MeaningTuple]]
     # Parsing dictionary keyed by first word of phrase
-    DICT = defaultdict(list)  # type: Dict[str, List[str]]
+    DICT = defaultdict(list)  # type: Dict[str, List[Tuple[List[str], int]]]
     # Error dictionary, { phrase : (error_code, right_phrase, right_tag_string, right_lemma_string) }
     ERROR_DICT = {}  # type: Dict[str, Tuple[str, str, str, str]]
 
     @staticmethod
-    def add(spec):
+    def add(spec: str) -> None:
         """ Add a static phrase to the dictionary. Called from the config file handler. """
         parts = spec.split(",")
         if len(parts) not in {1, 3}:
@@ -494,43 +503,44 @@ class StaticPhrases:
         StaticPhrases.DICT[wlist[0]].append((wlist[1:], ix))
 
     @staticmethod
-    def add_errors(words, error):
+    def add_errors(words: str, error: Tuple[str, str, str, str]) -> None:
         # Dictionary structure : { phrase : (error_code, right_phrase, right_tag_string, right_lemma_string) }
         StaticPhrases.ERROR_DICT[words] = error
 
     @staticmethod
-    def set_meaning(meaning):
+    def set_meaning(meaning: Iterable) -> None:
         """ Set the default meaning for static phrases """
-        StaticPhrases.MEANING = tuple(meaning)
+        StaticPhrases.MEANING = cast(StaticPhraseTuple, tuple(meaning))
+        assert len(StaticPhrases.MEANING) == 3
 
     @staticmethod
-    def get_meaning(ix):
+    def get_meaning(ix: int) -> List[MeaningTuple]:
         """ Return the meaning of the phrase with index ix """
         return [StaticPhrases.LIST[ix][1]]
 
     @staticmethod
-    def get_length(ix):
+    def get_length(ix: int) -> int:
         """ Return the length of the phrase with index ix """
         return len(StaticPhrases.LIST[ix][0].split())
 
     @staticmethod
-    def lookup(phrase):
+    def lookup(phrase: str) -> Optional[MeaningTuple]:
         """ Lookup an entire phrase """
         return StaticPhrases.MAP.get(phrase)
 
     @staticmethod
-    def has_details(phrase):
+    def has_details(phrase: str) -> bool:
         """ Return True if tag and lemma details are available for this phrase """
         return phrase in StaticPhrases.DETAILS
 
     @staticmethod
-    def tags(phrase):
+    def tags(phrase: str) -> Optional[List[str]]:
         """ Lookup a list of IFD tags for a phrase, if available """
         details = StaticPhrases.DETAILS.get(phrase)
         return None if details is None else details[0].split()
 
     @staticmethod
-    def lemmas(phrase):
+    def lemmas(phrase: str) -> Optional[List[str]]:
         """ Lookup a list of lemmas for a phrase, if available """
         details = StaticPhrases.DETAILS.get(phrase)
         return None if details is None else details[1].split()
@@ -615,7 +625,7 @@ class Topics:
     # Dict of identifier: topic name
     ID = dict()  # type: Dict[str, str]
     # Dict of identifier: threshold (as a float)
-    THRESHOLD = dict()  # type: Dict[str, float]
+    THRESHOLD = dict()  # type: Dict[str, Optional[float]]
     _name = None  # type: Optional[str]
 
     @staticmethod
@@ -708,15 +718,15 @@ class Preferences:
 
     # Dictionary keyed by word containing a list of tuples (worse, better)
     # where each is a list of terminal prefixes
-    DICT = defaultdict(list)  # type: Dict[str, List[Tuple[List[str], List[str]]]]
+    DICT = defaultdict(list)  # type: Dict[str, List[PreferenceTuple]]
 
     @staticmethod
-    def add(word, worse, better, factor):
+    def add(word: str, worse: List[str], better: List[str], factor: int) -> None:
         """ Add a preference to the dictionary. Called from the config file handler. """
         Preferences.DICT[word].append((worse, better, factor))
 
     @staticmethod
-    def get(word):
+    def get(word: str) -> Optional[List[PreferenceTuple]]:
         """ Return a list of (worse, better, factor) tuples for the given word """
         return Preferences.DICT.get(word, None)
 
@@ -1112,7 +1122,7 @@ class Settings:
         """ Handle preposition specifications in the settings section """
         # Format: pw1 pw2... case [nh]  [$error(X)]
         error = False
-        corr = None
+        corr = None  # type: Optional[Tuple[str, Optional[str]]]
         ix = s.rfind("$error(")  # Must be at the end
         if ix >= 0:
             # A typical format is $error(FORM-inn_á)
@@ -1150,6 +1160,7 @@ class Settings:
         pp = " ".join(a[:-1])
         Prepositions.add(pp, c, nh)
         if error:
+            assert corr is not None
             Prepositions.add_error(pp, c, corr)
 
     @staticmethod

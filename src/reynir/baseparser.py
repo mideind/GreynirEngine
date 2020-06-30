@@ -24,6 +24,10 @@
 
 """
 
+from typing import Union, Dict, List, Optional
+
+from .grammar import Grammar, Terminal, Nonterminal
+
 
 class _PackedProduction:
 
@@ -69,13 +73,13 @@ class Base_Parser:
     # Parser version - change when logic changes so that output is affected
     _VERSION = "1.0"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._root = None
-        self._nt_dict = {}
-        self._nonterminals = None
-        self._terminals = None
+        self._nt_dict = {}  # type: Dict[int, Optional[List[_PackedProduction]]]
+        self._nonterminals = {}  # type: Dict[int, Nonterminal]
+        self._terminals = {}  # type: Dict[int, Terminal]
 
-    def init_from_grammar(self, g):
+    def init_from_grammar(self, g: Grammar) -> None:
         """ Initialize the parser with the given grammar """
         nt_d = g.nt_dict
         r = g.root
@@ -97,13 +101,13 @@ class Base_Parser:
         self._terminals = g.terminals_by_ix
 
     @classmethod
-    def for_grammar(cls, g):
+    def for_grammar(cls, g: Grammar) -> "Base_Parser":
         """ Create a parser for the Grammar in g """
         p = cls()
         p.init_from_grammar(g)
         return p
 
-    def _lookup(self, ix):
+    def _lookup(self, ix: int) -> Union[Terminal, Nonterminal]:
         """ Convert a production item from an index to an object reference """
         # Terminals have positive indices
         # Nonterminals have negative indices

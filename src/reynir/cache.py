@@ -37,6 +37,8 @@
 
 """
 
+from typing import List, Dict, Any, Callable
+
 from heapq import nsmallest
 from operator import itemgetter
 import threading
@@ -49,11 +51,13 @@ LFU_DEFAULT = 512
 
 class LRU_Cache:
 
-    def __init__(self, user_function, maxsize = LRU_DEFAULT):
+    def __init__(
+        self, user_function: Callable[[Any], Any], maxsize: int=LRU_DEFAULT
+    ) -> None:
         # Link layout:     [PREV, NEXT, KEY, RESULT]
-        self.root = root = [None, None, None, None]
+        self.root = root = [None, None, None, None]  # type: List[Any]
         self.user_function = user_function
-        self.cache = cache = {}
+        self.cache = cache = {}  # type: Dict[Any, List[Any]]
 
         last = root
         for _ in range(maxsize):
@@ -61,7 +65,7 @@ class LRU_Cache:
             cache[key] = last[1] = last = [last, root, key, None]
         root[0] = last
 
-    def __call__(self, *key):
+    def __call__(self, *key) -> Any:
         cache = self.cache
         root = self.root
         link = cache.get(key)
@@ -97,15 +101,19 @@ class LFU_Cache:
         def __missing__(self, key):
             return 0
 
-    def __init__(self, maxsize = LFU_DEFAULT):
-        self.cache = {}                     # Mapping of keys to results
-        self.use_count = self.Counter()     # Times each key has been accessed
+    def __init__(self, maxsize: int=LFU_DEFAULT) -> None:
+        # Mapping of keys to results
+        self.cache = {}  # type: Dict[Any, Any]
+        # Times each key has been accessed
+        self.use_count = self.Counter()
         self.maxsize = maxsize
         self.hits = self.misses = 0
-        self.lock = threading.Lock()        # The cache may be accessed in parallel by multiple threads
+        # The cache may be accessed in parallel by multiple threads
+        self.lock = threading.Lock()
 
-    def lookup(self, key, func):
-        """ Lookup a key in the cache, calling func(key) to obtain the data if not already there """
+    def lookup(self, key: Any, func: Callable[[Any], Any]) -> Any:
+        """ Lookup a key in the cache, calling func(key)
+            to obtain the data if not already there """
         with self.lock:
             self.use_count[key] += 1
             # Get cache entry or compute if not found
@@ -141,11 +149,11 @@ class cached_property:
 
     """ A decorator for caching instance properties """
 
-    def __init__(self, func):
+    def __init__(self, func: Callable[[Any], Any]) -> None:
         self.__doc__ = getattr(func, "__doc__")
         self.func = func
 
-    def __get__(self, obj, cls):
+    def __get__(self, obj, cls) -> Any:
         if obj is None:
             return self
         # Get the property value and put it into the instance's

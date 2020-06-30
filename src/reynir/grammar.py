@@ -54,6 +54,8 @@
 
 """
 
+from typing import List, Dict
+
 import os
 import struct
 
@@ -671,7 +673,7 @@ class Grammar:
         Production.reset()
         # Dictionary of variants, keyed by variant name
         # where the values are lists of variant options (strings)
-        variants = OrderedDict()
+        variants = OrderedDict()  # type: Dict[str, List[str]]
 
         def parse_line(s):
 
@@ -1250,7 +1252,10 @@ class Grammar:
         # Becausee this creates a gap between the original grammar
         # and the resulting trees, we only do this for nonterminals with variants
         # that do not have a $score pragma
-        shortcuts = {}  # Dictionary of shortcuts
+
+        # Dictionary of shortcuts
+        shortcuts = {}  # type: Dict[Nonterminal, Nonterminal]
+
         for nt, plist in grammar.items():
             if not "_" in nt.name:
                 # 'Pure' nonterminal with no variants: don't shortcut

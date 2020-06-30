@@ -578,8 +578,8 @@ class Greynir:
 
     """
 
-    _parser = None
-    _reducer = None
+    _parser = None  # type: Optional[Fast_Parser]
+    _reducer = None  # type: Optional[Reducer]
     _lock = Lock()
 
     def __init__(self, **options: Any) -> None:

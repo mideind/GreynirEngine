@@ -29,6 +29,7 @@
 
 """
 
+from typing import Dict, List, Tuple, Sequence, Union, Any
 
 import re
 from pprint import pformat
@@ -314,7 +315,7 @@ _DEFAULT_ID_MAP = {
     "TO": dict(name="Nafnháttarmerki"),
     "C": dict(name="Samtenging"),
     "FOREIGN": dict(name="Erlendur texti"),
-}
+}  # type: Dict[str, Dict[str, Any]]
 
 _DEFAULT_TERMINAL_MAP = {  # TODO: Make sure node names are translated in treegrid
     # "no": "N",
@@ -1791,10 +1792,10 @@ class SimpleTreeBuilder:
         maps provided in the constructor. """
 
     def __init__(self, nt_map=None, id_map=None, terminal_map=None):
-        self._nt_map = nt_map or _DEFAULT_NT_MAP
-        self._id_map = id_map or _DEFAULT_ID_MAP
+        self._nt_map = nt_map or _DEFAULT_NT_MAP  # type: Dict[str, Sequence[str]]
+        self._id_map = id_map or _DEFAULT_ID_MAP  # type: Dict[str, Dict[str, Any]]
         self._terminal_map = terminal_map or _DEFAULT_TERMINAL_MAP
-        self._result = []
+        self._result = []  # type: List[Dict[str, Any]]
         self._stack = [self._result]
         self._scope = [NotImplemented]  # Sentinel value
         self._pushed = []
@@ -1841,7 +1842,7 @@ class SimpleTreeBuilder:
                 # don't bother pushing it
                 continue
             # This is a significant and noteworthy nonterminal
-            children = []
+            children = []  # type: List[Dict[str, Any]]
             self._stack[-1].append(
                 dict(k="NONTERMINAL", n=mapped_id["name"], i=mapped_nt, p=children)
             )

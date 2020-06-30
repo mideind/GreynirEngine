@@ -647,6 +647,7 @@ class IFD_Tagset:
                     if StaticPhrases.has_details(lower_x):
                         # This is a static multi-word phrase
                         tags = StaticPhrases.tags(lower_x)
+                        assert tags is not None
                         output.extend(zip(x.split(), tags))
                     else:
                         tag = str(cls(t))

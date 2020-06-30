@@ -34,7 +34,8 @@
 
 """
 
-from typing import Dict, Set, Tuple
+from typing import cast, Dict, Set, Tuple, Iterable
+
 import os
 import time
 import re
@@ -570,8 +571,9 @@ class BIN_Token(Token):
         "gm",
         "mm",
     ]
-    # Pre-calculate a dictionary of associated BIN forms
-    _VERB_FORMS = None  # Initialized later
+
+    # Dictionary of associated BIN forms, initialized later
+    _VERB_FORMS = None  # type: Dict[str, str]
 
     # Cache the dictionary of verb objects from settings.py
     _VERB_OBJECTS = VerbObjects.VERBS
@@ -967,7 +969,8 @@ class BIN_Token(Token):
                 # immediately following the nargs
                 arg_case = terminal.variant(1)
                 assert arg_case in BIN_Token.CASES_SET
-                if all(arg_case != argspec[0] for argspec in verb_objects[verb]):
+                objects = cast(Dict, verb_objects)[verb]
+                if all(arg_case != argspec[0] for argspec in objects):
                     # This verb does not allow an argument in the specified case
                     return False
             # Finally, make sure that the subject case (which is always
@@ -1035,7 +1038,8 @@ class BIN_Token(Token):
             # This means that for instance "eignaðist hest" is not resolved
             # to "eigna" but to "eignast"
             verb = self.mm_verb_stem(verb)
-        if verb in self._VERB_OBJECTS[nargs]:
+        verb_objects = self._VERB_OBJECTS[nargs]
+        if verb in verb_objects:
             # Seems to take the correct number of arguments:
             # do a further check on the supported cases
             if nargs == 0:
@@ -1057,7 +1061,8 @@ class BIN_Token(Token):
             # Check whether the parameters of this verb
             # match up with the requirements of the terminal
             # as specified in its variants at indices 1 and onward
-            for argspec in self._VERB_OBJECTS[nargs][verb]:
+            objects = cast(Dict, verb_objects)[verb]
+            for argspec in objects:
                 if all(terminal.variant(1 + ix) == c for ix, c in enumerate(argspec)):
                     # All variants match this spec: we're fine
                     return True
@@ -1485,7 +1490,9 @@ class BIN_Token(Token):
     @classmethod
     def init(cls):
         # Initialize cached dictionary of verb variant forms in BIN
-        cls._VERB_FORMS = {v: cls.VARIANT[v] for v in cls.VERB_VARIANTS}
+        cls._VERB_FORMS = {
+            v: cls.VARIANT[v] or "" for v in cls.VERB_VARIANTS
+        }
 
 
 BIN_Token.init()
@@ -1799,8 +1806,8 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
         if self._strong:
             # Invoke the matching function for strong literal terminals
             # directly, saving a comparison at run-time
-            self.matches_first = self.matches_strong
-            self.matches = self.matches_strong
+            setattr(self, "matches_first", self.matches_strong)
+            setattr(self, "matches", self.matches_strong)
             # Invoke WordMatchers.matcher_strong_literal() to check for match
             self._matcher = WordMatchers.matcher_strong_literal
             # Add a shortcut_match function which immediately aborts the
@@ -1823,8 +1830,8 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
         else:
             # For lemma terminals, the matches_first() and matches()
             # functions are identical
-            self.matches_first = self.matches
-            self.shortcut_match = None
+            setattr(self, "matches_first", self.matches)
+            setattr(self, "shortcut_match", None)
             # Invoke WordMatchers.matcher_lemma_literal() to check for match
             if self._first[0].isupper():
                 self._matcher = WordMatchers.matcher_uppercase_lemma_literal
@@ -1954,8 +1961,8 @@ class BIN_Parser(Base_Parser):
         the other. """
 
     # A singleton instance of the parsed Reynir.grammar
-    _grammar = None
-    _grammar_ts = None
+    _grammar = None  # type: BIN_Grammar
+    _grammar_ts = None  # type: float
     _grammar_class = BIN_Grammar
 
     # BIN_Parser version - change when logic is modified so that it
