@@ -334,12 +334,6 @@ class WordMatchers:
         """ Check company names """
         if m.ordfl != "fyrirtæki":
             return False
-        #if (
-        #    token.t1 not in BIN_Token._CORPORATION_ENDINGS
-        #    or m.ordmynd not in BIN_Token._CORPORATION_ENDINGS
-        #):
-            # Must match exactly one of the company ending texts
-        #    return False
         # Be careful not to match alternative abbreviations, such as
         # 'ASA' meaning 'aust-suð-austan' (which is an adverb)
         return m.ordfl in BIN_Token.GENDERS_SET
@@ -691,50 +685,6 @@ class BIN_Token(Token):
     # "365 skuldaði 389 milljónir",
     # as it would be incorrect to say "365 skulduðu 389 milljónir".
     _SINGULAR_SPECIAL_CASES = frozenset([365])
-
-    # Note: these must have a meaning for this to work, so specifying them
-    # as abbreviations to Main.conf is recommended
-    _CORPORATION_ENDINGS = frozenset(
-        [
-            "ehf.",
-            "ehf",
-            "hf.",
-            "hf",
-            "bs.",
-            "bs",
-            "sf.",
-            "sf",
-            "slhf.",
-            "slhf",
-            "slf.",
-            "slf",
-            "svf.",
-            "svf",
-            "ohf.",
-            "ohf",
-            "Inc",
-            "Inc.",
-            "Incorporated",
-            "Corp",
-            "Corp.",
-            "Corporation",
-            "Ltd",
-            "Ltd.",
-            "Limited",
-            "Co",
-            "Co.",
-            "Company",
-            "Group",
-            "AS",
-            "ASA",
-            "SA",
-            "S.A.",
-            "GmbH",
-            "AG",
-            "SARL",
-            "S.à.r.l.",
-        ]
-    )
 
     # The following is a filter on the punctuation tokens that are passed into
     # the parser (after being wrapped into BIN_Token objects). The actual

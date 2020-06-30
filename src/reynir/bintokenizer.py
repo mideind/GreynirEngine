@@ -296,6 +296,8 @@ _CORPORATION_ENDINGS = frozenset(
         "ehf.",
         "ehf",
         "hf.",
+        "hses.",
+        "hses",
         "hf",
         "bs.",
         "bs",
@@ -1161,7 +1163,7 @@ def parse_phrases_3(token_stream, token_ctor):
             next_token = next(token_stream)
             if (
                 (token.kind == TOK.ENTITY or (token.kind == TOK.WORD and not token.val))
-                and token.txt[0].isupper() and token.txt[1:].islower()
+                and token.txt.istitle()
                 and " " not in token.txt
                 and next_token.kind == TOK.PERSON
             ):
@@ -1183,7 +1185,7 @@ def parse_phrases_3(token_stream, token_ctor):
                     or (token.kind == TOK.WORD and not token.val)
                     or (token.kind == TOK.WORD and token.val[0].ordfl == "entity")
                 )
-                and token.txt[0].isupper() and token.txt[1:].islower()
+                and token.txt.is_title()
                 and " " not in token.txt
             ):
                 # Upper-case word: Check next word
@@ -1195,15 +1197,16 @@ def parse_phrases_3(token_stream, token_ctor):
                 while True:
                     if next_token.txt in _CORPORATION_ENDINGS:
                         # Form Company-token, stop searching
-                        entitytxt = entitytxt + " " + next_token.txt
+                        entitytxt += " " + next_token.txt
                         token = token_ctor.Company(entitytxt)
                         next_token = next(token_stream)
+                        found = False
                         break
                     elif (
                         (next_token.kind == TOK.ENTITY or (next_token.kind == TOK.WORD and not token.val))
-                        and next_token.txt[0].isupper() and next_token.txt[1:].islower()
+                        and next_token.txt.is_title()
                     ):
-                        entitytxt = entitytxt + " " + next_token.txt
+                        entitytxt += " " + next_token.txt
                         next_token = next(token_stream)
                         found = True
                     else:
@@ -1211,7 +1214,7 @@ def parse_phrases_3(token_stream, token_ctor):
                 if found:  # Have merged tokens, need to update token
                     token = token_ctor.Entity(entitytxt)
 
-            elif token.txt and token.txt[0].isupper() and next_token.txt in _CORPORATION_ENDINGS and not " " in token.txt:
+            elif token.txt and token.txt.istitle() and next_token.txt in _CORPORATION_ENDINGS and not " " in token.txt:
                 # Lastly, allow merging *one* token and a corporation ending 
                 # if the former token is capitalized
                 token = token_ctor.Company(token.txt + " " + next_token.txt)
