@@ -44,7 +44,7 @@ from datetime import datetime
 from functools import reduce
 import json
 
-from tokenizer import TOK, Abbreviations
+from tokenizer import TOK, Tok, Abbreviations
 
 from .settings import (
     Settings,
@@ -2034,7 +2034,7 @@ class BIN_Parser(Base_Parser):
         return ftime + "/" + BIN_Parser._VERSION + "/" + super()._VERSION
 
     @staticmethod
-    def _create_wrapped_token(t, ix):
+    def _create_wrapped_token(t: Tok, ix: int) -> BIN_Token:
         """ Create an instance of a wrapped token """
         return BIN_Token(t, ix)
 
