@@ -100,6 +100,7 @@ class BIN_Db:
         """ Return a session object that can be used in a with statement """
 
         class _BIN_Session:
+
             def __init__(self):
                 pass
 

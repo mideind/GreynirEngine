@@ -1482,7 +1482,7 @@ class DefaultPipeline:
         self._text_or_gen = text_or_gen
         self._auto_uppercase = options.pop("auto_uppercase", False)
         self._options = options
-        self._db = None
+        self._db = None  # type: Optional[BIN_Db]
         # Initialize the default tokenizer pipeline.
         # This sequence of phases can be modified in derived classes.
         self._phases = [
