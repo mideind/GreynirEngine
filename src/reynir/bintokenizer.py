@@ -1464,7 +1464,9 @@ class Bin_TOK(TOK):
         return TOK.Word(w, m)
 
     @staticmethod
-    def Number(w: str, n: float, cases=None, genders=None, token: Optional[Tok]=None) -> Tok:
+    def Number(
+        w: str, n: float, cases=None, genders=None, token: Optional[Tok]=None
+    ) -> Tok:
         return TOK.Number(w, n, cases, genders)
 
 
