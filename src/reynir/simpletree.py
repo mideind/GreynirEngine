@@ -195,6 +195,7 @@ _DEFAULT_NT_MAP = {
     "AlHvortSemUmErAðRæða": "ADVP",
     "LoAtviksliðir": "ADVP",
     "EinnAl": "ADVP",
+    "AlTilv" : "ADVP",
     "StefnuAtv": "ADVP-DIR",
     "SpurnarAtviksorð": "ADVP",
     "FöstDagsetning": "ADVP-DATE-ABS",

@@ -332,14 +332,8 @@ class WordMatchers:
 
     @staticmethod
     def matcher_fyrirtæki(token, terminal, m):
-        """ Check whether the token text matches a set of corporation identfiers """
-        # Note: these must have a meaning for this to work, so specifying them
-        # as abbreviations to Main.conf is recommended
-        if (
-            token.t1 not in BIN_Token._CORPORATION_ENDINGS
-            or m.ordmynd not in BIN_Token._CORPORATION_ENDINGS
-        ):
-            # Must match exactly one of the company ending texts
+        """ Check company names """
+        if m.ordfl != "fyrirtæki":
             return False
         # Be careful not to match alternative abbreviations, such as
         # 'ASA' meaning 'aust-suð-austan' (which is an adverb)
@@ -697,50 +691,6 @@ class BIN_Token(Token):
     # "365 skuldaði 389 milljónir",
     # as it would be incorrect to say "365 skulduðu 389 milljónir".
     _SINGULAR_SPECIAL_CASES = frozenset([365])
-
-    # Note: these must have a meaning for this to work, so specifying them
-    # as abbreviations to Main.conf is recommended
-    _CORPORATION_ENDINGS = frozenset(
-        [
-            "ehf.",
-            "ehf",
-            "hf.",
-            "hf",
-            "bs.",
-            "bs",
-            "sf.",
-            "sf",
-            "slhf.",
-            "slhf",
-            "slf.",
-            "slf",
-            "svf.",
-            "svf",
-            "ohf.",
-            "ohf",
-            "Inc",
-            "Inc.",
-            "Incorporated",
-            "Corp",
-            "Corp.",
-            "Corporation",
-            "Ltd",
-            "Ltd.",
-            "Limited",
-            "Co",
-            "Co.",
-            "Company",
-            "Group",
-            "AS",
-            "ASA",
-            "SA",
-            "S.A.",
-            "GmbH",
-            "AG",
-            "SARL",
-            "S.à.r.l.",
-        ]
-    )
 
     # The following is a filter on the punctuation tokens that are passed into
     # the parser (after being wrapped into BIN_Token objects). The actual
@@ -1360,16 +1310,24 @@ class BIN_Token(Token):
         return terminal.startswith("notandanafn")
 
     def matches_URL(self, terminal):
+        """ A URL token matches a URL (vefslóð) terminal """
         return terminal.startswith("vefslóð")
 
     def matches_EMAIL(self, terminal):
+        """ A e-mail token matches a e-mail (tölvupóstfang) terminal """
         return terminal.startswith("tölvupóstfang")
 
     def matches_SERIALNUMBER(self, terminal):
+        """ A serial number token matches a serial number (vörunúmer) terminal """
         return terminal.startswith("vörunúmer")
 
     def matches_TELNO(self, terminal):
+        """ A telephone number token matches a telephone number (símanúmer) terminal """
         return terminal.startswith("símanúmer")
+
+    def matches_COMPANY(self, terminal):
+        """ A company token matches a company (fyrirtæki) terminal """
+        return terminal.startswith("fyrirtæki")
 
     def matches_WORD(self, terminal):
         """ Match a word token, having the potential part-of-speech meanings
@@ -1429,6 +1387,7 @@ class BIN_Token(Token):
         TOK.EMAIL: matches_EMAIL,
         TOK.SERIALNUMBER: matches_SERIALNUMBER,
         TOK.TELNO: matches_TELNO,
+        TOK.COMPANY: matches_COMPANY,
         TOK.WORD: matches_WORD,
     }
 

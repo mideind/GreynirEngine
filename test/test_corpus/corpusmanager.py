@@ -35,9 +35,8 @@ class Maker():
 
 	def start(self, overwrite=False):
 		# Hef (1)
-		# Bý til (2) vélþáttuð skjöl á Annotaldsformi
+		# Bý til (2) véldjúpþáttuð Greynisskjöl á Annotaldsformi
 		# fyrir hvert skjal í /clean
-		# Taka út þau sem eru með öllum setningunum! Fyrir hvert genre, setja í /original
 		# bý til annoparse skjal með helpers.get_annoparse()
 		# tiltek rétta möppu -- /genpsd og endinguna .psd
 		#helpers.get_annoparse(CLEAN, GENPSD, '.txt', '.psd', False)
@@ -45,32 +44,17 @@ class Maker():
 		# hef þá (2)
 		# Útbý (3A) með handþáttun, geymi í /handpsd .grgld
 
-
 		# Hef (3A)
-		# Útbúa (3B) með map_to_iceparser
-		# Ath. í Comparison() er þetta útbúið með get_ipparse()
-		# Hér er óþarfi að handþátta sama textann tvisvar
-		# Líklega betra að varpa réttri þáttun á milli
-		# En get borið saman og séð hvort gengur betur!
-		# TODO
-
-		# Hef (3A)
-		# Útbúa (3C) með map_to_general
-		# TODO
+		# Útbý (3B) og (3C) handþáttanir á almennu skema á svigaformi
+		# með annotald_to_general()
+		print("Transforming goldfiles")
+		helpers.annotald_to_general(HANDPSD, BRACKETS, '.dgld', '.dbr', True, True)
+		#helpers.annotald_to_general(HANDPSD, BRACKETS, '.pgld', '.pbr', False, True)
 
 		# Hef þá (3B) og (3C)
-		# Handþátta og lagfæra helstu villur
-		# TODO
-
-		# Hef þá (3A), (3B) og (3C)
-		# Fæ (4A), (4B) og (4C) með to_brackets
-		# Passa að setja réttar endingar á allt, þarf mögulega að gera í 3 fallaköllum
-		helpers.greynir_to_brackets(HANDPSD, BRACKETS, '.grgld', '.grbr', True)
-		#helpers.to_brackets(HANDPSD, BRACKETS, '.ipgld', '.ipbr', overwrite)
-		#helpers.to_brackets(HANDPSD, BRACKETS, '.afgld', '.afbr', overwrite)
+		# Lagfæra helstu villur
 
 		# Þá ætti allt að vera tilbúið fyrir þróunarmálheildina!
-		# Passa í hverju skrefi að ef skjalið er þegar til á ekki að yfirskrifa það.
 
 
 class Comparison():
@@ -81,34 +65,34 @@ class Comparison():
 
 		# Hef (1)
 		# Útbý (2) með annoparse, eins og í Maker
-		#helpers.get_annoparse(CLEAN, GENPSD, ".txt", ".psd", True)
+		helpers.get_annoparse(CLEAN, GENPSD, ".txt", ".psd", False)
 		
 		# Hef (2)
 		# Útbý (5B) með get_ipparse()
 		# Ath. í Maker() er þetta útbúið með vörpun úr Greynisskemanu
-		# helpers.get_ipparse(CLEAN, GENPSD, '.txt', '.ippsd', True)
+		#helpers.get_ipparse(CLEAN, GENPSD, '.txt', '.ippsd', True)
 
 		# Hef (2)
 		# Útbý (5C) með map_to_general()
-		# TODO
+		print("Transforming greynir testfiles")
+		helpers.annotald_to_general(GENPSD, TESTFILES, '.psd', '.grdbr', True, True)
+		#print("Transforming IceParser testfiles")
+		#helpers.ip_to_general(GENPSD, TESTFILES, ".ippsd", ".ippbr", True)
 
-		# Hef (2), (5B) og (5C)
-		# Útbý (6A), (6B) og (6C) með to_brackets()
-		#helpers.greynir_to_brackets(GENPSD, TESTFILES, '.psd', '.grbr', True)
-		# helpers.to_brackets(GENPSD, TESTFILES, '.ippsd', '.ipbr', overwrite)
-		# helpers.to_brackets(GENPSD, TESTFILES, '.afpsd', '.afbr', overwrite)
 
-		# Hef (4A), (4B) og (4C) úr Maker
-		# Og (6A), (6B) og (6C) héðan
-		# Útbý (7A)
-		#helpers.get_results(BRACKETS, TESTFILES, REPORTS, ".out")
-		
+		tests = [
+			#(".ippbr", ".pbr", ".ippout"), 
+			#(".grpbr", ".pbr", ".grpout"), 
+			(".grdbr", ".dbr", ".grdout")
+		]
+		helpers.get_results(BRACKETS, TESTFILES, REPORTS, tests)
+
+		suffixes = [".grdout"]  # ".ippout", ".grpout", 
+		genres = ["reynir_corpus", "althingi", "visindavefur", "textasafn"]
 		# Hef (7A)
 		# Útbý (7B)
-		#suffixlist = [".grbr"]
-		#helpers.combine_reports(REPORTS, suffixlist)
+		helpers.combine_reports(REPORTS, suffixes, genres)
 
-	# Þáttar skjölin, útbýr vélþáttað skjal á slóðinni pgen
 
 if __name__ == "__main__":
 	# Spyrja hvort eigi að yfirskrifa skjöl sem þegar eru tilbúin
@@ -116,8 +100,8 @@ if __name__ == "__main__":
 	# TODO eftir að breyta ans í True/False gildi
 	ans = False
 	start = timer()
-	#maker = Maker()
-	#maker.start(ans)
+	maker = Maker()
+	maker.start(ans)
 
 
 	comp = Comparison()
