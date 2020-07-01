@@ -27,8 +27,8 @@
 """
 
 from typing import (
-    cast, Optional, NamedTuple, Tuple, List, Dict,
-    Union, Iterable, Set, FrozenSet, Callable, Type
+    cast, Optional, NamedTuple, Tuple, List, Dict, Union,
+    Iterable, Iterator, Set, FrozenSet, Callable, Type, Any
 )
 
 import sys
@@ -72,10 +72,10 @@ TokenList = List[Tok]
 # The input argument type for the tokenize() function and derivatives thereof
 StringIterable = Union[str, Iterable[str]]
 # The type of a stream of tokens
-TokenIterable = Iterable[Tok]
+TokenIterator = Iterator[Tok]
 # The type of a tokenization pipeline phase
-FirstPhaseFunction = Callable[[], TokenIterable]
-FollowingPhaseFunction = Callable[[TokenIterable], TokenIterable]
+FirstPhaseFunction = Callable[[], TokenIterator]
+FollowingPhaseFunction = Callable[[TokenIterator], TokenIterator]
 PhaseFunction = Union[FirstPhaseFunction, FollowingPhaseFunction]
 
 # Person names that are not recognized at the start of sentences
@@ -1260,29 +1260,29 @@ class MatchingStream:
         replace or modify these sequences.
     """
 
-    def __init__(self, phrase_dictionary):
+    def __init__(self, phrase_dictionary) -> None:
         self._pdict = phrase_dictionary
 
-    def key(self, token):
+    def key(self, token: Tok) -> Any:
         """ Generate a state key from the given token """
         return token.txt.lower()
 
-    def match_state(self, key, state):
+    def match_state(self, key: Any, state: Any) -> Any:
         """ Returns an iterable of states that match the key,
             or a falsy value if the key matches no states. """
         return state.get(key)
 
-    def match(self, tq, ix):
+    def match(self, tq: List[Tok], ix: int) -> Iterable[Tok]:
         """ Called when we have found a match for the entire
             token queue tq, using the index ix """
         return tq
 
-    def length(self, ix):
+    def length(self, ix: int) -> int:
         """ Override this to provide the length of the actual
             phrase that matches at index ix """
         return 0
 
-    def process(self, token_stream):
+    def process(self, token_stream: TokenIterator) -> TokenIterator:
         """ Generate an output stream from the input token stream """
         # Token queue
         tq = []  # type: List[Tok]
@@ -1584,50 +1584,50 @@ class DefaultPipeline:
             self.disambiguate_phrases,
         ]  # type: List[PhaseFunction]
 
-    def tokenize_without_annotation(self) -> TokenIterable:
+    def tokenize_without_annotation(self) -> TokenIterator:
         """ The basic, raw tokenization from the tokenizer package """
         return tokenize_without_annotation(self._text_or_gen, **self._options)
 
-    def parse_static_phrases(self, stream: TokenIterable) -> TokenIterable:
+    def parse_static_phrases(self, stream: TokenIterator) -> TokenIterator:
         """ Static multiword phrases """
         return parse_static_phrases(stream, self._token_ctor, self._auto_uppercase)
 
-    def correct_tokens(self, stream: TokenIterable) -> TokenIterable:
+    def correct_tokens(self, stream: TokenIterator) -> TokenIterator:
         """ Token-level correction can be plugged in here (default stack doesn't do
             any corrections, but this is overridden in ReynirCorrect) """
         return stream
 
-    def annotate(self, stream: TokenIterable) -> TokenIterable:
+    def annotate(self, stream: TokenIterator) -> TokenIterator:
         """ Lookup meanings from dictionary """
         return annotate(self._db, self._token_ctor, stream, self._auto_uppercase)
 
-    def recognize_entities(self, stream: TokenIterable) -> TokenIterable:
+    def recognize_entities(self, stream: TokenIterator) -> TokenIterator:
         """ Recognize named entities. Default stack doesn't do anything,
             but derived classes can override this. """
         return stream
 
-    def check_spelling(self, stream: TokenIterable) -> TokenIterable:
+    def check_spelling(self, stream: TokenIterator) -> TokenIterator:
         """ Spelling correction can be plugged in here (default stack doesn't do
             any corrections, but this is overridden in ReynirCorrect) """
         return stream
 
-    def parse_phrases_1(self, stream: TokenIterable) -> TokenIterable:
+    def parse_phrases_1(self, stream: TokenIterator) -> TokenIterator:
         """ Numbers and amounts """
         return parse_phrases_1(self._db, self._token_ctor, stream)
 
-    def parse_phrases_2(self, stream: TokenIterable) -> TokenIterable:
+    def parse_phrases_2(self, stream: TokenIterator) -> TokenIterator:
         """ Currencies, person names """
         return parse_phrases_2(stream, self._token_ctor)
 
-    def parse_phrases_3(self, stream: TokenIterable) -> TokenIterable:
+    def parse_phrases_3(self, stream: TokenIterator) -> TokenIterator:
         """ Additional person name logic """
         return parse_phrases_3(stream, self._token_ctor)
 
-    def disambiguate_phrases(self, stream: TokenIterable) -> TokenIterable:
+    def disambiguate_phrases(self, stream: TokenIterator) -> TokenIterator:
         """ Eliminate very uncommon meanings """
         return disambiguate_phrases(stream, self._token_ctor)
 
-    def tokenize(self) -> TokenIterable:
+    def tokenize(self) -> TokenIterator:
         """ Tokenize text in several phases, returning a generator of tokens
             that processes the text on-demand. If auto_uppercase is True, the tokenizer
             attempts to correct lowercase words that probably should be uppercase.
