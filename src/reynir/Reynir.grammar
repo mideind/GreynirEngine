@@ -4188,7 +4188,6 @@ Fyrirbæri_ef_hk →
 # Reglu breytt þar sem fyrirtækjanöfn eru nú sameinuð í einn tóka
 Fyrirtæki/fall →
     Sérnafn/fall no/fall* fyrirtæki # hf., ehf., Inc., Corporation, SA o.s.frv.
-    | fyrirtæki
 
 # Fyrirtæki eru næstum örugglega rétt greind
 $score(+12) Fyrirtæki/fall
