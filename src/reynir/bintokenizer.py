@@ -28,7 +28,7 @@
 
 from typing import (
     cast, Optional, NamedTuple, Tuple, List, Dict,
-    Union, Iterable, Set, FrozenSet, Callable
+    Union, Iterable, Set, FrozenSet, Callable, Type
 )
 
 import sys
@@ -1478,6 +1478,8 @@ class DefaultPipeline:
         output stream. Individual phases in the sequence can
         easily be overridden in derived classes. """
 
+    _token_ctor = Bin_TOK  # type: Type[Bin_TOK]
+
     def __init__(self, text_or_gen: StringIterable, **options) -> None:
         self._text_or_gen = text_or_gen
         self._auto_uppercase = options.pop("auto_uppercase", False)
@@ -1497,8 +1499,6 @@ class DefaultPipeline:
             self.parse_phrases_3,
             self.disambiguate_phrases,
         ]  # type: List[PhaseFunction]
-
-    _token_ctor = Bin_TOK
 
     def tokenize_without_annotation(self) -> TokenIterable:
         """ The basic, raw tokenization from the tokenizer package """
