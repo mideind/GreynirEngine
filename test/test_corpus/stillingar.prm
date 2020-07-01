@@ -14,7 +14,7 @@ DEBUG 1
 ##    The process will stop when this number##
 ##    of errors are accumulated.            ##
 ##------------------------------------------##
-MAX_ERROR 11
+MAX_ERROR 50
 
 ##------------------------------------------##
 ## Cut-off length for statistics            ##
@@ -44,6 +44,7 @@ LABELED 1
 ##------------------------------------------##
 DELETE_LABEL TOP
 DELETE_LABEL grm
+DELETE_LABEL p
 
 ##------------------------------------------##
 ## Delete labels for length calculation     ##

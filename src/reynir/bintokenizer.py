@@ -304,6 +304,51 @@ FOREIGN_MIDDLE_NAME_SET = frozenset(("van", "de", "den", "der", "el", "al"))
 # Given names that can also be family names (and thus gender- and caseless as such)
 BOTH_GIVEN_AND_FAMILY_NAMES = frozenset(("Hafstein",))
 
+# Note: these must have a meaning for this to work, so specifying them
+# as abbreviations to Main.conf is recommended
+_CORPORATION_ENDINGS = frozenset(
+    [
+        "ehf.",
+        "ehf",
+        "hf.",
+        "hses.",
+        "hses",
+        "hf",
+        "bs.",
+        "bs",
+        "sf.",
+        "sf",
+        "slhf.",
+        "slhf",
+        "slf.",
+        "slf",
+        "svf.",
+        "svf",
+        "ohf.",
+        "ohf",
+        "Inc",
+        "Inc.",
+        "Incorporated",
+        "Corp",
+        "Corp.",
+        "Corporation",
+        "Ltd",
+        "Ltd.",
+        "Limited",
+        "Co",
+        "Co.",
+        "Company",
+        "Group",
+        "AS",
+        "ASA",
+        "SA",
+        "S.A.",
+        "GmbH",
+        "AG",
+        "SARL",
+        "S.à.r.l.",
+    ]
+)
 
 def annotate(db, token_ctor, token_stream, auto_uppercase):
     """ Look up word forms in the BIN word database. If auto_uppercase
@@ -1135,10 +1180,9 @@ def parse_phrases_3(token_stream, token_ctor):
 
         while True:
             next_token = next(token_stream)
-
             if (
                 (token.kind == TOK.ENTITY or (token.kind == TOK.WORD and not token.val))
-                and token.txt[0].isupper() and token.txt[1:].islower()
+                and token.txt.istitle()
                 and " " not in token.txt
                 and next_token.kind == TOK.PERSON
             ):
@@ -1153,6 +1197,46 @@ def parse_phrases_3(token_stream, token_ctor):
                         for pn in next_token.val
                     ]
                 )
+                next_token = next(token_stream)
+            elif (
+                (
+                    token.kind == TOK.ENTITY 
+                    or (token.kind == TOK.WORD and not token.val)
+                    or (token.kind == TOK.WORD and token.val[0].ordfl == "entity")
+                )
+                and token.txt[0].isupper()
+                and " " not in token.txt
+            ):
+                # Upper-case word: Check next word
+                # Most likely two unknown person names
+                # Can also be a corporation ending
+                # TODO allow more than one name to be merged?
+                entitytxt = token.txt
+                found = False
+                while True:
+                    if next_token.txt in _CORPORATION_ENDINGS:
+                        # Form Company-token, stop searching
+                        entitytxt += " " + next_token.txt
+                        token = token_ctor.Company(entitytxt)
+                        next_token = next(token_stream)
+                        found = False
+                        break
+                    elif (
+                        (next_token.kind == TOK.ENTITY or (next_token.kind == TOK.WORD and not token.val))
+                        and next_token.txt[0].isupper()
+                    ):
+                        entitytxt += " " + next_token.txt
+                        next_token = next(token_stream)
+                        found = True
+                    else:
+                        break
+                if found:  # Have merged tokens, need to update token
+                    token = token_ctor.Entity(entitytxt)
+
+            elif token.txt and token.txt[0].isupper() and next_token.txt in _CORPORATION_ENDINGS and not " " in token.txt:
+                # Lastly, allow merging *one* token and a corporation ending 
+                # if the former token is capitalized
+                token = token_ctor.Company(token.txt + " " + next_token.txt)
                 next_token = next(token_stream)
 
             # Yield the current token and advance to the lookahead

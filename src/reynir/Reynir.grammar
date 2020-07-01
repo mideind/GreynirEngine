@@ -493,6 +493,7 @@ SpurnarNafnliður/tala/fall/kyn →
     | 'hver:fn'_ef_et_kk 'konar:kk'_ef_et Nl/fall/tala
     | HversuHve Lo/fall/tala/kyn Nl/fall/tala
     | HversuHve Lo/fall/tala/kyn AfLiður/kyn?
+    | HversuHve ao                  # TODO þrengja í ao sem tákna tíð, hátt, ...?
     | "hvernig:ao" Nl/fall/tala     # Hægt að nota hliðstætt með nafnlið
 
 SpurnarForsetningarliður →
@@ -3969,9 +3970,11 @@ LangtSérnafn →
     | entity entity+ tala?                  # !!! Til prófunar
     | SérnafnFyrirtæki
 
+# Reglu breytt þar sem fyrirtækjaheiti eru nú sameinuð í einn tóka.
 SérnafnFyrirtæki →
     entity+ "-"? sérnafn* tala? fyrirtæki   # Standard Oil Corp.
     | sérnafn+ tala? fyrirtæki              # Ísgerð Dísu ehf.
+    | fyrirtæki
 
 Sérnafn/fall →
     sérnafn/fall tala? | LangtSérnafn/fall tala?
@@ -4182,6 +4185,7 @@ Fyrirbæri_þgf_hk →
 Fyrirbæri_ef_hk →
     Fyrirtæki_ef
 
+# Reglu breytt þar sem fyrirtækjanöfn eru nú sameinuð í einn tóka
 Fyrirtæki/fall →
     Sérnafn/fall no/fall* fyrirtæki # hf., ehf., Inc., Corporation, SA o.s.frv.
 
@@ -5493,6 +5497,16 @@ EinFsAtv →
     # '(hann tók á móti mér) hlæjandi'
     | SögnLhNt
     | SamsettFsAtv
+    | AlTilv            # Hún horfir þangað sem hann stóð
+
+# Atviksliðir sem innihalda tilvísunarsetningu
+# Geta verið staðar-, stefnu- og spurnaratviksorð
+AlTilv →
+    SemAtv Tilvísunarsetning/tala/pers/kyn
+
+SemAtv → "þar:ao" | "þangað:ao" | "hingað:ao" | "þarna:ao" | "hér:ao" | "þaðan:ao"
+        | "hvar:ao" | "hvaðan:ao" | "hvenær:ao" | "hvernig:ao" | "hvert:ao" | "hversu:ao"
+
 
 SamsettFsAtv →
     # 'hvorki í Frakklandi né annars staðar í Evrópusambandinu'
