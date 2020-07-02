@@ -43,8 +43,8 @@ LABELED 1
 ##    children).                            ##
 ##------------------------------------------##
 DELETE_LABEL TOP
-DELETE_LABEL grm
-DELETE_LABEL p
+#DELETE_LABEL grm
+#DELETE_LABEL p
 
 ##------------------------------------------##
 ## Delete labels for length calculation     ##
