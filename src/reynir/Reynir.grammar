@@ -4232,7 +4232,7 @@ SérnafnEðaManneskja/fall →
     # (danska húsgagnahönnuðinn) Arne Jacobsen
     # (suður-kóreska símaframleiðandann) Samsung
     # (kvikmyndina umtöluðu) 50 gráa skugga
-    Sérnafn/fall | Persóna/fall | Fyrirtæki/fall | Nafn/fall | entity
+    Sérnafn/fall | Persóna/fall | Fyrirtæki/fall | Nafn/fall
 
 Persóna/fall →
     person/fall
@@ -4241,9 +4241,9 @@ $score(+8) Persóna/fall # Velja Persónu frekar en Sérnafn
 
 SérnafnEðaManneskja →
     # (kvikmyndina umtöluðu) 50 gráir skuggar
-    Sérnafn | Persóna | Fyrirtæki/fall | Nafn_nf
+    Sérnafn | Persóna | Fyrirtæki/fall | Nafn_nf | entity
 
-$score(-2) SérnafnEðaManneskja # Velja form með falli frekar en án falls
+$score(+4) SérnafnEðaManneskja # Velja form með falli frekar en án falls
 
 Nafn/fall →
     NlKjarni/tala/fall/kyn # 50 gráir skuggar
@@ -4278,6 +4278,7 @@ $score(-1) ÓsamstættFall/aukafall/kyn
 
 FyrirbæriMeðGreini_ft/fall/kyn →
     Skilgreining/fall/kyn Eindalisti/fall/kyn
+    | Skilgreining/fall/kyn Eindalisti
 
 Skilgreining/fall/kyn →
     VeiktLo_ft/fall/kyn* no_gr_ft/fall/kyn
@@ -4286,8 +4287,14 @@ Eindalisti/fall/kyn →
     SérnafnEðaManneskja/fall KommaSérnafnEðaManneskja/fall* Og SérnafnEðaManneskja/fall
     | Töluorð_ft/fall/kyn # skipverjanna tveggja, börnin tvö, stúlkunum tveimur
 
+Eindalisti →
+    SérnafnEðaManneskja KommaSérnafnEðaManneskja* Og SérnafnEðaManneskja
+
 KommaSérnafnEðaManneskja/fall →
     "," SérnafnEðaManneskja/fall
+
+KommaSérnafnEðaManneskja →
+    "," SérnafnEðaManneskja
 
 $score(+8) FyrirbæriMeðGreini_ft/fall/kyn
 
