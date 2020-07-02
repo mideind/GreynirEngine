@@ -9752,10 +9752,10 @@ Gaupi;0;kk;ism;Gaupa;ÞFET
 Gaupi;0;kk;ism;Gaupa;ÞGFET
 Gaupi;0;kk;ism;Gaupa;EFET
 
-Tesla;0;kvk;ism;Tesla;NFET
-Tesla;0;kvk;ism;Teslu;ÞFET
-Tesla;0;kvk;ism;Teslu;ÞGFET
-Tesla;0;kvk;ism;Teslu;EFET
+Tesla;0;kvk;fyr;Tesla;NFET
+Tesla;0;kvk;fyr;Teslu;ÞFET
+Tesla;0;kvk;fyr;Teslu;ÞGFET
+Tesla;0;kvk;fyr;Teslu;EFET
 
 snapp;0;hk;alm;snapp;NFET
 snapp;0;hk;alm;snappið;NFETgr
