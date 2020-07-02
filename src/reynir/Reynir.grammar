@@ -4232,7 +4232,7 @@ SérnafnEðaManneskja/fall →
     # (danska húsgagnahönnuðinn) Arne Jacobsen
     # (suður-kóreska símaframleiðandann) Samsung
     # (kvikmyndina umtöluðu) 50 gráa skugga
-    Sérnafn/fall | Persóna/fall | Fyrirtæki/fall | Nafn/fall
+    Sérnafn/fall | Persóna/fall | Fyrirtæki/fall | Nafn/fall | entity
 
 Persóna/fall →
     person/fall
