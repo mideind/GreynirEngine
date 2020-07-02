@@ -461,7 +461,6 @@ SkýringarBotn →
     BeygingarliðurÁnUmröðunar   # Ég taldi að Jón hefði dregið sér fé / að málmagnir væri að finna í hreyfli
     | AtvSetning                # Ég taldi að meðan þetta héldi yrðu ekki frekari skakkaföll
     | SetningUmAðRæða           # Ég taldi að um hefði verið að ræða mistök af hans hálfu
-    | SetningÞað                # Ég taldi að ætíð yrði að gæta hagsmuna almennings
     | SetningSoÞað              # Ég taldi að farið hefði verið ofan í saumana á málinu
     | AtvSkýring                # Ég taldi að hér væri vandamál á ferðinni
 
@@ -736,8 +735,16 @@ $score(+32) SagnViðhengi/tala/pers/kyn
 SagnHluti/tala/pers/kyn →
     SagnliðurMeðF/tala/pers/kyn SagnInnskot? SagnViðhengi/tala/pers/kyn?
 
+# Hér er falið frumlag 'það'
 SagnHluti_et_p3_hk →
-    VirðistSem    # Samkvæmt heimildum mbl.is virtist sem Björn fengi aðsvif á sviðinu
+    # [Samkvæmt heimildum mbl.is] virtist sem Björn fengi aðsvif á sviðinu
+    VirðistSem
+    # [Í dag] má með sanni segja að Jón hafi sloppið með skrekkinn
+    | SagnHlutiMegiSkuli
+
+SagnHlutiMegiSkuli →
+    # [Ætíð] skal fara með skjölin sem trúnaðarmál
+    HjSögnMegiSkuli_et_p3 FsAtv? EinSögn_nh_et_hk SagnInnskot?
 
 $tag(begin_prep_scope) SagnHluti/tala/pers/kyn # Nýtt undirtré fyrir tengingu sagnar og forsetningar
 
@@ -839,10 +846,6 @@ Setning/tala/pers/kyn →
 Setning_et_p3_hk →
     # 'Að raða frímerkjum er góð skemmtun'
     SetningAð
-    # 'Nú þarf/þyrfti að hugsa út fyrir kassann'
-    # 'Ætíð verður að gæta hagsmuna almennings'
-    # 'Þar hefur ekki gengið alltof vel á undanförnum árum'
-    | SetningÞað
     # Um er/var að ræða þriggja ára stelpu
     # (-> Það er um að ræða þriggja ára stelpu)
     | SetningUmAðRæða
@@ -866,12 +869,6 @@ SögnÞað →
 
 # Nýtt undirtré fyrir tengingu sagnar og forsetningar
 $tag(begin_prep_scope) Setning/tala/pers/kyn
-
-# Setning þar sem frumlagið 'það' er falið
-SetningÞað →
-    SetningForskeyti SagnRuna_et_p3_hk NhFyllingAtv?
-
-$score(-8) SetningÞað # Velja fremur hefðbundna setningu með tilgreindu frumlagi ef býðst
 
 SetningAð →
     # 'Að raða frímerkjum [í ró og næði] er góð skemmtun'
@@ -998,7 +995,7 @@ SetningSo →
     | Sögn_bh SögnFrh_bh?
 
     # Má með sanni segja (að þeir hafi sloppið með skrekkinn)
-    | HjSögnMegiSkuli_et_p3 FsAtv? EinSögn_nh_et_hk SagnInnskot?
+    | SagnHlutiMegiSkuli
 
     # Þarf til þess lagafyrirmæli að svipta mann réttindum
     | 'þurfa:so'_1_þf_gm_et_p3 FsAtv? NlBeintAndlag_þf AðLiður?
@@ -2414,6 +2411,7 @@ SögnMeðF_1/tala/pers/kyn →
         NlFrumlag_nf/tala/pers/kyn NlBeintAndlag/aukafall
         LoTengtSögn_nf/tala/kyn? NhFylling?
 
+    # (Eftir hálftíma) skal gjöfin gefin Páli
     | HjSögnLhÞtSM/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? SagnarBotnLhÞt/tala/kyn
 
     # (Þegar gögnin hafa verið lesin) eru eimaðar upp úr þeim upplýsingar [á borð við nöfn]
@@ -6375,8 +6373,8 @@ $score(+16) AfstættTímabilTvöfalt
 
 TímabilTími →
     FráTilTími 
-    | TímaNafnliðurMinni/fall/tala/kyn                              # um það bil tæpar 10 sekúndur
-    | TímaMagnNafnliðurMinni/fall/tala/kyn                          # næstu 8 mínútur
+    # | TímaNafnliðurMinni/fall/tala/kyn                              # um það bil tæpar 10 sekúndur
+    | TímaMagnNafnliðurMinni_þf/tala/kyn                            # næstu 8 mínútur
     | MagnFs/aukafall TímaMagnNafnliðurMinni/aukafall/tala/kyn      # á 20 sekúndum, innan 6 sekúndna, í 30 millisekúndur
     | PunkturFs/aukafall TímiPunkturTNL                             # eftir kl. 14:00
     | 'milli:fs'_ef TímiPunkturTNL Og TímiPunkturTNL

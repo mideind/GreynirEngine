@@ -179,8 +179,8 @@ _DEFAULT_NT_MAP = {
     "ÓpSagnliður": "VP",
     "HjSögn": "VP-AUX",
     "HjSögnNh": "VP-AUX",
-    "SetningSo": ("IP", "VP"),
-    "SetningSoÞað": ("IP", "VP"),
+    "SetningSo": "IP",  # Removed "VP" from here - it creates duplicate IP>VP chains
+    "SetningSoÞað": "IP",  # Removed "VP" from here - it creates duplicate IP>VP chains
     "FsLiður": "PP",
     "FsMeðFallstjórn": "PP",
     "FsFyrirEftir": "PP",
