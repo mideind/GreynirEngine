@@ -4239,7 +4239,7 @@ $score(+8) Persóna/fall # Velja Persónu frekar en Sérnafn
 
 SérnafnEðaManneskja →
     # (kvikmyndina umtöluðu) 50 gráir skuggar
-    Sérnafn | Persóna | Fyrirtæki/fall | Nafn_nf
+    Sérnafn | Persóna | Fyrirtæki/fall | Nafn_nf | entity
 
 $score(-2) SérnafnEðaManneskja # Velja form með falli frekar en án falls
 
@@ -4275,17 +4275,29 @@ $score(-1) ÓsamstættFall/aukafall/kyn
 # 'bandarísku sjóðirnir Eaton Vance Corp. og Autonomy Capital LP'
 
 FyrirbæriMeðGreini_ft/fall/kyn →
-    Skilgreining/fall/kyn Eindalisti/fall/kyn
+    Skilgreining/fall/kyn EindalistiFyrirbæri/fall/kyn
 
 Skilgreining/fall/kyn →
     VeiktLo_ft/fall/kyn* no_gr_ft/fall/kyn
+
+EindalistiFyrirbæri/fall/kyn →
+    Eindalisti/fall/kyn
+    | Eindalisti
 
 Eindalisti/fall/kyn →
     SérnafnEðaManneskja/fall KommaSérnafnEðaManneskja/fall* Og SérnafnEðaManneskja/fall
     | Töluorð_ft/fall/kyn # skipverjanna tveggja, börnin tvö, stúlkunum tveimur
 
+Eindalisti →
+    SérnafnEðaManneskja KommaSérnafnEðaManneskja* Og SérnafnEðaManneskja
+
+$score(-2) Eindalisti   # Velja form með falli frekar en án falls
+
 KommaSérnafnEðaManneskja/fall →
     "," SérnafnEðaManneskja/fall
+
+KommaSérnafnEðaManneskja →
+    "," SérnafnEðaManneskja
 
 $score(+8) FyrirbæriMeðGreini_ft/fall/kyn
 

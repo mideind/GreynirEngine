@@ -1298,7 +1298,7 @@ def test_ifd_tag(r):
         "sfm3eþ",
         "ao",
         "ta", "x",  # 300 kg
-        ".",
+        "."
     ]
     s = r.parse_single(
         "Vestur-Þýskalandi bar blátt áfram að bjarga a.m.k. 284,47 börnum "
@@ -1315,8 +1315,7 @@ def test_ifd_tag(r):
         'tfkfn',  # 284,47
         'nhfþ',
         'nven', 'ta',  # kl. 11:45
-        'nheo', 'ta', 'aa',  # árið 374 f.Kr
-        '.'
+        'nheo', 'ta', 'aa',  # árið 374 f.Kr.
     ]
 
 
@@ -1802,12 +1801,12 @@ def test_company(r):
         s.tree.flat_with_all_variants ==
         "S0 S-MAIN IP NP-SUBJ NP-COMPANY fyrirtæki fyrirtæki /NP-COMPANY /NP-SUBJ "
         "VP VP so_1_nf_et_fh_gm_nt_p3 /VP NP-PRD no_et_hk_nf NP-POSS "
-        "NP-COMPANY fyrirtæki fyrirtæki /NP-COMPANY /NP-POSS /NP-PRD /VP /IP /S-MAIN p /S0"
+        "NP-COMPANY fyrirtæki fyrirtæki /NP-COMPANY /NP-POSS /NP-PRD /VP /IP /S-MAIN /S0"
     )
 
     assert (
         [t.lemma for t in s.tree.all_matches("NP-COMPANY")] ==
-        ['Hands ASA', 'Celestial Inc']
+        ['Hands ASA', 'Celestial Inc.']
     )
     s = r.parse_single("Hann réðst inn á skrifstofu Samherja hf. og rændi gögnum.")
     assert s.tree is not None
