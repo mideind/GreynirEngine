@@ -1244,9 +1244,12 @@ class SimpleTree:
 
             def filter_func_no(m):
                 """ Filter function for nouns """
-                if not canonical:
+                if not canonical and self.tcat != "gata":
                     # Match the original word in terms of number (singular/plural)
-                    number = next(iter(self._vset & {"et", "ft"}), "et")
+                    # We don't do this for street names ('gata' terminals)
+                    # since they don't have number variants (_et/_ft)
+                    number_set = self._vset & {"et", "ft"}
+                    number = next(iter(number_set), "et")
                     if number.upper() not in m.beyging:
                         return False
                 if not (canonical or indefinite):
@@ -1546,7 +1549,7 @@ class SimpleTree:
         def prop_func(node):
             if node.is_terminal:
                 return case_property.fget(node)
-            if node.tag == "NP-TITLE" or node.tag == "NP-MEASURE":
+            if node.tag in {"NP-TITLE", "NP-MEASURE", "NP-ADDR"}:
                 # For these NP types, recurse into them, since we
                 # also want to cast them to the requested case
                 return node._np_form(prop_func)

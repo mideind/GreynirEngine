@@ -360,6 +360,45 @@ def test_casting():
     assert db.cast_to_genitive("Kópavogur", meaning_filter_func=f) == "Kópavogs"
 
 
+def test_addresses():
+    from reynir import NounPhrase
+    np = NounPhrase("Laugavegi 20b")
+    assert np.nominative == "Laugavegur 20b"
+    assert np.accusative == "Laugaveg 20b"
+    assert np.dative == "Laugavegi 20b"
+    assert np.genitive == "Laugavegar 20b"
+    np = NounPhrase("Baugatanga 6C")
+    assert np.nominative == "Baugatangi 6C"
+    assert np.accusative == "Baugatanga 6C"
+    assert np.dative == "Baugatanga 6C"
+    assert np.genitive == "Baugatanga 6C"
+    np = NounPhrase("Æðarvarp 17")
+    assert np.nominative == "Æðarvarp 17"
+    assert np.accusative == "Æðarvarp 17"
+    assert np.dative == "Æðarvarpi 17"
+    assert np.genitive == "Æðarvarps 17"
+    np = NounPhrase("Vættaborgir 17")
+    assert np.nominative == "Vættaborgir 17"
+    assert np.accusative == "Vættaborgir 17"
+    assert np.dative == "Vættaborgum 17"
+    assert np.genitive == "Vættaborga 17"
+    np = NounPhrase("Vættaborga 17")
+    assert np.nominative == "Vættaborgir 17"
+    assert np.accusative == "Vættaborgir 17"
+    assert np.dative == "Vættaborgum 17"
+    assert np.genitive == "Vættaborga 17"
+    np = NounPhrase("Gamla vitanum í Garðskaga á Reykjanesi")
+    assert np.nominative == "Gamli vitinn í Garðskaga á Reykjanesi"
+    assert np.accusative == "Gamla vitann í Garðskaga á Reykjanesi"
+    assert np.dative == "Gamla vitanum í Garðskaga á Reykjanesi"
+    assert np.genitive == "Gamla vitans í Garðskaga á Reykjanesi"
+    np = NounPhrase("Gamla vitans í Garðskaga á Reykjanesi")
+    assert np.nominative == "Gamli vitinn í Garðskaga á Reykjanesi"
+    assert np.accusative == "Gamla vitann í Garðskaga á Reykjanesi"
+    assert np.dative == "Gamla vitanum í Garðskaga á Reykjanesi"
+    assert np.genitive == "Gamla vitans í Garðskaga á Reykjanesi"
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
@@ -367,4 +406,5 @@ if __name__ == "__main__":
     test_cases(r)
     test_noun_phrases(r)
     test_casting()
+    test_addresses()
     r.__class__.cleanup()
