@@ -387,6 +387,11 @@ def test_addresses():
     assert np.accusative == "Vættaborgir 17"
     assert np.dative == "Vættaborgum 17"
     assert np.genitive == "Vættaborga 17"
+    np = NounPhrase("Sólarsölum 3B")
+    assert np.nominative == "Sólarsalir 3B"
+    assert np.accusative == "Sólarsali 3B"
+    assert np.dative == "Sólarsölum 3B"
+    assert np.genitive == "Sólarsala 3B"
     np = NounPhrase("Gamla vitanum í Garðskaga á Reykjanesi")
     assert np.nominative == "Gamli vitinn í Garðskaga á Reykjanesi"
     assert np.accusative == "Gamla vitann í Garðskaga á Reykjanesi"
