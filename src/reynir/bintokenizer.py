@@ -67,12 +67,19 @@ else:
     all_except_suffix = lambda s: s.rsplit(maxsplit=1)[0]
 
 
+# Named tuple for person names, including case and gender
+PersonName = NamedTuple(
+    "PersonName",
+    [("name", str), ("gender", Optional[str]), ("case", Optional[str])]
+)
 # The type of a list of tokens
 TokenList = List[Tok]
 # The input argument type for the tokenize() function and derivatives thereof
 StringIterable = Union[str, Iterable[str]]
 # The type of a stream of tokens
 TokenIterator = Iterator[Tok]
+# The type of a token val field
+TokenValType = Union[List[BIN_Meaning], List[PersonName], Tuple, None]
 # The type of a tokenization pipeline phase
 FirstPhaseFunction = Callable[[], TokenIterator]
 FollowingPhaseFunction = Callable[[TokenIterator], TokenIterator]
@@ -98,12 +105,6 @@ NOT_NAME_AT_SENTENCE_START = {
 
 # Set of all cases (nominative, accusative, dative, genitive)
 ALL_CASES = frozenset(["nf", "þf", "þgf", "ef"])
-
-# Named tuple for person names, including case and gender
-PersonName = NamedTuple(
-    "PersonName",
-    [("name", str), ("gender", Optional[str]), ("case", Optional[str])]
-)
 
 HYPHEN = "-"  # Normal hyphen
 EN_DASH = "\u2013"  # "–"
@@ -349,6 +350,20 @@ _CORPORATION_ENDINGS = frozenset(
         "S.à.r.l.",
     ]
 )
+
+
+def load_token(*args) -> Tuple[int, str, TokenValType]:
+    """ Convert a plain, usually JSON serialized, argument tuple
+        to kind, txt, val attributes """
+    kind, txt, val = args[0], args[1], args[2]
+    if kind == TOK.WORD:
+        val = [BIN_Meaning(*v) for v in val]
+    elif kind == TOK.PERSON:
+        val = [PersonName(*v) for v in val]
+    else:
+        val = tuple(val)
+    return kind, txt, val
+
 
 def annotate(db, token_ctor, token_stream, auto_uppercase):
     """ Look up word forms in the BIN word database. If auto_uppercase
@@ -1691,24 +1706,19 @@ def tokens_are_foreign(tokens: TokenList, min_icelandic_ratio: float) -> bool:
 def stems_of_token(t):
     """ Return a list of word stem descriptors associated with the token t.
         This is an empty list if the token is not a word or person or entity name.
-        The list can contain multiple stems, for instance in the case
-        of composite words:
-        ('sjómannadagur' -> ['sjómannadagur/kk', sjómaður/kk', 'dagur/kk']).
     """
     kind = t.get("k", TOK.WORD)
     if kind not in {TOK.WORD, TOK.PERSON, TOK.ENTITY}:
         # No associated stem
         return []
     if kind == TOK.WORD:
-        if "m" in t:
-            # Obtain the stem and the word category from the 'm' (meaning) field
-            stem = t["m"][0]
-            cat = t["m"][1]
+        # Obtain the stem and the word category from the 'm' (meaning) field,
+        # if present
+        m = t.get("m")
+        if m:
+            stem, cat = m[0], m[1]
             return [(stem, cat)]
-        else:
-            # Sérnafn
-            stem = t["x"]
-            return [(stem, "entity")]
+        # Entity or unknown word: fall through
     elif kind == TOK.PERSON:
         # The full person name, in nominative case, is stored in the 'v' field
         stem = t["v"]
@@ -1722,10 +1732,9 @@ def stems_of_token(t):
             # No known gender
             gender = ""
         return [(stem, "person" + gender)]
-    else:
-        # TOK.ENTITY
-        stem = t["x"]
-        return [(stem, "entity")]
+    # TOK.ENTITY or unknown word
+    stem = t["x"]
+    return [(stem, "entity")]
 
 
 def choose_full_name(val, case, gender):

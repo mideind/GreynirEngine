@@ -2,9 +2,9 @@
 
     test_serializers.py
 
-    Tests for Greynir module
+    Tests for JSON serialization of sentences
 
-    Copyright(C) 2019 by Miðeind ehf.
+    Copyright (C) 2020 by Miðeind ehf.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,26 +37,30 @@ def r():
 
 
 def test_serializers(r):
-    orig = r.parse_single("""
-        Ég fór niðrá bryggjuna með Reyni í gær. Það var 17. Júní árið 2020.
-        Við sáum tvo seli og örugglega fleiri en 100 mavá.
-        Klukkan var orðin tólf þegar við fórum heim.
-        Morguninn eftir vaknaði ég kl. 07:30.
-        Ég var fyrstur á fætur en Reynir númer 2.
-    """)
-    assert orig.tree is not None
+    sents = [
+        "Ég fór niðrá bryggjuna með Reyni Vilhjálmssyni í gær.",
+        "Það var 17. júní árið 2020.",
+        "Við sáum tvo seli og örugglega fleiri en 100 máva.",
+        "Klukkan var orðin tólf þegar við fórum heim.",
+        "Bíllinn kostaði €30.000 en ég greiddi 25500 USD fyrir hann.",
+        "Morguninn eftir vaknaði ég kl. 07:30.",
+        "Ég var fyrstur á fætur en Þuríður Hálfdánardóttir var númer 2.",
+    ]
+    for sent in sents:
+        orig = r.parse_single(sent)
+        assert orig.tree is not None
 
-    json_str = orig.dumps(indent=2)
+        json_str = r.dumps_single(orig, indent=2)
+        new = r.loads_single(json_str)
 
-    new = r.load_single(**json.loads(json_str))
-    assert new.tree is not None
-    assert new.tree.match("S0 >> { IP > { VP > { PP > { P > { fs } } } } } ")
+        assert new.tree is not None
 
-    assert orig.tokens == new.tokens
-    assert orig.terminals == new.terminals
+        assert orig.tokens == new.tokens
+        assert orig.terminals == new.terminals
 
-    assert orig.tree.flat_with_all_variants == orig.tree.flat_with_all_variants
-    assert json.loads(orig.dumps(indent=2)) == json.loads(new.dumps(indent=2))
+        assert orig.tree.flat_with_all_variants == orig.tree.flat_with_all_variants
+        cls = r.__class__
+        assert json.loads(orig.dumps(cls, indent=2)) == json.loads(new.dumps(cls, indent=2))
 
 
 if __name__ == "__main__":
