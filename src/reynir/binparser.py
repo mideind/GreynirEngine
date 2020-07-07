@@ -1030,7 +1030,7 @@ class BIN_Token(Token):
     def matches_PERSON(self, terminal):
         """ Handle a person name token, matching it with a person_[case]_[gender] terminal """
         if terminal.startswith("sérnafn"):
-            # We allow a simple person name to match an entity name (sérnafn)
+            # We allow a simple person name to match a proper name (sérnafn)
             if not self.is_upper or " " in self.lower:
                 # Must be capitalized and a single name
                 return False
@@ -1063,6 +1063,8 @@ class BIN_Token(Token):
 
     def matches_ENTITY(self, terminal):
         """ Handle an entity name token, matching it with an entity terminal """
+        # An entity name is 1) uppercase; 2) can be multi-word (all uppercase, such
+        # as "Goldman Sachs"); 3) not found in BÍN
         return terminal.startswith("entity")
         # !!! TBD !!!
         # Allow person terminals to match entity names that look like person names,

@@ -3956,23 +3956,24 @@ Sérnafn →
 $tag(apply_length_bonus) Sérnafn # Gefa bónus eftir því hversu margar eindir (tokens) falla undir sérnafnið
 
 # ATH: eitt 'entity' getur verið fleiri en eitt samliggjandi orð.
-# Ekki ætti að hafa samliggjandi 'entity' í málfræðireglu.
+# Ekki ætti að hafa samliggjandi 'entity' eða 'entity+' í málfræðireglu.
 # Hér eru höfð stutt bandstrik milli nafna, ekki en- eða em-dash.
 
 LangtSérnafn →
     sérnafn "-"? sérnafn+ tala?             # Glass-Steagall lögin
-    | sérnafn+ "-"? entity+ sérnafn* tala?  # Eining með nafni sem þekkt er úr gagnagrunni eða runu slíkra
-    | entity+ "-"? sérnafn+ tala?           # Eining með nafni sem þekkt er úr gagnagrunni eða runu slíkra
+    | sérnafn+ "-"? entity sérnafn* tala?   # Eining með nafni sem þekkt er úr gagnagrunni eða runu slíkra
+    | entity "-"? sérnafn+ tala?            # Eining með nafni sem þekkt er úr gagnagrunni eða runu slíkra
     | entity "-" entity tala?               # Villeneuve-Loubet
     | entity "-" tala                       # COVID-19
-    | entity entity+ tala?                  # !!! Til prófunar
     | SérnafnFyrirtæki
 
 # Reglu breytt þar sem fyrirtækjaheiti eru nú sameinuð í einn tóka.
 SérnafnFyrirtæki →
-    entity+ "-"? sérnafn* tala? fyrirtæki   # Standard Oil Corp.
-    | sérnafn+ tala? fyrirtæki              # Ísgerð Dísu ehf.
+    sérnafn+ BandstrikSérnöfn? tala? fyrirtæki # Standard Oil Corp. / Ísgerð Dísu ehf.
     | fyrirtæki
+
+BandstrikSérnöfn →
+    "-" sérnafn*
 
 Sérnafn/fall →
     sérnafn/fall tala? | LangtSérnafn/fall tala?
@@ -3980,18 +3981,9 @@ Sérnafn/fall →
 $tag(apply_length_bonus) Sérnafn/fall # Gefa bónus eftir því hversu margar eindir (tokens) falla undir sérnafnið
 
 LangtSérnafn/fall →
-    sérnafn/fall "-"? sérnafn/fall+ tala?               # Stóra-Felli
-    | sérnafn/fall+ "-"? entity+ sérnafn/fall* tala?    # Eining með nafni sem þekkt er úr gagnagrunni eða runu slíkra
-    | entity+ "-"? sérnafn/fall+ tala?                  # Eining með nafni sem þekkt er úr gagnagrunni eða runu slíkra
-
-# Leyfa löngu sérnafni í nefnifalli að passa við langt sérnafn án falls
-LangtSérnafn_nf →
-    LangtSérnafnNf
-
-LangtSérnafnNf →
-    LangtSérnafn
-
-$score(-12) LangtSérnafnNf
+    sérnafn/fall "-"? sérnafn/fall+ tala?              # Stóra-Felli
+    | sérnafn/fall+ "-"? entity sérnafn/fall* tala?    # Eining með nafni sem þekkt er úr gagnagrunni eða runu slíkra
+    | entity "-"? sérnafn/fall+ tala?                  # Eining með nafni sem þekkt er úr gagnagrunni eða runu slíkra
 
 # Löng sérnöfn, þ.e. runur orða með upphafsstöfum, eru mjög líklega rétt greind
 
@@ -4239,7 +4231,7 @@ $score(+8) Persóna/fall # Velja Persónu frekar en Sérnafn
 
 SérnafnEðaManneskja →
     # (kvikmyndina umtöluðu) 50 gráir skuggar
-    Sérnafn | Persóna | Fyrirtæki/fall | Nafn_nf | entity
+    Sérnafn | Persóna | Nafn_nf
 
 $score(-2) SérnafnEðaManneskja # Velja form með falli frekar en án falls
 
