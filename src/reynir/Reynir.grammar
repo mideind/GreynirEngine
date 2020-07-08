@@ -3829,7 +3829,7 @@ TöluorðForskeyti_ef_ft_kvk → TöluorðForskeyti_ft_ef_kvk
 TöluorðForskeyti_ef_ft_hk → TöluorðForskeyti_ft_ef_hk
 
 TöluorðLo/tala →
-    lo_evb_nf_hk/tala # efstu tvo / efstu tvö / efstu tvær
+    lo_evb_nf_hk/tala   # efstu tvo / efstu tvö / efstu tvær
     | lo_mst_nf_hk/tala # lægri tvo / lægri tvö / lægri tvær
 
 # Gefa mínusstig fyrir stök töluorð - viljum helst sjá þau sem einkunn í stærri nafnlið
@@ -3842,6 +3842,16 @@ $score(+12) TöluorðForskeyti # Rétta mínusinn af ef fleira fylgir
 NlStak_p3_ft_nf_kk → Manns_nf
 NlStak_p3_ft_þf_kk → Manns_þf
 NlStak_p3_ft_þgf_kk → Manns_þgf
+
+# Leyfa '30.000 manns, íklædd gulum vestum, mótmæltu í gær'
+NlStak_p3_ft_nf_hk → Manns_hk_nf
+NlStak_p3_ft_þf_hk → Manns_hk_þf
+NlStak_p3_ft_þgf_hk → Manns_hk_þgf
+
+Manns_hk/fall → Manns/fall
+
+# Hafa veika tilhneigingu til að velja karlkyn á 'N manns' umfram hvorugkyn
+$score(-2) Manns_hk/fall
 
 # Hér ganga beygjanleg töluorð ekki (?'fjórir manns')
 Manns/fall →
