@@ -34,7 +34,7 @@
 
 """
 
-from typing import cast, Dict, Set, Tuple, Iterable
+from typing import cast, Dict, Set, Tuple, List, Union, Iterable, Optional
 
 import os
 import time
@@ -63,6 +63,7 @@ from .grammar import (
     GrammarError,
 )
 from .baseparser import Base_Parser
+from .bindb import BIN_Meaning
 from .version import __version__
 
 # This is the base path where we expect to find the Reynir.grammar file
@@ -701,7 +702,7 @@ class BIN_Token(Token):
     _MEANING_CACHE = {}  # type: Dict[str, int]
     _VARIANT_CACHE = {}  # type: Dict[str, Set[str]]
 
-    def __init__(self, t, original_index):
+    def __init__(self, t: Tok, original_index: int) -> None:
 
         # Here, we convert a token coming from the Tokenizer (TOK class)
         # to a token object that will be seen by the parser and used to
@@ -744,16 +745,16 @@ class BIN_Token(Token):
         self._matching_func = BIN_Token._MATCHING_FUNC[self.t0]
 
     @property
-    def is_word(self):
+    def is_word(self) -> bool:
         return self.t0 == TOK.WORD
 
     @property
-    def lower(self):
+    def lower(self) -> str:
         """ Return the text for this property, in lower case """
         return self.t1_lower
 
     @property
-    def index(self):
+    def index(self) -> int:
         """ Return the original index of the corresponding token within the sentence """
         return self._index
 
@@ -763,7 +764,7 @@ class BIN_Token(Token):
         return self._error
 
     @property
-    def dump(self):
+    def dump(self) -> str:
         """ Serialize the token as required for text dumping of trees """
         if self.t0 == TOK.WORD:
             # Simple case; no token kind or auxiliary information dumped
@@ -775,7 +776,7 @@ class BIN_Token(Token):
         )
 
     @classmethod
-    def fbits(cls, beyging):
+    def fbits(cls, beyging: str) -> int:
         """ Convert a 'beyging' field from BIN to a set of fbits """
         bit = cls.FBIT
         return reduce(
@@ -783,7 +784,7 @@ class BIN_Token(Token):
         )
 
     @classmethod
-    def get_fbits(cls, beyging):
+    def get_fbits(cls, beyging: str) -> int:
         """ Get the (cached) fbits for a BIN 'beyging' field """
         fbits = cls._MEANING_CACHE.get(beyging)
         if fbits is None:
@@ -794,7 +795,7 @@ class BIN_Token(Token):
         return fbits
 
     @classmethod
-    def bin_variants(cls, beyging):
+    def bin_variants(cls, beyging: str) -> Set[str]:
         """ Return the set of variants coded in the given BÍN beyging string """
         if not beyging:
             return set()
@@ -817,7 +818,7 @@ class BIN_Token(Token):
         return vset
 
     @staticmethod
-    def mm_verb_stem(verb):
+    def mm_verb_stem(verb: str) -> str:
         """ Lookup a verb stem for a 'miðmynd' verb,
             i.e. "eignast" for "eigna" (which may have appeared
             as "eignaðist" in the text) """
@@ -828,7 +829,7 @@ class BIN_Token(Token):
         return verb if verb.endswith("st") else verb + "st"
 
     @staticmethod
-    def verb_is_strictly_impersonal(verb, form):
+    def verb_is_strictly_impersonal(verb: str, form: str) -> bool:
         """ Return True if the given verb is strictly impersonal,
             i.e. never appears with a nominative subject """
         # This is overridden in reynir_correct.checker
@@ -837,19 +838,19 @@ class BIN_Token(Token):
         return VerbSubjects.is_strictly_impersonal(verb)
 
     @staticmethod
-    def verb_cannot_be_impersonal(verb, form):
+    def verb_cannot_be_impersonal(verb: str, form: str) -> bool:
         """ Return True if this verb cannot match an so_xxx_op terminal """
         # If the verb doesn't have OP (impersonal) in its form, it
         # can't match an _op terminal
         return "OP" not in form
 
-    def verb_subject_matches(self, verb, subj):
+    def verb_subject_matches(self, verb: str, subj: str) -> bool:
         """ Returns True if the given subject type/case is allowed for this verb """
         return subj in self._VERB_SUBJECTS.get(verb, set())
 
     # Variants that must be present in the verb form if they
     # are present in the terminal
-    _RESTRICTIVE_VARIANTS = ("sagnb", "lhþt", "bh", "op")  # type: Tuple
+    _RESTRICTIVE_VARIANTS = ("sagnb", "lhþt", "bh", "op")
 
     def verb_matches(self, verb, terminal, form):
         """ Return True if the infinitive in question matches the verb category,
@@ -1465,7 +1466,7 @@ class VariantHandler:
         querying of terminal variants as well as mapping of variants to
         bit arrays for speed """
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         super().__init__(name)
         # Do a bit of pre-calculation to speed up various
         # checks against this terminal
@@ -1518,22 +1519,22 @@ class VariantHandler:
         else:
             self._cases = ""
 
-    def startswith(self, part):
+    def startswith(self, part: str) -> bool:
         """ Returns True if the terminal name starts with the given string """
         return self._first == part
 
-    def matches_category(self, cat):
+    def matches_category(self, cat: str) -> bool:
         """ Returns True if the terminal matches a particular category
             (overridden in BIN_LiteralTerminal) """
         return self._first == cat
 
-    def matches_first(self, t_kind, t_val, t_lit):
+    def matches_first(self, t_kind: str, t_val: str, t_lit: str) -> bool:
         """ Returns True if the first part of the terminal name matches the
             given word category """
         # Convert 'kk', 'kvk', 'hk' to 'no' before doing the compare
         return self._first == BIN_Token.KIND.get(t_kind, t_kind)
 
-    def matches_token_meaning(self, token):
+    def matches_token_meaning(self, token: BIN_Token) -> Union[bool, BIN_Meaning]:
         """ Return the meaning of the token which matches this terminal,
             if any, or False if none """
         for m in token.t2:
@@ -1861,25 +1862,24 @@ class BIN_Nonterminal(Nonterminal):
 
     """ Subclass of Nonterminal with BÍN-specific convenience functions """
 
-    def __init__(self, name, fname, line):
+    def __init__(self, name: str, fname: str, line: int) -> None:
         super().__init__(name, fname, line)
         # Optimized check for whether this is a noun phrase nonterminal
         self._is_noun_phrase = name.startswith("Nl")
+        self._parts = None  # type: Optional[List[str]]
 
     @property
-    def is_noun_phrase(self):
+    def is_noun_phrase(self) -> bool:
         """ Return True if this nonterminal denotes a noun phrase """
         return self._is_noun_phrase
 
     @property
-    def first(self):
+    def first(self) -> str:
         """ Return the initial part (before any underscores) of the nonterminal name """
         # Do this on demand
-        try:
-            return self._parts[0]
-        except AttributeError:
+        if self._parts is None:
             self._parts = self.name.split("_")
-            return self._parts[0]
+        return self._parts[0]
 
 
 class BIN_Grammar(Grammar):
