@@ -63,7 +63,7 @@ from .grammar import (
     GrammarError,
 )
 from .baseparser import Base_Parser
-from .version import __version__
+from .version import __version__ as package_version
 
 # This is the base path where we expect to find the Reynir.grammar file
 _PATH = os.path.dirname(__file__)
@@ -1926,9 +1926,6 @@ class BIN_Parser(Base_Parser):
     _grammar_ts = None  # type: float
     _grammar_class = BIN_Grammar
 
-    # BIN_Parser version - change when logic is modified so that it
-    # affects the parse tree
-    _VERSION = __version__
     _GRAMMAR_NAME = "Reynir.grammar"
     _GRAMMAR_FILE = os.path.join(_PATH, _GRAMMAR_NAME)
     _GRAMMAR_BINARY_FILE = _GRAMMAR_FILE + ".bin"
@@ -1990,9 +1987,9 @@ class BIN_Parser(Base_Parser):
 
     @property
     def version(self):
-        """ Return a composite version string from BIN_Parser and Parser """
+        """ Return a composite version string w. grammar file date + package version """
         ftime = str(self.grammar.file_time)[0:19]  # YYYY-MM-DD HH:MM:SS
-        return ftime + "/" + BIN_Parser._VERSION + "/" + super()._VERSION
+        return ftime + "/" + package_version
 
     @staticmethod
     def _create_wrapped_token(t: Tok, ix: int) -> BIN_Token:
