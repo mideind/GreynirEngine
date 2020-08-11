@@ -70,9 +70,6 @@ class Base_Parser:
         possible parses. The parses uses an optimized Earley algorithm.
     """
 
-    # Parser version - change when logic changes so that output is affected
-    _VERSION = "1.0"
-
     def __init__(self) -> None:
         self._root = None
         self._nt_dict = {}  # type: Dict[int, Optional[List[_PackedProduction]]]
