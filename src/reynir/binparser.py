@@ -732,7 +732,7 @@ class BIN_Token(Token):
 
         # Copy error information from the original token, if any
         try:
-            self._error = t.error
+            self._error = t.error  # type: ignore
         except AttributeError:
             self._error = None
 
@@ -1467,20 +1467,21 @@ class VariantHandler:
         bit arrays for speed """
 
     def __init__(self, name: str) -> None:
-        super().__init__(name)
+        super().__init__(name)  # type: ignore
         # Do a bit of pre-calculation to speed up various
         # checks against this terminal
         # pylint: disable=no-member
-        q = self._name[0]
+        n = self._name  # type: ignore
+        q = n[0]
         if q in "\"'":
             # Literal terminal: be careful since the first (literal)
             # part, within quotes, may contain underscores
-            ix = self._name.rfind(q)
+            ix = n.rfind(q)
             if ix < 0:
                 raise GrammarError("Malformed literal terminal name '{0}'".format(name))
-            lit = self._name[0 : ix + 1]
+            lit = n[0 : ix + 1]
             assert lit[0] == q and lit[-1] == q
-            rest = self._name[ix + 1 :]
+            rest = n[ix + 1 :]
             parts = [lit]
             if rest:
                 if rest[0] != "_" or len(rest) < 2:
@@ -1489,7 +1490,7 @@ class VariantHandler:
                     )
                 parts += rest[1:].split("_")
         else:
-            parts = self._name.split("_")
+            parts = n.split("_")
         self._first = parts[0]
         # Look up matching function in WordMatchers
         self._matcher = getattr(
