@@ -1,6 +1,6 @@
 /*
 
-   Reynir: Natural language processing for Icelandic
+   Greynir: Natural language processing for Icelandic
 
    C++ Earley parser module
 
@@ -713,9 +713,9 @@ BOOL Grammar::readBinary(const CHAR* pszFilename)
    UINT n = f.read(abSignature, sizeof(abSignature));
    if (n < sizeof(abSignature))
       return false;
-   // Check the signature - should start with 'Reynir '
-   if (memcmp(abSignature, "Reynir ", 7) != 0) {
-#ifdef DEBUG      
+   // Check the signature - should start with 'Greynir'
+   if (memcmp(abSignature, "Greynir", 7) != 0) {
+#ifdef DEBUG
       printf("Signature mismatch\n");
 #endif      
       return false;

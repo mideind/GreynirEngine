@@ -777,7 +777,7 @@ forms of the phrase, as required in various contexts.
 
         :param str np_string: The text string containing the noun phrase
             (*nafnliður*). The noun phrase must conform to the grammar
-            specified for the ``Nl`` nonterminal in ``Reynir.grammar``.
+            specified for the ``Nl`` nonterminal in ``Greynir.grammar``.
             This grammar allows e.g. number, adjective and adverb prefixes,
             referential phrases (*...sem...*) and prepositional
             phrases (*...í...*). Examples of valid noun phrases include:

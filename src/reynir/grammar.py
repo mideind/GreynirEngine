@@ -1,6 +1,6 @@
 """
 
-    Reynir: Natural language processing for Icelandic
+    Greynir: Natural language processing for Icelandic
 
     Grammar module
 
@@ -28,7 +28,7 @@
     nonterminals and terminals. A terminal can match a token of
     input.
 
-    In Reynir grammars, nonterminals always start with an uppercase letter.
+    In Greynir grammars, nonterminals always start with an uppercase letter.
     Terminals may be identifiers starting with lowercase letters, or
     literals enclosed within single or double quotes. Epsilon (empty)
     productions are allowed and denoted by 0.
@@ -612,7 +612,7 @@ class Grammar:
             if Settings.DEBUG:
                 print("Writing binary grammar file {0}".format(fname))
             # Version header
-            f.write("Reynir 00.00.01\n".encode("ascii"))  # 16 bytes total
+            f.write("Greynir00.00.01\n".encode("ascii"))  # 16 bytes total
             num_nt = self.num_nonterminals
             # Number of terminals and nonterminals in grammar
             f.write(struct.pack("<II", self.num_terminals, num_nt))
@@ -1445,7 +1445,7 @@ if __name__ == "__main__":
     # before we parse the grammar, since they are used in error checking
     Abbreviations.initialize()
 
-    fname = "Reynir.grammar"
+    fname = "Greynir.grammar"
     args = sys.argv
     if len(args) == 2:
         fname = args[1]

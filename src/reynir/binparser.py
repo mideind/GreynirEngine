@@ -1,6 +1,6 @@
 """
 
-    Reynir: Natural language processing for Icelandic
+    Greynir: Natural language processing for Icelandic
 
     BIN parser module
 
@@ -26,7 +26,7 @@
     class used for parsing text.
 
     BIN_Parser implements the logic to glue the Earley/C++ parser in
-    Fast_Parser to the context free grammar from Reynir.grammar and the
+    Fast_Parser to the context free grammar from Greynir.grammar and the
     BÍN word tokens with their part-of-speech annotations (meanings).
 
     BIN refers to 'Beygingarlýsing íslensks nútímamáls', the database of
@@ -66,7 +66,7 @@ from .baseparser import Base_Parser
 from .bindb import BIN_Meaning
 from .version import __version__ as package_version
 
-# This is the base path where we expect to find the Reynir.grammar file
+# This is the base path where we expect to find the Greynir.grammar file
 _PATH = os.path.dirname(__file__)
 
 
@@ -1917,17 +1917,17 @@ class BIN_Grammar(Grammar):
 class BIN_Parser(Base_Parser):
 
     """ BIN_Parser parses sentences according to the Icelandic
-        grammar in the Reynir.grammar file. It subclasses Parser
+        grammar in the Greynir.grammar file. It subclasses Parser
         and wraps the interface between the BIN grammatical
         data on one hand and the tokens and grammar terminals on
         the other. """
 
-    # A singleton instance of the parsed Reynir.grammar
+    # A singleton instance of the parsed Greynir.grammar
     _grammar = None  # type: BIN_Grammar
     _grammar_ts = None  # type: float
     _grammar_class = BIN_Grammar
 
-    _GRAMMAR_NAME = "Reynir.grammar"
+    _GRAMMAR_NAME = "Greynir.grammar"
     _GRAMMAR_FILE = os.path.join(_PATH, _GRAMMAR_NAME)
     _GRAMMAR_BINARY_FILE = _GRAMMAR_FILE + ".bin"
 
@@ -1983,7 +1983,7 @@ class BIN_Parser(Base_Parser):
 
     @property
     def grammar(self):
-        """ Return the grammar loaded from Reynir.grammar """
+        """ Return the grammar loaded from Greynir.grammar """
         return self._grammar
 
     @property

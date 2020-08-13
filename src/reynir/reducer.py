@@ -1,6 +1,6 @@
 """
 
-    Reynir: Natural language processing for Icelandic
+    Greynir: Natural language processing for Icelandic
 
     Reducer module
 
@@ -35,9 +35,9 @@
     preferred than other categories, etc.);
 
   * Third, production priorities within nonterminals, as specified
-    using > signs between productions in Reynir.grammar;
+    using > signs between productions in Greynir.grammar;
 
-  * Fourth, scores explicitly assigned to nonterminals in Reynir.grammar
+  * Fourth, scores explicitly assigned to nonterminals in Greynir.grammar
     and verb forms in Verbs.conf using the $score() pragma;
 
   * Fifth, verb-preposition matching where particular combinations
@@ -257,7 +257,7 @@ class _ReductionScope:
                 # We will be adjusting the result: make sure we do so on
                 # a separate dict copy (we don't want to clobber the child's dict)
                 # Get score adjustment for this nonterminal, if any
-                # (This is the $score(+/-N) pragma from Reynir.grammar)
+                # (This is the $score(+/-N) pragma from Greynir.grammar)
                 sc["sc"] += self.reducer._score_adj.get(nt, 0)
 
                 if nt.has_tag("apply_length_bonus"):

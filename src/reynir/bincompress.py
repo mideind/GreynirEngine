@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 
-    Reynir: Natural language processing for Icelandic
+    Greynir: Natural language processing for Icelandic
 
     BÍN compressor module
 
@@ -35,7 +35,7 @@
     When invoked from the command line, bincompress.py reads the files
     ord.csv (original from BÍN), ord.auka.csv (additional vocabulary),
     and ord.add.csv (generated from config/Vocab.conf by the program utils/vocab.py
-    in the Reynir repository).
+    in the Greynir repository).
 
     ************************************************************************
 
@@ -52,7 +52,7 @@
     Miðeind ehf. is a licensee of the BÍN data in accordance with the above
     mentioned terms. With reference to article 3 of the license terms, the data
     is redistributed in a proprietary binary format, exclusively as an integral
-    part of the Reynir project. Any subsequent distribution of this
+    part of the Greynir project. Any subsequent distribution of this
     data must be done only in full compliance with the original BÍN license
     terms.
 
@@ -336,7 +336,7 @@ class BIN_Compressor:
 
     """
 
-    VERSION = b"Reynir 001.04.00"
+    VERSION = b"Reynir 001.04.00"  # !!! Modify to Greynir at a convenient opportunity
     assert len(VERSION) == 16
 
     def __init__(self):
@@ -1191,7 +1191,7 @@ class BIN_Compressed:
 
 if __name__ == "__main__":
     # When run as a main program, generate a compressed binary file
-    print("Welcome to the Reynir compressed vocabulary file generator")
+    print("Welcome to the Greynir compressed vocabulary file generator")
 
     # Read BÍN errata and deletions from BinErrata.conf
     from settings import Settings, BinErrata, BinDeletions  # type: ignore

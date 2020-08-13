@@ -1,6 +1,6 @@
 """
 
-    Reynir: Natural language processing for Icelandic
+    Greynir: Natural language processing for Icelandic
 
     SimpleTree module
 
@@ -22,7 +22,7 @@
     This module implements SimpleTree, a wrapper class for simplified,
     normalized parse trees. It also implements SimpleTreeBuilder,
     a class that maps detailed parse trees corresponding to the CFG
-    in Reynir.grammar to the simplified, normalized tree schema.
+    in Greynir.grammar to the simplified, normalized tree schema.
 
     SimpleTree instances can be queried for pattern matches. The pattern
     matching functionality is implemented in matcher.py.

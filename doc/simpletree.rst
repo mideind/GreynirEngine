@@ -239,7 +239,7 @@ head (top) node, as well as about its children and contained subtrees.
 
         Example::
 
-            from reynir import Reynir
+            from reynir import Greynir
             g = Greynir()
             s = g.parse_single("Jón greiddi bænum 10 milljónir króna.")
             print(s.tree.flat_with_all_variants)

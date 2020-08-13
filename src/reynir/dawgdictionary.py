@@ -1,5 +1,5 @@
 """
-    Reynir: Natural language processing for Icelandic
+    Greynir: Natural language processing for Icelandic
 
     Compound word analyzer
 
