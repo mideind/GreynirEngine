@@ -1597,6 +1597,7 @@ class DefaultPipeline:
             self.parse_phrases_2,
             self.parse_phrases_3,
             self.disambiguate_phrases,
+            self.final_correct,
         ]  # type: List[PhaseFunction]
 
     def tokenize_without_annotation(self) -> TokenIterator:
@@ -1641,6 +1642,10 @@ class DefaultPipeline:
     def disambiguate_phrases(self, stream: TokenIterator) -> TokenIterator:
         """ Eliminate very uncommon meanings """
         return disambiguate_phrases(stream, self._token_ctor)
+
+    def final_correct(self, stream: TokenIterator) -> TokenIterator:
+        """ Late-stage token correction, overridden in GreynirCorrect """
+        return stream
 
     def tokenize(self) -> TokenIterator:
         """ Tokenize text in several phases, returning a generator of tokens
