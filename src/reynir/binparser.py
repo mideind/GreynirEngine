@@ -850,7 +850,7 @@ class BIN_Token(Token):
 
     # Variants that must be present in the verb form if they
     # are present in the terminal
-    _RESTRICTIVE_VARIANTS = ("sagnb", "lhþt", "bh", "op")
+    _RESTRICTIVE_VARIANTS = ("sagnb", "lhþt", "bh", "op")  # type: Tuple[str, ...]
 
     def verb_matches(self, verb, terminal, form):
         """ Return True if the infinitive in question matches the verb category,
