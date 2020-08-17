@@ -61,7 +61,7 @@ The Greynir class
     .. py:method:: submit( \
         self, text: string, parse: bool=False, *, \
         split_paragraphs: bool=False, progress_func=None, \
-        max_sent_length: int=90 \
+        max_sent_tokens: int=90 \
         ) -> _Job
 
         Submits a text string to Greynir for parsing and returns
@@ -78,8 +78,8 @@ The Greynir class
             periodically during the parse job. The call will have a single
             ``float`` parameter, ranging from ``0.0`` at the beginning of the parse
             job, to ``1.0`` at the end. Defaults to ``None``.
-        :param int max_sent_length: If given, this specifies the maximum number
-            of tokens that a sentence may contain for Greynir to attempt to parse it.
+        :param int max_sent_tokens: If given, this specifies the maximum number of
+            tokens that a sentence may contain for Greynir to attempt to parse it.
             The default is 90 tokens. In practice, sentences longer than this are
             expensive to parse in terms of memory use and processor time.
             This parameter can be used to make Greynir more brave in its parsing
@@ -102,7 +102,7 @@ The Greynir class
     .. py:method:: parse( \
         self, text: string, *, \
         progress_func = None, \
-        max_sent_length: int=90 \
+        max_sent_tokens: int=90 \
         ) -> dict
 
         Parses a text string and returns a dictionary with the parse job results.
@@ -113,7 +113,7 @@ The Greynir class
             periodically during the parse job. The call will have a single
             ``float`` parameter, ranging from ``0.0`` at the beginning of the parse
             job, to ``1.0`` at the end. Defaults to ``None``.
-        :param int max_sent_length: If given, this specifies the maximum number
+        :param int max_sent_tokens: If given, this specifies the maximum number
             of tokens that a sentence may contain for Greynir to attempt to parse it.
             The default is 90 tokens. In practice, sentences longer than this are
             expensive to parse in terms of memory use and processor time.
@@ -167,14 +167,14 @@ The Greynir class
 
     .. py:method:: parse_single( \
         self, sentence: string, *, \
-        max_sent_length_length: int=90 \
+        max_sent_tokens: int=90 \
         ) -> _Sentence
 
         Parses a single sentence from a string and returns a corresponding
         :py:class:`_Sentence` object.
 
         :param str sentence: The single sentence to parse.
-        :param int max_sent_length: If given, this specifies the maximum number
+        :param int max_sent_tokens: If given, this specifies the maximum number
             of tokens that a sentence may contain for Greynir to attempt to parse it.
             The default is 90 tokens. In practice, sentences longer than this are
             expensive to parse in terms of memory use and processor time.
@@ -224,7 +224,7 @@ The Greynir class
 
     .. py:method:: parse_tokens( \
         self, tokens: Iterable[Tok], *, \
-        max_sent_length_length: int=90 \
+        max_sent_tokens: int=90 \
         ) -> _Sentence
 
         Parses a single sentence from an iterable of tokens,
