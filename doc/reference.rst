@@ -59,7 +59,7 @@ The Greynir class
             package for further information.
 
     .. py:method:: submit( \
-        self, text: string, parse: bool=False, *, \
+        self, text: str, parse: bool=False, *, \
         split_paragraphs: bool=False, progress_func=None, \
         max_sent_tokens: int=90 \
         ) -> _Job
@@ -100,7 +100,7 @@ The Greynir class
         the parse job.
 
     .. py:method:: parse( \
-        self, text: string, *, \
+        self, text: str, *, \
         progress_func = None, \
         max_sent_tokens: int=90 \
         ) -> dict
@@ -166,7 +166,7 @@ The Greynir class
 
 
     .. py:method:: parse_single( \
-        self, sentence: string, *, \
+        self, sentence: str, *, \
         max_sent_tokens: int=90 \
         ) -> _Sentence
 
