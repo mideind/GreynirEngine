@@ -37,7 +37,7 @@
 
 """
 
-from typing import List, Dict, Any, Callable
+from typing import List, Dict, Any, Callable, TypeVar, Union
 
 from heapq import nsmallest
 from operator import itemgetter
@@ -135,13 +135,24 @@ class LFU_Cache:
             return result
 
 
-def cached(func):
+# Define a type variable to allow MyPy to infer the relationship
+# between intermediate types in cached and cached_property
+_T = TypeVar('_T')
+_CachedFunc = Callable[..., _T]
+
+# Define a unique singleton for use as a sentinel
+_NA = object()
+
+
+def cached(func: _CachedFunc) -> _CachedFunc:
     """ A decorator for caching function calls """
     @wraps(func)
-    def wrapper(*args, **kwargs):
-        if not hasattr(func, "_cache"):
-            func._cache = func(*args, **kwargs)
-        return func._cache
+    def wrapper(*args, **kwargs) -> _T:
+        val = getattr(func, "_cache", _NA)
+        if val is _NA:
+            val = func(*args, **kwargs)
+            setattr(func, "_cache", val)
+        return val
     return wrapper
 
 
@@ -149,15 +160,14 @@ class cached_property:
 
     """ A decorator for caching instance properties """
 
-    def __init__(self, func: Callable[[Any], Any]) -> None:
+    def __init__(self, func: _CachedFunc) -> None:
         self.__doc__ = getattr(func, "__doc__")
         self.func = func
 
-    def __get__(self, obj, cls) -> Any:
+    def __get__(self, obj, cls) -> Union["cached_property", _T]:
         if obj is None:
             return self
         # Get the property value and put it into the instance's
         # dict instead of the original function
-        value = obj.__dict__[self.func.__name__] = self.func(obj)
-        return value
-
+        val = obj.__dict__[self.func.__name__] = self.func(obj)
+        return val
