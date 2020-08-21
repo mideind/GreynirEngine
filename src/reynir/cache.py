@@ -98,7 +98,7 @@ class LFU_Cache:
 
     class Counter(dict):
         """ Mapping where default values are zero """
-        def __missing__(self, key):
+        def __missing__(self, key: Any) -> int:
             return 0
 
     def __init__(self, maxsize: int=LFU_DEFAULT) -> None:
@@ -160,11 +160,11 @@ class cached_property:
 
     """ A decorator for caching instance properties """
 
-    def __init__(self, func: _CachedFunc) -> None:
+    def __init__(self, func):
         self.__doc__ = getattr(func, "__doc__")
         self.func = func
 
-    def __get__(self, obj, cls) -> Union["cached_property", _T]:
+    def __get__(self, obj, cls):
         if obj is None:
             return self
         # Get the property value and put it into the instance's
