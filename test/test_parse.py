@@ -931,14 +931,15 @@ def test_terminal_types(r):
         variants=["nf"],
     ),
 
+
 def test_single(r):
     s = r.parse_single("Jón greiddi bænum 10 milljónir króna í skaðabætur.")
     check_terminals(s.terminals)
     try:
-        _ = r.parse_single("")
-        assert False, "Should have raised StopIteration"
+        s = r.parse_single("")
+        assert s is None
     except StopIteration:
-        pass
+        assert False, "Should not have raised StopIteration"
     s = r.parse_single("kötturinn lömdu hesturinn")
     assert s.combinations == 0
     assert s.tree is None
