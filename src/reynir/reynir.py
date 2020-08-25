@@ -753,31 +753,40 @@ class Greynir:
     def parse_single(
         self, sentence: str, *,
         max_sent_tokens: int=DEFAULT_MAX_SENT_TOKENS
-    ) -> _Sentence:
+    ) -> Optional[_Sentence]:
         """ Convenience function to parse a single sentence only """
         tokens = self.tokenize(sentence)
         job = _Job(self, tokens, parse=True, max_sent_tokens=max_sent_tokens)
-        # Raises StopIteration if no sentence was parsed
-        return next(iter(job))
+        # Returns None if no sentence could be extracted from the text
+        try:
+            return next(iter(job))
+        except StopIteration:
+            return None
 
     def parse_tokens(
         self, tokens: Iterable[Tok], *,
         max_sent_tokens: int=DEFAULT_MAX_SENT_TOKENS
-    ) -> _Sentence:
+    ) -> Optional[_Sentence]:
         """ Convenience function to parse a single sentence from tokens """
         job = _Job(self, tokens, parse=True, max_sent_tokens=max_sent_tokens)
-        # Raises StopIteration if no sentence was parsed
-        return next(iter(job))
+        # Returns None if no sentence could be extracted from the text
+        try:
+            return next(iter(job))
+        except StopIteration:
+            return None
 
-    def parse_noun_phrase(self, noun_phrase: str) -> _NounPhrase:
+    def parse_noun_phrase(self, noun_phrase: str) -> Optional[_NounPhrase]:
         """ Utility function to parse a noun phrase. Note that in most
             cases it is more convenient to use the NounPhrase class
             for this purpose. """
         tokens = self.tokenize(noun_phrase)
         # Use a _Job_NP to generate _NounPhrase objects instead of _Sentence objects
         job = _Job_NP(self, tokens)
-        # Raises StopIteration if no sentence was parsed
-        return cast(_NounPhrase, next(iter(job)))
+        # Returns None if no noun phrase could be extracted from the text
+        try:
+            return cast(_NounPhrase, next(iter(job)))
+        except StopIteration:
+            return None
 
     @classmethod
     def cleanup(cls) -> None:
