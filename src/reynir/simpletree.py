@@ -1,6 +1,6 @@
 """
 
-    Reynir: Natural language processing for Icelandic
+    Greynir: Natural language processing for Icelandic
 
     SimpleTree module
 
@@ -22,14 +22,14 @@
     This module implements SimpleTree, a wrapper class for simplified,
     normalized parse trees. It also implements SimpleTreeBuilder,
     a class that maps detailed parse trees corresponding to the CFG
-    in Reynir.grammar to the simplified, normalized tree schema.
+    in Greynir.grammar to the simplified, normalized tree schema.
 
     SimpleTree instances can be queried for pattern matches. The pattern
     matching functionality is implemented in matcher.py.
 
 """
 
-from typing import Dict, List, Tuple, Sequence, Union, Any
+from typing import Dict, List, Tuple, Sequence, Union, Any, Optional, Callable
 
 import re
 from pprint import pformat
@@ -39,7 +39,7 @@ from tokenizer import TOK, correct_spaces
 
 from .cache import cached_property
 from .settings import StaticPhrases
-from .binparser import BIN_Token, augment_terminal, canonicalize_token
+from .binparser import BIN_Token, BIN_Terminal, augment_terminal, canonicalize_token
 from .fastparser import ParseForestNavigator
 from .bintokenizer import (
     describe_token,
@@ -48,10 +48,13 @@ from .bintokenizer import (
     MULTIPLIERS,
     DECLINABLE_MULTIPLIERS,
 )
-from .bindb import BIN_Db
+from .bindb import BIN_Db, BIN_Meaning
 from .ifdtagger import IFD_Tagset
 from .matcher import match_pattern
 
+
+# Type for map from token index to (terminal, meaning) tuple
+TerminalMap = Dict[int, Tuple[BIN_Terminal, Optional[BIN_Meaning]]]
 
 # Default tree simplifier configuration maps
 
@@ -1468,13 +1471,13 @@ class SimpleTree:
         return [""] if self._lemma else []
 
     @property
-    def fl(self):
+    def fl(self) -> str:
         """ Return the BÍN 'fl' field of this node, if it is a terminal,
             or an empty string otherwise """
         return self._head.get("f", "")
 
     @cached_property
-    def text(self):
+    def text(self) -> str:
         """ Return the original text contained within this subtree """
         if self.is_terminal:
             # Terminal node: return own text
@@ -1483,7 +1486,7 @@ class SimpleTree:
         return " ".join([ch.text for ch in self.children if ch.text])
 
     @cached_property
-    def tidy_text(self):
+    def tidy_text(self) -> str:
         """ Return the text contained within this subtree
             after correcting its spacing """
         if self.is_terminal:
@@ -1492,7 +1495,7 @@ class SimpleTree:
         # Correct the spaced text coming from the self.text attribute
         return correct_spaces(self.text)
 
-    def _np_form(self, prop_func):
+    def _np_form(self, prop_func: Callable[["SimpleTree"], str]) -> str:
         """ Return a nominative form of the noun phrase (or noun/adjective terminal)
             contained within this subtree. Prop is a property accessor that returns
             either x.nominative, x.indefinite or x.canonical. """
@@ -1915,7 +1918,7 @@ class Annotator(ParseForestNavigator):
     """ Utility class to navigate a parse forest and annotate the
         original token list with the corresponding terminal matches """
 
-    def __init__(self, tmap):
+    def __init__(self, tmap: TerminalMap) -> None:
         super().__init__()
         self._tmap = tmap
 

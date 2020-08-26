@@ -1,6 +1,6 @@
 """
 
-    Reynir: Natural language processing for Icelandic
+    Greynir: Natural language processing for Icelandic
 
     Dictionary-aware tokenization layer
 
@@ -1555,7 +1555,7 @@ class Bin_TOK(TOK):
 
     """ Override the TOK class from tokenizer.py to allow a dummy
         token parameter to be passed into token constructors where
-        required. This again allows errtokenizer.py in ReynirCorrect
+        required. This again allows errtokenizer.py in GreynirCorrect
         to add token error information."""
 
     @staticmethod
@@ -1597,6 +1597,7 @@ class DefaultPipeline:
             self.parse_phrases_2,
             self.parse_phrases_3,
             self.disambiguate_phrases,
+            self.final_correct,
         ]  # type: List[PhaseFunction]
 
     def tokenize_without_annotation(self) -> TokenIterator:
@@ -1609,7 +1610,7 @@ class DefaultPipeline:
 
     def correct_tokens(self, stream: TokenIterator) -> TokenIterator:
         """ Token-level correction can be plugged in here (default stack doesn't do
-            any corrections, but this is overridden in ReynirCorrect) """
+            any corrections, but this is overridden in GreynirCorrect) """
         return stream
 
     def annotate(self, stream: TokenIterator) -> TokenIterator:
@@ -1623,7 +1624,7 @@ class DefaultPipeline:
 
     def check_spelling(self, stream: TokenIterator) -> TokenIterator:
         """ Spelling correction can be plugged in here (default stack doesn't do
-            any corrections, but this is overridden in ReynirCorrect) """
+            any corrections, but this is overridden in GreynirCorrect) """
         return stream
 
     def parse_phrases_1(self, stream: TokenIterator) -> TokenIterator:
@@ -1641,6 +1642,10 @@ class DefaultPipeline:
     def disambiguate_phrases(self, stream: TokenIterator) -> TokenIterator:
         """ Eliminate very uncommon meanings """
         return disambiguate_phrases(stream, self._token_ctor)
+
+    def final_correct(self, stream: TokenIterator) -> TokenIterator:
+        """ Late-stage token correction, overridden in GreynirCorrect """
+        return stream
 
     def tokenize(self) -> TokenIterator:
         """ Tokenize text in several phases, returning a generator of tokens

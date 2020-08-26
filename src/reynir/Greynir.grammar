@@ -1,9 +1,9 @@
 #
-# Reynir.grammar
+# Greynir.grammar
 #
 # A context-free grammar for modern Icelandic
 #
-# Reynir - a natural language processor for Icelandic
+# Greynir - a natural language processor for Icelandic
 #
 # Copyright (C) 2020 Miðeind ehf.
 #
@@ -85,7 +85,7 @@
 # For the Sublime Text editor, a syntax highlighting specification
 # for .grammar files, grammar.YAML-tmLanguage, is available.
 # It can be found in the GitHub repo subdirectory
-# https://github.com/mideind/Reynir/tree/master/resources
+# https://github.com/mideind/Greynir/tree/master/resources
 # and its use is highly recommended.
 
 
@@ -97,10 +97,10 @@
 
 # Case (nom, acc, dat, poss) variant
 /fall = nf þf þgf ef
-/aukafall = þf þgf ef # All cases except nominative
+/aukafall = þf þgf ef   # All cases except nominative
 /aukafall2 = þf þgf ef
-/afall = nf þf þgf ef # Second case (andlagsfall) for dual argument verbs
-/sfall = sþf sþgf sef # Adjective subject case
+/afall = nf þf þgf ef   # Second case (andlagsfall) for dual argument verbs
+/sfall = sþf sþgf sef   # Adjective subject case
 
 # Number (singular/plural) variant
 /tala = et ft
@@ -176,9 +176,9 @@ Heimild_ef/tala/pers →
     Nl_ef/tala/pers
 
 # Koma í veg fyrir að þessir hnútar séu bestaðir burt
-$score(+1) Heimild_nf/tala/pers
-$score(+1) Heimild_þgf/tala/pers
-$score(+1) Heimild_ef/tala/pers
+$tag(keep) Heimild_nf/tala/pers
+$tag(keep) Heimild_þgf/tala/pers
+$tag(keep) Heimild_ef/tala/pers
 
 Sagt → Forskeyti? Yfirsetning StLiður* 
 
@@ -427,7 +427,7 @@ Samanburðarsetning →
     Samanburðartenging BeygingarliðurÁnUmröðunar # Bara vh.
     | Samanburðartenging BeygingarliðurÁnF
 
-# Ath.: Skilyrðissetning er notuð í Reynir/processors/entities.py;
+# Ath.: Skilyrðissetning er notuð í Greynir/processors/entities.py;
 # ef nafni hnútsins er breytt þarf að breyta þar einnig
 Skilyrðissetning → 
     Skilyrðistenging BeygingarliðurÁnUmröðunar
@@ -1216,8 +1216,6 @@ SetningAukafallForgangur →
 
 BeygingarliðurLoÞgf →
     NlFrumlag_þgf HjSögnLhÞt_et_p3 'það:pfn'_hk_et_nf? FsAtv? LoÞgfNh
-
-$score(+0) BeygingarliðurLoÞgf
 
 # Lýsingarorð sem geta staðið með aukafalli og nafnháttarsetningu
 LoÞgfNh →
@@ -6781,7 +6779,7 @@ $score(-4) VillaFjöldiHluti/fall/kyn
 # Rules for common grammar errors
 #
 # The following rules are exclusive to the
-# grammar checker (in the ReynirCorrect package)
+# grammar checker (in the GreynirCorrect package)
 #
 # ----------------------------------------------
 

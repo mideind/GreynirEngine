@@ -1,6 +1,6 @@
 """
 
-    Reynir: Natural language processing for Icelandic
+    Greynir: Natural language processing for Icelandic
 
     IFD tagger module
 
@@ -19,7 +19,7 @@
     along with this program.  If not, see http://www.gnu.org/licenses/.
 
 
-    This module implements a class that handles conversion from Reynir's
+    This module implements a class that handles conversion from Greynir's
     terminal variants to the Icelandic Frequency Dictionary (IFD) tagset.
 
     The tagset is described here: http://www.malfong.is/files/ot_tagset_files_is.pdf
@@ -419,7 +419,7 @@ class IFD_Tagset:
 
     def _t(self):
         # if self._cat == "töl" and self._fl == "ob":
-        # Tekið út eftir að mörkun var bætt við í Reynir.grammar
+        # Tekið út eftir að mörkun var bætt við í Greynir.grammar
         # Óbeygt töluorð
         #    return "ta"
         return (

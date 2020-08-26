@@ -29,7 +29,7 @@ processing over 10 million sentences in over 515.000 articles. Its
 optimized C++ parsing core is fast and efficient enough to parse
 real-world text according to a
 `context-free grammar for the Icelandic
-language <https://github.com/mideind/ReynirPackage/blob/master/src/reynir/Reynir.grammar>`_
+language <https://github.com/mideind/ReynirPackage/blob/master/src/reynir/Greynir.grammar>`_
 with over 21,000 productions.
 
 To get acquainted with Greynir, we recommend that you start with
