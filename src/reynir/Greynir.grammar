@@ -5517,7 +5517,6 @@ AlTilv →
 SemAtv → "þar:ao" | "þangað:ao" | "hingað:ao" | "þarna:ao" | "hér:ao" | "þaðan:ao"
         | "hvar:ao" | "hvaðan:ao" | "hvenær:ao" | "hvernig:ao" | "hvert:ao" | "hversu:ao"
 
-
 SamsettFsAtv →
     # 'hvorki í Frakklandi né annars staðar í Evrópusambandinu'
     Hvorki EinEinföldFsAtv+ Né EinEinföldFsAtv
@@ -5691,6 +5690,9 @@ EinnAl →
     | 'allur:fn'_et_þf_kk 'tími:kk'_gr_et_þf # Allan tímann var mér ljóst að þetta var vonlaust
     | 'allur:fn'_ft_þf_kk "jafna:ao"    # Alla jafna eru menn rólegir yfir þessu
     | 'heill:lo'_sb_nf_et_hk "yfir:ao"  # Heilt yfir eru menn rólegir yfir þessu
+
+    | ao_zlega so_lhþt_nf_hk_et         # Hreinskilnislega sagt, gróflega séð
+    | lo_vb_nf_hk_et_zlega so_lhþt_nf_hk_et # Stórkarlalega ályktað
 
 $tag(no_prep) EinnAl        # Engar forsetningar hér inni - óþarfi að skoða dótturgreinar
 
@@ -6604,7 +6606,7 @@ TímaLo/fall/tala/kyn → 'rúmur:lo'_sb/fall/tala/kyn | 'tæpur:lo'_sb/fall/tal
 $score(+14) TímaLo/fall/tala/kyn
 
 # Hjálparreglur
-HinnSá/fall → 'sá:fn'_et_kk/fall | 'hinn:gr'_et_kk/fall
+HinnSá/fall → 'sá:fn'_et_kk/fall | 'hinn:gr'_et_kk/fall | 'aðfaranótt:kvk'_et/fall
 
 # Stigin hér þurfa að yfirvinna EinkunnFornafn, sem skeytir
 # 'þann' aftan við nafnlið

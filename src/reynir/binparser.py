@@ -143,9 +143,11 @@ class WordMatchers:
                 if v == "gr":
                     # Do not match a demand for the definitive article ('greinir')
                     return False
-            elif BIN_Token.VARIANT[v] not in m.beyging:
-                # Required case or number not found: no match
-                return False
+            else:
+                bin_string = BIN_Token.VARIANT.get(v)
+                if bin_string and bin_string not in m.beyging:
+                    # Required case or number not found: no match
+                    return False
         return True
 
     @staticmethod
@@ -171,6 +173,14 @@ class WordMatchers:
             if scase not in scases:
                 # This adjective cannot take an argument in the given case
                 return False
+        if terminal.has_any_vbits(BIN_Token.VBIT_ENDING):
+            # The terminal has a word or lemma ending constraint,
+            # such as _zlega: we don't match unless the meaning is compatible
+            for v in terminal.variants:
+                if v[0] == "z" and not m.ordmynd.endswith(v[1:]):
+                    return False
+                elif v[0] == "x" and not m.stofn.endswith(v[1:]):
+                    return False
         if m.beyging == "-":
             # Abbreviations for adjectives have no declension info,
             # so we accept them irrespective of the terminal variants
@@ -240,6 +250,14 @@ class WordMatchers:
         """ Adverbs, excluding meanings explicitly marked as eo """
         if m.ordfl != "ao":
             return False
+        if terminal.has_any_vbits(BIN_Token.VBIT_ENDING):
+            # The terminal has a word or lemma ending constraint,
+            # such as _zlega: we don't match unless the meaning is compatible
+            for v in terminal.variants:
+                if v[0] == "z" and not m.ordmynd.endswith(v[1:]):
+                    return False
+                elif v[0] == "x" and not m.stofn.endswith(v[1:]):
+                    return False
         fbits = BIN_Token.get_fbits(m.beyging)
         return terminal.fbits_match(fbits)
 
@@ -500,6 +518,9 @@ class BIN_Token(Token):
         "sþf": None,
         "sþgf": None,
         "sef": None,
+        # Synthetic variants that constrain matching to particular endings
+        "x": None,  # lemma ending constraint
+        "z": None,  # word form ending constraint
     }
 
     # Make a copy of VARIANT with the past tense (þt) added
@@ -530,9 +551,13 @@ class BIN_Token(Token):
     VBIT_ABBREV = VBIT["abbrev"]
     # Adjective subject cases
     VBIT_SCASES = VBIT["sþf"] | VBIT["sþgf"] | VBIT["sef"]
+    # Word ending constraints
+    VBIT_LEMMA_ENDING = VBIT["x"]
+    VBIT_WORD_ENDING = VBIT["z"]
+    VBIT_ENDING = VBIT_LEMMA_ENDING | VBIT_WORD_ENDING
 
     # Mask the following bits off a VBIT set to get an FBIT set
-    FBIT_MASK = VBIT_ABBREV | VBIT_SUBJ | VBIT_SCASES
+    FBIT_MASK = VBIT_ABBREV | VBIT_SUBJ | VBIT_SCASES | VBIT_ENDING
 
     CASES = ["nf", "þf", "þgf", "ef"]
     CASES_SET = frozenset(CASES)
@@ -1506,8 +1531,15 @@ class VariantHandler:
         # Also map variant names to bits in self._vbits
         bit = BIN_Token.VBIT
         self._vbits = reduce(
-            lambda x, y: (x | y), (bit[v] for v in self._vset if v in bit), 0
+            lambda x, y: (x | y), (bit.get(v, 0) for v in self._vset), 0
         )
+        # Handle the ending constraint variants (_xsomething and _zsomething)
+        # specially
+        for v in self._vset:
+            if v[0] == "x":
+                self._vbits |= BIN_Token.VBIT_LEMMA_ENDING
+            elif v[0] == "z":
+                self._vbits |= BIN_Token.VBIT_WORD_ENDING
         # fbits are like vbits but leave out variants that have no BIN meaning
         self._fbits = self._vbits & (~BIN_Token.FBIT_MASK)
         # For speed, store the cases associated with a verb
