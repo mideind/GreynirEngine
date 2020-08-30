@@ -4368,6 +4368,21 @@ $score(-2) TitilEinkunn/fall/kyn
 EinnTitill/fall →
     NlTitill/fall EfLiður? FsRunaEftirNl?  # sendiherra Bandaríkjanna hérlendis, handhafi bókmenntaverðlaunanna í ár
 
+FæðingarOgDánardægur →
+    "(" Fæddur FdDags FdSamtenging Dáinn FdDags ")"
+    | "(" FdDags "-:en" FdDags ")"
+    | "(" Fæddur FdDags ")"
+    | "(" Dáinn FdDags ")"
+
+Fæddur → 'fæddur:lo' # Skst. "f."
+
+Dáinn → 'dáinn:lo' # Skst. "d."
+
+FdDags → dagsföst | ártal
+
+FdSamtenging →
+    "," | "-:en" | ";"
+
 OgTitill/fall →
     KommaEðaOg EinnTitill/fall
 
@@ -4380,6 +4395,7 @@ KommuTitill/fall →
 
 KommulausTitill/fall →
     NlTitill/fall
+    | FæðingarOgDánardægur KommuTitill/fall?
 
 # Gefa plús fyrir titla
 $score(+5) Titill/fall

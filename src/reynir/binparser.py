@@ -2042,7 +2042,7 @@ class BIN_Parser(Base_Parser):
 
 # Abbreviations and stuff that we ignore inside parentheses
 _UNKNOWN = frozenset(("e.", "d.", "þ.", "t.d.", "þ.e.", "m.a."))
-_SKIP_PARENTHESIS = frozenset(("e.", "d.", "þ."))
+_SKIP_PARENTHESIS = frozenset(("e.",))  # "d." and "þ." were removed
 
 
 def wrap_tokens(tokens, wrap_func=None):
@@ -2061,30 +2061,36 @@ def wrap_tokens(tokens, wrap_func=None):
             if they are only unknown words - perhaps starting with
             an abbreviation """
         right = left + 1
+        balance = 0
         while right < tlen:
             tok = tlist[right]
-            if tok[0] == TOK.PUNCTUATION and tok[1] == ")":
-                # Check the contents of the token list from left+1 to right-1
+            if tok[0] == TOK.PUNCTUATION:
+                # Handle nested parentheses
+                if tok[1] == "(":
+                    balance += 1
+                elif tok[1] == ")" and balance > 0:
+                    balance -= 1
+                elif tok[1] == ")":
+                    # Check the contents of the token list from left+1 to right-1
 
-                # Skip parentheses starting with "e." (English),
-                # "þ." (German) or "d." (Danish)
-                foreign = right > left + 1 and tlist[left + 1][1] in _SKIP_PARENTHESIS
+                    # Skip parentheses starting with "e." (English)
+                    foreign = right > left + 1 and tlist[left + 1][1] in _SKIP_PARENTHESIS
 
-                def is_unknown(t):
-                    """ A token is unknown if it is a TOK.UNKNOWN or if it is a
-                        TOK.WORD with no meanings """
-                    return (
-                        t[0] == TOK.UNKNOWN
-                        or (t[0] == TOK.WORD and not t[2])
-                        or t[1] in _UNKNOWN
-                    )
+                    def is_unknown(t):
+                        """ A token is unknown if it is a TOK.UNKNOWN or if it is a
+                            TOK.WORD with no meanings """
+                        return (
+                            t[0] == TOK.UNKNOWN
+                            or (t[0] == TOK.WORD and not t[2])
+                            or t[1] in _UNKNOWN
+                        )
 
-                if foreign or all(is_unknown(t) for t in tlist[left + 1 : right]):
-                    # Only unknown tokens: erase'em, including the parentheses
-                    for i in range(left, right + 1):
-                        tlist[i] = None
+                    if foreign or all(is_unknown(t) for t in tlist[left + 1 : right]):
+                        # Only unknown tokens: erase'em, including the parentheses
+                        for i in range(left, right + 1):
+                            tlist[i] = None
 
-                return right + 1
+                    return right + 1
 
             right += 1
         # No match: we're done

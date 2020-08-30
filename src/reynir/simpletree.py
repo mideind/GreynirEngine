@@ -132,6 +132,7 @@ _DEFAULT_NT_MAP = {
     # Note: NP-TITLE is referred to in the program logic below,
     # so be careful when changing it
     "Titill": "NP-TITLE",
+    "FæðingarOgDánardægur": "NP-LIFESPAN",
     "Frumlag": "NP-SUBJ",
     "NlFrumlag": "NP-SUBJ",
     "NlFrumlagÞað": "NP-SUBJ",
@@ -264,9 +265,8 @@ _DEFAULT_ID_MAP = {
     ),  # Relative clause
     "CP-ADV-TEMP": dict(name="Tíðarsetning"),  # Adverbial temporal phrase
     "CP-ADV-PURP": dict(name="Tilgangssetning"),  # Adverbial purpose phrase
-    "CP-ADV-ACK": dict(
-        name="Viðurkenningarsetning"
-    ),  # Adverbial acknowledgement phrase
+    # Adverbial acknowledgement phrase
+    "CP-ADV-ACK": dict(name="Viðurkenningarsetning"),
     "CP-ADV-CONS": dict(name="Afleiðingarsetning"),  # Adverbial consequence phrase
     "CP-ADV-CAUSE": dict(name="Orsakarsetning"),  # Adverbial causal phrase
     "CP-ADV-COND": dict(name="Skilyrðissetning"),  # Adverbial conditional phrase
@@ -274,9 +274,8 @@ _DEFAULT_ID_MAP = {
     "CP-QUOTE": dict(name="Tilvitnun"),  # Direct quote
     "CP-SOURCE": dict(name="Segjandi"),  # Quote source
     "IP": dict(name="Beygingarliður"),  # Inflectional phrase
-    "IP-INF": dict(
-        name="Beygingarliður", overrides="VP"
-    ),  # Infinitival inflectional phrase
+    # Infinitival inflectional phrase
+    "IP-INF": dict(name="Beygingarliður", overrides="VP"),
     "VP": dict(name="Sagnliður", overrides={"VP"}),
     "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
     "NP": dict(
@@ -288,6 +287,7 @@ _DEFAULT_ID_MAP = {
     "NP-ADDR": dict(name="Heimilisfang", overrides="NP"),
     "NP-COMPANY": dict(name="Fyrirtæki", overrides="NP"),
     "NP-TITLE": dict(name="Titill", overrides="NP"),
+    "NP-LIFESPAN": dict(name="Ævidægur", overrides="NP-TITLE"),
     "NP-SOURCE": dict(name="Heimild"),
     "NP-PREFIX": dict(name="Forskeyti"),
     "NP-AGE": dict(name="Aldur"),
