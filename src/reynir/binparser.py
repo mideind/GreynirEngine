@@ -237,10 +237,10 @@ class WordMatchers:
                 # Explicitly allowed, no need to check further
                 token._is_eo = True
             else:
-                # Check whether also a preposition or pronoun and return False in that case
+                # Check whether also a preposition or pronoun
+                # and return False in that case
                 token._is_eo = not (
-                    txt in Prepositions.PP
-                    or any(mm.ordfl == "fn" for mm in token.t2)
+                    txt in Prepositions.PP or any(mm.ordfl == "fn" for mm in token.t2)
                 )
         # Return True if this token cannot also match a preposition
         return token._is_eo
@@ -666,7 +666,8 @@ class BIN_Token(Token):
         ]
     )
 
-    # Words that are not eligible for interpretation as proper names, even if they are capitalized
+    # Words that are not eligible for interpretation as proper names,
+    # even if they are capitalized
     _NOT_PROPER_NAME = frozenset(
         [
             "ég",
@@ -751,7 +752,8 @@ class BIN_Token(Token):
                 self.is_compound = any("-" in m.stofn for m in self.t2)
         else:
             self.t2 = t[2]
-        self.is_upper = self.t1[0] != self.t1_lower[0]  # True if starts with upper case
+        # True if starts with upper case
+        self.is_upper = self.t1[0] != self.t1_lower[0]
         self._hash = None  # Cached hash
         self._index = original_index  # Index of original token within sentence
 
@@ -761,9 +763,10 @@ class BIN_Token(Token):
         except AttributeError:
             self._error = None
 
-        # We store a cached check of whether this is an "eo". An "eo" is an adverb (atviksorð)
-        # that cannot also be a preposition ("fs") and is therefore a possible non-ambiguous
-        # prefix to a noun ("einkunn")
+        # We store a cached check of whether this is an "eo".
+        # An "eo" is an adverb (atviksorð) that cannot also be
+        # a preposition ("fs") and is therefore a possible
+        # non-ambiguousprefix to a noun ("einkunn")
         self._is_eo = None
 
         # Cache the matching function to use with this token
@@ -982,13 +985,13 @@ class BIN_Token(Token):
                 return False
         if terminal.is_lh:
             if "VB" in form and not terminal.has_variant("vb"):
-                # We want only the strong declensions ("SB") of lhþt, not the weak ones,
-                # unless explicitly requested
+                # We want only the strong declensions ("SB") of lhþt,
+                # not the weak ones, unless explicitly requested
                 return False
         if terminal.has_variant("bh") and "ST" in form:
-            # We only want the explicit request forms (boðháttur), i.e. "bónaðu"/"bónið",
-            # not 'stýfður boðháttur' ("bóna") which causes ambiguity vs.
-            # the nominal mode (nafnháttur)
+            # We only want the explicit request forms (boðháttur),
+            # i.e. "bónaðu"/"bónið", not 'stýfður boðháttur' ("bóna")
+            # which causes ambiguity vs. the infinitive (nafnháttur)
             return False
         # Check whether the verb token can potentially match the argument number
         # of the terminal in question. If the verb is known to take fewer
@@ -996,13 +999,14 @@ class BIN_Token(Token):
         if terminal.num_variants == 0 or terminal.variant(0) not in "012":
             # No argument number: all verbs match, except...
             if terminal.is_lh:
-                # Special check for lhþt: may specify a case without it being an argument case
+                # Special check for lhþt: may specify a case without it
+                # being an argument case
                 if any(
                     terminal.has_variant(c) and BIN_Token.VARIANT[c] not in form
                     for c in BIN_Token.CASES
                 ):
-                    # Terminal specified a non-argument case but the token doesn't have it:
-                    # no match
+                    # Terminal specified a non-argument case but
+                    # the token doesn't have it: no match
                     return False
             return True
         is_mm = "MM" in form
@@ -1054,7 +1058,8 @@ class BIN_Token(Token):
         return True
 
     def matches_PERSON(self, terminal):
-        """ Handle a person name token, matching it with a person_[case]_[gender] terminal """
+        """ Handle a person name token, matching it with
+            a person_[case]_[gender] terminal """
         if terminal.startswith("sérnafn"):
             # We allow a simple person name to match a proper name (sérnafn)
             if not self.is_upper or " " in self.lower:
@@ -1174,6 +1179,14 @@ class BIN_Token(Token):
             # case and gender variants that it may have. Those are
             # for informational purposes only.
             return self.is_correct_singular_or_plural(terminal)
+
+        if tfirst == "ártal":
+            # Allow a 3 or 4 digit integer number to match an 'ártal' terminal
+            # if it is within the range 874..2199
+            if not re.match(r"[0-9]{3,4}$", self.t1):
+                return False
+            n = int(self.t2[0])
+            return 874 <= n <= 2199
 
         if tfirst not in {"töl", "to"}:
             return False
@@ -1302,11 +1315,13 @@ class BIN_Token(Token):
         return terminal.startswith("tímapunktur")
 
     def matches_TIMESTAMPABS(self, terminal):
-        """ An absolute timestamp token matches an absolute timestamp (tímapunkturfast) terminal """
+        """ An absolute timestamp token matches an absolute timestamp
+            (tímapunkturfast) terminal """
         return terminal.startswith("tímapunkturfast")
 
     def matches_TIMESTAMPREL(self, terminal):
-        """ A relative timestamp token matches a relative timestamp (tímapunkturafs) terminal """
+        """ A relative timestamp token matches a relative timestamp
+            (tímapunkturafs) terminal """
         return terminal.startswith("tímapunkturafs")
 
     def matches_ORDINAL(self, terminal):
@@ -1477,9 +1492,7 @@ class BIN_Token(Token):
     @classmethod
     def init(cls):
         # Initialize cached dictionary of verb variant forms in BIN
-        cls._VERB_FORMS = {
-            v: cls.VARIANT[v] or "" for v in cls.VERB_VARIANTS
-        }
+        cls._VERB_FORMS = {v: cls.VARIANT[v] or "" for v in cls.VERB_VARIANTS}
 
 
 BIN_Token.init()
@@ -1519,9 +1532,7 @@ class VariantHandler:
         self._first = parts[0]
         # Look up matching function in WordMatchers
         self._matcher = getattr(
-            WordMatchers,
-            "matcher_" + self._first,
-            WordMatchers.matcher_default
+            WordMatchers, "matcher_" + self._first, WordMatchers.matcher_default
         )
         # The variant set for this terminal, i.e.
         # tname_var1_var2_var3 -> { 'var1', 'var2', 'var3' }
@@ -1625,11 +1636,13 @@ class VariantHandler:
         return v in self._vset
 
     def has_vbits(self, vbits):
-        """ Return True if this terminal has (all) the variant(s) corresponding to the given bit(s) """
+        """ Return True if this terminal has (all) the variant(s)
+            corresponding to the given bit(s) """
         return (self._vbits & vbits) == vbits
 
     def has_any_vbits(self, vbits):
-        """ Return True if this terminal has any of the variant(s) corresponding to the given bit(s) """
+        """ Return True if this terminal has any of the variant(s)
+            corresponding to the given bit(s) """
         return (self._vbits & vbits) != 0
 
     def cut_fbits(self, fbits):
@@ -1649,7 +1662,8 @@ class VariantHandler:
 
     @property
     def gender(self):
-        """ Return a gender string corresponding to a variant of this terminal, if any """
+        """ Return a gender string corresponding to a variant
+            of this terminal, if any """
         if self._vbits & BIN_Token.VBIT_KK:
             return "kk"
         if self._vbits & BIN_Token.VBIT_KVK:
@@ -1776,7 +1790,8 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
                 self._cat = self._match_cat = a[1]
                 if self._cat == "stt":
                     # Hack to make 'stt' terminals match with the BÍN 'st' category
-                    # (stt is only there to mark 'sem' and 'er' specially in particular contexts)
+                    # (stt is only there to mark 'sem' and 'er'
+                    # specially in particular contexts)
                     self._match_cat = "st"
                 elif self._cat == "pfn":
                     # Hack to allow genders to be specified on pfn literal terminals
@@ -1874,7 +1889,8 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
 
     # pylint: disable=method-hidden
     def matches(self, t_kind, t_val, t_lit):
-        """ A literal terminal matches a token if the token text is identical to the literal """
+        """ A literal terminal matches a token if the token text
+            is identical to the literal """
         if self._match_cat is not None and t_kind != self._match_cat:
             # Match only the word category that was specified
             return False
@@ -1882,7 +1898,8 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
         return self._first == t_val
 
     def matches_strong(self, t_kind, t_val, t_lit):
-        """ A literal terminal matches a token if the token text is identical to the literal """
+        """ A literal terminal matches a token if the token text
+            is identical to the literal """
         # Note that this function is overridden in __init__ if self._cat is None
         if self._match_cat is not None and t_kind != self._match_cat:
             # Match only the word category that was specified
@@ -1908,7 +1925,8 @@ class BIN_Nonterminal(Nonterminal):
 
     @property
     def first(self) -> str:
-        """ Return the initial part (before any underscores) of the nonterminal name """
+        """ Return the initial part (before any underscores)
+            of the nonterminal name """
         # Do this on demand
         if self._parts is None:
             self._parts = self.name.split("_")
@@ -2074,7 +2092,9 @@ def wrap_tokens(tokens, wrap_func=None):
                     # Check the contents of the token list from left+1 to right-1
 
                     # Skip parentheses starting with "e." (English)
-                    foreign = right > left + 1 and tlist[left + 1][1] in _SKIP_PARENTHESIS
+                    foreign = (
+                        right > left + 1 and tlist[left + 1][1] in _SKIP_PARENTHESIS
+                    )
 
                     def is_unknown(t):
                         """ A token is unknown if it is a TOK.UNKNOWN or if it is a
@@ -2204,7 +2224,8 @@ def augment_terminal(terminal, text_lower, beyging):
             cases += a[vstart:]
             # In this case, we don't pick up any other variants from the terminal
             vstart = len(a)
-            # Make sure we don't duplicate variants that are already in the cases string
+            # Make sure we don't duplicate variants
+            # that are already in the cases string
             vset_remove = set(cases)
     vset = set(a[vstart:])
     if a[0] == "pfn":

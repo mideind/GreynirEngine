@@ -45,7 +45,7 @@ _VERBOSE_AMBIGUITY_THRESHOLD = 1000
 
 # The ratio of words in a sentence that must be found in BÍN
 # for it to be analyzed as an Icelandic sentence
-ICELANDIC_RATIO = 0.6
+ICELANDIC_RATIO = 0.5
 
 
 class IncrementalParser:
@@ -73,11 +73,13 @@ class IncrementalParser:
 
     class _IncrementalSentence:
 
+        """ An internal sentence representation class """
+
         def __init__(self, ip, s):
             self._ip = ip
             self._s = s
             self._len = len(s)
-            assert self._len > 0 # Input should be already sanitized
+            assert self._len > 0  # Input should be already sanitized
             self._err_index = None
             self._tree = None
             self._score = 0
@@ -93,8 +95,7 @@ class IncrementalParser:
             try:
                 if tokens_are_foreign(self._s, min_icelandic_ratio=ICELANDIC_RATIO):
                     raise ParseError(
-                        "Sentence is probably not in Icelandic",
-                        token_index=0
+                        "Sentence is probably not in Icelandic", token_index=0
                     )
                 forest = self._ip._parser.go(self._s)
                 if forest is not None:
@@ -119,7 +120,7 @@ class IncrementalParser:
         @property
         def score(self):
             return self._score
-        
+
         @property
         def err_index(self):
             return self._len - 1 if self._err_index is None else self._err_index
@@ -131,8 +132,9 @@ class IncrementalParser:
         def __str__(self):
             return self.text
 
-
     class _IncrementalParagraph:
+
+        """ An internal paragraph representation class """
 
         def __init__(self, ip, p):
             self._ip = ip
@@ -148,8 +150,7 @@ class IncrementalParser:
                 time.sleep(0)
                 yield IncrementalParser._IncrementalSentence(self._ip, sent)
 
-
-    def __init__(self, parser, toklist, verbose = False):
+    def __init__(self, parser, toklist, verbose=False):
         self._parser = parser
         self._reducer = Reducer(parser.grammar)
         self._num_sent = 0
@@ -162,7 +163,7 @@ class IncrementalParser:
         self._start_time = self._last_time = time.time()
         self._verbose = verbose
         self._toklist = toklist
-        
+
     def _add_sentence(self, s, num):
         """ Add a processed sentence to the statistics """
         slen = len(s)
@@ -179,12 +180,14 @@ class IncrementalParser:
         # Debugging output, if requested and enabled
         if self._verbose and Settings.DEBUG:
             current_time = time.time()
-            print("Parsed sentence of length {0} with {1} combinations{3} in {4:.1f} seconds{2}"
-                .format(
-                    slen, num,
+            print(
+                "Parsed sentence of length {0} with {1} combinations{3} "
+                "in {4:.1f} seconds{2}".format(
+                    slen,
+                    num,
                     ("\n" + s.text) if num >= _VERBOSE_AMBIGUITY_THRESHOLD else "",
                     " and score " + str(s.score) if num >= 1 else "",
-                    current_time - self._last_time
+                    current_time - self._last_time,
                 )
             )
             self._last_time = current_time
@@ -216,7 +219,9 @@ class IncrementalParser:
 
     @property
     def ambiguity(self):
-        return (self._total_ambig / self._total_tokens) if self._total_tokens > 0 else 1.0
+        return (
+            (self._total_ambig / self._total_tokens) if self._total_tokens > 0 else 1.0
+        )
 
     @property
     def parse_time(self):

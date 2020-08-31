@@ -829,7 +829,7 @@ class ParseForestNavigator:
             is False and the node has been visited before """
         return False
 
-    def go(self, root_node):
+    def go(self, root_node) -> Any:
         """ Navigate the forest from the root node """
 
         visited = dict()  # type: Dict[Node, Any]

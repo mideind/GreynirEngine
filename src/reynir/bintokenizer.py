@@ -27,8 +27,20 @@
 """
 
 from typing import (
-    cast, Optional, NamedTuple, Tuple, List, Dict, Union,
-    Iterable, Iterator, Set, FrozenSet, Callable, Type, Any
+    cast,
+    Optional,
+    NamedTuple,
+    Tuple,
+    List,
+    Dict,
+    Union,
+    Iterable,
+    Iterator,
+    Set,
+    FrozenSet,
+    Callable,
+    Type,
+    Any,
 )
 
 import sys
@@ -36,7 +48,8 @@ import re
 from collections import defaultdict
 
 from tokenizer import (
-    TOK, Tok,
+    TOK,
+    Tok,
     tokenize_without_annotation,
     normalized_text,
 )
@@ -63,14 +76,15 @@ if "PyPy 7.3.0" in sys.version or "PyPy 7.2." in sys.version:
         except ValueError:
             # String does not contain a space: return it whole
             return s
+
+
 else:
     all_except_suffix = lambda s: s.rsplit(maxsplit=1)[0]
 
 
 # Named tuple for person names, including case and gender
 PersonName = NamedTuple(
-    "PersonName",
-    [("name", str), ("gender", Optional[str]), ("case", Optional[str])]
+    "PersonName", [("name", str), ("gender", Optional[str]), ("case", Optional[str])]
 )
 # The type of a list of tokens
 TokenList = List[Tok]
@@ -406,7 +420,7 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
                                 mm.fl,
                                 # ...but keep the hyphen in the word form ('-menn')
                                 w,
-                                mm.beyging
+                                mm.beyging,
                             )
                             for mm in m
                         ]
@@ -435,7 +449,7 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
                                 # Keep the word form as it originally appeared,
                                 # with its hyphens
                                 w,
-                                mm.beyging
+                                mm.beyging,
                             )
                             for mm in m
                         ]
@@ -457,7 +471,7 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
                                     mm.fl,
                                     # Keep the word form intact with hyphens
                                     w,
-                                    mm.beyging
+                                    mm.beyging,
                                 )
                                 for mm in m
                             ]
@@ -764,8 +778,9 @@ def parse_phrases_1(db, token_ctor, token_stream):
                                 mm.ordfl,
                                 mm.fl,
                                 prefix + " " + mm.ordmynd,
-                                mm.beyging
-                            ) for mm in next_token.val
+                                mm.beyging,
+                            )
+                            for mm in next_token.val
                         ]
                         token = token_ctor.Word(txt, m, token=next_token)
                         next_token = next(token_stream)
@@ -958,6 +973,8 @@ def parse_phrases_2(token_stream, token_ctor):
                     return False
                 if has_category(tok, PATRONYM_SET):
                     # This is a known surname, not an unknown one
+                    return False
+                if tok.txt in _CORPORATION_ENDINGS:
                     return False
                 # Allow single-letter abbreviations, but not multi-letter
                 # all-caps words (those are probably acronyms)
@@ -1185,74 +1202,85 @@ def parse_phrases_2(token_stream, token_ctor):
 def parse_phrases_3(token_stream, token_ctor):
     """ Parse a stream of tokens looking for phrases and making substitutions.
         Third pass: coalesce uppercase, otherwise unrecognized words with
-        a following person name, if any. """
+        a following person name, if any; also coalesce entity names and
+        recognize company names by endings ('hf.', 'Inc.', etc.). """
+
+    def is_interesting(token) -> bool:
+        """ Return True if this token causes us to want to take
+            a further look at the following tokens """
+        if token.kind != TOK.ENTITY and token.kind != TOK.WORD:
+            return False
+        return token.txt[0].isupper()
+
+    def can_concat(token) -> bool:
+        """ Return True if the token content can be concatenated onto
+            an existing entity name """
+        if token.kind != TOK.ENTITY and token.kind != TOK.WORD:
+            return False
+        if not token.txt[0].isupper():
+            return False
+        if " " in token.txt:
+            return False
+        if token.kind == TOK.WORD and token.val:
+            if not any(m.ordfl == "entity" for m in token.val):
+                return False
+        return True
+
+    def not_in_bin(token) -> bool:
+        """ Return True if the token is not a normal word found in BÍN """
+        if token.kind == TOK.ENTITY:
+            return True
+        assert token.kind == TOK.WORD
+        if token.val:
+            if all(m.ordfl != "entity" for m in token.val):
+                # This word is found in BÍN and has no 'entity' meanings
+                return False
+        return True
 
     token = None
     try:
 
         # Maintain a one-token lookahead
         token = next(token_stream)
+        concatable = False
 
         while True:
-            next_token = next(token_stream)
-            if (
-                (token.kind == TOK.ENTITY or (token.kind == TOK.WORD and not token.val))
-                and token.txt.istitle()
-                and " " not in token.txt
-                and next_token.kind == TOK.PERSON
-            ):
-                # Upper-case word that is either an entity or a word that is
-                # not in BÍN, and the next token is a person: merge the two
-                # tokens into a single person name
-                # 'Jesse' 'John Kelley' -> 'Jesse John Kelley'
-                token = token_ctor.Person(
-                    token.txt + " " + next_token.txt,
-                    [
-                        PersonName(token.txt + " " + pn.name, pn.gender, pn.case)
-                        for pn in next_token.val
-                    ]
-                )
-                next_token = next(token_stream)
-            elif (
-                (
-                    token.kind == TOK.ENTITY 
-                    or (token.kind == TOK.WORD and not token.val)
-                    or (token.kind == TOK.WORD and token.val[0].ordfl == "entity")
-                )
-                and token.txt[0].isupper()
-                and " " not in token.txt
-            ):
-                # Upper-case word: Check next word
-                # Most likely two unknown person names
-                # Can also be a corporation ending
-                # TODO allow more than one name to be merged?
-                entitytxt = token.txt
-                found = False
-                while True:
-                    if next_token.txt in _CORPORATION_ENDINGS:
-                        # Form Company-token, stop searching
-                        entitytxt += " " + next_token.txt
-                        token = token_ctor.Company(entitytxt)
-                        next_token = next(token_stream)
-                        found = False
-                        break
-                    elif (
-                        (next_token.kind == TOK.ENTITY or (next_token.kind == TOK.WORD and not token.val))
-                        and next_token.txt[0].isupper()
-                    ):
-                        entitytxt += " " + next_token.txt
-                        next_token = next(token_stream)
-                        found = True
-                    else:
-                        break
-                if found:  # Have merged tokens, need to update token
-                    token = token_ctor.Entity(entitytxt)
 
-            elif token.txt and token.txt[0].isupper() and next_token.txt in _CORPORATION_ENDINGS and not " " in token.txt:
-                # Lastly, allow merging *one* token and a corporation ending 
-                # if the former token is capitalized
+            if not concatable and not is_interesting(token):
+                yield token
+                # Make sure that token is None if next() raises StopIteration
+                token = None
+                token = next(token_stream)
+                continue
+
+            next_token = next(token_stream)
+            concatable = False
+
+            if next_token.txt in _CORPORATION_ENDINGS:
+                # Allow merging a corporation ending. This is fairly
+                # open: any prefix consisting of uppercase words is
+                # allowed, even if they are found in BÍN.
                 token = token_ctor.Company(token.txt + " " + next_token.txt)
                 next_token = next(token_stream)
+            elif not_in_bin(token):
+                if next_token.kind == TOK.PERSON and token.txt.istitle():
+                    # Upper-case word that is either an entity or a word that is
+                    # not in BÍN, and the next token is a person: merge the two
+                    # tokens into a single person name
+                    # 'Jesse' 'John Kelley' -> 'Jesse John Kelley'
+                    token = token_ctor.Person(
+                        token.txt + " " + next_token.txt,
+                        [
+                            PersonName(token.txt + " " + pn.name, pn.gender, pn.case)
+                            for pn in next_token.val
+                        ],
+                    )
+                    next_token = next(token_stream)
+                elif can_concat(next_token):
+                    # Concatenate the next token and do another loop round
+                    token = token_ctor.Entity(token.txt + " " + next_token.txt)
+                    concatable = True
+                    continue
 
             # Yield the current token and advance to the lookahead
             yield token
@@ -1262,7 +1290,7 @@ def parse_phrases_3(token_stream, token_ctor):
         pass
 
     # Final token (previous lookahead)
-    if token:
+    if token is not None:
         yield token
 
 
@@ -1534,7 +1562,8 @@ class DisambiguationStream(MatchingStream):
                 # (i.e. phrase components marked with an asterisk, such as 'eiga*')
                 stem = word[:-1] if word[-1] == "*" else None
                 mm.extend(
-                    m for m in t.val
+                    m
+                    for m in t.val
                     if m.ordfl in cat_set and (stem is None or m.stofn == stem)
                 )
             yield token_ctor.Word(t.txt, mm, token=t)
@@ -1559,12 +1588,12 @@ class Bin_TOK(TOK):
         to add token error information."""
 
     @staticmethod
-    def Word(w: str, m=None, token: Optional[Tok]=None) -> Tok:
+    def Word(w: str, m=None, token: Optional[Tok] = None) -> Tok:
         return TOK.Word(w, m)
 
     @staticmethod
     def Number(
-        w: str, n: float, cases=None, genders=None, token: Optional[Tok]=None
+        w: str, n: float, cases=None, genders=None, token: Optional[Tok] = None
     ) -> Tok:
         return TOK.Number(w, n, cases, genders)
 

@@ -199,7 +199,7 @@ _DEFAULT_NT_MAP = {
     "AlHvortSemUmErAðRæða": "ADVP",
     "LoAtviksliðir": "ADVP",
     "EinnAl": "ADVP",
-    "AlTilv" : "ADVP",
+    "AlTilv": "ADVP",
     "StefnuAtv": "ADVP-DIR",
     "SpurnarAtviksorð": "ADVP",
     "FöstDagsetning": "ADVP-DATE-ABS",
@@ -1105,8 +1105,9 @@ class SimpleTree:
         # No match
         if multi > index:
             raise AttributeError(
-                "Subtree has {0} {1} but index {2} was requested"
-                .format(multi - index, name, multi)
+                "Subtree has {0} {1} but index {2} was requested".format(
+                    multi - index, name, multi
+                )
             )
         raise AttributeError("Subtree has no child named '{0}'".format(name))
 
@@ -1938,8 +1939,13 @@ class Simplifier(ParseForestNavigator):
         a parse tree in a nested dictionary structure """
 
     def __init__(
-        self, tokens, *,
-        nt_map=None, id_map=None, terminal_map=None, first_token_index=0
+        self,
+        tokens,
+        *,
+        nt_map=None,
+        id_map=None,
+        terminal_map=None,
+        first_token_index=0
     ):
         super().__init__(visit_all=True)
         self._tokens = tokens
