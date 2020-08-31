@@ -26,18 +26,29 @@ Simple matches
 
 * A ``"literal"`` within *double quotes* matches a subtree that covers exactly
   the given literal text, although using a case-neutral comparison.
-  ``"Icelandic"`` thus matches ``"icelandic"`` and ``"ICELANDIC"``.
+  ``"Icelandic"`` thus matches ``icelandic`` and ``ICELANDIC``.
   The literal may have multiple words, separated by spaces:
   ``"borgarstjóri reykjavíkur"`` matches a subtree that covers these two
-  word forms.
+  word forms. The matched subtree can be a nonterminal or a terminal node.
 
 * A ``'literal'`` within *single quotes* matches a subtree that covers exactly
   the given word lemma(s), using a case-neutral comparison.
-  ``'hestur'`` thus matches ``"hests"`` and ``"Hestinum"``.
+  ``'hestur'`` thus matches ``hests`` and ``Hestinum``.
   The literal may have multiple words, separated by spaces:
   ``'borgarstjóri reykjavík'`` matches a subtree that covers these
   two lemmas. (``'borgarstjóri reykjavíkur'`` would never match anything
-  as ``"reykjavíkur"`` is not the lemma of any word form.)
+  as ``reykjavíkur`` is not the lemma of any word form.) The matched subtree
+  can be a nonterminal or a terminal node.
+
+* A ``@"literal"`` within *double quotes* and *prefixed with the @ symbol* matches
+  a *terminal node* that corresponds to a token having
+  the given literal text, although using a case-neutral comparison.
+  ``@"Icelandic"`` thus matches ``icelandic`` and ``ICELANDIC``.
+
+* A ``@'literal'`` within *single quotes* and *prefixed with the @ symbol* matches
+  a *terminal node* that corresponds to a token having the given word lemma,
+  using a case-neutral comparison. ``'hestur'`` thus matches ``hests``
+  and ``Hestinum``.
 
 * A ``NONTERMINAL`` identifier in upper case matches nodes associated with
   that nonterminal, as well as subcategories thereof. ``NP`` thus matches
@@ -127,16 +138,19 @@ Here is a short program using some of the matching features::
     s = g.parse_single(my_text)
     print("Parse tree:")
     print(s.tree.view)
-    print("All subjects:")
+    print("\nAll subjects:\n")
     for d in s.tree.descendants:
         if d.match_tag("NP-SUBJ"):
             print(d.text)
-    print("All masculine noun and pronoun phrases:")
+    print("\nAll masculine noun and pronoun phrases:\n")
     for m in s.tree.all_matches("NP > { (no_kk | pfn_kk) } "):
         print(m.canonical_np)
 
-Output::
+Output:
 
+.. code-block:: none
+
+    Parse tree:
     S0
       +-S-MAIN
         +-IP
@@ -206,12 +220,16 @@ Output::
             +-NP-PRD
               +-lo_sb_nf_et_kvk: 'lítil'
       +-'.'
-      All subjects:
-      kjörstaðirnir í þeim
-      þátttakan
-      All masculine noun and pronoun phrases:
-      áhugi
-      framboðsfundur og skuggakosning
-      kjörstaður
-      framhaldsskóli
+
+    All subjects:
+
+    kjörstaðirnir í þeim
+    þátttakan
+
+    All masculine noun and pronoun phrases:
+
+    áhugi
+    framboðsfundur og skuggakosning
+    kjörstaður
+    framhaldsskóli
 

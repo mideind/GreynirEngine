@@ -108,6 +108,7 @@
 """
 
 from typing import Dict
+
 import re
 
 
@@ -351,8 +352,7 @@ def contained(tree, items, pc, deep, context):
     # a generator of children generators(!)
     if deep:
         return any(
-            f_run(gen_children, subseq, context)
-            for gen_children in tree.deep_children
+            f_run(gen_children, subseq, context) for gen_children in tree.deep_children
         )
     # Shallow containment: iterate through direct children
     return f_run(tree.children, subseq, context)
@@ -427,9 +427,7 @@ def run_sequence(gen, items, context):
                     pc += 1
                     op = ">>"
                 if pc >= len_items:
-                    raise ValueError(
-                        "Missing argument to '{0}' operator".format(op)
-                    )
+                    raise ValueError("Missing argument to '{0}' operator".format(op))
                 result = contained(tree, items, pc, op == ">>", context)
                 if not result:
                     return False
@@ -485,9 +483,7 @@ def run_set(gen, items, context):
                     op = ">>"
                     pc += 1
                 if pc >= len_items:
-                    raise ValueError(
-                        "Missing argument to '{0}' operator".format(op)
-                    )
+                    raise ValueError("Missing argument to '{0}' operator".format(op))
                 if result:
                     # Further constrained by containment
                     result = contained(tree, items, pc, op == ">>", context)
