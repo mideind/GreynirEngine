@@ -3411,6 +3411,9 @@ NlStakTagl/tala/fall/kyn →
     | EignarFornafn/tala/fall/kyn KommaOgEðaEn EfLiður # skattskýrslur mínar og eiginkonu minnar
     | EinnOgSér/tala/fall/kyn
 
+NlStak_p3_ft/fall/hk →
+    'það:pfn'_hk_ft/fall Persóna/fall # Þau Páll / Þau Pál / þeim Páli / þeirra Páls
+
 EinnOgSér/tala/fall/kyn →
     'einn:fn'/tala/fall/kyn "og:st"? "sér:ao"           # skipulagsbreytingar einar [og] sér
 
@@ -4368,6 +4371,21 @@ $score(-2) TitilEinkunn/fall/kyn
 EinnTitill/fall →
     NlTitill/fall EfLiður? FsRunaEftirNl?  # sendiherra Bandaríkjanna hérlendis, handhafi bókmenntaverðlaunanna í ár
 
+FæðingarOgDánardægur →
+    "(" Fæddur FdDags FdSamtenging Dáinn FdDags ")"
+    | "(" FdDags "-:en" FdDags ")"
+    | "(" Fæddur FdDags ")"
+    | "(" Dáinn FdDags ")"
+
+Fæddur → 'fæddur:lo' # Skst. "f."
+
+Dáinn → 'dáinn:lo' # Skst. "d."
+
+FdDags → dagsföst | ártal
+
+FdSamtenging →
+    "," | "-:en" | ";"
+
 OgTitill/fall →
     KommaEðaOg EinnTitill/fall
 
@@ -4380,6 +4398,7 @@ KommuTitill/fall →
 
 KommulausTitill/fall →
     NlTitill/fall
+    | FæðingarOgDánardægur KommuTitill/fall?
 
 # Gefa plús fyrir titla
 $score(+5) Titill/fall
@@ -4422,6 +4441,12 @@ $score(+5) EfLiður_ft/kyn
 
 EfLiðurForskeytiTala/tala/kyn →
     Töluorð_ef/tala/kyn TilTölu/tala/kyn?  # (vel rúmlega) þriggja (klukkutíma bið) / 30 þúsund (króna tjón)
+
+EfLiðurForskeytiTala_ft/kyn →
+    'margur:lo'_sb_ef_ft/kyn # margra (tíma bið)
+    | 'allmargur:lo'_sb_ef_ft/kyn
+    | 'fár:lo'_sb_ef_ft/kyn
+    | 'örfár:lo'_sb_ef_ft/kyn
 
 TilTölu/tala/kyn →
     'til:fs'_ef Töluorð_ef/tala/kyn+   # (á) tveggja til þriggja metra dýpi
@@ -5031,7 +5056,11 @@ Lo/fall/tala/kyn →
 
 LoSemLo/fall/tala/kyn → 
     LoAtviksliður* lo/fall/tala/kyn # (Þingmenn kosnir) algerlega leynilegri (kosningu)
-    | Allra lo_evb/fall/tala/kyn # (Ég átti) allra stærsta (bílinn)
+    | LoRöðun lo_evb/fall/tala/kyn # (Ég átti) allra / 4. stærsta (bílinn)
+    | RaðTala/fall/tala/kyn lo_evb/fall/tala/kyn # (Ég átti) þriðja stærsta (bílinn)
+
+LoRöðun →
+    raðnr | Allra
 
 LoMun/fall/tala/kyn →
     'munur:kk'_þgf_et lo_mst/fall/tala/kyn # (Schengen rekur) mun öflugri gagnagrunn / (þau voru) mun frjálsari skoðana sinna
@@ -5517,7 +5546,6 @@ AlTilv →
 SemAtv → "þar:ao" | "þangað:ao" | "hingað:ao" | "þarna:ao" | "hér:ao" | "þaðan:ao"
         | "hvar:ao" | "hvaðan:ao" | "hvenær:ao" | "hvernig:ao" | "hvert:ao" | "hversu:ao"
 
-
 SamsettFsAtv →
     # 'hvorki í Frakklandi né annars staðar í Evrópusambandinu'
     Hvorki EinEinföldFsAtv+ Né EinEinföldFsAtv
@@ -5691,6 +5719,9 @@ EinnAl →
     | 'allur:fn'_et_þf_kk 'tími:kk'_gr_et_þf # Allan tímann var mér ljóst að þetta var vonlaust
     | 'allur:fn'_ft_þf_kk "jafna:ao"    # Alla jafna eru menn rólegir yfir þessu
     | 'heill:lo'_sb_nf_et_hk "yfir:ao"  # Heilt yfir eru menn rólegir yfir þessu
+
+    | ao_zlega so_lhþt_nf_hk_et         # Hreinskilnislega sagt, gróflega séð
+    | lo_vb_nf_hk_et_zlega so_lhþt_nf_hk_et # Stórkarlalega ályktað
 
 $tag(no_prep) EinnAl        # Engar forsetningar hér inni - óþarfi að skoða dótturgreinar
 
@@ -6604,7 +6635,7 @@ TímaLo/fall/tala/kyn → 'rúmur:lo'_sb/fall/tala/kyn | 'tæpur:lo'_sb/fall/tal
 $score(+14) TímaLo/fall/tala/kyn
 
 # Hjálparreglur
-HinnSá/fall → 'sá:fn'_et_kk/fall | 'hinn:gr'_et_kk/fall
+HinnSá/fall → 'sá:fn'_et_kk/fall | 'hinn:gr'_et_kk/fall | 'aðfaranótt:kvk'_et/fall
 
 # Stigin hér þurfa að yfirvinna EinkunnFornafn, sem skeytir
 # 'þann' aftan við nafnlið
@@ -6837,6 +6868,18 @@ VillaFsMeðFallstjórn_ef →
 
 $tag(error) VillaFsMeðFallstjórn/fall
 $score(-999) VillaFsMeðFallstjórn/fall
+
+# Villa þar sem tvípunkti er skeytt á milli forsetningar og
+# nafnliðar, t.d. "með: góðri efnahagsstjórn"
+
+FsMeðFallstjórn →
+    > VillaTvípunkturFs
+
+VillaTvípunkturFs →
+    fs/fall ":" Nl/fall
+
+$tag(error) VillaTvípunkturFs
+$score(+99) VillaTvípunkturFs
 
 NauðsynlegKomma →
     > VillaVantarKommu

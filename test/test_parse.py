@@ -30,6 +30,7 @@ from collections import defaultdict
 def r():
     """ Provide a module-scoped Greynir instance as a test fixture """
     from reynir import Greynir
+
     r = Greynir()
     yield r
     # Do teardown here
@@ -173,17 +174,18 @@ def test_parse(r, verbose=False):
         "vatn",
         "gráða",
     ]
-    assert results[5].tree.nouns == [
-        "1.000 dollara"
-    ]
+    assert results[5].tree.nouns == ["1.000 dollara"]
     # 'árið 1944' er tímaliður en ekki nafnliður
-    assert results[6].tree.nouns == [
-        "Þingvellir"
-    ]
+    assert results[6].tree.nouns == ["Þingvellir"]
     assert results[7].tree.nouns == ["hús", "strönd"]
     assert results[8].tree.nouns == ["barn", "augnrannsókn", "húsnæðiskaup"]
     assert results[9].tree.nouns == ["barn", "loðfíla-rannsókn"]
-    assert results[10].tree.nouns == ["eðlisfræðingur", "Stephen Hawking", "dagur", "pí-dagur"]
+    assert results[10].tree.nouns == [
+        "eðlisfræðingur",
+        "Stephen Hawking",
+        "dagur",
+        "pí-dagur",
+    ]
     assert results[11].tree.nouns == [
         "Jón",
         "ís",
@@ -199,8 +201,17 @@ def test_parse(r, verbose=False):
     assert results[22].tree.nouns == ["lögregla", "skemmd"]
     assert results[23].tree.nouns == ["vetur"]
     assert results[24].tree.nouns == ["loforð", "áhersla"]
-    assert results[32].tree.nouns == ["mynd", "þjóðskjalasafn", "Bandaríkin",
-        "skyn", "flugmaður", "saga", "Amelia Earhart", "flugslys", "Kyrrahaf"]
+    assert results[32].tree.nouns == [
+        "mynd",
+        "þjóðskjalasafn",
+        "Bandaríkin",
+        "skyn",
+        "flugmaður",
+        "saga",
+        "Amelia Earhart",
+        "flugslys",
+        "Kyrrahaf",
+    ]
 
     # Test that the parser finds the correct verbs
     assert results[0].tree.verbs == ["vera", "vera", "gera"]
@@ -223,9 +234,7 @@ def test_parse(r, verbose=False):
         "borða",
     ]
     assert results[12].tree.verbs == ["horfa", "borða"]
-    assert results[32].tree.verbs == [
-        "finna", "segja", "gefa", "hafa", "deyja"
-    ]
+    assert results[32].tree.verbs == ["finna", "segja", "gefa", "hafa", "deyja"]
 
     # Test that the parser finds the correct word lemmas
     assert results[0].tree.lemmas == [
@@ -363,7 +372,7 @@ def test_parse(r, verbose=False):
         "kviður",
         "með",
         "hnífur",
-        "."
+        ".",
     ]
 
     def num_pp(s):
@@ -508,13 +517,9 @@ def test_foreign(r):
         "w ramach usługi cargo."
     )
     assert s.is_foreign()
-    s = r.parse_single(
-        "Linie lotnicze"
-    )
+    s = r.parse_single("Linie lotnicze")
     assert not s.is_foreign()
-    s = r.parse_single(
-        "Linie lotnicze WOW Air ogłosiły"
-    )
+    s = r.parse_single("Linie lotnicze WOW Air ogłosiły")
     assert s.is_foreign()
 
 
@@ -868,6 +873,7 @@ def test_year_range(r):
     check_terminal(t[6], text="50", lemma="50", category="tala", variants=[]),
     check_terminal(t[7], text=".", lemma=".", category="", variants=[])
 
+
 def test_terminal_types(r):
     # tölvupóstfang = email
     s = r.parse_single("Netfangið er valid@my-domain.reallylongtld.")
@@ -904,11 +910,7 @@ def test_terminal_types(r):
     t = s.terminals
     assert len(t) == 4
     check_terminal(
-        t[2],
-        text="H2SO4",
-        lemma="H2SO4",
-        category="sameind",
-        variants=["nf"],
+        t[2], text="H2SO4", lemma="H2SO4", category="sameind", variants=["nf"],
     ),
     s = r.parse_single("570607-6859 er kennitala fyrirtækisins.")
     t = s.terminals
@@ -924,21 +926,18 @@ def test_terminal_types(r):
     t = s.terminals
     assert len(t) == 5
     check_terminal(
-        t[0],
-        text="867-6998",
-        lemma="867-6998",
-        category="símanúmer",
-        variants=["nf"],
+        t[0], text="867-6998", lemma="867-6998", category="símanúmer", variants=["nf"],
     ),
+
 
 def test_single(r):
     s = r.parse_single("Jón greiddi bænum 10 milljónir króna í skaðabætur.")
     check_terminals(s.terminals)
     try:
-        _ = r.parse_single("")
-        assert False, "Should have raised StopIteration"
+        s = r.parse_single("")
+        assert s is None
     except StopIteration:
-        pass
+        assert False, "Should not have raised StopIteration"
     s = r.parse_single("kötturinn lömdu hesturinn")
     assert s.combinations == 0
     assert s.tree is None
@@ -1003,7 +1002,7 @@ def test_complex(r, verbose=False):
         "margbreytilegu samfélagi, mynda tengsl við aðra, mótast sem einstaklingur "
         "í hnattrænu samfélagi, og takast á við ólík viðhorf, skoðanir og gildi — svo "
         "fátt eitt sé nefnt.",
-        max_sent_tokens=None
+        max_sent_tokens=None,
     )
     assert d["num_parsed"] == 1
     if verbose:
@@ -1030,9 +1029,7 @@ def test_measurements(r):
 
 
 def test_abbreviations(r):
-    s = r.parse_single(
-        "Ég borða köku BHM á laugard. í okt. nk. og mun þykja hún vond."
-    )
+    s = r.parse_single("Ég borða köku BHM á laugard. í okt. nk. og mun þykja hún vond.")
     assert (
         s.tree.flat == "S0 S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ VP VP VP "
         "so_1_þf_et_p1 /VP NP-OBJ no_et_þf_kvk NP-POSS no_et_ef_hk "
@@ -1301,32 +1298,41 @@ def test_ifd_tag(r):
         "lkeþve",
         "nkeþ",
         "sfg3eþ",
-        "nken-m", "nken-m", "nken-m",  # Guðbjörn J. Óskarsson
-        "tfvfþ",  "nvfþ",  # 200 krónum
+        "nken-m",
+        "nken-m",
+        "nken-m",  # Guðbjörn J. Óskarsson
+        "tfvfþ",
+        "nvfþ",  # 200 krónum
         "fakeo",
-        "ta", "nkeo", "ta",  # 19. júní 2003
+        "ta",
+        "nkeo",
+        "ta",  # 19. júní 2003
         "c",
         "sfm3eþ",
         "ao",
-        "ta", "x",  # 300 kg
-        "."
+        "ta",
+        "x",  # 300 kg
+        ".",
     ]
     s = r.parse_single(
         "Vestur-Þýskalandi bar blátt áfram að bjarga a.m.k. 284,47 börnum "
         "kl. 11:45 árið 374 f.Kr."
     )
     assert s.ifd_tags == [
-        'nheþ-ö',
-        'sfg3eþ',
-        'lhensf',
-        'aa',
-        'cn',
-        'sng',
-        'aa',
-        'tfkfn',  # 284,47
-        'nhfþ',
-        'nven', 'ta',  # kl. 11:45
-        'nheo', 'ta', 'aa',  # árið 374 f.Kr.
+        "nheþ-ö",
+        "sfg3eþ",
+        "lhensf",
+        "aa",
+        "cn",
+        "sng",
+        "aa",
+        "tfkfn",  # 284,47
+        "nhfþ",
+        "nven",
+        "ta",  # kl. 11:45
+        "nheo",
+        "ta",
+        "aa",  # árið 374 f.Kr.
     ]
 
 
@@ -1360,7 +1366,7 @@ def test_tree_flat(r, verbose=False):
             ("1.234,5 milljörðum", "ef", "tala no_ft_kk_þgf"),
             ("1,234.5 milljónum", "ef", "tala no_ft_kvk_þgf"),
             ("1,234.5 milljörðum", "ef", "tala no_ft_kk_þgf"),
-        ]
+        ],
     }
 
     CURRENCIES = {
@@ -1396,7 +1402,7 @@ def test_tree_flat(r, verbose=False):
             ("bandarískra dala", "lo_ef_ft_kk_sb no_ef_ft_kk"),
             ("indónesískra rúpía", "lo_ef_ft_kvk_sb no_ef_ft_kvk"),
             ("indverskra rúpía", "lo_ef_ft_kvk_sb no_ef_ft_kvk"),
-        )
+        ),
     }
 
     for verb_case, amounts in AMOUNTS.items():
@@ -1440,54 +1446,68 @@ def test_noun_lemmas(r):
 def test_composite_words(r):
     s = r.parse_single("Hann var mennta- og menningarmálaráðherra.")
     assert (
-        s.tree.flat_with_all_variants ==
-        "S0 S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP VP so_1_nf_et_fh_gm_p3_þt /VP "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP VP so_1_nf_et_fh_gm_p3_þt /VP "
         "NP-PRD no_et_kk_nf st no_et_kk_nf /NP-PRD /VP /IP /S-MAIN p /S0"
     )
     s = r.parse_single("Hann var dómsmála-, mennta- og menningarmálaráðherra.")
     assert (
-        s.tree.flat_with_all_variants ==
-        "S0 S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP VP so_1_nf_et_fh_gm_p3_þt /VP "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP VP so_1_nf_et_fh_gm_p3_þt /VP "
         "NP-PRD no_et_kk_nf no_et_kk_nf st no_et_kk_nf /NP-PRD /VP /IP /S-MAIN p /S0"
     )
-    s = r.parse_single("Hann var dómsmála- ferðamála- mennta- og menningarmálaráðherra.")
+    s = r.parse_single(
+        "Hann var dómsmála- ferðamála- mennta- og menningarmálaráðherra."
+    )
     assert (
-        s.tree.flat_with_all_variants ==
-        "S0 S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP VP so_1_nf_et_fh_gm_p3_þt /VP "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP VP so_1_nf_et_fh_gm_p3_þt /VP "
         "NP-PRD no_et_kk_nf no_et_kk_nf no_et_kk_nf st no_et_kk_nf /NP-PRD /VP /IP /S-MAIN p /S0"
     )
     s = r.parse_single("Hann var hálf-þýskur og fæddist í Vestur-Þýskalandi.")
     assert (
-        s.tree.flat_with_all_variants ==
-        "S0 S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP VP VP so_et_fh_gm_p3_þt /VP "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP VP VP so_et_fh_gm_p3_þt /VP "
         "NP-PRD lo_et_kk_nf_sb /NP-PRD /VP C st /C VP so_0_et_fh_mm_p3_þt /VP "
         "PP P fs_þgf /P NP no_et_hk_þgf /NP /PP /VP /IP /S-MAIN p /S0"
     )
     # Note that 'hálf - þýskur' is not the same as 'hálf-þýskur'
     # and 'Vestur  -  Þýskaland' is not the same as 'Vestur-Þýskaland'
     s = r.parse_single("Ég borðaði sykursaltan fiskinn")
-    assert s.lemmas == ['ég', 'borða', 'sykur-saltur', 'fiskur']
+    assert s.lemmas == ["ég", "borða", "sykur-saltur", "fiskur"]
     s = r.parse_single("Ég borðaði sykurinnsaltan fiskinn")
-    assert s.lemmas == ['ég', 'borða', 'sykur-inn-saltur', 'fiskur']
+    assert s.lemmas == ["ég", "borða", "sykur-inn-saltur", "fiskur"]
     s = r.parse_single("Ég borðaði sykrisaltan fiskinn")
     # 'sykrisaltan' is not a valid composite word, so this should get parsed
     # as an unknown noun - causing 'fiskinn' to be parsed as an adjective
-    assert s.lemmas == ['ég', 'borða', 'sykrisaltan', 'fiskinn']
+    assert s.lemmas == ["ég", "borða", "sykrisaltan", "fiskinn"]
     s = r.parse_single("Hann hjólaði kattspenntur á kvenbretti niður brekkuna")
-    assert s.lemmas == ['hann', 'hjóla', 'katt-spenna', 'á', 'kven-bretti', 'niður', 'brekka']
+    assert s.lemmas == [
+        "hann",
+        "hjóla",
+        "katt-spenna",
+        "á",
+        "kven-bretti",
+        "niður",
+        "brekka",
+    ]
     s = r.parse_single(
         "Málfræði-reglurnar sögðu að hann væri frá Vestur-Þýskalandi "
         "og Ytri-Hnausi í Þingvalla-sveit."
     )
-    assert s.tree.nouns == ['málfræðiregla', 'Vestur-Þýskaland', 'Ytri-Hnaus', 'Þingvallasveit']
-    s = r.parse_single(
-        "Þing-konur og -menn dvöldu í þingvalla-sveitinni."
-    )
-    assert s.tree.nouns == ['þingkona', 'maður', 'þingvalla-sveit']
+    assert s.tree.nouns == [
+        "málfræðiregla",
+        "Vestur-Þýskaland",
+        "Ytri-Hnaus",
+        "Þingvallasveit",
+    ]
+    s = r.parse_single("Þing-konur og -menn dvöldu í þingvalla-sveitinni.")
+    assert s.tree.nouns == ["þingkona", "maður", "þingvalla-sveit"]
 
 
 def test_compressed_bin():
     import reynir.bincompress as bc
+
     binc = bc.BIN_Compressed()
     assert "gleraugu" in binc
     assert "Ísland" in binc
@@ -1496,56 +1516,54 @@ def test_compressed_bin():
     assert "vextir" in binc
     assert "x" not in binc
     assert "X" not in binc
-    assert (
-        binc.lookup("aðförin") ==
-        [('aðför', 123454, 'kvk', 'alm', 'aðförin', 'NFETgr')]
-    )
-    assert (
-        binc.lookup("einkabílnum") ==
-        [('einkabíll', 75579, 'kk', 'alm', 'einkabílnum', 'ÞGFETgr')]
-    )
+    assert binc.lookup("aðförin") == [
+        ("aðför", 123454, "kvk", "alm", "aðförin", "NFETgr")
+    ]
+    assert binc.lookup("einkabílnum") == [
+        ("einkabíll", 75579, "kk", "alm", "einkabílnum", "ÞGFETgr")
+    ]
     nominal_forms = [m[4] for m in binc.nominative("einkabílnum") if m[5] == "NFETgr"]
-    assert nominal_forms == ['einkabíllinn']
+    assert nominal_forms == ["einkabíllinn"]
     # Test non-latin-1 code point (should not throw an exception)
     assert "Domino’s" not in binc
     # Test errata (BinErrata.conf)
-    assert (
-        binc.lookup("Hafnarfjörður") ==
-        [('Hafnarfjörður', 303729, 'kk', 'örn', 'Hafnarfjörður', 'NFET')]
-    )
-    assert (
-        binc.lookup("Gamli-Oddhóll") ==
-        [('Gamli-Oddhóll', 430106, 'kk', 'örn', 'Gamli-Oddhóll', 'NFET')]
-    )
-    assert (
-        binc.lookup("Árbæjarkirkja") ==
-        [('Árbæjarkirkja', 453313, 'kvk', 'örn', 'Árbæjarkirkja', 'NFET')]
-    )
-    assert (
-        binc.lookup("Litlihjalli") ==
-        [('Litlihjalli', 282316, 'kk', 'göt', 'Litlihjalli', 'NFET')]
-    )
+    assert binc.lookup("Hafnarfjörður") == [
+        ("Hafnarfjörður", 303729, "kk", "örn", "Hafnarfjörður", "NFET")
+    ]
+    assert binc.lookup("Gamli-Oddhóll") == [
+        ("Gamli-Oddhóll", 430106, "kk", "örn", "Gamli-Oddhóll", "NFET")
+    ]
+    assert binc.lookup("Árbæjarkirkja") == [
+        ("Árbæjarkirkja", 453313, "kvk", "örn", "Árbæjarkirkja", "NFET")
+    ]
+    assert binc.lookup("Litlihjalli") == [
+        ("Litlihjalli", 282316, "kk", "göt", "Litlihjalli", "NFET")
+    ]
 
 
 def test_foreign_names(r):
     s = r.parse_single("Aristóteles uppgötvaði þyngdarlögmálið.")
     assert (
-        s.tree.flat_with_all_variants ==
-        "S0 S-MAIN IP NP-SUBJ person_kk_nf /NP-SUBJ VP VP so_1_þf_et_fh_gm_p3_þt /VP "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ person_kk_nf /NP-SUBJ VP VP so_1_þf_et_fh_gm_p3_þt /VP "
         "NP-OBJ no_et_gr_hk_þf /NP-OBJ /VP /IP /S-MAIN p /S0"
     )
     # Test to check whether 'Hafstein' works as a family name in nominative case
-    s = r.parse_single("Þetta voru Ólafur Ísleifsson, Júlíus Hafstein og Ingibjörg Sólrún Gísladóttir.")
+    s = r.parse_single(
+        "Þetta voru Ólafur Ísleifsson, Júlíus Hafstein og Ingibjörg Sólrún Gísladóttir."
+    )
     assert (
-        s.tree.flat_with_all_variants ==
-        "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP VP so_1_nf_fh_ft_gm_p3_þt /VP NP-PRD "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP VP so_1_nf_fh_ft_gm_p3_þt /VP NP-PRD "
         "person_kk_nf person_kk_nf p person_kk_nf person_kk_nf C st /C person_kvk_nf person_kvk_nf person_kvk_nf "
         "/NP-PRD /VP /IP /S-MAIN p /S0"
     )
-    s = r.parse_single("Þetta voru Ólafur Ísleifsson, Bára Hafstein og Ingibjörg Sólrún Gísladóttir.")
+    s = r.parse_single(
+        "Þetta voru Ólafur Ísleifsson, Bára Hafstein og Ingibjörg Sólrún Gísladóttir."
+    )
     assert (
-        s.tree.flat_with_all_variants ==
-        "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP VP so_1_nf_fh_ft_gm_p3_þt /VP NP-PRD "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP VP so_1_nf_fh_ft_gm_p3_þt /VP NP-PRD "
         "person_kk_nf person_kk_nf p person_kvk_nf person_kvk_nf C st /C person_kvk_nf person_kvk_nf person_kvk_nf "
         "/NP-PRD /VP /IP /S-MAIN p /S0"
     )
@@ -1554,41 +1572,52 @@ def test_foreign_names(r):
 def test_vocabulary(r):
     """ Test words that should be in the vocabulary, coming from
         ord.auka.csv or ord.add.csv """
-    s = r.parse_single("""
+    s = r.parse_single(
+        """
         Í gær gekk ég út frá ströndum og fékk mér ís.
-        """)
+        """
+    )
     assert s.tree is not None
     assert "strönd" in s.tree.nouns
-    s = r.parse_single("""
+    s = r.parse_single(
+        """
         Rekjanleikinn var enginn þegar ég spurði um hann.
-        """)
+        """
+    )
     assert s.tree is not None
     assert "rekjanleiki" in s.tree.nouns
-    s = r.parse_single("""
+    s = r.parse_single(
+        """
         Jón hafði áhyggjur af seljanleika bréfanna.
-        """)
+        """
+    )
     assert s.tree is not None
     assert "seljanleiki" in s.tree.nouns
-    s = r.parse_single("""
+    s = r.parse_single(
+        """
         Tvískráning bréfanna er á döfinni.
-        """)
+        """
+    )
     assert s.tree is not None
     assert "tvískráning" in s.tree.nouns
-    s = r.parse_single("""
+    s = r.parse_single(
+        """
         Hann vanrækti börnin alla tíð.
-        """)
+        """
+    )
     assert s.tree is not None
     assert "vanrækja" in s.tree.verbs
-    s = r.parse_single("""
+    s = r.parse_single(
+        """
         Milli deildanna voru kínamúrar en starfsandi var góður.
-        """)
+        """
+    )
     assert s.tree is not None
     assert "kínamúr" in s.tree.nouns
     assert "starfsandi" in s.tree.nouns
 
     j = r.submit(
-        "Ég fór í Landmannalaugar. Það var gaman í Landmannalaugum.",
-        parse=True
+        "Ég fór í Landmannalaugar. Það var gaman í Landmannalaugum.", parse=True
     )
     cnt = 0
     for sent in j:
@@ -1611,30 +1640,48 @@ def test_adjective_predicates(r):
     """ Test adjectives with an associated predicate """
 
     # Accusative case (þolfall)
-    s = r.parse_single("""
+    s = r.parse_single(
+        """
         Hundurinn var viðstaddur sýninguna sem fjallaði um hann.
-        """)
+        """
+    )
     assert "NP-PRD lo_sb_nf_sþf_et_kk NP-ADP no_et_þf_kvk" in s.tree.flat
 
     # Dative case (þágufall)
-    s = r.parse_single("""
+    s = r.parse_single(
+        """
         Hundurinn var málkunnugur kettinum frá fyrri tíð.
-        """)
-    assert "NP-PRD lo_sb_nf_sþgf_et_kk NP-ADP no_et_þgf_kk /NP-ADP /NP-PRD" in s.tree.flat
+        """
+    )
+    assert (
+        "NP-PRD lo_sb_nf_sþgf_et_kk NP-ADP no_et_þgf_kk /NP-ADP /NP-PRD" in s.tree.flat
+    )
 
     # Possessive case (eignarfall)
-    s = r.parse_single("""
+    s = r.parse_single(
+        """
         Kötturinn þóttist vera frjáls ferða sinna.
-        """)
-    assert "NP-PRD lo_sb_nf_sef_et_kk NP-ADP no_ft_ef_kvk fn_ft_ef_kvk /NP-ADP /NP-PRD" in s.tree.flat
-    s = r.parse_single("""
+        """
+    )
+    assert (
+        "NP-PRD lo_sb_nf_sef_et_kk NP-ADP no_ft_ef_kvk fn_ft_ef_kvk /NP-ADP /NP-PRD"
+        in s.tree.flat
+    )
+    s = r.parse_single(
+        """
         Kötturinn hafði verið fullur sjálfstrausts.
-        """)
+        """
+    )
     assert "NP-PRD lo_sb_nf_sef_et_kk NP-ADP no_et_ef_hk /NP-ADP /NP-PRD" in s.tree.flat
-    s = r.parse_single("""
+    s = r.parse_single(
+        """
         Verkamaðurinn er verður launa sinna.
-        """)
-    assert "NP-PRD lo_sb_nf_sef_et_kk NP-ADP no_ft_ef_hk fn_ft_ef_hk /NP-ADP /NP-PRD" in s.tree.flat
+        """
+    )
+    assert (
+        "NP-PRD lo_sb_nf_sef_et_kk NP-ADP no_ft_ef_hk fn_ft_ef_hk /NP-ADP /NP-PRD"
+        in s.tree.flat
+    )
 
 
 def test_subj_op(r):
@@ -1705,38 +1752,46 @@ def test_names(r):
 def test_prepositions(r):
     s = r.parse_single("Ég fór niðrá bryggjuna.")
     assert s.tree is not None
-    assert s.tree.match("S0 >> { IP > { VP > { PP > { P > { fs_þf } NP > { no_þf } } } } } ")
+    assert s.tree.match(
+        "S0 >> { IP > { VP > { PP > { P > { fs_þf } NP > { no_þf } } } } } "
+    )
     s = r.parse_single("Ég var fjarri bílnum.")
     assert s.tree is not None
-    assert s.tree.match("S0 >> { IP > { VP > { PP > { P > { fs_þgf } NP > { no_þgf } } } } } ")
+    assert s.tree.match(
+        "S0 >> { IP > { VP > { PP > { P > { fs_þgf } NP > { no_þgf } } } } } "
+    )
     s = r.parse_single("Ég var víðsfjarri bílnum.")
     assert s.tree is not None
-    assert s.tree.match("S0 >> { IP > { VP > { PP > { P > { fs_þgf } NP > { no_þgf } } } } } ")
+    assert s.tree.match(
+        "S0 >> { IP > { VP > { PP > { P > { fs_þgf } NP > { no_þgf } } } } } "
+    )
     s = r.parse_single("Ég var allfjarri bílnum.")
     assert s.tree is not None
-    assert s.tree.match("S0 >> { IP > { VP > { PP > { P > { fs_þgf } NP > { no_þgf } } } } } ")
+    assert s.tree.match(
+        "S0 >> { IP > { VP > { PP > { P > { fs_þgf } NP > { no_þgf } } } } } "
+    )
 
 
 def test_personally(r):
     s = r.parse_single("Mér persónulega þótti þetta ekki flott.")
     assert s.tree is not None
     assert (
-        s.tree.flat_with_all_variants ==
-        "S0 S-MAIN IP NP-SUBJ pfn_et_p1_þgf ao /NP-SUBJ VP VP so_subj_op_þgf_et_fh_gm_þt /VP "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ pfn_et_p1_þgf ao /NP-SUBJ VP VP so_subj_op_þgf_et_fh_gm_þt /VP "
         "NP fn_et_hk_nf /NP NP-PRD ADVP eo /ADVP lo_et_hk_nf_sb /NP-PRD /VP /IP /S-MAIN p /S0"
     )
     s = r.parse_single("Þetta mál varðar þig persónulega.")
     assert s.tree is not None
     assert (
-        s.tree.flat_with_all_variants ==
-        "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf no_et_hk_nf /NP-SUBJ VP VP "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf no_et_hk_nf /NP-SUBJ VP VP "
         "so_1_þf_et_fh_gm_nt_p3 /VP NP-OBJ pfn_et_p2_þf ao /NP-OBJ /VP /IP /S-MAIN p /S0"
     )
     s = r.parse_single("Þetta kom illa við þær persónulega.")
     assert s.tree is not None
     assert (
-        s.tree.flat_with_all_variants ==
-        "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP VP so_0_et_fh_gm_p3_þt /VP "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP VP so_0_et_fh_gm_p3_þt /VP "
         "ADVP ao /ADVP PP P fs_þf /P NP pfn_ft_kvk_p3_þf ao /NP /PP /VP /IP /S-MAIN p /S0"
     )
 
@@ -1809,21 +1864,21 @@ def test_company(r):
     s = r.parse_single("Hands ASA er dótturfyrirtæki Celestial Inc.")
     assert s.tree is not None
     assert (
-        s.tree.flat_with_all_variants ==
-        "S0 S-MAIN IP NP-SUBJ NP-COMPANY fyrirtæki fyrirtæki /NP-COMPANY /NP-SUBJ "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ NP-COMPANY fyrirtæki fyrirtæki /NP-COMPANY /NP-SUBJ "
         "VP VP so_1_nf_et_fh_gm_nt_p3 /VP NP-PRD no_et_hk_nf NP-POSS "
         "NP-COMPANY fyrirtæki fyrirtæki /NP-COMPANY /NP-POSS /NP-PRD /VP /IP /S-MAIN /S0"
     )
 
-    assert (
-        [t.lemma for t in s.tree.all_matches("NP-COMPANY")] ==
-        ['Hands ASA', 'Celestial Inc.']
-    )
+    assert [t.lemma for t in s.tree.all_matches("NP-COMPANY")] == [
+        "Hands ASA",
+        "Celestial Inc.",
+    ]
     s = r.parse_single("Hann réðst inn á skrifstofu Samherja hf. og rændi gögnum.")
     assert s.tree is not None
     assert (
-        s.tree.flat_with_all_variants ==
-        "S0 S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP VP so_0_et_fh_mm_p3_þt "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP VP so_0_et_fh_mm_p3_þt "
         "/VP PP ADVP-DIR ao /ADVP-DIR P fs_þf /P NP no_et_kvk_þf NP-POSS NP-COMPANY "
         "fyrirtæki fyrirtæki /NP-COMPANY /NP-POSS /NP /PP C st /C VP VP "
         "so_1_þgf_et_fh_gm_p3_þt /VP NP-OBJ no_ft_hk_þgf /NP-OBJ /VP /VP /IP /S-MAIN p /S0"
@@ -1835,6 +1890,7 @@ def test_company(r):
 
 def test_kludgy_ordinals():
     from reynir import Greynir, KLUDGY_ORDINALS_PASS_THROUGH
+
     r2 = Greynir(handle_kludgy_ordinals=KLUDGY_ORDINALS_PASS_THROUGH)
     s = r2.parse_single(
         "Hann keypti 3ja herbergja íbúð á 1stu hæð "
@@ -1867,7 +1923,6 @@ def test_adjective_dative(r):
 
 
 def test_ambig_phrases(r):
-
     def has_verbs(s, v):
         return set(s.tree.verbs) == set(v)
 
@@ -1902,11 +1957,10 @@ def test_ambig_phrases(r):
 
 
 def test_relative_clause(r):
-    s = r.parse_single(
-        "Þetta eru lausnirnar sem kallað hefur verið eftir."
-    )
+    s = r.parse_single("Þetta eru lausnirnar sem kallað hefur verið eftir.")
     assert (
-        s.tree.flat_with_all_variants =="S0 S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP VP "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP VP "
         "so_1_nf_fh_ft_gm_nt_p3 /VP NP-PRD no_ft_gr_kvk_nf CP-REL C stt /C "
         "S-MAIN NP-PRD VP so_et_hk_lhþt_nf_sb /VP /NP-PRD VP VP so_et_fh_gm_nt_p3 /VP "
         "VP so_gm_sagnb /VP /VP ADVP ao /ADVP /S-MAIN /CP-REL /NP-PRD /VP /IP "
@@ -1917,14 +1971,16 @@ def test_relative_clause(r):
 def test_neutral_pronoun(r):
     s = r.parse_single("Hán var ánægt með hest háns.")
     assert (
-        s.tree.flat_with_all_variants == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ "
         "VP VP so_et_fh_gm_p3_þt /VP NP-PRD NP-PRD lo_et_hk_nf_sb /NP-PRD "
         "PP P fs_þf /P NP no_et_kk_þf NP-POSS pfn_ef_et_hk_p3 /NP-POSS /NP /PP /NP-PRD "
         "/VP /IP /S-MAIN p /S0"
     )
     s = r.parse_single("Hán langaði að tala við hán um málið.")
     assert (
-        s.tree.flat_with_all_variants == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_p3_þf /NP-SUBJ "
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_p3_þf /NP-SUBJ "
         "VP VP so_1_þf_subj_op_þf_et_fh_gm_þt /VP IP-INF TO nhm /TO VP so_0_gm_nh "
         "/VP /IP-INF PP P fs_þf /P NP pfn_et_hk_p3_þf /NP /PP PP P fs_þf /P NP "
         "no_et_gr_hk_þf /NP /PP /VP /IP /S-MAIN p /S0"
@@ -1963,9 +2019,11 @@ def test_neutral_pronoun(r):
         "/CP-THT /NP-OBJ /VP /IP /S-MAIN p /S0"
     )
 
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
+
     r = Greynir()
     test_compressed_bin()
     test_parse(r, verbose=True)

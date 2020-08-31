@@ -28,7 +28,9 @@
 from .reynir import Greynir, Reynir, Terminal
 # Import the following _underscored classes to be able to use them
 # in type signatures in derived classes
-from .reynir import _Job, _Sentence, _Paragraph, ProgressFunc, ParseResult
+from .reynir import (
+    _Job, _Sentence, _Paragraph, ProgressFunc, ParseResult, ICELANDIC_RATIO,
+)
 from .nounphrase import NounPhrase
 from .fastparser import ParseForestPrinter, ParseForestDumper, ParseForestFlattener
 from .fastparser import ParseError, ParseForestNavigator

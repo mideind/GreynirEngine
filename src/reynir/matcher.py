@@ -25,17 +25,27 @@
     The match patterns are as follows:
     ----------------------------------
 
-    `.` matches any tree node
+    `.` matches any tree node.
 
     `"literal"` matches a subtree covering exactly the given literal text,
-        albeit case-neutral
+        albeit compared case-neutrally. Note that this pattern may match
+        a nonterminal node. If you want to match a single terminal only,
+        use `@"literal"`.
 
-    `'lemma'` matches a subtree covering exactly the given word lemma(s)
+    `'lemma'` matches a subtree covering exactly the given word lemma(s).
+        Note that this pattern may match a nonterminal node. If you want
+        to match a single terminal only, use `@'lemma'`.
 
-    `NONTERMINAL` matches the given nonterminal
+    `@"literal"` matches a terminal node whose associated token has
+        exactly the given literal text, albeit compared case-neutrally.
 
-    `terminal` matches the given terminal
-    `terminal_var1_var2` matches a terminal having at least the given variants
+    `@'lemma'` matches a terminal node whose associated token has
+        at least one meaning with exactly the given word lemma(s).
+
+    `NONTERMINAL` matches the given nonterminal.
+
+    `terminal` matches the given terminal.
+    `terminal_var1_var2` matches a terminal having at least the given variants.
 
     `%macro` is resolved by looking up the key 'macro' in the context
     dictionary, which is an optional parameter to match_pattern(). The corresponding
@@ -98,6 +108,7 @@
 """
 
 from typing import Dict
+
 import re
 
 
@@ -222,15 +233,19 @@ class _CompiledPattern:
                     # Generators should not raise StopIteration,
                     # so we just break out of the loop normally
                     break
-                if item.startswith("'") or item.startswith('"'):
+                if item.startswith(("'", '"', "@'", '@"')):
                     # String literal item: merge with subsequent items
-                    # until we encounter a matching end quote
-                    q = item[0]
+                    # until we encounter a matching end quote.
+                    # Literals have one of the following forms:
+                    # 'lemma', "literal", @'lemma', @"literal".
+                    # The latter two only match terminals, while
+                    # the former two can match an entire subtree.
+                    q = item[1] if item[0] == "@" else item[0]
                     s = item
                     while not item.endswith(q):
                         item = next(gen)
                         s += " " + item
-                    if len(s) < 3 or s[0] != s[-1]:
+                    if len(s) < 3 or s[-1] != q:
                         raise ValueError("Malformed literal in pattern")
                     yield s
                 else:
@@ -275,6 +290,18 @@ def single_match(item, tree, context):
     if item == ".":
         # Wildcard: always matches
         return True
+    if item.startswith('@"'):
+        # @ + double quote: literal string, matching a terminal only
+        if not tree.is_terminal:
+            return False
+        # Note that this is a case-neutral compare
+        return item[2:-1].casefold() == tree.text.casefold()
+    if item.startswith("@'"):
+        # @ + single quote: match word lemma(s) of this terminal only
+        if not tree.is_terminal:
+            return False
+        # Note that this is a case-significant compare
+        return item[2:-1] == tree.lemma
     if item.startswith('"'):
         # Double quote: literal string
         # Note that this is a case-neutral compare
@@ -325,8 +352,7 @@ def contained(tree, items, pc, deep, context):
     # a generator of children generators(!)
     if deep:
         return any(
-            f_run(gen_children, subseq, context)
-            for gen_children in tree.deep_children
+            f_run(gen_children, subseq, context) for gen_children in tree.deep_children
         )
     # Shallow containment: iterate through direct children
     return f_run(tree.children, subseq, context)
@@ -401,9 +427,7 @@ def run_sequence(gen, items, context):
                     pc += 1
                     op = ">>"
                 if pc >= len_items:
-                    raise ValueError(
-                        "Missing argument to '{0}' operator".format(op)
-                    )
+                    raise ValueError("Missing argument to '{0}' operator".format(op))
                 result = contained(tree, items, pc, op == ">>", context)
                 if not result:
                     return False
@@ -459,9 +483,7 @@ def run_set(gen, items, context):
                     op = ">>"
                     pc += 1
                 if pc >= len_items:
-                    raise ValueError(
-                        "Missing argument to '{0}' operator".format(op)
-                    )
+                    raise ValueError("Missing argument to '{0}' operator".format(op))
                 if result:
                     # Further constrained by containment
                     result = contained(tree, items, pc, op == ">>", context)

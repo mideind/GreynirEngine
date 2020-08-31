@@ -31,7 +31,7 @@ Now you can use the ``g`` instance to parse text, by calling
 the :py:meth:`Greynir.submit()`, :py:meth:`Greynir.parse()` and/or
 :py:meth:`Greynir.parse_single()` methods on it.
 
-Note that if you are only going to be using the :py:class:`NounPhrase` class,
+If you are only going to be using the :py:class:`NounPhrase` class,
 you don't need to initialize a :py:class:`Greynir` instance.
 
 .. topic:: The Greynir instance
@@ -168,7 +168,7 @@ The Greynir class
     .. py:method:: parse_single( \
         self, sentence: str, *, \
         max_sent_tokens: int=90 \
-        ) -> _Sentence
+        ) -> Optional[_Sentence]
 
         Parses a single sentence from a string and returns a corresponding
         :py:class:`_Sentence` object.
@@ -182,7 +182,7 @@ The Greynir class
             attempts, by specifying a higher number than 90. Setting it to ``None``
             or zero disables the length limit. Note that the default may be
             increased from 90 in future versions of Greynir.
-        :return: A :py:class:`_Sentence` object. Raises ``StopIteration`` if
+        :return: A :py:class:`_Sentence` object, or ``None`` if
             no sentence could be extracted from the string.
 
         The given sentence string is tokenized. An internal parse
@@ -225,7 +225,7 @@ The Greynir class
     .. py:method:: parse_tokens( \
         self, tokens: Iterable[Tok], *, \
         max_sent_tokens: int=90 \
-        ) -> _Sentence
+        ) -> Optional[_Sentence]
 
         Parses a single sentence from an iterable of tokens,
         and returns a corresponding :py:class:`_Sentence` object. Except
