@@ -24,9 +24,9 @@ actions and opinions.
 Full documentation for Greynir is `available here <https://greynir.is/doc/>`__.
 
 Greynir is the engine of `Greynir.is <https://greynir.is>`_, a natural-language
-front end for a database of 9 million sentences parsed from Icelandic
-news articles, and `Embla <https://embla.is>`_, a natural-language query app
-for smart phones.
+front end for a database of over 10 million sentences parsed from Icelandic
+news articles, and `Embla <https://embla.is>`_, a voice-driven virtual assistant app
+for smart devices such as iOS and Android phones.
 
 Greynir uses the `Tokenizer <https://pypi.org/project/tokenizer/>`_ package,
 by the same authors, to tokenize text.
