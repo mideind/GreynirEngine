@@ -13,6 +13,7 @@ chmod -x src/reynir/*.grammar.bin
 chmod -x src/reynir/config/*
 chmod -x src/reynir/resources/*
 # Create the base source distribution
+rm -rf build/*
 python3 setup.py sdist
 # Create the binary wheels
 source wheels.sh
