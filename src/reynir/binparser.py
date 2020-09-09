@@ -537,6 +537,10 @@ class BIN_Token(Token):
     VBIT_KK = VBIT["kk"]
     VBIT_KVK = VBIT["kvk"]
     VBIT_HK = VBIT["hk"]
+    VBIT_NF = VBIT["nf"]
+    VBIT_ÞF = VBIT["þf"]
+    VBIT_ÞGF = VBIT["þgf"]
+    VBIT_EF = VBIT["ef"]
     VBIT_NH = VBIT["nh"]
     VBIT_VH = VBIT["vh"]
     VBIT_BH = VBIT["bh"]
@@ -1670,6 +1674,20 @@ class VariantHandler:
             return "kvk"
         if self._vbits & BIN_Token.VBIT_HK:
             return "hk"
+        return None
+
+    @property
+    def case(self):
+        """ Return a case string corresponding to a variant
+            of this terminal, if any """
+        if self._vbits & BIN_Token.VBIT_NF:
+            return "nf"
+        if self._vbits & BIN_Token.VBIT_ÞF:
+            return "þf"
+        if self._vbits & BIN_Token.VBIT_ÞGF:
+            return "þgf"
+        if self._vbits & BIN_Token.VBIT_EF:
+            return "ef"
         return None
 
     @property

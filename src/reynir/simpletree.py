@@ -140,6 +140,7 @@ _DEFAULT_NT_MAP = {
     "NlBeintAndlag": "NP-OBJ",
     "NlEnginnAndlag": "NP-OBJ",  # 'hann getur enga samninga gert'
     "NlAnnar": "NP-OBJ",  # '[Jón hefur] aðra sögu [að segja]'
+    "NlNema": "NP-EXCEPT",  # '(söknuðu einskis) nema hestsins'
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
     "SögnErLoBotn": "NP-PRD",  # Show '(Hann er) góður / 18 ára' as a predicate argument
@@ -280,7 +281,7 @@ _DEFAULT_ID_MAP = {
     "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
     "NP": dict(
         name="Nafnliður",
-        subject_to={"NP-SUBJ", "NP-ES", "NP-OBJ", "NP-IOBJ", "NP-PRD", "NP-ADP"},
+        subject_to={"NP-SUBJ", "NP-ES", "NP-OBJ", "NP-IOBJ", "NP-PRD", "NP-ADP", "NP-EXCEPT"},
     ),
     "NP-POSS": dict(name="Eignarfallsliður", overrides="NP"),
     "NP-DAT": dict(name="Þágufallsliður", overrides="NP"),
@@ -292,6 +293,7 @@ _DEFAULT_ID_MAP = {
     "NP-PREFIX": dict(name="Forskeyti"),
     "NP-AGE": dict(name="Aldur"),
     "NP-MEASURE": dict(name="Magnliður", overrides="NP"),
+    "NP-EXCEPT": dict(name="Nema"),
     "NP-SUBJ": dict(name="Frumlag", subject_to={"NP-SUBJ"}),
     "NP-ES": dict(name="Frumlagsleppur"),
     "NP-OBJ": dict(name="Beint andlag"),

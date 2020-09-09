@@ -3400,14 +3400,27 @@ NlStak_ft_p2/fall/kyn → NlStak_p2_ft/fall/kyn FsRunaEftirNl?
 
 NlStak_p3/tala/fall/kyn →
 
-    NlKjarni/tala/fall/kyn NlStakTagl/tala/fall/kyn
+    NlKjarni/tala/fall/kyn NlStakTagl/tala/fall/kyn?
     | NlFornafn/tala/fall/kyn
     | Pfn/kyn/tala/fall to/tala/fall/kyn? 'persónulega:ao'? # 'þið tvær', 'við fjögur', 'hann einn'
     | LoTöluorð_ef 'konar:kk'_ef_et NlKjarni/tala/fall/kyn  # 'tvenns/þrenns/ferns konar innstungur'
     | Raðnr/fall/kyn NlKjarni/tala/fall/kyn Fornafn/tala/fall/kyn*   # 1. verðlaunin öll, 1.-3. sætið, 10. og 12. árið
+    | NlStakNema/tala/fall/kyn
+
+# '(unnu) alla leiki sína nema þann síðasta'
+# '(söknuðu) alls/einskis nema hestsins'
+# '(söknuðu) alls síns farangurs nema bakpokans'
+# '(afskrifuðu) engar eignir nema hlutaféð'
+NlStakNema/tala/fall/kyn →
+    NlStakNemaFn/tala/fall/kyn Nl/fall/tala/kyn? NlNema/fall
+
+NlNema/fall → 'nema:st' Nl/fall
+
+NlStakNemaFn/tala/fall/kyn →
+    'allur:fn'/tala/fall/kyn | 'enginn:fn'/tala/fall/kyn
 
 NlStakTagl/tala/fall/kyn →
-    FornafnEinkunn/tala/fall/kyn* to/tala/fall/kyn?    # (stjórnarframkvæmdum) þessum öllum, (bílana) mína tvo
+    FornafnEinkunn/tala/fall/kyn+ to/tala/fall/kyn?    # (stjórnarframkvæmdum) þessum öllum, (bílana) mína tvo
     | EignarFornafn/tala/fall/kyn KommaOgEðaEn EfLiður # skattskýrslur mínar og eiginkonu minnar
     | EinnOgSér/tala/fall/kyn
 
@@ -4978,8 +4991,11 @@ $score(+6) KommuSamtenging/fall
 Nl →
     Nl/tala/pers/fall/kyn
 
-Nl/tala →
-    Nl/tala/pers/fall/kyn
+Nl_et →
+    Nl_et/pers/fall/kyn
+
+Nl_ft →
+    Nl_ft/pers/fall/kyn
 
 # Mark these two nonterminals as roots since they are used as
 # such in nounphrase.py
