@@ -298,6 +298,34 @@ def test_noun_phrases(r):
     assert np.number is None
     assert np.case is None
     assert np.person is None
+    np = NounPhrase("buxur")
+    assert np.parsed
+    assert np.number == "ft"
+    assert np.genitive == "buxna"
+    np = NounPhrase("buxur", force_number="et")
+    assert not np.parsed
+    np = NounPhrase("gleraugun hans afa", force_number="ft")
+    assert np.parsed
+    assert np.number == "ft"
+    assert np.genitive == "gleraugnanna hans afa"
+    np = NounPhrase("gleraugun hans afa", force_number="et")
+    assert not np.parsed
+    np = NounPhrase("eyjar", force_number="ft")
+    assert np.parsed
+    assert np.number == "ft"
+    assert np.nominative == "eyjar"
+    np = NounPhrase("eyjar", force_number="et")
+    assert np.parsed
+    assert np.number == "et"
+    assert np.nominative == "ey"
+    np = NounPhrase("eyjar", force_number="plural")
+    assert np.parsed
+    assert np.number == "ft"
+    assert np.nominative == "eyjar"
+    np = NounPhrase("eyjar", force_number="singular")
+    assert np.parsed
+    assert np.number == "et"
+    assert np.nominative == "ey"
 
 
 def test_casting():

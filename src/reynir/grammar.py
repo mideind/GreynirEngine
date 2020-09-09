@@ -1230,7 +1230,7 @@ class Grammar:
             reduced = False
             for nt in agenda:
                 for _, p in grammar[nt]:
-                    if all(True if isinstance(s, Terminal) else s in der_t for s in p):
+                    if all(isinstance(s, Terminal) or s in der_t for s in p):
                         der_t.add(nt)
                         break
                 if nt in der_t:

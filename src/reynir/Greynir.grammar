@@ -4972,11 +4972,19 @@ EðaEndir/fall →
 $score(+6) KommuSamtenging/fall
 
 # Nafnliðir sem geta verið stakar eindir eða runur einda
-# !!! ATH: Forskeytið "Nl" á nafnliði er harðkóðað í binparser.py,
-# !!! nánar til tekið í BIN_Nonterminal.is_noun_phrase.
+# !!! ATH: Forskeytið "Nl" á nafnliði er harðkóðað á nokkrum
+# !!! stöðum í Python kóðanum, þannig að því má ekki breyta
 
 Nl →
     Nl/tala/pers/fall/kyn
+
+Nl/tala →
+    Nl/tala/pers/fall/kyn
+
+# Mark these two nonterminals as roots since they are used as
+# such in nounphrase.py
+$root(Nl_et)
+$root(Nl_ft)
 
 Nl/fall →
     Nl/tala/pers/fall/kyn

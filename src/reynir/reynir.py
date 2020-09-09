@@ -593,10 +593,25 @@ class _Job_NP(_Job):
     """ Specialized _Job class that creates _NounPhrase objects
         instead of _Sentence objects """
 
-    def __init__(self, greynir: "Greynir", tokens: Iterable[Tok]) -> None:
+    def __init__(self,
+        greynir: "Greynir",
+        tokens: Iterable[Tok],
+        *,
+        force_number: str = None
+    ) -> None:
         # Parse the tokens with 'Nl' (noun phrase) as the root nonterminal
         # instead of the usual default 'S0' (sentence) root
-        super().__init__(greynir, tokens, parse=True, root="Nl")
+        root = "Nl"
+        if force_number:
+            if force_number in ("et", "singular"):
+                # We only want singular parses
+                root = "Nl_et"
+            elif force_number in ("ft", "plural"):
+                # We only want plural parses
+                root = "Nl_ft"
+            else:
+                raise ValueError("Unexpected value of force_number")
+        super().__init__(greynir, tokens, parse=True, root=root)
 
     def _create_sentence(self, s: TokenList) -> _NounPhrase:
         """ Create a fresh _NounPhrase object """
@@ -799,13 +814,18 @@ class Greynir:
         except StopIteration:
             return None
 
-    def parse_noun_phrase(self, noun_phrase: str) -> Optional[_NounPhrase]:
+    def parse_noun_phrase(
+        self,
+        noun_phrase: str,
+        *,
+        force_number=None
+    ) -> Optional[_NounPhrase]:
         """ Utility function to parse a noun phrase. Note that in most
             cases it is more convenient to use the NounPhrase class
             for this purpose. """
         tokens = self.tokenize(noun_phrase)
         # Use a _Job_NP to generate _NounPhrase objects instead of _Sentence objects
-        job = _Job_NP(self, tokens)
+        job = _Job_NP(self, tokens, force_number=force_number)
         # Returns None if no noun phrase could be extracted from the text
         try:
             return cast(_NounPhrase, next(iter(job)))

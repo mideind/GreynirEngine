@@ -61,8 +61,12 @@ class NounPhrase:
     # Singleton parser instance
     _greynir = None  # type: Greynir
 
-    def __init__(self, np_string):
-        """ Initialize a NounPhrase from a text string """
+    def __init__(self, np_string: str, *, force_number: str = None) -> None:
+        """ Initialize a NounPhrase from a text string.
+            If force_number is set to "et" or "singular", we only
+            consider singular interpretations of the string.
+            If force_number is set to "ft" or "plural", we only
+            consider plural interpretations of the string. """
         self._np_string = np_string or ""
         self._number = None
         self._person = None
@@ -74,7 +78,9 @@ class NounPhrase:
                 # Initialize our parser singleton
                 self.__class__._greynir = Greynir()
             # Parse the noun phrase string into a _NounPhrase object
-            self._np = self._greynir.parse_noun_phrase(self._np_string)
+            self._np = self._greynir.parse_noun_phrase(
+                self._np_string, force_number=force_number
+            )
             if self._np is not None and self._np.deep_tree is not None:
                 # Access the first child of the root 'Nl' nonterminal
                 # of the deep parse tree

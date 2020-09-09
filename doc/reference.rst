@@ -771,7 +771,7 @@ forms of the phrase, as required in various contexts.
 
 .. py:class:: NounPhrase
 
-    .. py:method:: __init__(self, np_string)
+    .. py:method:: __init__(self, np_string: str, *, force_number: str = None)
 
         Creates a :py:class:`NounPhrase` instance.
 
@@ -789,6 +789,15 @@ forms of the phrase, as required in various contexts.
             If the noun phrase cannot be parsed or is empty, the
             :py:attr:`NounPhrase.parsed` property will be ``False`` and all
             inflection properties will return ``None``.
+
+        :param str force_number: An optional string that can contain
+            ``"et"`` or ``"singular"``, or ``"ft"`` or ``"plural"``.
+            If given, it forces the parsing of the noun phrase to be
+            constrained to singular or plural forms, respectively.
+            As an example, ``NounPhrase("eyjar", force_number="ft")``
+            yields a plural result (nominative ``"eyjar"``),
+            while ``NounPhrase("eyjar")`` without forcing
+            yields a singular result (nominative ``"ey"``).
 
     .. py:method:: __str__(self) -> str
 
