@@ -35,7 +35,7 @@ from .nounphrase import NounPhrase
 from .fastparser import ParseForestPrinter, ParseForestDumper, ParseForestFlattener
 from .fastparser import ParseError, ParseForestNavigator
 from .settings import Settings
-from .bintokenizer import tokenize
+from .bintokenizer import tokenize, TokenList
 from .version import __version__
 
 # Expose the tokenizer API

@@ -770,7 +770,7 @@ class BIN_Token(Token):
         # We store a cached check of whether this is an "eo".
         # An "eo" is an adverb (atviksorð) that cannot also be
         # a preposition ("fs") and is therefore a possible
-        # non-ambiguousprefix to a noun ("einkunn")
+        # non-ambiguous prefix to a noun ("einkunn")
         self._is_eo = None
 
         # Cache the matching function to use with this token
