@@ -429,7 +429,15 @@ class WordMatchers:
     def matcher_lemma_literal(token, terminal, m):
         """ Check whether the meaning matches a lemma literal terminal,
             i.e. one that is enclosed in single quotes ('dæmi:hk'_nf_et) """
-        return WordMatchers.matcher_default(token, terminal, m)
+        if not WordMatchers.matcher_default(token, terminal, m):
+            return False
+        # Special case: We don't allow verb lemma literals to match
+        # middle voice ('mm') meanings unless the _mm variant is explicitly specified.
+        # This avoids the problem of lemma literals such as 'hafa:so'_et_p3
+        # matching 'hafast', which is usually not what you want for an auxiliary verb.
+        if terminal.colon_cat != "so" or terminal.is_mm:
+            return True
+        return "MM" not in m.beyging
 
     @staticmethod
     def matcher_uppercase_lemma_literal(token, terminal, m):

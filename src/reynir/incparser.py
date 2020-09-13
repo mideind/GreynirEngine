@@ -4,7 +4,7 @@
 
     Utility class for incremental parsing of token streams
 
-    Copyright (c) 2018 Miðeind ehf.
+    Copyright (c) 2020 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
        This program is free software: you can redistribute it and/or modify
@@ -142,13 +142,14 @@ class IncrementalParser:
 
         def sentences(self):
             """ Yield the sentences within the paragraph, nicely wrapped """
+            Sent = IncrementalParser._IncrementalSentence
             for _, sent in self._p:
                 # Call time.sleep(0) to yield the current thread, i.e.
                 # enable the threading subsystem and/or eventlet under Gunicorn
                 # to switch threads at this point - since the parsing of an
                 # entire article can take a long time
                 time.sleep(0)
-                yield IncrementalParser._IncrementalSentence(self._ip, sent)
+                yield Sent(self._ip, sent)
 
     def __init__(self, parser, toklist, verbose=False):
         self._parser = parser
@@ -194,8 +195,9 @@ class IncrementalParser:
 
     def paragraphs(self):
         """ Yield the paragraphs from the token stream """
+        Para = IncrementalParser._IncrementalParagraph
         for p in paragraphs(self._toklist):
-            yield IncrementalParser._IncrementalParagraph(self, p)
+            yield Para(self, p)
 
     @property
     def num_tokens(self):

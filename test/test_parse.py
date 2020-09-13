@@ -1496,13 +1496,13 @@ def test_composite_words(r):
         "og Ytri-Hnausi í Þingvalla-sveit."
     )
     assert s.tree.nouns == [
-        "málfræðiregla",
+        "Málfræði-regla",
         "Vestur-Þýskaland",
         "Ytri-Hnaus",
-        "Þingvallasveit",
+        "Þingvalla-sveit",
     ]
     s = r.parse_single("Þing-konur og -menn dvöldu í þingvalla-sveitinni.")
-    assert s.tree.nouns == ["þingkona", "maður", "þingvalla-sveit"]
+    assert s.tree.nouns == ["Þing-kona", "maður", "þingvalla-sveit"]
 
 
 def test_compressed_bin():

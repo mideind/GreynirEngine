@@ -53,6 +53,7 @@ _ALL_GENDERS = frozenset(("kk", "kvk", "hk"))
 _ALL_NUMBERS = frozenset(("et", "ft"))
 _SUBCLAUSES = frozenset(("nh", "mnh", "falls"))
 _REFLPRN = {"sig": "sig_hk_et_þf", "sér": "sig_hk_et_þgf", "sín": "sig_hk_et_ef"}
+_REFLPRN_SET = frozenset(_REFLPRN.keys())
 
 # Type of meaning tuples for static phrases
 # stofn, utg, ordfl, fl, ordmynd, beyging
@@ -61,6 +62,12 @@ MeaningTuple = Tuple[str, int, str, str, str, str]
 StaticPhraseTuple = Tuple[str, str, str]
 # Type for preference specifications
 PreferenceTuple = Tuple[List[str], List[str], int]
+# Type of set of zero-verb arguments
+VerbZeroArgSet = Set[str]
+# Type of dict of verbs with arguments (1 or 2),
+# where each entry is a list of argument lists
+VerbWithArgDict = Dict[str, List[List[str]]]
+VerbWithArgErrorDict = Dict[str, Dict[str, str]]
 
 
 @contextmanager
@@ -181,7 +188,7 @@ class VerbObjects:
     # Dictionary of verbs by object (argument) number, 0, 1 or 2
     # Verbs can control zero, one or two arguments (noun phrases),
     # where each argument must have a particular case
-    VERBS = [set(), defaultdict(list), defaultdict(list)]  # type: List[Union[Set[str], Dict[str, List[str]]]]
+    VERBS = [set(), defaultdict(list), defaultdict(list)]  # type: List[Union[VerbZeroArgSet, VerbWithArgDict]]
     # Dictionary of verb forms with associated scores
     # The key is the normal form of the verb + the associated cases,
     # separated by underscores, e.g. "vera_þgf_ef"
@@ -193,37 +200,48 @@ class VerbObjects:
     # dict { verb + argument cases : verb particle}
     VERB_PARTICLES = defaultdict(set)  # type: Dict[str, Set[str]]
 
-    VERBS_ERRORS = [set(), defaultdict(dict), defaultdict(dict)]  # type: List[Union[Set[str], Dict[str, Dict[str, str]]]]
+    VERBS_ERRORS = [set(), defaultdict(dict), defaultdict(dict)]  # type: List[Union[VerbZeroArgSet, VerbWithArgErrorDict]]
     VERB_PARTICLES_ERRORS = defaultdict(dict)  # type: Dict[str, Dict[str, str]]
     PREPOSITIONS_ERRORS = defaultdict(dict)  # type: Dict[str, Dict[str, str]]
-    WRONG_VERBS = defaultdict(list)  # type: Dict[str, List[str]]
+    WRONG_VERBS = dict()  # type: Dict[str, str]
 
     @staticmethod
-    def add(verb, args, prepositions, particle, score):
+    def check_args(args: List[str]) -> None:
+        for kind in args:
+            if kind not in _ALL_CASES | _SUBCLAUSES | _REFLPRN_SET:
+                spl = kind.split("_")
+                # Allow the last variant to be _gr, if the
+                # next-to-last one is a case
+                if spl and spl[-1] == "gr":
+                    spl = spl[:-1]
+                if not spl or spl[-1] not in _ALL_CASES:
+                    raise ConfigError(
+                        "Invalid verb argument: '{0}'".format(kind)
+                    )
+
+    @staticmethod
+    def add(
+        verb: str,
+        args: List[str],
+        prepositions: List[Tuple[str, str]],
+        particle: Optional[str],
+        score: int,
+    ) -> None:
         """ Add a verb and its objects (arguments). Called from the config file handler. """
         la = len(args)
         if la > 2:
             raise ConfigError("A verb can have 0-2 arguments; {0} given".format(la))
         if la:
-            for kind in args:
-                if kind not in _ALL_CASES and kind not in _SUBCLAUSES:
-                    if kind in _REFLPRN:
-                        kind = _REFLPRN[kind]
-                    else:
-                        spl = kind.split("_")
-                        if spl[-1] not in _ALL_CASES and spl[-1] != "gr":
-                            raise ConfigError(
-                                "Invalid verb argument: '{0}'".format(kind)
-                            )
+            VerbObjects.check_args(args)
             # Append a possible argument list
-            vargs = cast(Dict[str, List[str]], VerbObjects.VERBS[la])
+            vargs = cast(VerbWithArgDict, VerbObjects.VERBS[la])
             arglists = vargs[verb]
             if args not in arglists:
                 # Avoid adding the same argument list twice
                 arglists.append(args)
         else:
             # Note that the verb can be argument-free
-            argset = cast(Set[str], VerbObjects.VERBS[0])
+            argset = cast(VerbZeroArgSet, VerbObjects.VERBS[0])
             argset.add(verb)
         # Store the score, if nonzero
         verb_with_cases = "_".join([verb] + args)
@@ -237,17 +255,24 @@ class VerbObjects:
             # Add a full form with case or argument kind, such as "í_þgf", or "í_nh"
             d.add(p + "_" + kind)
         if particle:
-            VerbObjects.VERB_PARTICLES[verb_with_cases] = particle
+            VerbObjects.VERB_PARTICLES[verb_with_cases].add(particle)
 
     @staticmethod
-    def add_error(verb, args, prepositions, particle, corr):
+    def add_error(
+        verb: str,
+        args: List[str],
+        prepositions: List[Tuple[str, str]],
+        particle: Optional[str],
+        corr: str,
+    ) -> None:
         """ Take note of a verb object specification with an $error pragma """
+        VerbObjects.check_args(args)
         corrlist = corr.split(",")
         errlist = corrlist[0].split("-")
         errkind = errlist[0].strip()
         verb_with_cases = "_".join([verb] + args)
         if errkind == "OBJ":
-            vargs = cast(Dict[str, Dict[str, str]], VerbObjects.VERBS_ERRORS[len(args)])
+            vargs = cast(VerbWithArgErrorDict, VerbObjects.VERBS_ERRORS[len(args)])
             arglists = vargs[verb]
             arglists[verb_with_cases] = corr
         elif errkind == "PP":
@@ -257,6 +282,8 @@ class VerbObjects:
                 d[p + "_" + kind] = corr
         elif errkind == "PRTCL":
             # !!! TODO: Parse the corr string
+            if particle is None:
+                raise ConfigError("Particle error specification must specify particle")
             VerbObjects.VERB_PARTICLES_ERRORS[verb_with_cases][particle] = corr
         elif errkind == "ALL":
             # !!! TODO: Implement this (store specification of a
@@ -269,7 +296,14 @@ class VerbObjects:
             wrong_kind = errlist[1].strip()
             if wrong_kind == "VERB":
                 # Wrong verb, must point to completely different verb + args
-                VerbObjects.WRONG_VERBS[verb_with_cases] = corr
+                if len(corrlist) != 2:
+                    raise ConfigError("WRONG-VERB must specify correct verb")
+                if particle:
+                    verb_with_cases += "*" + particle
+                if verb_with_cases in VerbObjects.WRONG_VERBS:
+                    pass
+                    # raise ConfigError("WRONG-VERB has already been specified for this verb, argument list and particle")
+                VerbObjects.WRONG_VERBS[verb_with_cases] = corrlist[1]
             elif wrong_kind == "OBJ":
                 # !!! TODO: Implement this
                 pass
@@ -281,7 +315,7 @@ class VerbObjects:
             )
 
     @staticmethod
-    def verb_matches_preposition(verb_with_cases, prep_with_case):
+    def verb_matches_preposition(verb_with_cases: str, prep_with_case: str) -> bool:
         """ Does the given preposition with the given case fit the verb? """
         # if Settings.DEBUG:
         #    print("verb_matches_preposition: verb {0}, prep {1}, verb found {2}, prep found {3}"
@@ -289,18 +323,12 @@ class VerbObjects:
         #            verb_with_cases in VerbObjects.PREPOSITIONS,
         #            verb_with_cases in VerbObjects.PREPOSITIONS and
         #            prep_with_case in VerbObjects.PREPOSITIONS[verb_with_cases]))
-        return (
-            verb_with_cases in VerbObjects.PREPOSITIONS
-            and prep_with_case in VerbObjects.PREPOSITIONS[verb_with_cases]
-        )
+        return prep_with_case in VerbObjects.PREPOSITIONS.get(verb_with_cases, set())
 
     @staticmethod
-    def verb_matches_particle(verb_with_cases, particle):
+    def verb_matches_particle(verb_with_cases: str, particle: str) -> bool:
         """ Does the given particle fit the verb? """
-        return (
-            verb_with_cases in VerbObjects.VERB_PARTICLES
-            and particle in VerbObjects.VERB_PARTICLES[verb_with_cases]
-        )
+        return particle in VerbObjects.VERB_PARTICLES.get(verb_with_cases, set())
 
 
 class VerbSubjects:
@@ -315,19 +343,19 @@ class VerbSubjects:
     VERBS_ERRORS = defaultdict(dict)  # type: Dict[str, Dict[str, str]]
 
     @staticmethod
-    def set_case(case):
+    def set_case(case: str) -> None:
         """ Set the case of the subject for the following verbs """
         # if case not in { "þf", "þgf", "ef", "none", "lhþt" }:
         #     raise ConfigError("Unknown verb subject case '{0}' in verb_subjects".format(case))
         VerbSubjects._CASE = case
 
     @staticmethod
-    def add(verb):
+    def add(verb: str) -> None:
         """ Add a verb and its arguments. Called from the config file handler. """
         VerbSubjects.VERBS[verb].add(VerbSubjects._CASE)
 
     @staticmethod
-    def add_error(verb, corr):
+    def add_error(verb: str, corr: str) -> None:
         """ Add a verb and the correct case. Called from the config file handler. """
         corrlist = corr.split(",")
         errlist = corrlist[0].split("-")
@@ -349,7 +377,7 @@ class VerbSubjects:
             )
 
     @staticmethod
-    def is_strictly_impersonal(verb):
+    def is_strictly_impersonal(verb: str) -> bool:
         """ Returns True if the given verb is only impersonal, i.e. if it appears
             with an $error() pragma in the subject = nf section of verb_subjects
             and cannot be used with a nominative subject: ?'ég dreymdi þig' """
@@ -504,7 +532,8 @@ class StaticPhrases:
 
     @staticmethod
     def add_errors(words: str, error: Tuple[str, str, str, str]) -> None:
-        # Dictionary structure : { phrase : (error_code, right_phrase, right_tag_string, right_lemma_string) }
+        # Dictionary structure:
+        # { phrase : (error_code, right_phrase, right_tag_string, right_lemma_string) }
         StaticPhrases.ERROR_DICT[words] = error
 
     @staticmethod
@@ -881,35 +910,42 @@ class Settings:
     # Configuration settings from the Reynir.conf file
 
     @staticmethod
-    def _handle_settings(s):
+    def _handle_settings(s: str) -> None:
         """ Handle config parameters in the settings section """
         a = s.lower().split("=", maxsplit=1)
         par = a[0].strip().lower()
-        val = a[1].strip()
-        if val.lower() == "none":
+        sval = a[1].strip()
+        val = sval  # type: Union[None, str, bool]
+        if sval.lower() == "none":
             val = None
-        elif val.lower() == "true":
+        elif sval.lower() == "true":
             val = True
-        elif val.lower() == "false":
+        elif sval.lower() == "false":
             val = False
         try:
             if par == "db_hostname":
+                if not isinstance(val, str):
+                    raise ConfigError("Expected database host name as a string")
                 Settings.DB_HOSTNAME = Settings.BIN_DB_HOSTNAME = val
             elif par == "db_port":
+                if not isinstance(val, str):
+                    raise ConfigError("Expected port number")
                 Settings.DB_PORT = Settings.BIN_DB_PORT = int(val)
-            elif par == "bin_db_hostname":
-                # Specify this after db_hostname if different from db_hostname
-                Settings.BIN_DB_HOSTNAME = val
-            elif par == "bin_db_port":
-                # Specify this after db_port if different from db_port
-                Settings.BIN_DB_PORT = int(val)
             elif par == "host":
+                if not isinstance(val, str):
+                    raise ConfigError("Expected host name as a string")
                 Settings.HOST = val
             elif par == "port":
+                if not isinstance(val, str):
+                    raise ConfigError("Expected port number")
                 Settings.PORT = int(val)
             elif par == "simserver_host":
+                if not isinstance(val, str):
+                    raise ConfigError("Expected simserver host name as a string")
                 Settings.SIMSERVER_HOST = val
             elif par == "simserver_port":
+                if not isinstance(val, str):
+                    raise ConfigError("Expected port number")
                 Settings.SIMSERVER_PORT = int(val)
             elif par == "debug":
                 Settings.DEBUG = bool(val)
@@ -919,7 +955,7 @@ class Settings:
             raise ConfigError("Invalid parameter value: {0} = {1}".format(par, val))
 
     @staticmethod
-    def _handle_static_phrases(s):
+    def _handle_static_phrases(s: str) -> None:
         """ Handle static phrases in the settings section """
         error = False
         if "=" not in s:
@@ -928,11 +964,13 @@ class Settings:
                 error = True
                 # A typical format is
                 # $error(error_code, right_phrase, right_parts_of_speech)
-                e = s[ix + 7 :].lstrip().rstrip(" )").split(", ")
+                e = s[ix + 7 :].lstrip().rstrip(" )").split(",")
+                if len(e) != 4:
+                    raise ConfigError("Error pragma should have four parameters")
                 s = s[:ix].strip()
             StaticPhrases.add(s)
             if error:
-                StaticPhrases.add_errors(s.split(",")[0], e)
+                StaticPhrases.add_errors(s.split(",")[0], (e[0], e[1], e[2], e[3]))
             return
         # Check for a meaning spec
         a = s.split("=", maxsplit=1)
@@ -950,25 +988,24 @@ class Settings:
             )
 
     @staticmethod
-    def _handle_abbreviations(s):
+    def _handle_abbreviations(s: str) -> None:
         """ Handle abbreviations in the settings section """
         # Not required in the ReynirPackage module
         # and should not occur in its settings files
         assert False
 
     @staticmethod
-    def _handle_meanings(s):
+    def _handle_meanings(s: str) -> None:
         """ Handle additional word meanings in the settings section """
         # Not required in the ReynirPackage module
         # and should not occur in its settings files
         assert False
 
     @staticmethod
-    def _handle_verb_objects(s):
+    def _handle_verb_objects(s: str) -> None:
         """ Handle verb object specifications in the settings section """
-        # Format: verb [arg1] [arg2] [/preposition arg]... [$score(sc)]
+        # Format: verb [arg1] [arg2] [/preposition arg]... [*particle] [$pragma(txt)]
         # arg can be nf, þf, þgf, ef, nh, falls, sig/sér/sín, bági_kk_ft_þf
-        error = None
 
         # Start by handling the $score() pragma, if present
         score = 0
@@ -987,6 +1024,7 @@ class Settings:
                 raise ConfigError("Invalid score ('{0}') for verb form".format(sc))
 
         # Check for $error
+        error = None
         ix = s.rfind("$error(")
         if ix >= 0:
             if not s.endswith(")"):
@@ -1008,11 +1046,11 @@ class Settings:
                 raise ConfigError("Particle should be at least one letter")
 
         # Process preposition arguments, if any
-        prepositions = []
+        prepositions = []  # type: List[Tuple[str, str]]
         ap = s.split("/")
         s = ap[0]
         ix = 1
-        while len(ap) > ix:
+        while ix < len(ap):
             # We expect something like 'af þgf', or possibly
             # 'fyrir_hönd þf' (where the underscore needs to be replaced by a space)
             p = ap[ix].strip()
@@ -1020,22 +1058,19 @@ class Settings:
             if len(parg) != 2:
                 raise ConfigError("Preposition should have exactly one argument")
             if parg[1] not in _ALL_CASES and parg[1] not in _SUBCLAUSES:
-                if parg[1] in _REFLPRN:
-                    parg[1] = _REFLPRN[parg[1]]
+                parg[1] = _REFLPRN.get(parg[1], parg[1])
                 spl = parg[1].split("_")
                 if spl[-1] == "gr":
                     spl = spl[:-1]
                 if spl[-1] not in _ALL_CASES:
-                    raise ConfigError("Unknown argument for preposition")
+                    raise ConfigError("Preposition argument must have a case as its last variant")
             prepositions.append((parg[0].replace("_", " "), parg[1]))
             ix += 1
 
         # Process verb arguments
         a = s.split()
         if len(a) < 1 or len(a) > 3:
-            raise ConfigError(
-                "Verb should have zero, one or two arguments and an optional score"
-            )
+            raise ConfigError("Verb should have zero, one or two arguments")
         verb = a[0]
         if not verb.isalpha():
             raise ConfigError("Verb '{0}' is not a valid word".format(verb))

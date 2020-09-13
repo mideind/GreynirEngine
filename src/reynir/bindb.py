@@ -300,11 +300,17 @@ class BIN_Db:
         return "hk"  # Unknown gender
 
     @staticmethod
-    def prefix_meanings(mlist, prefix, *, insert_hyphen=True):
+    def prefix_meanings(mlist, prefix, *, insert_hyphen=True, uppercase=False):
         """ Return a meaning list with a prefix added to the
-            stofn and ordmynd attributes """
+            stofn and ordmynd attributes. If insert_hyphen is True, we
+            insert a hyphen between the prefix and the suffix, both in the
+            stofn and in the ordmynd fields. If uppercase is additionally True, we
+            uppercase the suffix. """
         if insert_hyphen:
-            concat = lambda w: prefix + "-" + w
+            if uppercase:
+                concat = lambda w: prefix + "-" + w.capitalize()
+            else:
+                concat = lambda w: prefix + "-" + w
         else:
             concat = lambda w: prefix + w
         return (
@@ -328,6 +334,14 @@ class BIN_Db:
     def _compound_meanings(w, lower_w, at_sentence_start, lookup):
         """ Return a list of meanings of this word,
             when interpreted as a compound word """
+        if "-" in w and not w.endswith("-"):
+            # The word already contains a hyphen: respect that split and
+            # look at the suffix only
+            prefix, suffix = w.rsplit("-", maxsplit=1)
+            m = BIN_Db._compound_meanings(suffix, suffix.lower(), False, lookup)
+            # For words such as 'Ytri-Hnaus', retain the uppercasing of the suffix
+            uppercase = suffix[0].isupper() and suffix[1:].islower()
+            return BIN_Db.prefix_meanings(m, prefix, uppercase=uppercase) if m else []
         cw = Wordbase.slice_compound_word(w)
         if not cw and lower_w != w:
             # If not able to slice in original case, try lower case
@@ -523,7 +537,7 @@ class BIN_Db:
                 cw = m_word.ordmynd.split("-")
                 prefix = "-".join(cw[0:-1])
                 # No need to think about upper or lower case here,
-                # since the last part of a composite word is always in BÍN as-is
+                # since the last part of a compound word is always in BÍN as-is
                 mm = case_func(
                     cw[-1], cat=m_word.ordfl, stem=m_word.stofn.split("-")[-1]
                 )

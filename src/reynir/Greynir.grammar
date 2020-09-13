@@ -6737,6 +6737,17 @@ TímaÁkvæðisliður/fall/tala/kyn →
 NæstSíðast/fall/tala/kyn →
     'næstkomandi:lo'/fall/tala/kyn
     | 'síðastliðinn:lo'/fall/tala/kyn
+    | VillaSíðastLiðinn/fall/tala/kyn
+
+# Grípa villuna 'síðast liðinn'
+# Við þurfum sérstaka villureglu fyrir þetta þar sem orðin
+# 'síðast liðin/ð/nn' geta komið fyrir í öðru samhengi án þess að það sé villa
+VillaSíðastLiðinn/fall/tala/kyn →
+    'síðar:ao' 'líða:so'_lhþt/fall/tala/kyn
+
+$tag(error) VillaSíðastLiðinn/fall/tala/kyn
+
+$score(+20) VillaSíðastLiðinn/fall/tala/kyn
 
 ÁðurEftir →
     "áður:ao"
