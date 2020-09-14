@@ -6,8 +6,8 @@
 # Stop execution upon error; show executed commands
 set -e -x
 
-# Create wheels for Python 3.5-3.7
-for PYBIN in cp35 cp36 cp37; do
+# Create wheels for Python 3.6-3.7
+for PYBIN in cp36 cp37; do
     "/opt/python/${PYBIN}-${PYBIN}m/bin/pip" wheel /io/ -w wheelhouse/
 done
 # Create wheels for Python >= 3.8
