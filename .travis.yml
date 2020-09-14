@@ -14,12 +14,14 @@ python:
 before_install:
   - python -m pip install --upgrade pip
   - python -m pip install --upgrade pytest
+  - if [ "$TRAVIS_PYTHON_VERSION" == "3.6" ]; then python -m pip install mypy; fi
   - python -m pip install git+https://github.com/mideind/Tokenizer#egg=tokenizer
 
 install:
   - python -m pip install -e .
 
 script:
+  - if [ "$TRAVIS_PYTHON_VERSION" == "3.6" ]; then mypy src/reynir/__init__.py; fi
   - python -m pytest
 
 notifications:
