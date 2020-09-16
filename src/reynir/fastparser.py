@@ -328,7 +328,7 @@ class Node:
         return node
 
     @classmethod
-    def copy(cls, other):
+    def copy(cls, other: "Node") -> "Node":
         """ Returns a copy of a Node instance """
         node = cls(other._start, other._end)
         node._nonterminal = other._nonterminal

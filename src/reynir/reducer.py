@@ -73,21 +73,25 @@
 
 """
 
-from typing import Dict, Union, List, Set
+from typing import Dict, Union, List, Set, Tuple, Optional, Any
 
 import copy
 from collections import defaultdict
+import threading
 
-from .grammar import Production
+from .grammar import Grammar, Production
 from .fastparser import Node, ParseForestNavigator, ParseForestPrinter
 from .settings import Preferences, NounPreferences, VerbObjects
 from .binparser import BIN_Token, BIN_Terminal
 
 
 # Types for data used in the reduction process
-ScopeDict=Dict[str, Union[int, List[str]]]
-ChildDict=Dict[int, ScopeDict]
-
+ResultDict = Dict[str, Union[int, List[str], List[Tuple[BIN_Terminal, BIN_Token]]]]
+ChildDict = Dict[int, ResultDict]
+ScoreDict = Dict[int, Dict[BIN_Terminal, int]]
+BonusCache = Dict[Tuple[BIN_Terminal, str, BIN_Terminal, BIN_Token], int]
+FinalsType = Dict[int, Set[BIN_Terminal]]
+TokensType = Dict[int, BIN_Token]
 
 _PREP_SCOPE_SET = frozenset(("begin_prep_scope", "purge_prep", "no_prep"))
 _PREP_ALL_SET = frozenset(_PREP_SCOPE_SET | {"enable_prep_bonus"})
@@ -100,12 +104,12 @@ _LENGTH_BONUS_FACTOR = 10  # For length bonus, multiply number of tokens by this
 _NOUN_SET = BIN_Token.GENDERS_SET  # kk, kvk, hk
 
 
-def copy_node(node):
+def copy_node(node: Optional[Node]) -> Optional[Node]:
     """ Copy the tree under the given node, including the node itself.
         Stop when coming to a nested preposition scope or to a
         noun phrase (Nafnliður, Nl_*) """
 
-    def dup(node):
+    def dup(node: Optional[Node]) -> Optional[Node]:
         """ Duplicate (copy) this node """
         if node is None:
             return None
@@ -139,19 +143,19 @@ class PrepositionUnpacker(ParseForestNavigator):
     """ Subclass to duplicate (split) the tree at every enclosing
         preposition scope (SagnInnskot) """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(visit_all=False)
 
-    def visit_nonterminal(self, level, node):
+    def visit_nonterminal(self, level: int, node: Node) -> Any:
         """ Create a result object to capture information about
             productions (families of children) of this nonterminal """
         return defaultdict(list)
 
-    def add_result(self, results, ix, r):
+    def add_result(self, results: Any, ix: int, r: Node) -> None:
         """ Capture a particular child node r of family ix """
         results[ix].append(r)
 
-    def process_results(self, results, node):
+    def process_results(self, results: Any, node: Node) -> Any:
         """ Go through the child productions (families) and
             duplicate any nodes that have the enable_prep_bonus
             tag, so that they can receive independent scores in
@@ -169,7 +173,7 @@ class PrepositionUnpacker(ParseForestNavigator):
         return node.nonterminal if node.is_completed else None
 
     @classmethod
-    def navigate(cls, root_node):
+    def navigate(cls, root_node: Node) -> int:
         cls().go(root_node)
 
 
@@ -180,7 +184,7 @@ class _ReductionScope:
 
     __slots__ = ("reducer", "sc", "pushed_prep_bonus", "start_verb")
 
-    def __init__(self, reducer, node):
+    def __init__(self, reducer: "ParseForestReducer", node: Node) -> None:
         self.reducer = reducer
         # Child tree scores
         self.sc = defaultdict(lambda: dict(sc=0))  # type: ChildDict
@@ -210,7 +214,7 @@ class _ReductionScope:
         self.sc[ix]["sc"] = -10 * prod.priority
         self.reducer.set_current_verb(self.start_verb)
 
-    def add_child(self, ix: int, sc: ScopeDict) -> None:
+    def add_child(self, ix: int, sc: ResultDict) -> None:
         """ Add a child node's score to the parent family's score,
             where the parent family has index ix (0..n) """
         d = self.sc[ix]
@@ -226,7 +230,7 @@ class _ReductionScope:
                 if key == "sl":
                     self.reducer.set_current_verb(sc[key])
 
-    def process(self, node):
+    def process(self, node: Node) -> ResultDict:
         """ After accumulating scores for all possible productions
             of this nonterminal (families of children), find the
             highest scoring one and reduce the tree to that child only """
@@ -238,7 +242,8 @@ class _ReductionScope:
 
             if len(csc) == 1:
                 # Not ambiguous: only one result, do a shortcut
-                [sc] = csc.values()  # Will raise an exception if not exactly one value
+                # Will raise an exception if not exactly one value
+                [sc] = csc.values()
             else:
                 # Eliminate all families except the best scoring one
                 # Sort in decreasing order by score, using the family index
@@ -302,7 +307,7 @@ class ParseForestReducer:
         so that the highest-scoring alternative production of a nonterminal
         (family of children) survives at each point of ambiguity """
 
-    def __init__(self, grammar, scores):
+    def __init__(self, grammar: Grammar, scores: ScoreDict) -> None:
         super().__init__()
         # scores contains the token-terminal matching scores
         self._scores = scores
@@ -310,12 +315,12 @@ class ParseForestReducer:
         self._score_adj = grammar._nt_scores
         self._prep_bonus_stack = [None]
         self._current_verb_stack = [None]
-        self._bonus_cache = dict()
+        self._bonus_cache = dict()  # type: BonusCache
 
     def push_prep_bonus(self, val):
         self._prep_bonus_stack.append(val)
 
-    def pop_prep_bonus(self):
+    def pop_prep_bonus(self) -> None:
         self._prep_bonus_stack.pop()
 
     def get_prep_bonus(self):
@@ -324,7 +329,7 @@ class ParseForestReducer:
     def push_current_verb(self, val):
         self._current_verb_stack.append(val)
 
-    def pop_current_verb(self):
+    def pop_current_verb(self) -> None:
         self._current_verb_stack.pop()
 
     def get_current_verb(self):
@@ -363,10 +368,10 @@ class ParseForestReducer:
         # If no match, discourage
         return _VERB_PREP_PENALTY
 
-    def _visit_token(self, node):
+    def _visit_token(self, node: Node) -> ResultDict:
         """ At token node """
         # Return the score of this token/terminal match
-        d = dict()
+        d = dict()  # type: ResultDict
         sc = self._scores[node.start][node.terminal]
         if node.terminal.matches_category("fs"):
             # Preposition terminal - this is either a normal fs_case terminal
@@ -400,17 +405,17 @@ class ParseForestReducer:
         d["sc"] = node.score = sc
         return d
 
-    def go(self, root_node):
+    def go(self, root_node: Node) -> ResultDict:
         """ Perform the reduction, but first split the tree underneath
             nodes that have the enable_prep_bonus tag """
 
         PrepositionUnpacker.navigate(root_node)
 
-        visited = dict()  # type: Dict[Node, Dict[str, int]]
-        NULL_SC = dict(sc=0)
+        visited = dict()  # type: Dict[Node, ResultDict]
+        NULL_SC = dict(sc=0)  # type: ResultDict
 
         def _nav_helper(w):
-            """ Navigate from w """
+            """ Navigate from node w """
             if w in visited:
                 # Already seen: return the previously calculated result
                 return visited[w]
@@ -446,42 +451,44 @@ class OptionFinder(ParseForestNavigator):
     """ Subclass to navigate a parse forest and populate the set
         of terminals that match each token """
 
-    def visit_token(self, level, node):
+    def __init__(self, finals: FinalsType, tokens: TokensType) -> None:
+        super().__init__()
+        self._finals = finals
+        self._tokens = tokens
+
+    def visit_token(self, level: int, node: Node) -> Any:
         """ At token node """
         # assert node.terminal is not None
         self._finals[node.start].add(node.terminal)
         self._tokens[node.start] = node.token
         return None
 
-    def __init__(self, finals, tokens):
-        super().__init__()
-        self._finals = finals
-        self._tokens = tokens
-
 
 class Reducer:
 
     """ Reduces parse forests to a single most likely parse tree """
 
-    def __init__(self, grammar):
+    def __init__(self, grammar: Grammar) -> None:
         self._grammar = grammar
 
-    def _find_options(self, forest, finals, tokens):
+    def _find_options(
+        self, forest: Node, finals: FinalsType, tokens: TokensType
+    ) -> None:
         """ Find token-terminal match options in a parse forest with a root in w """
         OptionFinder(finals, tokens).go(forest)
 
-    def _calc_terminal_scores(self, w):
+    def _calc_terminal_scores(self, w: Node) -> ScoreDict:
         """ Calculate the score for each possible terminal/token match """
 
         # First pass: for each token, find the possible terminals that
         # can correspond to that token
-        finals = defaultdict(set)  # type: Dict[int, Set[BIN_Terminal]]
-        tokens = dict()  # type: Dict[int, BIN_Token]
+        finals = defaultdict(set)  # type: FinalsType
+        tokens = dict()  # type: TokensType
         self._find_options(w, finals, tokens)
 
         # Second pass: find a (partial) ordering by scoring
         # the terminal alternatives for each token
-        scores = dict()
+        scores = dict()  # type: ScoreDict
         noun_prefs = NounPreferences.DICT
 
         # Loop through the indices of the tokens spanned by this tree
@@ -733,11 +740,11 @@ class Reducer:
 
         return scores
 
-    def _reduce(self, w, scores):
+    def _reduce(self, w: Node, scores: ScoreDict) -> Dict[str, Any]:
         """ Reduce a forest with a root in w based on subtree scores """
         return ParseForestReducer(self._grammar, scores).go(w)
 
-    def go_with_score(self, forest):
+    def go_with_score(self, forest: Optional[Node]) -> Tuple[Optional[Node], int]:
         """ Returns the argument forest after pruning it down to a single tree """
         if forest is None:
             return (None, 0)
@@ -747,7 +754,7 @@ class Reducer:
         score = self._reduce(forest, scores)
         return (forest, score["sc"])
 
-    def go(self, forest):
+    def go(self, forest: Optional[Node]) -> Optional[Node]:
         """ Return only the reduced forest, without its score """
         w, _ = self.go_with_score(forest)
         return w
