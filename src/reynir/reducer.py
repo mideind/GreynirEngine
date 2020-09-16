@@ -173,7 +173,7 @@ class PrepositionUnpacker(ParseForestNavigator):
         return node.nonterminal if node.is_completed else None
 
     @classmethod
-    def navigate(cls, root_node: Node) -> int:
+    def navigate(cls, root_node: Node) -> None:
         cls().go(root_node)
 
 
