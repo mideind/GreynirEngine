@@ -83,7 +83,7 @@ About Greynir
 -------------
 
 Greynir is a project and product of Miðeind ehf. of Reykjavík, Iceland.
-It is a free open source software project (:ref:`GNU GPLv3 <copyright>`),
+It is a free open source software project (:ref:`MIT license <copyright>`),
 started in mid-2015 by its original author, Vilhjálmur Þorsteinsson.
 Its aim is to produce an **industrial-strength Natural Language**
 **Processing toolset for Icelandic**, with the hope of supporting the
