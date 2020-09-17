@@ -91,6 +91,7 @@ class IncrementalParser:
             self._err_index = None
             self._tree = None
             self._score = 0
+            self._error = None
 
         def __len__(self):
             return self._len
@@ -111,7 +112,13 @@ class IncrementalParser:
                     if num > 1:
                         forest, score = self._ip._reducer.go_with_score(forest)
             except ParseError as e:
+                # The ParseError may originate in the reducer.go_with_score()
+                # function, and in that case, forest is not None; be sure to reset it
+                forest = None
+                score = 0
+                num = 0
                 self._err_index = e.token_index
+                self._error = e
             self._tree = forest
             self._score = score
             self._ip._add_sentence(self, num)
@@ -128,6 +135,10 @@ class IncrementalParser:
         @property
         def score(self):
             return self._score
+
+        @property
+        def error(self):
+            return self._error
 
         @property
         def err_index(self):
