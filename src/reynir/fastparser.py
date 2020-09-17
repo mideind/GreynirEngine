@@ -595,6 +595,10 @@ class ParseError(Exception):
         """ Return the 0-based index of the token where the parser ran out of options """
         return self._token_index
 
+    def __str__(self):
+        """ Return a string representation of the parse error """
+        return self.args[0]
+
 
 class Fast_Parser(BIN_Parser):
 

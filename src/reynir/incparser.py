@@ -135,7 +135,7 @@ class IncrementalParser:
 
         @property
         def text(self):
-            return " ".join(t.txt for t in self._s)
+            return " ".join(t.txt for t in self._s if t.txt)
 
         def __str__(self):
             return self.text

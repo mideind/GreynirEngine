@@ -81,15 +81,15 @@
 
 """
 
-from typing import Dict, Union, List, Set, Tuple, Optional, Any
+from typing import Dict, Union, List, Set, Tuple, Optional, Any, cast
 
 import copy
-from collections import defaultdict
+from collections import defaultdict, Counter
 import threading
 
 from .grammar import Grammar, Production
-from .fastparser import Node, ParseForestNavigator, ParseForestPrinter
-from .settings import Preferences, NounPreferences, VerbObjects
+from .fastparser import Node, ParseForestNavigator, ParseForestPrinter, ParseError
+from .settings import Settings, Preferences, NounPreferences, VerbObjects
 from .binparser import BIN_Token, BIN_Terminal
 
 
@@ -101,15 +101,26 @@ BonusCache = Dict[Tuple[BIN_Terminal, str, BIN_Terminal, BIN_Token], int]
 FinalsType = Dict[int, Set[BIN_Terminal]]
 TokensType = Dict[int, BIN_Token]
 
-_PREP_SCOPE_SET = frozenset(("begin_prep_scope", "purge_prep", "no_prep"))
-_PREP_ALL_SET = frozenset(_PREP_SCOPE_SET | {"enable_prep_bonus"})
-_CASES_SET = frozenset(BIN_Token.CASES)
 _VERB_PREP_BONUS = 7  # Give 7 extra points for a verb/preposition match
 _VERB_PREP_PENALTY = -2  # Subtract 2 points for a non-match
 _LENGTH_BONUS_FACTOR = 10  # For length bonus, multiply number of tokens by this factor
 
 # Noun categories set
 _NOUN_SET = BIN_Token.GENDERS_SET  # kk, kvk, hk
+_CASES_SET = frozenset(BIN_Token.CASES)
+
+# Tags of nonterminals that allow us to stop copying nodes
+# in the preposition unpacker
+_PREP_SCOPE_SET = frozenset(
+    ("begin_prep_scope", "purge_prep", "no_prep", "enable_prep_bonus")
+)
+# Maximum number of node copies that we are willing to do in a single
+# parse forest reduction phase, before breaking the circuit with a ParseError
+_MAX_NODE_COPIES = 10_000_000
+
+# Counter of copied nodes, used as a circuit breaker to abort the reduction
+# process if things get out of hand with a too complex forest
+copy_counter = threading.local()
 
 
 def copy_node(node: Optional[Node]) -> Optional[Node]:
@@ -138,6 +149,14 @@ def copy_node(node: Optional[Node]) -> Optional[Node]:
 
     if node is None:
         return None
+    # Check whether the node copying for this forest has gone too far
+    copy_counter.n += 1
+    if copy_counter.n > _MAX_NODE_COPIES:
+        # Too many copies for this forest; we give up and unwind the reduction thread
+        raise ParseError(f"Parse forest is too complex to reduce")
+    if Settings.DEBUG:
+        if node.nonterminal is not None:
+            copy_counter.counter.update([node.nonterminal])
     # First, copy the node itself
     node = Node.copy(node)
     # Then, copy the children as required by applying the dup() function
@@ -182,7 +201,19 @@ class PrepositionUnpacker(ParseForestNavigator):
 
     @classmethod
     def navigate(cls, root_node: Node) -> None:
-        cls().go(root_node)
+        """ Unpack a tree as required, at nodes
+            marked with an enable_prep_bonus tag """
+        # Reset our copy counting circuit-breaker
+        copy_counter.n = 0
+        if Settings.DEBUG:
+            copy_counter.counter = Counter()
+        try:
+            cls().go(root_node)
+        finally:
+            if Settings.DEBUG and copy_counter.n > 1_000_000:
+                print(f"{copy_counter.n} nodes copied during reduction")
+                for nt, cnt in copy_counter.counter.most_common(20):
+                    print(f"{nt.name:<20} {cnt:7}")
 
 
 class _ReductionScope:
@@ -195,7 +226,7 @@ class _ReductionScope:
     def __init__(self, reducer: "ParseForestReducer", node: Node) -> None:
         self.reducer = reducer
         # Child tree scores
-        self.sc = defaultdict(lambda: dict(sc=0))  # type: ChildDict
+        self.sc: ChildDict = defaultdict(lambda: dict(sc=0))
         # We are only interested in completed nonterminals
         nt = node.nonterminal if node.is_completed else None
         # Verb/preposition matching stuff
@@ -289,9 +320,9 @@ class _ReductionScope:
                     sc["sc"] += _VERB_PREP_BONUS  # type: ignore
 
                 if nt.has_tag("pick_up_verb"):
-                    verb = sc.get("so")
+                    verb = cast(List[str], sc.get("so"))
                     if verb is not None:
-                        sc["sl"] = verb[:]  # type: ignore
+                        sc["sl"] = verb[:]
 
                 if nt.has_any_tag({"begin_prep_scope", "purge_verb"}):
                     # Delete information about contained verbs
@@ -323,7 +354,7 @@ class ParseForestReducer:
         self._score_adj = grammar._nt_scores
         self._prep_bonus_stack = [None]
         self._current_verb_stack = [None]
-        self._bonus_cache = dict()  # type: BonusCache
+        self._bonus_cache: BonusCache = dict()
 
     def push_prep_bonus(self, val):
         self._prep_bonus_stack.append(val)
@@ -379,7 +410,7 @@ class ParseForestReducer:
     def _visit_token(self, node: Node) -> ResultDict:
         """ At token node """
         # Return the score of this token/terminal match
-        d = dict()  # type: ResultDict
+        d: ResultDict = dict()
         sc = self._scores[node.start][node.terminal]
         if node.terminal.matches_category("fs"):
             # Preposition terminal - this is either a normal fs_case terminal
@@ -419,8 +450,8 @@ class ParseForestReducer:
 
         PrepositionUnpacker.navigate(root_node)
 
-        visited = dict()  # type: Dict[Node, ResultDict]
-        NULL_SC = dict(sc=0)  # type: ResultDict
+        visited: Dict[Node, ResultDict] = dict()
+        NULL_SC: ResultDict = dict(sc=0)
 
         def _nav_helper(w):
             """ Navigate from node w """
@@ -490,13 +521,13 @@ class Reducer:
 
         # First pass: for each token, find the possible terminals that
         # can correspond to that token
-        finals = defaultdict(set)  # type: FinalsType
-        tokens = dict()  # type: TokensType
+        finals: FinalsType = defaultdict(set)
+        tokens: TokensType = dict()
         self._find_options(w, finals, tokens)
 
         # Second pass: find a (partial) ordering by scoring
         # the terminal alternatives for each token
-        scores = dict()  # type: ScoreDict
+        scores: ScoreDict = dict()
         noun_prefs = NounPreferences.DICT
 
         # Loop through the indices of the tokens spanned by this tree
@@ -527,8 +558,8 @@ class Reducer:
             prefs = None if same_first else Preferences.get(txt_last)
             sc = scores[i]
             if prefs:
-                adj_worse = defaultdict(int)  # type: Dict[BIN_Terminal, int]
-                adj_better = defaultdict(int)  # type: Dict[BIN_Terminal, int]
+                adj_worse: Dict[BIN_Terminal, int] = defaultdict(int)
+                adj_better: Dict[BIN_Terminal, int] = defaultdict(int)
                 for worse, better, factor in prefs:
                     for wt in s:
                         if wt.first in worse:

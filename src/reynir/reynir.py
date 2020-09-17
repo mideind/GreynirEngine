@@ -112,6 +112,7 @@ class _Sentence:
         self._len = len(s)
         assert self._len > 0  # Input should be already sanitized
         self._err_index = None  # type: Optional[int]
+        self._error = None  # type: Optional[ParseError]
         self._tree = self._simplified_tree = None
         # Number of possible combinations
         self._num = None  # type: Optional[int]
@@ -141,6 +142,7 @@ class _Sentence:
             tree, num, score = job.parse(self._s)
         except ParseError as e:
             self._err_index = self._len - 1 if e.token_index is None else e.token_index
+            self._error = e
         self._tree = tree
         if tree is None:
             self._simplified_tree = None
@@ -183,6 +185,11 @@ class _Sentence:
         """ Return the simplified parse tree, or None
             if the sentence hasn't been parsed """
         return self._simplified_tree
+
+    @property
+    def error(self) -> Optional[ParseError]:
+        """ Return the ParseError that occurred when parsing this sentence, or None """
+        return self._error
 
     @property
     def deep_tree(self) -> Any:

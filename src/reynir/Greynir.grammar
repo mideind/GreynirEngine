@@ -883,6 +883,8 @@ SetningAð →
 
 $score(-4) SetningAð # Óalgengt form
 
+$tag(begin_prep_scope) SetningAð
+
 SetningAðHugsaSér →
     Nhm 'hugsa:so'_1_þgf_gm_nh abfn_þgf # 'Að hugsa sér [, sagði Anna]'
 
@@ -4584,6 +4586,8 @@ $score(-8) KommaTilvísunarsetning/tala/pers/kyn
 Tilvísunarsetning/tala/pers/kyn →
     Tilvísunartenging Tengisetning/tala/pers/kyn OgTengisetning/tala/pers/kyn*
 
+$tag(begin_prep_scope) Tilvísunarsetning/tala/pers/kyn
+
 Tilvísunarsetning_p3_et/kyn →
     Tilvísunarsetning_et_p3/kyn
 
@@ -4759,6 +4763,8 @@ NlEind_et_p3_þgf_hk →
     | NhFyllingÁnAtv
 
 $score(+32) ÞaðTenging
+
+$tag(begin_prep_scope) ÞaðTenging
 
 # ÞaðTenging sem getur verið innan kommu
 
@@ -5476,6 +5482,8 @@ $score(+12) ÁttFs
 FsÞgfTilEf →
     Nl_þgf 'til:fs'_ef Nl_ef # máli sínu til stuðnings, barninu til hróss, henni til bjargar
 
+$tag(purge_prep) FsÞgfTilEf
+
 # Ekki velja þetta nema nauðsyn beri til
 $score(-6) FsÞgfTilEf
 
@@ -5488,6 +5496,8 @@ $score(+8) FsUmOgEftir
 FsÍGegnUm →
     "í:ao" "gegn:ao" 'um:fs'_þf Nl_þf
     | "í:ao" 'gegnum:fs'_þf Nl_þf
+
+$tag(purge_prep) FsÍGegnUm
 
 $score(+6) FsÍGegnUm
 
