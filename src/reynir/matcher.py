@@ -153,7 +153,7 @@ class _CompiledPattern:
     _NEST = {"(": ")", "[": "]", "{": "}"}
     _FINISHERS = frozenset(_NEST.values())
 
-    _pattern_cache = dict()  # type: Dict[str, _CompiledPattern]
+    _pattern_cache: Dict[str, "_CompiledPattern"] = dict()
 
     @classmethod
     def compile(cls, pattern):

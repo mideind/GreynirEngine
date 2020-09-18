@@ -80,9 +80,9 @@ class Base_Parser:
 
     def __init__(self) -> None:
         self._root = None
-        self._nt_dict = {}  # type: Dict[int, Optional[List[_PackedProduction]]]
-        self._nonterminals = {}  # type: Dict[int, Nonterminal]
-        self._terminals = {}  # type: Dict[int, Terminal]
+        self._nt_dict: Dict[int, Optional[List[_PackedProduction]]] = {}
+        self._nonterminals: Dict[int, Nonterminal] = {}
+        self._terminals: Dict[int, Terminal] = {}
 
     def init_from_grammar(self, g: Grammar) -> None:
         """ Initialize the parser with the given grammar """

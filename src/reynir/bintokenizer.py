@@ -547,7 +547,7 @@ def add_cases(cases, bin_spec, default="nf"):
 
 def all_cases(token, filter_func=None):
     """ Return a list of all cases that the token can be in """
-    cases = set()  # type: Union[FrozenSet[str], Set[str]]
+    cases: Union[FrozenSet[str], Set[str]] = set()
     if token.kind == TOK.WORD and token.val:
         # Roll through the potential meanings and extract the cases therefrom
         for m in token.val:
@@ -1022,7 +1022,7 @@ def parse_phrases_2(token_stream, token_ctor):
                     return False
                 return True
 
-            gn = None  # type: Optional[List[PersonName]]
+            gn: Optional[List[PersonName]] = None
             if token.kind == TOK.WORD and token.val and token.val[0].fl == "nafn":
                 # Convert a WORD with fl="nafn" to a PERSON with the correct gender,
                 # in all cases
@@ -1336,9 +1336,9 @@ class MatchingStream:
     def process(self, token_stream: TokenIterator) -> TokenIterator:
         """ Generate an output stream from the input token stream """
         # Token queue
-        tq = []  # type: List[Tok]
+        tq: List[Tok] = []
         # Phrases we're considering
-        state = defaultdict(list)  # type: Dict[str, List[Tuple[List[str], int]]]
+        state: Dict[str, List[Tuple[List[str], int]]] = defaultdict(list)
         pdict = self._pdict  # The phrase dictionary
 
         try:
@@ -1614,16 +1614,16 @@ class DefaultPipeline:
         output stream. Individual phases in the sequence can
         easily be overridden in derived classes. """
 
-    _token_ctor = Bin_TOK  # type: Type[Bin_TOK]
+    _token_ctor: Type[Bin_TOK] = Bin_TOK
 
     def __init__(self, text_or_gen: StringIterable, **options) -> None:
         self._text_or_gen = text_or_gen
         self._auto_uppercase = options.pop("auto_uppercase", False)
         self._options = options
-        self._db = None  # type: Optional[BIN_Db]
+        self._db: Optional[BIN_Db] = None
         # Initialize the default tokenizer pipeline.
         # This sequence of phases can be modified in derived classes.
-        self._phases = [
+        self._phases: List[PhaseFunction] = [
             self.tokenize_without_annotation,
             self.correct_tokens,
             self.parse_static_phrases,
@@ -1635,7 +1635,7 @@ class DefaultPipeline:
             self.parse_phrases_3,
             self.disambiguate_phrases,
             self.final_correct,
-        ]  # type: List[PhaseFunction]
+        ]
 
     def tokenize_without_annotation(self) -> TokenIterator:
         """ The basic, raw tokenization from the tokenizer package """

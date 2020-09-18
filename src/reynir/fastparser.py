@@ -86,9 +86,9 @@ class ParseJob:
     """ Dispatch token matching requests coming in from the C++ code """
 
     # Parse jobs have rotating integer IDs, reaching _MAX_JOBS before cycling back
-    _MAX_JOBS = 10000
+    _MAX_JOBS = 10_000
     _seq = 0
-    _jobs = dict()  # type: Dict[int, ParseJob]
+    _jobs: Dict[int, "ParseJob"] = dict()
     _lock = Lock()
 
     def __init__(self, handle, grammar, tokens, terminals, matching_cache):
@@ -621,7 +621,7 @@ class Fast_Parser(BIN_Parser):
     # The C++ grammar object (a binary blob)
     _c_grammar = ffi.NULL
     # The C++ grammar timestamp
-    _c_grammar_ts = None  # type: float
+    _c_grammar_ts: Optional[float] = None
 
     @classmethod
     def _load_binary_grammar(cls):
@@ -764,13 +764,13 @@ class Fast_Parser(BIN_Parser):
         if cls._c_grammar != ffi.NULL:
             eparser.deleteGrammar(cls._c_grammar)
         cls._c_grammar = ffi.NULL
-        cls._c_grammar_ts = None  # type: ignore
+        cls._c_grammar_ts = None
 
     @classmethod
     def num_combinations(cls, forest):
         """ Count the number of possible parse tree combinations in the given forest """
 
-        nc = dict()  # type: Dict[Node, int]
+        nc: Dict[Node, int] = dict()
         mul = operator.mul
 
         def _num_comb(w):
@@ -844,7 +844,7 @@ class ParseForestNavigator:
     def go(self, root_node) -> Any:
         """ Navigate the forest from the root node """
 
-        visited = dict()  # type: Dict[Node, Any]
+        visited: Dict[Node, Any] = dict()
 
         def _nav_helper(w, level):
             """ Navigate from w """
@@ -1073,7 +1073,7 @@ class _FlattenerNode:
     ) -> None:
         self._p = p
         self._score = score
-        self._children = None  # type: Optional[List[_FlattenerNode]]
+        self._children: Optional[List[_FlattenerNode]] = None
 
     def add_child(self, child: "_FlattenerNode") -> None:
         if self._children is None:
@@ -1122,7 +1122,7 @@ class ParseForestFlattener(ParseForestNavigator):
 
     def __init__(self) -> None:
         super().__init__(visit_all=True)  # Visit all nodes
-        self._stack = None  # type: Optional[List[_FlattenerNode]]
+        self._stack: Optional[List[_FlattenerNode]] = None
 
     def go(self, root_node: Node) -> None:
         self._stack = None

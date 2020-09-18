@@ -55,9 +55,11 @@ class LRU_Cache:
         self, user_function: Callable[[Any], Any], maxsize: int=LRU_DEFAULT
     ) -> None:
         # Link layout:     [PREV, NEXT, KEY, RESULT]
-        self.root = root = [None, None, None, None]  # type: List[Any]
+        root: List[Any] = [None, None, None, None]
+        self.root = root
         self.user_function = user_function
-        self.cache = cache = {}  # type: Dict[Any, List[Any]]
+        cache: Dict[Any, List[Any]] = {}
+        self.cache = cache
 
         last = root
         for _ in range(maxsize):
@@ -103,7 +105,7 @@ class LFU_Cache:
 
     def __init__(self, maxsize: int=LFU_DEFAULT) -> None:
         # Mapping of keys to results
-        self.cache = {}  # type: Dict[Any, Any]
+        self.cache: Dict[Any, Any] = {}
         # Times each key has been accessed
         self.use_count = self.Counter()
         self.maxsize = maxsize

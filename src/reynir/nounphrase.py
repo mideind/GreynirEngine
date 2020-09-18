@@ -67,7 +67,7 @@ class NounPhrase:
         allowing it to be easily inflected and formatted """
 
     # Singleton parser instance
-    _greynir = None  # type: Greynir
+    _greynir: Optional[Greynir] = None
 
     def __init__(self, np_string: str, *, force_number: str = None) -> None:
         """ Initialize a NounPhrase from a text string.
@@ -80,12 +80,13 @@ class NounPhrase:
         self._person = None
         self._case = None
         self._gender = None
-        self._np = None  # type: Optional[_NounPhrase]
+        self._np: Optional[_NounPhrase] = None
         if self._np_string:
             if self._greynir is None:
                 # Initialize our parser singleton
                 self.__class__._greynir = Greynir()
             # Parse the noun phrase string into a _NounPhrase object
+            assert self._greynir is not None
             self._np = self._greynir.parse_noun_phrase(
                 self._np_string, force_number=force_number
             )

@@ -42,7 +42,7 @@
 
 """
 
-from typing import cast, Dict, Set, Tuple, List, Union, Iterable, Optional
+from typing import cast, Dict, Set, Tuple, List, Union, Iterable, Optional, Any
 
 import os
 import time
@@ -613,7 +613,7 @@ class BIN_Token(Token):
     ]
 
     # Dictionary of associated BIN forms, initialized later
-    _VERB_FORMS = None  # type: Dict[str, str]
+    _VERB_FORMS: Optional[Dict[str, str]] = None
 
     # Cache the dictionary of verb objects from settings.py
     _VERB_OBJECTS = VerbObjects.VERBS
@@ -745,8 +745,8 @@ class BIN_Token(Token):
     # of each punctuation token.
     _UNDERSTOOD_PUNCTUATION = ".?!,:;-()[]"
 
-    _MEANING_CACHE = {}  # type: Dict[str, int]
-    _VARIANT_CACHE = {}  # type: Dict[str, Set[str]]
+    _MEANING_CACHE: Dict[str, int] = {}
+    _VARIANT_CACHE: Dict[str, Set[str]] = {}
 
     def __init__(self, t: Tok, original_index: int) -> None:
 
@@ -779,7 +779,7 @@ class BIN_Token(Token):
 
         # Copy error information from the original token, if any
         try:
-            self._error = t.error  # type: ignore
+            self._error: Any = t.error
         except AttributeError:
             self._error = None
 
@@ -898,7 +898,7 @@ class BIN_Token(Token):
 
     # Variants that must be present in the verb form if they
     # are present in the terminal
-    _RESTRICTIVE_VARIANTS = ("sagnb", "lhþt", "bh", "op")  # type: Tuple[str, ...]
+    _RESTRICTIVE_VARIANTS: Tuple[str, ...] = ("sagnb", "lhþt", "bh", "op")
 
     def verb_matches(self, verb, terminal, form):
         """ Return True if the infinitive in question matches the verb category,
@@ -990,6 +990,7 @@ class BIN_Token(Token):
             # Can't use singular verb if plural terminal
             return False
         # Check that person (1st, 2nd, 3rd) and other variant requirements match
+        assert BIN_Token._VERB_FORMS is not None
         for v in terminal.variants:
             # Lookup variant to see if it is one of the required ones for verbs
             rq = BIN_Token._VERB_FORMS.get(v)
@@ -1529,7 +1530,7 @@ class VariantHandler:
         # Do a bit of pre-calculation to speed up various
         # checks against this terminal
         # pylint: disable=no-member
-        n = self._name  # type: ignore
+        n = cast(str, self._name)  # type: ignore
         q = n[0]
         if q in "\"'":
             # Literal terminal: be careful since the first (literal)
@@ -1950,7 +1951,7 @@ class BIN_Nonterminal(Nonterminal):
         super().__init__(name, fname, line)
         # Optimized check for whether this is a noun phrase nonterminal
         self._is_noun_phrase = name.startswith("Nl")
-        self._parts = None  # type: Optional[List[str]]
+        self._parts: Optional[List[str]] = None
 
     @property
     def is_noun_phrase(self) -> bool:
@@ -2007,8 +2008,8 @@ class BIN_Parser(Base_Parser):
         the other. """
 
     # A singleton instance of the parsed Greynir.grammar
-    _grammar = None  # type: BIN_Grammar
-    _grammar_ts = None  # type: float
+    _grammar: Optional[BIN_Grammar] = None
+    _grammar_ts: Optional[float] = None
     _grammar_class = BIN_Grammar
 
     _GRAMMAR_NAME = "Greynir.grammar"

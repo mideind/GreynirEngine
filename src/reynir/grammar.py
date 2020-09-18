@@ -681,7 +681,7 @@ class Grammar:
         Production.reset()
         # Dictionary of variants, keyed by variant name
         # where the values are lists of variant options (strings)
-        variants = OrderedDict()  # type: Dict[str, List[str]]
+        variants: Dict[str, List[str]] = OrderedDict()
 
         def parse_line(s):
 
@@ -1262,7 +1262,7 @@ class Grammar:
         # that do not have a $score pragma
 
         # Dictionary of shortcuts
-        shortcuts = {}  # type: Dict[Nonterminal, Nonterminal]
+        shortcuts: Dict[Nonterminal, Nonterminal] = {}
 
         for nt, plist in grammar.items():
             if not "_" in nt.name:

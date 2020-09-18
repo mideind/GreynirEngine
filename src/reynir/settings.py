@@ -345,10 +345,10 @@ class VerbSubjects:
         initialized from the config file """
 
     # Dictionary of verbs and their associated set of subject cases
-    VERBS = defaultdict(set)  # type: Dict[str, Set[str]]
+    VERBS: Dict[str, Set[str]] = defaultdict(set)
     _CASE = "þgf"  # Default subject case
     # dict { verb : (wrong_case, correct_case) }
-    VERBS_ERRORS = defaultdict(dict)  # type: Dict[str, Dict[str, str]]
+    VERBS_ERRORS: Dict[str, Dict[str, str]] = defaultdict(dict)
 
     @staticmethod
     def set_case(case: str) -> None:

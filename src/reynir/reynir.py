@@ -111,15 +111,15 @@ class _Sentence:
         self._s = s
         self._len = len(s)
         assert self._len > 0  # Input should be already sanitized
-        self._err_index = None  # type: Optional[int]
-        self._error = None  # type: Optional[ParseError]
+        self._err_index: Optional[int] = None
+        self._error: Optional[ParseError] = None
         self._tree = self._simplified_tree = None
         # Number of possible combinations
-        self._num = None  # type: Optional[int]
+        self._num: Optional[int] = None
         # Score of best parse tree
-        self._score = None  # type: Optional[int]
+        self._score: Optional[int] = None
         # Cached terminals
-        self._terminals = None  # type: Optional[List[Terminal]]
+        self._terminals: Optional[List[Terminal]] = None
         if self._job.parse_immediately:
             # We want an immediate parse of the sentence
             self.parse()
@@ -672,8 +672,8 @@ class Greynir:
 
     """
 
-    _parser = None  # type: Optional[Fast_Parser]
-    _reducer = None  # type: Optional[Reducer]
+    _parser: Optional[Fast_Parser] = None
+    _reducer: Optional[Reducer] = None
     _lock = Lock()
 
     def __init__(self, **options: Any) -> None:
@@ -681,9 +681,9 @@ class Greynir:
             Greynir constructor """
         # Set parse_foreign_sentences to True to attempt to parse
         # all sentences, even if probably foreign
-        self._parse_foreign_sentences = options.pop(
+        self._parse_foreign_sentences: bool = options.pop(
             "parse_foreign_sentences", False
-        )  # type: bool
+        )
         self._options = options
 
     @property
