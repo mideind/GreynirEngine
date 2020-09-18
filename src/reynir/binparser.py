@@ -778,10 +778,7 @@ class BIN_Token(Token):
         self._index = original_index  # Index of original token within sentence
 
         # Copy error information from the original token, if any
-        try:
-            self._error: Any = t.error
-        except AttributeError:
-            self._error = None
+        self._error: Any = getattr(t, "error", None)
 
         # We store a cached check of whether this is an "eo".
         # An "eo" is an adverb (atviksorð) that cannot also be
