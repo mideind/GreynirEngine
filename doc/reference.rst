@@ -1,5 +1,3 @@
-.. _reference:
-
 Reference
 =========
 
@@ -58,112 +56,6 @@ The Greynir class
             for the `Tokenizer <https://github.com/mideind/Tokenizer>`__
             package for further information.
 
-    .. py:method:: submit( \
-        self, text: str, parse: bool=False, *, \
-        split_paragraphs: bool=False, progress_func=None, \
-        max_sent_tokens: int=90 \
-        ) -> _Job
-
-        Submits a text string to Greynir for parsing and returns
-        a :py:class:`_Job` object.
-
-        :param str text: The text to parse. Can be a single sentence
-            or multiple sentences.
-        :param bool parse: Controls whether the text is parsed immediately or
-            upon demand. Defaults to ``False``.
-        :param bool split_paragraphs: Indicates that the text should be
-            split into paragraps, with paragraph breaks at newline
-            characters (``\n``). Defaults to ``False``.
-        :param function progress_func: If given, this function will be called
-            periodically during the parse job. The call will have a single
-            ``float`` parameter, ranging from ``0.0`` at the beginning of the parse
-            job, to ``1.0`` at the end. Defaults to ``None``.
-        :param int max_sent_tokens: If given, this specifies the maximum number of
-            tokens that a sentence may contain for Greynir to attempt to parse it.
-            The default is 90 tokens. In practice, sentences longer than this are
-            expensive to parse in terms of memory use and processor time.
-            This parameter can be used to make Greynir more brave in its parsing
-            attempts, by specifying a higher number than 90. Setting it to ``None``
-            or zero disables the length limit. Note that the default may be
-            increased from 90 in future versions of Greynir.
-        :return: A fresh :py:class:`_Job` object.
-
-        The given text string is tokenized and split into paragraphs and sentences.
-        If the ``parse`` parameter is ``True``, the sentences are parsed
-        immediately, before returning from the method.
-        Otherwise, parsing is incremental (on demand) and is invoked by
-        calling :py:meth:`_Sentence.parse()` explicitly on each sentence.
-
-        Returns a :py:class:`_Job` object which supports iteration through
-        the paragraphs (via :py:meth:`_Job.paragraphs()`) and sentences
-        (via :py:meth:`_Job.sentences()` or :py:meth:`_Job.__iter__()`) of
-        the parse job.
-
-    .. py:method:: parse( \
-        self, text: str, *, \
-        progress_func = None, \
-        max_sent_tokens: int=90 \
-        ) -> dict
-
-        Parses a text string and returns a dictionary with the parse job results.
-
-        :param str text: The text to parse. Can be a single sentence
-            or multiple sentences.
-        :param function progress_func: If given, this function will be called
-            periodically during the parse job. The call will have a single
-            ``float`` parameter, ranging from ``0.0`` at the beginning of the parse
-            job, to ``1.0`` at the end. Defaults to ``None``.
-        :param int max_sent_tokens: If given, this specifies the maximum number
-            of tokens that a sentence may contain for Greynir to attempt to parse it.
-            The default is 90 tokens. In practice, sentences longer than this are
-            expensive to parse in terms of memory use and processor time.
-            This parameter can be used to make Greynir more brave in its parsing
-            attempts, by specifying a higher number than 90. Setting it to ``None``
-            or zero disables the length limit. Note that the default may be
-            increased from 90 in future versions of Greynir.
-        :return: A dictionary containing the parse results as well as statistics
-            from the parse job.
-
-        The given text string is tokenized and split into sentences. An internal parse
-        job is created and the sentences are parsed. The resulting :py:class:`_Sentence`
-        objects are returned in a list in the ``sentences`` field in the dictionary.
-        The text is treated as one contiguous paragraph.
-
-        The result dictionary contains the following items:
-
-        * ``sentences``: A list of :py:class:`_Sentence` objects corresponding
-          to the sentences found in the text. If a sentence could
-          not be parsed, the corresponding object's
-          ``tree`` property will be ``None``.
-
-        * ``num_sentences``: The number of sentences found in the text.
-
-        * ``num_parsed``: The number of sentences that were successfully parsed.
-
-        * ``ambiguity``: A ``float`` weighted average of the ambiguity of the parsed
-          sentences. Ambiguity is defined as the *n*-th root of the number
-          of possible parse trees for the sentence, where *n* is the number
-          of tokens in the sentence.
-
-        * ``parse_time``: A ``float`` with the wall clock time, in seconds,
-          spent on tokenizing and parsing the sentences.
-
-
-        Example *(try it!)*::
-
-            from reynir import Greynir
-            g = Greynir()
-            my_text = "Litla gula hænan fann fræ. Það var hveitifræ."
-            d = g.parse(my_text)
-            print("{0} sentences were parsed".format(d["num_parsed"]))
-            for sent in d["sentences"]:
-                print("The parse tree for '{0}' is:\n{1}"
-                    .format(
-                        sent.tidy_text,
-                        "[Null]" if sent.tree is None else sent.tree.flat
-                    )
-                )
-
 
     .. py:method:: parse_single( \
         self, sentence: str, *, \
@@ -174,6 +66,7 @@ The Greynir class
         :py:class:`_Sentence` object.
 
         :param str sentence: The single sentence to parse.
+
         :param int max_sent_tokens: If given, this specifies the maximum number
             of tokens that a sentence may contain for Greynir to attempt to parse it.
             The default is 90 tokens. In practice, sentences longer than this are
@@ -182,12 +75,14 @@ The Greynir class
             attempts, by specifying a higher number than 90. Setting it to ``None``
             or zero disables the length limit. Note that the default may be
             increased from 90 in future versions of Greynir.
+
         :return: A :py:class:`_Sentence` object, or ``None`` if
             no sentence could be extracted from the string.
 
         The given sentence string is tokenized. An internal parse
         job is created and the first sentence found in the string is parsed.
         Paragraph markers are ignored.
+
         A single :py:class:`_Sentence` object is returned. If the sentence
         could not be parsed, :py:attr:`_Sentence.tree` is ``None`` and
         :py:attr:`_Sentence.combinations` is zero.
@@ -233,6 +128,122 @@ The Greynir class
         :py:meth:`parse_single`.
 
 
+    .. py:method:: submit( \
+        self, text: str, parse: bool=False, *, \
+        split_paragraphs: bool=False, progress_func=None, \
+        max_sent_tokens: int=90 \
+        ) -> _Job
+
+        Submits a text string to Greynir for parsing and returns
+        a :py:class:`_Job` object.
+
+        :param str text: The text to parse. Can be a single sentence
+            or multiple sentences.
+
+        :param bool parse: Controls whether the text is parsed immediately or
+            upon demand. Defaults to ``False``.
+
+        :param bool split_paragraphs: Indicates that the text should be
+            split into paragraps, with paragraph breaks at newline
+            characters (``\n``). Defaults to ``False``.
+
+        :param function progress_func: If given, this function will be called
+            periodically during the parse job. The call will have a single
+            ``float`` parameter, ranging from ``0.0`` at the beginning of the parse
+            job, to ``1.0`` at the end. Defaults to ``None``.
+
+        :param int max_sent_tokens: If given, this specifies the maximum number of
+            tokens that a sentence may contain for Greynir to attempt to parse it.
+            The default is 90 tokens. In practice, sentences longer than this are
+            expensive to parse in terms of memory use and processor time.
+            This parameter can be used to make Greynir more brave in its parsing
+            attempts, by specifying a higher number than 90. Setting it to ``None``
+            or zero disables the length limit. Note that the default may be
+            increased from 90 in future versions of Greynir.
+
+        :return: A fresh :py:class:`_Job` object.
+
+        The given text string is tokenized and split into paragraphs and sentences.
+        If the ``parse`` parameter is ``True``, the sentences are parsed
+        immediately, before returning from the method.
+        Otherwise, parsing is incremental (on demand) and is invoked by
+        calling :py:meth:`_Sentence.parse()` explicitly on each sentence.
+
+        Returns a :py:class:`_Job` object which supports iteration through
+        the paragraphs (via :py:meth:`_Job.paragraphs()`) and sentences
+        (via :py:meth:`_Job.sentences()` or :py:meth:`_Job.__iter__()`) of
+        the parse job.
+
+
+    .. py:method:: parse( \
+        self, text: str, *, \
+        progress_func = None, \
+        max_sent_tokens: int=90 \
+        ) -> dict
+
+        Parses a text string and returns a dictionary with the parse job results.
+
+        :param str text: The text to parse. Can be a single sentence
+            or multiple sentences.
+
+        :param function progress_func: If given, this function will be called
+            periodically during the parse job. The call will have a single
+            ``float`` parameter, ranging from ``0.0`` at the beginning of the parse
+            job, to ``1.0`` at the end. Defaults to ``None``.
+
+        :param int max_sent_tokens: If given, this specifies the maximum number
+            of tokens that a sentence may contain for Greynir to attempt to parse it.
+            The default is 90 tokens. In practice, sentences longer than this are
+            expensive to parse in terms of memory use and processor time.
+            This parameter can be used to make Greynir more brave in its parsing
+            attempts, by specifying a higher number than 90. Setting it to ``None``
+            or zero disables the length limit. Note that the default may be
+            increased from 90 in future versions of Greynir.
+
+        :return: A dictionary containing the parse results as well as statistics
+            from the parse job.
+
+        The given text string is tokenized and split into sentences. An internal parse
+        job is created and the sentences are parsed. The resulting :py:class:`_Sentence`
+        objects are returned in a list in the ``sentences`` field in the dictionary.
+        The text is treated as one contiguous paragraph.
+
+        The result dictionary contains the following items:
+
+        * ``sentences``: A list of :py:class:`_Sentence` objects corresponding
+            to the sentences found in the text. If a sentence could
+            not be parsed, the corresponding object's
+            ``tree`` property will be ``None``.
+
+        * ``num_sentences``: The number of sentences found in the text.
+
+        * ``num_parsed``: The number of sentences that were successfully parsed.
+
+        * ``ambiguity``: A ``float`` weighted average of the ambiguity of the parsed
+            sentences. Ambiguity is defined as the *n*-th root of the number
+            of possible parse trees for the sentence, where *n* is the number
+            of tokens in the sentence.
+
+        * ``parse_time``: A ``float`` with the wall clock time, in seconds,
+            spent on tokenizing and parsing the sentences.
+
+
+        Example *(try it!)*::
+
+            from reynir import Greynir
+            g = Greynir()
+            my_text = "Litla gula hænan fann fræ. Það var hveitifræ."
+            d = g.parse(my_text)
+            print("{0} sentences were parsed".format(d["num_parsed"]))
+            for sent in d["sentences"]:
+                print("The parse tree for '{0}' is:\n{1}"
+                    .format(
+                        sent.tidy_text,
+                        "[Null]" if sent.tree is None else sent.tree.flat
+                    )
+                )
+
+
     .. py:classmethod:: cleanup(cls)
 
         Deallocates memory resources allocated by :py:meth:`__init__`.
@@ -246,6 +257,7 @@ The Greynir class
         no longer available via existing instances of :py:class:`Greynir`.
         However, you can initialize new instances (via ``g = Greynir()``),
         causing the configuration to be re-read and memory to be allocated again.
+
 
 The _Job class
 ----------------
@@ -461,6 +473,13 @@ hence the leading underscore in the class name.
         the best parse tree. Otherwise, :py:attr:`_Sentence.tree` is ``None``.
         If the parse is not successful, the 0-based index of the token where
         the parser gave up is stored in :py:attr:`_Sentence.err_index`.
+
+    .. py:attribute:: error
+
+        Returns a ``ParseError`` instance if an error was found during the
+        parsing of the sentence, or ``None`` otherwise. ``ParseError`` is
+        an exception class, derived from ``Exception``. It can be converted
+        to ``str`` to obtain a human-readable error message.
 
     .. py:attribute:: err_index
 
@@ -749,16 +768,16 @@ hence the leading underscore in the class name.
         If the sentence has not yet been parsed, or no parse tree was found
         for it, this property is ``None``.
 
-    .. py:method:: is_foreign(self, min_icelandic_ratio: float=0.6) -> bool
+    .. py:method:: is_foreign(self, min_icelandic_ratio: float=0.5) -> bool
 
         :param float min_icelandic_ratio: The minimum ratio of word tokens that must
             be found in BÍN for a sentence to be considered Icelandic.
-            Defaults to ``0.6``.
+            Defaults to ``0.5``.
 
         Returns ``True`` if the sentence is probably in a foreign language,
         i.e. not Icelandic. A sentence is probably foreign if it contains
-        at least three word tokens and, out of those, less than 60% are found
-        in the BÍN database. The 60% threshold is adjustable by overriding
+        at least three word tokens and, out of those, less than 50% are found
+        in the BÍN database. The 50% threshold is adjustable by overriding
         the ``min_icelandic_ratio`` parameter.
 
 

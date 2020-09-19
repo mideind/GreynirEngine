@@ -38,7 +38,7 @@ from typing import Optional
 
 import operator
 
-from .reynir import Greynir, _NounPhrase
+from .reynir import Greynir, _NounPhrase, SimpleTree
 
 
 # Format specifiers and how they relate to properties
@@ -76,10 +76,10 @@ class NounPhrase:
             If force_number is set to "ft" or "plural", we only
             consider plural interpretations of the string. """
         self._np_string = np_string or ""
-        self._number = None
-        self._person = None
-        self._case = None
-        self._gender = None
+        self._number: Optional[str] = None
+        self._person: Optional[str] = None
+        self._case: Optional[str] = None
+        self._gender: Optional[str] = None
         self._np: Optional[_NounPhrase] = None
         if self._np_string:
             if self._greynir is None:
@@ -103,21 +103,21 @@ class NounPhrase:
                 self._case = (variants & {"nf", "þf", "þgf", "ef"}).pop()
                 self._gender = (variants & {"kk", "kvk", "hk"}).pop()
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Return the contained string as-is """
         return self._np_string
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<reynir.NounPhrase('{0}'), {1}>".format(
             self._np_string,
             "parsed" if self.parsed else "not parsed"
         )
 
-    def __len__(self):
+    def __len__(self) -> int:
         """ Provide len() for convenience """
         return self._np_string.__len__()
 
-    def __format__(self, spec):
+    def __format__(self, spec: str) -> str:
         """ Return the contained string after inflecting it according
             to the format specification, if given """
         # Examples:
@@ -149,65 +149,65 @@ class NounPhrase:
         return fmt(self._np)
 
     @property
-    def parsed(self):
+    def parsed(self) -> bool:
         """ Return True if the noun phrase was successfully parsed """
         return self._np is not None and self._np.tree is not None
 
     @property
-    def tree(self):
+    def tree(self) -> Optional[SimpleTree]:
         """ Return the SimpleTree object corresponding to the noun phrase """
         return None if self._np is None else self._np.tree
 
     @property
-    def case(self):
+    def case(self) -> Optional[str]:
         """ Return the case of the noun phrase, as originally parsed """
         return self._case
 
     @property
-    def number(self):
+    def number(self) -> Optional[str]:
         """ Return the number (singular='et'/plural='ft') of the noun phrase,
             as originally parsed """
         return self._number
 
     @property
-    def person(self):
+    def person(self) -> Optional[str]:
         """ Return the person ('p1', 'p2', 'p3') of the noun phrase,
             as originally parsed """
         return self._person
 
     @property
-    def gender(self):
+    def gender(self) -> Optional[str]:
         """ Return the gender (masculine='kk', feminine='kvk', neutral='hk')
             of the noun phrase, as originally parsed """
         return self._gender
 
     @property
-    def nominative(self):
+    def nominative(self) -> Optional[str]:
         """ Return nominative form (nefnifall) """
         return None if self._np is None else self._np.nominative
 
     @property
-    def indefinite(self):
+    def indefinite(self) -> Optional[str]:
         """ Return indefinite form (nefnifall án greinis) """
         return None if self._np is None else self._np.indefinite
 
     @property
-    def canonical(self):
+    def canonical(self) -> Optional[str]:
         """ Return canonical form (nefnifall eintölu án greinis) """
         return None if self._np is None else self._np.canonical
 
     @property
-    def accusative(self):
+    def accusative(self) -> Optional[str]:
         """ Return accusative form (þolfall) """
         return None if self._np is None else self._np.accusative
 
     @property
-    def dative(self):
+    def dative(self) -> Optional[str]:
         """ Return dative form (þágufall) """
         return None if self._np is None else self._np.dative
 
     @property
-    def genitive(self):
+    def genitive(self) -> Optional[str]:
         """ Return genitive form (eignarfall) """
         return None if self._np is None else self._np.genitive
 

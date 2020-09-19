@@ -154,6 +154,11 @@ class _Sentence:
         return num > 0
 
     @property
+    def error(self) -> Optional[ParseError]:
+        """ Return the ParseError that occurred when parsing this sentence, or None """
+        return self._error
+
+    @property
     def err_index(self) -> Optional[int]:
         """ Return the index of the error token, if an error occurred;
             otherwise None """
@@ -185,11 +190,6 @@ class _Sentence:
         """ Return the simplified parse tree, or None
             if the sentence hasn't been parsed """
         return self._simplified_tree
-
-    @property
-    def error(self) -> Optional[ParseError]:
-        """ Return the ParseError that occurred when parsing this sentence, or None """
-        return self._error
 
     @property
     def deep_tree(self) -> Any:
