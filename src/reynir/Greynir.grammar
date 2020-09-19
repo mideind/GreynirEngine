@@ -6897,6 +6897,14 @@ VillaEinkunn_ef/tala/kyn →
 $tag(error) VillaEinkunn/fall/tala/kyn
 $score(-999) VillaEinkunn/fall/tala/kyn
 
+# Regla fyrir villu þar sem ritað er 'annara' í stað 'annarra'
+Fornafn_ft_ef/kyn → VillaAnnara
+
+VillaAnnara → "annara"
+
+$tag(error) VillaAnnara
+$score(-999) VillaAnnara
+
 FsMeðFallstjórn →
     # The following notation means that the production is
     # added to the existing productions of FsMeðFallstjórn
