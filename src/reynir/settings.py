@@ -26,7 +26,7 @@
         TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
         SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-    This module reads and interprets the ReynirPackage.conf or Reynir.conf
+    This module reads and interprets the GreynirPackage.conf
     configuration file. The file can include other files using the $include
     directive, making it easier to arrange configuration sections into logical
     and manageable pieces.
@@ -915,7 +915,7 @@ class Settings:
             )
         )
 
-    # Configuration settings from the Reynir.conf file
+    # Configuration settings from the GreynirPackage.conf file
 
     @staticmethod
     def _handle_settings(s: str) -> None:
@@ -998,14 +998,14 @@ class Settings:
     @staticmethod
     def _handle_abbreviations(s: str) -> None:
         """ Handle abbreviations in the settings section """
-        # Not required in the ReynirPackage module
+        # Not required in the GreynirPackage module
         # and should not occur in its settings files
         assert False
 
     @staticmethod
     def _handle_meanings(s: str) -> None:
         """ Handle additional word meanings in the settings section """
-        # Not required in the ReynirPackage module
+        # Not required in the GreynirPackage module
         # and should not occur in its settings files
         assert False
 

@@ -315,7 +315,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_person(token, terminal, m):
-        """ Check name from static phrases, coming from the Reynir.conf file """
+        """ Check name from static phrases, coming from the GreynirPackage.conf file """
         if m.fl != "nafn":
             return False
         if terminal.has_vbits(BIN_Token.VBIT_HK):

@@ -1,12 +1,12 @@
 
-.. image:: https://github.com/mideind/ReynirPackage/blob/master/doc/_static/GreynirLogo220.png?raw=true
+.. image:: https://github.com/mideind/GreynirPackage/blob/master/doc/_static/GreynirLogo220.png?raw=true
 
 ==========================================================
 A fast, efficient natural language processor for Icelandic
 ==========================================================
 
-.. image:: https://travis-ci.com/mideind/ReynirPackage.svg?branch=master
-    :target: https://travis-ci.com/mideind/ReynirPackage
+.. image:: https://travis-ci.com/mideind/GreynirPackage.svg?branch=master
+    :target: https://travis-ci.com/mideind/GreynirPackage
 
 ********
 Overview
@@ -128,14 +128,14 @@ To install this package, assuming Python 3 is your default Python::
 If you have **git** and **git-lfs** installed and want to be able to edit
 the source, do like so::
 
-    $ git clone https://github.com/mideind/ReynirPackage
-    $ cd ReynirPackage
+    $ git clone https://github.com/mideind/GreynirPackage
+    $ cd GreynirPackage
     $ # [ Activate your virtualenv here if you have one ]
     $ git lfs install
     $ git pull
     $ pip install -e .
 
-The package source code is now in ``ReynirPackage/src/reynir``.
+The package source code is now in ``GreynirPackage/src/reynir``.
 
 Note that **git-lfs** is required to clone and pull the full compressed binary
 files for the *Beygingarlýsing íslensks nútímamáls* (BÍN) database. If it is
@@ -146,7 +146,7 @@ Tests
 *****
 
 To run the built-in tests, install `pytest <https://docs.pytest.org/en/latest/>`__,
-``cd`` to your ``ReynirPackage`` subdirectory (and optionally activate your
+``cd`` to your ``GreynirPackage`` subdirectory (and optionally activate your
 virtualenv), then run::
 
     $ python -m pytest
@@ -190,7 +190,7 @@ This software is licensed under the **MIT License**:
 *TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE*
 *SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.*
 
-.. image:: https://github.com/mideind/ReynirPackage/blob/master/doc/_static/MideindLogoVert100.png?raw=true
+.. image:: https://github.com/mideind/GreynirPackage/blob/master/doc/_static/MideindLogoVert100.png?raw=true
    :align: right
    :alt: Miðeind ehf.
 

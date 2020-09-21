@@ -53,8 +53,8 @@ and do the following:
 
     $ mkdir ~/github
     $ cd ~/github
-    $ git clone https://github.com/mideind/ReynirPackage
-    $ cd ReynirPackage
+    $ git clone https://github.com/mideind/GreynirPackage
+    $ cd GreynirPackage
     $ git lfs install
     $ git pull
     $ pip install -e .
@@ -64,7 +64,7 @@ install a binary wheel. On other systems, a source distribution will be
 downloaded and compiled to binary.
 
 Pull requests are welcome in the project's
-`GitHub repository <https://github.com/mideind/ReynirPackage>`_.
+`GitHub repository <https://github.com/mideind/GreynirPackage>`_.
 
 
 Install into a virtualenv

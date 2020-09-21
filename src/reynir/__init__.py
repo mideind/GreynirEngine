@@ -62,5 +62,5 @@ __author__ = "Miðeind ehf."
 __copyright__ = "(C) 2020 Miðeind ehf."
 
 Abbreviations.initialize()
-Settings.read("config/ReynirPackage.conf")
+Settings.read("config/GreynirPackage.conf")
 

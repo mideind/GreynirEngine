@@ -554,7 +554,7 @@ class Reducer:
                 txt_last = token.t2[0].ordmynd.rsplit("-", maxsplit=1)[-1]
             # No need to check preferences if the first parts of
             # all possible terminals are equal
-            # Look up the preference ordering from Reynir.conf, if any
+            # Look up the preference ordering from GreynirPackage.conf, if any
             prefs = None if same_first else Preferences.get(txt_last)
             sc = scores[i]
             if prefs:
