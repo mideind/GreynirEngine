@@ -39,6 +39,7 @@ div.body h1 {
 div.body h2 {
     color: #006eff;
     font-size: 160%;
+    margin-top: 42px;
 }
 
 div.body p, div.body dd, div.body li {
@@ -72,4 +73,25 @@ div.sphinxsidebar ul li.toctree-l1 > a {
 
 div.figure p.caption span.caption-text {
     font-style: italic;
+}
+
+dl.py.class, dl.py.method, dl.py.attribute {
+    margin-top: 1.5em;
+    margin-bottom: 0.8em;
+}
+
+dl.py.method dt, dl.py.attribute dt {
+    margin-bottom: 0.8em;
+    padding-left: 2em;
+    text-indent: -2em;
+}
+
+tt.descname, tt.descclassname, code.descname, code.descclassname {
+    font-size: 1.05em;
+    color: #006eff;
+}
+
+dl.field-list > dt {
+    font-weight: normal;
+    color: #888888;
 }

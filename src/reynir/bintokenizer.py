@@ -60,6 +60,7 @@ from tokenizer import (
     Tok,
     tokenize_without_annotation,
     normalized_text,
+    Abbreviations,
 )
 
 # The following imports are here in order to be visible in clients
@@ -1302,6 +1303,35 @@ def parse_phrases_3(token_stream, token_ctor):
         yield token
 
 
+def fix_abbreviations(token_stream):
+    """ Fix sentence splitting that may be wrong due to abbreviations """
+    token = None
+    try:
+        # Maintain a one-token lookahead
+        token = next(token_stream)
+        while True:
+            next_token = next(token_stream)
+            # If we have a 'name finisher abbreviation'
+            # (such as 'próf.' for 'prófessor') and the next token
+            # is a text token but not a person, insert a sentence split
+            if (
+                token.kind == TOK.WORD
+                and token.txt.lower() in Abbreviations.NAME_FINISHERS
+                and next_token.kind in TOK.TEXT_EXCL_PERSON
+            ):
+                yield token
+                yield TOK.End_Sentence()
+                token = TOK.Begin_Sentence()
+            # Yield the current token and advance to the lookahead
+            yield token
+            token = next_token
+    except StopIteration:
+        pass
+    # Final token (previous lookahead)
+    if token is not None:
+        yield token
+
+
 class MatchingStream:
 
     """ This class parses a stream of tokens while looking for
@@ -1633,6 +1663,7 @@ class DefaultPipeline:
             self.parse_phrases_1,
             self.parse_phrases_2,
             self.parse_phrases_3,
+            self.fix_abbreviations,
             self.disambiguate_phrases,
             self.final_correct,
         ]
@@ -1673,8 +1704,12 @@ class DefaultPipeline:
         return parse_phrases_2(stream, self._token_ctor)
 
     def parse_phrases_3(self, stream: TokenIterator) -> TokenIterator:
-        """ Additional person name logic """
+        """ Additional person and entity name logic """
         return parse_phrases_3(stream, self._token_ctor)
+
+    def fix_abbreviations(self, stream: TokenIterator) -> TokenIterator:
+        """ Fix sentence splitting relating to abbreviations """
+        return fix_abbreviations(stream)
 
     def disambiguate_phrases(self, stream: TokenIterator) -> TokenIterator:
         """ Eliminate very uncommon meanings """

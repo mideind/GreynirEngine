@@ -215,6 +215,7 @@ _DEFAULT_NT_MAP = {
     "AfstæðDagsetning": "ADVP-DATE-REL",
     "FasturTímapunktur": "ADVP-TIMESTAMP-ABS",
     "AfstæðurTímapunktur": "ADVP-TIMESTAMP-REL",
+    "FsRunaEftirSögn": "ADVP-TIMESTAMP-REL",
     "Tíðni": "ADVP-TMP-SET",
     "FastTímabil": "ADVP-DUR-ABS",
     "AfstættTímabil": "ADVP-DUR-REL",
@@ -313,7 +314,11 @@ _DEFAULT_ID_MAP: Dict[str, Dict[str, Union[str, Set[str]]]] = {
     "ADVP-DATE-ABS": dict(name="Föst dagsetning", overrides="ADVP"),
     "ADVP-DATE-REL": dict(name="Afstæð dagsetning", overrides="ADVP"),
     "ADVP-TIMESTAMP-ABS": dict(name="Fastur tímapunktur", overrides="ADVP"),
-    "ADVP-TIMESTAMP-REL": dict(name="Afstæður tímapunktur", overrides="ADVP"),
+    "ADVP-TIMESTAMP-REL": dict(
+        name="Afstæður tímapunktur",
+        overrides="ADVP",
+        subject_to={"ADVP-TIMESTAMP-REL"}
+    ),
     "ADVP-TMP-SET": dict(name="Tíðni", overrides="ADVP"),
     "ADVP-DUR-ABS": dict(name="Fast tímabil"),
     "ADVP-DUR-REL": dict(name="Afstætt tímabil", overrides="ADVP"),

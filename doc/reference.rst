@@ -1,3 +1,5 @@
+.. _reference:
+
 Reference
 =========
 
@@ -27,7 +29,8 @@ the :py:class:`Greynir` class::
 
 Now you can use the ``g`` instance to parse text, by calling
 the :py:meth:`Greynir.submit()`, :py:meth:`Greynir.parse()` and/or
-:py:meth:`Greynir.parse_single()` methods on it.
+:py:meth:`Greynir.parse_single()` methods on it. To tokenize
+text without parsing it, you can call :py:meth:`Greynir.tokenize()`.
 
 If you are only going to be using the :py:class:`NounPhrase` class,
 you don't need to initialize a :py:class:`Greynir` instance.
@@ -49,21 +52,40 @@ The Greynir class
 
     .. py:method:: __init__(self, **options)
 
-        Initializes the :py:class:`Greynir` instance.
-
         :param options: Tokenizer options can be passed via keyword arguments,
             as in ``g = Greynir(convert_numbers=True)``. See the documentation
             for the `Tokenizer <https://github.com/mideind/Tokenizer>`__
             package for further information.
 
+            Additionally, if the parameter ``parse_foreign_sentences=True``
+            is given, the parser will attempt to parse
+            all sentences, even those that seem to be in a foreign language.
+            The default is not to try to parse sentences where >= 50% of
+            the tokens are not found in DMII/BÍN.
+
+        Initializes the :py:class:`Greynir` instance.
+
+    .. py:method:: tokenize(self, text: StringIterable) -> Iterable[Tok]
+
+        :param StringIterable text: A string or an iterable of strings, containing
+            the text to tokenize.
+
+        :return: A generator of `tokenizer.Tok <https://github.com/mideind/Tokenizer>`__
+            instances.
+
+        Tokenizes a string or an iterable of strings, returning a generator
+        of `tokenizer.Tok <https://github.com/mideind/Tokenizer>`__
+        instances. The returned tokens include a ``val`` attribute populated
+        with word meanings, lemmas and inflection paradigms from DMII/BÍN,
+        or, in the case of person names, information about gender and case.
+
+        The tokenizer options given in the class constructor are automatically
+        passed to the tokenizer.
 
     .. py:method:: parse_single( \
         self, sentence: str, *, \
         max_sent_tokens: int=90 \
         ) -> Optional[_Sentence]
-
-        Parses a single sentence from a string and returns a corresponding
-        :py:class:`_Sentence` object.
 
         :param str sentence: The single sentence to parse.
 
@@ -78,6 +100,9 @@ The Greynir class
 
         :return: A :py:class:`_Sentence` object, or ``None`` if
             no sentence could be extracted from the string.
+
+        Parses a single sentence from a string and returns a corresponding
+        :py:class:`_Sentence` object.
 
         The given sentence string is tokenized. An internal parse
         job is created and the first sentence found in the string is parsed.
@@ -122,15 +147,24 @@ The Greynir class
         max_sent_tokens: int=90 \
         ) -> Optional[_Sentence]
 
+        :param Iterable[Tok] tokens: An iterable of tokens to parse.
+
+        :param int max_sent_tokens: A maximum number of tokens to attempt
+            to parse. For longer sentences, an empty :py:class:`_Sentence`
+            object is returned, i.e. one where the ``tree`` attribute is ``None``.
+
+        :return: A :py:class:`_Sentence` object, or ``None`` if
+            no sentence could be extracted from the token iterable.
+
         Parses a single sentence from an iterable of tokens,
         and returns a corresponding :py:class:`_Sentence` object. Except
         for the input parameter type, the functionality is identical to
         :py:meth:`parse_single`.
 
-
     .. py:method:: submit( \
         self, text: str, parse: bool=False, *, \
-        split_paragraphs: bool=False, progress_func=None, \
+        split_paragraphs: bool=False, \
+        progress_func: Callable[[float], None]=None, \
         max_sent_tokens: int=90 \
         ) -> _Job
 
@@ -147,7 +181,7 @@ The Greynir class
             split into paragraps, with paragraph breaks at newline
             characters (``\n``). Defaults to ``False``.
 
-        :param function progress_func: If given, this function will be called
+        :param Callable[[float],None] progress_func: If given, this function will be called
             periodically during the parse job. The call will have a single
             ``float`` parameter, ranging from ``0.0`` at the beginning of the parse
             job, to ``1.0`` at the end. Defaults to ``None``.
@@ -177,7 +211,7 @@ The Greynir class
 
     .. py:method:: parse( \
         self, text: str, *, \
-        progress_func = None, \
+        progress_func: Callable[[float], None] = None, \
         max_sent_tokens: int=90 \
         ) -> dict
 
@@ -186,7 +220,7 @@ The Greynir class
         :param str text: The text to parse. Can be a single sentence
             or multiple sentences.
 
-        :param function progress_func: If given, this function will be called
+        :param Callable[[float],None] progress_func: If given, this function will be called
             periodically during the parse job. The call will have a single
             ``float`` parameter, ranging from ``0.0`` at the beginning of the parse
             job, to ``1.0`` at the end. Defaults to ``None``.
@@ -211,21 +245,21 @@ The Greynir class
         The result dictionary contains the following items:
 
         * ``sentences``: A list of :py:class:`_Sentence` objects corresponding
-            to the sentences found in the text. If a sentence could
-            not be parsed, the corresponding object's
-            ``tree`` property will be ``None``.
+          to the sentences found in the text. If a sentence could
+          not be parsed, the corresponding object's
+          ``tree`` property will be ``None``.
 
         * ``num_sentences``: The number of sentences found in the text.
 
         * ``num_parsed``: The number of sentences that were successfully parsed.
 
         * ``ambiguity``: A ``float`` weighted average of the ambiguity of the parsed
-            sentences. Ambiguity is defined as the *n*-th root of the number
-            of possible parse trees for the sentence, where *n* is the number
-            of tokens in the sentence.
+          sentences. Ambiguity is defined as the *n*-th root of the number
+          of possible parse trees for the sentence, where *n* is the number
+          of tokens in the sentence.
 
         * ``parse_time``: A ``float`` with the wall clock time, in seconds,
-            spent on tokenizing and parsing the sentences.
+          spent on tokenizing and parsing the sentences.
 
 
         Example *(try it!)*::
@@ -243,6 +277,31 @@ The Greynir class
                     )
                 )
 
+    .. py:method:: dumps_single(self, sent: _Sentence, **kwargs) -> str
+
+        :param _Sentence sent: The :py:class:`_Sentence` object to dump
+            in JSON format.
+
+        :param kwargs: Optional keyword parameters to be passed to the
+            standard library's ``json.dumps()`` function.
+
+        :return: A JSON string.
+
+        Dumps a :py:class:`_Sentence` object to a JSON string. Use
+        :py:meth:`Greynir.loads_single()` to re-create a
+        :py:class:`_Sentence` instance from a JSON string.
+
+    .. py:method:: loads_single(self, json_str: str, **kwargs) -> _Sentence
+
+        :param str json_str: The JSON string to load back into a :py:class:`_Sentence`
+            object.
+
+        :param kwargs: Optional keyword parameters to be passed to the
+            standard library's ``json.loads()`` function.
+
+        :return: A :py:class:`_Sentence` object constructed from the JSON string.
+
+        Constructs a :py:class:`_Sentence` instance from a JSON string.
 
     .. py:classmethod:: cleanup(cls)
 
@@ -268,7 +327,7 @@ in the class name.
 
 .. py:class:: _Job
 
-    .. py:method:: paragraphs(self)
+    .. py:method:: paragraphs(self) -> Iterable[_Paragraph]
 
         Returns a generator of :py:class:`_Paragraph` objects, corresponding
         to paragraphs in the parsed text. Paragraphs are assumed to be delimited by
@@ -298,7 +357,7 @@ in the class name.
             Hún er líka stutt.
 
 
-    .. py:method:: sentences(self)
+    .. py:method:: sentences(self) -> Iterable[_Sentence]
 
         Returns a generator of :py:class:`_Sentence` objects. Each object
         corresponds to a sentence in the parsed text. If the sentence has
@@ -306,7 +365,7 @@ in the class name.
         property will contain its (best) parse tree. Otherwise, the property is
         ``None``.
 
-    .. py:method:: __iter__(self)
+    .. py:method:: __iter__(self) -> Iterable[_Sentence]
 
         A shorthand for calling :py:meth:`_Job.sentences()`, supporting the
         Python iterator protocol. You can iterate through the sentences of
@@ -361,7 +420,7 @@ hence the leading underscore in the class name.
 
 .. py:class:: _Paragraph
 
-    .. py:method:: sentences(self)
+    .. py:method:: sentences(self) -> Iterable[_Sentence]
 
         Returns a generator of :py:class:`_Sentence` objects. Each object
         corresponds to a sentence within the paragraph in the parsed text.
@@ -370,7 +429,7 @@ hence the leading underscore in the class name.
         property will contain its (best) parse tree. Otherwise, the property is
         ``None``.
 
-    .. py:method:: __iter__(self)
+    .. py:method:: __iter__(self) -> Iterable[_Sentence]
 
         A shorthand for calling :py:meth:`_Paragraph.sentences()`, supporting the
         Python iterator protocol. You can iterate through the sentences of
@@ -602,21 +661,21 @@ hence the leading underscore in the class name.
         0. **text**: The token text.
 
         1. **lemma**: The lemma of the word, if the token is a word, otherwise
-            it is the text of the token. Lemmas of composite words include hyphens
-            ``-`` at the component boundaries. Examples: ``borgar-stjórnarmál``,
-            ``skugga-kosning``.
+           it is the text of the token. Lemmas of composite words include hyphens
+           ``-`` at the component boundaries. Examples: ``borgar-stjórnarmál``,
+           ``skugga-kosning``.
 
         2. **category**: The word :ref:`category <categories>`
-            (``no`` for noun, ``so`` for verb, etc.)
+           (``no`` for noun, ``so`` for verb, etc.)
 
         3. **variants**: A list of the :ref:`grammatical variants <variants>` for
-            the word or token, or an empty list if not applicable. The variants include
-            the case (``nf``, ``þf``, ``þgf``, ``ef``), gender (``kvk``, ``kk``, ``hk``),
-            person, verb form, adjective degree, etc. This list identical to the one returned
-            from :py:attr:`SimpleTree.all_variants` for the terminal in question.
+           the word or token, or an empty list if not applicable. The variants include
+           the case (``nf``, ``þf``, ``þgf``, ``ef``), gender (``kvk``, ``kk``, ``hk``),
+           person, verb form, adjective degree, etc. This list identical to the one returned
+           from :py:attr:`SimpleTree.all_variants` for the terminal in question.
 
         4. **index**: The index of the token that corresponds to this terminal.
-            The index is 0-based.
+           The index is 0-based.
 
         If the sentence has not yet been parsed, or no parse tree was found
         for it, this property is ``None``.
@@ -826,9 +885,9 @@ forms of the phrase, as required in various contexts.
 
         Returns the length of the original noun phrase string.
 
-    .. py:method:: __format__(self, spec) -> str
+    .. py:method:: __format__(self, spec: str) -> str
 
-        Formats a noun phrase using a requested inflection form.
+        Formats a noun phrase in the requested inflection form.
         Works with Python's ``format()`` function as well as in f-strings
         (available starting with Python 3.6).
 
@@ -845,6 +904,9 @@ forms of the phrase, as required in various contexts.
               without attached prepositions or referential phrases
               (*nefnifall eintölu án greinis, án forsetningarliða*
               *og tilvísunarsetninga*).
+
+        :return: The noun phrase in the requested inflection form,
+            as a string.
 
         Example::
 

@@ -106,6 +106,8 @@ class _Sentence:
         are available on the parse tree. """
 
     def __init__(self, job: "_Job", s: TokenList) -> None:
+        """ NOTE! If attributes are added here, the _Sentence.load() function
+            below needs to be updated accordingly. """
         self._job = job
         # s is a token list
         self._s = s
@@ -317,6 +319,7 @@ class _Sentence:
             "_terminals": None,
             "_job": None,
             "_err_index": None,
+            "_error": None,
             "_score": None,
         }
         return instance
@@ -704,15 +707,15 @@ class Greynir:
         """ Load token from serialized data """
         return Tok(*load_token(*args))
 
-    def loads_single(self, json_str: str, **kwargs) -> _Sentence:
-        """ Load previously dumped JSON description of a single sentence.
-            Useful for retrieving parsed data from a database. """
-        return _Sentence.loads(self.__class__, json_str, **kwargs)
-
     def dumps_single(self, sent: _Sentence, **kwargs) -> str:
         """ Return a _Sentence object in a JSON-formatted string,
             which can be loaded again using loads_single() """
         return sent.dumps(self.__class__, **kwargs)
+
+    def loads_single(self, json_str: str, **kwargs) -> _Sentence:
+        """ Load previously dumped JSON description of a single sentence.
+            Useful for retrieving parsed data from a database. """
+        return _Sentence.loads(self.__class__, json_str, **kwargs)
 
     def tokenize(self, text: StringIterable) -> Iterable[Tok]:
         """ Call the tokenizer (overridable in derived classes) """

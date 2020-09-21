@@ -574,7 +574,7 @@ Tíðartenging →
     | Allt? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"
     | VillaFráÞvíAð # frá því X
     | Allt? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "er:st"?
-    | 'snemma:ao'_mst "en:st" AðvörunAð?  # fyrr en
+    | FyrrEn AðvörunAð?  # fyrr en
     | 'ótt:ao'_mst "en:st" AðvörunAð? # óðar en
     | "þá:ao" "er:st"
     | 'um:fs'_þf 'leið:kvk'_þf_et "og:st" # um leið og
@@ -595,6 +595,11 @@ Tíðartenging →
     | TengiorðEr # "er:stt", líka tilvísunartenging - fær mínus
 
 $tag(apply_length_bonus) Tíðartenging
+
+FyrrEn → "fyrr:ao" "en:st"
+
+# Reyna að halda 'fyrr en' saman
+$score(+20) FyrrEn
 
 Allt → 'allur:fn'_nf_hk_et
 
@@ -1307,7 +1312,7 @@ SögnAukafallEfBotn →
     so_1_ef_sagnb AðLiður?
 
     # Ákvörðunar var/er/verður/hefur verið/mun [ekki] að vænta [strax í dag]
-    | Nhm so_1_ef_nh FsAtv?
+    | Nhm so_1_ef_nh FsRunaEftirSögn?
 
 $score(+3) SögnAukafallEfBotn
 
@@ -4672,8 +4677,8 @@ BeygingarliðurÁnF/tala/pers/kyn →
 
 $score(+8) BeygingarliðurÁnF/tala/pers/kyn
 
-# '(þegar) líða/síga/saxast fer/tekur á daginn'
 BeygingarliðurTími →
+    # '(þegar) líða/síga/saxast fer/tekur á daginn'
     HjSögnTímiNh HjSögnTími FsAtv
 
 HjSögnTímiNh →
@@ -5701,8 +5706,12 @@ FsRunaEftirSögn →
 
 AtvTímaliður →
     Atviksliður? Tímaliður  # strax síðastliðið sumar
+    | FyrrEn Tímaliður      # fyrr en síðastliðið sumar / á föstudagskvöld
+    | FyrrEn FsMeðFallstjórn # fyrr en eftir dúk og disk
     # Undantekningar sem falla ekki undir eo, gegna helst hlutverki talmálsmarkara
-    | "nú:ao" | "þá:ao"   # Lögreglan rannsakar þá/nú málið
+    | "nú:ao" | "þá:ao"     # Lögreglan rannsakar þá/nú málið
+
+$score(+10) AtvTímaliður
 
 # $tag(apply_length_bonus) FsRunaEftirSögn
 
@@ -5960,10 +5969,10 @@ DaganaFast →
 # Aðalliður: Afstæð dagsetning 
 AfstæðDagsetning →
     ÓfullkominDagsetning
-    | 'í:fs'_þf Árstíð_þf_et/kyn        # í haust, í sumar
-    | 'í:fs'_þgf 'liðinn:lo'_sb_þgf_et_kvk 'vika:kvk'_þgf_et # í liðinni viku
-    | 'á:fs'_þgf 'liðinn:lo'_sb_þgf_ft_hk 'ár:hk'_þgf_ft OgÁratugum? # á liðnum árum [og áratugum]
-    | 'í:fs'_þgf dagsafs NæstSíðast_þgf_et_kk? # í október [1933] [síðastliðnum]
+    | ÍFs_þf Árstíð_þf_et/kyn        # í haust, í sumar
+    | ÍFs_þgf 'liðinn:lo'_sb_þgf_et_kvk 'vika:kvk'_þgf_et # í liðinni viku
+    | ÁFs_þgf 'liðinn:lo'_sb_þgf_ft_hk 'ár:hk'_þgf_ft OgÁratugum? # á liðnum árum [og áratugum]
+    | ÍFs_þgf dagsafs NæstSíðast_þgf_et_kk? # í október [1933] [síðastliðnum]
 
     | ÍByrjunLok Mánuður_et_ef NæstSíðast_ef_et_kk? # í byrjun septembermánaðar [síðastliðins]
     | ÍByrjunLok dagsafs NæstSíðast_ef_et_kk? # í byrjun október (2014) [síðastliðins]
@@ -5994,13 +6003,13 @@ OgÁratugum →
     | Mánaðamót                                             # mánaðamótin mars-apríl
     | DaganaAfs                                             # dagana 14. og 15. október
     | ÁrinAfs                                               # árin 1938 og 1967
-    | TímaÁkvæðisliður_þf_et_kk Vikudagur_et_þf             # næsta fimmtudag
+    | TímaÁkvæðisliður_þf_et_kk Vikudagur_et_þf OgVikudagur_et_þf? # næsta fimmtudag [[, föstudag] og/eða laugardag]
     | TímaÁkvæðisliður_þf_et/kyn Árstíð_þf_et/kyn           # næsta haust, þann sama vetur
     | TímaNafnorðStærri_gr_þf/tala FsFyrirEftir             # daginn fyrir útskriftina, mánuðina eftir jarðskjálftann
     | HinnSá_þf? RaðTala_þf_et_kk MánaðarNafn_þf            # [hinn/þann] sjöunda febrúar
 
 VísiDagsetning → 
-    'á:fs'_þf Vikudagur_et_þf               # á föstudag
+    ÁFs_þf Vikudagur_et_þf OgVikudagur_et_þf? # á föstudag [eða laugardag]
     | 'um:fs'_þf 'helgi:kvk'_þf_et_gr       # um helgina
     | 'um:fs'_þf 'mánaðamót:hk'_þf_ft_gr    # um mánaðamótin
     | 'um:fs'_þf 'áramót:hk'_þf_ft_gr       # um áramótin
@@ -6012,8 +6021,8 @@ VísiDagsetning →
     | 'dagur:kk'_þf_et_gr "eftir:ao"        # daginn eftir
     | 'annar:fn'_et_þf_hk 'kvöld:hk'_et_þf  # annað kvöld
     | 'annar:fn'_et_þf_kvk 'nótt:kvk'_et_þf # aðra nótt
-    | 'á:fs'_þf Vikudagur_gr_þf_et 'koma:so'_0_gm_fh_et_p3          # á sunnudaginn kemur
-    | 'á:fs'_þf VikuMorgunnKvöld_gr_þf_et 'koma:so'_0_gm_fh_et_p3   # á laugardagskvöldið kemur
+    | ÁFs_þf Vikudagur_gr_þf_et 'koma:so'_0_gm_fh_et_p3          # á sunnudaginn kemur
+    | ÁFs_þf VikuMorgunnKvöld_gr_þf_et 'koma:so'_0_gm_fh_et_p3   # á laugardagskvöldið kemur
 
 # Hér eru aðeins orð yfir mánuði sem ekki tengjast við 'dagsafs' lauf
 Mánuður_et/fall →
@@ -6088,6 +6097,9 @@ AfstæðDagsetningFs →
 ÍFs/fall → 'í:fs'/fall
 ÁFs/fall → 'á:fs'/fall
 
+# Gefa slatta af stigum til að yfirvinna sögnina 'að eiga' með þolfalli
+$score(+40) ÁFs_þf
+
 # Aðalliður: Fastur tímapunktur 
 FasturTímapunktur →
     tímapunkturfast                                 # 14. nóvember 2017 kl. 14:35
@@ -6126,9 +6138,9 @@ AfstæðurTími →
 ÓfullkominnTími →
     ÁTímanum                                        # á sjötta tímanum
     | Dagspartur
-    | ParturHluti_þf_et Vikudagur_ef_et             # fyrri part sunnudags / seinni helming mánudags
+    | ParturHluti_þf_et Vikudagur_ef_et OgVikudagur_et_ef? # fyrri part sunnudags / seinni helming mánudags
     | 'aðfaranótt:kvk'_et_þf AfstæðDagsetning
-    | 'aðfaranótt:kvk'_et_þf TímaÁkvæðisliður_ef_et_kk? Vikudagur_ef_et
+    | 'aðfaranótt:kvk'_et_þf TímaÁkvæðisliður_ef_et_kk? Vikudagur_ef_et OgVikudagur_et_ef?
     | TímaVísiNafnliðurMinni_þf_et/kyn              # sömu mínútu, sama klukkutíma
     | TímaVísiNafnliðurStærri_þf/tala/kyn           # undanfarið ár / undanfarna áratugi
     | FyrrSíðarSeinna? TímaÁkvæðisliður_þf_et/kyn 
@@ -6142,7 +6154,7 @@ AfstæðurTími →
     | 'það:pfn'_hk_nf_et "sem:st" "eftir:ao" 'lifa:so'_0_gm_et_p3 TímaNafnorð_ef_et
 
 ÁTímanum → 
-    'á:fs'_þgf RaðKlukkuTala_þgf_et_kk 'tími:kk'_þgf_et_gr  # Á sjötta tímanum
+    ÁFs_þgf RaðKlukkuTala_þgf_et_kk 'tími:kk'_þgf_et_gr  # Á sjötta tímanum
 
 RaðKlukkuTala/fall/tala/kyn →
     RaðTala1til9/fall/tala/kyn
@@ -6203,12 +6215,12 @@ MorgunnKvöld_hk → 'kvöld:hk'_þf_et
 MorgunnKvöld_kvk → "" # Never matches
 
 AfstæðurTímiFs →
-    'á:fs'_þgf TímaÁkvæðisliður_þgf_et_kvk 'sekúnda:kvk'_þgf_et         # á sömu sekúndu
-    | 'á:fs'_þgf TímaÁkvæðisliður_þgf_et_kvk 'mínúta:kvk'_þgf_et        # á næstu mínútu
-    | 'á:fs'_þgf TímaÁkvæðisliður_þgf_et_hk 'kortér:hk'_þgf_et          # á sama kortéri
-    | 'á:fs'_þgf TímaÁkvæðisliður_þgf_et_hk 'korter:hk'_þgf_et          # á næsta korteri
-    | 'á:fs'_þgf TímaÁkvæðisliður_þgf_et_kvk 'klukkustund:kvk'_þgf_et   # á síðustu klukkustund
-    | 'á:fs'_þgf TímaÁkvæðisliður_þgf_et_kk 'klukkutími:kk'_þgf_et      # á sama klukkutíma
+    ÁFs_þgf TímaÁkvæðisliður_þgf_et_kvk 'sekúnda:kvk'_þgf_et         # á sömu sekúndu
+    | ÁFs_þgf TímaÁkvæðisliður_þgf_et_kvk 'mínúta:kvk'_þgf_et        # á næstu mínútu
+    | ÁFs_þgf TímaÁkvæðisliður_þgf_et_hk 'kortér:hk'_þgf_et          # á sama kortéri
+    | ÁFs_þgf TímaÁkvæðisliður_þgf_et_hk 'korter:hk'_þgf_et          # á næsta korteri
+    | ÁFs_þgf TímaÁkvæðisliður_þgf_et_kvk 'klukkustund:kvk'_þgf_et   # á síðustu klukkustund
+    | ÁFs_þgf TímaÁkvæðisliður_þgf_et_kk 'klukkutími:kk'_þgf_et      # á sama klukkutíma
 
 Mínútur →
     Mínútutala/tala 'mínúta:kvk'_þf/tala    # eina mínútu, tíu mínútur (yfir tvö)
@@ -6262,20 +6274,20 @@ Dagspartur →
     | 'að:fs'_þgf Lag_þgf
     | ÍByrjunLok 'dagur:kk'_et_ef
     | ÍByrjunLok KvöldNótt_ef
-    | 'í:fs'_þf KvöldNótt_þf
+    | ÍFs_þf KvöldNótt_þf
     | 'í_morgun:ao'
     | 'í_gærmorgun:ao'
     | 'í_gærkvöld:ao'
     | 'í_gærkvöldi:ao'
-    | 'í:fs'_þf DagsByrjunLok_þf
-    | 'í:fs'_þgf 'hádegi:hk'_þgf_et_gr
-    | 'á:fs'_þf VikuMorgunnKvöld_et_þf      # á mánudagsmorgun/morgni, á fimmtudagskvöld/kvöldi
-    | 'á:fs'_þgf VikuMorgunnKvöld_et_þgf    # á mánudagsmorgun/morgni, á fimmtudagskvöld/kvöldi
+    | ÍFs_þf DagsByrjunLok_þf
+    | ÍFs_þgf 'hádegi:hk'_þgf_et_gr
+    | ÁFs_þf VikuMorgunnKvöld_et_þf      # á mánudagsmorgun, á fimmtudagskvöld
+    | ÁFs_þgf VikuMorgunnKvöld_et_þgf    # á mánudagsmorgni, á fimmtudagskvöldi
     | 'um:fs'_þf UmTímanafnorð_þf
 
 FyrirEftirÁ_nf → "" # Never matches
 FyrirEftirÁ_þf → 'fyrir:fs'_þf | 'eftir:fs'_þf
-FyrirEftirÁ_þgf → 'á:fs'_þgf
+FyrirEftirÁ_þgf → ÁFs_þgf
 FyrirEftirÁ_ef → "" # Never matches
 
 HádegiMiðnætti/fall → 'hádegi:hk'_et/fall | 'miðnætti:hk'_et/fall
@@ -6381,19 +6393,19 @@ Tíðni →
 TíðniNafnliðurStærri →
     TíðniLo_þf_et/kyn TímaNafnorðStærri_þf_et/kyn       # sérhvern dag, hverja viku
     | 'dagur:kk'_þf_et TíðniLo_þf_et_kk                 # dag hvern
-    | TíðniLo_þf_et_kk Vikudagur_þf_et                  # sérhvern fimmtudag
+    | TíðniLo_þf_et_kk Vikudagur_þf_et OgVikudagur_et_þf?  # sérhvern fimmtudag
     | 'allur:fn'_þf_ft/kyn 'virkur:lo'_þf_ft/kyn?       # alla (virka) daga - ath. et. væri tímabil; allan daginn
         TímaNafnorðStærri_þf_ft/kyn       
-    | 'allur:fn'_þf_ft_kk Vikudagur_þf_ft               # alla fimmtudaga
+    | 'allur:fn'_þf_ft_kk Vikudagur_þf_ft OgVikudagur_ft_þf? # alla fimmtudaga
 
 TíðniForsetningarliðurStærri →
-    'á:fs'_þgf TíðniLo_þgf_et_kk                        # á hverjum (virkum) degi
+    ÁFs_þgf TíðniLo_þgf_et_kk                        # á hverjum (virkum) degi
         'virkur:lo'_þgf_et_kk? 'dagur:kk'_þgf_et    
-    | 'á:fs'_þgf TíðniLo_þgf_et_kk Vikudagur_þgf_et     # á hverjum fimmtudegi
-    | 'á:fs'_þgf Vikudagur_þgf_ft                       # á fimmtudögum
-    | 'í:fs'_þgf TíðniLo_þgf_et_kvk 'vika:kvk'_þgf_et   # í hverri viku
-    | 'í:fs'_þgf TíðniLo_þgf_et_kk 'mánuður:kk'_þgf_et  # í hverjum mánuði
-    | 'á:fs'_þgf TíðniLo_þgf_et_hk 'ár:hk'_þgf_et       # á hverju ári
+    | ÁFs_þgf TíðniLo_þgf_et_kk Vikudagur_þgf_et OgVikudagur_et_þgf? # á hverjum fimmtudegi
+    | ÁFs_þgf Vikudagur_þgf_ft OgVikudagur_ft_þgf    # á fimmtudögum [og þriðjudögum]
+    | ÍFs_þgf TíðniLo_þgf_et_kvk 'vika:kvk'_þgf_et   # í hverri viku
+    | ÍFs_þgf TíðniLo_þgf_et_kk 'mánuður:kk'_þgf_et  # í hverjum mánuði
+    | ÁFs_þgf TíðniLo_þgf_et_hk 'ár:hk'_þgf_et       # á hverju ári
 
 TíðniNafnliðurMinni →
     TíðniLo_þf_et/kyn MorgunnKvöld/kyn                  # sérhvern morgun, hvert kvöld
@@ -6401,10 +6413,10 @@ TíðniNafnliðurMinni →
         MorgunnKvöld/kyn
 
 TíðniForsetningarliðurMinni →
-    'á:fs'_þgf TíðniLo_þgf_et/kyn                       # á hverjum (virkum) morgni, á sérhverju kvöldi
+    ÁFs_þgf TíðniLo_þgf_et/kyn                       # á hverjum (virkum) morgni, á sérhverju kvöldi
         'virkur:lo'_þgf_et/kyn? MorgunnKvöld/kyn
-    | 'á:fs'_þgf VikuMorgunnKvöld_þgf_ft                # á fimmtudagsmorgnum, á sunnudagskvöldum
-    | 'á:fs'_þgf TíðniLo_þgf_et/kyn                     # á hverju fimmtudagskvöldi, á sérhverjum sunnudagsmorgni
+    | ÁFs_þgf VikuMorgunnKvöld_þgf_ft                # á fimmtudagsmorgnum, á sunnudagskvöldum
+    | ÁFs_þgf TíðniLo_þgf_et/kyn                     # á hverju fimmtudagskvöldi, á sérhverjum sunnudagsmorgni
         VikuMorgunnKvöld_þgf_et
     | 'á_morgnana:ao'
     | 'á_kvöldin:ao'
@@ -6531,7 +6543,7 @@ FráTilTími →
 TímabilTil → "til:fs" | '-:en'
 
 ÞegarLíðaTekurÁ →
-    "þegar:st" 'líða:so'_0_nh 'taka:so'_0_gm_p3_et 'á:fs'_þf TímaNafnorðStærri_þf/tala/kyn
+    "þegar:st" 'líða:so'_0_nh 'taka:so'_0_gm_p3_et ÁFs_þf TímaNafnorðStærri_þf/tala/kyn
 
 OgMeð → Og 'með:fs'_þgf    # (frá) og með, (til) og með
 
@@ -6703,6 +6715,12 @@ Vikudagur_gr/fall/tala →
     | 'föstudagur:kk'_gr/fall/tala
     | 'laugardagur:kk'_gr/fall/tala
     | 'sunnudagur:kk'_gr/fall/tala
+
+OgVikudagur/tala/fall →
+    KommaVikudagur/tala/fall* OgEða Vikudagur/tala/fall
+
+KommaVikudagur/tala/fall →
+    ',' Vikudagur/tala/fall
 
 FyrrSíðarSeinna →
     'snemma:ao'_mst     # fyrr

@@ -32,9 +32,11 @@
 
 import functools
 
+from reynir import Greynir
 from reynir.binparser import augment_terminal
 from reynir.bincompress import BIN_Compressed
 from reynir.bindb import BIN_Db
+from reynir.bintokenizer import TOK
 
 
 def test_augment_terminal():
@@ -295,7 +297,6 @@ def test_bindb():
 
 
 def test_lemmas():
-    from reynir import Greynir
     g = Greynir()
     s = g.parse_single(
         "Hallbjörn borðaði ísinn kl. 14 meðan Icelandair át 3 teppi "
@@ -323,6 +324,27 @@ def test_lemmas():
     assert s.categories is None
     assert s.lemmas_and_cats is None
 
+
+def test_sentence_split():
+    g = Greynir()
+    tlist = list(g.tokenize("Ég hitti próf. Jón Mýrdal áðan."))
+    assert len([t for t in tlist if t.kind == TOK.S_BEGIN]) == 1
+    assert len([t for t in tlist if t.kind == TOK.S_END]) == 1
+    tlist = list(g.tokenize("Ég tók samræmt próf. Það var létt."))
+    assert len([t for t in tlist if t.kind == TOK.S_BEGIN]) == 2
+    assert len([t for t in tlist if t.kind == TOK.S_END]) == 2
+    tlist = list(g.tokenize("Þetta er próf. Hann taldi það víst."))
+    assert len([t for t in tlist if t.kind == TOK.S_BEGIN]) == 2
+    assert len([t for t in tlist if t.kind == TOK.S_END]) == 2
+    tlist = list(g.tokenize("Próf. Páll var ósammála próf. Höllu um ritgerðina."))
+    assert len([t for t in tlist if t.kind == TOK.S_BEGIN]) == 1
+    assert len([t for t in tlist if t.kind == TOK.S_END]) == 1
+    tlist = list(g.tokenize("Ég hitti dr. Jón Mýrdal áðan."))
+    assert len([t for t in tlist if t.kind == TOK.S_BEGIN]) == 1
+    assert len([t for t in tlist if t.kind == TOK.S_END]) == 1
+    tlist = list(g.tokenize("Ég hitti hr. Jón Mýrdal áðan."))
+    assert len([t for t in tlist if t.kind == TOK.S_BEGIN]) == 1
+    assert len([t for t in tlist if t.kind == TOK.S_END]) == 1
 
 if __name__ == "__main__":
 
