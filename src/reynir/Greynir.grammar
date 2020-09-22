@@ -6915,13 +6915,25 @@ VillaEinkunn_ef/tala/kyn →
 $tag(error) VillaEinkunn/fall/tala/kyn
 $score(-999) VillaEinkunn/fall/tala/kyn
 
-# Regla fyrir villu þar sem ritað er 'annara' í stað 'annarra'
+# Regla fyrir villu þar sem ritað er 'annara'/'nokkura' í stað 'annarra'/'nokkurra'
 Fornafn_ft_ef/kyn → VillaAnnara
+# Regla fyrir villu þar sem ritað er 'annarar'/'nokkurar' í stað 'annarrar'/'nokkurrar'
+Fornafn_et_þgf_kvk → VillaAnnari
+Fornafn_et_ef_kvk → VillaAnnarar
 
-VillaAnnara → "annara"
+$tag(keep) Fornafn_et_þgf_kvk
+$tag(keep) Fornafn_et_ef_kvk
+
+VillaAnnara → "annara" | "nokkura"
+VillaAnnari → "annari" | "nokkuri"
+VillaAnnarar → "annarar" | "nokkurar"
 
 $tag(error) VillaAnnara
+$tag(error) VillaAnnari
+$tag(error) VillaAnnarar
 $score(-999) VillaAnnara
+$score(-999) VillaAnnari
+$score(-999) VillaAnnarar
 
 FsMeðFallstjórn →
     # The following notation means that the production is
