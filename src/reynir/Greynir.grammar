@@ -868,6 +868,13 @@ Setning_et_p3_hk →
     # Það (verður að viðurkennast að Jón er fær á sínu sviði)
     # Það (mun skapast hætta)
     | NlFrumlagÞað SögnÞað
+    # 'Til stendur/stóð að halda landsfundinn í júní'
+    | SetningTilStendur
+
+SetningTilStendur →
+    "til:ao" 'standa:so'_0_gm_p3_et NhFyllingAtv
+
+$score(+20) SetningTilStendur
 
 SögnÞað →
     # (Það) var verið að eyðileggja menningarverðmæti
@@ -6001,7 +6008,7 @@ OgÁratugum →
     | Árstíð_þf_et/kyn ártal_þf_et                          # haustið 2016, veturinn 1998
     | HinnSá_þf raðnr SáÞessi_ef_et_kk 'mánuður:kk'_ef_et   # þann/hinn 23. þess/þessa mánaðar
     | Mánaðamót                                             # mánaðamótin mars-apríl
-    | DaganaAfs                                             # dagana 14. og 15. október
+    | DaganaAfs NæstSíðast_þf_et_kk?                        # dagana 14. og 15. október
     | ÁrinAfs                                               # árin 1938 og 1967
     | TímaÁkvæðisliður_þf_et_kk Vikudagur_et_þf OgVikudagur_et_þf? # næsta fimmtudag [[, föstudag] og/eða laugardag]
     | TímaÁkvæðisliður_þf_et/kyn Árstíð_þf_et/kyn           # næsta haust, þann sama vetur
@@ -6055,9 +6062,12 @@ MánaðarNafn_þf →
     | "nóvember"
     | "desember"
 
+Dagana →
+    'dagur:kk'_gr_ft_þf | 'helgi:kvk'_gr_et_þf  # dagana/helgina
+
 DaganaAfs → 
-    'dagur:kk'_gr_ft_þf? dagsafs Til dagsafs       # (dagana) 13. október og/til/- 14. nóvember
-    | 'dagur:kk'_gr_ft_þf? raðnr Til dagsafs       # (dagana) 13. og/til/- 14. nóvember 
+    Dagana? dagsafs Til dagsafs  # (dagana/helgina) 13. október og/til/- 14. nóvember
+    | Dagana? raðnr Til dagsafs  # (dagana/helgina) 13. og/til/- 14. nóvember 
 
 FsFyrirEftir →
     FyrirEftir Nl_þf
@@ -6519,28 +6529,25 @@ PunkturFs_ef →
     | 'til_og_með:ao'
 
 DaganaTímabilAfstætt →
-    'dagur:kk'_gr_ft_þf? dagsafs TímabilTil dagsafs         # (dagana) 13. október til 14. nóvember
-    | 'dagur:kk'_gr_ft_þf? raðnr TímabilTil dagsafs         # (dagana) 13. og 14. nóvember
-    | Vikudagur_et_þf tímapunkturafs "-:en" tími            # miðvikudaginn 13. desember kl 14:00 - 15:00
+    DaganaAfs NæstSíðast_þf_et_kk?
+    | Vikudagur_et_þf tímapunkturafs Til tími   # miðvikudaginn 13. desember kl 14:00 - 15:00
 
 ÁrinTímabilAfstætt →
-    ártal ÁraRuna* TímabilTil tala                          # 2016-2017 / 2016 til 2017
-    | 'ár:hk'_ft_gr_þf tala ÁraRuna* TímabilTil tala        # árin 2016-2017, árin 2016 til 2017
+    ártal ÁraRuna* Til tala                     # 2016-2017 / 2016 til 2017
+    | 'ár:hk'_ft_gr_þf tala ÁraRuna* Til tala   # árin 2016-2017, árin 2016 til 2017
 
 DaganaTímabilFast →
-    'dagur:kk'_gr_ft_þf? dagsafs TímabilTil dagsföst        # (dagana) 13. október til 14. nóvember 2017; 13. október-14. nóvember 2017
-    | 'dagur:kk'_gr_ft_þf? raðnr TímabilTil dagsföst        # (dagana) 13.-14. nóvember 2017, 13. til 14. nóvember 2017
-    | Vikudagur_et_þf tímapunkturfast "-:en" tími           # miðvikudaginn 13. desember 2017 kl 14:00 - 15:00
+    Dagana? dagsafs Til dagsföst                # (dagana/helgina) 13. október til 14. nóvember 2017; 13. október-14. nóvember 2017
+    | Dagana? raðnr Til dagsföst                # (dagana/helgina) 13.-14. nóvember 2017, 13. til 14. nóvember 2017
+    | Vikudagur_et_þf tímapunkturfast Til tími  # miðvikudaginn 13. desember 2017 kl 14:00 - 15:00
 
 FráTilTími → 
-    'frá:fs'_þgf? tími TímabilTil tími DaganaTímabilAfstætt?
-    | 'frá:fs'_þgf? tími TímabilTil tími DaganaTímabilFast?
-    | 'frá:fs'_þgf? tími TímabilTil tímapunkturfast                # kl. 14:00-17:00 14. nóvember 2017
-    | 'frá:fs'_þgf? tími TímabilTil tímapunkturafs                 # kl. 14:00-17:00 14. nóvember
-    | 'frá:fs'_þgf? tími TímabilTil tími HinnSá_þf? dagsföst       # kl. 14:00 til 17:00 hinn 14. nóvember 2017
-    | 'frá:fs'_þgf? tími TímabilTil tími HinnSá_þf? dagsafs        # kl. 14:00 til 17:00 þann 14. nóvember
-
-TímabilTil → "til:fs" | '-:en'
+    'frá:fs'_þgf? tími Til tími DaganaTímabilAfstætt?
+    | 'frá:fs'_þgf? tími Til tími DaganaTímabilFast?
+    | 'frá:fs'_þgf? tími Til tímapunkturfast                # kl. 14:00-17:00 14. nóvember 2017
+    | 'frá:fs'_þgf? tími Til tímapunkturafs                 # kl. 14:00-17:00 14. nóvember
+    | 'frá:fs'_þgf? tími Til tími HinnSá_þf? dagsföst       # kl. 14:00 til 17:00 hinn 14. nóvember 2017
+    | 'frá:fs'_þgf? tími Til tími HinnSá_þf? dagsafs        # kl. 14:00 til 17:00 þann 14. nóvember
 
 ÞegarLíðaTekurÁ →
     "þegar:st" 'líða:so'_0_nh 'taka:so'_0_gm_p3_et ÁFs_þf TímaNafnorðStærri_þf/tala/kyn
