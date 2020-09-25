@@ -7,18 +7,26 @@
     Copyright (C) 2020 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
-       This program is free software: you can redistribute it and/or modify
-       it under the terms of the GNU General Public License as published by
-       the Free Software Foundation, either version 3 of the License, or
-       (at your option) any later version.
-       This program is distributed in the hope that it will be useful,
-       but WITHOUT ANY WARRANTY; without even the implied warranty of
-       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-       GNU General Public License for more details.
+    This software is licensed under the MIT License:
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see http://www.gnu.org/licenses/.
+        Permission is hereby granted, free of charge, to any person
+        obtaining a copy of this software and associated documentation
+        files (the "Software"), to deal in the Software without restriction,
+        including without limitation the rights to use, copy, modify, merge,
+        publish, distribute, sublicense, and/or sell copies of the Software,
+        and to permit persons to whom the Software is furnished to do so,
+        subject to the following conditions:
 
+        The above copyright notice and this permission notice shall be
+        included in all copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+        IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+        CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+        TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+        SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     This module implements the BIN_Token class, deriving from Token,
     and BIN_Parser class, deriving from Base_Parser. BIN_Parser is then
@@ -34,7 +42,7 @@
 
 """
 
-from typing import cast, Dict, Set, Tuple, List, Union, Iterable, Optional
+from typing import cast, Dict, Set, Tuple, List, Union, Iterable, Optional, Any
 
 import os
 import time
@@ -307,7 +315,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_person(token, terminal, m):
-        """ Check name from static phrases, coming from the Reynir.conf file """
+        """ Check name from static phrases, coming from the GreynirPackage.conf file """
         if m.fl != "nafn":
             return False
         if terminal.has_vbits(BIN_Token.VBIT_HK):
@@ -605,7 +613,7 @@ class BIN_Token(Token):
     ]
 
     # Dictionary of associated BIN forms, initialized later
-    _VERB_FORMS = None  # type: Dict[str, str]
+    _VERB_FORMS: Optional[Dict[str, str]] = None
 
     # Cache the dictionary of verb objects from settings.py
     _VERB_OBJECTS = VerbObjects.VERBS
@@ -737,8 +745,8 @@ class BIN_Token(Token):
     # of each punctuation token.
     _UNDERSTOOD_PUNCTUATION = ".?!,:;-()[]"
 
-    _MEANING_CACHE = {}  # type: Dict[str, int]
-    _VARIANT_CACHE = {}  # type: Dict[str, Set[str]]
+    _MEANING_CACHE: Dict[str, int] = {}
+    _VARIANT_CACHE: Dict[str, Set[str]] = {}
 
     def __init__(self, t: Tok, original_index: int) -> None:
 
@@ -770,10 +778,7 @@ class BIN_Token(Token):
         self._index = original_index  # Index of original token within sentence
 
         # Copy error information from the original token, if any
-        try:
-            self._error = t.error  # type: ignore
-        except AttributeError:
-            self._error = None
+        self._error: Any = getattr(t, "error", None)
 
         # We store a cached check of whether this is an "eo".
         # An "eo" is an adverb (atviksorð) that cannot also be
@@ -890,7 +895,7 @@ class BIN_Token(Token):
 
     # Variants that must be present in the verb form if they
     # are present in the terminal
-    _RESTRICTIVE_VARIANTS = ("sagnb", "lhþt", "bh", "op")  # type: Tuple[str, ...]
+    _RESTRICTIVE_VARIANTS: Tuple[str, ...] = ("sagnb", "lhþt", "bh", "op")
 
     def verb_matches(self, verb, terminal, form):
         """ Return True if the infinitive in question matches the verb category,
@@ -982,6 +987,7 @@ class BIN_Token(Token):
             # Can't use singular verb if plural terminal
             return False
         # Check that person (1st, 2nd, 3rd) and other variant requirements match
+        assert BIN_Token._VERB_FORMS is not None
         for v in terminal.variants:
             # Lookup variant to see if it is one of the required ones for verbs
             rq = BIN_Token._VERB_FORMS.get(v)
@@ -1521,7 +1527,7 @@ class VariantHandler:
         # Do a bit of pre-calculation to speed up various
         # checks against this terminal
         # pylint: disable=no-member
-        n = self._name  # type: ignore
+        n = cast(str, self._name)  # type: ignore
         q = n[0]
         if q in "\"'":
             # Literal terminal: be careful since the first (literal)
@@ -1942,7 +1948,7 @@ class BIN_Nonterminal(Nonterminal):
         super().__init__(name, fname, line)
         # Optimized check for whether this is a noun phrase nonterminal
         self._is_noun_phrase = name.startswith("Nl")
-        self._parts = None  # type: Optional[List[str]]
+        self._parts: Optional[List[str]] = None
 
     @property
     def is_noun_phrase(self) -> bool:
@@ -1999,8 +2005,8 @@ class BIN_Parser(Base_Parser):
         the other. """
 
     # A singleton instance of the parsed Greynir.grammar
-    _grammar = None  # type: BIN_Grammar
-    _grammar_ts = None  # type: float
+    _grammar: Optional[BIN_Grammar] = None
+    _grammar_ts: Optional[float] = None
     _grammar_class = BIN_Grammar
 
     _GRAMMAR_NAME = "Greynir.grammar"

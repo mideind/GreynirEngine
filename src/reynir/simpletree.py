@@ -6,18 +6,26 @@
 
     Copyright (c) 2020 Miðeind ehf.
 
-       This program is free software: you can redistribute it and/or modify
-       it under the terms of the GNU General Public License as published by
-       the Free Software Foundation, either version 3 of the License, or
-       (at your option) any later version.
-       This program is distributed in the hope that it will be useful,
-       but WITHOUT ANY WARRANTY; without even the implied warranty of
-       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-       GNU General Public License for more details.
+    This software is licensed under the MIT License:
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see http://www.gnu.org/licenses/.
+        Permission is hereby granted, free of charge, to any person
+        obtaining a copy of this software and associated documentation
+        files (the "Software"), to deal in the Software without restriction,
+        including without limitation the rights to use, copy, modify, merge,
+        publish, distribute, sublicense, and/or sell copies of the Software,
+        and to permit persons to whom the Software is furnished to do so,
+        subject to the following conditions:
 
+        The above copyright notice and this permission notice shall be
+        included in all copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+        IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+        CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+        TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+        SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     This module implements SimpleTree, a wrapper class for simplified,
     normalized parse trees. It also implements SimpleTreeBuilder,
@@ -29,7 +37,7 @@
 
 """
 
-from typing import Dict, List, Tuple, Sequence, Union, Any, Optional, Callable
+from typing import Dict, List, Tuple, Sequence, Set, Union, Any, Optional, Callable
 
 import re
 from pprint import pformat
@@ -207,6 +215,7 @@ _DEFAULT_NT_MAP = {
     "AfstæðDagsetning": "ADVP-DATE-REL",
     "FasturTímapunktur": "ADVP-TIMESTAMP-ABS",
     "AfstæðurTímapunktur": "ADVP-TIMESTAMP-REL",
+    "FsRunaEftirSögn": "ADVP-TIMESTAMP-REL",
     "Tíðni": "ADVP-TMP-SET",
     "FastTímabil": "ADVP-DUR-ABS",
     "AfstættTímabil": "ADVP-DUR-REL",
@@ -251,7 +260,7 @@ _DEFAULT_NT_MAP = {
 # overrides: we cut off a parent node in favor of this one
 # if there are no intermediate nodes
 
-_DEFAULT_ID_MAP = {
+_DEFAULT_ID_MAP: Dict[str, Dict[str, Union[str, Set[str]]]] = {
     "S0": dict(name="Málsgrein"),
     "S0-X": dict(name="Rangt mynduð setning"),
     "S-MAIN": dict(name="Setning", subject_to={"S-MAIN", "S-QUE", "CP-QUOTE", "IP"}),
@@ -305,7 +314,11 @@ _DEFAULT_ID_MAP = {
     "ADVP-DATE-ABS": dict(name="Föst dagsetning", overrides="ADVP"),
     "ADVP-DATE-REL": dict(name="Afstæð dagsetning", overrides="ADVP"),
     "ADVP-TIMESTAMP-ABS": dict(name="Fastur tímapunktur", overrides="ADVP"),
-    "ADVP-TIMESTAMP-REL": dict(name="Afstæður tímapunktur", overrides="ADVP"),
+    "ADVP-TIMESTAMP-REL": dict(
+        name="Afstæður tímapunktur",
+        overrides="ADVP",
+        subject_to={"ADVP-TIMESTAMP-REL"}
+    ),
     "ADVP-TMP-SET": dict(name="Tíðni", overrides="ADVP"),
     "ADVP-DUR-ABS": dict(name="Fast tímabil"),
     "ADVP-DUR-REL": dict(name="Afstætt tímabil", overrides="ADVP"),
@@ -321,7 +334,7 @@ _DEFAULT_ID_MAP = {
     "TO": dict(name="Nafnháttarmerki"),
     "C": dict(name="Samtenging"),
     "FOREIGN": dict(name="Erlendur texti"),
-}  # type: Dict[str, Dict[str, Any]]
+}
 
 _DEFAULT_TERMINAL_MAP = {  # TODO: Make sure node names are translated in treegrid
     # "no": "N",
@@ -1802,10 +1815,10 @@ class SimpleTreeBuilder:
         maps provided in the constructor. """
 
     def __init__(self, nt_map=None, id_map=None, terminal_map=None):
-        self._nt_map = nt_map or _DEFAULT_NT_MAP  # type: Dict[str, Sequence[str]]
-        self._id_map = id_map or _DEFAULT_ID_MAP  # type: Dict[str, Dict[str, Any]]
+        self._nt_map: Dict[str, Sequence[str]] = nt_map or _DEFAULT_NT_MAP
+        self._id_map: Dict[str, Dict[str, Any]] = id_map or _DEFAULT_ID_MAP
         self._terminal_map = terminal_map or _DEFAULT_TERMINAL_MAP
-        self._result = []  # type: List[Dict[str, Any]]
+        self._result: List[Dict[str, Any]] = []
         self._stack = [self._result]
         self._scope = [NotImplemented]  # Sentinel value
         self._pushed = []
@@ -1852,7 +1865,7 @@ class SimpleTreeBuilder:
                 # don't bother pushing it
                 continue
             # This is a significant and noteworthy nonterminal
-            children = []  # type: List[Dict[str, Any]]
+            children: List[Dict[str, Any]] = []
             self._stack[-1].append(
                 dict(k="NONTERMINAL", n=mapped_id["name"], i=mapped_nt, p=children)
             )

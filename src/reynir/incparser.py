@@ -7,18 +7,26 @@
     Copyright (c) 2020 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
-       This program is free software: you can redistribute it and/or modify
-       it under the terms of the GNU General Public License as published by
-       the Free Software Foundation, either version 3 of the License, or
-       (at your option) any later version.
-       This program is distributed in the hope that it will be useful,
-       but WITHOUT ANY WARRANTY; without even the implied warranty of
-       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-       GNU General Public License for more details.
+    This software is licensed under the MIT License:
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see http://www.gnu.org/licenses/.
+        Permission is hereby granted, free of charge, to any person
+        obtaining a copy of this software and associated documentation
+        files (the "Software"), to deal in the Software without restriction,
+        including without limitation the rights to use, copy, modify, merge,
+        publish, distribute, sublicense, and/or sell copies of the Software,
+        and to permit persons to whom the Software is furnished to do so,
+        subject to the following conditions:
 
+        The above copyright notice and this permission notice shall be
+        included in all copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+        IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+        CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+        TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+        SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     This module implements a simple utility class for parsing token
     streams into paragraphs and sentences. The parse is incremental so
@@ -83,6 +91,7 @@ class IncrementalParser:
             self._err_index = None
             self._tree = None
             self._score = 0
+            self._error = None
 
         def __len__(self):
             return self._len
@@ -103,7 +112,13 @@ class IncrementalParser:
                     if num > 1:
                         forest, score = self._ip._reducer.go_with_score(forest)
             except ParseError as e:
+                # The ParseError may originate in the reducer.go_with_score()
+                # function, and in that case, forest is not None; be sure to reset it
+                forest = None
+                score = 0
+                num = 0
                 self._err_index = e.token_index
+                self._error = e
             self._tree = forest
             self._score = score
             self._ip._add_sentence(self, num)
@@ -122,12 +137,16 @@ class IncrementalParser:
             return self._score
 
         @property
+        def error(self):
+            return self._error
+
+        @property
         def err_index(self):
             return self._len - 1 if self._err_index is None else self._err_index
 
         @property
         def text(self):
-            return " ".join(t.txt for t in self._s)
+            return " ".join(t.txt for t in self._s if t.txt)
 
         def __str__(self):
             return self.text

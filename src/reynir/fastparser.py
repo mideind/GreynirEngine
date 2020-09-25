@@ -6,18 +6,26 @@
 
     Copyright (C) 2020 Miðeind ehf.
 
-       This program is free software: you can redistribute it and/or modify
-       it under the terms of the GNU General Public License as published by
-       the Free Software Foundation, either version 3 of the License, or
-       (at your option) any later version.
-       This program is distributed in the hope that it will be useful,
-       but WITHOUT ANY WARRANTY; without even the implied warranty of
-       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-       GNU General Public License for more details.
+    This software is licensed under the MIT License:
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see http://www.gnu.org/licenses/.
+        Permission is hereby granted, free of charge, to any person
+        obtaining a copy of this software and associated documentation
+        files (the "Software"), to deal in the Software without restriction,
+        including without limitation the rights to use, copy, modify, merge,
+        publish, distribute, sublicense, and/or sell copies of the Software,
+        and to permit persons to whom the Software is furnished to do so,
+        subject to the following conditions:
 
+        The above copyright notice and this permission notice shall be
+        included in all copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+        IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+        CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+        TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+        SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     This module wraps an Earley-Scott parser written in C++ to transform token
     sequences (sentences) into forests of parse trees, with each tree representing a
@@ -78,9 +86,9 @@ class ParseJob:
     """ Dispatch token matching requests coming in from the C++ code """
 
     # Parse jobs have rotating integer IDs, reaching _MAX_JOBS before cycling back
-    _MAX_JOBS = 10000
+    _MAX_JOBS = 10_000
     _seq = 0
-    _jobs = dict()  # type: Dict[int, ParseJob]
+    _jobs: Dict[int, "ParseJob"] = dict()
     _lock = Lock()
 
     def __init__(self, handle, grammar, tokens, terminals, matching_cache):
@@ -328,7 +336,7 @@ class Node:
         return node
 
     @classmethod
-    def copy(cls, other):
+    def copy(cls, other: "Node") -> "Node":
         """ Returns a copy of a Node instance """
         node = cls(other._start, other._end)
         node._nonterminal = other._nonterminal
@@ -587,6 +595,10 @@ class ParseError(Exception):
         """ Return the 0-based index of the token where the parser ran out of options """
         return self._token_index
 
+    def __str__(self):
+        """ Return a string representation of the parse error """
+        return self.args[0]
+
 
 class Fast_Parser(BIN_Parser):
 
@@ -609,7 +621,7 @@ class Fast_Parser(BIN_Parser):
     # The C++ grammar object (a binary blob)
     _c_grammar = ffi.NULL
     # The C++ grammar timestamp
-    _c_grammar_ts = None  # type: float
+    _c_grammar_ts: Optional[float] = None
 
     @classmethod
     def _load_binary_grammar(cls):
@@ -752,13 +764,13 @@ class Fast_Parser(BIN_Parser):
         if cls._c_grammar != ffi.NULL:
             eparser.deleteGrammar(cls._c_grammar)
         cls._c_grammar = ffi.NULL
-        cls._c_grammar_ts = None  # type: ignore
+        cls._c_grammar_ts = None
 
     @classmethod
     def num_combinations(cls, forest):
         """ Count the number of possible parse tree combinations in the given forest """
 
-        nc = dict()  # type: Dict[Node, int]
+        nc: Dict[Node, int] = dict()
         mul = operator.mul
 
         def _num_comb(w):
@@ -832,7 +844,7 @@ class ParseForestNavigator:
     def go(self, root_node) -> Any:
         """ Navigate the forest from the root node """
 
-        visited = dict()  # type: Dict[Node, Any]
+        visited: Dict[Node, Any] = dict()
 
         def _nav_helper(w, level):
             """ Navigate from w """
@@ -1061,7 +1073,7 @@ class _FlattenerNode:
     ) -> None:
         self._p = p
         self._score = score
-        self._children = None  # type: Optional[List[_FlattenerNode]]
+        self._children: Optional[List[_FlattenerNode]] = None
 
     def add_child(self, child: "_FlattenerNode") -> None:
         if self._children is None:
@@ -1110,7 +1122,7 @@ class ParseForestFlattener(ParseForestNavigator):
 
     def __init__(self) -> None:
         super().__init__(visit_all=True)  # Visit all nodes
-        self._stack = None  # type: Optional[List[_FlattenerNode]]
+        self._stack: Optional[List[_FlattenerNode]] = None
 
     def go(self, root_node: Node) -> None:
         self._stack = None

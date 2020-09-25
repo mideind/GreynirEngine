@@ -104,7 +104,7 @@ html_theme_options = {
     "logo_text_align": "center",
     "description": "Natural Language Processing for Icelandic",
     "github_user": "mideind",
-    "github_repo": "ReynirPackage",
+    "github_repo": "GreynirPackage",
     "github_button": True,
     "sidebar_collapse": False,
     "fixed_sidebar": True,

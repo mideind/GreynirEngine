@@ -6,18 +6,26 @@
 
     Copyright (C) 2020 Miðeind ehf.
 
-       This program is free software: you can redistribute it and/or modify
-       it under the terms of the GNU General Public License as published by
-       the Free Software Foundation, either version 3 of the License, or
-       (at your option) any later version.
-       This program is distributed in the hope that it will be useful,
-       but WITHOUT ANY WARRANTY; without even the implied warranty of
-       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-       GNU General Public License for more details.
+    This software is licensed under the MIT License:
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see http://www.gnu.org/licenses/.
+        Permission is hereby granted, free of charge, to any person
+        obtaining a copy of this software and associated documentation
+        files (the "Software"), to deal in the Software without restriction,
+        including without limitation the rights to use, copy, modify, merge,
+        publish, distribute, sublicense, and/or sell copies of the Software,
+        and to permit persons to whom the Software is furnished to do so,
+        subject to the following conditions:
 
+        The above copyright notice and this permission notice shall be
+        included in all copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+        IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+        CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+        TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+        SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     This module adds layers on top of the "raw" tokenizer in
     tokenizer.py. These layers annotate the token stream with word
@@ -52,6 +60,7 @@ from tokenizer import (
     Tok,
     tokenize_without_annotation,
     normalized_text,
+    Abbreviations,
 )
 
 # The following imports are here in order to be visible in clients
@@ -539,7 +548,7 @@ def add_cases(cases, bin_spec, default="nf"):
 
 def all_cases(token, filter_func=None):
     """ Return a list of all cases that the token can be in """
-    cases = set()  # type: Union[FrozenSet[str], Set[str]]
+    cases: Union[FrozenSet[str], Set[str]] = set()
     if token.kind == TOK.WORD and token.val:
         # Roll through the potential meanings and extract the cases therefrom
         for m in token.val:
@@ -1014,7 +1023,7 @@ def parse_phrases_2(token_stream, token_ctor):
                     return False
                 return True
 
-            gn = None  # type: Optional[List[PersonName]]
+            gn: Optional[List[PersonName]] = None
             if token.kind == TOK.WORD and token.val and token.val[0].fl == "nafn":
                 # Convert a WORD with fl="nafn" to a PERSON with the correct gender,
                 # in all cases
@@ -1294,6 +1303,35 @@ def parse_phrases_3(token_stream, token_ctor):
         yield token
 
 
+def fix_abbreviations(token_stream):
+    """ Fix sentence splitting that may be wrong due to abbreviations """
+    token = None
+    try:
+        # Maintain a one-token lookahead
+        token = next(token_stream)
+        while True:
+            next_token = next(token_stream)
+            # If we have a 'name finisher abbreviation'
+            # (such as 'próf.' for 'prófessor') and the next token
+            # is a text token but not a person, insert a sentence split
+            if (
+                token.kind == TOK.WORD
+                and token.txt.lower() in Abbreviations.NAME_FINISHERS
+                and next_token.kind in TOK.TEXT_EXCL_PERSON
+            ):
+                yield token
+                yield TOK.End_Sentence()
+                token = TOK.Begin_Sentence()
+            # Yield the current token and advance to the lookahead
+            yield token
+            token = next_token
+    except StopIteration:
+        pass
+    # Final token (previous lookahead)
+    if token is not None:
+        yield token
+
+
 class MatchingStream:
 
     """ This class parses a stream of tokens while looking for
@@ -1328,9 +1366,9 @@ class MatchingStream:
     def process(self, token_stream: TokenIterator) -> TokenIterator:
         """ Generate an output stream from the input token stream """
         # Token queue
-        tq = []  # type: List[Tok]
+        tq: List[Tok] = []
         # Phrases we're considering
-        state = defaultdict(list)  # type: Dict[str, List[Tuple[List[str], int]]]
+        state: Dict[str, List[Tuple[List[str], int]]] = defaultdict(list)
         pdict = self._pdict  # The phrase dictionary
 
         try:
@@ -1606,16 +1644,16 @@ class DefaultPipeline:
         output stream. Individual phases in the sequence can
         easily be overridden in derived classes. """
 
-    _token_ctor = Bin_TOK  # type: Type[Bin_TOK]
+    _token_ctor: Type[Bin_TOK] = Bin_TOK
 
     def __init__(self, text_or_gen: StringIterable, **options) -> None:
         self._text_or_gen = text_or_gen
         self._auto_uppercase = options.pop("auto_uppercase", False)
         self._options = options
-        self._db = None  # type: Optional[BIN_Db]
+        self._db: Optional[BIN_Db] = None
         # Initialize the default tokenizer pipeline.
         # This sequence of phases can be modified in derived classes.
-        self._phases = [
+        self._phases: List[PhaseFunction] = [
             self.tokenize_without_annotation,
             self.correct_tokens,
             self.parse_static_phrases,
@@ -1625,9 +1663,10 @@ class DefaultPipeline:
             self.parse_phrases_1,
             self.parse_phrases_2,
             self.parse_phrases_3,
+            self.fix_abbreviations,
             self.disambiguate_phrases,
             self.final_correct,
-        ]  # type: List[PhaseFunction]
+        ]
 
     def tokenize_without_annotation(self) -> TokenIterator:
         """ The basic, raw tokenization from the tokenizer package """
@@ -1665,8 +1704,12 @@ class DefaultPipeline:
         return parse_phrases_2(stream, self._token_ctor)
 
     def parse_phrases_3(self, stream: TokenIterator) -> TokenIterator:
-        """ Additional person name logic """
+        """ Additional person and entity name logic """
         return parse_phrases_3(stream, self._token_ctor)
+
+    def fix_abbreviations(self, stream: TokenIterator) -> TokenIterator:
+        """ Fix sentence splitting relating to abbreviations """
+        return fix_abbreviations(stream)
 
     def disambiguate_phrases(self, stream: TokenIterator) -> TokenIterator:
         """ Eliminate very uncommon meanings """

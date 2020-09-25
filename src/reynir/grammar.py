@@ -6,18 +6,26 @@
 
     Copyright (C) 2020 Miðeind ehf.
 
-       This program is free software: you can redistribute it and/or modify
-       it under the terms of the GNU General Public License as published by
-       the Free Software Foundation, either version 3 of the License, or
-       (at your option) any later version.
-       This program is distributed in the hope that it will be useful,
-       but WITHOUT ANY WARRANTY; without even the implied warranty of
-       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-       GNU General Public License for more details.
+    This software is licensed under the MIT License:
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see http://www.gnu.org/licenses/.
+        Permission is hereby granted, free of charge, to any person
+        obtaining a copy of this software and associated documentation
+        files (the "Software"), to deal in the Software without restriction,
+        including without limitation the rights to use, copy, modify, merge,
+        publish, distribute, sublicense, and/or sell copies of the Software,
+        and to permit persons to whom the Software is furnished to do so,
+        subject to the following conditions:
 
+        The above copyright notice and this permission notice shall be
+        included in all copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+        IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+        CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+        TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+        SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     This module parses a text file containing the description of
     a context-free grammar.
@@ -673,7 +681,7 @@ class Grammar:
         Production.reset()
         # Dictionary of variants, keyed by variant name
         # where the values are lists of variant options (strings)
-        variants = OrderedDict()  # type: Dict[str, List[str]]
+        variants: Dict[str, List[str]] = OrderedDict()
 
         def parse_line(s):
 
@@ -1254,7 +1262,7 @@ class Grammar:
         # that do not have a $score pragma
 
         # Dictionary of shortcuts
-        shortcuts = {}  # type: Dict[Nonterminal, Nonterminal]
+        shortcuts: Dict[Nonterminal, Nonterminal] = {}
 
         for nt, plist in grammar.items():
             if not "_" in nt.name:
@@ -1434,7 +1442,7 @@ if __name__ == "__main__":
     try:
         # Read configuration file
         basepath, _ = os.path.split(os.path.realpath(__file__))
-        Settings.read(os.path.join(basepath, "config", "ReynirPackage.conf"))
+        Settings.read(os.path.join(basepath, "config", "GreynirPackage.conf"))
     except ConfigError as e:
         print("Configuration error: {0}".format(e))
         quit()

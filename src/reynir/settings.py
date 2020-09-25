@@ -5,20 +5,28 @@
 
     Copyright (C) 2020 Miðeind ehf.
 
-       This program is free software: you can redistribute it and/or modify
-       it under the terms of the GNU General Public License as published by
-       the Free Software Foundation, either version 3 of the License, or
-       (at your option) any later version.
-       This program is distributed in the hope that it will be useful,
-       but WITHOUT ANY WARRANTY; without even the implied warranty of
-       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-       GNU General Public License for more details.
+    This software is licensed under the MIT License:
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see http://www.gnu.org/licenses/.
+        Permission is hereby granted, free of charge, to any person
+        obtaining a copy of this software and associated documentation
+        files (the "Software"), to deal in the Software without restriction,
+        including without limitation the rights to use, copy, modify, merge,
+        publish, distribute, sublicense, and/or sell copies of the Software,
+        and to permit persons to whom the Software is furnished to do so,
+        subject to the following conditions:
 
+        The above copyright notice and this permission notice shall be
+        included in all copies or substantial portions of the Software.
 
-    This module reads and interprets the ReynirPackage.conf or Reynir.conf
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+        IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+        CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+        TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+        SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+    This module reads and interprets the GreynirPackage.conf
     configuration file. The file can include other files using the $include
     directive, making it easier to arrange configuration sections into logical
     and manageable pieces.
@@ -337,10 +345,10 @@ class VerbSubjects:
         initialized from the config file """
 
     # Dictionary of verbs and their associated set of subject cases
-    VERBS = defaultdict(set)  # type: Dict[str, Set[str]]
+    VERBS: Dict[str, Set[str]] = defaultdict(set)
     _CASE = "þgf"  # Default subject case
     # dict { verb : (wrong_case, correct_case) }
-    VERBS_ERRORS = defaultdict(dict)  # type: Dict[str, Dict[str, str]]
+    VERBS_ERRORS: Dict[str, Dict[str, str]] = defaultdict(dict)
 
     @staticmethod
     def set_case(case: str) -> None:
@@ -907,7 +915,7 @@ class Settings:
             )
         )
 
-    # Configuration settings from the Reynir.conf file
+    # Configuration settings from the GreynirPackage.conf file
 
     @staticmethod
     def _handle_settings(s: str) -> None:
@@ -990,14 +998,14 @@ class Settings:
     @staticmethod
     def _handle_abbreviations(s: str) -> None:
         """ Handle abbreviations in the settings section """
-        # Not required in the ReynirPackage module
+        # Not required in the GreynirPackage module
         # and should not occur in its settings files
         assert False
 
     @staticmethod
     def _handle_meanings(s: str) -> None:
         """ Handle additional word meanings in the settings section """
-        # Not required in the ReynirPackage module
+        # Not required in the GreynirPackage module
         # and should not occur in its settings files
         assert False
 

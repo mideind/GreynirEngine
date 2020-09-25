@@ -3,7 +3,7 @@
 Patterns
 ========
 
-This section describes matching patterns that can be used with the
+This section describes grammatical matching patterns that can be used with the
 :py:meth:`SimpleTree.match()`, :py:meth:`SimpleTree.first_match()`,
 :py:meth:`SimpleTree.all_matches()` and :py:meth:`SimpleTree.top_matches()`
 methods.
@@ -12,8 +12,9 @@ Overview
 --------
 
 The above mentioned methods can be used to find trees and subtrees that match
-a specific grammatical pattern. This pattern can include conditions that apply
-to the root of each subtree as well as its children, direct or indirect.
+a specific grammatical pattern, within a sentence. The pattern can include
+conditions that apply to the root of each subtree as well as its children,
+direct or indirect.
 
 The patterns are given as strings, with pattern tokens separated by whitespace.
 :ref:`examples` are given below.
@@ -47,7 +48,7 @@ Simple matches
 
 * A ``@'literal'`` within *single quotes* and *prefixed with the @ symbol* matches
   a *terminal node* that corresponds to a token having the given word lemma,
-  using a case-neutral comparison. ``'hestur'`` thus matches ``hests``
+  using a case-neutral comparison. ``@'hestur'`` thus matches ``hests``
   and ``Hestinum``.
 
 * A ``NONTERMINAL`` identifier in upper case matches nodes associated with

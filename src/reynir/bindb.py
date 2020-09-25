@@ -6,18 +6,26 @@
 
     Copyright (C) 2020 Miðeind ehf.
 
-       This program is free software: you can redistribute it and/or modify
-       it under the terms of the GNU General Public License as published by
-       the Free Software Foundation, either version 3 of the License, or
-       (at your option) any later version.
-       This program is distributed in the hope that it will be useful,
-       but WITHOUT ANY WARRANTY; without even the implied warranty of
-       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-       GNU General Public License for more details.
+    This software is licensed under the MIT License:
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see http://www.gnu.org/licenses/.
+        Permission is hereby granted, free of charge, to any person
+        obtaining a copy of this software and associated documentation
+        files (the "Software"), to deal in the Software without restriction,
+        including without limitation the rights to use, copy, modify, merge,
+        publish, distribute, sublicense, and/or sell copies of the Software,
+        and to permit persons to whom the Software is furnished to do so,
+        subject to the following conditions:
 
+        The above copyright notice and this permission notice shall be
+        included in all copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+        IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+        CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+        TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+        SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     This module encapsulates access to the BIN (Beygingarlýsing íslensks nútímamáls)
     database of word forms, including lookup of abbreviations and basic strategies
@@ -93,7 +101,7 @@ class BIN_Db:
     _meanings_cache = LFU_Cache(maxsize=CACHE_SIZE_MEANINGS)
 
     # Singleton instance of BIN_Db, returned by get_db()
-    _singleton = None  # type: Optional[BIN_Db]
+    _singleton: Optional["BIN_Db"] = None
 
     @classmethod
     def get_db(cls):
@@ -132,25 +140,28 @@ class BIN_Db:
         )
         # Compressed BÍN wrapper
         # Throws IOError if the compressed file doesn't exist
-        self._compressed_bin = BIN_Compressed()
+        self._compressed_bin: Optional[BIN_Compressed] = BIN_Compressed()
 
     def close(self):
         """ Close the BIN_Compressed() instance """
         if self._compressed_bin is not None:
             self._compressed_bin.close()
-            self._compressed_bin = None  # type: ignore
+            self._compressed_bin = None
 
     def contains(self, w):
         """ Returns True if the given word form is found in BÍN """
+        assert self._compressed_bin is not None
         return self._compressed_bin.contains(w)
 
     def __contains__(self, w):
         """ Returns True if the given word form is found in BÍN """
+        assert self._compressed_bin is not None
         return self._compressed_bin.contains(w)
 
     def _meanings(self, w):
         """ Low-level fetch of the BIN meanings of a given word """
         # Route the lookup request to the compressed binary file
+        assert self._compressed_bin is not None
         g = self._compressed_bin.lookup(w)
         # If an error occurs, this returns None.
         # If the lookup doesn't yield any results, [] is returned.
@@ -204,11 +215,13 @@ class BIN_Db:
             The set is unfiltered except for the presence of 'NF' in the beyging
             field. For new code, lookup_nominative() is likely to be a
             more efficient choice. """
+        assert self._compressed_bin is not None
         return list(map(BIN_Meaning._make, self._compressed_bin.raw_nominative(w)))
 
     def lookup_nominative(self, w, **options):
         """ Return meaning tuples for all word forms in nominative
             case for all { kk, kvk, hk, lo } category stems of the given word """
+        assert self._compressed_bin is not None
         return list(
             map(BIN_Meaning._make, self._compressed_bin.nominative(w, **options))
         )
@@ -216,6 +229,7 @@ class BIN_Db:
     def lookup_accusative(self, w, **options):
         """ Return meaning tuples for all word forms in accusative
             case for all { kk, kvk, hk, lo } category stems of the given word """
+        assert self._compressed_bin is not None
         return list(
             map(BIN_Meaning._make, self._compressed_bin.accusative(w, **options))
         )
@@ -223,15 +237,18 @@ class BIN_Db:
     def lookup_dative(self, w, **options):
         """ Return meaning tuples for all word forms in dative
             case for all { kk, kvk, hk, lo } category stems of the given word """
+        assert self._compressed_bin is not None
         return list(map(BIN_Meaning._make, self._compressed_bin.dative(w, **options)))
 
     def lookup_genitive(self, w, **options):
         """ Return meaning tuples for all word forms in genitive
             case for all { kk, kvk, hk, lo } category stems of the given word """
+        assert self._compressed_bin is not None
         return list(map(BIN_Meaning._make, self._compressed_bin.genitive(w, **options)))
 
     def lookup_word(self, w, at_sentence_start=False, auto_uppercase=False):
         """ Given a word form, look up all its possible meanings """
+        assert self._compressed_bin is not None
         return self._lookup(w, at_sentence_start, auto_uppercase, self._meanings_func)
 
     # A dictionary of functions, one for each word category, that return

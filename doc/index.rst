@@ -29,7 +29,7 @@ processing over 10 million sentences in over 515.000 articles. Its
 optimized C++ parsing core is fast and efficient enough to parse
 real-world text according to a
 `context-free grammar for the Icelandic
-language <https://github.com/mideind/ReynirPackage/blob/master/src/reynir/Greynir.grammar>`_
+language <https://github.com/mideind/GreynirPackage/blob/master/src/reynir/Greynir.grammar>`_
 with over 21,000 productions.
 
 To get acquainted with Greynir, we recommend that you start with
@@ -59,7 +59,7 @@ infer what the most likely lemmas are, how they are inflected in the
 parsed text, and where they fit in the overall sentence structure.
 
 Greynir is thoroughly documented, and its source code is of course
-`available on GitHub <https://github.com/mideind/ReynirPackage>`_.
+`available on GitHub <https://github.com/mideind/GreynirPackage>`_.
 
 Enabling your application
 -------------------------
@@ -83,7 +83,7 @@ About Greynir
 -------------
 
 Greynir is a project and product of Miðeind ehf. of Reykjavík, Iceland.
-It is a free open source software project (:ref:`GNU GPLv3 <copyright>`),
+It is a free open source software project (:ref:`MIT license <copyright>`),
 started in mid-2015 by its original author, Vilhjálmur Þorsteinsson.
 Its aim is to produce an **industrial-strength Natural Language**
 **Processing toolset for Icelandic**, with the hope of supporting the

@@ -7,18 +7,26 @@
     Copyright (c) 2020 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
-       This program is free software: you can redistribute it and/or modify
-       it under the terms of the GNU General Public License as published by
-       the Free Software Foundation, either version 3 of the License, or
-       (at your option) any later version.
-       This program is distributed in the hope that it will be useful,
-       but WITHOUT ANY WARRANTY; without even the implied warranty of
-       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-       GNU General Public License for more details.
+    This software is licensed under the MIT License:
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see http://www.gnu.org/licenses/.
+        Permission is hereby granted, free of charge, to any person
+        obtaining a copy of this software and associated documentation
+        files (the "Software"), to deal in the Software without restriction,
+        including without limitation the rights to use, copy, modify, merge,
+        publish, distribute, sublicense, and/or sell copies of the Software,
+        and to permit persons to whom the Software is furnished to do so,
+        subject to the following conditions:
 
+        The above copyright notice and this permission notice shall be
+        included in all copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+        IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+        CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+        TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+        SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     This module implements a high-level interface to the Greynir
     tokenizer, parser and reducer for parsing Icelandic text into
@@ -98,19 +106,22 @@ class _Sentence:
         are available on the parse tree. """
 
     def __init__(self, job: "_Job", s: TokenList) -> None:
+        """ NOTE! If attributes are added here, the _Sentence.load() function
+            below needs to be updated accordingly. """
         self._job = job
         # s is a token list
         self._s = s
         self._len = len(s)
         assert self._len > 0  # Input should be already sanitized
-        self._err_index = None  # type: Optional[int]
+        self._err_index: Optional[int] = None
+        self._error: Optional[ParseError] = None
         self._tree = self._simplified_tree = None
         # Number of possible combinations
-        self._num = None  # type: Optional[int]
+        self._num: Optional[int] = None
         # Score of best parse tree
-        self._score = None  # type: Optional[int]
+        self._score: Optional[int] = None
         # Cached terminals
-        self._terminals = None  # type: Optional[List[Terminal]]
+        self._terminals: Optional[List[Terminal]] = None
         if self._job.parse_immediately:
             # We want an immediate parse of the sentence
             self.parse()
@@ -133,6 +144,7 @@ class _Sentence:
             tree, num, score = job.parse(self._s)
         except ParseError as e:
             self._err_index = self._len - 1 if e.token_index is None else e.token_index
+            self._error = e
         self._tree = tree
         if tree is None:
             self._simplified_tree = None
@@ -142,6 +154,11 @@ class _Sentence:
         self._num = num
         self._score = score
         return num > 0
+
+    @property
+    def error(self) -> Optional[ParseError]:
+        """ Return the ParseError that occurred when parsing this sentence, or None """
+        return self._error
 
     @property
     def err_index(self) -> Optional[int]:
@@ -302,6 +319,7 @@ class _Sentence:
             "_terminals": None,
             "_job": None,
             "_err_index": None,
+            "_error": None,
             "_score": None,
         }
         return instance
@@ -657,8 +675,8 @@ class Greynir:
 
     """
 
-    _parser = None  # type: Optional[Fast_Parser]
-    _reducer = None  # type: Optional[Reducer]
+    _parser: Optional[Fast_Parser] = None
+    _reducer: Optional[Reducer] = None
     _lock = Lock()
 
     def __init__(self, **options: Any) -> None:
@@ -666,9 +684,9 @@ class Greynir:
             Greynir constructor """
         # Set parse_foreign_sentences to True to attempt to parse
         # all sentences, even if probably foreign
-        self._parse_foreign_sentences = options.pop(
+        self._parse_foreign_sentences: bool = options.pop(
             "parse_foreign_sentences", False
-        )  # type: bool
+        )
         self._options = options
 
     @property
@@ -689,15 +707,15 @@ class Greynir:
         """ Load token from serialized data """
         return Tok(*load_token(*args))
 
-    def loads_single(self, json_str: str, **kwargs) -> _Sentence:
-        """ Load previously dumped JSON description of a single sentence.
-            Useful for retrieving parsed data from a database. """
-        return _Sentence.loads(self.__class__, json_str, **kwargs)
-
     def dumps_single(self, sent: _Sentence, **kwargs) -> str:
         """ Return a _Sentence object in a JSON-formatted string,
             which can be loaded again using loads_single() """
         return sent.dumps(self.__class__, **kwargs)
+
+    def loads_single(self, json_str: str, **kwargs) -> _Sentence:
+        """ Load previously dumped JSON description of a single sentence.
+            Useful for retrieving parsed data from a database. """
+        return _Sentence.loads(self.__class__, json_str, **kwargs)
 
     def tokenize(self, text: StringIterable) -> Iterable[Tok]:
         """ Call the tokenizer (overridable in derived classes) """

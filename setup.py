@@ -9,17 +9,26 @@
     Copyright (C) 2020 Miðeind ehf.
     Original Author: Vilhjálmur Þorsteinsson
 
-        This program is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
-        This program is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
+    This software is licensed under the MIT License:
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see http://www.gnu.org/licenses/.
+        Permission is hereby granted, free of charge, to any person
+        obtaining a copy of this software and associated documentation
+        files (the "Software"), to deal in the Software without restriction,
+        including without limitation the rights to use, copy, modify, merge,
+        publish, distribute, sublicense, and/or sell copies of the Software,
+        and to permit persons to whom the Software is furnished to do so,
+        subject to the following conditions:
+
+        The above copyright notice and this permission notice shall be
+        included in all copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+        IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+        CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+        TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+        SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
     This module sets up the Greynir package. It uses the cffi_modules
@@ -46,7 +55,7 @@ from setuptools import find_packages  # type: ignore
 from setuptools import setup  # type: ignore
 
 
-if sys.version_info < (3, 5):
+if sys.version_info < (3, 6):
     print("Greynir requires Python >= 3.6")
     sys.exit(1)
 
@@ -67,7 +76,7 @@ exec(open(join("src", "reynir", "version.py")).read())
 setup(
     name="reynir",
     version=__version__,
-    license="GNU GPLv3",
+    license="MIT",
     description="A natural language parser for Icelandic",
     long_description="{0}\n{1}".format(
         re.compile("^.. start-badges.*^.. end-badges", re.M | re.S)
@@ -76,7 +85,7 @@ setup(
     ),
     author="Miðeind ehf",
     author_email="mideind@mideind.is",
-    url="https://github.com/mideind/ReynirPackage",
+    url="https://github.com/mideind/GreynirPackage",
     packages=find_packages("src"),
     package_dir={"": "src"},
     py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
@@ -88,7 +97,7 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "License :: OSI Approved :: MIT License",
         "Operating System :: Unix",
         "Operating System :: POSIX",
         "Operating System :: Microsoft :: Windows",
@@ -107,7 +116,7 @@ setup(
     ],
     keywords=["nlp", "parser", "icelandic"],
     setup_requires=["cffi>=1.13.0"],
-    install_requires=["cffi>=1.13.0", "tokenizer>=2.3.0"],
+    install_requires=["cffi>=1.13.0", "tokenizer>=2.3.1"],
     cffi_modules=[
         "src/reynir/eparser_build.py:ffibuilder",
         "src/reynir/bin_build.py:ffibuilder"
