@@ -125,11 +125,6 @@ To install this package, assuming Python 3 is your default Python::
 
     $ pip install reynir
 
-If you are running PyPy and a recent version of macOS, you may need to add
-the following prefix to the command: `CFLAGS=-stdlib=libc++`. Thus:
-
-    $ CFLAGS=-stdlib=libc++ pip install reynir
-
 If you have **git** and **git-lfs** installed and want to be able to edit
 the source, do like so::
 
