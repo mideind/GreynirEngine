@@ -45,6 +45,7 @@ ffibuilder = cffi.FFI()
 
 _PATH = os.path.dirname(__file__) or "."
 WINDOWS = platform.system() == "Windows"
+MACOS = platform.system() == "Darwin"
 
 # What follows is the actual Python-wrapped C interface to eparser.*.so
 
@@ -126,6 +127,8 @@ callbacks = """
 
 if WINDOWS:
     extra_compile_args = ["/Zc:offsetof-"]
+elif MACOS:
+    extra_compile_args = ["-mmacosx-version-min=10.7", "-stdlib=libc++"]
 else:
     extra_compile_args = ["-std=c++11"]
 
