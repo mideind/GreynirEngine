@@ -4669,7 +4669,20 @@ Tengisetning_ft_p3/kyn →
     'þessi:fn'_ft_nf/kyn
  
 TengiYfirsetning →
-    HreinYfirsetning
+    HreinAukasetning
+
+# Sama innihald að mestu og HreinYfirsetning
+# En því er varpað í S, sem á ekki heima undir CP.
+HreinAukasetning →
+    Setning
+    | SetningAukafall
+    | SetningAukafallForgangur
+    | SetningLo
+    | SetningSo
+    | AtvSetning        # Atvikssetning fremst í aðalsetningu
+    | Spurnarsetning
+    | SamsettSetning    # Annaðhvort X eða Y; bæði X og Y; ýmist X eða Y
+
 
 # Hér er gert ráð fyrir að frumlagslausar atvikssetningar
 # séu alltaf í 3p et hk, sbr. 'þegar kallað var eftir lækni',

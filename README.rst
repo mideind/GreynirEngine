@@ -151,6 +151,13 @@ virtualenv), then run::
 
     $ python -m pytest
 
+**********
+Evaluation
+**********
+A parsing test pipeline for different parsing schemas, including the Greynir schema,
+has been developed. It is available `here <https://github.com/mideind/ParsingTestPipe>`__.
+
+
 *************
 Documentation
 *************
