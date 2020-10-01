@@ -43,13 +43,15 @@ Use Greynir to easily inflect noun phrases:
     from reynir import NounPhrase as Nl
 
     # Create a NounPhrase ('nafnliður') object
-    nl = Nl("þrír lúxus-miðar á Star Wars og tveir brimsaltir pokar af poppi")
+    karfa = Nl("þrír lúxus-miðar á Star Wars og tveir brimsaltir pokar af poppi")
 
     # Print the NounPhrase in the correct case for each context
-    # (þf=þolfall/accusative, þgf=þágufall/dative)
+    # (þf=þolfall/accusative, þgf=þágufall/dative). Note that
+    # the NounPhrase class implements __format__(), allowing you
+    # to use the case as a format specification, for instance in f-strings.
 
-    print("Þú keyptir {nl:þf}.".format(nl=nl))
-    print("Hér er kvittunin þín fyrir {nl:þgf}.".format(nl=nl))
+    print(f"Þú keyptir {karfa:þf}.")
+    print(f"Hér er kvittunin þín fyrir {karfa:þgf}.")
 
 The program outputs the following text, correctly inflected::
 
@@ -156,7 +158,6 @@ Evaluation
 **********
 A parsing test pipeline for different parsing schemas, including the Greynir schema,
 has been developed. It is available `here <https://github.com/mideind/ParsingTestPipe>`__.
-
 
 *************
 Documentation
