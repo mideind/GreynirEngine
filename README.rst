@@ -23,12 +23,20 @@ actions and opinions.
 
 Full documentation for Greynir is `available here <https://greynir.is/doc/>`__.
 
-Greynir is the engine of `Greynir.is <https://greynir.is>`_, a natural-language
+Greynir is the engine of `Greynir.is <https://greynir.is>`__, a natural-language
 front end for a database of over 10 million sentences parsed from Icelandic
-news articles, and `Embla <https://embla.is>`_, a voice-driven virtual assistant app
+news articles, and `Embla <https://embla.is>`__, a voice-driven virtual assistant app
 for smart devices such as iOS and Android phones.
 
-Greynir uses the `Tokenizer <https://pypi.org/project/tokenizer/>`_ package,
+Greynir includes a hand-written
+`context-free grammar <https://github.com/mideind/GreynirPackage/blob/master/src/reynir/Greynir.grammar>`__
+for the Icelandic language, consisting of over 7,000 lines of grammatical
+productions in `extended Backus-Naur format <https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form>`__.
+Its fast C++ parser core is able to cope with long and ambiguous sentences,
+using an `Earley-type parser <https://en.wikipedia.org/wiki/Earley_parser>`__
+as `enhanced by Scott and Johnstone <https://www.sciencedirect.com/science/article/pii/S0167642309000951>`__.
+
+Greynir employs the `Tokenizer <https://pypi.org/project/tokenizer/>`__ package,
 by the same authors, to tokenize text.
 
 ********
@@ -156,9 +164,9 @@ Documentation
 *************
 
 Please consult `Greynir's documentation <https://greynir.is/doc/>`__ for detailed
-`installation instructions <https://greynir.is/doc/installation.html>`_,
-a `quickstart guide <https://greynir.is/doc/quickstart.html>`_,
-and `reference information <https://greynir.is/doc/reference.html>`_,
+`installation instructions <https://greynir.is/doc/installation.html>`__,
+a `quickstart guide <https://greynir.is/doc/quickstart.html>`__,
+and `reference information <https://greynir.is/doc/reference.html>`__,
 as well as important information
 about `copyright and licensing <https://greynir.is/doc/copyright.html>`__.
 
