@@ -38,8 +38,12 @@ doc/_build/
 
 # Various resource files
 src/reynir/resources/*.csv
+src/reynir/resources/*.tsv
+src/reynir/resources/*.txt
+src/reynir/resources/*.py
 !src/reynir/resources/ord.auka.csv
 !src/reynir/resources/systematic_additions.csv
+src/reynir/resources/extra/
 
 # Test files
 test/test_corpus/handpsd/annotaldLog.txt
