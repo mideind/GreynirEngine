@@ -100,6 +100,7 @@ ScoreDict = Dict[int, Dict[BIN_Terminal, int]]
 BonusCache = Dict[Tuple[BIN_Terminal, str, BIN_Terminal, BIN_Token], int]
 FinalsType = Dict[int, Set[BIN_Terminal]]
 TokensType = Dict[int, BIN_Token]
+KeyType = Tuple[Node, int]
 
 _VERB_PREP_BONUS = 7  # Give 7 extra points for a verb/preposition match
 _VERB_PREP_PENALTY = -2  # Subtract 2 points for a non-match
@@ -123,15 +124,13 @@ _MAX_NODE_COPIES = 10_000_000
 copy_counter = threading.local()
 
 
-def copy_node(node: Optional[Node]) -> Optional[Node]:
+def copy_node(node: Node) -> Node:
     """ Copy the tree under the given node, including the node itself.
         Stop when coming to a nested preposition scope or to a
         noun phrase (Nafnliður, Nl_*) """
 
-    def dup(node: Optional[Node]) -> Optional[Node]:
+    def dup(node: Node) -> Node:
         """ Duplicate (copy) this node """
-        if node is None:
-            return None
         nt = node.nonterminal if node.is_completed else None
         if nt is not None:
             if nt.has_any_tag(_PREP_SCOPE_SET):
@@ -147,8 +146,6 @@ def copy_node(node: Optional[Node]) -> Optional[Node]:
         # Recurse to copy the child tree as well
         return copy_node(node)
 
-    if node is None:
-        return None
     # Check whether the node copying for this forest has gone too far
     copy_counter.n += 1
     if copy_counter.n > _MAX_NODE_COPIES:
@@ -302,13 +299,13 @@ class _ReductionScope:
                 # a separate dict copy (we don't want to clobber the child's dict)
                 # Get score adjustment for this nonterminal, if any
                 # (This is the $score(+/-N) pragma from Greynir.grammar)
-                sc["sc"] += self.reducer._score_adj.get(nt, 0)
+                sc["sc"] += self.reducer._score_adj.get(nt, 0)  # type: ignore
 
                 if nt.has_tag("apply_length_bonus"):
                     # Give this nonterminal a bonus depending on how many tokens
                     # it encloses
                     bonus = (node.end - node.start - 1) * _LENGTH_BONUS_FACTOR
-                    sc["sc"] += bonus
+                    sc["sc"] += bonus  # type: ignore
 
                 if (
                     nt.has_tag("apply_prep_bonus")
@@ -448,41 +445,103 @@ class ParseForestReducer:
         """ Perform the reduction, but first split the tree underneath
             nodes that have the enable_prep_bonus tag """
 
-        PrepositionUnpacker.navigate(root_node)
+        # PrepositionUnpacker.navigate(root_node)
 
-        visited: Dict[Node, ResultDict] = dict()
         NULL_SC: ResultDict = dict(sc=0)
+        # Memoization/caching dict, keyed by node and memoization key
+        visited: Dict[KeyType, ResultDict] = dict()
+        # Current memoization key
+        current_key = 0
+        # Next memoization key to use
+        next_key = 0
 
-        def _nav_helper(w):
-            """ Navigate from node w """
-            if w in visited:
-                # Already seen: return the previously calculated result
-                return visited[w]
+        def enter_key_scope(node: Node) -> bool:
+            """ Return True for a node whose score should not be
+                memoized within the shared packed parse forest """
+            if not node.is_completed or node.nonterminal is None:
+                return False
+            return node.nonterminal.has_tag("enable_prep_bonus")
+
+        def exit_key_scope(node: Node) -> bool:
+            """ Return True if it is safe to resume memoization
+                of subtree scores from this node onwards """
+            nt = node.nonterminal if node.is_completed else None
+            if nt is not None:
+                if nt.has_any_tag(_PREP_SCOPE_SET):
+                    # Entering a subtree that has its own scope:
+                    # resume memoization until further notice
+                    return True
+                if nt.is_noun_phrase:
+                    # Once we've gone through a preposition node,
+                    # it is safe to memoize the enclosed noun phrase subtree
+                    return True
+                if False: # nt.is_optional and node.is_empty:
+                    # Explicitly nullable nonterminal with no child:
+                    # always OK to memoize
+                    return True
+            return False
+
+        def _nav_helper(w: Node) -> ResultDict:
+            """ Navigate from (w, key) where w is a node and key
+                is a navigation key, controlling the memoization
+                of already visited nodes. When navigating into
+                nodes marked enable_prep_bonus, we create a new unique
+                navigation key, since such nodes may have
+                different scores depending on the enclosing
+                (verb) context. """
             if w is None:
-                # Epsilon node
-                v = NULL_SC
-            elif w._token is not None:
+                return NULL_SC
+            nonlocal current_key, next_key
+            key = current_key
+            v = visited.get((w, key))
+            if v is not None:
+                # Already seen: return the previously calculated result
+                return v
+            # We have not seen this node (or this combination of
+            # node and key_stack) before: reduce it and calculte its score
+            if w._token is not None:
                 # Return the score of this terminal option
                 v = self._visit_token(w)
-            elif w.is_span:
+            elif w.is_span and w._families:
+                # We have a nonempty nonterminal node with one or more families
+                # of children, i.e. multiple possible derivations:
                 # Init container for child results
                 scope = _ReductionScope(self, w)
-                if w._families:
-                    for ix, (prod, children) in enumerate(w._families):
-                        scope.start_family(ix, prod)
-                        for ch in children:
-                            scope.add_child(ix, _nav_helper(ch))
+                for family_ix, (prod, children) in enumerate(w._families):
+                    scope.start_family(family_ix, prod)
+                    for ch in children:
+                        if ch is not None:
+                            if enter_key_scope(ch):
+                                # This child has an enable_prep_bonus flag:
+                                # make sure we navigate separately through it
+                                # sincle enclosed prepositions may have different
+                                # scores in other subtrees
+                                prev_key = current_key
+                                # Generate a new unique memoization key to use
+                                # when navigating through this child subtree
+                                next_key += 1
+                                current_key = next_key
+                                scope.add_child(family_ix, _nav_helper(ch))
+                                current_key = prev_key
+                            else:
+                                if current_key != 0 and exit_key_scope(ch):
+                                    # We no longer need a separate memoization key
+                                    current_key = 0
+                                scope.add_child(family_ix, _nav_helper(ch))
+                # Return a dict describing the winning family of children
+                # (derivation) including an "sc" field for its score
                 v = scope.process(w)
             else:
                 v = NULL_SC
             # Mark the node as visited and store its result
-            visited[w] = v
+            visited[(w, key)] = v
             if w is not None:
-                w.score = v["sc"]
+                w.score = cast(int, v["sc"])
             return v
 
         # Perform the actual scoring and reduction after splitting the tree
-        return _nav_helper(root_node)
+        d = _nav_helper(root_node)
+        return d
 
 
 class OptionFinder(ParseForestNavigator):
@@ -779,19 +838,19 @@ class Reducer:
 
         return scores
 
-    def _reduce(self, w: Node, scores: ScoreDict) -> Dict[str, Any]:
+    def _reduce(self, w: Node, scores: ScoreDict) -> ResultDict:
         """ Reduce a forest with a root in w based on subtree scores """
         return ParseForestReducer(self._grammar, scores).go(w)
 
     def go_with_score(self, forest: Optional[Node]) -> Tuple[Optional[Node], int]:
         """ Returns the argument forest after pruning it down to a single tree """
         if forest is None:
-            return (None, 0)
+            return None, 0
         scores = self._calc_terminal_scores(forest)
         # Third pass: navigate the tree bottom-up, eliminating lower-rated
         # options (subtrees) in favor of higher rated ones
         score = self._reduce(forest, scores)
-        return (forest, score["sc"])
+        return forest, cast(int, score["sc"])
 
     def go(self, forest: Optional[Node]) -> Optional[Node]:
         """ Return only the reduced forest, without its score """
