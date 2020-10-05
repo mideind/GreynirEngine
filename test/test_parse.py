@@ -171,6 +171,7 @@ def test_parse(r, verbose=False):
         print("Thereof parsed      : {0}".format(job.num_parsed))
         print("Ambiguity           : {0:.2f}".format(job.ambiguity))
         print("Parsing time        : {0:.2f}".format(job.parse_time))
+        print("Reduction time      : {0:.2f}".format(job.reduce_time))
 
     # Test that the parser finds the correct nouns
     assert results[0].tree.nouns == ["tilraun", "þáttun"]
@@ -504,6 +505,7 @@ def test_long_parse(r, verbose=False):
         print("Thereof parsed      : {0}".format(job.num_parsed))
         print("Ambiguity           : {0:.2f}".format(job.ambiguity))
         print("Parsing time        : {0:.2f}".format(job.parse_time))
+        print("Reduction time      : {0:.2f}".format(job.reduce_time))
 
 
 def test_properties(r):
@@ -960,7 +962,9 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
+            .format(d["parse_time"], d["reduce_time"])
+        )
         print("Complex, sentence 2", end="")
     d = r.parse(
         "Viðar Garðarsson, sem setti upp vefsíður fyrir Sigmund Davíð "
@@ -970,7 +974,9 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
+            .format(d["parse_time"], d["reduce_time"])
+        )
         print("Complex, sentence 3", end="")
     d = r.parse(
         "Ákæran var þingfest í Héraðsdómi Reykjaness í dag "
@@ -979,7 +985,9 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
+            .format(d["parse_time"], d["reduce_time"])
+        )
         print("Complex, sentence 4", end="")
     d = r.parse(
         "Út úr stílfærðri túlkun listamannsins á gamla , litla og mjóa "
@@ -988,7 +996,9 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
+            .format(d["parse_time"], d["reduce_time"])
+        )
         print("Complex, sentence 5", end="")
     d = r.parse(
         "Rétt hjá anddyrinu var ein af þessum höggnu andlitsmyndum "
@@ -999,7 +1009,9 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
+            .format(d["parse_time"], d["reduce_time"])
+        )
         print("Complex, sentence 6", end="")
     d = r.parse(
         "Sú fullyrðing byggist á því að ef hlutverk skólastarfs er eingöngu til þess "
@@ -1014,7 +1026,9 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
+            .format(d["parse_time"], d["reduce_time"])
+        )
 
 
 def test_measurements(r):
