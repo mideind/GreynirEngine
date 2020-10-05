@@ -5,23 +5,34 @@ cache: pip
 jobs:
   include:
     # Linux
-    - os: linux
+    - name: "Linux (Python 3.6)"
+      os: linux
       python: 3.6
       dist: xenial
-    - os: linux
+
+    - name: "Linux (Python 3.7)"
+      os: linux
       python: 3.7
       dist: xenial
-    - os: linux
+
+    - name: "Linux (Python 3.8)"
+      os: linux
       python: 3.8
       dist: xenial
-    - os: linux
+
+    - name: "Linux (Python 3.9-dev)"
+      os: linux
       python: 3.9-dev
       dist: xenial
-    - os: linux
+
+    - name: "Linux (PyPy3)"
+      os: linux
       python: pypy3
       dist: xenial
-    # macOS + PyPy3 + Xcode 12
-    - os: osx
+
+      # macOS
+    - name: "macOS (PyPy3 - Xcode 12)"
+      os: osx
       language: generic  # 'language: python' is an error on Travis CI macOS
       osx_image: xcode12
       before_install:
@@ -35,8 +46,9 @@ jobs:
         - python -m pip install git+https://github.com/mideind/Tokenizer#egg=tokenizer
       before_script: 
         - git lfs pull
-    # macOS + CPython 3.8.2 + Xcode 11
-    - os: osx
+
+    - name: "macOS (Python 3.8 - Xcode 11)"
+      os: osx
       language: generic  # 'language: python' is an error on Travis CI macOS
       osx_image: xcode11.6
       before_install:
@@ -50,16 +62,18 @@ jobs:
         - python -m pip install git+https://github.com/mideind/Tokenizer#egg=tokenizer
       before_script: 
         - git lfs pull
-    # Windows + CPython 3.7.4
-    - os: windows
+
+    # Windows
+    - name: "Windows (Python 3.8)"
+      os: windows
       language: shell  # 'language: python' is an error on Travis CI Windows
       before_install:
-        - choco install python --version 3.7.4
+        - choco install python --version 3.8.0
         - python --version
         - python -m pip install --upgrade pip
         - pip3 install --upgrade pytest
         - python -m pip install git+https://github.com/mideind/Tokenizer#egg=tokenizer
-      env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
+      env: PATH=/c/Python38:/c/Python38/Scripts:$PATH
 
 before_install:
   - python -m pip install --upgrade pip
