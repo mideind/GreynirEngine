@@ -960,7 +960,9 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
+            .format(d["parse_time"], d["reduce_time"])
+        )
         print("Complex, sentence 2", end="")
     d = r.parse(
         "Viðar Garðarsson, sem setti upp vefsíður fyrir Sigmund Davíð "
@@ -970,7 +972,9 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
+            .format(d["parse_time"], d["reduce_time"])
+        )
         print("Complex, sentence 3", end="")
     d = r.parse(
         "Ákæran var þingfest í Héraðsdómi Reykjaness í dag "
@@ -979,7 +983,9 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
+            .format(d["parse_time"], d["reduce_time"])
+        )
         print("Complex, sentence 4", end="")
     d = r.parse(
         "Út úr stílfærðri túlkun listamannsins á gamla , litla og mjóa "
@@ -988,7 +994,9 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
+            .format(d["parse_time"], d["reduce_time"])
+        )
         print("Complex, sentence 5", end="")
     d = r.parse(
         "Rétt hjá anddyrinu var ein af þessum höggnu andlitsmyndum "
@@ -999,7 +1007,9 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
+            .format(d["parse_time"], d["reduce_time"])
+        )
         print("Complex, sentence 6", end="")
     d = r.parse(
         "Sú fullyrðing byggist á því að ef hlutverk skólastarfs er eingöngu til þess "
@@ -1014,7 +1024,9 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", time: {:.2f} seconds".format(d["parse_time"]))
+        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
+            .format(d["parse_time"], d["reduce_time"])
+        )
 
 
 def test_measurements(r):
@@ -1978,6 +1990,11 @@ def test_relative_clause(r):
     )
 
 
+def test_attachment_2(r):
+    s = r.parse_single("Páll talaði við köttinn um hestinn.")
+    pass
+
+
 def test_neutral_pronoun(r):
     s = r.parse_single("Hán var ánægt með hest háns.")
     assert (
@@ -2023,10 +2040,10 @@ def test_neutral_pronoun(r):
     s = r.parse_single("Háni féll illa að talað var af vanvirðingu um hán.")
     assert (
         s.tree.flat_with_all_variants == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_p3_þgf "
-        "/NP-SUBJ VP VP so_1_nf_subj_op_þgf_et_fh_gm_þt /VP NP-OBJ eo CP-THT C st /C "
-        "IP VP VP so_gm_sagnb /VP VP so_et_fh_gm_p3_þt /VP PP P fs_þgf /P NP "
-        "no_et_kvk_þgf PP P fs_þf /P NP pfn_et_hk_p3_þf /NP /PP /NP /PP /VP /IP "
-        "/CP-THT /NP-OBJ /VP /IP /S-MAIN p /S0"
+        "/NP-SUBJ VP VP so_1_nf_subj_op_þgf_et_fh_gm_þt /VP NP-OBJ eo CP-THT "
+        "C st /C IP VP VP so_gm_sagnb /VP VP so_et_fh_gm_p3_þt /VP PP P fs_þgf "
+        "/P NP no_et_kvk_þgf /NP /PP PP P fs_þf /P NP pfn_et_hk_p3_þf /NP /PP "
+        "/VP /IP /CP-THT /NP-OBJ /VP /IP /S-MAIN p /S0"
     )
 
 

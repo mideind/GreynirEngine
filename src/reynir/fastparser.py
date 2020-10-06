@@ -389,26 +389,6 @@ class Node:
             self._families.append(pc)
         self._highest_prio = prio
 
-    def transform_children(self, func: TransformFunc) -> None:
-        """ Apply a given function to all children of this node,
-            replacing the children with the result. """
-        if not self._families:
-            return
-        for ix, (prod, f) in enumerate(self._families):
-            if f:
-                f = [None if ch is None else func(ch) for ch in f]
-                self._families[ix] = (prod, f)
-
-    def transform_child(
-        self, family_ix: int, child_ix: int, func: TransformFunc
-    ) -> None:
-        """ Replace a single child of this node with the
-            result of applying a function to it """
-        if self._families:
-            _, children = self._families[family_ix]
-            ch = children[child_ix]
-            children[child_ix] = None if ch is None else func(ch)
-
     @property
     def start(self) -> int:
         """ Return the start token index """
@@ -560,6 +540,7 @@ class Node:
         istr = "  " * indent
         if self._families:
             # Show the children in each family
+
             def child_rep(children):
                 if not children:
                     return ""
