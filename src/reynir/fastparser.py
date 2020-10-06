@@ -80,7 +80,6 @@ _PATH = os.path.dirname(__file__) or "."
 # The type of an entry on a ParseTreeFlattener stack
 FlattenerType = Union[Tuple[Terminal, Token], Nonterminal]
 ProductionTuple = Tuple[Production, List[Optional["Node"]]]
-TransformFunc = Callable[["Node"], "Node"]
 
 
 class ParseJob:

@@ -376,7 +376,9 @@ class ParseForestReducer:
         def exit_key_scope(node: Node) -> bool:
             """ Return True if it is safe to resume memoization
                 of subtree scores from this node onwards """
-            nt = node.nonterminal if node.is_completed else None
+            if not node.is_completed:
+                return False
+            nt = node.nonterminal
             if nt is not None:
                 if nt.has_any_tag(_PREP_SCOPE_SET):
                     # Entering a subtree that has its own scope:
@@ -386,7 +388,7 @@ class ParseForestReducer:
                     # Once we've gone through a preposition node,
                     # it is safe to memoize the enclosed noun phrase subtree
                     return True
-                if False: # nt.is_optional and node.is_empty:
+                if node.is_empty:
                     # Explicitly nullable nonterminal with no child:
                     # always OK to memoize
                     return True

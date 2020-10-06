@@ -62,7 +62,7 @@
 
 """
 
-from typing import List, Dict, Set, Tuple, Iterator, Optional, Union
+from typing import List, Dict, Set, Tuple, Iterator, Optional, Union, Any
 
 import os
 import struct
@@ -84,7 +84,7 @@ class GrammarError(Exception):
 
     """ Exception class for errors in a grammar """
 
-    def __init__(self, text: str, fname: Optional[str]=None, line=0) -> None:
+    def __init__(self, text: str, fname: Optional[str]=None, line: int=0) -> None:
         """ A GrammarError contains an error text and optionally the name
             of a grammar file and a line number where the error occurred """
         super().__init__(text)
@@ -116,7 +116,7 @@ class Nonterminal:
 
     _INDEX = -1  # Running sequence number (negative) of all nonterminals
 
-    def __init__(self, name: str, fname: Optional[str]=None, line=0):
+    def __init__(self, name: str, fname: Optional[str]=None, line: int=0) -> None:
         self._name = name
         # Place of initial definition in a grammar file
         self._fname = fname
@@ -133,82 +133,82 @@ class Nonterminal:
         Nonterminal._INDEX -= 1
         self._hash = id(self).__hash__()
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """ Use the id of this nonterminal as a basis for the hash """
         # The index may change after the entire grammar has been
         # read and processed; therefore it is not suitable for hashing
         return self._hash
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return self is other
 
-    def __ne__(self, other):
+    def __ne__(self, other: Any) -> bool:
         return self is not other
 
     @property
-    def index(self):
+    def index(self) -> int:
         """ Return the (negative) sequence number of this nonterminal """
         return self._index
 
-    def set_index(self, ix):
+    def set_index(self, ix: int) -> None:
         """ Set a new sequence number for this nonterminal """
         assert ix < 0
         self._index = ix
 
-    def add_ref(self):
+    def add_ref(self) -> None:
         """ Mark this as being referenced """
         self._ref = True
 
     @property
-    def has_ref(self):
+    def has_ref(self) -> bool:
         """ Return True if the nonterminal has been referenced in a production """
         return self._ref
 
     @property
-    def is_optional(self):
+    def is_optional(self) -> bool:
         """ Return True if this nonterminal is explicitly nullable """
         return self._optional
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
-    def fname(self):
+    def fname(self) -> str:
         """ Return the name of the grammar file where this nonterminal was defined """
-        return self._fname
+        return self._fname or ""
 
     @property
-    def line(self):
+    def line(self) -> int:
         """ Return the number of the line within the grammar file
             where this nt was defined """
         return self._line
 
     @property
-    def has_tags(self):
+    def has_tags(self) -> bool:
         """ Return True if this nonterminal has a tag associated with it """
         return bool(self._tags)
 
-    def has_tag(self, tag):
+    def has_tag(self, tag: str) -> bool:
         """ Check whether this nonterminal has been tagged with the given tag """
         return self._tags is not None and tag in self._tags
 
-    def has_any_tag(self, tagset):
+    def has_any_tag(self, tagset: Set[str]) -> bool:
         """ Check whether this nonterminal has been tagged
             with any of the given tags """
         return False if self._tags is None else not self._tags.isdisjoint(tagset)
 
-    def add_tag(self, tag):
+    def add_tag(self, tag: str) -> None:
         """ Add a tag to this nonterminal """
         if self._tags is None:
             self._tags = {tag}
         else:
             self._tags.add(tag)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self._name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self._name
 
 
@@ -218,43 +218,43 @@ class Terminal:
 
     _INDEX = 1  # Running sequence number (positive) of all terminals
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         self._name = name
         self._index = Terminal._INDEX
         # The hash is used quite often so it is worth caching
         self._hash = id(self).__hash__()
         Terminal._INDEX += 1
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return self._hash
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self._name
 
-    def __str__(self):
-        return self._name
-
-    @property
-    def name(self):
+    def __str__(self) -> str:
         return self._name
 
     @property
-    def index(self):
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def index(self) -> int:
         """ Return the (positive) sequence number of this terminal """
         return self._index
 
     @property
-    def is_literal(self):
+    def is_literal(self) -> bool:
         """ Return True if this is a literal terminal, i.e. one enclosed
             within single or double quotes """
         return False
 
-    def set_index(self, ix):
+    def set_index(self, ix: int) -> None:
         """ Set a new sequence number for this nonterminal """
         assert ix > 0
         self._index = ix
 
-    def matches(self, t_kind, t_val, t_lit):
+    def matches(self, t_kind: str, t_val, t_lit) -> bool:
         """ Does this terminal match the given token? """
         return self._name == t_kind
 
@@ -267,7 +267,7 @@ class LiteralTerminal(Terminal):
         A literal within double quotes "x" is matched absolutely, i.e. with
         the exact source text (except for a conversion to lowercase). """
 
-    def __init__(self, lit):
+    def __init__(self, lit: str) -> None:
         q = lit[0]
         assert q in "'\""
         super().__init__(lit)
@@ -278,12 +278,12 @@ class LiteralTerminal(Terminal):
         self._strong = q == '"'
 
     @property
-    def is_literal(self):
+    def is_literal(self) -> bool:
         """ Return True if this is a literal terminal, i.e. one enclosed
             within single or double quotes """
         return True
 
-    def matches(self, t_kind, t_val, t_lit):
+    def matches(self, t_kind: str, t_val, t_lit) -> bool:
         """ A literal terminal matches a token if the token text is
             canonically or absolutely identical to the literal """
         if self._strong:
@@ -297,37 +297,37 @@ class Token:
 
     """ A single input token as seen by the parser """
 
-    def __init__(self, kind, val, lit=None):
-        """ A basic token has a kind, a canonical value and an optional literal value,
-            all strings """
+    def __init__(self, kind: str, val: str, lit: Optional[str]=None):
+        """ A basic token has a kind, a canonical value
+            and an optional literal value, all strings """
         self._kind = kind
         self._val = val
         self._lit = lit or val
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """ Return a simple string representation of this token """
         if self._kind == self._val:
             return self._kind
         return "{0}:{1}".format(self._kind, self._val)
 
     @property
-    def kind(self):
+    def kind(self) -> str:
         """ Return the token kind """
         return self._kind
 
     @property
-    def text(self):
+    def text(self) -> str:
         """ Return the 'canonical' token text, which may be a stem or
             prototype of the literal, original token text as it appeared
             in the source """
         return self._val
 
     @property
-    def literal(self):
+    def literal(self) -> str:
         """ Return the literal, original token text as it appeared in the source """
         return self._lit
 
-    def matches(self, terminal):
+    def matches(self, terminal: Terminal) -> bool:
         """ Does this token match the given terminal? """
         # By default, ask the terminal
         return terminal.matches(self._kind, self._val, self._lit)
