@@ -57,7 +57,7 @@
 
 """
 
-from typing import Dict, Any, Optional, List, Union, Tuple
+from typing import Dict, Any, Optional, List, Union, Tuple, Iterator, Callable, cast
 
 import os
 import operator
@@ -65,7 +65,7 @@ from threading import Lock
 from functools import reduce
 
 from .binparser import BIN_Parser, simplify_terminal, augment_terminal
-from .grammar import GrammarError, Nonterminal, Terminal, Token
+from .grammar import Grammar, GrammarError, Nonterminal, Terminal, Token, Production
 from .settings import Settings
 from .glock import GlobalLock
 
@@ -79,6 +79,7 @@ _PATH = os.path.dirname(__file__) or "."
 
 # The type of an entry on a ParseTreeFlattener stack
 FlattenerType = Union[Tuple[Terminal, Token], Nonterminal]
+ProductionTuple = Tuple[Production, List[Optional["Node"]]]
 
 
 class ParseJob:
@@ -91,21 +92,23 @@ class ParseJob:
     _jobs: Dict[int, "ParseJob"] = dict()
     _lock = Lock()
 
-    def __init__(self, handle, grammar, tokens, terminals, matching_cache):
+    def __init__(
+        self, handle: int, grammar: Grammar, tokens, terminals, matching_cache
+    ) -> None:
         self._handle = handle
         self.tokens = tokens
         self.terminals = terminals
         self.grammar = grammar
-        self.c_dict = dict()  # Node pointer conversion dictionary
+        self.c_dict: Dict[Any, "Node"] = dict()  # Node pointer conversion dictionary
         self.matching_cache = matching_cache  # Token/terminal matching buffers
 
-    def matches(self, token, terminal):
+    def matches(self, token, terminal) -> bool:
         """ Convert the token reference from a 0-based token index
             to the token object itself; convert the terminal from a
             1-based terminal index to a terminal object. """
         return self.tokens[token].matches(self.terminals[terminal])
 
-    def alloc_cache(self, token, size):
+    def alloc_cache(self, token, size: int):
         """ Allocate a token/terminal matching cache buffer for the given token """
         key = self.tokens[token].key  # Obtain the (hashable) key of the BIN_Token
         try:
@@ -118,12 +121,12 @@ class ParseJob:
             assert False, "alloc_cache() unable to hash key: {0}".format(repr(key))
         return b
 
-    def reset(self):
+    def reset(self) -> None:
         """ Reset the node pointer conversion dictionary """
         self.c_dict = dict()
 
     @property
-    def handle(self):
+    def handle(self) -> int:
         return self._handle
 
     def __enter__(self):
@@ -138,7 +141,7 @@ class ParseJob:
         return False
 
     @classmethod
-    def make(cls, grammar, tokens, terminals, matching_cache):
+    def make(cls, grammar: Grammar, tokens, terminals, matching_cache) -> "ParseJob":
         """ Create a new parse job with for a given token sequence and set of terminals """
         with cls._lock:
             h = cls._seq
@@ -149,24 +152,25 @@ class ParseJob:
         return j
 
     @classmethod
-    def delete(cls, handle):
+    def delete(cls, handle: int) -> None:
         """ Delete a no-longer-used parse job """
         with cls._lock:
             del cls._jobs[handle]
 
     @classmethod
-    def dispatch(cls, handle, token, terminal):
+    def dispatch(cls, handle: int, token, terminal) -> bool:
         """ Dispatch a match request to the correct parse job """
         return cls._jobs[handle].matches(token, terminal)
 
     @classmethod
-    def alloc(cls, handle, token, size):
+    def alloc(cls, handle: int, token, size: int):
         """ Dispatch a cache buffer allocation request to the correct parse job """
         return cls._jobs[handle].alloc_cache(token, size)
 
 
 # Declare CFFI callback functions to be called from the C++ code
 # See: https://cffi.readthedocs.io/en/latest/using.html#extern-python-new-style-callbacks
+
 
 @ffi.def_extern()
 def matching_func(handle, token, terminal):
@@ -225,17 +229,23 @@ class Node:
     # Note: __slots__ are not really required on PyPy,
     # but they are beneficial on CPython
     __slots__ = (
-        "_start", "_end", "_families", "_highest_prio",
-        "_nonterminal", "_terminal", "_token", "_completed",
+        "_start",
+        "_end",
+        "_families",
+        "_highest_prio",
+        "_nonterminal",
+        "_terminal",
+        "_token",
+        "_completed",
         "score",
     )
 
-    def __init__(self, start, end):
+    def __init__(self, start: int, end: int) -> None:
         # Start and end token indices, i.e. the span of this node
         self._start = start
         self._end = end
         # Families of children of this node
-        self._families = None
+        self._families: Optional[List[ProductionTuple]] = None
         # Priority of highest-priority child family
         self._highest_prio = 0
         # The nonterminal corresponding to this node, if not a leaf node
@@ -252,7 +262,9 @@ class Node:
         self.score = 0
 
     @classmethod
-    def from_c_node(cls, job, c_node, parent=None, index=0):
+    def from_c_node(
+        cls, job: ParseJob, c_node, parent=None, index=0
+    ) -> Optional["Node"]:
         """ Initialize a Python node from a C++ SPPF node structure """
         if c_node == ffi.NULL:
             return None
@@ -350,20 +362,17 @@ class Node:
             node._families = other._families[:]
         return node
 
-    def _add_family(self, job, c_prod, c_children):
+    def _add_family(self, job: ParseJob, c_prod, c_children) -> None:
         """ Add a family of children to this node, in parallel with other families """
-        if c_prod == ffi.NULL:
-            prod = None
-            prio = 0
-        else:
-            prod = job.grammar.productions_by_ix[c_prod.nId]
-            prio = prod.priority
+        assert c_prod != ffi.NULL
+        prod: Production = job.grammar.productions_by_ix[c_prod.nId]
+        prio: int = prod.priority
         # Note: lower priority values mean higher priority!
         if self._families and prio > self._highest_prio:
             # Lower priority than a family we already have: don't bother adding it
             return
         # Recreate the pc tuple from the production index
-        pc = (
+        pc: ProductionTuple = (
             prod,
             [
                 # Convert child node from C++ form to Python form
@@ -379,35 +388,18 @@ class Node:
             self._families.append(pc)
         self._highest_prio = prio
 
-    def transform_children(self, func):
-        """ Apply a given function to all children of this node,
-            replacing the children with the result. """
-        if not self._families:
-            return
-        for ix, (prod, f) in enumerate(self._families):
-            if f:
-                f = [func(ch) for ch in f]
-                self._families[ix] = (prod, f)
-
-    def transform_child(self, family_ix, child_ix, func):
-        """ Replace a single child of this node with the
-            result of applying a function to it """
-        if self._families:
-            _, children = self._families[family_ix]
-            children[child_ix] = func(children[child_ix])
-
     @property
-    def start(self):
+    def start(self) -> int:
         """ Return the start token index """
         return self._start
 
     @property
-    def end(self):
+    def end(self) -> int:
         """ Return the end token index """
         return self._end
 
     @property
-    def is_span(self):
+    def is_span(self) -> bool:
         """ Returns True if the node spans one or more tokens """
         return self._end > self._start
 
@@ -424,7 +416,8 @@ class Node:
             ix = 0
             while f[ix] is None:
                 ix += 1
-            p = f[ix]
+            assert f[ix] is not None
+            p = cast(Node, f[ix])
         return p._token
 
     def _last_token(self):
@@ -440,7 +433,8 @@ class Node:
             ix = -1
             while f[ix] is None:
                 ix -= 1
-            p = f[ix]
+            assert f[ix] is not None
+            p = cast(Node, f[ix])
         return p._token
 
     @property
@@ -484,29 +478,29 @@ class Node:
         return self._token
 
     @property
-    def has_children(self):
+    def has_children(self) -> bool:
         """ Return True if there are any families of children of this node """
         return bool(self._families)
 
     @property
-    def is_empty(self):
+    def is_empty(self) -> bool:
         """ Return True if there is only a single empty family of this node """
         if not self._families:
             return True
         return len(self._families) == 1 and not bool(self._families[0][1])
 
     @property
-    def num_families(self):
+    def num_families(self) -> int:
         """ Return the number of families of children of this node """
         return len(self._families) if self._families is not None else 0
 
-    def enum_children(self):
+    def enum_children(self) -> Iterator[ProductionTuple]:
         """ Enumerate families of children """
         if self._families:
             for prod, children in self._families:
                 yield (prod, children)
 
-    def enum_child_nodes(self):
+    def enum_child_nodes(self) -> Iterator[Optional["Node"]]:
         """ Enumerate child nodes of this node, one by one """
         # Note that for reduced trees, a nonterminal node
         # will only have one family of children, which
@@ -524,7 +518,7 @@ class Node:
             # meaning that this is an ambiguous, non-reduced node
             assert False, "enum_child_nodes() called on an ambiguous node"
 
-    def reduce_to(self, child_ix):
+    def reduce_to(self, child_ix: int) -> None:
         """ Eliminate all child families except the given one """
         if self._families and len(self._families) > 1:
             # More than one family to choose from:
@@ -532,7 +526,7 @@ class Node:
             f = self._families[child_ix]
             self._families = [f]
 
-    def _repr(self, indent):
+    def _repr(self, indent: int) -> str:
         if hasattr(self, "score"):
             sc = " [{0}] ".format(self.score)
         else:
@@ -545,6 +539,7 @@ class Node:
         istr = "  " * indent
         if self._families:
             # Show the children in each family
+
             def child_rep(children):
                 if not children:
                     return ""
@@ -564,12 +559,12 @@ class Node:
                 )
         return istr + label_rep + families_rep
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """ Create a reasonably nice text representation of this node
             and its families of children, if any """
         return self._repr(0)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Return a string representation of this node """
         return "<Node: " + str(self._nonterminal or self._token) + ">"
 
@@ -630,10 +625,7 @@ class Fast_Parser(BIN_Parser):
         try:
             ts = os.path.getmtime(fname)
         except os.error:
-            raise GrammarError(
-                "Binary grammar file {0} not found"
-                .format(fname)
-            )
+            raise GrammarError("Binary grammar file {0} not found".format(fname))
         if cls._c_grammar == ffi.NULL or cls._c_grammar_ts != ts:
             # Need to load or reload the grammar
             if cls._c_grammar != ffi.NULL:
@@ -644,8 +636,7 @@ class Fast_Parser(BIN_Parser):
             cls._c_grammar_ts = ts
             if cls._c_grammar == ffi.NULL:
                 raise GrammarError(
-                    "Unable to load binary grammar file {0}"
-                    .format(fname)
+                    "Unable to load binary grammar file {0}".format(fname)
                 )
         return cls._c_grammar
 
@@ -710,9 +701,7 @@ class Fast_Parser(BIN_Parser):
                 # Override the default root for this parse
                 root_index = self.grammar.nonterminals[root].index
 
-            node = eparser.earleyParse(
-                self._c_parser, lw, root_index, job.handle, err
-            )
+            node = eparser.earleyParse(self._c_parser, lw, root_index, job.handle, err)
 
             if node == ffi.NULL:
                 ix = err[0]  # Token index
@@ -720,15 +709,17 @@ class Fast_Parser(BIN_Parser):
                     # Find the error token index in the original (unwrapped) token list
                     orig_ix = wrapped_tokens[ix].index if ix < lw else ix
                     raise ParseError(
-                        "No parse available at token {0} ({1})"
-                        .format(orig_ix, wrapped_tokens[ix - 1]),
+                        "No parse available at token {0} ({1})".format(
+                            orig_ix, wrapped_tokens[ix - 1]
+                        ),
                         orig_ix - 1,
                     )
                 else:
                     # Not a normal parse error, but report it anyway
                     raise ParseError(
-                        "No parse available at token {0} ({1} tokens in input)"
-                        .format(ix, len(wrapped_tokens)),
+                        "No parse available at token {0} ({1} tokens in input)".format(
+                            ix, len(wrapped_tokens)
+                        ),
                         0,
                     )
 
@@ -756,7 +747,9 @@ class Fast_Parser(BIN_Parser):
         self._c_parser = ffi.NULL
         if Settings.DEBUG:
             eparser.printAllocationReport()
-            print("Matching cache contains {0} entries".format(len(self._matching_cache)))
+            print(
+                "Matching cache contains {0} entries".format(len(self._matching_cache))
+            )
 
     @classmethod
     def discard_grammar(cls):
@@ -783,9 +776,7 @@ class Fast_Parser(BIN_Parser):
             # millions)
             cnt = nc.get(w)
             if cnt is not None:
-                assert cnt is not NotImplemented, (
-                    "Loop in node tree at {0}".format(w)
-                )
+                assert cnt is not NotImplemented, "Loop in node tree at {0}".format(w)
                 return cnt
             nc[w] = NotImplemented  # Special marker for an unassigned cache entry
             comb = 0
@@ -804,7 +795,7 @@ class ParseForestNavigator:
 
     # pylint: disable=assignment-from-none
 
-    def __init__(self, visit_all=False):
+    def __init__(self, visit_all: bool = False) -> None:
         """ If visit_all is False, we only visit each packed node once.
             If True, we visit the entire tree in order. """
         self._visit_all = visit_all
@@ -819,7 +810,7 @@ class ParseForestNavigator:
 
     def visit_nonterminal(self, level, node):
         """ At nonterminal node """
-        # Return object to collect results
+        # Typically returns an accumulation object to collect results
         return None
 
     def visit_family(self, results, level, node, ix, prod):
@@ -827,7 +818,7 @@ class ParseForestNavigator:
         return
 
     def add_result(self, results, ix, r):
-        """ Append a single result object r to the result object """
+        """ Append a single result r to the results accumulation object """
         return
 
     def process_results(self, results, node):
@@ -844,6 +835,7 @@ class ParseForestNavigator:
     def go(self, root_node) -> Any:
         """ Navigate the forest from the root node """
 
+        # Memoization cache dictionary
         visited: Dict[Node, Any] = dict()
 
         def _nav_helper(w, level):
@@ -853,7 +845,7 @@ class ParseForestNavigator:
                 and w in visited
                 and not self.force_visit(w, visited)
             ):
-                # Already seen: return the previously calculated result
+                # Already seen: return the memoized result
                 return visited[w]
             if w is None:
                 # Epsilon node
@@ -862,7 +854,7 @@ class ParseForestNavigator:
                 # Return the score of this terminal option
                 v = self.visit_token(level, w)
             else:
-                # Init container for child results
+                # Init accumulator for child results
                 results = self.visit_nonterminal(level, w)
                 if results is NotImplemented:
                     # If visit_nonterminal() returns NotImplemented,
@@ -876,7 +868,6 @@ class ParseForestNavigator:
                         else:
                             child_level = level + 1
                         for ix, (prod, children) in enumerate(w._families):
-                            # assert len(children) > 0
                             self.visit_family(results, level, w, ix, prod)
                             for ch in children:
                                 self.add_result(
@@ -1068,9 +1059,7 @@ class _FlattenerNode:
     """ A node in a flattened parse tree, produced by
         the ParseTreeFlattener class (below) """
 
-    def __init__(
-        self, p: FlattenerType, score: int
-    ) -> None:
+    def __init__(self, p: FlattenerType, score: int) -> None:
         self._p = p
         self._score = score
         self._children: Optional[List[_FlattenerNode]] = None
@@ -1106,9 +1095,7 @@ class _FlattenerNode:
             return "{0}{1}{2}".format(
                 " " * indent,
                 self._p,
-                "".join(
-                    "\n" + child._to_str(indent + 1) for child in self._children
-                ),
+                "".join("\n" + child._to_str(indent + 1) for child in self._children),
             )
         return "{0}{1}".format(" " * indent, self._p)
 

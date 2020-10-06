@@ -5788,11 +5788,17 @@ EinnAl →
     | 'allur:fn'_et_þf_kk 'tími:kk'_gr_et_þf # Allan tímann var mér ljóst að þetta var vonlaust
     | 'allur:fn'_ft_þf_kk "jafna:ao"    # Alla jafna eru menn rólegir yfir þessu
     | 'heill:lo'_sb_nf_et_hk "yfir:ao"  # Heilt yfir eru menn rólegir yfir þessu
+    | HliðViðHlið
 
     | ao_zlega so_lhþt_nf_hk_et         # Hreinskilnislega sagt, gróflega séð
     | lo_vb_nf_hk_et_zlega so_lhþt_nf_hk_et # Stórkarlalega ályktað
 
 $tag(no_prep) EinnAl        # Engar forsetningar hér inni - óþarfi að skoða dótturgreinar
+
+HliðViðHlið →
+    'hlið:kvk'_et_þf 'við:fs'_þf 'hlið:kvk'_et_þf # (...starfa) hlið við hlið (með félögum sínum)
+
+$score(+10) HliðViðHlið
 
 AlMiðstig →
     MiðstigForskeyti? ao_mst EnSamanb_nf? # (Gunnar ók) [mun/miklu] hraðar [en Jón gat ímyndað sér]
