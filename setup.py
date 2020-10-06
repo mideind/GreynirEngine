@@ -37,7 +37,8 @@
     and build the required CFFI Python wrapper via eparser_build.py.
     The same applies to bin.cpp -> bin.*.so and bin_build.py.
 
-    Note that installing under PyPy >= 3.6 is supported.
+    Note that installing under PyPy >= 3.6 is supported (and recommended
+    for best performance).
 
 """
 
