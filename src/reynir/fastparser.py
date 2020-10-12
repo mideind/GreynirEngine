@@ -800,45 +800,45 @@ class ParseForestNavigator:
             If True, we visit the entire tree in order. """
         self._visit_all = visit_all
 
-    def visit_epsilon(self, level):
+    def visit_epsilon(self, level: int) -> Any:
         """ At Epsilon node """
         return None
 
-    def visit_token(self, level, node):
+    def visit_token(self, level: int, node: Node) -> Any:
         """ At token node """
         return None
 
-    def visit_nonterminal(self, level, node):
+    def visit_nonterminal(self, level: int, node: Node) -> Any:
         """ At nonterminal node """
         # Typically returns an accumulation object to collect results
         return None
 
-    def visit_family(self, results, level, node, ix, prod):
+    def visit_family(self, results: Any, level: int, node: Node, ix: int, prod: Production) -> None:
         """ At a family of children """
         return
 
-    def add_result(self, results, ix, r):
+    def add_result(self, results: Any, ix: int, r: Any) -> None:
         """ Append a single result r to the results accumulation object """
         return
 
-    def process_results(self, results, node):
+    def process_results(self, results: Any, node: Node) -> Any:
         """ Process results after visiting children.
             The results list typically contains tuples (ix, r) where ix is
             the family index and r is the child result """
         return None
 
-    def force_visit(self, w, visited):
+    def force_visit(self, w: Optional[Node], visited: Dict[Optional[Node], Any]) -> bool:
         """ Override this and return True to visit a node, even if self._visit_all
             is False and the node has been visited before """
         return False
 
-    def go(self, root_node) -> Any:
+    def go(self, root_node: Node) -> Any:
         """ Navigate the forest from the root node """
 
         # Memoization cache dictionary
-        visited: Dict[Node, Any] = dict()
+        visited: Dict[Optional[Node], Any] = dict()
 
-        def _nav_helper(w, level):
+        def _nav_helper(w: Optional[Node], level: int) -> Any:
             """ Navigate from w """
             if (
                 not self._visit_all
@@ -1119,11 +1119,11 @@ class ParseForestFlattener(ParseForestNavigator):
     def root(self) -> Optional[_FlattenerNode]:
         return self._stack[0] if self._stack else None
 
-    def visit_epsilon(self, level: int) -> None:
+    def visit_epsilon(self, level: int) -> Any:
         """ Epsilon (null) node: not included in a flattened tree """
         return None
 
-    def visit_token(self, level: int, w: Node) -> None:
+    def visit_token(self, level: int, w: Node) -> Any:
         """ Add a terminal/token node to the flattened tree """
         # assert level > 0
         # assert self._stack
@@ -1133,7 +1133,7 @@ class ParseForestFlattener(ParseForestNavigator):
         self._stack[-1].add_child(node)
         return None
 
-    def visit_nonterminal(self, level: int, w: Node) -> None:
+    def visit_nonterminal(self, level: int, w: Node) -> Any:
         """ Add a nonterminal node to the flattened tree """
         # Interior nodes are not dumped
         # and do not increment the indentation level
@@ -1156,7 +1156,7 @@ class ParseForestFlattener(ParseForestNavigator):
         return None  # No results required, but visit children
 
     def visit_family(
-        self, results: Any, level: int, w: Node, ix: int, prod: Any
+        self, results: Any, level: int, w: Node, ix: int, prod: Production
     ) -> None:
         """ Visit different subtree options within a parse forest """
         # In this case, the tree should be unambigous
