@@ -40,7 +40,18 @@
 
 """
 
-from typing import NamedTuple, Optional
+from typing import (
+    NamedTuple,
+    Optional,
+    Callable,
+    List,
+    Tuple,
+    Iterable,
+    Type,
+    Dict,
+    Any,
+)
+from typing_extensions import Protocol
 
 from functools import lru_cache
 
@@ -49,12 +60,6 @@ from .cache import LFU_Cache
 from .dawgdictionary import Wordbase
 from .bincompress import BIN_Compressed
 
-
-# Size of LRU/LFU caches for word lookups
-CACHE_SIZE = 512
-# Most common lookup function (meanings of a particular word form)
-CACHE_SIZE_MEANINGS = 2048
-CACHE_SIZE_UNDECLINABLE = 2048
 
 # Named tuple for word meanings fetched from the BÍN database (lexicon)
 BIN_Meaning = NamedTuple(
@@ -66,8 +71,25 @@ BIN_Meaning = NamedTuple(
         ("fl", str),
         ("ordmynd", str),
         ("beyging", str),
-    ]
+    ],
 )
+# Type definitions
+ResultTuple = Tuple[str, List[BIN_Meaning]]
+LookupFunc = Callable[[str], List[BIN_Meaning]]
+TupleLookupFunc = Callable[[str], ResultTuple]
+MeaningFilterFunc = Callable[[Iterable[BIN_Meaning]], List[BIN_Meaning]]
+
+# Annotate the case-casting function signature via a callback protocol
+# See https://www.python.org/dev/peps/pep-0544/#callback-protocols
+class CaseFunc(Protocol):
+    def __call__(self, w: str, **options) -> List[BIN_Meaning]:
+        ...
+
+# Size of LRU/LFU caches for word lookups
+CACHE_SIZE = 512
+# Most common lookup function (meanings of a particular word form)
+CACHE_SIZE_MEANINGS = 2048
+CACHE_SIZE_UNDECLINABLE = 2048
 
 # Compact string representation
 _meaning_repr = lambda self: (
@@ -82,6 +104,25 @@ setattr(BIN_Meaning, "__repr__", _meaning_repr)
 # The set of word subcategories (fl) for person names
 # (i.e. first names or complete names)
 PERSON_NAME_FL = frozenset(("ism", "nafn", "erm"))
+
+
+class _BIN_Session:
+
+    """ Encapsulates a BIN_Db singleton instance in a context manager """
+
+    def __init__(self, cls: Type["BIN_Db"]) -> None:
+        self._cls = cls
+
+    def __enter__(self) -> "BIN_Db":
+        """ Python context manager protocol """
+        if self._cls._singleton is None:
+            self._cls._singleton = self._cls()
+        return self._cls._singleton
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """ Python context manager protocol """
+        # Return False to re-throw exception from the context, if any
+        return False
 
 
 class BIN_Db:
@@ -104,35 +145,18 @@ class BIN_Db:
     _singleton: Optional["BIN_Db"] = None
 
     @classmethod
-    def get_db(cls):
+    def get_db(cls) -> _BIN_Session:
         """ Return a session object that can be used in a with statement """
-
-        class _BIN_Session:
-
-            def __init__(self):
-                pass
-
-            def __enter__(self):
-                """ Python context manager protocol """
-                if cls._singleton is None:
-                    cls._singleton = cls()
-                return cls._singleton
-
-            def __exit__(self, exc_type, exc_value, traceback):
-                """ Python context manager protocol """
-                # Return False to re-throw exception from the context, if any
-                return False
-
-        return _BIN_Session()
+        return _BIN_Session(cls)
 
     @classmethod
-    def cleanup(cls):
+    def cleanup(cls) -> None:
         """ Close singleton instance, if any """
         if cls._singleton:
             cls._singleton.close()
             cls._singleton = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         """ Initialize BIN database wrapper instance """
         # Cache descriptors for the lookup functions
         self._meanings_func = lambda key: (
@@ -142,23 +166,23 @@ class BIN_Db:
         # Throws IOError if the compressed file doesn't exist
         self._compressed_bin: Optional[BIN_Compressed] = BIN_Compressed()
 
-    def close(self):
+    def close(self) -> None:
         """ Close the BIN_Compressed() instance """
         if self._compressed_bin is not None:
             self._compressed_bin.close()
             self._compressed_bin = None
 
-    def contains(self, w):
+    def contains(self, w: str) -> bool:
         """ Returns True if the given word form is found in BÍN """
         assert self._compressed_bin is not None
         return self._compressed_bin.contains(w)
 
-    def __contains__(self, w):
+    def __contains__(self, w: str) -> bool:
         """ Returns True if the given word form is found in BÍN """
         assert self._compressed_bin is not None
         return self._compressed_bin.contains(w)
 
-    def _meanings(self, w):
+    def _meanings(self, w: str) -> List[BIN_Meaning]:
         """ Low-level fetch of the BIN meanings of a given word """
         # Route the lookup request to the compressed binary file
         assert self._compressed_bin is not None
@@ -166,10 +190,10 @@ class BIN_Db:
         # If an error occurs, this returns None.
         # If the lookup doesn't yield any results, [] is returned.
         # Otherwise, map the query results to a BIN_Meaning tuple
-        return list(map(BIN_Meaning._make, g)) if g else g
+        return list(map(BIN_Meaning._make, g)) if g else []
 
     @staticmethod
-    def _priority(m):
+    def _priority(m: BIN_Meaning) -> int:
         """ Return a relative priority for the word meaning tuple
             in m. A lower number means more priority, a higher number
             means less priority. """
@@ -185,15 +209,15 @@ class BIN_Db:
         prio += 1 if "2P" in m.beyging else 0
         return prio
 
-    def meanings(self, w):
+    def meanings(self, w: str) -> List[BIN_Meaning]:
         """ Return a list of all possible grammatical meanings of the given word.
             Note that this is a low-level lookup in BÍN, or rather in ord.compressed,
             meaning that no upper/lower case conversion is applied, no abbreviations
             are recognized, static phrases are not looked up, etc.
             Also note that this is not a cached function. """
         m = self._meanings(w)
-        if m is None:
-            return None
+        if not m:
+            return []
         stem_prefs = StemPreferences.DICT.get(w)
         if stem_prefs is not None:
             # We have a preferred stem for this word form:
@@ -210,7 +234,7 @@ class BIN_Db:
         return m
 
     @lru_cache(maxsize=CACHE_SIZE)
-    def lookup_raw_nominative(self, w):
+    def lookup_raw_nominative(self, w: str) -> List[BIN_Meaning]:
         """ Return a set of meaning tuples for all word forms in nominative case.
             The set is unfiltered except for the presence of 'NF' in the beyging
             field. For new code, lookup_nominative() is likely to be a
@@ -218,7 +242,7 @@ class BIN_Db:
         assert self._compressed_bin is not None
         return list(map(BIN_Meaning._make, self._compressed_bin.raw_nominative(w)))
 
-    def lookup_nominative(self, w, **options):
+    def lookup_nominative(self, w: str, **options) -> List[BIN_Meaning]:
         """ Return meaning tuples for all word forms in nominative
             case for all { kk, kvk, hk, lo } category stems of the given word """
         assert self._compressed_bin is not None
@@ -226,7 +250,7 @@ class BIN_Db:
             map(BIN_Meaning._make, self._compressed_bin.nominative(w, **options))
         )
 
-    def lookup_accusative(self, w, **options):
+    def lookup_accusative(self, w: str, **options) -> List[BIN_Meaning]:
         """ Return meaning tuples for all word forms in accusative
             case for all { kk, kvk, hk, lo } category stems of the given word """
         assert self._compressed_bin is not None
@@ -234,26 +258,28 @@ class BIN_Db:
             map(BIN_Meaning._make, self._compressed_bin.accusative(w, **options))
         )
 
-    def lookup_dative(self, w, **options):
+    def lookup_dative(self, w: str, **options) -> List[BIN_Meaning]:
         """ Return meaning tuples for all word forms in dative
             case for all { kk, kvk, hk, lo } category stems of the given word """
         assert self._compressed_bin is not None
         return list(map(BIN_Meaning._make, self._compressed_bin.dative(w, **options)))
 
-    def lookup_genitive(self, w, **options):
+    def lookup_genitive(self, w: str, **options) -> List[BIN_Meaning]:
         """ Return meaning tuples for all word forms in genitive
             case for all { kk, kvk, hk, lo } category stems of the given word """
         assert self._compressed_bin is not None
         return list(map(BIN_Meaning._make, self._compressed_bin.genitive(w, **options)))
 
-    def lookup_word(self, w, at_sentence_start=False, auto_uppercase=False):
+    def lookup_word(
+        self, w: str, at_sentence_start: bool = False, auto_uppercase: bool = False
+    ) -> ResultTuple:
         """ Given a word form, look up all its possible meanings """
         assert self._compressed_bin is not None
         return self._lookup(w, at_sentence_start, auto_uppercase, self._meanings_func)
 
     # A dictionary of functions, one for each word category, that return
     # True for declension (beyging) strings of canonical/lemma forms
-    LEMMA_FILTERS = dict(
+    LEMMA_FILTERS: Dict[str, Callable[[str], bool]] = dict(
         # Nouns: Nominative, singular
         kk=lambda b: b == "NFET",
         kvk=lambda b: b == "NFET",
@@ -272,7 +298,9 @@ class BIN_Db:
         to=lambda b: b.startswith("KK_NF") or b == "-",
     )
 
-    def lookup_lemma(self, w, at_sentence_start=False, auto_uppercase=False):
+    def lookup_lemma(
+        self, w: str, at_sentence_start: bool = False, auto_uppercase: bool = False
+    ) -> ResultTuple:
         """ Given a word lemma, look up all its possible meanings """
         # Note: we consider middle voice infinitive verbs to be lemmas,
         # i.e. 'eignast' is recognized as a lemma as well as 'eigna'.
@@ -282,7 +310,7 @@ class BIN_Db:
             w, at_sentence_start=at_sentence_start, auto_uppercase=auto_uppercase
         )
 
-        def match(m):
+        def match(m: BIN_Meaning) -> bool:
             """ Return True for meanings that are canonical as lemmas """
             if m.ordfl == "so" and m.beyging == "MM-NH":
                 # This is a middle voice verb infinitive meaning
@@ -297,7 +325,7 @@ class BIN_Db:
         return final_w, [m for m in meanings if match(m)]
 
     @lru_cache(maxsize=CACHE_SIZE)
-    def lookup_name_gender(self, name):
+    def lookup_name_gender(self, name: str) -> str:
         """ Given a person name, lookup its gender. """
         if not name:
             return "hk"  # Unknown gender
@@ -309,15 +337,21 @@ class BIN_Db:
             return m.ordfl
         # The first name was not found: check whether the full name is
         # in the static phrases
-        m = StaticPhrases.lookup(name)
-        if m is not None:
-            m = BIN_Meaning._make(m)
+        mm = StaticPhrases.lookup(name)
+        if mm is not None:
+            m = BIN_Meaning._make(mm)
             if m.fl in PERSON_NAME_FL:
                 return m.ordfl
         return "hk"  # Unknown gender
 
     @staticmethod
-    def prefix_meanings(mlist, prefix, *, insert_hyphen=True, uppercase=False):
+    def prefix_meanings(
+        mlist: Iterable[BIN_Meaning],
+        prefix: str,
+        *,
+        insert_hyphen: bool = True,
+        uppercase: bool = False
+    ) -> List[BIN_Meaning]:
         """ Return a meaning list with a prefix added to the
             stofn and ordmynd attributes. If insert_hyphen is True, we
             insert a hyphen between the prefix and the suffix, both in the
@@ -338,17 +372,19 @@ class BIN_Db:
                 for r in mlist
             ]
             if prefix
-            else mlist
+            else list(mlist)
         )
 
     @staticmethod
-    def open_cats(mlist):
+    def open_cats(mlist: Iterable[BIN_Meaning]) -> List[BIN_Meaning]:
         """ Return a list of meanings filtered down to
             open (extensible) word categories """
         return [mm for mm in mlist if mm.ordfl in BIN_Db._OPEN_CATS]
 
     @staticmethod
-    def _compound_meanings(w, lower_w, at_sentence_start, lookup):
+    def _compound_meanings(
+        w: str, lower_w: str, at_sentence_start: bool, lookup: LookupFunc
+    ) -> List[BIN_Meaning]:
         """ Return a list of meanings of this word,
             when interpreted as a compound word """
         if "-" in w and not w.endswith("-"):
@@ -382,7 +418,9 @@ class BIN_Db:
         return BIN_Db.prefix_meanings(m, prefix)
 
     @staticmethod
-    def _lookup(w, at_sentence_start, auto_uppercase, lookup):
+    def _lookup(
+        w: str, at_sentence_start: bool, auto_uppercase: bool, lookup: LookupFunc
+    ) -> ResultTuple:
         """ Lookup a simple or compound word in the database and
             return its meaning(s). This function checks for abbreviations,
             upper/lower case variations, etc. """
@@ -508,11 +546,16 @@ class BIN_Db:
         return w, m
 
     @staticmethod
-    def _cast_to_case(w, lookup_func, case_func, meaning_filter_func):
+    def _cast_to_case(
+        w: str,
+        lookup_func: TupleLookupFunc,
+        case_func: CaseFunc,
+        meaning_filter_func: Optional[MeaningFilterFunc],
+    ) -> str:
         """ Return a word after casting it from nominative to another case,
             as returned by the case_func """
 
-        def score(m):
+        def score(m: BIN_Meaning) -> int:
             """ Return a score for a noun word form, based on the
                 [noun_preferences] section in Prefs.conf """
             sc = NounPreferences.DICT.get(m.ordmynd.split("-")[-1])
@@ -588,7 +631,9 @@ class BIN_Db:
         # No case casting could be done: return the original word
         return w
 
-    def cast_to_accusative(self, w, *, meaning_filter_func=None):
+    def cast_to_accusative(
+        self, w: str, *, meaning_filter_func: Optional[MeaningFilterFunc] = None
+    ) -> str:
         """ Cast a word from nominative to accusative case, or return it
             unchanged if it is not inflectable by case. """
         # Note that since this function has no context, the conversion is
@@ -602,7 +647,9 @@ class BIN_Db:
             meaning_filter_func=meaning_filter_func,
         )
 
-    def cast_to_dative(self, w, *, meaning_filter_func=None):
+    def cast_to_dative(
+        self, w: str, *, meaning_filter_func: Optional[MeaningFilterFunc] = None
+    ) -> str:
         """ Cast a word from nominative to dative case, or return it
             unchanged if it is not inflectable by case. """
         # Note that since this function has no context, the conversion is
@@ -616,7 +663,9 @@ class BIN_Db:
             meaning_filter_func=meaning_filter_func,
         )
 
-    def cast_to_genitive(self, w, *, meaning_filter_func=None):
+    def cast_to_genitive(
+        self, w: str, *, meaning_filter_func: Optional[MeaningFilterFunc] = None
+    ) -> str:
         """ Cast a word from nominative to genitive case, or return it
             unchanged if it is not inflectable by case. """
         # Note that since this function has no context, the conversion is

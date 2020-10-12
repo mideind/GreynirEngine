@@ -1992,11 +1992,6 @@ def test_relative_clause(r):
     )
 
 
-def test_attachment_2(r):
-    s = r.parse_single("Páll talaði við köttinn um hestinn.")
-    pass
-
-
 def test_neutral_pronoun(r):
     s = r.parse_single("Hán var ánægt með hest háns.")
     assert (
@@ -2009,10 +2004,10 @@ def test_neutral_pronoun(r):
     s = r.parse_single("Hán langaði að tala við hán um málið.")
     assert (
         s.tree.flat_with_all_variants
-        == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_p3_þf /NP-SUBJ "
-        "VP VP so_1_þf_subj_op_þf_et_fh_gm_þt /VP IP-INF TO nhm /TO VP so_0_gm_nh "
-        "/VP /IP-INF PP P fs_þf /P NP pfn_et_hk_p3_þf /NP /PP PP P fs_þf /P NP "
-        "no_et_gr_hk_þf /NP /PP /VP /IP /S-MAIN p /S0"
+        == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_p3_þf /NP-SUBJ VP "
+        "VP so_1_þf_subj_op_þf_et_fh_gm_þt /VP IP-INF TO nhm /TO VP VP so_0_gm_nh "
+        "/VP PP P fs_þf /P NP pfn_et_hk_p3_þf /NP /PP PP P fs_þf /P NP no_et_gr_hk_þf "
+        "/NP /PP /VP /IP-INF /VP /IP /S-MAIN p /S0"
     )
     s = r.parse_single("Hán Alda var ánægt.")
     assert (

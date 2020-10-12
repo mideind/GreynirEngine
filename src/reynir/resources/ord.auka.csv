@@ -129,8 +129,8 @@ fari;0;kk;alm;farar;NFFT
 fari;0;kk;alm;fararnir;NFFTgr
 fari;0;kk;alm;fara;ÞFFT
 fari;0;kk;alm;farana;ÞFFTgr
-fari;0;kk;alm;farum;ÞGFFT
-fari;0;kk;alm;farunum;ÞGFFTgr
+fari;0;kk;alm;förum;ÞGFFT
+fari;0;kk;alm;förunum;ÞGFFTgr
 fari;0;kk;alm;fara;EFFT
 fari;0;kk;alm;faranna;EFFTgr
 
@@ -163,8 +163,8 @@ gjafi;0;kk;alm;gjafar;NFFT
 gjafi;0;kk;alm;gjafarnir;NFFTgr
 gjafi;0;kk;alm;gjafa;ÞFFT
 gjafi;0;kk;alm;gjafana;ÞFFTgr
-gjafi;0;kk;alm;gjafum;ÞGFFT
-gjafi;0;kk;alm;gjafunum;ÞGFFTgr
+gjafi;0;kk;alm;gjöfum;ÞGFFT
+gjafi;0;kk;alm;gjöfunum;ÞGFFTgr
 gjafi;0;kk;alm;gjafa;EFFT
 gjafi;0;kk;alm;gjafanna;EFFTgr
 
@@ -259,33 +259,22 @@ menningur;0;kk;alm;menningunum;ÞGFFTgr
 menningur;0;kk;alm;menninga;EFFT
 menningur;0;kk;alm;menninganna;EFFTgr
 
-athygli;0;kk;alm;athygli;NFET
-athygli;0;kk;alm;athyglin;NFETgr
-athygli;0;kk;alm;athygli;ÞFET
-athygli;0;kk;alm;athyglina;ÞFETgr
-athygli;0;kk;alm;athygli;ÞGFET
-athygli;0;kk;alm;athyglinni;ÞGFETgr
-athygli;0;kk;alm;athygli;EFET
-athygli;0;kk;alm;athyglinnar;EFETgr
-
 yrki;0;kk;alm;yrki;NFET
 yrki;0;kk;alm;yrkinn;NFETgr
-yrki;0;kk;alm;yrka;ÞFET
-yrki;0;kk;alm;yrkann;ÞFETgr
-yrki;0;kk;alm;yrka;ÞGFET
-yrki;0;kk;alm;yrkanum;ÞGFETgr
-yrki;0;kk;alm;yrka;EFET
-yrki;0;kk;alm;yrkans;EFETgr
-yrki;0;kk;alm;yrkar;NFFT
-yrki;0;kk;alm;yrkarnir;NFFTgr
-yrki;0;kk;alm;yrka;ÞFFT
-yrki;0;kk;alm;yrkana;ÞFFTgr
-yrki;0;kk;alm;yrkum;ÞGFFT
-yrki;0;kk;alm;yrkunum;ÞGFFTgr
-yrki;0;kk;alm;yrka;EFFT
-yrki;0;kk;alm;yrkanna;EFFTgr
-
-
+yrki;0;kk;alm;yrkja;ÞFET
+yrki;0;kk;alm;yrkjann;ÞFETgr
+yrki;0;kk;alm;yrkja;ÞGFET
+yrki;0;kk;alm;yrkjanum;ÞGFETgr
+yrki;0;kk;alm;yrkja;EFET
+yrki;0;kk;alm;yrkjans;EFETgr
+yrki;0;kk;alm;yrkjar;NFFT
+yrki;0;kk;alm;yrkjarnir;NFFTgr
+yrki;0;kk;alm;yrkja;ÞFFT
+yrki;0;kk;alm;yrkjana;ÞFFTgr
+yrki;0;kk;alm;yrkjum;ÞGFFT
+yrki;0;kk;alm;yrkjunum;ÞGFFTgr
+yrki;0;kk;alm;yrkja;EFFT
+yrki;0;kk;alm;yrkjanna;EFFTgr
 
 tugur;0;lo;alm;tugur;FSB-KK-NFET
 tugur;0;lo;alm;tugan;FSB-KK-ÞFET
@@ -754,7 +743,6 @@ Narnía;0;kvk;örn;Narníum;ÞGFFT
 Narnía;0;kvk;örn;Narníunum;ÞGFFTgr
 Narnía;0;kvk;örn;Narnía;EFFT
 Narnía;0;kvk;örn;Narníanna;EFFTgr
-
 
 Jelena;0;kvk;ism;Jelena;NFET
 Jelena;0;kvk;ism;Jelenan;NFETgr

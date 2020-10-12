@@ -259,8 +259,12 @@ The Greynir class
           of tokens in the sentence.
 
         * ``parse_time``: A ``float`` with the wall clock time, in seconds,
-          spent on tokenizing and parsing the sentences.
+          spent on tokenizing and parsing the sentences, including finding the
+          best parse trees.
 
+        * ``reduce_time``: A ``float`` with the wall clock time, in seconds,
+          spent on finding the best parse tree in each parse forest.
+          This time is included in the ``parse_time``.
 
         Example *(try it!)*::
 

@@ -85,8 +85,6 @@ if "PyPy 7.3.0" in sys.version or "PyPy 7.2." in sys.version:
         except ValueError:
             # String does not contain a space: return it whole
             return s
-
-
 else:
     all_except_suffix = lambda s: s.rsplit(maxsplit=1)[0]
 
@@ -500,8 +498,6 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
                     # Additional meanings found: add them to
                     # the front of the meaning list, giving them a bit of
                     # priority over the dubious abbreviation
-                    # !!! TODO: Consider doing list(set(m + meanings)) to
-                    # !!! eliminate duplicates
                     meanings = m + meanings
                     w = w_new
             yield token_ctor.Word(w, meanings, token=t)

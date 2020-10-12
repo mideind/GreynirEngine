@@ -165,6 +165,7 @@ _DEFAULT_NT_MAP = {
     "Sagnliður": "VP",
     "SagnliðurMeðF": "VP",
     "So": "VP",
+    "NhSögnAtv": "VP",
     "NhLiðir": "VP",
     "NhSögn": "VP",
     "NhEinfaldur": "VP",
@@ -336,7 +337,7 @@ _DEFAULT_ID_MAP: Dict[str, Dict[str, Union[str, Set[str]]]] = {
     "FOREIGN": dict(name="Erlendur texti"),
 }
 
-_DEFAULT_TERMINAL_MAP = {  # TODO: Make sure node names are translated in treegrid
+_DEFAULT_TERMINAL_MAP = {
     # "no": "N",
     # "hk": "N",
     # "kk": "N",
@@ -862,7 +863,7 @@ class SimpleTree:
         result = []
         case = None
         gender = None
-        terminal_case = None
+        terminal_case: Optional[str] = None
         # Token atoms (components of a multiword token)
         a = list(reversed(txt.split()))
         for tok in a:
@@ -964,8 +965,9 @@ class SimpleTree:
                             ).upper()
                         if terminal_case:
                             # The terminal actually specifies a case: sort on it
+                            tc: str = terminal_case  # Make mypy happy
                             m.sort(
-                                key=lambda mm: 0 if terminal_case in mm.beyging else 1
+                                key=lambda mm: 0 if tc in mm.beyging else 1
                             )
                         # If we can get away with just a 'töl', do it
                         mm = next((mm for mm in m if mm.ordfl == "töl"), m[0])
@@ -1378,10 +1380,10 @@ class SimpleTree:
                 "gr": filter_func_with_gender,
                 "pfn": filter_func_without_gender,
             }
-            meanings = filter(filters.get(self._cat, filter_func_no), meanings)
+            meanings_iter = filter(filters.get(self._cat, filter_func_no), meanings)
             try:
                 # Choose the first nominative form that got past the filter
-                w = next(meanings).ordmynd
+                w = next(meanings_iter).ordmynd
                 # Try to match the capitalization of the original word
                 if prefix and prefix[-1] != "-":
                     txt = w.lower()

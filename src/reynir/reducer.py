@@ -318,7 +318,7 @@ class ParseForestReducer:
         # If no match, discourage
         return _VERB_PREP_PENALTY
 
-    def _visit_token(self, node: Node) -> ResultDict:
+    def visit_token(self, node: Node) -> ResultDict:
         """ At token node """
         # Return the score of this token/terminal match
         d: ResultDict = dict()
@@ -394,7 +394,7 @@ class ParseForestReducer:
                     return True
             return False
 
-        def _nav_helper(w: Node) -> ResultDict:
+        def calc_score(w: Node) -> ResultDict:
             """ Navigate from (w, current_key) where w is a node and current_key
                 is an integer navigation key, carefully controlling the memoization
                 of already visited nodes. When navigating into
@@ -413,7 +413,7 @@ class ParseForestReducer:
             # reduce it, calculate its score and memoize it
             if w._token is not None:
                 # Return the score of this terminal option
-                v = self._visit_token(w)
+                v = self.visit_token(w)
             elif w.is_span and w._families:
                 # We have a nonempty nonterminal node with one or more families
                 # of children, i.e. multiple possible derivations:
@@ -429,19 +429,24 @@ class ParseForestReducer:
                                 # This child subtree has an enable_prep_bonus flag:
                                 # make sure we navigate separately through it
                                 # sincle enclosed prepositions may have different
-                                # scores in other subtrees
+                                # scores in other subtrees.
                                 # Generate a new unique memoization key to use
-                                # when navigating through this child subtree
+                                # when navigating through this child subtree.
                                 next_key += 1
                                 current_key = next_key
                             elif current_key != 0 and exit_key_scope(ch):
                                 # We no longer need a separate memoization key
                                 # for this child subtree
                                 current_key = 0
-                            scope.add_child(family_ix, _nav_helper(ch))
+                            scope.add_child(family_ix, calc_score(ch))
                             current_key = prev_key
                 # Return a dict describing the winning family of children
                 # (derivation) including an "sc" field for its score.
+                # !!! TODO: We might be pruning the parse forest too
+                # !!! early here - there could be a different verb scope
+                # !!! above this node that would cause a different child
+                # !!! to be culled. However a test case to demonstrate this
+                # !!! has yet to be identified/created.
                 v = scope.process(w)
                 # The winning family is now the only remaining family
                 # of children of this node; the others have been culled.
@@ -453,7 +458,9 @@ class ParseForestReducer:
             return v
 
         # Start the scoring and reduction process at the root
-        return NULL_SC if root_node is None else _nav_helper(root_node)
+        if root_node is None:
+            return NULL_SC
+        return calc_score(root_node)
 
 
 class OptionFinder(ParseForestNavigator):
