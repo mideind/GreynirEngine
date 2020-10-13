@@ -54,7 +54,7 @@ jobs:
       before_install:
         - brew install git-lfs
         - git lfs install
-        - brew install python@3.8
+        - brew upgrade python@3.8
         - pip install virtualenv
         - /usr/local/bin/virtualenv -p /usr/local/bin/python3.8 venv
         - source venv/bin/activate
