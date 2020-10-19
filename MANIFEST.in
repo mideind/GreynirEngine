@@ -4,6 +4,8 @@ prune src/reynir/.mypy_cache
 prune test/test_corpus
 include src/reynir/Greynir.grammar
 include src/reynir/Greynir.grammar.bin
+exclude src/reynir/Greynir.grammar.error.bin
+exclude src/reynir/Greynir.grammar.query.bin
 include src/reynir/eparser.h
 exclude src/reynir/_eparser.cpp
 include src/reynir/config/*.conf

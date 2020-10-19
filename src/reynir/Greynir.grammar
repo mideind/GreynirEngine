@@ -236,6 +236,8 @@ FyrirsögnInnihald →
     # Nafnliður í nefnifalli
     Nl_nf Atviksliður? Eignun? Lokatákn?
     | SetningÁnF Lokatákn?
+    # 'Um landsins gögn og nauðsynjar'
+    | FsMeðFallstjórn
 
 StaðurDags →
     # Staður og dagsetning, oft í bréfhaus eða undirritun
@@ -3031,11 +3033,13 @@ NhSögn →
     | so_1_þf_nh so_0_gm_vh_p3_et? OgNhSögn_þf* FsRunaEftirSögn? NlBeintAndlag_þf    # að selja [skyldi] í snatri hestinn
     | so_1_þgf_nh so_0_gm_vh_p3_et? OgNhSögn_þgf* FsRunaEftirSögn? NlBeintAndlag_þgf # að hætta [ætti] baráttunni
     | so_1_ef_nh so_0_gm_vh_p3_et? OgNhSögn_ef* FsRunaEftirSögn? NlBeintAndlag_ef    # að freista [eigi] gæfunnar
-    | so_2_þgf_þf_nh so_0_gm_vh_p3_et? OgNhSögn_þgf_þf* FsRunaEftirSögn? NlÓbeintAndlag_þgf NlBeintAndlag_þf # að skrifa [skuli] og senda Karólínu bréfið
-    | so_2_þf_ef_nh so_0_gm_vh_p3_et? OgNhSögn_þf_ef* FsRunaEftirSögn? NlÓbeintAndlag_þf NlBeintAndlag_ef    # að spyrja og krefja Pál svars
+    | so_2_þf_þf_nh so_0_gm_vh_p3_et? OgNhSögn_þf_þf* FsRunaEftirSögn? NlÓbeintAndlag_þf NlBeintAndlag_þf    # að lýsa auðlindir þjóðareign
     | so_2_þf_þgf_nh so_0_gm_vh_p3_et? OgNhSögn_þf_þgf* FsRunaEftirSögn? Nl_þf Nl_þgf # að kalla [ætti] Pál illum nöfnum
-    | so_2_þgf_ef_nh so_0_gm_vh_p3_et? OgNhSögn_þgf_ef* FsRunaEftirSögn? NlÓbeintAndlag_þgf NlBeintAndlag_ef # að óska [eigi] og óska Páli góðs bata
+    | so_2_þf_ef_nh so_0_gm_vh_p3_et? OgNhSögn_þf_ef* FsRunaEftirSögn? NlÓbeintAndlag_þf NlBeintAndlag_ef    # að spyrja og krefja Pál svars
     | so_2_þgf_nf_nh so_0_gm_vh_p3_et? OgNhSögn_þgf_nf* FsRunaEftirSögn? Nl_þgf Nl_nf # að vera [eigi] og vera Páli stoð og stytta
+    | so_2_þgf_þf_nh so_0_gm_vh_p3_et? OgNhSögn_þgf_þf* FsRunaEftirSögn? NlÓbeintAndlag_þgf NlBeintAndlag_þf # að skrifa [skuli] og senda Karólínu bréfið
+    | so_2_þgf_þgf_nh so_0_gm_vh_p3_et? OgNhSögn_þgf_þgf* FsRunaEftirSögn? NlÓbeintAndlag_þgf NlBeintAndlag_þgf # að taka Páli opnum örmum
+    | so_2_þgf_ef_nh so_0_gm_vh_p3_et? OgNhSögn_þgf_ef* FsRunaEftirSögn? NlÓbeintAndlag_þgf NlBeintAndlag_ef # að óska [eigi] og óska Páli góðs bata
     | 'gera:so'_1_þgf_nh so_0_gm_vh_p3_et? NlÓbeintAndlag_þgf LoTengtSögn_nf_et_hk NhFylling # að gera [eigi] Páli kleift að matast með reisn
     # að reistar yrðu og byggðar íbúðir / að barinn skyldi fiskurinn og flakaður
     # !!! Ath: sennilega geta aðeins hjálparsagnir staðið í viðtengingarhætti hér,
@@ -3082,16 +3086,20 @@ OgNhSögn_ef →
     OgEðaHeldur so_1_ef_nh so_0_gm_vh_p3_et?
 OgNhSögn_nf →
     OgEðaHeldur so_1_nf_nh so_0_gm_vh_p3_et?
-OgNhSögn_þgf_þf →
-    OgEðaHeldur so_2_þgf_þf_nh so_0_gm_vh_p3_et?
-OgNhSögn_þf_ef →
-    OgEðaHeldur so_2_þf_ef_nh so_0_gm_vh_p3_et?
+OgNhSögn_þf_þf →
+    OgEðaHeldur so_2_þf_þf_nh so_0_gm_vh_p3_et?
 OgNhSögn_þf_þgf →
     OgEðaHeldur so_2_þf_þgf_nh so_0_gm_vh_p3_et?
-OgNhSögn_þgf_ef →
-    OgEðaHeldur so_2_þgf_ef_nh so_0_gm_vh_p3_et?
+OgNhSögn_þf_ef →
+    OgEðaHeldur so_2_þf_ef_nh so_0_gm_vh_p3_et?
 OgNhSögn_þgf_nf →
     OgEðaHeldur so_2_þgf_nf_nh so_0_gm_vh_p3_et?
+OgNhSögn_þgf_þf →
+    OgEðaHeldur so_2_þgf_þf_nh so_0_gm_vh_p3_et?
+OgNhSögn_þgf_þgf →
+    OgEðaHeldur so_2_þgf_þgf_nh so_0_gm_vh_p3_et?
+OgNhSögn_þgf_ef →
+    OgEðaHeldur so_2_þgf_ef_nh so_0_gm_vh_p3_et?
 OgNhSögn_lhþt/tala/kyn →
     OgEðaHeldur so_0_lhþt/tala/kyn
 
