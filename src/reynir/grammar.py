@@ -72,9 +72,11 @@ from collections import defaultdict, OrderedDict
 
 # pylint: disable=no-name-in-module
 if __package__:
-    from .settings import Settings, changedlocale
+    from .settings import Settings
+    from .basics import changedlocale
 else:
-    from settings import Settings, changedlocale, ConfigError  # type: ignore
+    from settings import Settings  # type: ignore
+    from basics import changedlocale, ConfigError  # type: ignore
 
 
 ProductionTuple = Tuple[int, "Production"]

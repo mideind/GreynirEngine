@@ -326,7 +326,7 @@ class BIN_Db:
 
     @lru_cache(maxsize=CACHE_SIZE)
     def lookup_name_gender(self, name: str) -> str:
-        """ Given a person name, lookup its gender. """
+        """ Given a person name, lookup its gender """
         if not name:
             return "hk"  # Unknown gender
         w = name.split(maxsplit=1)[0]  # First name

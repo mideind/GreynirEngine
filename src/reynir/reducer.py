@@ -95,7 +95,8 @@ import threading
 
 from .grammar import Grammar, Production
 from .fastparser import Node, ParseForestNavigator, ParseForestPrinter, ParseError
-from .settings import Settings, Preferences, NounPreferences, VerbObjects
+from .settings import Settings, Preferences, NounPreferences
+from .verbframe import VerbFrame
 from .binparser import BIN_Token, BIN_Terminal
 
 
@@ -104,9 +105,9 @@ ResultDict = Dict[str, Union[int, List[str], List[Tuple[BIN_Terminal, BIN_Token]
 ChildDict = Dict[int, ResultDict]
 ScoreDict = Dict[int, Dict[BIN_Terminal, int]]
 BonusCache = Dict[Tuple[BIN_Terminal, str, BIN_Terminal, BIN_Token], int]
-FinalsType = Dict[int, Set[BIN_Terminal]]
-TokensType = Dict[int, BIN_Token]
-KeyType = Tuple[Node, int]
+FinalsDict = Dict[int, Set[BIN_Terminal]]
+TokensDict = Dict[int, BIN_Token]
+KeyTuple = Tuple[Node, int]
 
 # Reducer result dictionary with a null score
 NULL_SC: ResultDict = dict(sc=0)
@@ -304,14 +305,14 @@ class ParseForestReducer:
             if prep_case in _CASES_SET:
                 prep_with_case = prep_token + "_" + prep_case
             else:
-                # Probably fs_nh: match all cases
+                # Probably fs_nh: match all cases (note: _nh is hereby cut off)
                 prep_with_case = prep_token
         else:
             # Literal terminal, such as "á:fs" - match all cases
             prep_with_case = prep_token
         # Do a lookup in the verb/preposition lexicon from the settings
         # (typically stored in VerbPrepositions.conf)
-        if VerbObjects.verb_matches_preposition(verb_with_cases, prep_with_case):
+        if VerbFrame.matches_preposition(verb_with_cases, prep_with_case):
             # If the verb clicks with the given preposition in the
             # given case, give a healthy bonus
             return _VERB_PREP_BONUS
@@ -360,7 +361,7 @@ class ParseForestReducer:
             nodes that have the enable_prep_bonus tag """
 
         # Memoization/caching dict, keyed by node and memoization key
-        visited: Dict[KeyType, ResultDict] = dict()
+        visited: Dict[KeyTuple, ResultDict] = dict()
         # Current memoization key
         current_key = 0
         # Next memoization key to use
@@ -468,7 +469,7 @@ class OptionFinder(ParseForestNavigator):
     """ Subclass to navigate a parse forest and populate the set
         of terminals that match each token """
 
-    def __init__(self, finals: FinalsType, tokens: TokensType) -> None:
+    def __init__(self, finals: FinalsDict, tokens: TokensDict) -> None:
         super().__init__()
         self._finals = finals
         self._tokens = tokens
@@ -489,7 +490,7 @@ class Reducer:
         self._grammar = grammar
 
     def _find_options(
-        self, forest: Node, finals: FinalsType, tokens: TokensType
+        self, forest: Node, finals: FinalsDict, tokens: TokensDict
     ) -> None:
         """ Find token-terminal match options in a parse forest with a root in w """
         OptionFinder(finals, tokens).go(forest)
@@ -499,8 +500,8 @@ class Reducer:
 
         # First pass: for each token, find the possible terminals that
         # can correspond to that token
-        finals: FinalsType = defaultdict(set)
-        tokens: TokensType = dict()
+        finals: FinalsDict = defaultdict(set)
+        tokens: TokensDict = dict()
         self._find_options(w, finals, tokens)
 
         # Second pass: find a (partial) ordering by scoring
@@ -632,33 +633,21 @@ class Reducer:
                         # the more matched, the better
                         numcases = int(t.variant(0))
                         adj = 2 * numcases
-                        # !!! TODO: Logic should be added here to encourage
-                        # zero arguments for verbs in the middle voice
-                        if numcases == 0:
-                            # Zero arguments: we might not like this
-                            vo0 = VerbObjects.VERBS[0]
-                            if all(
-                                (m.stofn not in vo0)
-                                and (m.ordmynd not in vo0)
-                                and ("MM" not in m.beyging)
-                                for m in token.t2
-                                if m.ordfl == "so"
-                            ):
-                                # No meaning where the verb has zero arguments
-                                adj = -5
                         # Apply score adjustments for verbs with particular
                         # object cases, as specified by $score(n) pragmas in Verbs.conf
                         # In the (rare) cases where there are conflicting scores,
                         # apply the most positive adjustment
-                        adjmax = 0
+                        adjmax = None
                         for m in token.t2:
                             if m.ordfl == "so":
                                 key = m.stofn + t.verb_cases
-                                score = VerbObjects.SCORES.get(key)
+                                score = VerbFrame.verb_score(key)
                                 if score is not None:
-                                    adjmax = score
-                                    break
-                        sc[t] += adj + adjmax
+                                    if adjmax is None:
+                                        adjmax = score
+                                    else:
+                                        adjmax = max(adjmax, score)
+                        sc[t] += adj + (adjmax or 0)
                     if t.is_bh:
                         # Discourage 'boðháttur'
                         sc[t] -= 4

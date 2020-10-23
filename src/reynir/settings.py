@@ -39,7 +39,19 @@
 
 """
 
-from typing import cast, Iterable, Optional, Union, Dict, Tuple, Set, List
+from typing import (
+    cast,
+    Iterable,
+    Iterator,
+    Optional,
+    Union,
+    Dict,
+    Tuple,
+    Set,
+    FrozenSet,
+    List,
+    Callable,
+)
 
 import os
 import codecs
@@ -51,17 +63,18 @@ from collections import defaultdict
 from threading import Lock
 from pkg_resources import resource_stream
 
+from .basics import (
+    ConfigError,
+    LineReader,
+    ALL_CASES,
+    ALL_GENDERS,
+    ALL_NUMBERS,
+    SUBCLAUSES,
+    REFLPRN,
+    REFLPRN_SET,
+)
+from .verbframe import VerbFrame
 
-# The sorting locale used by default in the changedlocale function
-_DEFAULT_SORT_LOCALE = ("IS_is", "UTF-8")
-
-# A set of all valid verb argument cases
-_ALL_CASES = frozenset(("nf", "þf", "þgf", "ef"))
-_ALL_GENDERS = frozenset(("kk", "kvk", "hk"))
-_ALL_NUMBERS = frozenset(("et", "ft"))
-_SUBCLAUSES = frozenset(("nh", "mnh", "falls"))
-_REFLPRN = {"sig": "sig_hk_et_þf", "sér": "sig_hk_et_þgf", "sín": "sig_hk_et_ef"}
-_REFLPRN_SET = frozenset(_REFLPRN.keys())
 
 # Type of meaning tuples for static phrases
 # stofn, utg, ordfl, fl, ordmynd, beyging
@@ -70,273 +83,6 @@ MeaningTuple = Tuple[str, int, str, str, str, str]
 StaticPhraseTuple = Tuple[str, str, str]
 # Type for preference specifications
 PreferenceTuple = Tuple[List[str], List[str], int]
-# Type of set of zero-verb arguments
-VerbZeroArgSet = Set[str]
-# Type of dict of verbs with arguments (1 or 2),
-# where each entry is a list of argument lists
-VerbWithArgDict = Dict[str, List[List[str]]]
-VerbWithArgErrorDict = Dict[str, Dict[str, str]]
-
-
-@contextmanager
-def changedlocale(new_locale=None):
-    """ Change locale for collation temporarily within a context (with-statement) """
-    # The newone locale parameter should be a tuple: ('is_IS', 'UTF-8')
-    old_locale = locale.getlocale(locale.LC_COLLATE)
-    try:
-        locale.setlocale(locale.LC_COLLATE, new_locale or _DEFAULT_SORT_LOCALE)
-        yield locale.strxfrm  # Function to transform string for sorting
-    finally:
-        locale.setlocale(locale.LC_COLLATE, old_locale)
-
-
-def sort_strings(strings, loc=None):
-    """ Sort a list of strings using the specified locale's collation order """
-    # Change locale temporarily for the sort
-    with changedlocale(loc) as strxfrm:
-        return sorted(strings, key=strxfrm)
-
-
-class ConfigError(Exception):
-
-    """ Exception class for configuration errors """
-
-    def __init__(self, s):
-        super().__init__(s)
-        self.fname = None
-        self.line = 0
-
-    def set_pos(self, fname, line):
-        """ Set file name and line information, if not already set """
-        if not self.fname:
-            self.fname = fname
-            self.line = line
-
-    def __str__(self):
-        """ Return a string representation of this exception """
-        s = Exception.__str__(self)
-        if not self.fname:
-            return s
-        return "File {0}, line {1}: {2}".format(self.fname, self.line, s)
-
-
-class LineReader:
-
-    """ Read lines from a text file, recognizing $include directives """
-
-    def __init__(self, fname, outer_fname=None, outer_line=0):
-        self._fname = fname
-        self._line = 0
-        self._inner_rdr = None
-        self._outer_fname = outer_fname
-        self._outer_line = outer_line
-
-    def fname(self):
-        """ The name of the file being read """
-        return self._fname if self._inner_rdr is None else self._inner_rdr.fname()
-
-    def line(self):
-        """ The number of the current line within the file """
-        return self._line if self._inner_rdr is None else self._inner_rdr.line()
-
-    def lines(self):
-        """ Generator yielding lines from a text file """
-        self._line = 0
-        try:
-            if __package__:
-                stream = resource_stream(__name__, self._fname)
-            else:
-                stream = open(self._fname, "rb")
-            with stream as inp:
-                # Read config file line-by-line from the package resources
-                for b in inp:
-                    # We get byte strings; convert from utf-8 to strings
-                    s = b.decode("utf-8")
-                    self._line += 1
-                    # Check for include directive: $include filename.txt
-                    if s.startswith("$") and s.lower().startswith("$include "):
-                        iname = s.split(maxsplit=1)[1].strip()
-                        # Do some path magic to allow the included path
-                        # to be relative to the current file path, or a
-                        # fresh (absolute) path by itself
-                        head, _ = os.path.split(self._fname)
-                        iname = os.path.join(head, iname)
-                        rdr = self._inner_rdr = LineReader(
-                            iname, self._fname, self._line
-                        )
-                        for incl_s in rdr.lines():
-                            yield incl_s
-                        self._inner_rdr = None
-                    else:
-                        yield s
-        except (IOError, OSError):
-            if self._outer_fname:
-                # This is an include file within an outer config file
-                c = ConfigError(
-                    "Error while opening or reading include file '{0}'".format(
-                        self._fname
-                    )
-                )
-                c.set_pos(self._outer_fname, self._outer_line)
-            else:
-                # This is an outermost config file
-                c = ConfigError(
-                    "Error while opening or reading config file '{0}'".format(
-                        self._fname
-                    )
-                )
-            raise c
-
-
-class VerbObjects:
-
-    """ Wrapper around dictionary of verbs and their objects,
-        initialized from the config file """
-
-    # Dictionary of verbs by object (argument) number, 0, 1 or 2
-    # Verbs can control zero, one or two arguments (noun phrases),
-    # where each argument must have a particular case
-    VERBS = [set(), defaultdict(list), defaultdict(list)]  # type: List[Union[VerbZeroArgSet, VerbWithArgDict]]
-    # Dictionary of verb forms with associated scores
-    # The key is the normal form of the verb + the associated cases,
-    # separated by underscores, e.g. "vera_þgf_ef"
-    SCORES = dict()  # type: Dict[str, int]
-    # Dictionary of verbs where, for each verb + argument cases, we store a set of
-    # preposition_case keys, i.e. "frá_þgf"
-    PREPOSITIONS = defaultdict(set)  # type: Dict[str, Set[str]]
-
-    # dict { verb + argument cases : verb particle}
-    VERB_PARTICLES = defaultdict(set)  # type: Dict[str, Set[str]]
-
-    VERBS_ERRORS = [set(), defaultdict(dict), defaultdict(dict)]  # type: List[Union[VerbZeroArgSet, VerbWithArgErrorDict]]
-    VERB_PARTICLES_ERRORS = defaultdict(dict)  # type: Dict[str, Dict[str, str]]
-    PREPOSITIONS_ERRORS = defaultdict(dict)  # type: Dict[str, Dict[str, str]]
-    WRONG_VERBS = dict()  # type: Dict[str, str]
-
-    @staticmethod
-    def check_args(args: List[str]) -> None:
-        for kind in args:
-            if kind not in _ALL_CASES | _SUBCLAUSES | _REFLPRN_SET:
-                spl = kind.split("_")
-                # Allow the last variant to be _gr, if the
-                # next-to-last one is a case
-                if spl and spl[-1] == "gr":
-                    spl = spl[:-1]
-                if not spl or spl[-1] not in _ALL_CASES:
-                    raise ConfigError(
-                        "Invalid verb argument: '{0}'".format(kind)
-                    )
-
-    @staticmethod
-    def add(
-        verb: str,
-        args: List[str],
-        prepositions: List[Tuple[str, str]],
-        particle: Optional[str],
-        score: int,
-    ) -> None:
-        """ Add a verb and its objects (arguments). Called from the config file handler. """
-        la = len(args)
-        if la > 2:
-            raise ConfigError("A verb can have 0-2 arguments; {0} given".format(la))
-        if la:
-            VerbObjects.check_args(args)
-            # Append a possible argument list
-            vargs = cast(VerbWithArgDict, VerbObjects.VERBS[la])
-            arglists = vargs[verb]
-            if args not in arglists:
-                # Avoid adding the same argument list twice
-                arglists.append(args)
-        else:
-            # Note that the verb can be argument-free
-            argset = cast(VerbZeroArgSet, VerbObjects.VERBS[0])
-            argset.add(verb)
-        # Store the score, if nonzero
-        verb_with_cases = "_".join([verb] + args)
-        if score != 0:
-            VerbObjects.SCORES[verb_with_cases] = score
-        # prepositions is a list of tuples: (preposition, case/kind), e.g. ("í", "þgf") or ("í", "falls")
-        d = VerbObjects.PREPOSITIONS[verb_with_cases]
-        for p, kind in prepositions:
-            # Add a "bare" preposition, such as "í"
-            d.add(p)
-            # Add a full form with case or argument kind, such as "í_þgf", or "í_nh"
-            d.add(p + "_" + kind)
-        if particle:
-            VerbObjects.VERB_PARTICLES[verb_with_cases].add(particle)
-
-    @staticmethod
-    def add_error(
-        verb: str,
-        args: List[str],
-        prepositions: List[Tuple[str, str]],
-        particle: Optional[str],
-        corr: str,
-    ) -> None:
-        """ Take note of a verb object specification with an $error pragma """
-        VerbObjects.check_args(args)
-        corrlist = corr.split(",")
-        errlist = corrlist[0].split("-")
-        errkind = errlist[0].strip()
-        verb_with_cases = "_".join([verb] + args)
-        if errkind == "OBJ":
-            vargs = cast(VerbWithArgErrorDict, VerbObjects.VERBS_ERRORS[len(args)])
-            arglists = vargs[verb]
-            arglists[verb_with_cases] = corr
-        elif errkind == "PP":
-            d = VerbObjects.PREPOSITIONS_ERRORS[verb_with_cases]
-            for p, kind in prepositions:
-                d[p] = corr
-                d[p + "_" + kind] = corr
-        elif errkind == "PRTCL":
-            # !!! TODO: Parse the corr string
-            if particle is None:
-                raise ConfigError("Particle error specification must specify particle")
-            VerbObjects.VERB_PARTICLES_ERRORS[verb_with_cases][particle] = corr
-        elif errkind == "ALL":
-            # !!! TODO: Implement this (store specification of a
-            # !!! TODO: replacement of the entire construct)
-            pass
-        elif errkind == "PREDS":
-            # !!! TODO: Implement this
-            pass
-        elif errkind == "WRONG":
-            wrong_kind = errlist[1].strip()
-            if wrong_kind == "VERB":
-                # Wrong verb, must point to completely different verb + args
-                if len(corrlist) != 2:
-                    raise ConfigError("WRONG-VERB must specify correct verb")
-                if particle:
-                    verb_with_cases += "*" + particle
-                if verb_with_cases in VerbObjects.WRONG_VERBS:
-                    pass
-                    # raise ConfigError("WRONG-VERB has already been specified for this verb, argument list and particle")
-                VerbObjects.WRONG_VERBS[verb_with_cases] = corrlist[1]
-            elif wrong_kind == "OBJ":
-                # !!! TODO: Implement this
-                pass
-            else:
-                raise ConfigError("Unknown type of WRONG-XXX in $error pragma")
-        else:
-            raise ConfigError(
-                "Unknown error type in $error pragma: '{0}'".format(errkind)
-            )
-
-    @staticmethod
-    def verb_matches_preposition(verb_with_cases: str, prep_with_case: str) -> bool:
-        """ Does the given preposition with the given case fit the verb? """
-        # if Settings.DEBUG:
-        #    print("verb_matches_preposition: verb {0}, prep {1}, verb found {2}, prep found {3}"
-        #        .format(verb_with_cases, prep_with_case,
-        #            verb_with_cases in VerbObjects.PREPOSITIONS,
-        #            verb_with_cases in VerbObjects.PREPOSITIONS and
-        #            prep_with_case in VerbObjects.PREPOSITIONS[verb_with_cases]))
-        return prep_with_case in VerbObjects.PREPOSITIONS.get(verb_with_cases, set())
-
-    @staticmethod
-    def verb_matches_particle(verb_with_cases: str, particle: str) -> bool:
-        """ Does the given particle fit the verb? """
-        return particle in VerbObjects.VERB_PARTICLES.get(verb_with_cases, set())
 
 
 class VerbSubjects:
@@ -397,18 +143,18 @@ class Prepositions:
     """ Wrapper around dictionary of prepositions, initialized from the config file """
 
     # Dictionary of prepositions: preposition -> { set of cases that it controls }
-    PP = defaultdict(set)  # type: Dict[str, Set[str]]
+    PP: Dict[str, Set[str]] = defaultdict(set)
     # Prepositions that can be followed by an infinitive verb phrase
     # 'Beiðnin um að handtaka manninn var send lögreglunni'
-    PP_NH = set()  # type: Set[str]
+    PP_NH: Set[str] = set()
     # Set of common, 'plain' prepositions that require matching with BÍN meanings,
     # cf. logic in matcher_fs() in binparser.py. If filtering according to Phrases.conf
     # is important for a preposition, include it here.
-    PP_COMMON = set()  # type: Set[str]
+    PP_COMMON: Set[str] = set()
     # A dictionary containing information from $error() pragmas associated
     # with the preposition. Each entry is again a dict of {case: error} specifications,
     # where each error spec is usually a tuple.
-    PP_ERRORS = defaultdict(dict)  # type: Dict[str, Dict[str, Tuple]]
+    PP_ERRORS: Dict[str, Dict[str, Tuple]] = defaultdict(dict)
 
     @staticmethod
     def add(prep: str, case: str, nh: bool) -> None:
@@ -419,7 +165,9 @@ class Prepositions:
             if not prep:
                 raise ConfigError("Asterisk should be affixed to a preposition")
             if " " in prep:
-                raise ConfigError("An asterisk-marked preposition must be a single word")
+                raise ConfigError(
+                    "An asterisk-marked preposition must be a single word"
+                )
             # Add to set of 'common'/'plain' prepositions
             Prepositions.PP_COMMON.add(prep)
         Prepositions.PP[prep].add(case)
@@ -438,7 +186,7 @@ class AdjectiveTemplate:
     """ Wrapper around template list of adjective endings """
 
     # List of tuples: (ending, form_spec)
-    ENDINGS = []  # type: List[Tuple[str, str]]
+    ENDINGS: List[Tuple[str, str]] = []
 
     @classmethod
     def add(cls, ending: str, form: str) -> None:
@@ -451,7 +199,7 @@ class DisallowedNames:
     """ Wrapper around list of disallowed person name forms """
 
     # Dictionary of name stems : sets of cases
-    STEMS = {}  # type: Dict[str, Set[str]]
+    STEMS: Dict[str, Set[str]] = {}
 
     @classmethod
     def add(cls, name: str, cases: Iterable[str]) -> None:
@@ -464,7 +212,7 @@ class UndeclinableAdjectives:
     """ Wrapper around list of undeclinable adjectives """
 
     # Set of adjectives
-    ADJECTIVES = set()  # type: Set[str]
+    ADJECTIVES: Set[str] = set()
 
     @classmethod
     def add(cls, wrd: str) -> None:
@@ -477,18 +225,19 @@ class StaticPhrases:
     """ Wrapper around dictionary of static phrases, initialized from the config file """
 
     # Default meaning for static phrases
-    MEANING = ("ao", "frasi", "-")  # type: StaticPhraseTuple
+    MEANING: StaticPhraseTuple = ("ao", "frasi", "-")
     # Dictionary of the static phrases with their meanings
-    MAP = {}  # type: Dict[str, MeaningTuple]
+    MAP: Dict[str, MeaningTuple] = {}
     # Dictionary of the static phrases with their IFD tags and lemmas
     # { static_phrase : (tag string, lemma string) }
-    DETAILS = {}  # type: Dict[str, Tuple[str, str]]
+    DETAILS: Dict[str, Tuple[str, str]] = {}
     # List of all static phrases and their meanings
-    LIST = []  # type: List[Tuple[str, MeaningTuple]]
+    LIST: List[Tuple[str, MeaningTuple]] = []
     # Parsing dictionary keyed by first word of phrase
-    DICT = defaultdict(list)  # type: Dict[str, List[Tuple[List[str], int]]]
-    # Error dictionary, { phrase : (error_code, right_phrase, right_tag_string, right_lemma_string) }
-    ERROR_DICT = {}  # type: Dict[str, Tuple[str, str, str, str]]
+    DICT: Dict[str, List[Tuple[List[str], int]]] = defaultdict(list)
+    # Error dictionary:
+    # { phrase : (error_code, right_phrase, right_tag_string, right_lemma_string) }
+    ERROR_DICT: Dict[str, Tuple[str, str, str, str]] = {}
 
     @staticmethod
     def add(spec: str) -> None:
@@ -590,14 +339,14 @@ class AmbigPhrases:
 
     # List of tuples of ambiguous phrases and their word category lists,
     # i.e. (words, cats) where words and cats are tuples
-    LIST = []  # type: List[Tuple[Tuple[str, ...], Tuple[str, ...]]]
+    LIST: List[Tuple[List[str], Tuple[FrozenSet[str], ...]]] = []
     # Parsing dictionary keyed by first word of phrase
-    DICT = defaultdict(list)  # type: Dict[str, List[Tuple[List[str], int]]]
+    DICT: Dict[str, List[Tuple[List[str], int]]] = defaultdict(list)
     # Error dictionary, { phrase : (error_code, right_phrase, right_parts_of_speech) }
-    ERROR_DICT = defaultdict(list)  # type: Dict[str, List[Tuple[str, ...]]]
+    ERROR_DICT: Dict[str, List[List[str]]] = defaultdict(list)
 
     @staticmethod
-    def add(words, cats):
+    def add(words: List[str], cats: Tuple[FrozenSet[str], ...]) -> None:
         """ Add an ambiguous phrase to the dictionary.
             Called from the config file handler. """
 
@@ -611,18 +360,18 @@ class AmbigPhrases:
         AmbigPhrases.DICT[words[0]].append((words[1:], ix))
 
     @staticmethod
-    def add_error(words, error):
+    def add_error(words: str, error: List[str]) -> None:
         # Dictionary structure:
         # dict { phrase : (error_code, right_phrase, right_parts_of_speech) }
         AmbigPhrases.ERROR_DICT[words].append(error)
 
     @staticmethod
-    def get_cats(ix):
+    def get_cats(ix: int) -> Tuple[FrozenSet[str], ...]:
         """ Return the word categories for the phrase with index ix """
         return AmbigPhrases.LIST[ix][1]
 
     @staticmethod
-    def get_words(ix):
+    def get_words(ix: int) -> List[str]:
         """ Return the words for the phrase with index ix """
         return AmbigPhrases.LIST[ix][0]
 
@@ -633,22 +382,22 @@ class NoIndexWords:
         not be indexed """
 
     # Set of (stem, cat) tuples
-    SET = set()  # type: Set[Tuple[str, str]]
+    SET: Set[Tuple[str, str]] = set()
     # Default category
     _CAT = "so"
 
     # The word categories that are indexed in the words table
-    CATEGORIES_TO_INDEX = frozenset(
+    CATEGORIES_TO_INDEX: FrozenSet[str] = frozenset(
         ("kk", "kvk", "hk", "person_kk", "person_kvk", "entity", "lo", "so")
-    )  # Type: Set[str]
+    )
 
     @staticmethod
-    def set_cat(cat):
+    def set_cat(cat: str) -> None:
         """ Set the category for the following word stems """
         NoIndexWords._CAT = cat
 
     @staticmethod
-    def add(stem):
+    def add(stem: str) -> None:
         """ Add a word stem and its category. Called from the config file handler. """
         NoIndexWords.SET.add((stem, NoIndexWords._CAT))
 
@@ -658,23 +407,23 @@ class Topics:
     """ Wrapper around topics, represented as a dict (name: set) """
 
     # Dict of topic name: set
-    DICT = defaultdict(set)  # type: Dict[str, Set[str]]
+    DICT: Dict[str, Set[str]] = defaultdict(set)
     # Dict of identifier: topic name
-    ID = dict()  # type: Dict[str, str]
+    ID: Dict[str, str] = dict()
     # Dict of identifier: threshold (as a float)
-    THRESHOLD = dict()  # type: Dict[str, Optional[float]]
-    _name = None  # type: Optional[str]
+    THRESHOLD: Dict[str, Optional[float]] = dict()
+    _name: Optional[str] = None
 
     @staticmethod
-    def set_name(name):
+    def set_name(name: str) -> None:
         """ Set the topic name for the words that follow """
         a = name.split("|")
         Topics._name = tname = a[0].strip()
         identifier = a[1].strip() if len(a) > 1 else None
-        if identifier is not None and not identifier.isidentifier():
+        if identifier is None or not identifier.isidentifier():
             raise ConfigError(
                 "Topic identifier ('{0}') must be a valid Python identifier".format(
-                    identifier
+                    identifier or ""
                 )
             )
         try:
@@ -685,7 +434,7 @@ class Topics:
         Topics.THRESHOLD[tname] = threshold
 
     @staticmethod
-    def add(word):
+    def add(word: str) -> None:
         """ Add a word stem and its category. Called from the config file handler. """
         if Topics._name is None:
             raise ConfigError(
@@ -721,18 +470,20 @@ class AdjectivePredicates:
         the [adjective_predicates] section of AdjectivePredicates.conf """
 
     # dict { adjective lemma : set of possible argument cases }
-    ARGUMENTS = defaultdict(set)  # type: Dict[str, Set[str]]
+    ARGUMENTS: Dict[str, Set[str]] = defaultdict(set)
     # dict { adjective lemma : set of (preposition, case) }
-    PREPOSITIONS = defaultdict(set)  # type: Dict[str, Set[Tuple[str, str]]]
+    PREPOSITIONS: Dict[str, Set[Tuple[str, str]]] = defaultdict(set)
 
     # dict { adjective lemma : [ (argument case, error code) ] }
-    ERROR_DICT = defaultdict(list)  # type: Dict[str, List[Tuple[str, str]]]
+    ERROR_DICT: Dict[str, List[Tuple[str, List[str]]]] = defaultdict(list)
 
     # dict { adjective lemma : set of (preposition, case) }
-    ERROR_PREPOSITIONS = defaultdict(set)  # type: Dict[str, Set[Tuple[str, str]]]
+    ERROR_PREPOSITIONS: Dict[str, Set[Tuple[str, str]]] = defaultdict(set)
 
     @staticmethod
-    def add(adj, arg, prepositions):
+    def add(
+        adj: str, arg: Iterable[str], prepositions: Iterable[Tuple[str, str]]
+    ) -> None:
         if arg:
             # Add a case that is associated with an adjective
             AdjectivePredicates.ARGUMENTS[adj].update(arg)
@@ -741,7 +492,12 @@ class AdjectivePredicates:
             AdjectivePredicates.PREPOSITIONS[adj].update(prepositions)
 
     @staticmethod
-    def add_error(adj, arg, prepositions, error):
+    def add_error(
+        adj: str,
+        arg: Iterable[str],
+        prepositions: Iterable[Tuple[str, str]],
+        error: List[str],
+    ) -> None:
         if arg and error:
             for a in arg:
                 AdjectivePredicates.ERROR_DICT[adj].append((a, error))
@@ -755,7 +511,7 @@ class Preferences:
 
     # Dictionary keyed by word containing a list of tuples (worse, better)
     # where each is a list of terminal prefixes
-    DICT = defaultdict(list)  # type: Dict[str, List[PreferenceTuple]]
+    DICT: Dict[str, List[PreferenceTuple]] = defaultdict(list)
 
     @staticmethod
     def add(word: str, worse: List[str], better: List[str], factor: int) -> None:
@@ -774,10 +530,10 @@ class StemPreferences:
 
     # Dictionary keyed by word form containing a tuple (worse, better)
     # where each is a list word stems
-    DICT = dict()  # type: Dict[str, Tuple[List[str], List[str]]]
+    DICT: Dict[str, Tuple[List[str], List[str]]] = dict()
 
     @staticmethod
-    def add(word, worse, better):
+    def add(word: str, worse: List[str], better: List[str]) -> None:
         """ Add a preference to the dictionary. Called from the config file handler. """
         if word in StemPreferences.DICT:
             raise ConfigError(
@@ -786,7 +542,7 @@ class StemPreferences:
         StemPreferences.DICT[word] = (worse, better)
 
     @staticmethod
-    def get(word):
+    def get(word: str) -> Optional[Tuple[List[str], List[str]]]:
         """ Return a (worse, better) tuple for the given word form """
         return StemPreferences.DICT.get(word, None)
 
@@ -798,12 +554,12 @@ class NounPreferences:
 
     # This is a dict of noun word forms, giving the relative priorities
     # of different genders
-    DICT = defaultdict(dict)  # type: Dict[str, Dict[str, int]]
+    DICT: Dict[str, Dict[str, int]] = defaultdict(dict)
 
     @staticmethod
-    def add(word, worse, better):
+    def add(word: str, worse: str, better: str) -> None:
         """ Add a preference to the dictionary. Called from the config file handler. """
-        if worse not in _ALL_GENDERS or better not in _ALL_GENDERS:
+        if worse not in ALL_GENDERS or better not in ALL_GENDERS:
             raise ConfigError("Noun priorities must specify genders (kk, kvk, hk)")
         d = NounPreferences.DICT[word]
         worse_score = d.get(worse)
@@ -819,17 +575,16 @@ class NounPreferences:
             better_score = 2
         d[worse] = worse_score
         d[better] = better_score
-        # print("Noun prefs for '{0}' are now {1}".format(word, d))
 
 
 class NamePreferences:
 
     """ Wrapper around well-known person names, initialized from the config file """
 
-    SET = set()  # type: Set[str]
+    SET: Set[str] = set()
 
     @staticmethod
-    def add(name):
+    def add(name: str) -> None:
         """ Add a preference to the dictionary. Called from the config file handler. """
         NamePreferences.SET.add(name)
 
@@ -838,10 +593,10 @@ class BinErrata:
 
     """ Wrapper around BÍN errata, initialized from the config file """
 
-    DICT = dict()  # type: Dict[Tuple[str, str], str]
+    DICT: Dict[Tuple[str, str], str] = dict()
 
     @staticmethod
-    def add(stem, ordfl, fl):
+    def add(stem: str, ordfl: str, fl: str) -> None:
         """ Add a BÍN fix. Used by bincompress.py when generating a new
             compressed vocabulary file. """
         BinErrata.DICT[(stem, ordfl)] = fl
@@ -851,69 +606,22 @@ class BinDeletions:
 
     """ Wrapper around BÍN deletions, initialized from the config file """
 
-    SET = set()  # type: Set[Tuple[str, str, str]]
+    SET: Set[Tuple[str, str, str]] = set()
 
     @staticmethod
-    def add(stem, ordfl, fl):
+    def add(stem: str, ordfl: str, fl: str) -> None:
         """ Add a BÍN fix. Used by bincompress.py when generating a new
             compressed vocabulary file. """
         BinDeletions.SET.add((stem, ordfl, fl))
 
 
-# Global settings
-
-
 class Settings:
+
+    """ Global settings """
 
     _lock = threading.Lock()
     loaded = False
-
-    # Postgres SQL database server hostname and port
-    DB_HOSTNAME = os.environ.get("GREYNIR_DB_HOST", "localhost")
-    # Default PostgreSQL port
-    DB_PORT = os.environ.get("GREYNIR_DB_PORT", "5432")  # type: Union[str,int]
-
-    try:
-        DB_PORT = int(DB_PORT)
-    except ValueError:
-        raise ConfigError(
-            "Invalid environment variable value: DB_PORT = {0}".format(DB_PORT)
-        )
-
-    BIN_DB_HOSTNAME = os.environ.get("GREYNIR_BIN_DB_HOST", DB_HOSTNAME)
-    BIN_DB_PORT = os.environ.get("GREYNIR_BIN_DB_PORT", DB_PORT)  # type: Union[str,int]
-
-    try:
-        BIN_DB_PORT = int(BIN_DB_PORT)
-    except ValueError:
-        raise ConfigError(
-            "Invalid environment variable value: BIN_DB_PORT = {0}".format(BIN_DB_PORT)
-        )
-
-    # Flask server host and port
-    HOST = os.environ.get("GREYNIR_HOST", "localhost")
-    PORT = os.environ.get("GREYNIR_PORT", "5000")  # type: Union[str,int]
-    try:
-        PORT = int(PORT)
-    except ValueError:
-        raise ConfigError(
-            "Invalid environment variable value: GREYNIR_PORT = {0}".format(PORT)
-        )
-
-    # Flask debug parameter
     DEBUG = False
-
-    # Similarity server
-    SIMSERVER_HOST = os.environ.get("SIMSERVER_HOST", "localhost")
-    SIMSERVER_PORT = os.environ.get("SIMSERVER_PORT", "5001")  # type: Union[str,int]
-    try:
-        SIMSERVER_PORT = int(SIMSERVER_PORT)
-    except ValueError:
-        raise ConfigError(
-            "Invalid environment variable value: SIMSERVER_PORT = {0}".format(
-                SIMSERVER_PORT
-            )
-        )
 
     # Configuration settings from the GreynirPackage.conf file
 
@@ -923,7 +631,7 @@ class Settings:
         a = s.lower().split("=", maxsplit=1)
         par = a[0].strip().lower()
         sval = a[1].strip()
-        val = sval  # type: Union[None, str, bool]
+        val: Union[None, str, bool] = sval
         if sval.lower() == "none":
             val = None
         elif sval.lower() == "true":
@@ -931,31 +639,7 @@ class Settings:
         elif sval.lower() == "false":
             val = False
         try:
-            if par == "db_hostname":
-                if not isinstance(val, str):
-                    raise ConfigError("Expected database host name as a string")
-                Settings.DB_HOSTNAME = Settings.BIN_DB_HOSTNAME = val
-            elif par == "db_port":
-                if not isinstance(val, str):
-                    raise ConfigError("Expected port number")
-                Settings.DB_PORT = Settings.BIN_DB_PORT = int(val)
-            elif par == "host":
-                if not isinstance(val, str):
-                    raise ConfigError("Expected host name as a string")
-                Settings.HOST = val
-            elif par == "port":
-                if not isinstance(val, str):
-                    raise ConfigError("Expected port number")
-                Settings.PORT = int(val)
-            elif par == "simserver_host":
-                if not isinstance(val, str):
-                    raise ConfigError("Expected simserver host name as a string")
-                Settings.SIMSERVER_HOST = val
-            elif par == "simserver_port":
-                if not isinstance(val, str):
-                    raise ConfigError("Expected port number")
-                Settings.SIMSERVER_PORT = int(val)
-            elif par == "debug":
+            if par == "debug":
                 Settings.DEBUG = bool(val)
             else:
                 raise ConfigError("Unknown configuration parameter '{0}'".format(par))
@@ -996,101 +680,12 @@ class Settings:
             )
 
     @staticmethod
-    def _handle_abbreviations(s: str) -> None:
-        """ Handle abbreviations in the settings section """
-        # Not required in the GreynirPackage module
-        # and should not occur in its settings files
-        assert False
-
-    @staticmethod
-    def _handle_meanings(s: str) -> None:
-        """ Handle additional word meanings in the settings section """
-        # Not required in the GreynirPackage module
-        # and should not occur in its settings files
-        assert False
-
-    @staticmethod
     def _handle_verb_objects(s: str) -> None:
         """ Handle verb object specifications in the settings section """
-        # Format: verb [arg1] [arg2] [/preposition arg]... [*particle] [$pragma(txt)]
-        # arg can be nf, þf, þgf, ef, nh, falls, sig/sér/sín, bági_kk_ft_þf
-
-        # Start by handling the $score() pragma, if present
-        score = 0
-        ix = s.rfind("$score(")  # Must be at the end
-        if ix >= 0:
-            sc = s[ix:]
-            s = s[0:ix].strip()
-            if not sc.endswith(")"):
-                raise ConfigError("Invalid score pragma; form should be $score(n)")
-            # There is an associated score with this verb form, to be taken
-            # into consideration by the reducer
-            sc = sc[7:-1].strip()
-            try:
-                score = int(sc)
-            except ValueError:
-                raise ConfigError("Invalid score ('{0}') for verb form".format(sc))
-
-        # Check for $error
-        error = None
-        ix = s.rfind("$error(")
-        if ix >= 0:
-            if not s.endswith(")"):
-                raise ConfigError("Invalid error pragma; form should be $error(...)")
-            error = s[ix + 7 : -1].strip()
-            s = s[0:ix].strip()
-            if not error:
-                raise ConfigError("Expected error specification in $error(...)")
-
-        # Process particles, should only be one in each line
-        particle = None
-        ix = s.rfind("*")
-        if ix >= 0:
-            particle = s[ix:].strip()
-            s = s[0:ix].strip()
-            if " " in particle:
-                raise ConfigError("Particle should only be one word")
-            elif len(particle) < 2:
-                raise ConfigError("Particle should be at least one letter")
-
-        # Process preposition arguments, if any
-        prepositions = []  # type: List[Tuple[str, str]]
-        ap = s.split("/")
-        s = ap[0]
-        ix = 1
-        while ix < len(ap):
-            # We expect something like 'af þgf', or possibly
-            # 'fyrir_hönd þf' (where the underscore needs to be replaced by a space)
-            p = ap[ix].strip()
-            parg = p.split()
-            if len(parg) != 2:
-                raise ConfigError("Preposition should have exactly one argument")
-            if parg[1] not in _ALL_CASES and parg[1] not in _SUBCLAUSES:
-                parg[1] = _REFLPRN.get(parg[1], parg[1])
-                spl = parg[1].split("_")
-                if spl[-1] == "gr":
-                    spl = spl[:-1]
-                if spl[-1] not in _ALL_CASES:
-                    raise ConfigError("Preposition argument must have a case as its last variant")
-            prepositions.append((parg[0].replace("_", " "), parg[1]))
-            ix += 1
-
-        # Process verb arguments
-        a = s.split()
-        if len(a) < 1 or len(a) > 3:
-            raise ConfigError("Verb should have zero, one or two arguments")
-        verb = a[0]
-        if not verb.isalpha():
-            raise ConfigError("Verb '{0}' is not a valid word".format(verb))
-
-        # Add to verb database
-        if error:
-            VerbObjects.add_error(verb, a[1:], prepositions, particle, error)
-        else:
-            VerbObjects.add(verb, a[1:], prepositions, particle, score)
+        VerbFrame.create_from_config(s)
 
     @staticmethod
-    def _handle_verb_subjects(s):
+    def _handle_verb_subjects(s: str) -> None:
         """ Handle verb subject specifications in the settings section """
         # Format: subject = [case] followed by verb list
         a = s.lower().split("=", maxsplit=1)
@@ -1119,7 +714,7 @@ class Settings:
             VerbSubjects.add(par)
 
     @staticmethod
-    def _handle_undeclinable_adjectives(s):
+    def _handle_undeclinable_adjectives(s: str) -> None:
         """ Handle list of undeclinable adjectives """
         s = s.lower().strip()
         if not s.isalpha():
@@ -1129,7 +724,7 @@ class Settings:
         UndeclinableAdjectives.add(s)
 
     @staticmethod
-    def _handle_noindex_words(s):
+    def _handle_noindex_words(s: str) -> None:
         """ Handle no index instructions in the settings section """
         # Format: category = [cat] followed by word stem list
         a = s.lower().split("=", maxsplit=1)
@@ -1145,7 +740,7 @@ class Settings:
         NoIndexWords.add(par)
 
     @staticmethod
-    def _handle_topics(s):
+    def _handle_topics(s: str) -> None:
         """ Handle topic specifications """
         # Format: name = [topic name] followed by word stem list in the form word/cat
         a = s.split("=", maxsplit=1)
@@ -1161,11 +756,11 @@ class Settings:
         Topics.add(par)
 
     @staticmethod
-    def _handle_prepositions(s):
+    def _handle_prepositions(s: str) -> None:
         """ Handle preposition specifications in the settings section """
         # Format: pw1 pw2... case [nh]  [$error(X)]
         error = False
-        corr = None  # type: Optional[Tuple[str, Optional[str]]]
+        corr: Optional[Tuple[str, Optional[str]]] = None
         ix = s.rfind("$error(")  # Must be at the end
         if ix >= 0:
             # A typical format is $error(FORM-inn_á)
@@ -1207,7 +802,7 @@ class Settings:
             Prepositions.add_error(pp, c, corr)
 
     @staticmethod
-    def _handle_preferences(s):
+    def _handle_preferences(s: str) -> None:
         """ Handle ambiguity preference hints in the settings section """
         # Format: word worse1 worse2... < better
         # If two less-than signs are used, the preference is even stronger (tripled)
@@ -1236,7 +831,7 @@ class Settings:
         Preferences.add(w[0], w[1:], b, factor)
 
     @staticmethod
-    def _handle_stem_preferences(s):
+    def _handle_stem_preferences(s: str) -> None:
         """ Handle stem ambiguity preference hints in the settings section """
         # Format: word worse1 worse2... < better
         a = s.lower().split("<", maxsplit=1)
@@ -1255,7 +850,7 @@ class Settings:
         StemPreferences.add(w[0], w[1:], b)
 
     @staticmethod
-    def _handle_noun_preferences(s):
+    def _handle_noun_preferences(s: str) -> None:
         """ Handle noun preference hints in the settings section """
         # Format: noun worse1 worse2... < better
         # The worse and better specifiers are gender names (kk, kvk, hk)
@@ -1271,12 +866,12 @@ class Settings:
         NounPreferences.add(w[0], w[1], b[0])
 
     @staticmethod
-    def _handle_name_preferences(s):
+    def _handle_name_preferences(s: str) -> None:
         """ Handle well-known person names in the settings section """
         NamePreferences.add(s)
 
     @staticmethod
-    def _handle_bin_errata(s):
+    def _handle_bin_errata(s: str) -> None:
         """ Handle changes to BÍN categories ('fl') """
         a = s.split()
         if len(a) != 3:
@@ -1289,7 +884,7 @@ class Settings:
         BinErrata.add(stem, ordfl, fl)
 
     @staticmethod
-    def _handle_bin_deletions(s):
+    def _handle_bin_deletions(s: str) -> None:
         """ Handle deletions from BÍN, given as stem/ordfl/fl triples """
         a = s.split()
         if len(a) != 3:
@@ -1304,13 +899,14 @@ class Settings:
         BinDeletions.add(stem, ordfl, fl)
 
     @staticmethod
-    def _handle_ambiguous_phrases(s):
+    def _handle_ambiguous_phrases(s: str) -> None:
         """ Handle ambiguous phrase guidance in the settings section """
         # Format: "word1 word2..." cat1 cat2...
         error = False
         if s[0] != '"':
             raise ConfigError("Ambiguous phrase must be enclosed in double quotes")
         ix = s.rfind("$error(")  # Must be at the end
+        e: List[str] = []
         if ix >= 0:
             error = True
             # A typical format is
@@ -1336,7 +932,9 @@ class Settings:
             )
         # Convert the list of category specifiers to a tuple of frozensets of
         # word categories
-        cats_t = tuple(frozenset(cat.split("/")) for cat in cats)
+        cats_t: Tuple[FrozenSet[str], ...] = tuple(
+            frozenset(cat.split("/")) for cat in cats
+        )
         # Check for something like ao/ or so//fs
         if any("" in cats_set for cats_set in cats_t):
             raise ConfigError("Empty category set not allowed")
@@ -1348,7 +946,7 @@ class Settings:
             AmbigPhrases.add_error(s[1:q].strip().lower(), e)
 
     @staticmethod
-    def _handle_adjective_template(s):
+    def _handle_adjective_template(s: str) -> None:
         """ Handle the template for new adjectives in the settings section """
         # Format: adjective-ending bin-meaning
         a = s.split()
@@ -1359,7 +957,7 @@ class Settings:
         AdjectiveTemplate.add(a[0], a[1])
 
     @staticmethod
-    def _handle_disallowed_names(s):
+    def _handle_disallowed_names(s: str) -> None:
         """ Handle disallowed person name forms from the settings section """
         # Format: Name-stem case1 case2...
         a = s.split()
@@ -1370,10 +968,11 @@ class Settings:
         DisallowedNames.add(a[0], a[1:])
 
     @staticmethod
-    def _handle_adjective_predicates(s):
+    def _handle_adjective_predicates(s: str) -> None:
         # Process preposition arguments, if any
         error = False
         ix = s.rfind("$error(")  # Must be at the end
+        e: List[str] = []
         if ix >= 0:
             error = True
             # A typical format is
@@ -1381,7 +980,7 @@ class Settings:
             e = s[ix + 7 :].lstrip().rstrip(" )").split(",")
             s = s[:ix].strip()
 
-        prepositions = []
+        prepositions: List[Tuple[str, str]] = []
         ap = s.split("/")
         s = ap[0]
         ix = 1
@@ -1391,7 +990,7 @@ class Settings:
             parg = p.split()
             if len(parg) != 2:
                 raise ConfigError("Preposition should have exactly one argument")
-            if parg[1] not in _ALL_CASES:
+            if parg[1] not in ALL_CASES:
                 raise ConfigError("Unknown argument case for preposition")
             prepositions.append((parg[0], parg[1]))
             ix += 1
@@ -1403,7 +1002,7 @@ class Settings:
             AdjectivePredicates.add(adj, a[1:], prepositions)
 
     @staticmethod
-    def read(fname):
+    def read(fname: str) -> None:
         """ Read configuration file """
 
         with Settings._lock:
@@ -1411,10 +1010,9 @@ class Settings:
             if Settings.loaded:
                 return
 
-            CONFIG_HANDLERS = {
+            CONFIG_HANDLERS: Dict[str, Callable[[str], None]] = {
                 "settings": Settings._handle_settings,
                 "static_phrases": Settings._handle_static_phrases,
-                "abbreviations": Settings._handle_abbreviations,
                 "verb_objects": Settings._handle_verb_objects,
                 "verb_subjects": Settings._handle_verb_subjects,
                 "prepositions": Settings._handle_prepositions,
@@ -1423,7 +1021,6 @@ class Settings:
                 "name_preferences": Settings._handle_name_preferences,
                 "stem_preferences": Settings._handle_stem_preferences,
                 "ambiguous_phrases": Settings._handle_ambiguous_phrases,
-                "meanings": Settings._handle_meanings,
                 "adjective_template": Settings._handle_adjective_template,
                 "undeclinable_adjectives": Settings._handle_undeclinable_adjectives,
                 "disallowed_names": Settings._handle_disallowed_names,
@@ -1433,9 +1030,9 @@ class Settings:
                 "bin_errata": Settings._handle_bin_errata,
                 "bin_deletions": Settings._handle_bin_deletions,
             }
-            handler = None  # Current section handler
+            handler: Optional[Callable[[str], None]] = None  # Current section handler
 
-            rdr = None
+            rdr: Optional[LineReader] = None
             try:
                 rdr = LineReader(fname)
                 for s in rdr.lines():
