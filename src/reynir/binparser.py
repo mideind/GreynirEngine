@@ -42,14 +42,26 @@
 
 """
 
-from typing import cast, Dict, Set, Tuple, List, Union, Iterable, Optional, Any
+from typing import (
+    cast,
+    Dict,
+    Set,
+    Tuple,
+    List,
+    Union,
+    Iterable,
+    Callable,
+    Hashable,
+    Optional,
+    Any,
+)
 
 import os
 import time
 import re
 
 from datetime import datetime
-from functools import reduce
+from functools import reduce, lru_cache
 import json
 
 from tokenizer import TOK, Tok, Abbreviations
@@ -57,11 +69,11 @@ from tokenizer import TOK, Tok, Abbreviations
 from .settings import (
     Settings,
     StaticPhrases,
-    VerbObjects,
     VerbSubjects,
     Prepositions,
     AdjectivePredicates,
 )
+from .verbframe import VerbFrame
 from .grammar import (
     Terminal,
     LiteralTerminal,
@@ -615,8 +627,6 @@ class BIN_Token(Token):
     # Dictionary of associated BIN forms, initialized later
     _VERB_FORMS: Optional[Dict[str, str]] = None
 
-    # Cache the dictionary of verb objects from settings.py
-    _VERB_OBJECTS = VerbObjects.VERBS
     # Cache the dictionary of verb subjects from settings.py
     _VERB_SUBJECTS = VerbSubjects.VERBS
     # Cache the dictionary of adjective predicates/arguments from settings.py
@@ -774,7 +784,7 @@ class BIN_Token(Token):
             self.t2 = t[2]
         # True if starts with upper case
         self.is_upper = self.t1[0] != self.t1_lower[0]
-        self._hash = None  # Cached hash
+        self._hash: Optional[int] = None  # Cached hash
         self._index = original_index  # Index of original token within sentence
 
         # Copy error information from the original token, if any
@@ -804,7 +814,7 @@ class BIN_Token(Token):
         return self._index
 
     @property
-    def error(self):
+    def error(self) -> Any:
         """ Return the error object associated with this token, if any """
         return self._error
 
@@ -873,8 +883,8 @@ class BIN_Token(Token):
         # nominal form (unless it already ends with "st").
         return verb if verb.endswith("st") else verb + "st"
 
-    @staticmethod
-    def verb_is_strictly_impersonal(verb: str, form: str) -> bool:
+    @classmethod
+    def verb_is_strictly_impersonal(cls, verb: str, form: str) -> bool:
         """ Return True if the given verb is strictly impersonal,
             i.e. never appears with a nominative subject """
         # This is overridden in reynir_correct.checker
@@ -882,25 +892,27 @@ class BIN_Token(Token):
         # since that check is done in the _RESTRICTIVE_VARIANTS loop.
         return VerbSubjects.is_strictly_impersonal(verb)
 
-    @staticmethod
-    def verb_cannot_be_impersonal(verb: str, form: str) -> bool:
+    @classmethod
+    def verb_cannot_be_impersonal(cls, verb: str, form: str) -> bool:
         """ Return True if this verb cannot match an so_xxx_op terminal """
         # If the verb doesn't have OP (impersonal) in its form, it
         # can't match an _op terminal
         return "OP" not in form
 
-    def verb_subject_matches(self, verb: str, subj: str) -> bool:
+    @classmethod
+    def verb_subject_matches(cls, verb: str, subj: str) -> bool:
         """ Returns True if the given subject type/case is allowed for this verb """
-        return subj in self._VERB_SUBJECTS.get(verb, set())
+        return subj in cls._VERB_SUBJECTS.get(verb, set())
 
     # Variants that must be present in the verb form if they
     # are present in the terminal
     _RESTRICTIVE_VARIANTS: Tuple[str, ...] = ("sagnb", "lhþt", "bh", "op")
 
-    def verb_matches(self, verb, terminal, form):
-        """ Return True if the infinitive in question matches the verb category,
-            where the category is one of so_0, so_1, so_2 depending on
-            the allowable number of noun phrase arguments """
+    @classmethod
+    @lru_cache(maxsize=2048)
+    def verb_matches(cls, verb: str, terminal: "BIN_Terminal", form: str) -> bool:
+        """ Return True if the verb lemma with the given BÍN inflection string
+            matches the verb terminal (so_xxx_...) """
 
         if terminal.is_subj:
             # Verb subject in non-nominative case
@@ -927,7 +939,7 @@ class BIN_Token(Token):
                 return False
             form_lh = "LHÞT" in form
             if terminal.is_lh:
-                return form_lh and self.verb_subject_matches(verb, "lhþt")
+                return form_lh and cls.verb_subject_matches(verb, "lhþt")
             # Don't allow the past participle unless explicitly requested in terminal
             if form_lh:
                 return False
@@ -937,12 +949,12 @@ class BIN_Token(Token):
                 # subject list in Verbs.conf
                 if terminal.is_sagnb != form_sagnb:
                     return False
-                return self.verb_subject_matches(verb, "none")
+                return cls.verb_subject_matches(verb, "none")
             if form_sagnb and not terminal.is_sagnb:
                 # For regular subj, we don't allow supine (sagnbót)
                 # ('langað', 'þótt')
                 return False
-            if terminal.has_variant("op") and self.verb_cannot_be_impersonal(
+            if terminal.has_variant("op") and cls.verb_cannot_be_impersonal(
                 verb, form
             ):
                 # This can't work, as the verb can't be impersonal
@@ -956,28 +968,21 @@ class BIN_Token(Token):
                 assert nargs == 1
                 if nargs != 1:
                     return False
-                # Point to dict of single-argument verbs
-                verb_objects = self._VERB_OBJECTS[nargs]
-                if verb not in verb_objects:
-                    # Verb does not allow a single argument: we're done
-                    return False
-                # The case of the argument is in the second variant,
-                # immediately following the nargs
-                arg_case = terminal.variant(1)
-                assert arg_case in BIN_Token.CASES_SET
-                objects = cast(Dict, verb_objects)[verb]
-                if all(arg_case != argspec[0] for argspec in objects):
-                    # This verb does not allow an argument in the specified case
+                # Check whether the verb allows a single argument
+                # in the case indicated in the terminal (second variant,
+                # immediately following the nargs)
+                key = verb + "_" + terminal.variant(1)
+                if not VerbFrame.matches_arguments(key):
                     return False
             # Finally, make sure that the subject case (which is always
             # in the last variant) matches the terminal
-            return self.verb_subject_matches(verb, terminal.variant(-1))
+            return cls.verb_subject_matches(verb, terminal.variant(-1))
 
         # Not a _subj terminal: no match of strictly impersonal verbs
         # Note that this is overridden in reynir_correct to
         # allow impersonal verbs to be used as normal verbs
         # for grammar checking purposes
-        if self.verb_is_strictly_impersonal(verb, form):
+        if cls.verb_is_strictly_impersonal(verb, form):
             return False
 
         if terminal.is_singular and "FT" in form:
@@ -987,10 +992,10 @@ class BIN_Token(Token):
             # Can't use singular verb if plural terminal
             return False
         # Check that person (1st, 2nd, 3rd) and other variant requirements match
-        assert BIN_Token._VERB_FORMS is not None
+        assert cls._VERB_FORMS is not None
         for v in terminal.variants:
             # Lookup variant to see if it is one of the required ones for verbs
-            rq = BIN_Token._VERB_FORMS.get(v)
+            rq = cls._VERB_FORMS.get(v)
             if rq is not None and rq not in form:
                 # If this is required variant that is not found in the form we have,
                 # return False
@@ -998,8 +1003,8 @@ class BIN_Token(Token):
         # Check restrictive variants, i.e. we don't accept meanings
         # that have those unless they are explicitly present in the terminal
         # Be careful with "lh" here
-        for v in self._RESTRICTIVE_VARIANTS:
-            if BIN_Token.VARIANT[v] in form and not terminal.has_variant(v):
+        for v in cls._RESTRICTIVE_VARIANTS:
+            if (cls.VARIANT.get(v) or "") in form and not terminal.has_variant(v):
                 return False
         if terminal.is_lh:
             if "VB" in form and not terminal.has_variant("vb"):
@@ -1020,62 +1025,35 @@ class BIN_Token(Token):
                 # Special check for lhþt: may specify a case without it
                 # being an argument case
                 if any(
-                    terminal.has_variant(c) and BIN_Token.VARIANT[c] not in form
-                    for c in BIN_Token.CASES
+                    terminal.has_variant(c)
+                    and (cls.VARIANT.get(c) or "") not in form
+                    for c in cls.CASES
                 ):
                     # Terminal specified a non-argument case but
                     # the token doesn't have it: no match
                     return False
             return True
+        # Is this a middle voice inflection form?
         is_mm = "MM" in form
-        nargs = int(terminal.variant(0))
         if is_mm:
             # For MM forms, do not use the normal infinitive of the verb
-            # for lookup in the BIN_Token._VERB_OBJECTS collection;
-            # instead, use the MM-NH infinitive.
+            # to look up the verb frame; instead, use the MM-NH infinitive.
             # This means that for instance "eignaðist hest" is not resolved
             # to "eigna" but to "eignast"
-            verb = self.mm_verb_stem(verb)
-        verb_objects = self._VERB_OBJECTS[nargs]
-        if verb in verb_objects:
-            # Seems to take the correct number of arguments:
-            # do a further check on the supported cases
-            if nargs == 0:
-                # Zero arguments: that's simple
-                return True
-            # Does this terminal require argument cases?
-            if terminal.num_variants < 2:
-                # No: we don't need to check further
-                return True
-            # The following is not consistent as some verbs take
-            # legitimate arguments in the middle voice, such as 'krefjast', 'ábyrgjast'
-            # 'undirgangast', 'minnast'. They are also not consistently
-            # annotated in BIN; some of them are marked as MM and some not.
-            if nargs > 1 and is_mm:
-                # Temporary compromise: Don't accept verbs in the middle voice
-                # if taking >1 arguments
-                # TODO: Change if necessary.
-                return False
-            # Check whether the parameters of this verb
-            # match up with the requirements of the terminal
-            # as specified in its variants at indices 1 and onward
-            objects = cast(Dict, verb_objects)[verb]
-            for argspec in objects:
-                if all(terminal.variant(1 + ix) == c for ix, c in enumerate(argspec)):
-                    # All variants match this spec: we're fine
-                    return True
-            # No match: return False
-            return False
-        # It's not there with the correct number of arguments:
-        # see if it definitely has fewer ones
-        for i in range(0, nargs):
-            if verb in self._VERB_OBJECTS[i]:
-                # Prevent verb from matching a terminal if it
-                # doesn't have all the arguments that the terminal requires
-                return False
-        return True
+            verb = cls.mm_verb_stem(verb)
+        # Check whether this verb + the terminal argument specification
+        # is found in the verb frame database
+        key = verb + terminal.verb_cases
+        if VerbFrame.matches_arguments(key):
+            return True
+        if terminal.verb_cases == "" and not VerbFrame.known(verb):
+            # Allow unknown verbs to match 0-argument terminals;
+            # 'so_0_p3_et' thus matches 'veipaði' even if that verb
+            # is not described in Verbs.conf.
+            return True
+        return False
 
-    def matches_PERSON(self, terminal):
+    def matches_PERSON(self, terminal: "BIN_Terminal") -> bool:
         """ Handle a person name token, matching it with
             a person_[case]_[gender] terminal """
         if terminal.startswith("sérnafn"):
@@ -1110,7 +1088,7 @@ class BIN_Token(Token):
             case == m.case and (gender is None or gender == m.gender) for m in self.t2
         )
 
-    def matches_ENTITY(self, terminal):
+    def matches_ENTITY(self, terminal: "BIN_Terminal") -> bool:
         """ Handle an entity name token, matching it with an entity terminal """
         # An entity name is 1) uppercase; 2) can be multi-word (all uppercase, such
         # as "Goldman Sachs"); 3) not found in BÍN
@@ -1125,11 +1103,11 @@ class BIN_Token(Token):
         #    return False
         # return all(n[0].isupper() for n in a)
 
-    def matches_PUNCTUATION(self, terminal):
+    def matches_PUNCTUATION(self, terminal: "BIN_Terminal") -> bool:
         """ Match a literal terminal with the same content as the punctuation token """
         return terminal.matches("punctuation", self.t1, self.t1)
 
-    def matches_CURRENCY(self, terminal):
+    def matches_CURRENCY(self, terminal: "BIN_Terminal") -> bool:
         """ A currency name token matches a noun (no) terminal,
             or a currency/iso/fall terminal """
         if terminal.startswith("currency"):
@@ -1164,7 +1142,7 @@ class BIN_Token(Token):
             return not terminal.has_any_vbits(BIN_Token.VBIT_KK | BIN_Token.VBIT_KVK)
         return True
 
-    def is_correct_singular_or_plural(self, terminal):
+    def is_correct_singular_or_plural(self, terminal: "BIN_Terminal") -> bool:
         """ Match a number with a singular or plural noun (terminal).
             In Icelandic, all integers whose modulo 100 ends in 1 are
             singular, except 11. """
@@ -1188,7 +1166,7 @@ class BIN_Token(Token):
             return False
         return True
 
-    def matches_NUMBER(self, terminal):
+    def matches_NUMBER(self, terminal: "BIN_Terminal") -> bool:
         """ A number token matches a 'tala', 'töl' or 'to' terminal """
         tfirst = terminal.first
 
@@ -1236,10 +1214,10 @@ class BIN_Token(Token):
 
         return True
 
-    def matches_NUMWLETTER(self, terminal):
+    def matches_NUMWLETTER(self, terminal: "BIN_Terminal") -> bool:
         return terminal.startswith("talameðbókstaf")
 
-    def matches_AMOUNT(self, terminal):
+    def matches_AMOUNT(self, terminal: "BIN_Terminal") -> bool:
         """ An amount token matches an amount terminal and a noun terminal """
         if terminal.startswith("amount"):
             if terminal.num_variants >= 1 and terminal.variant(0).upper() != self.t2[1]:
@@ -1276,7 +1254,7 @@ class BIN_Token(Token):
                     return False
         return True
 
-    def matches_PERCENT(self, terminal):
+    def matches_PERCENT(self, terminal: "BIN_Terminal") -> bool:
         """ A percent token matches a number (töl) or noun terminal """
         if terminal.startswith("töl") or terminal.startswith("prósenta"):
             return True
@@ -1299,7 +1277,7 @@ class BIN_Token(Token):
         # '35% skattur' and '1% allra blóma' are valid
         return True
 
-    def matches_YEAR(self, terminal):
+    def matches_YEAR(self, terminal: "BIN_Terminal") -> bool:
         """ A year token matches a number (töl) or year (ártal) terminal """
         if terminal.first not in {"töl", "ártal", "tala"}:
             return False
@@ -1312,85 +1290,85 @@ class BIN_Token(Token):
         # No case associated with year numbers: match all
         return True
 
-    def matches_DATE(self, terminal):
+    def matches_DATE(self, terminal: "BIN_Terminal") -> bool:
         """ A date token matches a date (dags) terminal """
         return terminal.startswith("dags")
 
-    def matches_DATEABS(self, terminal):
+    def matches_DATEABS(self, terminal: "BIN_Terminal") -> bool:
         """ An absolute date token matches an absolute date (dagsföst) terminal """
         return terminal.startswith("dagsföst")
 
-    def matches_DATEREL(self, terminal):
+    def matches_DATEREL(self, terminal: "BIN_Terminal") -> bool:
         """ A relative date token matches a relative date (dagsafs) terminal """
         return terminal.startswith("dagsafs")
 
-    def matches_TIME(self, terminal):
+    def matches_TIME(self, terminal: "BIN_Terminal") -> bool:
         """ A time token matches a time (tími) terminal """
         return terminal.startswith("tími")
 
-    def matches_TIMESTAMP(self, terminal):
+    def matches_TIMESTAMP(self, terminal: "BIN_Terminal") -> bool:
         """ A timestamp token matches a timestamp (tímapunktur) terminal """
         return terminal.startswith("tímapunktur")
 
-    def matches_TIMESTAMPABS(self, terminal):
+    def matches_TIMESTAMPABS(self, terminal: "BIN_Terminal") -> bool:
         """ An absolute timestamp token matches an absolute timestamp
             (tímapunkturfast) terminal """
         return terminal.startswith("tímapunkturfast")
 
-    def matches_TIMESTAMPREL(self, terminal):
+    def matches_TIMESTAMPREL(self, terminal: "BIN_Terminal") -> bool:
         """ A relative timestamp token matches a relative timestamp
             (tímapunkturafs) terminal """
         return terminal.startswith("tímapunkturafs")
 
-    def matches_ORDINAL(self, terminal):
+    def matches_ORDINAL(self, terminal: "BIN_Terminal") -> bool:
         """ An ordinal token matches an ordinal (raðnr) terminal """
         return terminal.startswith("raðnr")
 
-    def matches_MEASUREMENT(self, terminal):
+    def matches_MEASUREMENT(self, terminal: "BIN_Terminal") -> bool:
         """ A measurement token matches a measurement (mælieining) terminal """
         return terminal.startswith("mælieining")
 
-    def matches_DOMAIN(self, terminal):
+    def matches_DOMAIN(self, terminal: "BIN_Terminal") -> bool:
         """ A domain token matches a domain (lén) terminal """
         return terminal.startswith("lén")
 
-    def matches_HASHTAG(self, terminal):
+    def matches_HASHTAG(self, terminal: "BIN_Terminal") -> bool:
         """ A hashtag token matches a hashtag (myllumerki) terminal """
         return terminal.startswith("myllumerki")
 
-    def matches_SSN(self, terminal):
+    def matches_SSN(self, terminal: "BIN_Terminal") -> bool:
         """ A social security number token matches an ssn (kennitala) terminal """
         return terminal.startswith("kennitala")
 
-    def matches_MOLECULE(self, terminal):
+    def matches_MOLECULE(self, terminal) -> bool:
         """ A molecule token matches a molecule (sameind) terminal """
         return terminal.startswith("sameind")
 
-    def matches_USERNAME(self, terminal):
+    def matches_USERNAME(self, terminal: "BIN_Terminal") -> bool:
         """ A username token matches a username (notandanafn) terminal """
         return terminal.startswith("notandanafn")
 
-    def matches_URL(self, terminal):
+    def matches_URL(self, terminal: "BIN_Terminal") -> bool:
         """ A URL token matches a URL (vefslóð) terminal """
         return terminal.startswith("vefslóð")
 
-    def matches_EMAIL(self, terminal):
+    def matches_EMAIL(self, terminal: "BIN_Terminal") -> bool:
         """ A e-mail token matches a e-mail (tölvupóstfang) terminal """
         return terminal.startswith("tölvupóstfang")
 
-    def matches_SERIALNUMBER(self, terminal):
+    def matches_SERIALNUMBER(self, terminal: "BIN_Terminal") -> bool:
         """ A serial number token matches a serial number (vörunúmer) terminal """
         return terminal.startswith("vörunúmer")
 
-    def matches_TELNO(self, terminal):
+    def matches_TELNO(self, terminal: "BIN_Terminal") -> bool:
         """ A telephone number token matches a telephone number (símanúmer) terminal """
         return terminal.startswith("símanúmer")
 
-    def matches_COMPANY(self, terminal):
+    def matches_COMPANY(self, terminal: "BIN_Terminal") -> bool:
         """ A company token matches a company (fyrirtæki) terminal """
         return terminal.startswith("fyrirtæki")
 
-    def matches_WORD(self, terminal):
+    def matches_WORD(self, terminal: "BIN_Terminal") -> Union[BIN_Meaning, bool]:
         """ Match a word token, having the potential part-of-speech meanings
             from the BIN database, with the terminal """
 
@@ -1420,7 +1398,9 @@ class BIN_Token(Token):
         )
 
     # Dispatch table for the token matching functions
-    _MATCHING_FUNC = {
+    _MATCHING_FUNC: Dict[
+        int, Callable[["BIN_Token", "BIN_Terminal"], Union[BIN_Meaning, bool]]
+    ] = {
         TOK.PERSON: matches_PERSON,
         TOK.ENTITY: matches_ENTITY,
         TOK.PUNCTUATION: matches_PUNCTUATION,
@@ -1453,7 +1433,7 @@ class BIN_Token(Token):
     }
 
     @classmethod
-    def is_understood(cls, t):
+    def is_understood(cls, t: Tok) -> bool:
         """ Return True if the token type is understood by the BIN Parser """
         if t[0] == TOK.PUNCTUATION:
             # A limited number of punctuation symbols is currently understood
@@ -1461,7 +1441,7 @@ class BIN_Token(Token):
             return t[2][1] in cls._UNDERSTOOD_PUNCTUATION
         return t[0] in cls._MATCHING_FUNC
 
-    def match_with_meaning(self, terminal):
+    def match_with_meaning(self, terminal: "BIN_Terminal") -> Union[bool, BIN_Meaning]:
         """ Return False if this token does not match the given terminal;
             otherwise True or the actual meaning tuple that matched """
         # If the terminal is able to shortcut this match without
@@ -1476,18 +1456,18 @@ class BIN_Token(Token):
         # Dispatch the token matching according to the dispatch table in _MATCHING_FUNC
         return self._matching_func(self, terminal)
 
-    def matches(self, terminal):
+    def matches(self, terminal: Terminal) -> bool:
         """ Return True if this token matches the given terminal """
-        return self.match_with_meaning(terminal) is not False
+        return self.match_with_meaning(cast(BIN_Terminal, terminal)) != False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "[" + self.kind + ": " + self.t1 + "]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "'" + self.t1 + "'"
 
     @property
-    def key(self):
+    def key(self) -> Tuple[Hashable, ...]:
         """ Return a hashable key that partitions tokens based on
             effective identity, i.e. tokens with the same hash can be considered
             equivalent for parsing purposes. This hash is inter alia used by the
@@ -1501,14 +1481,14 @@ class BIN_Token(Token):
         # Otherwise, the t0 and t1 fields are enough
         return self.t0, self.t1
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """ Calculate and cache a hash for this token """
         if self._hash is None:
             self._hash = hash(self.key)
         return self._hash
 
     @classmethod
-    def init(cls):
+    def init(cls) -> None:
         # Initialize cached dictionary of verb variant forms in BIN
         cls._VERB_FORMS = {v: cls.VARIANT[v] or "" for v in cls.VERB_VARIANTS}
 

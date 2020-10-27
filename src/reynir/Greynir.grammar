@@ -117,8 +117,10 @@
 # Hacks to generate single variants only
 /hk = hk
 /kvk = kvk
+/nf = nf
 /þf = þf
 /et = et
+/p3 = p3
 
 # GRAMMAR RULES
 
@@ -349,7 +351,7 @@ Spurnarsetning →
     SpurnarNafnliður/tala/fall/kyn BeygingarliðurSögnFremst? Spurningarmerki   
     | SpurnarForsetningarliður BeygingarliðurSögnFremst? Spurningarmerki       # Í hvaða fötum er barnið?
     | SpurnarAtviksorð BeygingarliðurSögnFremst? Spurningarmerki               # Hvernig missti tröllið lífið?
-    | SpurnarFrumlag/pers/tala/kyn BlTagl/tala/pers/kyn? Spurningarmerki       # Hvað er í pokanum?
+    | SpurnarFrumlag/tala/kyn BlTagl/tala/p3/kyn? Spurningarmerki              # Hvað er í pokanum?
     | BeygingarliðurSögnFremst Spurningarmerki                                 # Getur þú hlaupið hratt?
 
 # Spurnarorðið er frumlag setningarinnar, stendur utan beygingarliðar
@@ -358,8 +360,8 @@ BlTagl/tala/pers/kyn →
         SagnRuna/tala/pers/kyn Sjálfur/tala/kyn?
         KommaTilvísunarsetning/tala/pers/kyn? Upptalning/tala?
 
-SpurnarFrumlag/pers/tala/kyn →
-    SpurnarNafnliður/tala/fall/kyn FsMeðFallstjórn?
+SpurnarFrumlag/tala/kyn →
+    SpurnarNafnliður/tala/nf/kyn FsMeðFallstjórn?
 
 $score(+8) Spurnarsetning
 
@@ -488,20 +490,20 @@ Spurnaraukasetning →
     SpurnarNafnliður/tala/fall/kyn FsMeðFallstjórn? BeygingarliðurÁnUmröðunar?
     | SpurnarForsetningarliður BeygingarliðurÁnUmröðunar?
     | SpurnarAtviksorð FsMeðFallstjórn? BeygingarliðurÁnUmröðunar?
-    | SpurnarFrumlag/pers/tala/kyn BlTagl/tala/pers/kyn?
+    | SpurnarFrumlag/tala/kyn BlTagl/tala/p3/kyn?
 
 SpurnarNafnliður/tala/fall/kyn →
-    'hver:fn'/tala/fall/kyn Nl_ef_ft/pers/kyn?
-    | 'hver:fn'/tala/fall/kyn AfLiður/kyn
-    | 'hvor:fn'/tala/fall/kyn Nl_ef_ft/pers/kyn?
-    | 'hvor:fn'/tala/fall/kyn Nl/fall/tala
-    | 'hvor:fn'/tala/fall/kyn AfLiður/kyn
-    | 'hvaða:fn'/tala/fall/kyn Nl/fall/tala
-    | 'hver:fn'_ef_et_kk 'konar:kk'_ef_et Nl/fall/tala
-    | HversuHve Lo/fall/tala/kyn Nl/fall/tala
-    | HversuHve Lo/fall/tala/kyn AfLiður/kyn?
-    | HversuHve ao                  # TODO þrengja í ao sem tákna tíð, hátt, ...?
-    | "hvernig:ao" Nl/fall/tala     # Hægt að nota hliðstætt með nafnlið
+    'hver:fn'/tala/fall/kyn AfLiður/kyn?         # hvern [af mönnunum] ertu að tala um?
+    | 'hver:fn'_et/fall/kyn Nl_ef_ft/kyn         # hvern mannanna, hvert barnanna
+    | 'hvor:fn'/tala/fall/kyn AfLiður/kyn?       # hvorn [af mönnunm] ertu að tala um?
+    | 'hvor:fn'_et/fall/kyn Nl_ef_ft/kyn         # hvorn mannanna
+    | 'hvor:fn'/tala/fall/kyn Nl/fall/tala/kyn   # hvorn manninn, hver barnanna
+    | 'hvaða:fn'/tala/fall/kyn Nl/fall/tala/kyn  # hvaða mann, hvaða börn
+    | 'hver:fn'_ef_et_kk 'konar:kk'_ef_et Nl/fall/tala/kyn # hvers konar blóm
+    | HversuHve Lo/fall/tala/kyn Nl/fall/tala/kyn # hversu mikinn þrýsting
+    | HversuHve Lo/fall/tala/kyn AfLiður/kyn?    # hversu mikið af bensíni
+    | "hvernig:ao" Nl/fall/tala/kyn     # Hægt að nota hliðstætt með nafnlið
+    | HversuHve ao                      # TODO þrengja í ao sem tákna tíð, hátt, ...?
 
 SpurnarForsetningarliður →
     fs/fall SpurnarNafnliður/tala/fall/kyn
@@ -902,6 +904,7 @@ $tag(begin_prep_scope) SetningAð
 SetningAðHugsaSér →
     Nhm 'hugsa:so'_1_þgf_gm_nh abfn_þgf # 'Að hugsa sér [, sagði Anna]'
 
+# Nafnháttarmerki, 'að'
 Nhm → nhm
 
 $score(+2) SetningAðHugsaSér
@@ -1861,6 +1864,9 @@ BhBotnTagl/tala/kyn →
 
 BhBotn →
     AðLiður
+
+# Reyna að láta SagnInnskot tilheyra boðháttarsögninni sjálfri frekar en botninum
+$score(-3) BhBotn
 
 SögnFrh_bh →
     KommuSögn_bh* OgSögn_bh+
@@ -3023,9 +3029,15 @@ OgNhLiður →
 # NhSögnAtv tengir saman sögn í nafnhætti og hugsanlega forsetningarliði sem
 # eiga að hanga á henni fremur en ofar í trénu
 NhSögnAtv →
-    NhSögn SagnInnskot?
+    NhSögn NhSagnInnskot?
 
 $tag(begin_prep_scope) NhSögnAtv
+
+NhSagnInnskot → SagnInnskot
+
+# Gefa smá viðbót á SagnInnskot hér til að líma forsetningu frekar inn í
+# nafnháttarlið heldur en að láta hana tengjast ofar í trénu
+$score(+3) NhSagnInnskot
 
 NhSögn →
     so_0_nh so_0_gm_vh_p3_et? OgNhSögn*                                              # að kjósa [þurfi] og telja (upp á nýtt)
