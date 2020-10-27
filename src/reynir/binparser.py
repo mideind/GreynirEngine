@@ -123,7 +123,7 @@ class WordMatchers:
         verb = m.stofn
         if "-" in verb:
             verb = verb.rsplit("-", maxsplit=1)[-1]
-        return BIN_Token.verb_matches(verb, terminal, m.beyging)
+        return token.verb_matches(verb, terminal, m.beyging)
 
     @staticmethod
     def matcher_no(token, terminal, m):
@@ -883,8 +883,8 @@ class BIN_Token(Token):
         # nominal form (unless it already ends with "st").
         return verb if verb.endswith("st") else verb + "st"
 
-    @staticmethod
-    def verb_is_strictly_impersonal(verb: str, form: str) -> bool:
+    @classmethod
+    def verb_is_strictly_impersonal(cls, verb: str, form: str) -> bool:
         """ Return True if the given verb is strictly impersonal,
             i.e. never appears with a nominative subject """
         # This is overridden in reynir_correct.checker
@@ -892,25 +892,25 @@ class BIN_Token(Token):
         # since that check is done in the _RESTRICTIVE_VARIANTS loop.
         return VerbSubjects.is_strictly_impersonal(verb)
 
-    @staticmethod
-    def verb_cannot_be_impersonal(verb: str, form: str) -> bool:
+    @classmethod
+    def verb_cannot_be_impersonal(cls, verb: str, form: str) -> bool:
         """ Return True if this verb cannot match an so_xxx_op terminal """
         # If the verb doesn't have OP (impersonal) in its form, it
         # can't match an _op terminal
         return "OP" not in form
 
-    @staticmethod
-    def verb_subject_matches(verb: str, subj: str) -> bool:
+    @classmethod
+    def verb_subject_matches(cls, verb: str, subj: str) -> bool:
         """ Returns True if the given subject type/case is allowed for this verb """
-        return subj in BIN_Token._VERB_SUBJECTS.get(verb, set())
+        return subj in cls._VERB_SUBJECTS.get(verb, set())
 
     # Variants that must be present in the verb form if they
     # are present in the terminal
     _RESTRICTIVE_VARIANTS: Tuple[str, ...] = ("sagnb", "lhþt", "bh", "op")
 
-    @staticmethod
+    @classmethod
     @lru_cache(maxsize=2048)
-    def verb_matches(verb: str, terminal: "BIN_Terminal", form: str) -> bool:
+    def verb_matches(cls, verb: str, terminal: "BIN_Terminal", form: str) -> bool:
         """ Return True if the verb lemma with the given BÍN inflection string
             matches the verb terminal (so_xxx_...) """
 
@@ -939,7 +939,7 @@ class BIN_Token(Token):
                 return False
             form_lh = "LHÞT" in form
             if terminal.is_lh:
-                return form_lh and BIN_Token.verb_subject_matches(verb, "lhþt")
+                return form_lh and cls.verb_subject_matches(verb, "lhþt")
             # Don't allow the past participle unless explicitly requested in terminal
             if form_lh:
                 return False
@@ -949,12 +949,12 @@ class BIN_Token(Token):
                 # subject list in Verbs.conf
                 if terminal.is_sagnb != form_sagnb:
                     return False
-                return BIN_Token.verb_subject_matches(verb, "none")
+                return cls.verb_subject_matches(verb, "none")
             if form_sagnb and not terminal.is_sagnb:
                 # For regular subj, we don't allow supine (sagnbót)
                 # ('langað', 'þótt')
                 return False
-            if terminal.has_variant("op") and BIN_Token.verb_cannot_be_impersonal(
+            if terminal.has_variant("op") and cls.verb_cannot_be_impersonal(
                 verb, form
             ):
                 # This can't work, as the verb can't be impersonal
@@ -976,13 +976,13 @@ class BIN_Token(Token):
                     return False
             # Finally, make sure that the subject case (which is always
             # in the last variant) matches the terminal
-            return BIN_Token.verb_subject_matches(verb, terminal.variant(-1))
+            return cls.verb_subject_matches(verb, terminal.variant(-1))
 
         # Not a _subj terminal: no match of strictly impersonal verbs
         # Note that this is overridden in reynir_correct to
         # allow impersonal verbs to be used as normal verbs
         # for grammar checking purposes
-        if BIN_Token.verb_is_strictly_impersonal(verb, form):
+        if cls.verb_is_strictly_impersonal(verb, form):
             return False
 
         if terminal.is_singular and "FT" in form:
@@ -992,10 +992,10 @@ class BIN_Token(Token):
             # Can't use singular verb if plural terminal
             return False
         # Check that person (1st, 2nd, 3rd) and other variant requirements match
-        assert BIN_Token._VERB_FORMS is not None
+        assert cls._VERB_FORMS is not None
         for v in terminal.variants:
             # Lookup variant to see if it is one of the required ones for verbs
-            rq = BIN_Token._VERB_FORMS.get(v)
+            rq = cls._VERB_FORMS.get(v)
             if rq is not None and rq not in form:
                 # If this is required variant that is not found in the form we have,
                 # return False
@@ -1003,8 +1003,8 @@ class BIN_Token(Token):
         # Check restrictive variants, i.e. we don't accept meanings
         # that have those unless they are explicitly present in the terminal
         # Be careful with "lh" here
-        for v in BIN_Token._RESTRICTIVE_VARIANTS:
-            if (BIN_Token.VARIANT.get(v) or "") in form and not terminal.has_variant(v):
+        for v in cls._RESTRICTIVE_VARIANTS:
+            if (cls.VARIANT.get(v) or "") in form and not terminal.has_variant(v):
                 return False
         if terminal.is_lh:
             if "VB" in form and not terminal.has_variant("vb"):
@@ -1026,8 +1026,8 @@ class BIN_Token(Token):
                 # being an argument case
                 if any(
                     terminal.has_variant(c)
-                    and (BIN_Token.VARIANT.get(c) or "") not in form
-                    for c in BIN_Token.CASES
+                    and (cls.VARIANT.get(c) or "") not in form
+                    for c in cls.CASES
                 ):
                     # Terminal specified a non-argument case but
                     # the token doesn't have it: no match
@@ -1040,7 +1040,7 @@ class BIN_Token(Token):
             # to look up the verb frame; instead, use the MM-NH infinitive.
             # This means that for instance "eignaðist hest" is not resolved
             # to "eigna" but to "eignast"
-            verb = BIN_Token.mm_verb_stem(verb)
+            verb = cls.mm_verb_stem(verb)
         # Check whether this verb + the terminal argument specification
         # is found in the verb frame database
         key = verb + terminal.verb_cases

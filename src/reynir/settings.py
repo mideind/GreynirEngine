@@ -64,6 +64,7 @@ from threading import Lock
 from pkg_resources import resource_stream
 
 from .basics import (
+    MeaningTuple,
     ConfigError,
     LineReader,
     ALL_CASES,
@@ -76,10 +77,7 @@ from .basics import (
 from .verbframe import VerbFrame
 
 
-# Type of meaning tuples for static phrases
-# stofn, utg, ordfl, fl, ordmynd, beyging
-MeaningTuple = Tuple[str, int, str, str, str, str]
-# ordfl, fl, beyging
+# Type for static phrases: ordfl, fl, beyging
 StaticPhraseTuple = Tuple[str, str, str]
 # Type for preference specifications
 PreferenceTuple = Tuple[List[str], List[str], int]
@@ -1002,12 +1000,12 @@ class Settings:
             AdjectivePredicates.add(adj, a[1:], prepositions)
 
     @staticmethod
-    def read(fname: str) -> None:
+    def read(fname: str, force: bool=False) -> None:
         """ Read configuration file """
 
         with Settings._lock:
 
-            if Settings.loaded:
+            if Settings.loaded and not force:
                 return
 
             CONFIG_HANDLERS: Dict[str, Callable[[str], None]] = {
@@ -1034,7 +1032,7 @@ class Settings:
 
             rdr: Optional[LineReader] = None
             try:
-                rdr = LineReader(fname)
+                rdr = LineReader(fname, package_name=__name__)
                 for s in rdr.lines():
                     # Ignore comments
                     ix = s.find("#")

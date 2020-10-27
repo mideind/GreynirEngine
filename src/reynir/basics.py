@@ -1,4 +1,3 @@
-
 """
     Greynir: Natural language processing for Icelandic
 
@@ -58,6 +57,10 @@ from threading import Lock
 from pkg_resources import resource_stream
 
 
+# Type of BÍN meaning tuples
+# stofn, utg, ordfl, fl, ordmynd, beyging
+MeaningTuple = Tuple[str, int, str, str, str, str]
+
 # The sorting locale used by default in the changedlocale function
 _DEFAULT_SORT_LOCALE = ("IS_is", "UTF-8")
 
@@ -68,6 +71,12 @@ ALL_NUMBERS = frozenset(("et", "ft"))
 SUBCLAUSES = frozenset(("nh", "mnh", "falls"))
 REFLPRN = {"sig": "sig_hk_et_þf", "sér": "sig_hk_et_þgf", "sín": "sig_hk_et_ef"}
 REFLPRN_SET = frozenset(REFLPRN.keys())
+
+# BÍN compressed file format version (used in tools/binpack.py and bincompress.py)
+# !!! Modify to Greynir at a convenient opportunity
+BIN_COMPRESSOR_VERSION = b"Reynir 001.04.00"
+assert len(BIN_COMPRESSOR_VERSION) == 16
+BIN_COMPRESSED_FILE = "ord.compressed"
 
 
 @contextmanager
@@ -117,9 +126,15 @@ class LineReader:
     """ Read lines from a text file, recognizing $include directives """
 
     def __init__(
-        self, fname: str, outer_fname: Optional[str] = None, outer_line: int = 0
+        self,
+        fname: str,
+        *,
+        package_name: Optional[str] = None,
+        outer_fname: Optional[str] = None,
+        outer_line: int = 0
     ) -> None:
         self._fname = fname
+        self._package_name = package_name
         self._line = 0
         self._inner_rdr: Optional[LineReader] = None
         self._outer_fname = outer_fname
@@ -137,8 +152,8 @@ class LineReader:
         """ Generator yielding lines from a text file """
         self._line = 0
         try:
-            if __package__:
-                stream = resource_stream(__name__, self._fname)
+            if self._package_name:
+                stream = resource_stream(self._package_name, self._fname)
             else:
                 stream = open(self._fname, "rb")
             with stream as inp:
@@ -156,7 +171,10 @@ class LineReader:
                         head, _ = os.path.split(self._fname)
                         iname = os.path.join(head, iname)
                         rdr = self._inner_rdr = LineReader(
-                            iname, self._fname, self._line
+                            iname,
+                            package_name=self._package_name,
+                            outer_fname=self._fname,
+                            outer_line=self._line,
                         )
                         for incl_s in rdr.lines():
                             yield incl_s

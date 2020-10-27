@@ -69,6 +69,95 @@ from .basics import (
 
 # Key type for preposition frames
 PrepKey = str
+# Type of set of zero-verb arguments
+VerbZeroArgSet = Set[str]
+# Type of dict of verbs with arguments (1 or 2),
+# where each entry is a list of argument lists
+VerbWithArgErrorDict = Dict[str, Dict[str, str]]
+
+
+class VerbErrors:
+
+    """ A container class for verb error data, for instance wrong
+        verb forms and wrong preposition attachment """
+
+    ERRORS: List[Union[VerbZeroArgSet, VerbWithArgErrorDict]] = [
+        set(),
+        defaultdict(dict),
+        defaultdict(dict),
+    ]
+    VERB_PARTICLES_ERRORS: Dict[str, Dict[str, str]] = defaultdict(dict)
+    PREPOSITIONS_ERRORS: Dict[str, Dict[str, str]] = defaultdict(dict)
+    WRONG_VERBS: Dict[str, str] = dict()
+
+    @staticmethod
+    def check_args(args: List[str]) -> None:
+        for kind in args:
+            if kind not in ALL_CASES | SUBCLAUSES | REFLPRN_SET:
+                spl = kind.split("_")
+                # Allow the last variant to be _gr, if the
+                # next-to-last one is a case
+                if spl and spl[-1] == "gr":
+                    spl = spl[:-1]
+                if not spl or spl[-1] not in ALL_CASES:
+                    raise ConfigError("Invalid verb argument: '{0}'".format(kind))
+
+    @staticmethod
+    def add_error(
+        verb: str,
+        args: List[str],
+        prepositions: List[Tuple[str, str]],
+        particle: Optional[str],
+        corr: str,
+    ) -> None:
+        """ Take note of a verb object specification with an $error pragma """
+        VerbErrors.check_args(args)
+        corrlist = corr.split(",")
+        errlist = corrlist[0].split("-")
+        errkind = errlist[0].strip()
+        verb_with_cases = "_".join([verb] + args)
+        if errkind == "OBJ":
+            vargs = cast(VerbWithArgErrorDict, VerbErrors.ERRORS[len(args)])
+            arglists = vargs[verb]
+            arglists[verb_with_cases] = corr
+        elif errkind == "PP":
+            d = VerbErrors.PREPOSITIONS_ERRORS[verb_with_cases]
+            for p, kind in prepositions:
+                d[p] = corr
+                d[p + "_" + kind] = corr
+        elif errkind == "PRTCL":
+            # !!! TODO: Parse the corr string
+            if particle is None:
+                raise ConfigError("Particle error specification must specify particle")
+            VerbErrors.VERB_PARTICLES_ERRORS[verb_with_cases][particle] = corr
+        elif errkind == "ALL":
+            # !!! TODO: Implement this (store specification of a
+            # !!! TODO: replacement of the entire construct)
+            pass
+        elif errkind == "PREDS":
+            # !!! TODO: Implement this
+            pass
+        elif errkind == "WRONG":
+            wrong_kind = errlist[1].strip()
+            if wrong_kind == "VERB":
+                # Wrong verb, must point to completely different verb + args
+                if len(corrlist) != 2:
+                    raise ConfigError("WRONG-VERB must specify correct verb")
+                if particle:
+                    verb_with_cases += "*" + particle
+                if verb_with_cases in VerbErrors.WRONG_VERBS:
+                    pass
+                    # raise ConfigError("WRONG-VERB has already been specified for this verb, argument list and particle")
+                VerbErrors.WRONG_VERBS[verb_with_cases] = corrlist[1]
+            elif wrong_kind == "OBJ":
+                # !!! TODO: Implement this
+                pass
+            else:
+                raise ConfigError("Unknown type of WRONG-XXX in $error pragma")
+        else:
+            raise ConfigError(
+                "Unknown error type in $error pragma: '{0}'".format(errkind)
+            )
 
 
 class PrepositionFrame:
@@ -80,9 +169,7 @@ class PrepositionFrame:
     # Dictionary of all preposition frames, avoiding duplicates
     FRAMES: Dict[PrepKey, "PrepositionFrame"] = dict()
 
-    def __init__(
-        self, prep: str, case: str,
-    ) -> None:
+    def __init__(self, prep: str, case: str,) -> None:
         self.prep = prep
         self.case = case
 
@@ -122,8 +209,12 @@ class VerbFrame:
     VERBS: Set[str] = set()
 
     def __init__(
-        self, verb: str, args: List[str], preps: Iterable[Tuple[str, str]],
-        particle: Optional[str], score: Optional[int],
+        self,
+        verb: str,
+        args: List[str],
+        preps: Iterable[Tuple[str, str]],
+        particle: Optional[str],
+        score: Optional[int],
     ) -> None:
         self.verb = verb
         assert 0 <= len(args) <= 2
@@ -233,8 +324,8 @@ class VerbFrame:
         args = a[1:]
         # Add to verb database
         if error:
-            # VerbObjects.add_error(verb, args, prepositions, particle, error)
-            pass
+            # Add this to the error database
+            VerbErrors.add_error(verb, args, prepositions, particle, error)
         else:
             # Create a VerbFrame instance
             vf = cls(verb, args, prepositions, particle, score)
