@@ -61,8 +61,8 @@ from pkg_resources import resource_stream
 # stofn, utg, ordfl, fl, ordmynd, beyging
 MeaningTuple = Tuple[str, int, str, str, str, str]
 
-# The sorting locale used by default in the changedlocale function
-_DEFAULT_SORT_LOCALE = ("IS_is", "UTF-8")
+# The locale used by default in the changedlocale function
+_DEFAULT_LOCALE = ("IS_is", "UTF-8")
 
 # A set of all valid verb argument cases
 ALL_CASES = frozenset(("nf", "þf", "þgf", "ef"))
@@ -80,15 +80,17 @@ BIN_COMPRESSED_FILE = "ord.compressed"
 
 
 @contextmanager
-def changedlocale(new_locale: Optional[str] = None):
+def changedlocale(new_locale: Optional[str] = None, category: str = "LC_COLLATE"):
     """ Change locale for collation temporarily within a context (with-statement) """
     # The newone locale parameter should be a tuple: ('is_IS', 'UTF-8')
-    old_locale = locale.getlocale(locale.LC_COLLATE)
+    # The category should be a string such as 'LC_TIME', 'LC_NUMERIC' etc.
+    cat = getattr(locale, category)
+    old_locale = locale.getlocale(cat)
     try:
-        locale.setlocale(locale.LC_COLLATE, new_locale or _DEFAULT_SORT_LOCALE)
+        locale.setlocale(cat, new_locale or _DEFAULT_LOCALE)
         yield locale.strxfrm  # Function to transform string for sorting
     finally:
-        locale.setlocale(locale.LC_COLLATE, old_locale)
+        locale.setlocale(cat, old_locale)
 
 
 def sort_strings(strings: Iterable[str], loc: Optional[str] = None):
