@@ -1220,6 +1220,10 @@ def parse_phrases_3(token_stream, token_ctor):
     def can_concat(token) -> bool:
         """ Return True if the token content can be concatenated onto
             an existing entity name """
+
+        # Non-capitalized function words that can appear within entity names
+        if token.txt in ["in", "a", "an", "for"]:  
+            return True
         if token.kind != TOK.ENTITY and token.kind != TOK.WORD:
             return False
         if not token.txt[0].isupper():
@@ -1250,7 +1254,7 @@ def parse_phrases_3(token_stream, token_ctor):
         concatable = False
 
         while True:
-
+            print(token)
             if not concatable and not is_interesting(token):
                 yield token
                 # Make sure that token is None if next() raises StopIteration
