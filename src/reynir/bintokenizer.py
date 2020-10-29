@@ -1222,7 +1222,7 @@ def parse_phrases_3(token_stream, token_ctor):
             an existing entity name """
 
         # Non-capitalized function words that can appear within entity names
-        if token.txt in ["in", "a", "an", "for"]:  
+        if token.txt in ["in", "a", "an", "for"]:
             return True
         if token.kind != TOK.ENTITY and token.kind != TOK.WORD:
             return False
