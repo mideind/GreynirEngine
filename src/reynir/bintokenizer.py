@@ -1222,7 +1222,7 @@ def parse_phrases_3(token_stream, token_ctor):
             an existing entity name """
 
         # Non-capitalized function words that can appear within entity names
-        if token.txt in ["in", "a", "an", "for"]:
+        if token.txt in ["in", "a", "an", "for", "van", "von"]:
             return True
         if token.kind != TOK.ENTITY and token.kind != TOK.WORD:
             return False
@@ -1254,7 +1254,7 @@ def parse_phrases_3(token_stream, token_ctor):
         concatable = False
 
         while True:
-            print(token)
+            
             if not concatable and not is_interesting(token):
                 yield token
                 # Make sure that token is None if next() raises StopIteration
