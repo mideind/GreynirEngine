@@ -279,6 +279,7 @@ class WordMatchers:
                 elif v[0] == "x" and not m.stofn.endswith(v[1:]):
                     return False
         fbits = BIN_Token.get_fbits(m.beyging)
+        # The fbits may contain MST and EST
         return terminal.fbits_match(fbits)
 
     @staticmethod

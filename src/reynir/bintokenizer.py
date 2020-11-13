@@ -41,6 +41,7 @@ from typing import (
     Tuple,
     List,
     Dict,
+    Mapping,
     Union,
     Iterable,
     Iterator,
@@ -105,6 +106,10 @@ TokenValType = Union[List[BIN_Meaning], List[PersonName], Tuple, None]
 FirstPhaseFunction = Callable[[], TokenIterator]
 FollowingPhaseFunction = Callable[[TokenIterator], TokenIterator]
 PhaseFunction = Union[FirstPhaseFunction, FollowingPhaseFunction]
+StateTuple = Tuple[List[str], int]
+StateList = List[StateTuple]
+StateDict = Mapping[str, StateList]
+DisambiguationTuple = Tuple[str, FrozenSet[str]]
 
 # Person names that are not recognized at the start of sentences
 NOT_NAME_AT_SENTENCE_START = {
@@ -1337,17 +1342,17 @@ class MatchingStream:
         replace or modify these sequences.
     """
 
-    def __init__(self, phrase_dictionary) -> None:
+    def __init__(self, phrase_dictionary: StateDict) -> None:
         self._pdict = phrase_dictionary
 
     def key(self, token: Tok) -> Any:
         """ Generate a state key from the given token """
         return token.txt.lower()
 
-    def match_state(self, key: Any, state: Any) -> Any:
+    def match_state(self, key: Any, state: StateDict) -> StateList:
         """ Returns an iterable of states that match the key,
             or a falsy value if the key matches no states. """
-        return state.get(key)
+        return state.get(key, [])
 
     def match(self, tq: List[Tok], ix: int) -> Iterable[Tok]:
         """ Called when we have found a match for the entire
@@ -1364,7 +1369,7 @@ class MatchingStream:
         # Token queue
         tq: List[Tok] = []
         # Phrases we're considering
-        state: Dict[str, List[Tuple[List[str], int]]] = defaultdict(list)
+        state: StateDict = defaultdict(list)
         pdict = self._pdict  # The phrase dictionary
 
         try:
@@ -1386,7 +1391,7 @@ class MatchingStream:
                     continue
 
                 # Look for matches in the current state and build a new state
-                newstate = defaultdict(list)
+                newstate: StateDict = defaultdict(list)
                 key = self.key(token)
 
                 def add_to_state(slist, index):
@@ -1476,15 +1481,15 @@ class StaticPhraseStream(MatchingStream):
         length of the longest phrase.
     """
 
-    def __init__(self, token_ctor, auto_uppercase):
+    def __init__(self, token_ctor, auto_uppercase: bool) -> None:
         super().__init__(StaticPhrases.DICT)
         self._token_ctor = token_ctor
         self._auto_uppercase = auto_uppercase
 
-    def length(self, ix):
+    def length(self, ix: int) -> int:
         return StaticPhrases.get_length(ix)
 
-    def key(self, token):
+    def key(self, token: Tok) -> Tuple[str, str]:
         """ We allow both the original token text and a lowercase
             version of it to match """
         wo = token.txt  # Original word
@@ -1493,22 +1498,22 @@ class StaticPhraseStream(MatchingStream):
             wo = w
         return wo, w
 
-    def match_state(self, key, state):
+    def match_state(self, key: Tuple[str, str], state: StateDict) -> StateList:
         """ First check for original (uppercase) word in the state, if any;
             if that doesn't match, check the lower case """
-        wm = None
+        wm = ""
         wo, w = key
-        if self._auto_uppercase and len(wo) == 1 and w is wo:
+        if self._auto_uppercase and len(wo) == 1 and w != wo:
             # If we are auto-uppercasing, leave single-letter lowercase
             # phrases alone, i.e. 'g' for 'gram' and 'm' for 'meter'
-            pass
+            wm = wo
         elif wo is not w and wo in state:
             wm = wo  # Original word
         elif w in state:
             wm = w  # Lowercase version
-        return state[wm]
+        return state.get(wm, [])
 
-    def match(self, tq, ix):
+    def match(self, tq: List[Tok], ix: int) -> Iterable[Tok]:
         w = " ".join([t.txt for t in tq])
         # Add the entire phrase as one 'word' to the token queue.
         # Note that the StaticPhrases meaning list will be converted
@@ -1532,37 +1537,36 @@ class DisambiguationStream(MatchingStream):
         meanings that have categories matching those allowed
         in the [disambiguate_phrases] section in config/Phrases.conf """
 
-    def __init__(self, token_ctor):
+    def __init__(self, token_ctor: Type["Bin_TOK"]) -> None:
         super().__init__(AmbigPhrases.DICT)
         self._token_ctor = token_ctor
 
-    def key(self, token):
+    def key(self, token: Tok) -> DisambiguationTuple:
         """ Generate a phrase key from the given token """
         # Construct a set of all possible lemmas of this word form
         if token.kind == TOK.WORD:
             return token.txt.lower(), frozenset(m.stofn + "*" for m in token.val)
         return token.txt.lower(), frozenset()
 
-    def match_state(self, key, state):
+    def match_state(self, key: DisambiguationTuple, state: StateDict) -> StateList:
         """ Called to see if the current token's key matches
             the given state. Returns the value that should be
             used to look up the key within the state, or None
             if there is no match. """
         # First, check for a direct text match
-        states = []
-        if key[0] in state:
-            states.extend(state[key[0]])
+        txt, stems = key
+        states = list(state.get(txt, []))
         # Then, check whether the stems of the token match any
         # asterisk-marked entry in the state
-        for stem in key[1]:
+        for stem in stems:
             if stem in state:
                 states.extend(state[stem])
         return states
 
-    def length(self, ix):
+    def length(self, ix: int) -> int:
         return len(AmbigPhrases.get_cats(ix))
 
-    def match(self, tq, ix):
+    def match(self, tq: List[Tok], ix: int) -> Iterable[Tok]:
         """ We have a phrase match: return the tokens in the token
             queue, but with their meanings filtered down to only
             the word categories specified in the phrase configration """

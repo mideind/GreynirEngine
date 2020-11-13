@@ -305,7 +305,7 @@ Samtenging →
     | 'auk_þess:ao' "sem:st" AðvörunAð?
     | 'það_er_að_segja:ao' Tengimerki? "að:st"?
     | "svo:st" "lengi:ao"? "sem:st"
-    | "eins:ao" "og:st"
+    | "rétt:ao"? "eins:ao" "og:st"
     | "því:st" "að:st"?
     | "þannig:ao" "að:st"
     | "og:st" "loks:ao" "að:st"
@@ -5780,6 +5780,7 @@ EinnAl →
     | AlMiðstig             # [mun] hraðar en augað sér
     | AlHvortSemUmErAðRæða  # Hvort sem um er að ræða X eða Y
     | AðNýju
+    | FjöldiSaman           # Tugþúsundum saman
 
     # Fjölyrtir atviksliðir sem ekki er unnt að búa til fasta frasa úr
 
@@ -5841,6 +5842,19 @@ UndirEins →
     "undir:ao" "eins:ao"    # 'Ég fór undir eins og kannaði málið'
 
 $score(+4) UndirEins
+
+FjöldiSaman →
+    Fjöldi_þgf "saman:ao"
+
+Fjöldi_þgf →
+    'tugur:kk'_ft_þgf           # tugum saman
+    | 'hundrað:hk'_ft_þgf       # hundruðum saman
+    | 'þúsund:kvk'_ft_þgf       # þúsundum saman
+    | 'tugþúsundir:kvk'_ft_þgf  # tugþúsundum saman
+    | 'milljón:kvk'_ft_þgf      # milljónum saman
+    | 'milljarður:kk'_ft_þgf    # milljörðum saman
+
+$score(+12) FjöldiSaman
 
 Sinnum →
     # tvisvar, þrisvar og fjórum sinnum er skilgreint sem atviksliður í Phrases.conf
@@ -6420,12 +6434,16 @@ Tíðni →
     | 'í_sífellu:ao'
     | "aldrei:ao"
     | "alltaf:ao"
-    | "árlega:ao"
-    | "daglega:ao"
     | "dagsdaglega:ao"
+    | "daglega:ao"
+    | "vikulega:ao"
     | "mánaðarlega:ao"
-    | "oft:ao"
+    | "ársfjórðungslega:ao"
+    | "árlega:ao"
+    | "oft:ao" | "oftast:ao"
     | "reglulega:ao"
+    | "gjarnan:ao"
+    | "ævinlega:ao"
     | "sjaldan:ao"
     | "stundum:ao"
     | "títt:ao"
