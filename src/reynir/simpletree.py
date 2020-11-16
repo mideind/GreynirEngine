@@ -50,12 +50,12 @@ from .settings import StaticPhrases
 from .binparser import BIN_Token, BIN_Terminal, augment_terminal, canonicalize_token
 from .fastparser import ParseForestNavigator
 from .bintokenizer import (
-    describe_token,
     CURRENCIES,
     CURRENCY_GENDERS,
     MULTIPLIERS,
     DECLINABLE_MULTIPLIERS,
 )
+from .binparser import describe_token
 from .bindb import BIN_Db, BIN_Meaning
 from .ifdtagger import IFD_Tagset
 from .matcher import match_pattern
@@ -1963,7 +1963,7 @@ class Simplifier(ParseForestNavigator):
         id_map=None,
         terminal_map=None,
         first_token_index=0
-    ):
+    ) -> None:
         super().__init__(visit_all=True)
         self._tokens = tokens
         self._builder = SimpleTreeBuilder(nt_map, id_map, terminal_map)

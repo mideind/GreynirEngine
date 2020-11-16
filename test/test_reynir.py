@@ -37,6 +37,7 @@ from reynir.binparser import augment_terminal
 from reynir.bincompress import BIN_Compressed
 from reynir.bindb import BIN_Db
 from reynir.bintokenizer import TOK
+from tokenizer import correct_spaces, detokenize
 
 
 def test_augment_terminal():
@@ -147,23 +148,31 @@ def test_bin():
         "geymis",
     )
     assert declension("sulta", "sulta", "kvk", lambda b: "ET" in b) == (
-        "sulta", "sultu", "sultu", "sultu"
+        "sulta",
+        "sultu",
+        "sultu",
+        "sultu",
     )
     assert declension("vígi", "vígi", "hk", lambda b: "ET" in b) == (
-        "vígi", "vígi", "vígi", "vígis"
+        "vígi",
+        "vígi",
+        "vígi",
+        "vígis",
     )
-    assert declension("buxur", "buxur", "kvk") == (
-        "buxur", "buxur", "buxum", "buxna"
-    )
+    assert declension("buxur", "buxur", "kvk") == ("buxur", "buxur", "buxum", "buxna")
     assert declension("ríki", "ríki", "hk", lambda b: "ET" in b) == (
-        "ríki", "ríki", "ríki", "ríkis"
+        "ríki",
+        "ríki",
+        "ríki",
+        "ríkis",
     )
     assert declension("ríki", "ríki", "hk", lambda b: "FT" in b) == (
-        "ríki", "ríki", "ríkjum", "ríkja"
+        "ríki",
+        "ríki",
+        "ríkjum",
+        "ríkja",
     )
-    assert declension("ríki", "ríkir", "kk") == (
-        "ríkir", "ríki", "ríki", "ríkis"
-    )
+    assert declension("ríki", "ríkir", "kk") == ("ríkir", "ríki", "ríki", "ríkis")
     assert declension("brjóstsykurinn", "brjóstsykur", "kk") == (
         "brjóstsykurinn",
         "brjóstsykurinn",
@@ -194,12 +203,8 @@ def test_bin():
         "sultunni",
         "sultunnar",
     )
-    assert declension("vígið", "vígi", "hk") == (
-        "vígið", "vígið", "víginu", "vígisins"
-    )
-    assert declension("ríkið", "ríki", "hk") == (
-        "ríkið", "ríkið", "ríkinu", "ríkisins"
-    )
+    assert declension("vígið", "vígi", "hk") == ("vígið", "vígið", "víginu", "vígisins")
+    assert declension("ríkið", "ríki", "hk") == ("ríkið", "ríkið", "ríkinu", "ríkisins")
     assert declension("geymarnir", "geymir", "kk") == (
         "geymarnir",
         "geymana",
@@ -302,22 +307,42 @@ def test_lemmas():
         "Hallbjörn borðaði ísinn kl. 14 meðan Icelandair át 3 teppi "
         "frá Íran og Xochitl var tilbeðin."
     )
-    assert (
-        list(zip(s.lemmas, s.categories)) == [
-            ('Hallbjörn', 'kk'), ('borða', 'so'), ('ís', 'kk'), ('kl. 14', ''),
-            ('meðan', 'st'), ('Icelandair', 'entity'), ('éta', 'so'), ('3', ''),
-            ('teppi', 'hk'), ('frá', 'fs'), ('Íran', 'hk'), ('og', 'st'),
-            ('Xochitl', 'entity'), ('vera', 'so'), ('tilbiðja', 'so'), ('.', '')
-        ]
-    )
-    assert (
-        s.lemmas_and_cats == [
-            ('Hallbjörn', 'person_kk'), ('borða', 'so'), ('ís', 'kk'), ('kl. 14', ''),
-            ('meðan', 'st'), ('Icelandair', 'entity'), ('éta', 'so'), ('3', ''),
-            ('teppi', 'hk'), ('frá', 'fs'), ('Íran', 'hk'), ('og', 'st'),
-            ('Xochitl', 'entity'), ('vera', 'so'), ('tilbiðja', 'so'), ('.', '')
-        ]
-    )
+    assert list(zip(s.lemmas, s.categories)) == [
+        ("Hallbjörn", "kk"),
+        ("borða", "so"),
+        ("ís", "kk"),
+        ("kl. 14", ""),
+        ("meðan", "st"),
+        ("Icelandair", "entity"),
+        ("éta", "so"),
+        ("3", ""),
+        ("teppi", "hk"),
+        ("frá", "fs"),
+        ("Íran", "hk"),
+        ("og", "st"),
+        ("Xochitl", "entity"),
+        ("vera", "so"),
+        ("tilbiðja", "so"),
+        (".", ""),
+    ]
+    assert s.lemmas_and_cats == [
+        ("Hallbjörn", "person_kk"),
+        ("borða", "so"),
+        ("ís", "kk"),
+        ("kl. 14", ""),
+        ("meðan", "st"),
+        ("Icelandair", "entity"),
+        ("éta", "so"),
+        ("3", ""),
+        ("teppi", "hk"),
+        ("frá", "fs"),
+        ("Íran", "hk"),
+        ("og", "st"),
+        ("Xochitl", "entity"),
+        ("vera", "so"),
+        ("tilbiðja", "so"),
+        (".", ""),
+    ]
     s = g.parse_single("Sigurður langaði í köttur")
     assert s.tree is None
     assert s.lemmas is None
@@ -345,6 +370,20 @@ def test_sentence_split():
     tlist = list(g.tokenize("Ég hitti hr. Jón Mýrdal áðan."))
     assert len([t for t in tlist if t.kind == TOK.S_BEGIN]) == 1
     assert len([t for t in tlist if t.kind == TOK.S_END]) == 1
+
+
+def test_auto_uppercase():
+    g = Greynir(auto_uppercase=True)
+    s = g.parse_single("hver er guðni th jóhannesson")
+    assert detokenize(s.tokens) == "hver er Guðni Th Jóhannesson"
+    assert "Guðni Th Jóhannesson" in s.tree.persons
+    s = g.parse_single("hver er gunnar thoroddsen")
+    assert detokenize(s.tokens) == "hver er Gunnar Thoroddsen"
+    assert "Gunnar Thoroddsen" in s.tree.persons
+    s = g.parse_single("hver er eliza reid")
+    assert detokenize(s.tokens) == "hver er Eliza Reid"
+    assert "Eliza Reid" in s.tree.persons
+
 
 if __name__ == "__main__":
 

@@ -334,6 +334,10 @@ def test_noun_phrases(r):
     assert np.parsed
     assert np.number == "et"
     assert np.nominative == "ey"
+    np = NounPhrase("Spánn")
+    assert np.parsed
+    assert np.nominative == "Spánn"
+    assert np.genitive == "Spánar"
 
 
 def test_casting():

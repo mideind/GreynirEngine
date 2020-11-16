@@ -841,6 +841,7 @@ class Greynir:
         """ Utility function to parse a noun phrase. Note that in most
             cases it is more convenient to use the NounPhrase class
             for this purpose. """
+        # When tokenizing a noun phrase, don't assume that it starts a sentence
         tokens = self.tokenize(noun_phrase)
         # Use a _Job_NP to generate _NounPhrase objects instead of _Sentence objects
         job = _Job_NP(self, tokens, force_number=force_number)

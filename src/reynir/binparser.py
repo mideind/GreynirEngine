@@ -64,7 +64,7 @@ from datetime import datetime
 from functools import reduce, lru_cache
 import json
 
-from tokenizer import TOK, Tok, Abbreviations
+from tokenizer import TOK, Tok, Abbreviations, normalized_text
 
 from .settings import (
     Settings,
@@ -83,6 +83,7 @@ from .grammar import (
     GrammarError,
 )
 from .baseparser import Base_Parser
+from .bintokenizer import choose_full_name, HYPHEN, EM_DASH, EN_DASH
 from .bindb import BIN_Meaning
 from .version import __version__ as package_version
 
@@ -135,8 +136,8 @@ class WordMatchers:
         if terminal.is_abbrev:
             # Only match abbreviations; gender, case and number do not matter
             return no_info
-        if m.fl == "nafn":
-            # Names are only matched by person terminals
+        if m.fl == "nafn" or m.fl == "ætt":
+            # Names or family names (ættarnöfn) are only matched by person terminals
             return False
         for v in terminal.variants:
             if v in BIN_Token.GENDERS_SET:
@@ -955,9 +956,7 @@ class BIN_Token(Token):
                 # For regular subj, we don't allow supine (sagnbót)
                 # ('langað', 'þótt')
                 return False
-            if terminal.has_variant("op") and cls.verb_cannot_be_impersonal(
-                verb, form
-            ):
+            if terminal.has_variant("op") and cls.verb_cannot_be_impersonal(verb, form):
                 # This can't work, as the verb can't be impersonal
                 return False
             if terminal.variant(0) in "012":
@@ -1026,8 +1025,7 @@ class BIN_Token(Token):
                 # Special check for lhþt: may specify a case without it
                 # being an argument case
                 if any(
-                    terminal.has_variant(c)
-                    and (cls.VARIANT.get(c) or "") not in form
+                    terminal.has_variant(c) and (cls.VARIANT.get(c) or "") not in form
                     for c in cls.CASES
                 ):
                     # Terminal specified a non-argument case but
@@ -2021,7 +2019,7 @@ class BIN_Parser(Base_Parser):
         return (cls._grammar_ts != ts, ts)
 
     @classmethod
-    def _load_grammar(cls, verbose, ts):
+    def _load_grammar(cls, verbose: bool, ts: Optional[float]) -> BIN_Grammar:
         """ Load the shared BIN grammar if not already there """
         if ts is None:
             ts = os.path.getmtime(cls._GRAMMAR_FILE)
@@ -2045,12 +2043,13 @@ class BIN_Parser(Base_Parser):
         return g
 
     @property
-    def grammar(self):
+    def grammar(self) -> BIN_Grammar:
         """ Return the grammar loaded from Greynir.grammar """
+        assert self._grammar is not None
         return self._grammar
 
     @property
-    def version(self):
+    def version(self) -> str:
         """ Return a composite version string w. grammar file date + package version """
         ftime = str(self.grammar.file_time)[0:19]  # YYYY-MM-DD HH:MM:SS
         return ftime + "/" + package_version
@@ -2060,11 +2059,11 @@ class BIN_Parser(Base_Parser):
         """ Create an instance of a wrapped token """
         return BIN_Token(t, ix)
 
-    def _wrap(self, tokens):
+    def _wrap(self, tokens: Iterable[Tok]) -> List[BIN_Token]:
         """ Sanitize the 'raw' tokens and wrap them in BIN_Token() wrappers """
         return wrap_tokens(tokens, wrap_func=self._create_wrapped_token)
 
-    def go(self, tokens):
+    def go(self, tokens: Iterable[BIN_Token]) -> None:
         """ Parse the token list after wrapping
             each understood token in the BIN_Token class """
         # This should never be called - is overridden in Fast_Parser
@@ -2076,7 +2075,7 @@ _UNKNOWN = frozenset(("e.", "d.", "þ.", "t.d.", "þ.e.", "m.a."))
 _SKIP_PARENTHESIS = frozenset(("e.",))  # "d." and "þ." were removed
 
 
-def wrap_tokens(tokens, wrap_func=None):
+def wrap_tokens(tokens: Iterable[Tok], wrap_func: Optional[Callable[[Tok, int], Tok]]=None) -> List[Tok]:
     """ Pre-process a token stream, removing tokens that will not be looked at
         during parsing - for instance insignificant punctuation and non-Icelandic
         text within parentheses. The function returns a fresh token list, with
@@ -2087,7 +2086,7 @@ def wrap_tokens(tokens, wrap_func=None):
     tlist = list(tokens)
     tlen = len(tlist)
 
-    def scan_par(left):
+    def scan_par(left: int) -> int:
         """ Scan tokens inside parentheses and remove'em all
             if they are only unknown words - perhaps starting with
             an abbreviation """
@@ -2147,7 +2146,7 @@ def wrap_tokens(tokens, wrap_func=None):
     return wrapped_tokens
 
 
-def simplify_terminal(terminal, cat=None):
+def simplify_terminal(terminal: str, cat: Optional[str]=None) -> str:
     """ Return a simplified terminal name where literal specifications of
         the form 'literal:cat'_var1 and "literal:cat" have been converted
         to cat_var1, with the further complication that kk/kvk/hk are
@@ -2219,7 +2218,7 @@ _PFN_VARIANTS = {
 }
 
 
-def augment_terminal(terminal, text_lower, beyging):
+def augment_terminal(terminal: str, text_lower: str, beyging: str) -> str:
     """ Augment a terminal name string with additional variants from BÍN,
         extracted from the 'beyging' string """
     a = terminal.split("_")
@@ -2275,7 +2274,7 @@ def augment_terminal(terminal, text_lower, beyging):
     return "_".join(a[0:1] + cases + sorted(list(vset)))
 
 
-def canonicalize_token(t):
+def canonicalize_token(t: Dict[str, Any]) -> None:
     """ Convert a token in-situ from a compact dictionary representation
         (typically created by TreeUtility._describe_token()) to a normalized,
         verbose form that is appropriate for external consumption """
@@ -2335,3 +2334,65 @@ def canonicalize_token(t):
     if kind in (TOK.ENTITY, TOK.WORD) and "s" not in t:
         # Put in a stem for entities and proper names
         t["s"] = t["x"]
+
+
+def describe_token(
+    index: int, t: Tok, terminal: Optional[BIN_Terminal], meaning: Optional[BIN_Meaning]
+) -> Dict[str, str]:
+    """ Return a compact dictionary describing the token t,
+        at the given index within its sentence,
+        which matches the given terminal with the given meaning """
+    txt = normalized_text(t)
+    d = dict(x=txt, ix=index)
+    if terminal is not None:
+        # There is a token-terminal match
+        if t.kind == TOK.PUNCTUATION:
+            if txt == HYPHEN:
+                # Hyphen: check whether it is matching an em or en-dash terminal
+                if terminal.colon_cat == "em":
+                    # Substitute em dash (will be displayed with surrounding space)
+                    d["x"] = EM_DASH
+                elif terminal.colon_cat == "en":
+                    # Substitute en dash
+                    d["x"] = EN_DASH
+        else:
+            # Annotate with terminal name and BÍN meaning
+            # (no need to do this for punctuation)
+            d["t"] = terminal.name
+            if meaning is not None:
+                if terminal.first == "fs":
+                    # Special case for prepositions since they're really
+                    # resolved from the preposition list in Main.conf, not from BÍN
+                    m = (meaning.ordmynd, "fs", "alm", terminal.variant(0).upper())
+                else:
+                    m = (meaning.stofn, meaning.ordfl, meaning.fl, meaning.beyging)
+                d["m"] = m
+    if t.kind != TOK.WORD:
+        # Optimize by only storing the k field for non-word tokens
+        d["k"] = t.kind
+    if t.val is not None and t.kind not in {TOK.WORD, TOK.ENTITY, TOK.PUNCTUATION}:
+        # For tokens except words, entities and punctuation, include the val field
+        if t.kind == TOK.PERSON:
+            case: Optional[str] = None
+            gender: Optional[str] = None
+            if terminal is not None and terminal.num_variants >= 1:
+                gender = terminal.variant(-1)
+                if gender in {"nf", "þf", "þgf", "ef"}:
+                    # Oops, mistaken identity
+                    case = gender
+                    gender = None
+                if terminal.num_variants >= 2:
+                    case = terminal.variant(-2)
+            d["v"], gender = choose_full_name(t.val, case, gender)
+            # Make sure the terminal field has a gender indicator
+            if terminal is not None:
+                if not terminal.name.endswith("_" + gender):
+                    d["t"] = terminal.name + "_" + gender
+            else:
+                # No terminal field: create it
+                d["t"] = "person_" + gender
+            # In any case, add a separate gender indicator field for convenience
+            d["g"] = gender
+        else:
+            d["v"] = t.val
+    return d
