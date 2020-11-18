@@ -24,37 +24,37 @@ jobs:
       python: pypy3
 
       # macOS
-    - name: "macOS (PyPy3 - Xcode 12)"
-      os: osx
-      language: generic  # 'language: python' is an error on Travis CI macOS
-      osx_image: xcode12
-      before_install:
-        - brew install git-lfs
-        - git lfs install
-        - brew install pypy3
-        - pip install virtualenv
-        - /usr/local/bin/virtualenv -p /usr/local/bin/pypy3 venv
-        - source venv/bin/activate
-        - python -m pip install --upgrade pytest
-        - python -m pip install git+https://github.com/mideind/Tokenizer#egg=tokenizer
-      before_script: 
-        - git lfs pull
-
-    - name: "macOS (Python 3.8 - Xcode 11)"
-      os: osx
-      language: generic  # 'language: python' is an error on Travis CI macOS
-      osx_image: xcode11.6
-      before_install:
-        - brew install git-lfs
-        - git lfs install
-        - brew upgrade python@3.8
-        - pip install virtualenv
-        - /usr/local/bin/virtualenv -p /usr/local/bin/python3.8 venv
-        - source venv/bin/activate
-        - python -m pip install --upgrade pytest
-        - python -m pip install git+https://github.com/mideind/Tokenizer#egg=tokenizer
-      before_script: 
-        - git lfs pull
+#    - name: "macOS (PyPy3 - Xcode 12)"
+#      os: osx
+#      language: generic  # 'language: python' is an error on Travis CI macOS
+#      osx_image: xcode12
+#      before_install:
+#        - brew install git-lfs
+#        - git lfs install
+#        - brew install pypy3
+#        - pip install virtualenv
+#        - /usr/local/bin/virtualenv -p /usr/local/bin/pypy3 venv
+#        - source venv/bin/activate
+#        - python -m pip install --upgrade pytest
+#        - python -m pip install git+https://github.com/mideind/Tokenizer#egg=tokenizer
+#      before_script: 
+#        - git lfs pull
+#
+#    - name: "macOS (Python 3.8 - Xcode 11)"
+#      os: osx
+#      language: generic  # 'language: python' is an error on Travis CI macOS
+#      osx_image: xcode11.6
+#      before_install:
+#        - brew install git-lfs
+#        - git lfs install
+#        - brew upgrade python@3.8
+#        - pip install virtualenv
+#        - /usr/local/bin/virtualenv -p /usr/local/bin/python3.8 venv
+#        - source venv/bin/activate
+#        - python -m pip install --upgrade pytest
+#        - python -m pip install git+https://github.com/mideind/Tokenizer#egg=tokenizer
+#      before_script: 
+#        - git lfs pull
 
     # Windows
     - name: "Windows (Python 3.8)"
