@@ -1778,7 +1778,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
     """ Subclass of LiteralTerminal that mixes in support from VariantHandler
         for variants in terminal names """
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         super().__init__(name)
         # Peel off the quotes from the first part
         assert len(self._first) >= 2  # The string can be ""
@@ -1859,7 +1859,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
             else:
                 self._matcher = WordMatchers.matcher_lemma_literal
 
-    def _check_first(self):
+    def _check_first(self) -> None:
         """ Replace underscores in the terminal's first part with spaces
             and check whether the resulting phrase occurs in StaticPhrases
             or is an abbreviation (because otherwise it will never match) """
@@ -1880,26 +1880,33 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
                 )
 
     @property
-    def colon_cat(self):
+    def colon_cat(self) -> Optional[str]:
         """ Return the string occurring after a colon in the terminal name """
         return self._cat
 
     @property
-    def category(self):
+    def literal_text(self) -> str:
+        """ If this is a strong literal, return it """
+        if self._strong:
+            return self._first
+        return ""
+
+    @property
+    def category(self) -> Optional[str]:
         """ Return the word category matched by the terminal """
         return self._match_cat
 
-    def startswith(self, part):
+    def startswith(self, part: str) -> bool:
         """ Override VariantHandler.startswith() """
         return False
 
-    def matches_category(self, cat):
+    def matches_category(self, cat: str) -> bool:
         """ Returns True if the terminal matches a particular category
             (overrides VariantHandler) """
         return self._match_cat == cat
 
     # pylint: disable=method-hidden
-    def matches(self, t_kind, t_val, t_lit):
+    def matches(self, t_kind, t_val, t_lit) -> bool:
         """ A literal terminal matches a token if the token text
             is identical to the literal """
         if self._match_cat is not None and t_kind != self._match_cat:
@@ -1908,7 +1915,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
         # Compare with lemma
         return self._first == t_val
 
-    def matches_strong(self, t_kind, t_val, t_lit):
+    def matches_strong(self, t_kind, t_val, t_lit) -> bool:
         """ A literal terminal matches a token if the token text
             is identical to the literal """
         # Note that this function is overridden in __init__ if self._cat is None

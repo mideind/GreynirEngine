@@ -3871,7 +3871,7 @@ TöluorðForskeyti →
     # Fleiryrt forskeyti
     | "hátt:ao" "í:ao"
     | Allt "að:ao"
-    | "innan:ao" "við:ao"
+    | "innan_við:ao"
     | "svo:st" "sem:st"
 
 TöluorðForskeyti/tala/fall/kyn →
@@ -5529,7 +5529,7 @@ FsUmOgEftir →
 $score(+8) FsUmOgEftir
 
 FsÍGegnUm →
-    "í:ao" "gegn:ao" 'um:fs'_þf Nl_þf
+    "í_gegn:ao" 'um:fs'_þf Nl_þf
     | "í:ao" 'gegnum:fs'_þf Nl_þf
 
 $tag(purge_prep) FsÍGegnUm

@@ -62,7 +62,7 @@
 
 """
 
-from typing import List, Dict, Set, Tuple, Iterator, Optional, Union, Any
+from typing import List, Sequence, Dict, Set, Tuple, Iterator, Optional, Union, Any
 
 import os
 import struct
@@ -72,10 +72,10 @@ from collections import defaultdict, OrderedDict
 
 # pylint: disable=no-name-in-module
 if __package__:
-    from .settings import Settings
+    from .settings import Settings, StaticPhrases
     from .basics import changedlocale
 else:
-    from settings import Settings  # type: ignore
+    from settings import Settings, StaticPhrases  # type: ignore
     from basics import changedlocale, ConfigError  # type: ignore
 
 
@@ -86,7 +86,7 @@ class GrammarError(Exception):
 
     """ Exception class for errors in a grammar """
 
-    def __init__(self, text: str, fname: Optional[str]=None, line: int=0) -> None:
+    def __init__(self, text: str, fname: Optional[str] = None, line: int = 0) -> None:
         """ A GrammarError contains an error text and optionally the name
             of a grammar file and a line number where the error occurred """
         super().__init__(text)
@@ -111,14 +111,37 @@ class GrammarError(Exception):
         return prefix + super().__str__()
 
 
-class Nonterminal:
+class GrammarItem:
+
+    """ An item that can occur in a production in a grammar.
+        This is either a Nonterminal or a Terminal. """
+
+    def __init__(self) -> None:
+        self._index = 0
+
+    @property
+    def literal_text(self) -> str:
+        return ""
+
+    @property
+    def index(self) -> int:
+        """ Return the (negative) sequence number of this nonterminal """
+        return self._index
+
+    def set_index(self, ix: int) -> None:
+        """ Set a new sequence number for this grammar item """
+        self._index = ix
+
+
+class Nonterminal(GrammarItem):
 
     """ A nonterminal, either at the left hand side of
         a rule or within a production """
 
     _INDEX = -1  # Running sequence number (negative) of all nonterminals
 
-    def __init__(self, name: str, fname: Optional[str]=None, line: int=0) -> None:
+    def __init__(self, name: str, fname: Optional[str] = None, line: int = 0) -> None:
+        super().__init__()
         self._name = name
         # Place of initial definition in a grammar file
         self._fname = fname
@@ -147,15 +170,10 @@ class Nonterminal:
     def __ne__(self, other: Any) -> bool:
         return self is not other
 
-    @property
-    def index(self) -> int:
-        """ Return the (negative) sequence number of this nonterminal """
-        return self._index
-
     def set_index(self, ix: int) -> None:
         """ Set a new sequence number for this nonterminal """
         assert ix < 0
-        self._index = ix
+        super().set_index(ix)
 
     def add_ref(self) -> None:
         """ Mark this as being referenced """
@@ -214,13 +232,14 @@ class Nonterminal:
         return self._name
 
 
-class Terminal:
+class Terminal(GrammarItem):
 
     """ A terminal within a right-hand-side production """
 
     _INDEX = 1  # Running sequence number (positive) of all terminals
 
     def __init__(self, name: str) -> None:
+        super().__init__()
         self._name = name
         self._index = Terminal._INDEX
         # The hash is used quite often so it is worth caching
@@ -241,11 +260,6 @@ class Terminal:
         return self._name
 
     @property
-    def index(self) -> int:
-        """ Return the (positive) sequence number of this terminal """
-        return self._index
-
-    @property
     def is_literal(self) -> bool:
         """ Return True if this is a literal terminal, i.e. one enclosed
             within single or double quotes """
@@ -254,7 +268,7 @@ class Terminal:
     def set_index(self, ix: int) -> None:
         """ Set a new sequence number for this nonterminal """
         assert ix > 0
-        self._index = ix
+        super().set_index(ix)
 
     def matches(self, t_kind: str, t_val, t_lit) -> bool:
         """ Does this terminal match the given token? """
@@ -280,6 +294,13 @@ class LiteralTerminal(Terminal):
         self._strong = q == '"'
 
     @property
+    def literal_text(self) -> str:
+        """ If this is a strong literal, return that literal """
+        if self._strong:
+            return self._name[1:-1]
+        return ""
+
+    @property
     def is_literal(self) -> bool:
         """ Return True if this is a literal terminal, i.e. one enclosed
             within single or double quotes """
@@ -299,7 +320,7 @@ class Token:
 
     """ A single input token as seen by the parser """
 
-    def __init__(self, kind: str, val: str, lit: Optional[str]=None):
+    def __init__(self, kind: str, val: str, lit: Optional[str] = None):
         """ A basic token has a kind, a canonical value
             and an optional literal value, all strings """
         self._kind = kind
@@ -341,12 +362,18 @@ class Production:
 
     _INDEX = 0  # Running sequence number of all productions
 
-    def __init__(self, fname=None, line=0, rhs=None, priority=0):
+    def __init__(
+        self,
+        fname: Optional[str] = None,
+        line: int = 0,
+        rhs: Optional[List[GrammarItem]] = None,
+        priority: int = 0,
+    ) -> None:
 
         """ Initialize a production from a list of
             right-hand-side nonterminals and terminals """
 
-        self._rhs = [] if rhs is None else rhs
+        self._rhs: List[GrammarItem] = [] if rhs is None else rhs
         # If parsing a grammar file, note the position of the production
         # in the file
         self._fname = fname
@@ -358,24 +385,17 @@ class Production:
         self._index = Production._INDEX
         Production._INDEX += 1
         # Cached tuple representation of this production
-        self._tuple = None
+        self._tuple: Optional[Tuple[int, ...]] = None
 
     @classmethod
     def reset(cls):
         """ Reset the production index sequence to zero """
         cls._INDEX = 0
 
-    def append(self, t):
+    def append(self, t: GrammarItem) -> None:
         """ Append a terminal or nonterminal to this production """
         self._rhs.append(t)
         self._len += 1
-        # Destroy the cached tuple, if any
-        self._tuple = None
-
-    def expand(self, l):
-        """ Add a list of terminals and/or nonterminals to this production """
-        self._rhs.expand(l)
-        self._len += len(l)
         # Destroy the cached tuple, if any
         self._tuple = None
 
@@ -494,7 +514,9 @@ class Grammar:
         self._nt_scores: Dict[Nonterminal, int] = {}
 
         self._root: Optional[Nonterminal] = None
-        self._secondary_roots: List[Nonterminal] = []  # Additional, secondary roots, if any
+        self._secondary_roots: List[
+            Nonterminal
+        ] = []  # Additional, secondary roots, if any
 
         # Information about the grammar file
         self._file_name: Optional[str] = None
@@ -666,8 +688,12 @@ class Grammar:
             raise GrammarError("Unable to open or read grammar file", fname, 0)
 
     def read_from_generator(
-        self, fname: str, line_generator: Iterator[str], verbose=False,
-        binary_fname=None, force_new_binary=False
+        self,
+        fname: str,
+        line_generator: Iterator[str],
+        verbose=False,
+        binary_fname=None,
+        force_new_binary=False,
     ) -> None:
         """ Read grammar from a generator of lines. Set verbose=True to get
             diagnostic messages about unused nonterminals and nonterminals that are
@@ -708,7 +734,9 @@ class Grammar:
                 """ Parse a right-hand side sequence, eventually with
                     relative priority within the nonterminal """
 
-                def add_rhs(nt_id: str, rhs: Optional[Production], priority: int=0) -> None:
+                def add_rhs(
+                    nt_id: str, rhs: Optional[Production], priority: int = 0
+                ) -> None:
                     """ Add a fully expanded right-hand-side production
                         to a nonterminal rule """
                     nt = nonterminals[nt_id]
@@ -1237,6 +1265,35 @@ class Grammar:
                             p.line,
                         )
 
+        # Check that productions do not contain consecutive literals
+        # that are joined to become a single multi-word phrase token
+        # Loop through nonterminals of the grammar
+        for _, plist in grammar.items():
+            # Loop through the production list of a nonterminal
+            for _, p in plist:
+                phrase = []
+                # Loop through items in a production
+                for item in p:
+                    item_text = item.literal_text
+                    if item_text:
+                        # This is a literal terminal: append to phrase
+                        phrase.append(item_text)
+                        if len(phrase) >= 2:
+                            # We have a phrase: check it
+                            ptxt = " ".join(phrase)
+                            if ptxt in StaticPhrases.MAP:
+                                # Oops: defined as a multi-word token in
+                                # the [static_phrases] section of Phrases.conf
+                                raise GrammarError(
+                                    "Consecutive literal terminals match "
+                                    "static phrase; use {0} instead".format(
+                                        '"' + "_".join(phrase) + '"'
+                                    )
+                                )
+                    else:
+                        # Restart phrase
+                        phrase = []
+
         # Check that all nonterminals derive terminal strings
         agenda = [nt for nt in nonterminals.values()]
         der_t = set()
@@ -1469,8 +1526,9 @@ if __name__ == "__main__":
         print("Unable to read grammar file {0}".format(fname))
     else:
         print(
-            "Reading grammar file {0} with timestamp {1:%Y-%m-%d %H:%M:%S}\n"
-            .format(fname, datetime.fromtimestamp(ts))
+            "Reading grammar file {0} with timestamp {1:%Y-%m-%d %H:%M:%S}\n".format(
+                fname, datetime.fromtimestamp(ts)
+            )
         )
         import time
 
@@ -1479,12 +1537,12 @@ if __name__ == "__main__":
         try:
             g.read(fname, verbose=True)
             print(
-                "Grammar parsed and loaded in {0:.2f} seconds"
-                .format(time.time() - t0)
+                "Grammar parsed and loaded in {0:.2f} seconds".format(time.time() - t0)
             )
             print(
-                "Grammar has {0:,} terminals, {1:,} nonterminals and {2:,} productions"
-                .format(g.num_terminals, g.num_nonterminals, g.num_productions)
+                "Grammar has {0:,} terminals, {1:,} nonterminals and {2:,} productions".format(
+                    g.num_terminals, g.num_nonterminals, g.num_productions
+                )
             )
         except GrammarError as err:
             print(str(err))
