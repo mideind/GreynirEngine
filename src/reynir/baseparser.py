@@ -32,9 +32,9 @@
 
 """
 
-from typing import Union, Dict, List, Optional
+from typing import Union, Dict, List, Iterator, Optional
 
-from .grammar import Grammar, Terminal, Nonterminal
+from .grammar import Grammar, GrammarItem, Terminal, Nonterminal, Production
 
 
 class _PackedProduction:
@@ -43,7 +43,7 @@ class _PackedProduction:
         where the component terminals and nonterminals have been packed
         into a list of integer indices """
 
-    def __init__(self, priority, production):
+    def __init__(self, priority: int, production: Production) -> None:
         # Store the relative priority of this production within its nonterminal
         self._priority = priority
         # Keep a reference to the original production
@@ -54,20 +54,20 @@ class _PackedProduction:
         self._len = len(self._ix_list)
 
     @property
-    def production(self):
+    def production(self) -> Production:
         return self._production
 
     @property
-    def priority(self):
+    def priority(self) -> int:
         return self._priority
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> int:
         return self._ix_list[index] if 0 <= index < self._len else 0
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self._len
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[int]:
         return iter(self._ix_list)
 
 
@@ -79,7 +79,7 @@ class Base_Parser:
     """
 
     def __init__(self) -> None:
-        self._root = None
+        self._root: Optional[int] = None
         self._nt_dict: Dict[int, Optional[List[_PackedProduction]]] = {}
         self._nonterminals: Dict[int, Nonterminal] = {}
         self._terminals: Dict[int, Terminal] = {}
@@ -112,7 +112,7 @@ class Base_Parser:
         p.init_from_grammar(g)
         return p
 
-    def _lookup(self, ix: int) -> Union[Terminal, Nonterminal]:
+    def _lookup(self, ix: int) -> GrammarItem:
         """ Convert a production item from an index to an object reference """
         # Terminals have positive indices
         # Nonterminals have negative indices

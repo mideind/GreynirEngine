@@ -249,11 +249,11 @@ class Node:
         # Priority of highest-priority child family
         self._highest_prio = 0
         # The nonterminal corresponding to this node, if not a leaf node
-        self._nonterminal = None
+        self._nonterminal: Optional[Nonterminal] = None
         # The terminal corresponding to this node, if it is a leaf node
-        self._terminal = None
+        self._terminal: Optional[Terminal] = None
         # The token matching this terminal, if this is a leaf node
-        self._token = None
+        self._token: Optional[Token] = None
         # If completed is True, this node represents a completed nonterminal.
         # Otherwise, it is an internal node representing a position within
         # a production of a nonterminal.
@@ -282,13 +282,13 @@ class Node:
         if lb.iNt >= 0:
             # Token node: find the corresponding terminal
             tix = parent.pList[index]
-            node._terminal = job.grammar.lookup(tix)
+            node._terminal = job.grammar.lookup_terminal(tix)
             node._token = job.tokens[lb.iNt]
             return node
 
         # Nonterminal node
         nt = lb.iNt
-        node._nonterminal = job.grammar.lookup(nt)
+        node._nonterminal = job.grammar.lookup_nonterminal(nt)
         node._completed = lb.pProd == ffi.NULL
         # Cache nonterminal nodes
         job.c_dict[c_node] = node
