@@ -1322,7 +1322,9 @@ def parse_phrases_2(
         yield token
 
 
-def parse_phrases_3(token_stream: Iterator[Bin_TOK], token_ctor: TokenConstructor) -> Iterator[Bin_TOK]:
+def parse_phrases_3(
+    token_stream: Iterator[Bin_TOK], token_ctor: TokenConstructor
+) -> Iterator[Bin_TOK]:
     """ Parse a stream of tokens looking for phrases and making substitutions.
         Third pass: coalesce uppercase, otherwise unrecognized words with
         a following person name, if any; also coalesce entity names and
@@ -1638,7 +1640,9 @@ class StaticPhraseStream(MatchingStream):
         yield self._token_ctor.Word(w, StaticPhrases.get_meaning(ix), token=tq)
 
 
-def parse_static_phrases(token_stream: Iterator[Bin_TOK], token_ctor: TokenConstructor, auto_uppercase: bool) -> Iterator[Bin_TOK]:
+def parse_static_phrases(
+    token_stream: Iterator[Bin_TOK], token_ctor: TokenConstructor, auto_uppercase: bool
+) -> Iterator[Bin_TOK]:
     """ Use the StaticPhraseStream class to process the token stream
         and replace static phrases with single tokens """
     sps = StaticPhraseStream(token_ctor, auto_uppercase)
@@ -1721,7 +1725,9 @@ class DisambiguationStream(MatchingStream):
             yield token_ctor.Word(t.txt, mm, token=t)
 
 
-def disambiguate_phrases(token_stream: Iterator[Bin_TOK], token_ctor: TokenConstructor) -> Iterator[Bin_TOK]:
+def disambiguate_phrases(
+    token_stream: Iterator[Bin_TOK], token_ctor: TokenConstructor
+) -> Iterator[Bin_TOK]:
 
     """ Parse a stream of tokens looking for common ambiguous multiword phrases
         (i.e. phrases that have a well known very likely interpretation but
