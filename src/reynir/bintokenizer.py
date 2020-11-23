@@ -321,7 +321,7 @@ PATRONYM_SET = frozenset(("föð", "móð", "ætt"))
 # Set of foreign middle names that start with a lower case letter
 # ('Louis de Broglie', 'Jan van Eyck')
 # 'of' was also here but caused problems
-FOREIGN_MIDDLE_NAME_SET = frozenset(("van", "de", "den", "der", "el", "al"))
+FOREIGN_MIDDLE_NAME_SET = frozenset(("van", "de", "den", "der", "el", "al", "von", "la"))
 
 # Given names that can also be family names (and thus gender- and caseless as such)
 BOTH_GIVEN_AND_FAMILY_NAMES = frozenset(("Hafstein",))
@@ -992,7 +992,7 @@ def parse_phrases_2(token_stream, token_ctor):
                     if tok.txt in BOTH_GIVEN_AND_FAMILY_NAMES:
                         # For instance "Hafstein" which can be both a given
                         # name and a family name: prepend the family name as
-                        # an genderless and caseless option to the list
+                        # a genderless and caseless option to the list
                         gnames = [
                             PersonName(name=tok.txt, gender=None, case=None)
                         ] + gnames
@@ -1204,7 +1204,7 @@ def parse_phrases_2(token_stream, token_ctor):
         yield token
 
 
-def parse_phrases_3(token_stream, token_ctor):
+def parse_phrases_3(token_stream, token_ctor, db):
     """ Parse a stream of tokens looking for phrases and making substitutions.
         Third pass: coalesce uppercase, otherwise unrecognized words with
         a following person name, if any; also coalesce entity names and
@@ -1222,7 +1222,7 @@ def parse_phrases_3(token_stream, token_ctor):
             an existing entity name """
 
         # Non-capitalized function words that can appear within entity names
-        if token.txt in ["in", "a", "an", "for", "van", "von"]:
+        if token.txt in ["in", "a", "an", "for", "and", "the", "for", "on", "of"] or token.txt in FOREIGN_MIDDLE_NAME_SET: 
             return True
         if token.kind != TOK.ENTITY and token.kind != TOK.WORD:
             return False
@@ -1254,14 +1254,43 @@ def parse_phrases_3(token_stream, token_ctor):
         concatable = False
 
         while True:
-            
+            print(token)
             if not concatable and not is_interesting(token):
-                yield token
-                # Make sure that token is None if next() raises StopIteration
-                token = None
-                token = next(token_stream)
-                continue
-
+                print("\t1")
+                if token.txt and token.txt.split(" ")[-1] in FOREIGN_MIDDLE_NAME_SET and " " in token.txt:
+                    # Combined in parse_phrases_2() but no capitalized word follows
+                    # Should be split up
+                    print("\tKOMST")
+                    split = token.txt.split(" ")
+                    first = split[:-1]
+                    print("\t{}".format(first))
+                    middle = ""
+                    if first[-1] in FOREIGN_MIDDLE_NAME_SET:
+                        # Allow one more check, in case of "de la"
+                        middle = first[-1]
+                        first = first[:-1]
+                    if token.kind == TOK.PERSON:
+                        token = token_ctor.Person(
+                            " ".join(first),
+                            [
+                                PersonName(" ".join(first), pn.gender, pn.case)
+                                for pn in token.val
+                            ],
+                        )
+                    else:
+                        token = token_ctor.Entity(" ".join(first))
+                    yield token
+                    if middle:
+                        w, m = db.lookup_word(middle)
+                        yield token_ctor.Word(middle, m)
+                    w, m = db.lookup_word(split[-1])
+                    token = token_ctor.Word(split[-1], m)
+                else:
+                    yield token
+                    # Make sure that token is None if next() raises StopIteration
+                    token = None
+                    token = next(token_stream)
+                    continue
             next_token = next(token_stream)
             concatable = False
 
@@ -1269,6 +1298,7 @@ def parse_phrases_3(token_stream, token_ctor):
                 # Allow merging a corporation ending. This is fairly
                 # open: any prefix consisting of uppercase words is
                 # allowed, even if they are found in BÍN.
+                print("\t2")
                 token = token_ctor.Company(token.txt + " " + next_token.txt)
                 next_token = next(token_stream)
             elif not_in_bin(token):
@@ -1277,6 +1307,7 @@ def parse_phrases_3(token_stream, token_ctor):
                     # not in BÍN, and the next token is a person: merge the two
                     # tokens into a single person name
                     # 'Jesse' 'John Kelley' -> 'Jesse John Kelley'
+                    print("\t3")
                     token = token_ctor.Person(
                         token.txt + " " + next_token.txt,
                         [
@@ -1287,9 +1318,13 @@ def parse_phrases_3(token_stream, token_ctor):
                     next_token = next(token_stream)
                 elif can_concat(next_token):
                     # Concatenate the next token and do another loop round
+                    print("\t4")
                     token = token_ctor.Entity(token.txt + " " + next_token.txt)
                     concatable = True
                     continue
+
+                
+            print("\t5")
 
             # Yield the current token and advance to the lookahead
             yield token
@@ -1705,7 +1740,7 @@ class DefaultPipeline:
 
     def parse_phrases_3(self, stream: TokenIterator) -> TokenIterator:
         """ Additional person and entity name logic """
-        return parse_phrases_3(stream, self._token_ctor)
+        return parse_phrases_3(stream, self._token_ctor, self._db)
 
     def fix_abbreviations(self, stream: TokenIterator) -> TokenIterator:
         """ Fix sentence splitting relating to abbreviations """
