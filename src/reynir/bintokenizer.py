@@ -1254,16 +1254,12 @@ def parse_phrases_3(token_stream, token_ctor, db):
         concatable = False
 
         while True:
-            print(token)
             if not concatable and not is_interesting(token):
-                print("\t1")
                 if token.txt and token.txt.split(" ")[-1] in FOREIGN_MIDDLE_NAME_SET and " " in token.txt:
                     # Combined in parse_phrases_2() but no capitalized word follows
                     # Should be split up
-                    print("\tKOMST")
                     split = token.txt.split(" ")
                     first = split[:-1]
-                    print("\t{}".format(first))
                     middle = ""
                     if first[-1] in FOREIGN_MIDDLE_NAME_SET:
                         # Allow one more check, in case of "de la"
@@ -1307,7 +1303,6 @@ def parse_phrases_3(token_stream, token_ctor, db):
                     # not in BÍN, and the next token is a person: merge the two
                     # tokens into a single person name
                     # 'Jesse' 'John Kelley' -> 'Jesse John Kelley'
-                    print("\t3")
                     token = token_ctor.Person(
                         token.txt + " " + next_token.txt,
                         [
@@ -1318,14 +1313,10 @@ def parse_phrases_3(token_stream, token_ctor, db):
                     next_token = next(token_stream)
                 elif can_concat(next_token):
                     # Concatenate the next token and do another loop round
-                    print("\t4")
                     token = token_ctor.Entity(token.txt + " " + next_token.txt)
                     concatable = True
                     continue
-
-                
-            print("\t5")
-
+            
             # Yield the current token and advance to the lookahead
             yield token
             token = next_token
