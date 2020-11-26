@@ -475,7 +475,7 @@ def test_tokens():
     assert s.lemmas == ['hér', 'vera', 'Helgi Björns', '.']
 
     s = g.parse_single("Hér er Jón de la.")
-    assert s.lemmas == ['hér', 'vera', 'Jón de la', '.']
+    assert s.lemmas == ['hér', 'vera', 'Jón', 'de', 'la', '.']
 
 
 def test_sentence_split():

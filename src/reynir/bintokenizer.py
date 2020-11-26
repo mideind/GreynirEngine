@@ -1310,7 +1310,13 @@ def parse_phrases_3(token_stream, token_ctor, db):
                         ],
                     )
                     next_token = next(token_stream)
-                elif token.kind == TOK.WORD and token.txt and token.txt.istitle() and any(m.fl in PATRONYM_SET for m in next_token.val):
+                elif (
+                    token.kind == TOK.WORD
+                    and next_token.kind == TOK.WORD 
+                    and token.txt 
+                    and token.txt.istitle() 
+                    and any(m.fl in PATRONYM_SET for m in next_token.val)
+                ):
                     # Most likely a foreign name with an Icelandic patronym
                     token = token_ctor.Person(
                         token.txt + " " + next_token.txt,
@@ -1327,7 +1333,18 @@ def parse_phrases_3(token_stream, token_ctor, db):
                     token = token_ctor.Entity(token.txt + " " + next_token.txt)
                     concatable = True
                     continue
-            
+                elif (
+                    token.txt 
+                    and next_token.txt 
+                    and token.txt.istitle() 
+                    and next_token.txt.istitle()
+                    and not " " in token.txt
+                    and not " " in next_token.txt
+                ):
+                    # Usually with capitalized foreign entity names that look like Icelandic common nouns.
+                    token = token_ctor.Entity(token.txt + " " + next_token.txt)
+                    continue
+
             # Yield the current token and advance to the lookahead
             yield token
             token = next_token
