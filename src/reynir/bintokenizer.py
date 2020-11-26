@@ -1063,7 +1063,6 @@ def parse_phrases_2(token_stream, token_ctor):
                     gn = r
                     w += " " + next_token.txt
                     next_token = next(token_stream)
-
                 # Check whether the sequence of given names is followed
                 # by one or more surnames (patronym/matronym) of the same gender,
                 # for instance 'Dagur Bergþóruson Eggertsson'
@@ -1185,6 +1184,7 @@ def parse_phrases_2(token_stream, token_ctor):
                     # and the intersected set of possible cases
                     token = token_ctor.Person(w, gn)
 
+
             # Yield the current token and advance to the lookahead
             yield token
 
@@ -1294,7 +1294,6 @@ def parse_phrases_3(token_stream, token_ctor, db):
                 # Allow merging a corporation ending. This is fairly
                 # open: any prefix consisting of uppercase words is
                 # allowed, even if they are found in BÍN.
-                print("\t2")
                 token = token_ctor.Company(token.txt + " " + next_token.txt)
                 next_token = next(token_stream)
             elif not_in_bin(token):
@@ -1311,6 +1310,18 @@ def parse_phrases_3(token_stream, token_ctor, db):
                         ],
                     )
                     next_token = next(token_stream)
+                elif token.kind == TOK.WORD and token.txt and token.txt.istitle() and any(m.fl in PATRONYM_SET for m in next_token.val):
+                    # Most likely a foreign name with an Icelandic patronym
+                    token = token_ctor.Person(
+                        token.txt + " " + next_token.txt,
+                        [
+                            PersonName(name=token.txt + " " + m.stofn, gender=m.ordfl, case=case(m.beyging, default="-"))
+                            for m in next_token.val
+                        ],
+                    )
+                    next_token = next(token_stream)
+
+
                 elif can_concat(next_token):
                     # Concatenate the next token and do another loop round
                     token = token_ctor.Entity(token.txt + " " + next_token.txt)
