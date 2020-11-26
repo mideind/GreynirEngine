@@ -383,21 +383,20 @@ def test_tokens():
     s = g.parse_single("Hér er Svanur Hildar- og Pálsson Scheving.")
     assert s.lemmas == ['hér', 'vera', 'Svanur Hildar- og Pálsson Scheving', '.']
 
-    # The following examples are not covered at the moment, included in case they will be
-    #s = g.parse_single("Hér eru Áki og Andri Brjánssynir.")
-    #assert s.lemmas == ['hér', 'vera', 'Áki og Andri Brjánssynir', '.']
+    s = g.parse_single("Hér eru Áki og Andri Brjánssynir.")
+    #assert s.lemmas == ['hér', 'vera', 'Áki og Andri Brjánssynir', '.']    # Out of scope 
 
-    #s = g.parse_single("Hér eru Ína og Una Brjánsdætur.")
-    #assert s.lemmas == ['hér', 'vera', 'Ína og Una Brjánsdætur', '.']
+    s = g.parse_single("Hér eru Ína og Una Brjánsdætur.")
+    #assert s.lemmas == ['hér', 'vera', 'Ína og Una Brjánsdætur', '.']    # Out of scope 
 
-    #s = g.parse_single("Hér eru Áki og Láki Brjánssynir.")
-    #assert s.lemmas == ['hér', 'vera', 'Áki og Láki Brjánssynir', '.']
+    s = g.parse_single("Hér eru Áki og Láki Brjánssynir.")
+    #assert s.lemmas == ['hér', 'vera', 'Áki og Láki Brjánssynir', '.']    # Out of scope 
 
-    #s = g.parse_single("Hér eru Ína og Mína Brjánsdætur.")
-    #assert s.lemmas == ['hér', 'vera', 'Ína og Mína Brjánsdætur', '.']
+    s = g.parse_single("Hér eru Ína og Mína Brjánsdætur.")
+    #assert s.lemmas == ['hér', 'vera', 'Ína og Mína Brjánsdætur', '.']    # Out of scope 
 
-    #s = g.parse_single("Hér eru Áki og Ína Brjánsbörn.")
-    #assert s.lemmas == ['hér', 'vera', 'Áki og Ína Brjánsbörn', '.']
+    s = g.parse_single("Hér eru Áki og Ína Brjánsbörn.")
+    #assert s.lemmas == ['hér', 'vera', 'Áki og Ína Brjánsbörn', '.']    # Out of scope 
 
     s = g.parse_single("Hér er Jack Nicholson.")
     assert s.lemmas == ['hér', 'vera', 'Jack Nicholson', '.']
@@ -406,13 +405,13 @@ def test_tokens():
     assert s.lemmas == ['hér', 'vera', 'Diane Lane', '.']
 
     s = g.parse_single("Hér er Finsbury Park.")
-    #assert s.lemmas == ['hér', 'vera', 'Finsbury Park', '.']
+    assert s.lemmas == ['hér', 'vera', 'Finsbury Park', '.']
 
     s = g.parse_single("Hér er Sky Sports.")
-    #assert s.lemmas == ['hér', 'vera', 'Sky Sports', '.']
+    assert s.lemmas == ['hér', 'vera', 'Sky Sports', '.']
 
     s = g.parse_single("Hér er J. K. Rowling.")
-    #assert s.lemmas == ['hér', 'vera', 'J. K. Rowling', '.']
+    #assert s.lemmas == ['hér', 'vera', 'J. K. Rowling', '.']    # Out of scope 
 
     s = g.parse_single("Hér er Parsley Ecothelial Welmington III.")
     assert s.lemmas == ['hér', 'vera', 'Parsley Ecothelial Welmington III', '.']
@@ -439,35 +438,36 @@ def test_tokens():
     assert s.lemmas == ['hér', 'vera', 'Díana Woodward', '.']
 
     s = g.parse_single("Hér er Knut Axel Holding AS.")
-    #assert s.lemmas == ['hér', 'vera', 'Knut Axel Holding AS', '.']
+    #assert s.lemmas == ['hér', 'vera', 'Knut Axel Holding AS', '.']    # Out of scope 
 
     s = g.parse_single("Hér er Matthildur Ármannsdóttir ehf..")
-    #assert s.lemmas == ['hér', 'vera', 'Matthildur Ármannsdóttir ehf.', '.']
+    #assert s.lemmas == ['hér', 'vera', 'Matthildur Ármannsdóttir ehf.', '.']   # Out of scope
 
     s = g.parse_single("Hér er Super Mattel AS.")
     assert s.lemmas == ['hér', 'vera', 'Super Mattel AS', '.']
 
     s = g.parse_single("Hér er WOW Cyclothon.")
-    #assert s.lemmas == ['hér', 'vera', 'WOW Cyclothon', '.']
+    #assert s.lemmas == ['hér', 'vera', 'WOW Cyclothon', '.']   # Out of scope
 
     s = g.parse_single("Hér er SHAPP Games.")
     assert s.lemmas == ['hér', 'vera', 'SHAPP Games', '.']
 
     s = g.parse_single("Hér er Fiat a10.")
-    #assert s.lemmas == ['hér', 'vera', 'Fiat a10', '.']
+    #assert s.lemmas == ['hér', 'vera', 'Fiat a10', '.']        # Out of scope
 
     s = g.parse_single("Hér er Ikea.")
     assert s.lemmas == ['hér', 'vera', 'Ikea', '.']
 
     s = g.parse_single("Hér er Styrmir Halldórsson H225.")
-    #assert s.lemmas == ['hér', 'vera', 'Styrmir Halldórsson H225', '.']
+    #assert s.lemmas == ['hér', 'vera', 'Styrmir Halldórsson H225', '.']    # Out of scope
 
     s = g.parse_single("Hér er The Trials and Tribulations of the Cat.")
     assert s.lemmas == ['hér', 'vera', 'The Trials and Tribulations of the Cat', '.']
 
     s = g.parse_single("Hér er Making Pastels: In Search of Quietness.")
-    #assert s.lemmas == ['hér', 'vera', 'Making Pastels: In Search of Quietness', '.']
+    assert s.lemmas == ['hér', 'vera', 'Making Pastels', ':', 'In Search of Quietness', '.']
 
+    # False positives to avoid
     s = g.parse_single("Hér er von Helgu.")
     assert s.lemmas == ['hér', 'vera', 'von', 'Helga', '.']
 
