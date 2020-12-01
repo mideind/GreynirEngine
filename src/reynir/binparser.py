@@ -1999,7 +1999,7 @@ class BIN_Parser(Base_Parser):
     _GRAMMAR_FILE = os.path.join(_PATH, _GRAMMAR_NAME)
     _GRAMMAR_BINARY_FILE = _GRAMMAR_FILE + ".bin"
 
-    def __init__(self, verbose=False):
+    def __init__(self, verbose: bool=False) -> None:
         super().__init__()
         modified, ts = self.is_grammar_modified()
         if modified:
@@ -2013,7 +2013,7 @@ class BIN_Parser(Base_Parser):
         self.init_from_grammar(g)
 
     @classmethod
-    def is_grammar_modified(cls):
+    def is_grammar_modified(cls) -> Tuple[bool, Optional[float]]:
         """ Returns True if the grammar file has been modified
             since it was last loaded, as well as the grammar
             file timestamp if it is known """
@@ -2070,7 +2070,7 @@ class BIN_Parser(Base_Parser):
         """ Sanitize the 'raw' tokens and wrap them in BIN_Token() wrappers """
         return wrap_tokens(tokens, wrap_func=self._create_wrapped_token)
 
-    def go(self, tokens: Iterable[BIN_Token]) -> None:
+    def go(self, tokens: Iterable[Token]) -> Any:
         """ Parse the token list after wrapping
             each understood token in the BIN_Token class """
         # This should never be called - is overridden in Fast_Parser
