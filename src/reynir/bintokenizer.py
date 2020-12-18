@@ -885,7 +885,9 @@ def parse_phrases_1(
                             )
                             for mm in next_token.val
                         ]
-                        token = token_ctor.Word(txt, m, token=next_token)
+                        # Copy attributes, such as capitalization status
+                        # (cf. GreynirCorrect) from the first token in the queue
+                        token = token_ctor.Word(txt, m, token=tq[0])
                         next_token = next(token_stream)
                 else:
                     # Incorrect prediction: make amends and continue

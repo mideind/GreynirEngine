@@ -85,6 +85,7 @@ class CaseFunc(Protocol):
     def __call__(self, w: str, **options) -> List[BIN_Meaning]:
         ...
 
+
 # Size of LRU/LFU caches for word lookups
 CACHE_SIZE = 512
 # Most common lookup function (meanings of a particular word form)
@@ -163,7 +164,7 @@ class BIN_Db:
             self._meanings_cache.lookup(key, self.meanings)
         )
         # Compressed BÍN wrapper
-        # Throws IOError if the compressed file doesn't exist
+        # Raises IOError if the compressed file doesn't exist
         self._compressed_bin: Optional[BIN_Compressed] = BIN_Compressed()
 
     def close(self) -> None:
@@ -382,11 +383,29 @@ class BIN_Db:
         return [mm for mm in mlist if mm.ordfl in BIN_Db._OPEN_CATS]
 
     @staticmethod
+    def nouns(mlist: Iterable[BIN_Meaning]) -> List[BIN_Meaning]:
+        """ Return a list of meanings filtered down to noun categories (kk, kvk, hk) """
+        return [mm for mm in mlist if mm.ordfl in BIN_Db._NOUNS]
+
+    @staticmethod
     def _compound_meanings(
         w: str, lower_w: str, at_sentence_start: bool, lookup: LookupFunc
     ) -> List[BIN_Meaning]:
         """ Return a list of meanings of this word,
             when interpreted as a compound word """
+        if " " in w:
+            # The word is a multi-word compound, such as 'félags- og barnamálaráðherra':
+            # Look at the last part only
+            prefix, suffix = w.rsplit(" ", maxsplit=1)
+            uppercase = suffix[0].isupper() and suffix[1:].islower()
+            m = BIN_Db._compound_meanings(suffix, suffix.lower(), False, lookup)
+            return (
+                BIN_Db.prefix_meanings(
+                    m, prefix + " ", insert_hyphen=False, uppercase=uppercase
+                )
+                if m
+                else []
+            )
         if "-" in w and not w.endswith("-"):
             # The word already contains a hyphen: respect that split and
             # look at the suffix only
@@ -400,6 +419,7 @@ class BIN_Db:
             # If not able to slice in original case, try lower case
             cw = Wordbase.slice_compound_word(lower_w)
         if not cw:
+            # No way to find a compound meaning: give up
             return []
         # This looks like a compound word:
         # use the meaning of its last part
@@ -410,10 +430,11 @@ class BIN_Db:
             # If this is an uppercase word in the middle of a
             # sentence, allow only nouns as possible interpretations
             # (it wouldn't be correct to capitalize verbs, adjectives, etc.)
-            m = [mm for mm in m if mm.ordfl in BIN_Db._NOUNS]
-        # Only allows meanings from open word categories
-        # (nouns, verbs, adjectives, adverbs)
-        m = BIN_Db.open_cats(m)
+            m = BIN_Db.nouns(m)
+        else:
+            # Only allows meanings from open word categories
+            # (nouns, verbs, adjectives, adverbs)
+            m = BIN_Db.open_cats(m)
         # Add the prefix to the remaining word stems
         return BIN_Db.prefix_meanings(m, prefix)
 

@@ -385,6 +385,29 @@ def test_auto_uppercase():
     assert "Eliza Reid" in s.tree.persons
 
 
+def test_compounds():
+    db = BIN_Db()
+    _, m = db.lookup_word("fjármála- og efnahagsráðherra")
+    assert m
+    assert m[0].stofn == "fjármála- og efnahags-ráðherra"
+    assert m[0].ordmynd == "fjármála- og efnahags-ráðherra"
+
+    _, m = db.lookup_word("tösku- og hanskabúðina")
+    assert m
+    assert m[0].stofn == "tösku- og hanskabúð"
+    assert m[0].ordmynd == "tösku- og hanskabúðina"
+
+    _, m = db.lookup_word("Félags- og barnamálaráðherra")
+    assert m
+    assert m[0].stofn == "Félags- og barnamála-ráðherra"
+    assert m[0].ordmynd == "Félags- og barnamála-ráðherra"
+
+    _, m = db.lookup_word("Félags- og Barnamálaráðherra")  # sic
+    assert m
+    assert m[0].stofn == "Félags- og barnamála-ráðherra"
+    assert m[0].ordmynd == "Félags- og barnamála-ráðherra"
+
+
 if __name__ == "__main__":
 
     test_augment_terminal()
