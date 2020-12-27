@@ -33,10 +33,7 @@
    (Beygingarlýsing íslensks nútímamáls, BÍN).
 
    The memory layout of the compressed buffer is determined by the
-   BIN_Compressor class in bincompress.py.
-
-   See https://greynir.is/doc/copyright.html for important copyright and
-   licensing information.
+   BIN_Compressor class in binpack.py.
 
 */
 

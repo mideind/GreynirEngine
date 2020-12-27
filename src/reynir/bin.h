@@ -32,9 +32,6 @@
    byte buffer containing the Database of Modern Icelandic Inflection
    (Beygingarlýsing íslensks nútímamáls, BÍN).
 
-   See https://greynir.is/doc/copyright.html for important copyright and
-   licensing information.
-
 */
 
 #include <stdlib.h>

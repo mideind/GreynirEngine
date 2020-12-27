@@ -40,30 +40,35 @@
     dictionaries or other data structures should be needed. The binary image
     is shared between running processes.
 
-    binpack.py reads the files ord.csv (original from BÍN), ord.auka.csv
+    binpack.py reads the files ord.csv (originally SHsnid.csv from BÍN), ord.auka.csv
     (additional vocabulary), and ord.add.csv (generated from config/Vocab.conf
-    by the program utils/vocab.py in the Greynir repository).
+    by the program utils/vocab.py in the Greynir repository). Additionally,
+    errata from the BinErrata.conf file are applied during the compression process.
+    These additions and modifications are not a part of the original BÍN source data.
 
     The run-time counterpart of this module is bincompress.py.
 
     ************************************************************************
 
-    IMPORTANT NOTE: It is not permitted to reverse engineer this file format
-    in order to extract the original BÍN source data. This source data
-    is subject to a license from 'Stofnun Árna Magnússonar í íslenskum fræðum'
-    of Reykjavík, Iceland, which holds the copyright to 'Beygingarlýsing
-    íslensks nútímamáls' (BÍN).
+    LICENSE NOTICE:
 
-    The BÍN source data should only be obtained via the official application
-    process at the bin.arnastofnun.is website and in accordance with the terms
-    of that license, cf. http://bin.arnastofnun.is/gogn/skilmalar/
+    GreynirPackage embeds the 'Database of Modern Icelandic Inflection' /
+    'Beygingarlýsing íslensks nútímamáls' (see https://bin.arnastofnun.is),
+    abbreviated BÍN.
 
-    Miðeind ehf. is a licensee of the BÍN data in accordance with the above
-    mentioned terms. With reference to article 3 of the license terms, the data
-    is redistributed in a proprietary binary format, exclusively as an integral
-    part of the Greynir project. Any subsequent distribution of this
-    data must be done only in full compliance with the original BÍN license
-    terms.
+    The BÍN source data are publicly available under the CC-BY-4.0 license, as further
+    detailed here in English: https://bin.arnastofnun.is/DMII/LTdata/conditions/
+    and here in Icelandic: https://bin.arnastofnun.is/gogn/mimisbrunnur/.
+
+    In accordance with the BÍN license terms, credit is hereby given as follows:
+
+        Beygingarlýsing íslensks nútímamáls.
+        Stofnun Árna Magnússonar í íslenskum fræðum.
+        Höfundur og ritstjóri Kristín Bjarnadóttir.
+
+    This module makes certain additions and modifications to the original
+    BÍN source data during the generation of the compressed file.
+    These are described in the comments above.
 
 """
 
