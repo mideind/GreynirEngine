@@ -214,19 +214,19 @@ If you would like to use this software in ways that are incompatible
 with the standard MIT license, `contact Miðeind ehf. <mailto:mideind@mideind.is>`__
 to negotiate custom arrangements.
 
-.. note::
+----
 
-    GreynirPackage embeds the `Database of Modern Icelandic Inflection <https://bin.arnastofnun.is>`_
-    (`Beygingarlýsing íslensks nútímamáls <https://bin.arnastofnun.is>`_), abbreviated BÍN.
+GreynirPackage embeds the `Database of Modern Icelandic Inflection <https://bin.arnastofnun.is>`_
+(`Beygingarlýsing íslensks nútímamáls <https://bin.arnastofnun.is>`_), abbreviated BÍN.
 
-    The BÍN source data are publicly available under the CC-BY-4.0 license, as further
-    detailed `here in English <https://bin.arnastofnun.is/DMII/LTdata/conditions/>`_
-    and `here in Icelandic <https://bin.arnastofnun.is/gogn/mimisbrunnur/>`_.
+The BÍN source data are publicly available under the CC-BY-4.0 license, as further
+detailed `here in English <https://bin.arnastofnun.is/DMII/LTdata/conditions/>`_
+and `here in Icelandic <https://bin.arnastofnun.is/gogn/mimisbrunnur/>`_.
 
-    In accordance with the BÍN license terms, credit is hereby given as follows:
+In accordance with the BÍN license terms, credit is hereby given as follows:
 
-    *Beygingarlýsing íslensks nútímamáls. Stofnun Árna Magnússonar í íslenskum fræðum. Höfundur og ritstjóri Kristín Bjarnadóttir.*
+*Beygingarlýsing íslensks nútímamáls. Stofnun Árna Magnússonar í íslenskum fræðum. Höfundur og ritstjóri Kristín Bjarnadóttir.*
 
-    GreynirPackage includes certain additions and modifications to the original BÍN
-    source data. These are explained in the source code file ``binpack.py``,
-    available in the project's `GitHub repository <https://github.com/mideind/GreynirPackage>`_.
+GreynirPackage includes certain additions and modifications to the original BÍN
+source data. These are explained in the source code file ``binpack.py``,
+available in the project's `GitHub repository <https://github.com/mideind/GreynirPackage>`_.
