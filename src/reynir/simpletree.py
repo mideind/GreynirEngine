@@ -148,6 +148,7 @@ _DEFAULT_NT_MAP = {
     "NlBeintAndlag": "NP-OBJ",
     "NlEnginnAndlag": "NP-OBJ",  # 'hann getur enga samninga gert'
     "NlAnnar": "NP-OBJ",  # '[Jón hefur] aðra sögu [að segja]'
+    "NlAndlagÞað": "NP-OBJ",  # (Jón lét) þess (getið að Guðrún væri falleg)
     "NlNema": "NP-EXCEPT",  # '(söknuðu einskis) nema hestsins'
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
@@ -182,6 +183,7 @@ _DEFAULT_NT_MAP = {
     "SögnAðRæða": "VP",
     "SögnAukafallÞgf": "VP",
     "SögnAukafallEf": "VP",
+    "SögnÞessGetið": "VP",
     "HreinSögn": "VP",
     "EinSögn": "VP",
     "SögnUmAðRæða": "VP",

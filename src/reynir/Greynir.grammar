@@ -613,7 +613,7 @@ $score(+4) Allt
 Allra → 'allur:fn'_ef_hk_ft
 
 Tilgangstenging → 
-    'til:fs'_ef 'það:pfn'_hk_ef_et "að:st"
+    'til:fs'_ef 'það:pfn'_hk_ef_et "að:st"  # Til þess að
     | "svo:st" "að:st"    # Líka afleiðingartenging
     | SvoTenging
 
@@ -1245,9 +1245,10 @@ SetningAukafallForgangur →
     # Þess ber að geta að... / Því ber að fagna að...
     # Þess verður að geta að...
     # !!! TODO: 'Því bæri að fagna ef Jón hefði sannfærst'
-    | 'það:pfn'_hk_et/aukafall HjSögnBer FsAtv? Nhm So_1_nh/aukafall AðLiður?
+    | NlAndlagÞað/aukafall HjSögnBer FsAtv? Nhm So_1_nh/aukafall AðLiður?
 
 BeygingarliðurLoÞgf →
+    # Öllum er [það] frjálst
     NlFrumlag_þgf HjSögnLhÞt_et_p3 'það:pfn'_hk_et_nf? FsAtv? LoÞgfNh
 
 # Lýsingarorð sem geta staðið með aukafalli og nafnháttarsetningu
@@ -1774,7 +1775,9 @@ EinSögn_sagnb/tala/kyn →
     # !!! sbr. Konurnar hafa lofað Páli ([því] að fara út): þarna er í raun 'lofa:so'_2_þgf_þgf_sagnb
     | Sögn_1_sagnb NhFylling/tala/kyn?  # Konurnar hafa [ekki] lofað Páli [að fara út]
     | Sögn_2_sagnb
-    | so_mm_sagnb LhÞtBotn/tala/kyn   # Konurnar hafa reynst vera bíræfnir þjófar / þóst ritfærar / sagst fara að drífa sig
+    | so_mm_sagnb LhÞtBotn/tala/kyn     # Konurnar hafa reynst vera bíræfnir þjófar / þóst ritfærar / sagst fara að drífa sig
+    # Ég hef látið þess getið að Jón er frábær
+    | 'láta:so'_sagnb SögnÞessGetið/tala/kyn
 
 # Gefa auka stig hér enda smella þá fleiri en eitt púsl saman
 $score(+8) EinSögn_sagnb/tala/kyn
@@ -1846,6 +1849,8 @@ EinSögn_nh/tala/kyn →
     | Sögn_2_nh
     # (Stjórnsýsla skal) vera [í öllum tilvikum] gegnsæ
     | HjSögnVeraVerða FsRunaInnskot? LoTengtSögn_nf/tala/kyn
+    # Ég vil láta þess getið að Jón er frábær
+    | 'láta:so'_nh SögnÞessGetið/tala/kyn
 
 # Boðháttur
 
@@ -1860,6 +1865,9 @@ Sögn_bh →
     | Sögn_2_bh BhBotn?
     # Láttu/látið það ekki slá ykkur (út af laginu) og fara (með ykkur í gönur)
     | 'láta:so'_bh NlBeintAndlag_þf AtvFs? EinSögn_nh/tala/kyn OgSögn_nh/tala/kyn* SagnInnskotAtv?
+    # Láttu/látið þess getið að Jón er frábær
+    | 'láta:so'_bh/tala SögnÞessGetið/tala/kyn
+
 
 # Boðháttur er sjaldgæfur - viljum aðra kosti frekar
 $score(-14) Sögn_bh
@@ -2072,7 +2080,7 @@ SögnMeðF_0/tala/pers/kyn →
     | 'segja:so'_0_gm_et_p3 FsAtv? AðvörunKomma? Skýringarsetning
 
 SögnMeðF_nh/tala/pers/kyn →
-    HjSögnNh/tala/pers NlFrumlag_nf/tala/pers/kyn Atviksliður? SögnMeðFNhBotn/tala/pers/kyn
+    HjSögnNh/tala/pers NlFrumlag_nf/tala/pers/kyn Atviksliður? SögnMeðFNhBotn/tala/kyn
 
 $score(+4) SögnMeðF_nh/tala/pers/kyn
 
@@ -2084,11 +2092,17 @@ SögnMeðFSagnbBotn →
     # !!! ATH: Nl_nf á í raun að vera frumlag hér, ef sá nafnliður er fyrir hendi á annað borð
     | Nl_nf/tala/kyn? LoAtviksliðir? lo_sb_nf_sþgf/tala/kyn Skýringarsetning?
 
-SögnMeðFNhBotn/tala/pers/kyn →
+SögnMeðFNhBotn/tala/kyn →
     # (Í stað takka) vill Apple [nú] koma fyrir snertiskynjurum
     HreinSögn_nh/tala/kyn
     # (Samkvæmt fréttum) mun þingkonan [nú] hafa gefið í skyn / geta fengið gögnin / fá upplýst um málið
     | HafaGetaFá_nh HreinSögn_sagnb/tala/kyn
+    # (Í gær lét hún) þess [ekki] getið [galvösk] að Jón væri frábær
+    | SögnÞessGetið/tala/kyn
+
+SögnÞessGetið/tala/kyn →
+    # (Í gær lét hún / Maðurinn lét) þess [ekki] getið [galvösk] að Jón væri frábær
+    NlAndlagÞað_ef Geta_sagnb LoTengtSögn_nf/tala/kyn? Skýringarsetning
 
 VeraVerðaAtv →
      FsAtv? HjSögnVeraVerða
@@ -2325,6 +2339,9 @@ Sögn_1/tala/pers/kyn →
     | HjSögnLhÞtSM/tala/pers FsAtv? so_2_þf_þgf_lhþt/tala/kyn NlBeintAndlag_þgf
     # Páll fékk [í snatri] [galvaskur] bílinn [að fullu / strax] endurgreiddan
     | HjSögnFá/tala/pers FsRunaEftirSögn? LoTengtSögn_nf/tala/kyn? FáAndlag_þf
+
+    # Ég læt þess getið að Jón er frábær
+    | 'láta:so'_gm/tala/pers SögnÞessGetið/tala/kyn
 
 FáAndlag_þf →
     # Páll fékk bílinn strax endurgreiddan
@@ -3161,9 +3178,8 @@ NlFrumlagÞað → 'það:pfn'_hk_nf_et
 
 # Hafa sérstakan hnút fyrir frumlagslepp (NP-ES)
 NlFrumlagLeppur → 'það:pfn'_hk_nf_et
-# Merkja til að koma í veg fyrir að hnúturinn sé fjarlægður,
-# þar sem hann bendir beint á annan hnút
-$tag(keep) NlFrumlagLeppur
+
+NlAndlagÞað/fall → 'það:pfn'_hk_et/fall
 
 NlFrumlag/fall → Nl/fall | NlSkýringarsetning
 NlFrumlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn

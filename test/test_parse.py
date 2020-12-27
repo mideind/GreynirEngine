@@ -2044,6 +2044,31 @@ def test_neutral_pronoun(r):
     )
 
 
+def test_þess_getið(r):
+    s = r.parse_single("Ég lét þess ekki getið að Jón væri frábær.")
+    assert s is not None
+    assert s.tree is not None
+    assert "láta" in s.tree.verbs
+    assert "geta" in s.tree.verbs
+    s = r.parse_single("Ég mun galvaskur láta þess getið að Jón sé frábær.")
+    assert s is not None
+    assert s.tree is not None
+    assert "láta" in s.tree.verbs
+    assert "geta" in s.tree.verbs
+    s = r.parse_single("Ég hef ætíð látið þess getið að Jón sé frábær.")
+    assert s is not None
+    assert s.tree is not None
+    assert "láta" in s.tree.verbs
+    assert "geta" in s.tree.verbs
+    s = r.parse_single("Ég sagðist hafa látið þess getið að Jón sé frábær.")
+    assert s is not None
+    assert s.tree is not None
+    assert "segja" in s.tree.verbs
+    assert "hafa" in s.tree.verbs
+    assert "láta" in s.tree.verbs
+    assert "geta" in s.tree.verbs
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
