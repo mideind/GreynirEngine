@@ -324,7 +324,9 @@ def test_lemmas():
     assert s.categories is None
     assert s.lemmas_and_cats is None
 
-def test_tokens():
+# Tests for more complex tokenization in bintokenizer
+
+def test_names():
     g = Greynir()
     s = g.parse_single("Hér er Jón.")
     assert s.lemmas == ['hér', 'vera', 'Jón', '.']
@@ -477,6 +479,37 @@ def test_tokens():
     s = g.parse_single("Hér er Jón de la.")
     assert s.lemmas == ['hér', 'vera', 'Jón', 'de', 'la', '.']
 
+def test_compounds_with_numbers():
+    """ Compounds containing numbers, either
+        with a hyphen or not """
+    g = Greynir()
+    
+    # Tokens with letters and numbers are split up so this fails
+    s = g.parse_single("Hér er X3-jeppi.")
+    #assert s.lemmas == ['hér', 'vera', 'X3-jeppi', '.']
+
+    # Tokens with letters and numbers are split up so this fails
+    s = g.parse_single("Hér er Bombardier Q-400.")
+    #assert s.lemmas == ['hér', 'vera', 'Bombardier Q-400', '.']
+
+    # Tokens with letters and numbers are split up so this fails
+    s = g.parse_single("Hér er U20-landsliðið.")
+    #assert s.lemmas == ['hér', 'vera', 'U20-landslið', '.']
+
+    # Tokens with letters and numbers are split up so this fails
+    s = g.parse_single("Hér er ómega-3 fitusýra.")
+    #assert s.lemmas == ['hér', 'vera', 'ómega-3', 'fitusýra', '.']
+
+    # The entity combination doesn't recognize the hyphenated word
+    s = g.parse_single("Hér er Coca Cola-bikarinn.")
+    #assert s.lemmas == ['hér', 'vera', 'Coca Cola-bikar', '.']
+
+"""
+def test_numbers()
+    g = Greynir()
+    s = g.parse_single("Hér er Jón.")
+    assert s.lemmas == ['hér', 'vera', 'Jón', '.']
+"""
 
 def test_sentence_split():
     g = Greynir()
