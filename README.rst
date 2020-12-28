@@ -228,5 +228,5 @@ In accordance with the BÍN license terms, credit is hereby given as follows:
 *Beygingarlýsing íslensks nútímamáls. Stofnun Árna Magnússonar í íslenskum fræðum. Höfundur og ritstjóri Kristín Bjarnadóttir.*
 
 GreynirPackage includes certain additions and modifications to the original BÍN
-source data. These are explained in the source code file ``binpack.py``,
+source data. These are explained in the source code file ``tools/binpack.py``,
 available in the project's `GitHub repository <https://github.com/mideind/GreynirPackage>`_.

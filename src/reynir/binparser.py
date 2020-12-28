@@ -45,6 +45,7 @@
 from typing import (
     cast,
     Dict,
+    Mapping,
     Set,
     Tuple,
     List,
@@ -96,6 +97,9 @@ class WordMatchers:
     """ A namespace to enclose the matching functions for various
         types of word categories and terminals. These functions
         are called from the BIN_Token.matches_WORD() function.
+        In other words, they are only used to match word tokens
+        (kind==TOK.WORD) with terminals that are potentially
+        matchable with such tokens.
 
         Enclosing these functions in a separate namespace class
         improves performance, especially in PyPy, and simplifies
@@ -103,9 +107,12 @@ class WordMatchers:
     """
 
     @staticmethod
-    def matcher_so(token, terminal, m):
-        """ Check verb """
+    def matcher_so(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
+        """ Match word with verb terminal, i.e. so_xxx """
         if m.ordfl != "so":
+            # Not a verb: no match
             return False
         if m.beyging == "-":
             # Abbreviated verb (such as 'dags.' for 'dagsetja/dagsett',
@@ -120,21 +127,24 @@ class WordMatchers:
 
         # If this is an unknown but potentially composite verb,
         # it will contain one or more hyphens. In this case, use only
-        # the last part in lookups in the internal verb lexicons.
+        # the last part in lookups in the internal verb dictionaries.
         verb = m.stofn
         if "-" in verb:
             verb = verb.rsplit("-", maxsplit=1)[-1]
         return token.verb_matches(verb, terminal, m.beyging)
 
     @staticmethod
-    def matcher_no(token, terminal, m):
-        """ Check noun """
+    def matcher_no(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
+        """ Match word with noun terminal, i.e. no_xxx """
         if m.ordfl not in BIN_Token.NOUNS_SET:
             # Not kk, kvk, hk
             return False
         no_info = m.beyging == "-"
         if terminal.is_abbrev:
-            # Only match abbreviations; gender, case and number do not matter
+            # Terminal has the form no_abbrev:
+            # only match abbreviations; gender, case and number do not matter
             return no_info
         if m.fl == "nafn" or m.fl == "ætt":
             # Names or family names (ættarnöfn) are only matched by person terminals
@@ -172,8 +182,10 @@ class WordMatchers:
         return True
 
     @staticmethod
-    def matcher_lo(token, terminal, m):
-        """ Adjective terminal """
+    def matcher_lo(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
+        """ Match word with adjective terminal, i.e. lo_xxx """
         if m.ordfl != "lo":
             return False
         if terminal.has_any_vbits(BIN_Token.VBIT_SCASES):
@@ -209,8 +221,11 @@ class WordMatchers:
         return terminal.fbits_match(BIN_Token.get_fbits(m.beyging))
 
     @staticmethod
-    def matcher_abfn(token, terminal, m):
-        """ Check reflexive pronoun (afturbeygt fornafn) """
+    def matcher_abfn(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
+        """ Match word with reflexive pronoun terminal
+            (afturbeygt fornafn), abfn_xxx """
         if m.ordfl != "abfn":
             return False
         fbits = BIN_Token.get_fbits(m.beyging)
@@ -219,8 +234,10 @@ class WordMatchers:
         return terminal.fbits_match_mask(BIN_Token.VBIT_CASES, fbits)
 
     @staticmethod
-    def matcher_pfn(token, terminal, m):
-        """ Personal pronoun """
+    def matcher_pfn(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
+        """ Match word with personal pronoun terminal, pfn_xxx """
         if m.ordfl != "pfn":
             return False
         fbits = BIN_Token.get_fbits(m.beyging)
@@ -231,15 +248,19 @@ class WordMatchers:
         )
 
     @staticmethod
-    def matcher_stt(token, terminal, m):
-        """ Check connective conjunction ('sem', 'er') """
+    def matcher_stt(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
+        """ Match word with connective conjunction terminal ('sem', 'er') """
         # This is actually never used by the current grammar,
         # since all instances of stt are of the form "sem:stt"
         # which is handled in matcher_default() / terminal.matches_first()
         return m.ordfl == "st" and m.stofn in {"sem", "er"}
 
     @staticmethod
-    def matcher_eo(token, terminal, m):
+    def matcher_eo(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
         """ 'Einkunnarorð': adverb (atviksorð) that is not the same
             as a preposition (forsetning) or pronoun (fornafn)."""
         if not m.ordfl.endswith("ao"):
@@ -267,7 +288,9 @@ class WordMatchers:
         return token._is_eo
 
     @staticmethod
-    def matcher_ao(token, terminal, m):
+    def matcher_ao(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
         """ Adverbs, excluding meanings explicitly marked as eo """
         if m.ordfl != "ao":
             return False
@@ -284,7 +307,9 @@ class WordMatchers:
         return terminal.fbits_match(fbits)
 
     @staticmethod
-    def matcher_fs(token, terminal, m):
+    def matcher_fs(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
         """ Check preposition. Note that in this exceptional case, we
             do not use the BÍN annotation of the token at all. Instead
             we look up the token text in Prepositions.PP which is read
@@ -319,7 +344,9 @@ class WordMatchers:
         return True
 
     @staticmethod
-    def matcher_töl(token, terminal, m):
+    def matcher_töl(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
         """ Undeclinable number word ('fimm', 'sex', 'tuttugu'...) """
         # In this case, the terminal may have variants but they are only used
         # to signal the context in which the terminal stands. We don't use
@@ -328,7 +355,9 @@ class WordMatchers:
         return terminal.matches_first(m.ordfl, m.stofn, token.t1_lower)
 
     @staticmethod
-    def matcher_person(token, terminal, m):
+    def matcher_person(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
         """ Check name from static phrases, coming from the GreynirPackage.conf file """
         if m.fl != "nafn":
             return False
@@ -338,7 +367,8 @@ class WordMatchers:
         # Check case, if present
         if m.beyging != "-":
             if any(
-                BIN_Token.VARIANT[c] in m.beyging and not terminal.has_variant(c)
+                (BIN_Token.VARIANT[c] or "*") in m.beyging
+                and not terminal.has_variant(c)
                 for c in BIN_Token.CASES
             ):
                 # The name has an associated case, but this is not it: quit
@@ -352,7 +382,9 @@ class WordMatchers:
         return True
 
     @staticmethod
-    def matcher_gata(token, terminal, m):
+    def matcher_gata(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
         """ Check street name """
         # Note: we allow street names as well as place names ('örn')
         # since some street names are also place names, such as 'Einarsnes',
@@ -366,22 +398,15 @@ class WordMatchers:
                 if m.ordfl != v:
                     # Mismatched gender
                     return False
-            elif BIN_Token.VARIANT[v] not in m.beyging:
+            elif (BIN_Token.VARIANT[v] or "*") not in m.beyging:
                 # Required case or number not found: no match
                 return False
         return True
 
     @staticmethod
-    def matcher_fyrirtæki(token, terminal, m):
-        """ Check company names """
-        if m.ordfl != "fyrirtæki":
-            return False
-        # Be careful not to match alternative abbreviations, such as
-        # 'ASA' meaning 'aust-suð-austan' (which is an adverb)
-        return m.ordfl in BIN_Token.GENDERS_SET
-
-    @staticmethod
-    def matcher_sérnafn(token, terminal, m):
+    def matcher_sérnafn(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
         """ Proper name terminal """
         # Only allow a potential interpretation as a proper name if
         # the token is uppercase but there is no uppercase meaning of
@@ -408,8 +433,10 @@ class WordMatchers:
         } and terminal.fbits_match(fbits)
 
     @staticmethod
-    def matcher_default(token, terminal, m):
-        """ Check other word categories """
+    def matcher_default(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
+        """ Check other terminal categories """
         if not terminal.matches_first(m.ordfl, m.stofn, token.t1_lower):
             return False
         if m.beyging == "-":
@@ -442,13 +469,17 @@ class WordMatchers:
         return terminal.fbits_match(fbits)
 
     @staticmethod
-    def matcher_strong_literal(token, terminal, m):
+    def matcher_strong_literal(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
         """ Check whether the meaning matches a strong literal terminal,
             i.e. one that is enclosed in double quotes ("dæmi:hk") """
         return terminal.matches_first(m.ordfl, m.stofn, token.t1_lower)
 
     @staticmethod
-    def matcher_lemma_literal(token, terminal, m):
+    def matcher_lemma_literal(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
         """ Check whether the meaning matches a lemma literal terminal,
             i.e. one that is enclosed in single quotes ('dæmi:hk'_nf_et) """
         if not WordMatchers.matcher_default(token, terminal, m):
@@ -462,7 +493,9 @@ class WordMatchers:
         return "MM" not in m.beyging
 
     @staticmethod
-    def matcher_uppercase_lemma_literal(token, terminal, m):
+    def matcher_uppercase_lemma_literal(
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+    ) -> bool:
         """ Check whether the meaning matches an uppercase lemma literal terminal,
             i.e. one that is enclosed in single quotes ('Vestur-Þýskaland:hk'_nf) """
         return WordMatchers.matcher_default(token, terminal, m)
@@ -489,7 +522,7 @@ class BIN_Token(Token):
     """
 
     # Map the BÍN category (ordfl) to terminal names used in the grammar
-    KIND = {
+    KIND: Mapping[str, str] = {
         "kk": "no",
         "kvk": "no",
         "hk": "no",
@@ -510,7 +543,7 @@ class BIN_Token(Token):
     }
 
     # Strings that must be present in the grammatical form for variants
-    VARIANT = {
+    VARIANT: Mapping[str, Optional[str]] = {
         "nf": "NF",  # Nefnifall / nominative
         "þf": "ÞF",  # Þolfall / accusative
         "þgf": "ÞGF",  # Þágufall / dative
@@ -528,6 +561,7 @@ class BIN_Token(Token):
         "p2": "2P",  # Önnur persóna / second person
         "p3": "3P",  # Þriðja persóna / third person
         "op": "OP",  # Ópersónuleg sögn
+        "sp": "SP",  # Spurnarmynd
         "gm": "GM",  # Germynd
         "mm": "MM",  # Miðmynd
         "sb": "SB",  # Sterk beyging
@@ -554,13 +588,17 @@ class BIN_Token(Token):
     }
 
     # Make a copy of VARIANT with the past tense (þt) added
-    VARIANT_EX = {key: val for key, val in VARIANT.items() if val is not None}
-    VARIANT_EX["þt"] = "ÞT"
+    VARIANT_EX: Mapping[str, str] = {
+        key: val for key, val in VARIANT.items() if val is not None
+    }
+    VARIANT_EX["þt"] = "ÞT"  # type: ignore
 
     # Bit mapping for all known variants
-    VBIT = {key: 1 << i for i, key in enumerate(VARIANT.keys())}
+    VBIT: Mapping[str, int] = {key: 1 << i for i, key in enumerate(VARIANT.keys())}
     # Bit mapping for all variants that have a corresponding BIN meaning
-    FBIT = {val: 1 << i for i, val in enumerate(VARIANT.values()) if val}
+    FBIT: Mapping[str, int] = {
+        val: 1 << i for i, val in enumerate(VARIANT.values()) if val
+    }
 
     VBIT_ET = VBIT["et"]
     VBIT_FT = VBIT["ft"]
@@ -579,8 +617,9 @@ class BIN_Token(Token):
     VBIT_GM = VBIT["gm"]
     VBIT_GR = VBIT["gr"]
     VBIT_OP = VBIT["op"]
+    VBIT_SP = VBIT["sp"]
     VBIT_SAGNB = VBIT["sagnb"]
-    VBIT_LHNT = VBIT["lh"] | VBIT["nt"]
+    VBIT_LHNT = VBIT["lh"] | VBIT["nt"]  # Both bits need to be present
     VBIT_SUBJ = VBIT["subj"]
     VBIT_ABBREV = VBIT["abbrev"]
     # Adjective subject cases
@@ -593,10 +632,10 @@ class BIN_Token(Token):
     # Mask the following bits off a VBIT set to get an FBIT set
     FBIT_MASK = VBIT_ABBREV | VBIT_SUBJ | VBIT_SCASES | VBIT_ENDING
 
-    CASES = ["nf", "þf", "þgf", "ef"]
+    CASES = ("nf", "þf", "þgf", "ef")
     CASES_SET = frozenset(CASES)
 
-    GENDERS = ["kk", "kvk", "hk"]
+    GENDERS = ("kk", "kvk", "hk")
     GENDERS_SET = NOUNS_SET = frozenset(GENDERS)
     GENDERS_MAP = {"kk": "KK", "kvk": "KVK", "hk": "HK"}
 
@@ -605,7 +644,7 @@ class BIN_Token(Token):
     VBIT_NUMBER = VBIT["et"] | VBIT["ft"]
 
     # Variants to be checked for verbs
-    VERB_VARIANTS = [
+    VERB_VARIANTS = (
         "p1",
         "p2",
         "p3",
@@ -624,7 +663,8 @@ class BIN_Token(Token):
         "vb",
         "gm",
         "mm",
-    ]
+        "sp",
+    )
 
     # Dictionary of associated BIN forms, initialized later
     _VERB_FORMS: Optional[Dict[str, str]] = None
@@ -639,7 +679,7 @@ class BIN_Token(Token):
     # !!! NOTE: This set should probably include all abbreviations that
     # !!! can represent adverbial phrases as well as other meanings,
     # !!! such as 'f.h.' which is both 'fyrir hádegi' and 'fyrir hönd'.
-    _NOT_EO = frozenset(["og", "eða", "sem", "ekkert", "f.h.", "m.v."])
+    _NOT_EO = frozenset(("og", "eða", "sem", "ekkert", "f.h.", "m.v."))
 
     # Prepositions that nevertheless must be allowed as adverbs
     # 'Fyrirtækið hefur skilað inn ársreikningi'
@@ -796,7 +836,7 @@ class BIN_Token(Token):
         # An "eo" is an adverb (atviksorð) that cannot also be
         # a preposition ("fs") and is therefore a possible
         # non-ambiguous prefix to a noun ("einkunn")
-        self._is_eo = None
+        self._is_eo: Optional[bool] = None
 
         # Cache the matching function to use with this token
         self._matching_func = BIN_Token._MATCHING_FUNC[self.t0]
@@ -906,9 +946,9 @@ class BIN_Token(Token):
         """ Returns True if the given subject type/case is allowed for this verb """
         return subj in cls._VERB_SUBJECTS.get(verb, set())
 
-    # Variants that must be present in the verb form if they
-    # are present in the terminal
-    _RESTRICTIVE_VARIANTS: Tuple[str, ...] = ("sagnb", "lhþt", "bh", "op")
+    # Variants that must be present in the terminal
+    # if they are present in the verb form
+    _RESTRICTIVE_VARIANTS: Tuple[str, ...] = ("sagnb", "lhþt", "bh", "op", "sp")
 
     @classmethod
     @lru_cache(maxsize=2048)
@@ -996,7 +1036,7 @@ class BIN_Token(Token):
         for v in terminal.variants:
             # Lookup variant to see if it is one of the required ones for verbs
             rq = cls._VERB_FORMS.get(v)
-            if rq is not None and rq not in form:
+            if rq and rq not in form:
                 # If this is required variant that is not found in the form we have,
                 # return False
                 return False
@@ -1004,7 +1044,7 @@ class BIN_Token(Token):
         # that have those unless they are explicitly present in the terminal
         # Be careful with "lh" here
         for v in cls._RESTRICTIVE_VARIANTS:
-            if (cls.VARIANT.get(v) or "") in form and not terminal.has_variant(v):
+            if (cls.VARIANT.get(v) or "*") in form and not terminal.has_variant(v):
                 return False
         if terminal.is_lh:
             if "VB" in form and not terminal.has_variant("vb"):
@@ -1726,7 +1766,7 @@ class VariantHandler:
 
     @property
     def is_lh_nt(self):
-        # Lýsingarháttur nútíðar ("LH-NT")
+        # Lýsingarháttur nútíðar ("LH-NT" or "LHNT")
         return (self._vbits & BIN_Token.VBIT_LHNT) == BIN_Token.VBIT_LHNT
 
     @property
@@ -1999,7 +2039,7 @@ class BIN_Parser(Base_Parser):
     _GRAMMAR_FILE = os.path.join(_PATH, _GRAMMAR_NAME)
     _GRAMMAR_BINARY_FILE = _GRAMMAR_FILE + ".bin"
 
-    def __init__(self, verbose: bool=False) -> None:
+    def __init__(self, verbose: bool = False) -> None:
         super().__init__()
         modified, ts = self.is_grammar_modified()
         if modified:
@@ -2082,7 +2122,9 @@ _UNKNOWN = frozenset(("e.", "d.", "þ.", "t.d.", "þ.e.", "m.a."))
 _SKIP_PARENTHESIS = frozenset(("e.",))  # "d." and "þ." were removed
 
 
-def wrap_tokens(tokens: Iterable[Tok], wrap_func: Optional[Callable[[Tok, int], Tok]]=None) -> List[Tok]:
+def wrap_tokens(
+    tokens: Iterable[Tok], wrap_func: Optional[Callable[[Tok, int], Tok]] = None
+) -> List[Tok]:
     """ Pre-process a token stream, removing tokens that will not be looked at
         during parsing - for instance insignificant punctuation and non-Icelandic
         text within parentheses. The function returns a fresh token list, with
@@ -2153,7 +2195,7 @@ def wrap_tokens(tokens: Iterable[Tok], wrap_func: Optional[Callable[[Tok, int], 
     return wrapped_tokens
 
 
-def simplify_terminal(terminal: str, cat: Optional[str]=None) -> str:
+def simplify_terminal(terminal: str, cat: Optional[str] = None) -> str:
     """ Return a simplified terminal name where literal specifications of
         the form 'literal:cat'_var1 and "literal:cat" have been converted
         to cat_var1, with the further complication that kk/kvk/hk are

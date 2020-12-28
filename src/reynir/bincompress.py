@@ -34,6 +34,8 @@
     a BLOB (via mmap). No auxiliary dictionaries or other data structures
     should be needed. The binary image is shared between running processes.
 
+    The compression of the dictionary is performed in tools/binpack.py.
+
     ************************************************************************
 
     LICENSE NOTICE:
@@ -52,7 +54,7 @@
         Stofnun Árna Magnússonar í íslenskum fræðum.
         Höfundur og ritstjóri Kristín Bjarnadóttir.
 
-    See the comments in the binpack.py file for further information.
+    See the comments in the tools/binpack.py file for further information.
 
 """
 

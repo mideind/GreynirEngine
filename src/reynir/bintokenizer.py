@@ -328,8 +328,8 @@ CURRENCY_GENDERS = {
 }
 
 # Set of categories (fl fields in BÍN) that denote
-# person names, Icelandic ('ism') or foreign ('erm')
-PERSON_NAME_SET = frozenset(("ism", "erm"))
+# person names, Icelandic ('ism' or 'gæl') or foreign ('erm')
+PERSON_NAME_SET = frozenset(("ism", "gæl", "erm"))
 
 # Set of categories (fl fields in BÍN) for patronyms
 # and matronyms, as well as gender-neutral family names
@@ -647,7 +647,7 @@ def all_cases(
         for m in token.val:
             if filter_func is not None and not filter_func(m):
                 continue
-            if m.fl == "ob":
+            if m.fl == "ob" or m.beyging == "-":
                 # One of the meanings is an undeclined word: all cases apply
                 cases = set(ALL_CASES)
                 break
@@ -1059,7 +1059,7 @@ def parse_phrases_2(
             # Check for person names
             def given_names(tok: Bin_TOK) -> Optional[List[PersonName]]:
                 """ Check for Icelandic or foreign person name
-                    (category 'ism' or 'erm') """
+                    (category 'ism', 'gæl' or 'erm') """
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
                     # Must be a word starting with an uppercase character
                     return None
@@ -1385,7 +1385,7 @@ def parse_phrases_3(
             concatable = False
 
             if next_token.txt in _CORPORATION_ENDINGS:
-                # Allow merging a corporation ending. This is fairly
+                # Allow merging a corporation ending ('ehf.', 'Inc.'). This is fairly
                 # open: any prefix consisting of uppercase words is
                 # allowed, even if they are found in BÍN.
                 token = token_ctor.Company(token.txt + " " + next_token.txt)

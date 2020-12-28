@@ -426,10 +426,6 @@ class IFD_Tagset:
         return "g" + self._kyn() + self._tala() + self._fall()
 
     def _t(self):
-        # if self._cat == "töl" and self._fl == "ob":
-        # Tekið út eftir að mörkun var bætt við í Greynir.grammar
-        # Óbeygt töluorð
-        #    return "ta"
         return (
             "t"
             + self._flokkur_t()

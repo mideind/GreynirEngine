@@ -387,6 +387,13 @@ class BIN_Compressor:
                             )
                         )
                         continue
+                    # Convert uninflectable indicator to "-"
+                    if s_meaning == "OBEYGJANLEGT":
+                        s_meaning = "-"
+                    # Cut off redundant ending of meaning (beyging),
+                    # e.g. ÞGFET2
+                    if s_meaning and s_meaning[-1] in {"2", "3"}:
+                        s_meaning = s_meaning[:-1]
                     # Apply a fix if we have one for this
                     # particular (stem, ordfl) combination
                     s_fl = _BIN_ERRATA.get((s_stem, s_ordfl), s_fl)
@@ -395,10 +402,6 @@ class BIN_Compressor:
                     fl = s_fl.encode("latin-1")
                     form = s_form.encode("latin-1")
                     meaning = s_meaning.encode("latin-1")
-                    # Cut off redundant ending of meaning (beyging),
-                    # e.g. ÞGF2
-                    if meaning and meaning[-1] in {b"2", b"3"}:
-                        meaning = meaning[:-1]
                     self._alphabet |= set(form)
                     # Map null (no string) in utg to -1
                     wix = int(wid) if wid else -1

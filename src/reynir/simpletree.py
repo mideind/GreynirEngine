@@ -293,7 +293,15 @@ _DEFAULT_ID_MAP: Dict[str, Dict[str, Union[str, Set[str]]]] = {
     "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
     "NP": dict(
         name="Nafnliður",
-        subject_to={"NP-SUBJ", "NP-ES", "NP-OBJ", "NP-IOBJ", "NP-PRD", "NP-ADP", "NP-EXCEPT"},
+        subject_to={
+            "NP-SUBJ",
+            "NP-ES",
+            "NP-OBJ",
+            "NP-IOBJ",
+            "NP-PRD",
+            "NP-ADP",
+            "NP-EXCEPT",
+        },
     ),
     "NP-POSS": dict(name="Eignarfallsliður", overrides="NP"),
     "NP-DAT": dict(name="Þágufallsliður", overrides="NP"),
@@ -318,9 +326,7 @@ _DEFAULT_ID_MAP: Dict[str, Dict[str, Union[str, Set[str]]]] = {
     "ADVP-DATE-REL": dict(name="Afstæð dagsetning", overrides="ADVP"),
     "ADVP-TIMESTAMP-ABS": dict(name="Fastur tímapunktur", overrides="ADVP"),
     "ADVP-TIMESTAMP-REL": dict(
-        name="Afstæður tímapunktur",
-        overrides="ADVP",
-        subject_to={"ADVP-TIMESTAMP-REL"}
+        name="Afstæður tímapunktur", overrides="ADVP", subject_to={"ADVP-TIMESTAMP-REL"}
     ),
     "ADVP-TMP-SET": dict(name="Tíðni", overrides="ADVP"),
     "ADVP-DUR-ABS": dict(name="Fast tímabil"),
@@ -968,9 +974,7 @@ class SimpleTree:
                         if terminal_case:
                             # The terminal actually specifies a case: sort on it
                             tc: str = terminal_case  # Make mypy happy
-                            m.sort(
-                                key=lambda mm: 0 if tc in mm.beyging else 1
-                            )
+                            m.sort(key=lambda mm: 0 if tc in mm.beyging else 1)
                         # If we can get away with just a 'töl', do it
                         mm = next((mm for mm in m if mm.ordfl == "töl"), m[0])
                         if mm.ordfl == "lo" and case is not None and gender is not None:
@@ -1199,12 +1203,13 @@ class SimpleTree:
                 for name in txt.split():
                     meanings = lookup_func(name, singular=True, cat=gender)
                     try:
-                        # Try to find an 'ism', 'erm', 'föð' or 'móð'
+                        # Try to find an 'ism', 'erm', 'gæl', 'föð' or 'móð'
                         # nominative form of the correct gender
                         result.append(
                             next(
                                 filter(
-                                    lambda m: m.fl in {"ism", "erm", "föð", "móð"},
+                                    lambda m: m.fl
+                                    in {"ism", "gæl", "erm", "föð", "móð"},
                                     meanings,
                                 )
                             ).ordmynd

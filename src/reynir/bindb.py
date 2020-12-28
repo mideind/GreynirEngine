@@ -104,7 +104,7 @@ setattr(BIN_Meaning, "__repr__", _meaning_repr)
 
 # The set of word subcategories (fl) for person names
 # (i.e. first names or complete names)
-PERSON_NAME_FL = frozenset(("ism", "nafn", "erm"))
+PERSON_NAME_FL = frozenset(("ism", "nafn", "gæl", "erm"))
 
 
 class _BIN_Session:
