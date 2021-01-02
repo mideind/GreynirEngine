@@ -7,7 +7,7 @@ Copyright and licensing
     :align: left
     :alt: Miðeind ehf.
 
-Greynir is *copyright © 2020 Miðeind ehf.*, Reykjavík, Iceland.
+Greynir is *copyright © 2021 Miðeind ehf.*, Reykjavík, Iceland.
 
 The project's original author is *Vilhjálmur Þorsteinsson*.
 

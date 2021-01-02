@@ -164,6 +164,7 @@ virtualenv), then run::
 **********
 Evaluation
 **********
+
 A parsing test pipeline for different parsing schemas, including the Greynir schema,
 has been developed. It is available `here <https://github.com/mideind/ParsingTestPipe>`__.
 
@@ -182,7 +183,7 @@ about `copyright and licensing <https://greynir.is/doc/copyright.html>`__.
 Copyright and licensing
 ***********************
 
-Greynir is *copyright © 2020 by Miðeind ehf.*
+Greynir is *copyright © 2021 by Miðeind ehf.*
 The original author of this software is *Vilhjálmur Þorsteinsson*.
 
 This software is licensed under the **MIT License**:

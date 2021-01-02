@@ -5,7 +5,7 @@
     Cache utility classes
 
     The LRU_Cache and LFU_Cache classes herein are
-	copyright (c) 2011 by Raymond Hettinger
+	copyright (C) 2011 by Raymond Hettinger
 
     cf. http://code.activestate.com/recipes/577970-simplified-lru-cache/
         http://code.activestate.com/recipes/498245-lru-and-lfu-cache-decorators/
