@@ -520,7 +520,7 @@ class IFD_Tagset:
     def _sérnöfn(self):
         if not self._stem:
             return ""
-        if self._fl in {"örn", "göt", "lönd"}:
+        if self._fl in {"örn", "göt", "heö", "bær", "þor", "lönd"}:
             return "ö" if "gr" in self._tagset else "-ö"
         if self._kind == "PERSON":
             return "-m"

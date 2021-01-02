@@ -1647,7 +1647,7 @@ def test_vocabulary(r):
     for sent in j:
         assert sent.tree is not None
         lemma_set = set([lemma.replace("-", "") for lemma in sent.lemmas])
-        assert "landmannalaug" in lemma_set
+        assert "Landmannalaugar" in lemma_set
         cnt += 1
     assert cnt == 2
 

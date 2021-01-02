@@ -389,7 +389,9 @@ class WordMatchers:
         # Note: we allow street names as well as place names ('örn')
         # since some street names are also place names, such as 'Einarsnes',
         # and place names tend to have priority in BÍN.
-        if m.fl != "göt" and m.fl != "örn":  # Götuheiti eða örnefni
+        if m.fl not in {"göt", "örn", "bær", "þor"}:
+            # Not a street name or place name
+            # (götuheiti, örnefni, bæir, þorp)
             return False
         if BIN_Token.KIND.get(m.ordfl, m.ordfl) != "no":
             return False

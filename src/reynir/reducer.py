@@ -579,10 +579,22 @@ class Reducer:
                         # Punish abbreviations in favor of other more specific terminals
                         sc[t] -= 1
                     if token.is_word and token.is_upper and token.t2:
-                        # Punish connection of normal noun terminal to
-                        # an uppercase word that can be a person or entity name
+                        # Punish connection of normal noun terminal to an
+                        # uppercase word that can be a person or entity name and
+                        # would thus normally be matched with person or entity
+                        # terminal
                         if any(
-                            m.fl in {"ism", "erm", "gæl", "nafn", "föð", "móð", "örn", "fyr"}
+                            m.fl
+                            in {
+                                "ism",
+                                "erm",
+                                "gæl",
+                                "nafn",
+                                "föð",
+                                "móð",
+                                "ætt",
+                                "entity",
+                            }
                             for m in token.t2
                         ):
                             # logging.info(

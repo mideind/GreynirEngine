@@ -501,7 +501,7 @@ SpurnarNafnliður/tala/fall/kyn →
     | 'hvaða:fn'/tala/fall/kyn Nl/fall/tala/kyn  # hvaða mann, hvaða börn
     | 'hver:fn'_ef_et_kk 'konar:kk'_ef_et Nl/fall/tala/kyn # hvers konar blóm
     | HversuHve Lo/fall/tala/kyn Nl/fall/tala/kyn # hversu mikinn þrýsting
-    | HversuHve Lo/fall/tala/kyn AfLiður/kyn?    # hversu mikið af bensíni
+    | HversuHve Lo/fall/tala/kyn AfLiður/kyn?     # hversu mikið af bensíni
     | "hvernig:ao" Nl/fall/tala/kyn     # Hægt að nota hliðstætt með nafnlið
     | HversuHve ao                      # TODO þrengja í ao sem tákna tíð, hátt, ...?
 
