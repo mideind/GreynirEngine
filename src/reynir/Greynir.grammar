@@ -2275,15 +2275,29 @@ Sögn_2_nh →
 
 Andlög/fall/afall →
     NlÓbeintAndlag/fall AndlögBotn/fall/afall
+    | UmsnúinAndlög/fall/afall
 
 Andlög/fall/afall/tala/kyn →
     NlÓbeintAndlag/fall LoTengtSögn_nf/tala/kyn? AndlögBotn/fall/afall
+    | UmsnúinAndlög/fall/afall/tala/kyn
+
+UmsnúinAndlög/fall/afall →
+    NlBeintAndlag/afall UmsnúinAndlögBotn/fall/afall
+
+UmsnúinAndlög/fall/afall/tala/kyn → 
+    NlBeintAndlag/afall UmsnúinAndlögBotn/fall/afall
+
+UmsnúinAndlögBotn/fall/afall →
+    NlÓbeintAndlag/fall
+    | LoAtviksliður* lo_mst/fall/tala/kyn NlÓbeintAndlag/fall/tala/pers/kyn SamanburðarNafnliður
 
 AndlögBotn/fall/afall →
     # (gefa Páli) [stóra] gjöf
     NlBeintAndlag/afall
     # (gefa Páli) [talsvert] stærri gjöf/flottari bíl en mér/Sigríði
     | LoAtviksliður* lo_mst/afall/tala/kyn NlBeintAndlag/afall/tala/pers/kyn SamanburðarNafnliður
+
+$score(-50) UmsnúinAndlög/fall/afall
 
 So_2_nh_þf_nf → so_2_þf_nf_nh
 So_2_nh_þf_þf → so_2_þf_þf_nh
@@ -3214,6 +3228,7 @@ NlBeintAndlag_þf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
 NlBeintAndlag_þgf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
 NlBeintAndlag_ef_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
 NlÓbeintAndlag/fall → Nl/fall | NlSkýringarsetning
+NlÓbeintAndlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
 NlSagnfylling/fall → Nl/fall | NlSkýringarsetning
 NlSagnfylling/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
 NlSagnfylling_nf_et_p3_hk → NlSkýringarsetning
