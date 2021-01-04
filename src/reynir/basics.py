@@ -3,7 +3,7 @@
 
     Basic classes module
 
-    Copyright (C) 2020 Miðeind ehf.
+    Copyright (C) 2021 Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -59,7 +59,7 @@ from pkg_resources import resource_stream
 
 # Type of BÍN meaning tuples
 # stofn, utg, ordfl, fl, ordmynd, beyging
-MeaningTuple = Tuple[str, int, str, str, str, str]
+MeaningTuple = Tuple[str, Optional[int], str, str, str, str]
 
 # The locale used by default in the changedlocale function
 _DEFAULT_LOCALE = ("IS_is", "UTF-8")
@@ -73,8 +73,7 @@ REFLPRN = {"sig": "sig_hk_et_þf", "sér": "sig_hk_et_þgf", "sín": "sig_hk_et_
 REFLPRN_SET = frozenset(REFLPRN.keys())
 
 # BÍN compressed file format version (used in tools/binpack.py and bincompress.py)
-# !!! Modify to Greynir at a convenient opportunity
-BIN_COMPRESSOR_VERSION = b"Reynir 001.04.00"
+BIN_COMPRESSOR_VERSION = b"Greynir 02.00.00"
 assert len(BIN_COMPRESSOR_VERSION) == 16
 BIN_COMPRESSED_FILE = "ord.compressed"
 

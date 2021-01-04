@@ -18,8 +18,7 @@ python3 setup.py sdist
 # Create the binary wheels
 source wheels.sh
 # Upload the new release
-# Note: twine must be installed into the current venv
-# for the following to work, and twine doesn't seem to work on PyPy,
-# so a CPython venv is required
-twine upload dist/reynir-$1*
+# Since twine doesn't work under PyPy (our default Python interpreter),
+# we resort to using Python2 to run it
+python2 -m twine upload dist/reynir-$1*
 echo "Upload of" "$1" "done"

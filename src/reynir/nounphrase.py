@@ -4,7 +4,7 @@
 
     NounPhrase class implementation
 
-    Copyright (c) 2020 Miðeind ehf.
+    Copyright (C) 2021 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -84,7 +84,10 @@ class NounPhrase:
         if self._np_string:
             if self._greynir is None:
                 # Initialize our parser singleton
-                self.__class__._greynir = Greynir()
+                # When parsing noun phrases, we don't assume that they
+                # start a sentence - so we don't attempt to interpret the
+                # first word as a lowercase word, as we would otherwise
+                self.__class__._greynir = Greynir(no_sentence_start=True)
             # Parse the noun phrase string into a _NounPhrase object
             assert self._greynir is not None
             self._np = self._greynir.parse_noun_phrase(

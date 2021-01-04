@@ -4,7 +4,7 @@
 
    C++ Earley parser module
 
-   Copyright (C) 2020 Miðeind ehf.
+   Copyright (C) 2021 Miðeind ehf.
 
    This software is licensed under the MIT License:
 

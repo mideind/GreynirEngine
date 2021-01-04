@@ -8455,21 +8455,21 @@ staðgöngumæðrun;0;kvk;alm;staðgöngumæðruninni;ÞGFETgr
 staðgöngumæðrun;0;kvk;alm;staðgöngumæðrunar;EFET
 staðgöngumæðrun;0;kvk;alm;staðgöngumæðrunarinnar;EFETgr
 
-Baggalútur;0;kk;ent;Baggalútur;NFET
-Baggalútur;0;kk;ent;Baggalút;ÞFET
-Baggalútur;0;kk;ent;Baggalút;ÞGFET
-Baggalútur;0;kk;ent;Baggalúts;EFET
-Baggalútur;0;kk;ent;Baggalútar;EFET2
+Baggalútur;0;kk;entity;Baggalútur;NFET
+Baggalútur;0;kk;entity;Baggalút;ÞFET
+Baggalútur;0;kk;entity;Baggalút;ÞGFET
+Baggalútur;0;kk;entity;Baggalúts;EFET
+Baggalútur;0;kk;entity;Baggalútar;EFET2
 
-Medína;0;kvk;ent;Medína;NFET
-Medína;0;kvk;ent;Medínu;ÞFET
-Medína;0;kvk;ent;Medínu;ÞGFET
-Medína;0;kvk;ent;Medínu;EFET
+Medína;0;kvk;entity;Medína;NFET
+Medína;0;kvk;entity;Medínu;ÞFET
+Medína;0;kvk;entity;Medínu;ÞGFET
+Medína;0;kvk;entity;Medínu;EFET
 
-Medúlla;0;kvk;ent;Medúlla;NFET
-Medúlla;0;kvk;ent;Medúllu;ÞFET
-Medúlla;0;kvk;ent;Medúllu;ÞGFET
-Medúlla;0;kvk;ent;Medúllu;EFET
+Medúlla;0;kvk;entity;Medúlla;NFET
+Medúlla;0;kvk;entity;Medúllu;ÞFET
+Medúlla;0;kvk;entity;Medúllu;ÞGFET
+Medúlla;0;kvk;entity;Medúllu;EFET
 
 Nóbel;0;kk;ism;Nóbel;NFET
 Nóbel;0;kk;ism;Nóbel;ÞFET

@@ -30,7 +30,7 @@ optimized C++ parsing core is fast and efficient enough to parse
 real-world text according to a
 `context-free grammar for the Icelandic
 language <https://github.com/mideind/GreynirPackage/blob/master/src/reynir/Greynir.grammar>`_
-with over 21,000 productions.
+with over 22,000 productions.
 
 To get acquainted with Greynir, we recommend that you start with
 the :ref:`overview`, proceed with the :ref:`installation` instructions,
@@ -50,8 +50,8 @@ To start using Greynir with Python, you (usually) need
 
 **No database to set up, no further data to download.**
 The entire `Database of Modern Icelandic
-Inflection <http://bin.arnastofnun.is/DMII/>`_
-(`Beygingarlýsing íslensks nútímamáls <http://bin.arnastofnun.is>`_),
+Inflection <https://bin.arnastofnun.is/DMII/>`_
+(`Beygingarlýsing íslensks nútímamáls <https://bin.arnastofnun.is>`_),
 with over 6 million entries, is embedded within Greynir in compressed form.
 By looking up word forms in this database and applying context-free
 grammar rules (productions) and scoring heuristics, Greynir is able to

@@ -164,6 +164,7 @@ virtualenv), then run::
 **********
 Evaluation
 **********
+
 A parsing test pipeline for different parsing schemas, including the Greynir schema,
 has been developed. It is available `here <https://github.com/mideind/ParsingTestPipe>`__.
 
@@ -182,7 +183,7 @@ about `copyright and licensing <https://greynir.is/doc/copyright.html>`__.
 Copyright and licensing
 ***********************
 
-Greynir is *copyright © 2020 by Miðeind ehf.*
+Greynir is *copyright © 2021 by Miðeind ehf.*
 The original author of this software is *Vilhjálmur Þorsteinsson*.
 
 This software is licensed under the **MIT License**:
@@ -213,3 +214,20 @@ This software is licensed under the **MIT License**:
 If you would like to use this software in ways that are incompatible
 with the standard MIT license, `contact Miðeind ehf. <mailto:mideind@mideind.is>`__
 to negotiate custom arrangements.
+
+----
+
+GreynirPackage embeds the `Database of Modern Icelandic Inflection <https://bin.arnastofnun.is>`_
+(`Beygingarlýsing íslensks nútímamáls <https://bin.arnastofnun.is>`_), abbreviated BÍN.
+
+The BÍN source data are publicly available under the CC-BY-4.0 license, as further
+detailed `here in English <https://bin.arnastofnun.is/DMII/LTdata/conditions/>`_
+and `here in Icelandic <https://bin.arnastofnun.is/gogn/mimisbrunnur/>`_.
+
+In accordance with the BÍN license terms, credit is hereby given as follows:
+
+*Beygingarlýsing íslensks nútímamáls. Stofnun Árna Magnússonar í íslenskum fræðum. Höfundur og ritstjóri Kristín Bjarnadóttir.*
+
+GreynirPackage includes certain additions and modifications to the original BÍN
+source data. These are explained in the source code file ``tools/binpack.py``,
+available in the project's `GitHub repository <https://github.com/mideind/GreynirPackage>`_.

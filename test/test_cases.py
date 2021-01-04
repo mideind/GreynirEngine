@@ -4,7 +4,7 @@
 
     Tests for Greynir module
 
-    Copyright (C) 2020 Miðeind ehf.
+    Copyright (C) 2021 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -334,6 +334,10 @@ def test_noun_phrases(r):
     assert np.parsed
     assert np.number == "et"
     assert np.nominative == "ey"
+    np = NounPhrase("Spánn")
+    assert np.parsed
+    assert np.nominative == "Spánn"
+    assert np.genitive == "Spánar"
 
 
 def test_casting():

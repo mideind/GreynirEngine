@@ -5,7 +5,7 @@
 
     BÍN compressor module
 
-    Copyright (C) 2020 Miðeind ehf.
+    Copyright (C) 2021 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -34,24 +34,27 @@
     a BLOB (via mmap). No auxiliary dictionaries or other data structures
     should be needed. The binary image is shared between running processes.
 
+    The compression of the dictionary is performed in tools/binpack.py.
+
     ************************************************************************
 
-    IMPORTANT NOTE: It is not permitted to reverse engineer this file format
-    in order to extract the original BÍN source data. This source data
-    is subject to a license from 'Stofnun Árna Magnússonar í íslenskum fræðum'
-    of Reykjavík, Iceland, which holds the copyright to 'Beygingarlýsing
-    íslensks nútímamáls' (BÍN).
+    LICENSE NOTICE:
 
-    The BÍN source data should only be obtained via the official application
-    process at the bin.arnastofnun.is website and in accordance with the terms
-    of that license, cf. http://bin.arnastofnun.is/gogn/skilmalar/
+    GreynirPackage embeds the 'Database of Modern Icelandic Inflection' /
+    'Beygingarlýsing íslensks nútímamáls' (see https://bin.arnastofnun.is),
+    abbreviated BÍN.
 
-    Miðeind ehf. is a licensee of the BÍN data in accordance with the above
-    mentioned terms. With reference to article 3 of the license terms, the data
-    is redistributed in a proprietary binary format, exclusively as an integral
-    part of the Greynir project. Any subsequent distribution of this
-    data must be done only in full compliance with the original BÍN license
-    terms.
+    The BÍN source data are publicly available under the CC-BY-4.0 license, as further
+    detailed here in English: https://bin.arnastofnun.is/DMII/LTdata/conditions/
+    and here in Icelandic: https://bin.arnastofnun.is/gogn/mimisbrunnur/.
+
+    In accordance with the BÍN license terms, credit is hereby given as follows:
+
+        Beygingarlýsing íslensks nútímamáls.
+        Stofnun Árna Magnússonar í íslenskum fræðum.
+        Höfundur og ritstjóri Kristín Bjarnadóttir.
+
+    See the comments in the tools/binpack.py file for further information.
 
 """
 
@@ -89,6 +92,18 @@ UINT32 = struct.Struct("<I")
 CASES = ("NF", "ÞF", "ÞGF", "EF")
 CASES_LATIN = tuple(case.encode("latin-1") for case in CASES)
 
+# Note: the following constants are also declared in tools/binpack.py
+# and their values must be identical
+
+# Bits allocated for the stem index
+STEM_BITS = 20
+# Bits allocated for the meaning index
+MEANING_BITS = 11
+# Bits allocated for the utg number
+UTG_BITS = 23
+# Bits allocated for the subcategory index (fl)
+SUBCAT_BITS = 8
+
 
 class BIN_Compressed:
 
@@ -122,7 +137,8 @@ class BIN_Compressed:
             variants_offset,
             meanings_offset,
             alphabet_offset,
-        ) = struct.unpack("<IIIIII", self._b[16:40])
+            subcats_offset,
+        ) = struct.unpack("<IIIIIII", self._b[16:44])
         self._forms_offset = forms_offset
         self._mappings = self._b[mappings_offset:]
         self._stems = self._b[stems_offset:]
@@ -139,6 +155,12 @@ class BIN_Compressed:
         self._alphabet_bytes = bytes(
             self._b[alphabet_offset + 4 : alphabet_offset + 4 + alphabet_length]
         )
+        # Decode the subcategories ('fl') into a list of strings
+        subcats_length = self._UINT(subcats_offset)
+        subcats_bytes = bytes(
+            self._b[subcats_offset + 4 : subcats_offset + 4 + subcats_length]
+        )
+        self._subcats = [s.decode("latin-1") for s in subcats_bytes.split()]
         # Create a CFFI buffer object pointing to the memory map
         self._mmap_buffer = ffi.from_buffer(self._b)
 
@@ -159,25 +181,27 @@ class BIN_Compressed:
             self._b.close()
             self._b = None  # type: ignore
 
-    def meaning(self, ix: int) -> Tuple[str, str, str]:
-        """ Find and decode a meaning (ordfl, fl, beyging) tuple,
+    def meaning(self, ix: int) -> Tuple[str, str]:
+        """ Find and decode a meaning (ordfl, beyging) tuple,
             given its index """
         (off,) = UINT32.unpack_from(self._meanings, ix * 4)
         b = bytes(self._b[off : off + 24])
-        s = b.decode("latin-1").split(maxsplit=4)
-        return s[0], s[1], s[2]  # ordfl, fl, beyging
+        s = b.decode("latin-1").split(maxsplit=2)
+        return s[0], s[1]  # ordfl, beyging
 
-    def stem(self, ix: int) -> Tuple[str, int]:
-        """ Find and decode a stem (utg, stofn) tuple, given its index """
+    def stem(self, ix: int) -> Tuple[str, int, str]:
+        """ Find and decode a stem (stofn, utg, subcat) tuple, given its index """
         (off,) = UINT32.unpack_from(self._stems, ix * 4)
-        wid = self._UINT(off)
-        # The id (utg) is stored in the lower 31 bits, after adding 1
-        wid = (wid & 0x7FFFFFFF) - 1
+        bits = self._UINT(off) & 0x7FFFFFFF
+        # The id (utg) is stored after adding 1 - subtract it again
+        utg = (bits >> SUBCAT_BITS) - 1
+        # Subcategory (fl) index
+        cix = bits & (2 ** SUBCAT_BITS - 1)
         p = off + 4
         lw = self._b[p]  # Length byte
         p += 1
         b = bytes(self._b[p : p + lw])
-        return b.decode("latin-1"), wid  # stofn, utg
+        return b.decode("latin-1"), utg, self._subcats[cix]  # stofn, utg, fl
 
     def case_variants(self, ix: int, case: bytes = b"NF") -> List[bytes]:
         """ Return all word forms having the given case, that are
@@ -219,9 +243,8 @@ class BIN_Compressed:
             return c, p
 
         (off,) = UINT32.unpack_from(self._stems, ix * 4)
-        wid = self._UINT(off)
-        # The id (utg) is stored in the lower 31 bits, after adding 1
-        if wid & 0x80000000 == 0:
+        bits = self._UINT(off)
+        if bits & 0x80000000 == 0:
             # No case_variants associated with this stem
             return []
         # Skip past the stem itself
@@ -269,8 +292,8 @@ class BIN_Compressed:
         result = []
         while True:
             (stem_meaning,) = self._partial_mappings(mapping * 4)
-            stem_index = (stem_meaning >> 11) & (2 ** 20 - 1)
-            meaning_index = stem_meaning & (2 ** 11 - 1)
+            stem_index = (stem_meaning >> MEANING_BITS) & (2 ** STEM_BITS - 1)
+            meaning_index = stem_meaning & (2 ** MEANING_BITS - 1)
             result.append((stem_index, meaning_index))
             if stem_meaning & 0x80000000:
                 # Last mapping indicator: we're done
@@ -282,9 +305,7 @@ class BIN_Compressed:
         """ Returns True if the trie contains the given word form"""
         return self._mapping_cffi(word) is not None
 
-    def __contains__(self, word: str) -> bool:
-        """ Returns True if the trie contains the given word form"""
-        return self._mapping_cffi(word) is not None
+    __contains__ = contains
 
     def lookup(
         self,
@@ -293,7 +314,7 @@ class BIN_Compressed:
         stem: Optional[str] = None,
         utg: Any = NoUtg,
         beyging_func: Optional[Callable[[str], bool]] = None,
-    ):
+    ) -> List[MeaningTuple]:
         """ Returns a list of BÍN meanings for the given word form,
             eventually constrained to the requested word category,
             stem, utg number and/or the given beyging_func filter function,
@@ -306,7 +327,7 @@ class BIN_Compressed:
             cats = ALL_GENDERS
         else:
             cats = frozenset([cat])
-        result = []
+        result: List[MeaningTuple] = []
         for stem_index, meaning_index in self._raw_lookup(word):
             meaning = self.meaning(meaning_index)
             if cats is not None and meaning[0] not in cats:
@@ -320,13 +341,13 @@ class BIN_Compressed:
             if utg is not BIN_Compressed.NoUtg and word_utg != utg:
                 # Fails the utg filter
                 continue
-            beyging = meaning[2]
-            if beyging_func is not None and not (beyging_func(beyging)):
+            beyging = meaning[1]
+            if beyging_func is not None and not beyging_func(beyging):
                 # Fails the beyging_func filter
                 continue
             # stofn, utg, ordfl, fl, ordmynd, beyging
             result.append(
-                (word_stem[0], word_utg, meaning[0], meaning[1], word, beyging)
+                (word_stem[0], word_utg, meaning[0], word_stem[2], word, beyging)
             )
         return result
 
@@ -341,7 +362,7 @@ class BIN_Compressed:
         stem: Optional[str] = None,
         utg: Any = NoUtg,
         beyging_filter: Optional[Callable[[str], bool]] = None
-    ):
+    ) -> Set[MeaningTuple]:
         """ Returns a set of meanings, in the requested case, derived
             from the lemmas of the given word form, optionally constrained
             by word category and by the other arguments given. The
@@ -355,7 +376,7 @@ class BIN_Compressed:
         # simply means that no forcing to singular occurs.
         # The same applies to indefinite=True and False, mutatis mutandis.
 
-        result = set()  # type: Set[MeaningTuple]
+        result: Set[MeaningTuple] = set()
         case_latin = case.encode("latin-1")
         # Category set
         if cat is None:
@@ -423,7 +444,7 @@ class BIN_Compressed:
                 continue
             # Go through the variants of this
             # stem, for the requested case
-            wanted_beyging = simplify_beyging(meaning[2])
+            wanted_beyging = simplify_beyging(meaning[1])
             for c_latin in self.case_variants(stem_index, case=case_latin):
                 # TODO: Encoding and decoding back and forth is not terribly efficient
                 c = c_latin.decode("latin-1")

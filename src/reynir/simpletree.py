@@ -4,7 +4,7 @@
 
     SimpleTree module
 
-    Copyright (c) 2020 Miðeind ehf.
+    Copyright (C) 2021 Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -50,12 +50,12 @@ from .settings import StaticPhrases
 from .binparser import BIN_Token, BIN_Terminal, augment_terminal, canonicalize_token
 from .fastparser import ParseForestNavigator
 from .bintokenizer import (
-    describe_token,
     CURRENCIES,
     CURRENCY_GENDERS,
     MULTIPLIERS,
     DECLINABLE_MULTIPLIERS,
 )
+from .binparser import describe_token
 from .bindb import BIN_Db, BIN_Meaning
 from .ifdtagger import IFD_Tagset
 from .matcher import match_pattern
@@ -148,6 +148,7 @@ _DEFAULT_NT_MAP = {
     "NlBeintAndlag": "NP-OBJ",
     "NlEnginnAndlag": "NP-OBJ",  # 'hann getur enga samninga gert'
     "NlAnnar": "NP-OBJ",  # '[Jón hefur] aðra sögu [að segja]'
+    "NlAndlagÞað": "NP-OBJ",  # (Jón lét) þess (getið að Guðrún væri falleg)
     "NlNema": "NP-EXCEPT",  # '(söknuðu einskis) nema hestsins'
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
@@ -182,6 +183,7 @@ _DEFAULT_NT_MAP = {
     "SögnAðRæða": "VP",
     "SögnAukafallÞgf": "VP",
     "SögnAukafallEf": "VP",
+    "SögnÞessGetið": "VP",
     "HreinSögn": "VP",
     "EinSögn": "VP",
     "SögnUmAðRæða": "VP",
@@ -200,6 +202,7 @@ _DEFAULT_NT_MAP = {
     "FsFyrirEftir": "PP",
     "FsUmAðRæða": "PP",
     "FsVarUmAðRæða": "PP",
+    "FsRunaEftirSögn": "PP",
     "AðSögn": "PP",
     "ÍNl": "PP",
     "SpurnarForsetningarliður": "PP",
@@ -216,7 +219,6 @@ _DEFAULT_NT_MAP = {
     "AfstæðDagsetning": "ADVP-DATE-REL",
     "FasturTímapunktur": "ADVP-TIMESTAMP-ABS",
     "AfstæðurTímapunktur": "ADVP-TIMESTAMP-REL",
-    "FsRunaEftirSögn": "ADVP-TIMESTAMP-REL",
     "Tíðni": "ADVP-TMP-SET",
     "FastTímabil": "ADVP-DUR-ABS",
     "AfstættTímabil": "ADVP-DUR-REL",
@@ -291,7 +293,15 @@ _DEFAULT_ID_MAP: Dict[str, Dict[str, Union[str, Set[str]]]] = {
     "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
     "NP": dict(
         name="Nafnliður",
-        subject_to={"NP-SUBJ", "NP-ES", "NP-OBJ", "NP-IOBJ", "NP-PRD", "NP-ADP", "NP-EXCEPT"},
+        subject_to={
+            "NP-SUBJ",
+            "NP-ES",
+            "NP-OBJ",
+            "NP-IOBJ",
+            "NP-PRD",
+            "NP-ADP",
+            "NP-EXCEPT",
+        },
     ),
     "NP-POSS": dict(name="Eignarfallsliður", overrides="NP"),
     "NP-DAT": dict(name="Þágufallsliður", overrides="NP"),
@@ -316,9 +326,7 @@ _DEFAULT_ID_MAP: Dict[str, Dict[str, Union[str, Set[str]]]] = {
     "ADVP-DATE-REL": dict(name="Afstæð dagsetning", overrides="ADVP"),
     "ADVP-TIMESTAMP-ABS": dict(name="Fastur tímapunktur", overrides="ADVP"),
     "ADVP-TIMESTAMP-REL": dict(
-        name="Afstæður tímapunktur",
-        overrides="ADVP",
-        subject_to={"ADVP-TIMESTAMP-REL"}
+        name="Afstæður tímapunktur", overrides="ADVP", subject_to={"ADVP-TIMESTAMP-REL"}
     ),
     "ADVP-TMP-SET": dict(name="Tíðni", overrides="ADVP"),
     "ADVP-DUR-ABS": dict(name="Fast tímabil"),
@@ -966,9 +974,7 @@ class SimpleTree:
                         if terminal_case:
                             # The terminal actually specifies a case: sort on it
                             tc: str = terminal_case  # Make mypy happy
-                            m.sort(
-                                key=lambda mm: 0 if tc in mm.beyging else 1
-                            )
+                            m.sort(key=lambda mm: 0 if tc in mm.beyging else 1)
                         # If we can get away with just a 'töl', do it
                         mm = next((mm for mm in m if mm.ordfl == "töl"), m[0])
                         if mm.ordfl == "lo" and case is not None and gender is not None:
@@ -1197,12 +1203,13 @@ class SimpleTree:
                 for name in txt.split():
                     meanings = lookup_func(name, singular=True, cat=gender)
                     try:
-                        # Try to find an 'ism', 'erm', 'föð' or 'móð'
+                        # Try to find an 'ism', 'erm', 'gæl', 'föð' or 'móð'
                         # nominative form of the correct gender
                         result.append(
                             next(
                                 filter(
-                                    lambda m: m.fl in {"ism", "erm", "föð", "móð"},
+                                    lambda m: m.fl
+                                    in {"ism", "gæl", "erm", "föð", "móð"},
                                     meanings,
                                 )
                             ).ordmynd
@@ -1963,7 +1970,7 @@ class Simplifier(ParseForestNavigator):
         id_map=None,
         terminal_map=None,
         first_token_index=0
-    ):
+    ) -> None:
         super().__init__(visit_all=True)
         self._tokens = tokens
         self._builder = SimpleTreeBuilder(nt_map, id_map, terminal_map)

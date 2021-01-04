@@ -5,7 +5,7 @@
 
     BÍN packing/compression program
 
-    Copyright (C) 2020 Miðeind ehf.
+    Copyright (C) 2021 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -40,30 +40,35 @@
     dictionaries or other data structures should be needed. The binary image
     is shared between running processes.
 
-    binpack.py reads the files ord.csv (original from BÍN), ord.auka.csv
+    binpack.py reads the files ord.csv (originally SHsnid.csv from BÍN), ord.auka.csv
     (additional vocabulary), and ord.add.csv (generated from config/Vocab.conf
-    by the program utils/vocab.py in the Greynir repository).
+    by the program utils/vocab.py in the Greynir repository). Additionally,
+    errata from the BinErrata.conf file are applied during the compression process.
+    These additions and modifications are not a part of the original BÍN source data.
 
     The run-time counterpart of this module is bincompress.py.
 
     ************************************************************************
 
-    IMPORTANT NOTE: It is not permitted to reverse engineer this file format
-    in order to extract the original BÍN source data. This source data
-    is subject to a license from 'Stofnun Árna Magnússonar í íslenskum fræðum'
-    of Reykjavík, Iceland, which holds the copyright to 'Beygingarlýsing
-    íslensks nútímamáls' (BÍN).
+    LICENSE NOTICE:
 
-    The BÍN source data should only be obtained via the official application
-    process at the bin.arnastofnun.is website and in accordance with the terms
-    of that license, cf. http://bin.arnastofnun.is/gogn/skilmalar/
+    GreynirPackage embeds the 'Database of Modern Icelandic Inflection' /
+    'Beygingarlýsing íslensks nútímamáls' (see https://bin.arnastofnun.is),
+    abbreviated BÍN.
 
-    Miðeind ehf. is a licensee of the BÍN data in accordance with the above
-    mentioned terms. With reference to article 3 of the license terms, the data
-    is redistributed in a proprietary binary format, exclusively as an integral
-    part of the Greynir project. Any subsequent distribution of this
-    data must be done only in full compliance with the original BÍN license
-    terms.
+    The BÍN source data are publicly available under the CC-BY-4.0 license, as further
+    detailed here in English: https://bin.arnastofnun.is/DMII/LTdata/conditions/
+    and here in Icelandic: https://bin.arnastofnun.is/gogn/mimisbrunnur/.
+
+    In accordance with the BÍN license terms, credit is hereby given as follows:
+
+        Beygingarlýsing íslensks nútímamáls.
+        Stofnun Árna Magnússonar í íslenskum fræðum.
+        Höfundur og ritstjóri Kristín Bjarnadóttir.
+
+    This module makes certain additions and modifications to the original
+    BÍN source data during the generation of the compressed file.
+    These are described in the comments above.
 
 """
 
@@ -97,6 +102,18 @@ _BIN_DELETIONS: Set[Tuple[str, str, str]] = set()
 
 CASES = ("NF", "ÞF", "ÞGF", "EF")
 CASES_LATIN = tuple(case.encode("latin-1") for case in CASES)
+
+# Note: the following constants are also declared in bincompress.py
+# and their values must be identical
+
+# Bits allocated for the stem index
+STEM_BITS = 20
+# Bits allocated for the meaning index
+MEANING_BITS = 11
+# Bits allocated for the utg number
+UTG_BITS = 23
+# Bits allocated for the subcategory index (fl)
+SUBCAT_BITS = 8
 
 
 class _Node:
@@ -231,7 +248,7 @@ class Trie:
         Each node in the trie contains a prefix string, leading
         to its children. """
 
-    def __init__(self, root_fragment: bytes=b"") -> None:
+    def __init__(self, root_fragment: bytes = b"") -> None:
         self._cnt = 0
         self._root = _Node(root_fragment, None)
 
@@ -239,7 +256,7 @@ class Trie:
     def root(self) -> _Node:
         return self._root
 
-    def add(self, key: bytes, value: Any=None) -> Any:
+    def add(self, key: bytes, value: Any = None) -> Any:
         """ Add the given (key, value) pair to the trie.
             Duplicates are not allowed and not added to the trie.
             If the value is None, it is set to the number of entries
@@ -257,7 +274,7 @@ class Trie:
         self._cnt += 1
         return value
 
-    def get(self, key: bytes, default: Any=None) -> Any:
+    def get(self, key: bytes, default: Any = None) -> Any:
         """ Lookup the given key and return the associated value,
             or the default if the key is not found. """
         value = self._root.lookup(key)
@@ -301,7 +318,7 @@ class Indexer:
     def __getitem__(self, key: Any) -> Any:
         return self._d[key]
 
-    def get(self, key: Any, default: Any=None) -> Any:
+    def get(self, key: Any, default: Any = None) -> Any:
         return self._d.get(key, default)
 
     def __str__(self) -> str:
@@ -333,30 +350,41 @@ class BIN_Compressor:
         This means that the source alphabet can contain no more than
         127 characters (ordinal 0 is reserved).
 
+        The current set of possible subcategories is as follows:
+
+            heö, alm, ism, föð, móð, fyr, bibl, gæl, lönd, gras, efna, tölv, lækn,
+            örn, tón, natt, göt, lög, íþr, málfr, tími, við, fjár, bíl, ffl, mat,
+            bygg, tung, erl, hetja, bær, þor, mvirk, brag, jard, stærð, hug, erm,
+            mæl, titl, gjald, stja, dýr, hann, ætt, ob, entity, spurn
+
     """
 
     def __init__(self) -> None:
-        self._forms = Trie()  # ordmynd
-        self._stems = Indexer()  # stofn
+        self._forms = Trie()        # ordmynd
+        self._stems = Indexer()     # stofn
         self._meanings = Indexer()  # beyging
-        self._alphabet = set()
+        self._subcats = Indexer()   # fl
+        self._alphabet: Set[int] = set()
         self._alphabet_bytes = bytes()
-        # map form index -> { (stem, meaning) }
-        self._lookup_form = defaultdict(set)
+        # map form index -> { (stem_ix, meaning_ix) }
+        self._lookup_form: Dict[int, Set[Tuple[int, int]]] = defaultdict(set)
         # map stem index -> { case: { form } }
-        self._lookup_stem: Dict[int, Dict[bytes, Set[bytes]]] = defaultdict(lambda: defaultdict(set))
+        self._lookup_stem: Dict[int, Dict[bytes, Set[bytes]]] = defaultdict(
+            lambda: defaultdict(set)
+        )
         # Count of stem word categories
-        self._stem_cat_count = defaultdict(int)
+        self._stem_cat_count: Dict[str, int] = defaultdict(int)
         # Count of word forms for each case for each stem
-        self._canonical_count = defaultdict(int)
+        self._canonical_count: Dict[bytes, int] = defaultdict(int)
         # map declension pattern -> { offset }
-        self._case_variants = dict()
+        self._case_variants: Dict[bytes, int] = dict()
 
     def read(self, fnames: Iterable[str]) -> None:
         """ Read the given .csv text files in turn and add them to the
             compressed data structures """
         cnt = 0
         stem_cnt = -1
+        max_wix = 0
         start_time = time.time()
         for fname in fnames:
             print("Reading file '{0}'...\n".format(fname))
@@ -368,11 +396,18 @@ class BIN_Compressor:
                         continue
                     t = line.split(";")
                     s_stem, wid, s_ordfl, s_fl, s_form, s_meaning = t
-                    # Skip this if present in _BIN_DELETIONS
-                    if (s_stem, s_ordfl, s_fl) in _BIN_DELETIONS or " " in line:
+                    # Silently skip word forms with spaces in them
+                    if " " in s_form:
+                        continue
+                    assert " " not in line
+                    # Skip this if present in _BIN_DELETIONS,
+                    # or if the stem is capitalized differently than the word form
+                    # (which is a bug in BÍN)
+                    if (s_stem, s_ordfl, s_fl) in _BIN_DELETIONS or (
+                        s_stem[0].isupper() != s_form[0].isupper()
+                    ):
                         print(
-                            "Skipping {stem} {wid} {ordfl} {fl} {form} {meaning}"
-                            .format(
+                            "Skipping {stem} {wid} {ordfl} {fl} {form} {meaning}".format(
                                 stem=s_stem,
                                 wid=wid,
                                 ordfl=s_ordfl,
@@ -382,6 +417,19 @@ class BIN_Compressor:
                             )
                         )
                         continue
+                    # Convert uninflectable number words to "töl" for compatibility
+                    if s_ordfl == "to" and s_meaning == "OBEYGJANLEGT":
+                        s_ordfl = "töl"
+                    # Convert uninflectable indicator to "-" for compatibility
+                    if s_meaning == "OBEYGJANLEGT":
+                        s_meaning = "-"
+                    # Convert "afn" (reflexive pronoun) to "abfn" for compatibility
+                    if s_ordfl == "afn":
+                        s_ordfl = "abfn"
+                    # Convert "rt" (ordinal number) to "lo" (adjective)
+                    # for compatibility
+                    if s_ordfl == "rt":
+                        s_ordfl = "lo"
                     # Apply a fix if we have one for this
                     # particular (stem, ordfl) combination
                     s_fl = _BIN_ERRATA.get((s_stem, s_ordfl), s_fl)
@@ -390,20 +438,19 @@ class BIN_Compressor:
                     fl = s_fl.encode("latin-1")
                     form = s_form.encode("latin-1")
                     meaning = s_meaning.encode("latin-1")
-                    # Cut off redundant ending of meaning (beyging),
-                    # e.g. ÞGF2
-                    if meaning and meaning[-1] in {b"2", b"3"}:
-                        meaning = meaning[:-1]
                     self._alphabet |= set(form)
                     # Map null (no string) in utg to -1
                     wix = int(wid) if wid else -1
-                    six = self._stems.add((stem, wix))
+                    cix = self._subcats.add(fl)
+                    if wix > max_wix:
+                        max_wix = wix
+                    six = self._stems.add((stem, wix, cix))
                     if six > stem_cnt:
                         # New stem, not seen before: count its category (ordfl)
-                        self._stem_cat_count[t[2]] += 1
+                        self._stem_cat_count[s_ordfl] += 1
                         stem_cnt = six
                     fix = self._forms.add(form)  # Add to a trie
-                    mix = self._meanings.add((ordfl, fl, meaning))
+                    mix = self._meanings.add((ordfl, meaning))
                     self._lookup_form[fix].add((six, mix))
                     case_forms = self._lookup_stem[six]
                     for case in CASES_LATIN:
@@ -418,8 +465,10 @@ class BIN_Compressor:
                         print(cnt, end="\r")
         print("{0} done\n".format(cnt))
         print("Time: {0:.1f} seconds".format(time.time() - start_time))
+        print("Highest utg (wix) is {0}".format(max_wix))
         self._stems.invert()
         self._meanings.invert()
+        self._subcats.invert()
         # Convert alphabet set to contiguous byte array, sorted by ordinal
         self._alphabet_bytes = bytes(sorted(self._alphabet))
 
@@ -438,6 +487,7 @@ class BIN_Compressor:
                     case, self._canonical_count[CASES_LATIN[index]]
                 )
             )
+        print("Subcategories are {0}".format(len(self._subcats)))
         print("Meanings are {0}".format(len(self._meanings)))
         print("The alphabet is '{0!r}'".format(self._alphabet_bytes))
         print("It contains {0} characters".format(len(self._alphabet_bytes)))
@@ -454,18 +504,18 @@ class BIN_Compressor:
             return [
                 (
                     s[0].decode("latin-1"),  # stofn
-                    s[1],  # utg
+                    s[1],                    # utg
                     m[0].decode("latin-1"),  # ordfl
-                    m[1].decode("latin-1"),  # fl
-                    form,  # ordmynd
-                    m[2].decode("latin-1"),  # beyging
+                    self._subcats[s[2]].decode("latin-1"),  # fl
+                    form,                    # ordmynd
+                    m[1].decode("latin-1"),  # beyging
                 )
                 for s, m in result
             ]
         except KeyError:
             return []
 
-    def lookup_forms(self, form: str, case: str="NF") -> List[Tuple[str, str]]:
+    def lookup_forms(self, form: str, case: str = "NF") -> List[Tuple[str, str]]:
         """ Test lookup of all forms having the same stem as the given form """
         form_latin = form.encode("latin-1")
         case_latin = case.encode("latin-1")
@@ -477,18 +527,18 @@ class BIN_Compressor:
             for six in set(v[0] for v in values):
                 # Look at all forms of this stem that may be canonical
                 if six in self._lookup_stem and case in self._lookup_stem[six]:
-                    for can in self._lookup_stem[six][case]:
-                        for s, m in self._lookup_form[self._forms[can]]:
+                    for canonical in self._lookup_stem[six][case_latin]:
+                        for s, m in self._lookup_form[self._forms[canonical]]:
                             if s == six:
-                                b = self._meanings[m][2]
+                                b = self._meanings[m][1]
                                 if case_latin in b:
                                     # Nominative
-                                    v.append((b, can))
+                                    v.append((b, canonical))
             return [(m.decode("latin-1"), f.decode("latin-1")) for m, f in v]
         except KeyError:
             return []
 
-    def write_forms(self, f: IO, alphabet: str, lookup_map: Dict[int, int]) -> None:
+    def write_forms(self, f: IO, alphabet: bytes, lookup_map: List[int]) -> None:
         """ Write the forms trie contents to a packed binary stream """
         # We assume that the alphabet can be represented in 7 bits
         assert len(alphabet) + 1 < 2 ** 7
@@ -585,6 +635,8 @@ class BIN_Compressor:
         f.write(UINT32.pack(0))
         alphabet_offset = f.tell()
         f.write(UINT32.pack(0))
+        subcats_offset = f.tell()
+        f.write(UINT32.pack(0))
 
         def write_padded(b: bytes, n: int) -> None:
             assert len(b) <= n
@@ -606,7 +658,7 @@ class BIN_Compressor:
                 DWORD (32-bit) boundary """
             f.write(struct.pack("B{0}s0I".format(len(s)), len(s), s))
 
-        def compress_set(s: Set[str], base: Optional[str]=None) -> bytearray:
+        def compress_set(s: Set[bytes], base: Optional[bytes] = None) -> bytearray:
             """ Write a set of strings as a single compressed string. """
 
             # Each string is written as a variation of the previous
@@ -680,7 +732,7 @@ class BIN_Compressor:
         # Write the form to meaning mapping
         write_padded(b"[mapping]", 16)
         fixup(mapping_offset)
-        lookup_map = []
+        lookup_map: List[int] = []
         cnt = 0
         # Loop through word forms
         for fix in range(len(self._forms)):
@@ -689,13 +741,13 @@ class BIN_Compressor:
             # loop through them
             num_meanings = len(self._lookup_form[fix])
             for i, (six, mix) in enumerate(self._lookup_form[fix]):
-                # Allocate 20 bits for the stem index
-                assert six < 2 ** 20
-                # Allocate 11 bits for the meaning index
-                assert mix < 2 ** 11
+                # Allocate 19 bits for the stem index
+                assert six < 2 ** STEM_BITS
+                # Allocate 12 bits for the meaning index
+                assert mix < 2 ** MEANING_BITS
                 # Mark the last meaning with the high bit
                 last_indicator = 0x80000000 if i == num_meanings - 1 else 0
-                f.write(UINT32.pack(last_indicator | (six << 11) | mix))
+                f.write(UINT32.pack(last_indicator | (six << MEANING_BITS) | mix))
                 cnt += 1
 
         # Write the the compact radix trie structure that
@@ -713,19 +765,21 @@ class BIN_Compressor:
         num_sets_bytes = 0
         for ix in range(len(self._stems)):
             lookup_map.append(f.tell())
-            # Squeeze the word id into the lower 31 bits
-            # and a flag for whether a canonical forms list
-            # is present into the uppermost bit
-            wid = self._stems[ix][1] + 1  # -1 becomes 0
+            # Squeeze the utg (word id) and subcategory index into the lower 31 bits.
+            # The uppermost bit flags whether a canonical forms list is present.
+            stem, utg, cix = self._stems[ix]
+            utg += 1  # -1 becomes 0
+            assert 0 <= utg < 2 ** UTG_BITS
+            assert 0 <= cix < 2 ** SUBCAT_BITS
+            bits = (utg << SUBCAT_BITS) | cix
             has_case_variants = False
             if self._lookup_stem.get(ix):
                 # We have a set of word forms in four cases
                 # for this stem
-                wid |= 0x80000000
+                bits |= 0x80000000
                 has_case_variants = True
-            f.write(UINT32.pack(wid))
+            f.write(UINT32.pack(bits))
             # Write the stem
-            stem = self._stems[ix][0]
             write_string(stem)
             # Write the set of word forms in four cases, compressed,
             # if this stem has such a set
@@ -775,16 +829,23 @@ class BIN_Compressor:
         # Write the meanings
         write_padded(b"[meanings]", 16)
         lookup_map = []
-        f.write(UINT32.pack(len(self._meanings)))
-        for ix in range(len(self._meanings)):
+        num_meanings = len(self._meanings)
+        f.write(UINT32.pack(num_meanings))
+        for ix in range(num_meanings):
             lookup_map.append(f.tell())
-            write_spaced(b" ".join(self._meanings[ix]))  # ordfl, fl, beyging
+            write_spaced(b" ".join(self._meanings[ix]))  # ordfl, beyging
         f.write(b" " * 24)
-        fixup(meanings_offset)
 
         # Write the index-to-offset mapping table for meanings
+        fixup(meanings_offset)
         for offset in lookup_map:
             f.write(UINT32.pack(offset))
+
+        # Write the subcategories, space-separated
+        fixup(subcats_offset)
+        b = b" ".join(self._subcats[ix] for ix in range(len(self._subcats)))
+        f.write(UINT32.pack(len(b)))
+        write_aligned(b)
 
         # Write the entire byte buffer stream to the compressed file
         with open(fname, "wb") as stream:

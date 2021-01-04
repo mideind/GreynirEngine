@@ -4,7 +4,7 @@
 
     Python wrapper for C++ Earley/Scott parser
 
-    Copyright (C) 2020 Miðeind ehf.
+    Copyright (C) 2021 Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -57,7 +57,20 @@
 
 """
 
-from typing import Dict, Any, Optional, List, Union, Tuple, Iterator, Callable, cast
+from typing import (
+    Dict,
+    Any,
+    Optional,
+    List,
+    Set,
+    Union,
+    Tuple,
+    Iterable,
+    Iterator,
+    Callable,
+    IO,
+    cast,
+)
 
 import os
 import operator
@@ -93,7 +106,12 @@ class ParseJob:
     _lock = Lock()
 
     def __init__(
-        self, handle: int, grammar: Grammar, tokens, terminals, matching_cache
+        self,
+        handle: int,
+        grammar: Grammar,
+        tokens: List[Token],
+        terminals: List[Terminal],
+        matching_cache: Dict[int, Any],
     ) -> None:
         self._handle = handle
         self.tokens = tokens
@@ -173,7 +191,7 @@ class ParseJob:
 
 
 @ffi.def_extern()
-def matching_func(handle, token, terminal):
+def matching_func(handle: int, token, terminal) -> bool:
     """ This function is called from the C++ parser to determine
         whether a token matches a terminal. The token is referenced
         by 0-based index, and the terminal by a 1-based index.
@@ -249,11 +267,11 @@ class Node:
         # Priority of highest-priority child family
         self._highest_prio = 0
         # The nonterminal corresponding to this node, if not a leaf node
-        self._nonterminal = None
+        self._nonterminal: Optional[Nonterminal] = None
         # The terminal corresponding to this node, if it is a leaf node
-        self._terminal = None
+        self._terminal: Optional[Terminal] = None
         # The token matching this terminal, if this is a leaf node
-        self._token = None
+        self._token: Optional[Token] = None
         # If completed is True, this node represents a completed nonterminal.
         # Otherwise, it is an internal node representing a position within
         # a production of a nonterminal.
@@ -282,13 +300,13 @@ class Node:
         if lb.iNt >= 0:
             # Token node: find the corresponding terminal
             tix = parent.pList[index]
-            node._terminal = job.grammar.lookup(tix)
+            node._terminal = job.grammar.lookup_terminal(tix)
             node._token = job.tokens[lb.iNt]
             return node
 
         # Nonterminal node
         nt = lb.iNt
-        node._nonterminal = job.grammar.lookup(nt)
+        node._nonterminal = job.grammar.lookup_nonterminal(nt)
         node._completed = lb.pProd == ffi.NULL
         # Cache nonterminal nodes
         job.c_dict[c_node] = node
@@ -640,7 +658,7 @@ class Fast_Parser(BIN_Parser):
                 )
         return cls._c_grammar
 
-    def __init__(self, verbose=False, root=None):
+    def __init__(self, verbose: bool = False, root: Optional[str] = None) -> None:
 
         # Only one initialization at a time, since we don't want a race
         # condition between threads with regards to reading and parsing the grammar file
@@ -664,7 +682,7 @@ class Fast_Parser(BIN_Parser):
             # as it includes an entry (consisting of one byte per terminal in the
             # grammar, or currently about 5K bytes for Greynir.grammar) for every
             # distinct token that the parser encounters.
-            self._matching_cache = dict()
+            self._matching_cache: Dict[int, Any] = dict()
 
     def __enter__(self):
         """ Python context manager protocol """
@@ -676,7 +694,7 @@ class Fast_Parser(BIN_Parser):
         self.cleanup()
         return False
 
-    def go(self, tokens, *, root=None):
+    def go(self, tokens: Iterable[Token], *, root: Optional[str] = None) -> Node:
         """ Call the C++ parser module to parse the tokens. The parser's
             default root nonterminal can be overridden by passing its
             name in the root parameter. """
@@ -729,16 +747,17 @@ class Fast_Parser(BIN_Parser):
 
         # Delete the C++ nodes
         eparser.deleteForest(node)
+        assert result is not None
         return result
 
-    def go_no_exc(self, tokens, **kwargs):
+    def go_no_exc(self, tokens: Iterable[Token], **kwargs) -> Optional[Node]:
         """ Simple version of go() that returns None instead of throwing ParseError """
         try:
             return self.go(tokens, **kwargs)
         except ParseError:
             return None
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """ Delete C++ objects. Must call after last use of Fast_Parser
             to avoid memory leaks. The context manager protocol is recommended
             to guarantee cleanup. """
@@ -752,7 +771,7 @@ class Fast_Parser(BIN_Parser):
             )
 
     @classmethod
-    def discard_grammar(cls):
+    def discard_grammar(cls) -> None:
         """ Discard the C grammar object instance held as a class attribute """
         if cls._c_grammar != ffi.NULL:
             eparser.deleteGrammar(cls._c_grammar)
@@ -760,13 +779,13 @@ class Fast_Parser(BIN_Parser):
         cls._c_grammar_ts = None
 
     @classmethod
-    def num_combinations(cls, forest):
+    def num_combinations(cls, forest: Node) -> int:
         """ Count the number of possible parse tree combinations in the given forest """
 
         nc: Dict[Node, int] = dict()
         mul = operator.mul
 
-        def _num_comb(w):
+        def _num_comb(w: Node) -> int:
             if w is None or w._token is not None:
                 # Empty (epsilon) node or token node
                 return 1
@@ -781,7 +800,7 @@ class Fast_Parser(BIN_Parser):
             nc[w] = NotImplemented  # Special marker for an unassigned cache entry
             comb = 0
             for _, f in w.enum_children():
-                comb += reduce(mul, (_num_comb(ch) for ch in f), 1)
+                comb += reduce(mul, (_num_comb(ch) for ch in f if ch is not None), 1)
             result = nc[w] = comb if comb > 0 else 1
             return result
 
@@ -813,7 +832,9 @@ class ParseForestNavigator:
         # Typically returns an accumulation object to collect results
         return None
 
-    def visit_family(self, results: Any, level: int, node: Node, ix: int, prod: Production) -> None:
+    def visit_family(
+        self, results: Any, level: int, node: Node, ix: int, prod: Production
+    ) -> None:
         """ At a family of children """
         return
 
@@ -827,7 +848,9 @@ class ParseForestNavigator:
             the family index and r is the child result """
         return None
 
-    def force_visit(self, w: Optional[Node], visited: Dict[Optional[Node], Any]) -> bool:
+    def force_visit(
+        self, w: Optional[Node], visited: Dict[Optional[Node], Any]
+    ) -> bool:
         """ Override this and return True to visit a node, even if self._visit_all
             is False and the node has been visited before """
         return False
@@ -888,13 +911,13 @@ class ParseForestPrinter(ParseForestNavigator):
 
     def __init__(
         self,
-        detailed=False,
-        file=None,
-        show_scores=False,
-        show_ids=False,
-        visit_all=True,
-        skip_duplicates=False,
-    ):
+        detailed: bool = False,
+        file: Optional[IO] = None,
+        show_scores: bool = False,
+        show_ids: bool = False,
+        visit_all: bool = True,
+        skip_duplicates: bool = False,
+    ) -> None:
 
         # Normally, we visit all nodes, also those we've seen before
         super().__init__(visit_all=visit_all)
@@ -903,21 +926,20 @@ class ParseForestPrinter(ParseForestNavigator):
         self._show_scores = show_scores
         self._show_ids = show_ids
         self._skip_duplicates = skip_duplicates
-        self._visited = set()
+        self._visited: Set[Node] = set()
 
-    def _score(self, w):
+    def _score(self, w: Node) -> str:
         """ Return a string showing the node's score """
         # !!! To enable this, assignment of the .score attribute
         # !!! needs to be uncommented in reducer.py
         return " [{0}]".format(w.score) if self._show_scores else ""
 
-    def visit_epsilon(self, level):
+    def visit_epsilon(self, level: int) -> None:
         """ Epsilon (null) node """
         indent = "  " * level  # Two spaces per indent level
         print(indent + "(empty)", file=self._file)
-        return None
 
-    def visit_token(self, level, w):
+    def visit_token(self, level: int, w: Node) -> None:
         """ Token matching a terminal """
         indent = "  " * level  # Two spaces per indent level
         h = str(w.token)
@@ -927,9 +949,8 @@ class ParseForestPrinter(ParseForestNavigator):
             indent + "{0}: {1}{2}".format(w.terminal, h, self._score(w)),
             file=self._file,
         )
-        return None
 
-    def visit_nonterminal(self, level, w):
+    def visit_nonterminal(self, level: int, w: Node) -> None:
         # Interior nodes are not printed
         # and do not increment the indentation level
         if self._detailed or not w.is_interior:
@@ -951,7 +972,9 @@ class ParseForestPrinter(ParseForestNavigator):
                 self._visited.add(w)
         return None  # No results required, but visit children
 
-    def visit_family(self, results, level, w, ix, prod):
+    def visit_family(
+        self, results: Any, level: int, w: Node, ix: int, prod: Production
+    ) -> None:
         """ Show trees for different options, if ambiguous """
         if w.is_ambiguous:
             indent = "  " * level  # Two spaces per indent level

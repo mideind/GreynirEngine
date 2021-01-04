@@ -4,7 +4,7 @@
 
     Tests for Greynir module
 
-    Copyright(C) 2020 by Miðeind ehf.
+    Copyright(C) 2021 by Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -1647,7 +1647,7 @@ def test_vocabulary(r):
     for sent in j:
         assert sent.tree is not None
         lemma_set = set([lemma.replace("-", "") for lemma in sent.lemmas])
-        assert "Landmannalaug" in lemma_set
+        assert "Landmannalaugar" in lemma_set
         cnt += 1
     assert cnt == 2
 
@@ -2042,6 +2042,31 @@ def test_neutral_pronoun(r):
         "/P NP no_et_kvk_þgf /NP /PP PP P fs_þf /P NP pfn_et_hk_p3_þf /NP /PP "
         "/VP /IP /CP-THT /NP-OBJ /VP /IP /S-MAIN p /S0"
     )
+
+
+def test_þess_getið(r):
+    s = r.parse_single("Ég lét þess ekki getið að Jón væri frábær.")
+    assert s is not None
+    assert s.tree is not None
+    assert "láta" in s.tree.verbs
+    assert "geta" in s.tree.verbs
+    s = r.parse_single("Ég mun galvaskur láta þess getið að Jón sé frábær.")
+    assert s is not None
+    assert s.tree is not None
+    assert "láta" in s.tree.verbs
+    assert "geta" in s.tree.verbs
+    s = r.parse_single("Ég hef ætíð látið þess getið að Jón sé frábær.")
+    assert s is not None
+    assert s.tree is not None
+    assert "láta" in s.tree.verbs
+    assert "geta" in s.tree.verbs
+    s = r.parse_single("Ég sagðist hafa látið þess getið að Jón sé frábær.")
+    assert s is not None
+    assert s.tree is not None
+    assert "segja" in s.tree.verbs
+    assert "hafa" in s.tree.verbs
+    assert "láta" in s.tree.verbs
+    assert "geta" in s.tree.verbs
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@
 
     IFD tagger module
 
-    Copyright (C) 2020 Miðeind ehf.
+    Copyright (C) 2021 Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -426,10 +426,6 @@ class IFD_Tagset:
         return "g" + self._kyn() + self._tala() + self._fall()
 
     def _t(self):
-        # if self._cat == "töl" and self._fl == "ob":
-        # Tekið út eftir að mörkun var bætt við í Greynir.grammar
-        # Óbeygt töluorð
-        #    return "ta"
         return (
             "t"
             + self._flokkur_t()
@@ -524,7 +520,7 @@ class IFD_Tagset:
     def _sérnöfn(self):
         if not self._stem:
             return ""
-        if self._fl in {"örn", "göt", "lönd"}:
+        if self._fl in {"örn", "göt", "heö", "bær", "þor", "lönd"}:
             return "ö" if "gr" in self._tagset else "-ö"
         if self._kind == "PERSON":
             return "-m"

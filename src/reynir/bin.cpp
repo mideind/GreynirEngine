@@ -4,7 +4,7 @@
 
    C++ BÍN lookup module
 
-   Copyright (C) 2020 Miðeind ehf.
+   Copyright (C) 2021 Miðeind ehf.
    Original author: Vilhjálmur Þorsteinsson
 
    This software is licensed under the MIT License:
@@ -33,10 +33,7 @@
    (Beygingarlýsing íslensks nútímamáls, BÍN).
 
    The memory layout of the compressed buffer is determined by the
-   BIN_Compressor class in bincompress.py.
-
-   See https://greynir.is/doc/copyright.html for important copyright and
-   licensing information.
+   BIN_Compressor class in tools/binpack.py.
 
 */
 

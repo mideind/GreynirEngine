@@ -4,7 +4,7 @@
 
     Reducer module
 
-    Copyright (C) 2020 Miðeind ehf.
+    Copyright (C) 2021 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -118,7 +118,7 @@ _LENGTH_BONUS_FACTOR = 10  # For length bonus, multiply number of tokens by this
 
 # Noun categories set
 _NOUN_SET = BIN_Token.GENDERS_SET  # kk, kvk, hk
-_CASES_SET = frozenset(BIN_Token.CASES)
+_CASES_SET = BIN_Token.CASES_SET
 
 # Tags of nonterminals that allow us to stop copying nodes
 # in the preposition unpacker
@@ -579,10 +579,22 @@ class Reducer:
                         # Punish abbreviations in favor of other more specific terminals
                         sc[t] -= 1
                     if token.is_word and token.is_upper and token.t2:
-                        # Punish connection of normal noun terminal to
-                        # an uppercase word that can be a person or entity name
+                        # Punish connection of normal noun terminal to an
+                        # uppercase word that can be a person or entity name and
+                        # would thus normally be matched with person or entity
+                        # terminal
                         if any(
-                            m.fl in {"ism", "erm", "nafn", "föð", "móð", "örn", "fyr"}
+                            m.fl
+                            in {
+                                "ism",
+                                "erm",
+                                "gæl",
+                                "nafn",
+                                "föð",
+                                "móð",
+                                "ætt",
+                                "entity",
+                            }
                             for m in token.t2
                         ):
                             # logging.info(
@@ -623,7 +635,8 @@ class Reducer:
                     # For adjectives ending with 'andi', we strongly prefer verbs in
                     # present participle (lýsingarháttur nútíðar)
                     if txt.endswith("andi") and any(
-                        (m.ordfl == "so" and m.beyging == "LH-NT") for m in token.t2
+                        (m.ordfl == "so" and m.beyging in {"LH-NT", "LHNT"})
+                        for m in token.t2
                     ):
                         sc[t] -= 50
                 elif tfirst == "so":

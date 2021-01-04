@@ -4,7 +4,7 @@
 
    C++ BÍN lookup module
 
-   Copyright (C) 2020 Miðeind ehf.
+   Copyright (C) 2021 Miðeind ehf.
    Original Author: Vilhjálmur Þorsteinsson
 
    This software is licensed under the MIT License:
@@ -31,9 +31,6 @@
    This module implements lookup of words in a compressed, memory-mapped
    byte buffer containing the Database of Modern Icelandic Inflection
    (Beygingarlýsing íslensks nútímamáls, BÍN).
-
-   See https://greynir.is/doc/copyright.html for important copyright and
-   licensing information.
 
 */
 
