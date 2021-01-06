@@ -5740,6 +5740,8 @@ AtvEftirNl →
     "hérlendis:ao"
     | "erlendis:ao"
     | 'í_ár:ao'
+    # hollið þar á undan
+    | "þar:ao" ÁðurEftir
 
 OgAtvEftirNl →
     OgEða AtvEftirNl
@@ -6870,6 +6872,8 @@ $score(+20) VillaSíðastLiðinn/fall/tala/kyn
     | "eftir:ao"
     | 'á_undan:ao'
     | 'á_eftir:ao'
+
+$score(+4) ÁðurEftir
 
 ÍByrjunLok →
     'í:fs'_þgf 'byrjun:kvk'_þgf
