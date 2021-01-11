@@ -950,7 +950,7 @@ class ParseForestPrinter(ParseForestNavigator):
             file=self._file,
         )
 
-    def visit_nonterminal(self, level: int, w: Node) -> None:
+    def visit_nonterminal(self, level: int, w: Node) -> Any:
         # Interior nodes are not printed
         # and do not increment the indentation level
         if self._detailed or not w.is_interior:
@@ -1018,18 +1018,18 @@ class ParseForestDumper(ParseForestNavigator):
     # On index -- Option with index >= 0
     # Q0 -- end indicator (not followed by newline)
 
-    def __init__(self, token_dicts):
+    def __init__(self, token_dicts: Dict[int, Dict[str, str]]) -> None:
         super().__init__(visit_all=True)  # Visit all nodes
         self._result = ["R1"]  # Start indicator and version number
         self._token_dicts = token_dicts
 
-    def visit_epsilon(self, level):
+    def visit_epsilon(self, level: int) -> Any:
         # Identify this as an epsilon (null) node
         # !!! Not necessary - removed July 2018 VTh
         # self._result.append("P{0}".format(level))
         return None
 
-    def visit_token(self, level, w):
+    def visit_token(self, level: int, w: Node) -> Any:
         # Identify this as a terminal/token
         ta = ""  # Augmented terminal
         if self._token_dicts is not None:
@@ -1052,7 +1052,7 @@ class ParseForestDumper(ParseForestNavigator):
         )
         return None
 
-    def visit_nonterminal(self, level, w):
+    def visit_nonterminal(self, level: int, w: Node) -> Any:
         # Interior nodes are not dumped
         # and do not increment the indentation level
         if not w.is_interior:
@@ -1063,13 +1063,15 @@ class ParseForestDumper(ParseForestNavigator):
             self._result.append("N{0} {1}".format(level, w.nonterminal.name))
         return None  # No results required, but visit children
 
-    def visit_family(self, results, level, w, ix, prod):
+    def visit_family(
+        self, results: Any, level: int, w: Node, ix: int, prod: Production
+    ) -> None:
         if w.is_ambiguous:
             # Identify this as an option
             self._result.append("O{0} {1}".format(level, ix))
 
     @classmethod
-    def dump_forest(cls, root_node, token_dicts=None):
+    def dump_forest(cls, root_node: Node, token_dicts=None) -> str:
         """ Return a string with a multi-line text representation of the parse tree """
         dumper = cls(token_dicts)
         dumper.go(root_node)
