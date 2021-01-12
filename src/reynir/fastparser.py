@@ -77,7 +77,7 @@ import operator
 from threading import Lock
 from functools import reduce
 
-from .binparser import BIN_Parser, simplify_terminal, augment_terminal
+from .binparser import BIN_Parser, simplify_terminal, augment_terminal, Tok
 from .grammar import Grammar, GrammarError, Nonterminal, Terminal, Token, Production
 from .settings import Settings
 from .glock import GlobalLock
@@ -694,7 +694,7 @@ class Fast_Parser(BIN_Parser):
         self.cleanup()
         return False
 
-    def go(self, tokens: Iterable[Token], *, root: Optional[str] = None) -> Node:
+    def go(self, tokens: Iterable[Tok], *, root: Optional[str] = None) -> Node:
         """ Call the C++ parser module to parse the tokens. The parser's
             default root nonterminal can be overridden by passing its
             name in the root parameter. """
@@ -750,7 +750,7 @@ class Fast_Parser(BIN_Parser):
         assert result is not None
         return result
 
-    def go_no_exc(self, tokens: Iterable[Token], **kwargs) -> Optional[Node]:
+    def go_no_exc(self, tokens: Iterable[Tok], **kwargs) -> Optional[Node]:
         """ Simple version of go() that returns None instead of throwing ParseError """
         try:
             return self.go(tokens, **kwargs)
