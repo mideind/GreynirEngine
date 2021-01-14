@@ -166,7 +166,7 @@ class LineReader:
                     self._line += 1
                     if s.rstrip().endswith("\\"):
                         # Backslash at end of line: continuation in next line
-                        accumulator += s.rstrip()[:-1]
+                        accumulator += s.strip()[:-1]
                         continue
                     if accumulator:
                         # Add accumulated text from preceding
