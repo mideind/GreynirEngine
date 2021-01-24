@@ -4,7 +4,7 @@
 
     Dictionary-aware tokenization layer
 
-    Copyright (C) 2020 Miðeind ehf.
+    Copyright (C) 2021 Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -40,7 +40,9 @@ from typing import (
     NamedTuple,
     Tuple,
     List,
+    Sequence,
     Dict,
+    Mapping,
     Union,
     Iterable,
     Iterator,
@@ -49,6 +51,7 @@ from typing import (
     Callable,
     Type,
     Any,
+    TypeVar,
 )
 
 import sys
@@ -59,7 +62,6 @@ from tokenizer import (
     TOK,
     Tok,
     tokenize_without_annotation,
-    normalized_text,
     Abbreviations,
     # The following imports are here in order to be visible in clients
     # (they are not used in this module)
@@ -82,10 +84,14 @@ if "PyPy 7.3.0" in sys.version or "PyPy 7.2." in sys.version:
         except ValueError:
             # String does not contain a space: return it whole
             return s
+
+
 else:
     all_except_suffix = lambda s: s.rsplit(maxsplit=1)[0]
 
 
+# Generic type variable
+T = TypeVar("T")
 # Named tuple for person names, including case and gender
 PersonName = NamedTuple(
     "PersonName",
@@ -95,6 +101,7 @@ PersonName = NamedTuple(
 )
 # The type of a list of tokens
 TokenList = List[Tok]
+TokenIterable = Iterable[Tok]
 # The input argument type for the tokenize() function and derivatives thereof
 StringIterable = Union[str, Iterable[str]]
 # The type of a stream of tokens
@@ -105,6 +112,12 @@ TokenValType = Union[List[BIN_Meaning], List[PersonName], Tuple, None]
 FirstPhaseFunction = Callable[[], TokenIterator]
 FollowingPhaseFunction = Callable[[TokenIterator], TokenIterator]
 PhaseFunction = Union[FirstPhaseFunction, FollowingPhaseFunction]
+StateTuple = Tuple[List[str], int]
+StateList = List[StateTuple]
+StateDict = Mapping[str, StateList]
+DisambiguationTuple = Tuple[str, FrozenSet[str]]
+TokenConstructor = Type["Bin_TOK"]
+FilterFunction = Callable[[BIN_Meaning], bool]
 
 # Person names that are not recognized at the start of sentences
 NOT_NAME_AT_SENTENCE_START = {
@@ -126,6 +139,10 @@ NOT_NAME_AT_SENTENCE_START = {
 
 # Set of all cases (nominative, accusative, dative, genitive)
 ALL_CASES = frozenset(["nf", "þf", "þgf", "ef"])
+
+# Genders
+GENDER_SET = frozenset(("kk", "kvk", "hk"))
+GENDER_DICT = {"KK": "kk", "KVK": "kvk", "HK": "hk"}
 
 HYPHEN = "-"  # Normal hyphen
 EN_DASH = "\u2013"  # "–"
@@ -311,8 +328,8 @@ CURRENCY_GENDERS = {
 }
 
 # Set of categories (fl fields in BÍN) that denote
-# person names, Icelandic ('ism') or foreign ('erm')
-PERSON_NAME_SET = frozenset(("ism", "erm"))
+# person names, Icelandic ('ism' or 'gæl') or foreign ('erm')
+PERSON_NAME_SET = frozenset(("ism", "gæl", "erm"))
 
 # Set of categories (fl fields in BÍN) for patronyms
 # and matronyms, as well as gender-neutral family names
@@ -327,7 +344,7 @@ FOREIGN_MIDDLE_NAME_SET = frozenset(("van", "de", "den", "der", "el", "al", "von
 BOTH_GIVEN_AND_FAMILY_NAMES = frozenset(("Hafstein",))
 
 # Note: these must have a meaning for this to work, so specifying them
-# as abbreviations to Main.conf is recommended
+# as abbreviations in Abbrev.conf in Tokenizer is recommended
 _CORPORATION_ENDINGS = frozenset(
     [
         "ehf.",
@@ -372,6 +389,52 @@ _CORPORATION_ENDINGS = frozenset(
     ]
 )
 
+# Abbreviations that we explicitly accept as a part of
+# person names, if we are auto-capitalizing
+UPPER_CASE_ABBREVS = frozenset(
+    (
+        "th",
+        "kr",
+        "st",
+        "fr",
+        "a",
+        "á",
+        "b",
+        "c",
+        "d",
+        "e",
+        "é",
+        "f",
+        "g",
+        "h",
+        "i",
+        "í",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "ó",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "ú",
+        "v",
+        "w",
+        "x",
+        "y",
+        "ý",
+        "z",
+        "þ",
+        "æ",
+        "ö",
+    )
+)
+
 
 def load_token(*args) -> Tuple[int, str, TokenValType]:
     """ Convert a plain, usually JSON serialized, argument tuple
@@ -414,7 +477,8 @@ def annotate(
 ):
     """ Look up word forms in the BIN word database. If auto_uppercase
         is True, change lower case words to uppercase if it looks likely
-        that they should be uppercase. """
+        that they should be uppercase. If no_sentence_start is True,
+        don't assume that the token stream starts a sentence. """
 
     at_sentence_start = False
 
@@ -425,13 +489,15 @@ def annotate(
             yield t
             if t.kind == TOK.S_BEGIN or (t.kind == TOK.PUNCTUATION and t.val[1] == ":"):
                 # After an S_BEGIN, and also after a colon, we consider ourselves
-                # to be at a sentence starting point
-                at_sentence_start = True
+                # to be at a sentence starting point - unless
+                # no_sentence_start is set to True
+                at_sentence_start = not no_sentence_start
             elif t.kind != TOK.PUNCTUATION and t.kind != TOK.ORDINAL:
                 # Wait until we have something other than punctuation or an
                 # ordinal number to conclude that the sentence has started
                 at_sentence_start = False
             continue
+        # This is a word token
         w = t.txt
         if not t.val:
             # Look up word in BIN database
@@ -550,7 +616,7 @@ def match_stem_list(
     return stems.get(token.txt.lower(), None)
 
 
-def case(bin_spec, default="nf"):
+def case(bin_spec: str, default: str = "nf") -> str:
     """ Return the case specified in the bin_spec string """
     c = default
     if "NF" in bin_spec:
@@ -564,7 +630,7 @@ def case(bin_spec, default="nf"):
     return c
 
 
-def add_cases(cases, bin_spec, default="nf"):
+def add_cases(cases: Set[str], bin_spec: str, default: str = "nf") -> None:
     """ Add the case specified in the bin_spec string, if any, to the cases set """
     c = case(bin_spec, default)
     if c:
@@ -575,17 +641,17 @@ def all_cases(
     token: Tok, filter_func: Optional[FilterFunction] = None
 ) -> List[str]:
     """ Return a list of all cases that the token can be in """
-    cases: Union[FrozenSet[str], Set[str]] = set()
+    cases: Set[str] = set()
     if token.kind == TOK.WORD and token.val:
         # Roll through the potential meanings and extract the cases therefrom
         for m in token.val:
             if filter_func is not None and not filter_func(m):
                 continue
-            if m.fl == "ob":
+            if m.fl == "ob" or m.beyging == "-":
                 # One of the meanings is an undeclined word: all cases apply
-                cases = ALL_CASES
+                cases = set(ALL_CASES)
                 break
-            add_cases(cases, m.beyging, None)
+            add_cases(cases, m.beyging, "")
     return list(cases)
 
 
@@ -602,10 +668,6 @@ def all_common_cases(
     return list(set1 & set2)
 
 
-_GENDER_SET = {"kk", "kvk", "hk"}
-_GENDER_DICT = {"KK": "kk", "KVK": "kvk", "HK": "hk"}
-
-
 def all_genders(token: Tok) -> Optional[List[str]]:
     """ Return a list of the possible genders of the word in the token, if any """
     if token.kind != TOK.WORD:
@@ -614,10 +676,10 @@ def all_genders(token: Tok) -> Optional[List[str]]:
     if token.val:
 
         def find_gender(m):
-            if m.ordfl in _GENDER_SET:
+            if m.ordfl in GENDER_SET:
                 return m.ordfl  # Plain noun
             # Probably number word ('töl' or 'to'): look at its spec
-            for k, v in _GENDER_DICT.items():
+            for k, v in GENDER_DICT.items():
                 if k in m.beyging:
                     return v
             return None
@@ -823,7 +885,9 @@ def parse_phrases_1(
                             )
                             for mm in next_token.val
                         ]
-                        token = token_ctor.Word(txt, m, token=next_token)
+                        # Copy attributes, such as capitalization status
+                        # (cf. GreynirCorrect) from the first token in the queue
+                        token = token_ctor.Word(txt, m, token=tq[0])
                         next_token = next(token_stream)
                 else:
                     # Incorrect prediction: make amends and continue
@@ -990,12 +1054,12 @@ def parse_phrases_2(
                 if tok.kind != TOK.WORD or not tok.val:
                     return True
                 # Return True if there is a different meaning, not a given name
-                return any(m.fl not in category_set for m in tok.val)
+                return any(m.fl not in categories for m in tok.val)
 
             # Check for person names
             def given_names(tok: Tok) -> Optional[List[PersonName]]:
                 """ Check for Icelandic or foreign person name
-                    (category 'ism' or 'erm') """
+                    (category 'ism', 'gæl' or 'erm') """
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
                     # Must be a word starting with an uppercase character
                     return None
@@ -1014,6 +1078,14 @@ def parse_phrases_2(
             def unknown_surname(tok: Tok) -> bool:
                 """ Check for unknown (non-Icelandic) surnames """
                 # Accept (most) upper case words as a surnames
+                if auto_uppercase:
+                    if tok.txt in UPPER_CASE_ABBREVS:
+                        # We accept 'th', 'kr' and single-letter lowercase
+                        # abbrevs as surnames if auto-uppercasing
+                        return True
+                    if tok.txt and not tok.val:
+                        # Looks like an unknown word: accept it as a surname
+                        return True
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
                     # Must start with capital letter
                     return False
@@ -1035,7 +1107,7 @@ def parse_phrases_2(
                     if tok.txt in BOTH_GIVEN_AND_FAMILY_NAMES:
                         # For instance "Hafstein" which can be both a given
                         # name and a family name: prepend the family name as
-                        # a genderless and caseless option to the list
+                        # an genderless and caseless option to the list
                         gnames = [
                             PersonName(name=tok.txt, gender=None, case=None)
                         ] + gnames
@@ -1051,7 +1123,7 @@ def parse_phrases_2(
                 # all genders and cases possible
                 return [PersonName(name=wrd, gender=None, case=None)]
 
-            def compatible(pn, npn):
+            def compatible(pn: PersonName, npn: PersonName) -> bool:
                 """ Return True if the next PersonName (npn) is compatible
                     with the one we have (pn) """
                 # The neutral gender (hk) is used for family names and is
@@ -1106,6 +1178,7 @@ def parse_phrases_2(
                     gn = r
                     w += " " + next_token.txt
                     next_token = next(token_stream)
+
                 # Check whether the sequence of given names is followed
                 # by one or more surnames (patronym/matronym) of the same gender,
                 # for instance 'Dagur Bergþóruson Eggertsson'
@@ -1161,13 +1234,16 @@ def parse_phrases_2(
                     # unknown uppercase word next;
                     # if so, add it to the person names we've already found
                     while unknown_surname(next_token):
+                        ntxt = next_token.txt
+                        if auto_uppercase and ntxt.islower():
+                            # Make sure that surnames are capitalized
+                            # if we are auto-capitalizing
+                            ntxt = ntxt.capitalize()
                         for ix, p in enumerate(gn):
                             gn[ix] = PersonName(
-                                name=p.name + " " + next_token.txt,
-                                gender=p.gender,
-                                case=p.case,
+                                name=p.name + " " + ntxt, gender=p.gender, case=p.case,
                             )
-                        w += " " + next_token.txt
+                        w += " " + ntxt
                         next_token = next(token_stream)
                         # Assume we now have a patronym
                         patronym = True
@@ -1229,7 +1305,6 @@ def parse_phrases_2(
                     # and the intersected set of possible cases
                     token = token_ctor.Person(w, gn)
 
-
             # Yield the current token and advance to the lookahead
             yield token
 
@@ -1267,7 +1342,6 @@ def parse_phrases_3(
     def can_concat(token) -> bool:
         """ Return True if the token content can be concatenated onto
             an existing entity name """
-
         # Non-capitalized function words that can appear within entity names
         if token.txt in ["in", "a", "an", "for", "and", "the", "for", "on", "of"] or token.txt in FOREIGN_MIDDLE_NAME_SET: 
             return True
@@ -1302,6 +1376,7 @@ def parse_phrases_3(
         concatable = False
 
         while True:
+
             if not concatable and not is_interesting(token):
                 if token.txt and token.txt.split(" ")[-1] in FOREIGN_MIDDLE_NAME_SET and " " in token.txt:
                     # Combined in parse_phrases_2() but no capitalized word follows
@@ -1339,7 +1414,7 @@ def parse_phrases_3(
             concatable = False
 
             if next_token.txt in _CORPORATION_ENDINGS:
-                # Allow merging a corporation ending. This is fairly
+                # Allow merging a corporation ending ('ehf.', 'Inc.'). This is fairly
                 # open: any prefix consisting of uppercase words is
                 # allowed, even if they are found in BÍN.
                 token = token_ctor.Company(token.txt + " " + next_token.txt)
@@ -1358,39 +1433,10 @@ def parse_phrases_3(
                         ],
                     )
                     next_token = next(token_stream)
-                elif (
-                    token.kind == TOK.WORD
-                    and next_token.kind == TOK.WORD 
-                    and token.txt 
-                    and token.txt.istitle() 
-                    and any(m.fl in PATRONYM_SET for m in next_token.val)
-                ):
-                    # Most likely a foreign name with an Icelandic patronym
-                    token = token_ctor.Person(
-                        token.txt + " " + next_token.txt,
-                        [
-                            PersonName(name=token.txt + " " + m.stofn, gender=m.ordfl, case=case(m.beyging, default="-"))
-                            for m in next_token.val
-                        ],
-                    )
-                    next_token = next(token_stream)
-
-
                 elif can_concat(next_token):
                     # Concatenate the next token and do another loop round
                     token = token_ctor.Entity(token.txt + " " + next_token.txt)
                     concatable = True
-                    continue
-                elif (
-                    token.txt 
-                    and next_token.txt 
-                    and token.txt.istitle() 
-                    and next_token.txt.istitle()
-                    and not " " in token.txt
-                    and not " " in next_token.txt
-                ):
-                    # Usually with capitalized foreign entity names that look like Icelandic common nouns.
-                    token = token_ctor.Entity(token.txt + " " + next_token.txt)
                     continue
 
             # Yield the current token and advance to the lookahead
@@ -1443,17 +1489,17 @@ class MatchingStream:
         replace or modify these sequences.
     """
 
-    def __init__(self, phrase_dictionary) -> None:
+    def __init__(self, phrase_dictionary: StateDict) -> None:
         self._pdict = phrase_dictionary
 
     def key(self, token: Tok) -> Any:
         """ Generate a state key from the given token """
         return token.txt.lower()
 
-    def match_state(self, key: Any, state: Any) -> Any:
+    def match_state(self, key: Any, state: StateDict) -> StateList:
         """ Returns an iterable of states that match the key,
             or a falsy value if the key matches no states. """
-        return state.get(key)
+        return state.get(key, [])
 
     def match(self, tq: List[Tok], ix: int) -> Iterable[Tok]:
         """ Called when we have found a match for the entire
@@ -1470,7 +1516,7 @@ class MatchingStream:
         # Token queue
         tq: List[Tok] = []
         # Phrases we're considering
-        state: Dict[str, List[Tuple[List[str], int]]] = defaultdict(list)
+        state: StateDict = defaultdict(list)
         pdict = self._pdict  # The phrase dictionary
 
         try:
@@ -1492,7 +1538,7 @@ class MatchingStream:
                     continue
 
                 # Look for matches in the current state and build a new state
-                newstate = defaultdict(list)
+                newstate: StateDict = defaultdict(list)
                 key = self.key(token)
 
                 def add_to_state(slist, index):
@@ -1582,15 +1628,15 @@ class StaticPhraseStream(MatchingStream):
         length of the longest phrase.
     """
 
-    def __init__(self, token_ctor, auto_uppercase):
+    def __init__(self, token_ctor: TokenConstructor, auto_uppercase: bool) -> None:
         super().__init__(StaticPhrases.DICT)
         self._token_ctor = token_ctor
         self._auto_uppercase = auto_uppercase
 
-    def length(self, ix):
+    def length(self, ix: int) -> int:
         return StaticPhrases.get_length(ix)
 
-    def key(self, token):
+    def key(self, token: Tok) -> Tuple[str, str]:
         """ We allow both the original token text and a lowercase
             version of it to match """
         wo = token.txt  # Original word
@@ -1599,22 +1645,22 @@ class StaticPhraseStream(MatchingStream):
             wo = w
         return wo, w
 
-    def match_state(self, key, state):
+    def match_state(self, key: Tuple[str, str], state: StateDict) -> StateList:
         """ First check for original (uppercase) word in the state, if any;
             if that doesn't match, check the lower case """
-        wm = None
+        wm = ""
         wo, w = key
-        if self._auto_uppercase and len(wo) == 1 and w is wo:
+        if self._auto_uppercase and len(wo) == 1 and w != wo:
             # If we are auto-uppercasing, leave single-letter lowercase
             # phrases alone, i.e. 'g' for 'gram' and 'm' for 'meter'
-            pass
+            wm = wo
         elif wo is not w and wo in state:
             wm = wo  # Original word
         elif w in state:
             wm = w  # Lowercase version
-        return state[wm]
+        return state.get(wm, [])
 
-    def match(self, tq, ix):
+    def match(self, tq: List[Tok], ix: int) -> Iterable[Tok]:
         w = " ".join([t.txt for t in tq])
         # Add the entire phrase as one 'word' to the token queue.
         # Note that the StaticPhrases meaning list will be converted
@@ -1640,37 +1686,36 @@ class DisambiguationStream(MatchingStream):
         meanings that have categories matching those allowed
         in the [disambiguate_phrases] section in config/Phrases.conf """
 
-    def __init__(self, token_ctor):
+    def __init__(self, token_ctor: TokenConstructor) -> None:
         super().__init__(AmbigPhrases.DICT)
         self._token_ctor = token_ctor
 
-    def key(self, token):
+    def key(self, token: Tok) -> DisambiguationTuple:
         """ Generate a phrase key from the given token """
         # Construct a set of all possible lemmas of this word form
         if token.kind == TOK.WORD:
             return token.txt.lower(), frozenset(m.stofn + "*" for m in token.val)
         return token.txt.lower(), frozenset()
 
-    def match_state(self, key, state):
+    def match_state(self, key: DisambiguationTuple, state: StateDict) -> StateList:
         """ Called to see if the current token's key matches
             the given state. Returns the value that should be
             used to look up the key within the state, or None
             if there is no match. """
         # First, check for a direct text match
-        states = []
-        if key[0] in state:
-            states.extend(state[key[0]])
+        txt, stems = key
+        states = list(state.get(txt, []))
         # Then, check whether the stems of the token match any
         # asterisk-marked entry in the state
-        for stem in key[1]:
+        for stem in stems:
             if stem in state:
                 states.extend(state[stem])
         return states
 
-    def length(self, ix):
+    def length(self, ix: int) -> int:
         return len(AmbigPhrases.get_cats(ix))
 
-    def match(self, tq, ix):
+    def match(self, tq: List[Tok], ix: int) -> Iterable[Tok]:
         """ We have a phrase match: return the tokens in the token
             queue, but with their meanings filtered down to only
             the word categories specified in the phrase configration """
@@ -1724,24 +1769,6 @@ def disambiguate_phrases(
     yield from ds.process(token_stream)
 
 
-class Bin_TOK(TOK):
-
-    """ Override the TOK class from tokenizer.py to allow a dummy
-        token parameter to be passed into token constructors where
-        required. This again allows errtokenizer.py in GreynirCorrect
-        to add token error information."""
-
-    @staticmethod
-    def Word(w: str, m=None, token: Optional[Tok] = None) -> Tok:
-        return TOK.Word(w, m)
-
-    @staticmethod
-    def Number(
-        w: str, n: float, cases=None, genders=None, token: Optional[Tok] = None
-    ) -> Tok:
-        return TOK.Number(w, n, cases, genders)
-
-
 class DefaultPipeline:
 
     """ A DefaultPipeline encapsulates a sequence of tokenization
@@ -1750,11 +1777,12 @@ class DefaultPipeline:
         output stream. Individual phases in the sequence can
         easily be overridden in derived classes. """
 
-    _token_ctor: Type[Bin_TOK] = Bin_TOK
+    _token_ctor: TokenConstructor = Bin_TOK
 
     def __init__(self, text_or_gen: StringIterable, **options) -> None:
         self._text_or_gen = text_or_gen
         self._auto_uppercase = options.pop("auto_uppercase", False)
+        self._no_sentence_start = options.pop("no_sentence_start", False)
         self._options = options
         self._db: Optional[BIN_Db] = None
         # Initialize the default tokenizer pipeline.
@@ -1789,7 +1817,14 @@ class DefaultPipeline:
 
     def annotate(self, stream: TokenIterator) -> TokenIterator:
         """ Lookup meanings from dictionary """
-        return annotate(self._db, self._token_ctor, stream, self._auto_uppercase)
+        assert self._db is not None
+        return annotate(
+            self._db,
+            self._token_ctor,
+            stream,
+            auto_uppercase=self._auto_uppercase,
+            no_sentence_start=self._no_sentence_start,
+        )
 
     def recognize_entities(self, stream: TokenIterator) -> TokenIterator:
         """ Recognize named entities. Default stack doesn't do anything,
@@ -1803,15 +1838,16 @@ class DefaultPipeline:
 
     def parse_phrases_1(self, stream: TokenIterator) -> TokenIterator:
         """ Numbers and amounts """
+        assert self._db is not None
         return parse_phrases_1(self._db, self._token_ctor, stream)
 
     def parse_phrases_2(self, stream: TokenIterator) -> TokenIterator:
         """ Currencies, person names """
-        return parse_phrases_2(stream, self._token_ctor)
+        return parse_phrases_2(stream, self._token_ctor, self._auto_uppercase)
 
     def parse_phrases_3(self, stream: TokenIterator) -> TokenIterator:
         """ Additional person and entity name logic """
-        return parse_phrases_3(stream, self._token_ctor, self._db)
+        return parse_phrases_3(stream, self._token_ctor)
 
     def fix_abbreviations(self, stream: TokenIterator) -> TokenIterator:
         """ Fix sentence splitting relating to abbreviations """
@@ -1858,13 +1894,13 @@ class DefaultPipeline:
                 self._db = None
 
 
-def tokenize(text: StringIterable, **options) -> Iterable[Tok]:
+def tokenize(text: StringIterable, **options) -> Iterator[Tok]:
     """ Tokenize text using the default pipeline """
     pipeline = DefaultPipeline(text, **options)
     return pipeline.tokenize()
 
 
-def tokens_are_foreign(tokens: TokenList, min_icelandic_ratio: float) -> bool:
+def tokens_are_foreign(tokens: TokenIterable, min_icelandic_ratio: float) -> bool:
     """ Return True if the given tokens are probably not in Icelandic """
     words_in_bin = 0
     words_not_in_bin = 0
@@ -1920,7 +1956,9 @@ def stems_of_token(t: Dict[str, Any]) -> List[Tuple[str, str]]:
     return [(stem, "entity")]
 
 
-def choose_full_name(val, case, gender):
+def choose_full_name(
+    val: Sequence[Tuple[str, str, str]], case: Optional[str], gender: Optional[str]
+) -> Tuple[str, str]:
     """ From a list of name possibilities in val, and given a case and a gender
         (which may be None), return the best matching full name and gender """
     fn_list = [
@@ -1946,65 +1984,5 @@ def choose_full_name(val, case, gender):
             fn_list = [(fn, g, c)]
     # If there are many choices, select the nominative case,
     # or the first element as a last resort
-    fn = next((fn for fn in fn_list if fn[2] == "nf"), fn_list[0])
-    return fn[0], fn[1] if gender is None else gender
-
-
-def describe_token(index, t, terminal, meaning):
-    """ Return a compact dictionary describing the token t,
-        at the given index within its sentence,
-        which matches the given terminal with the given meaning """
-    txt = normalized_text(t)
-    d = dict(x=txt, ix=index)
-    if terminal is not None:
-        # There is a token-terminal match
-        if t.kind == TOK.PUNCTUATION:
-            if txt == HYPHEN:
-                # Hyphen: check whether it is matching an em or en-dash terminal
-                if terminal.colon_cat == "em":
-                    # Substitute em dash (will be displayed with surrounding space)
-                    d["x"] = EM_DASH
-                elif terminal.colon_cat == "en":
-                    # Substitute en dash
-                    d["x"] = EN_DASH
-        else:
-            # Annotate with terminal name and BÍN meaning
-            # (no need to do this for punctuation)
-            d["t"] = terminal.name
-            if meaning is not None:
-                if terminal.first == "fs":
-                    # Special case for prepositions since they're really
-                    # resolved from the preposition list in Main.conf, not from BÍN
-                    m = (meaning.ordmynd, "fs", "alm", terminal.variant(0).upper())
-                else:
-                    m = (meaning.stofn, meaning.ordfl, meaning.fl, meaning.beyging)
-                d["m"] = m
-    if t.kind != TOK.WORD:
-        # Optimize by only storing the k field for non-word tokens
-        d["k"] = t.kind
-    if t.val is not None and t.kind not in {TOK.WORD, TOK.ENTITY, TOK.PUNCTUATION}:
-        # For tokens except words, entities and punctuation, include the val field
-        if t.kind == TOK.PERSON:
-            case = None
-            gender = None
-            if terminal is not None and terminal.num_variants >= 1:
-                gender = terminal.variant(-1)
-                if gender in {"nf", "þf", "þgf", "ef"}:
-                    # Oops, mistaken identity
-                    case = gender
-                    gender = None
-                if terminal.num_variants >= 2:
-                    case = terminal.variant(-2)
-            d["v"], gender = choose_full_name(t.val, case, gender)
-            # Make sure the terminal field has a gender indicator
-            if terminal is not None:
-                if not terminal.name.endswith("_" + gender):
-                    d["t"] = terminal.name + "_" + gender
-            else:
-                # No terminal field: create it
-                d["t"] = "person_" + gender
-            # In any case, add a separate gender indicator field for convenience
-            d["g"] = gender
-        else:
-            d["v"] = t.val
-    return d
+    ft = next((fn for fn in fn_list if fn[2] == "nf"), fn_list[0])
+    return ft[0], ft[1] if gender is None else gender
