@@ -44,6 +44,7 @@
 
 from typing import (
     cast,
+    TypeVar,
     Dict,
     Mapping,
     Set,
@@ -65,7 +66,9 @@ from datetime import datetime
 from functools import reduce, lru_cache
 import json
 
-from tokenizer import TOK, Tok, Abbreviations, normalized_text
+from tokenizer import (
+    TOK, Tok, Abbreviations, normalized_text
+)
 
 from .settings import (
     Settings,
@@ -2112,21 +2115,16 @@ class BIN_Parser(Base_Parser):
         """ Sanitize the 'raw' tokens and wrap them in BIN_Token() wrappers """
         return wrap_tokens(tokens, wrap_func=self._create_wrapped_token)
 
-    def go(self, tokens: Iterable[Token]) -> Any:
-        """ Parse the token list after wrapping
-            each understood token in the BIN_Token class """
-        # This should never be called - is overridden in Fast_Parser
-        raise NotImplementedError
-
 
 # Abbreviations and stuff that we ignore inside parentheses
 _UNKNOWN = frozenset(("e.", "d.", "þ.", "t.d.", "þ.e.", "m.a."))
 _SKIP_PARENTHESIS = frozenset(("e.",))  # "d." and "þ." were removed
 
+_T = TypeVar("_T")
 
 def wrap_tokens(
-    tokens: Iterable[Tok], wrap_func: Optional[Callable[[Tok, int], Tok]] = None
-) -> List[Tok]:
+    tokens: Iterable[Tok], wrap_func: Optional[Callable[[Tok, int], _T]] = None
+) -> List[_T]:
     """ Pre-process a token stream, removing tokens that will not be looked at
         during parsing - for instance insignificant punctuation and non-Icelandic
         text within parentheses. The function returns a fresh token list, with
@@ -2134,7 +2132,7 @@ def wrap_tokens(
 
     # Remove stuff that won't be understood in any case
     # Start with runs of unknown words inside parentheses
-    tlist = list(tokens)
+    tlist: List[Tok] = list(tokens)
     tlen = len(tlist)
 
     def scan_par(left: int) -> int:
@@ -2171,7 +2169,7 @@ def wrap_tokens(
                     if foreign or all(is_unknown(t) for t in tlist[left + 1 : right]):
                         # Only unknown tokens: erase'em, including the parentheses
                         for i in range(left, right + 1):
-                            tlist[i] = None
+                            tlist[i] = cast(Tok, None)
 
                     return right + 1
 
@@ -2190,10 +2188,10 @@ def wrap_tokens(
 
     # Wrap the sanitized token list using wrap_func, if given,
     # while keeping a back index to the original token
-    wrapped_tokens = []
+    wrapped_tokens: List[_T] = []
     for ix, t in enumerate(tlist):
         if t is not None and BIN_Token.is_understood(t):
-            wrapped_tokens.append(t if wrap_func is None else wrap_func(t, ix))
+            wrapped_tokens.append(cast(_T, t) if wrap_func is None else wrap_func(t, ix))
     return wrapped_tokens
 
 
@@ -2389,12 +2387,12 @@ def canonicalize_token(t: Dict[str, Any]) -> None:
 
 def describe_token(
     index: int, t: Tok, terminal: Optional[BIN_Terminal], meaning: Optional[BIN_Meaning]
-) -> Dict[str, str]:
+) -> Dict[str, Union[str, int, Tuple[str, str, str, str]]]:
     """ Return a compact dictionary describing the token t,
         at the given index within its sentence,
         which matches the given terminal with the given meaning """
     txt = normalized_text(t)
-    d = dict(x=txt, ix=index)
+    d: Dict[str, Union[str, int, Tuple[str, str, str, str]]] = dict(x=txt, ix=index)
     if terminal is not None:
         # There is a token-terminal match
         if t.kind == TOK.PUNCTUATION:
@@ -2411,6 +2409,7 @@ def describe_token(
             # (no need to do this for punctuation)
             d["t"] = terminal.name
             if meaning is not None:
+                m: Tuple[str, str, str, str]
                 if terminal.first == "fs":
                     # Special case for prepositions since they're really
                     # resolved from the preposition list in Main.conf, not from BÍN

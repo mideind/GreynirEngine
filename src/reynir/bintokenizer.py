@@ -61,11 +61,8 @@ from tokenizer import (
     tokenize_without_annotation,
     normalized_text,
     Abbreviations,
-)
-
-# The following imports are here in order to be visible in clients
-# (they are not used in this module)
-from tokenizer import (
+    # The following imports are here in order to be visible in clients
+    # (they are not used in this module)
     tokenize as raw_tokenize,
     correct_spaces,
     paragraphs,
@@ -91,7 +88,10 @@ else:
 
 # Named tuple for person names, including case and gender
 PersonName = NamedTuple(
-    "PersonName", [("name", str), ("gender", Optional[str]), ("case", Optional[str])]
+    "PersonName",
+    [
+        ("name", str), ("gender", Optional[str]), ("case", Optional[str])
+    ]
 )
 # The type of a list of tokens
 TokenList = List[Tok]
@@ -386,7 +386,32 @@ def load_token(*args) -> Tuple[int, str, TokenValType]:
     return kind, txt, val
 
 
-def annotate(db, token_ctor, token_stream, auto_uppercase):
+class Bin_TOK(TOK):
+
+    """ Override the TOK class from tokenizer.py to allow a dummy
+        token parameter to be passed into token constructors where
+        required. This again allows errtokenizer.py in GreynirCorrect
+        to add token error information. """
+
+    @staticmethod
+    def Word(w: str, m=None, token: Union[None, Tok, Sequence[Tok]] = None) -> Tok:
+        return TOK.Word(w, m)
+
+    @staticmethod
+    def Number(
+        w: str, n: float, cases=None, genders=None, token: Optional[Tok] = None
+    ) -> Tok:
+        return TOK.Number(w, n, cases, genders)
+
+
+def annotate(
+    db: BIN_Db,
+    token_ctor: TokenConstructor,
+    token_stream: Iterator[Tok],
+    *,
+    auto_uppercase: bool = False,
+    no_sentence_start: bool = False
+):
     """ Look up word forms in the BIN word database. If auto_uppercase
         is True, change lower case words to uppercase if it looks likely
         that they should be uppercase. """
@@ -505,7 +530,11 @@ def annotate(db, token_ctor, token_stream, auto_uppercase):
         at_sentence_start = False
 
 
-def match_stem_list(token, stems, filter_func=None):
+def match_stem_list(
+    token: Tok,
+    stems: Mapping[str, T],
+    filter_func: Optional[FilterFunction] = None,
+) -> Optional[T]:
     """ Find the stem of a word token in given dict, or return None if not found """
     if token.kind != TOK.WORD:
         return None
@@ -542,7 +571,9 @@ def add_cases(cases, bin_spec, default="nf"):
         cases.add(c)
 
 
-def all_cases(token, filter_func=None):
+def all_cases(
+    token: Tok, filter_func: Optional[FilterFunction] = None
+) -> List[str]:
     """ Return a list of all cases that the token can be in """
     cases: Union[FrozenSet[str], Set[str]] = set()
     if token.kind == TOK.WORD and token.val:
@@ -558,7 +589,9 @@ def all_cases(token, filter_func=None):
     return list(cases)
 
 
-def all_common_cases(token1, token2, filter_func=None):
+def all_common_cases(
+    token1: Tok, token2: Tok, filter_func: Optional[FilterFunction] = None,
+):
     """ Compute intersection of case sets for two tokens """
     set1 = set(all_cases(token1, filter_func))
     if not token2.val:
@@ -573,7 +606,7 @@ _GENDER_SET = {"kk", "kvk", "hk"}
 _GENDER_DICT = {"KK": "kk", "KVK": "kvk", "HK": "hk"}
 
 
-def all_genders(token):
+def all_genders(token: Tok) -> Optional[List[str]]:
     """ Return a list of the possible genders of the word in the token, if any """
     if token.kind != TOK.WORD:
         return None
@@ -597,10 +630,13 @@ def all_genders(token):
     return list(g)
 
 
-def parse_phrases_1(db, token_ctor, token_stream):
+def parse_phrases_1(
+    db: BIN_Db, token_ctor: TokenConstructor, token_stream: Iterator[Tok]
+) -> Iterator[Tok]:
     """ Parse numbers and amounts """
 
-    token = None
+    token: Tok = cast(Tok, None)
+
     try:
 
         # Maintain a one-token lookahead
@@ -806,12 +842,15 @@ def parse_phrases_1(db, token_ctor, token_stream):
         yield token
 
 
-def parse_phrases_2(token_stream, token_ctor):
+def parse_phrases_2(
+    token_stream: Iterator[Tok], token_ctor: TokenConstructor, auto_uppercase: bool
+) -> Iterator[Tok]:
     """ Parse a stream of tokens looking for phrases and making substitutions.
         Second pass: handle conversion of numbers + currencies into amounts,
         and process person names """
 
-    token = None
+    token: Tok = cast(Tok, None)
+
     try:
 
         # Maintain a one-token lookahead
@@ -906,7 +945,9 @@ def parse_phrases_2(token_stream, token_ctor):
 
             # Logic for human names
 
-            def stems(tok, categories, given_name=False):
+            def stems(
+                tok: Tok, categories: FrozenSet[str], given_name: bool = False
+            ) -> Optional[List[PersonName]]:
                 """ If the token denotes a given name, return its possible
                     interpretations, as a list of PersonName tuples (name, case, gender).
                     If given_name is True, we omit from the list all name forms that
@@ -936,14 +977,14 @@ def parse_phrases_2(token_stream, token_ctor):
                             )
                 return result or None
 
-            def has_category(tok, categories):
+            def has_category(tok: Tok, categories: FrozenSet[str]) -> bool:
                 """ Return True if the token matches a meaning
                     with any of the given categories """
                 if tok.kind != TOK.WORD or not tok.val:
                     return False
                 return any(m.fl in categories for m in tok.val)
 
-            def has_other_meaning(tok, category_set):
+            def has_other_meaning(tok: Tok, categories: FrozenSet[str]) -> bool:
                 """ Return True if the token can denote something
                     besides a given name """
                 if tok.kind != TOK.WORD or not tok.val:
@@ -952,7 +993,7 @@ def parse_phrases_2(token_stream, token_ctor):
                 return any(m.fl not in category_set for m in tok.val)
 
             # Check for person names
-            def given_names(tok):
+            def given_names(tok: Tok) -> Optional[List[PersonName]]:
                 """ Check for Icelandic or foreign person name
                     (category 'ism' or 'erm') """
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
@@ -961,7 +1002,7 @@ def parse_phrases_2(token_stream, token_ctor):
                 return stems(tok, PERSON_NAME_SET, given_name=True)
 
             # Check for surnames
-            def surnames(tok):
+            def surnames(tok: Tok) -> Optional[List[PersonName]]:
                 """ Check for Icelandic patronym (category 'föð'),
                     matronym (category 'móð') or family names (category 'ætt') """
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
@@ -970,7 +1011,7 @@ def parse_phrases_2(token_stream, token_ctor):
                 return stems(tok, PATRONYM_SET)
 
             # Check for unknown surnames
-            def unknown_surname(tok):
+            def unknown_surname(tok: Tok) -> bool:
                 """ Check for unknown (non-Icelandic) surnames """
                 # Accept (most) upper case words as a surnames
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
@@ -985,7 +1026,9 @@ def parse_phrases_2(token_stream, token_ctor):
                 # all-caps words (those are probably acronyms)
                 return len(tok.txt) == 1 or not tok.txt.isupper()
 
-            def given_names_or_middle_abbrev(tok):
+            def given_names_or_middle_abbrev(
+                tok: Tok,
+            ) -> Optional[List[PersonName]]:
                 """ Check for given name or middle abbreviation """
                 gnames = given_names(tok)
                 if gnames is not None:
@@ -1067,7 +1110,9 @@ def parse_phrases_2(token_stream, token_ctor):
                 # by one or more surnames (patronym/matronym) of the same gender,
                 # for instance 'Dagur Bergþóruson Eggertsson'
 
-                def eat_surnames(gn, w, patronym, next_token):
+                def eat_surnames(
+                    gn: List[PersonName], w: str, patronym: bool, next_token: Tok
+                ) -> Tuple[List[PersonName], str, bool, Tok]:
                     """ Process contiguous known surnames, typically "*dóttir/*son",
                         while they are compatible with the given name
                         we already have """
@@ -1204,7 +1249,9 @@ def parse_phrases_2(token_stream, token_ctor):
         yield token
 
 
-def parse_phrases_3(token_stream, token_ctor, db):
+def parse_phrases_3(
+    token_stream: Iterator[Tok], token_ctor: TokenConstructor
+) -> Iterator[Tok]:
     """ Parse a stream of tokens looking for phrases and making substitutions.
         Third pass: coalesce uppercase, otherwise unrecognized words with
         a following person name, if any; also coalesce entity names and
@@ -1246,7 +1293,8 @@ def parse_phrases_3(token_stream, token_ctor, db):
                 return False
         return True
 
-    token = None
+    # The following declaration is a deliberate mypy hack
+    token: Tok = cast(Tok, None)
     try:
 
         # Maintain a one-token lookahead
@@ -1284,7 +1332,7 @@ def parse_phrases_3(token_stream, token_ctor, db):
                 else:
                     yield token
                     # Make sure that token is None if next() raises StopIteration
-                    token = None
+                    token = cast(Tok, None)
                     token = next(token_stream)
                     continue
             next_token = next(token_stream)
@@ -1357,9 +1405,9 @@ def parse_phrases_3(token_stream, token_ctor, db):
         yield token
 
 
-def fix_abbreviations(token_stream):
+def fix_abbreviations(token_stream: Iterator[Tok]) -> Iterator[Tok]:
     """ Fix sentence splitting that may be wrong due to abbreviations """
-    token = None
+    token: Tok = cast(Tok, None)
     try:
         # Maintain a one-token lookahead
         token = next(token_stream)
@@ -1577,7 +1625,9 @@ class StaticPhraseStream(MatchingStream):
         yield self._token_ctor.Word(w, StaticPhrases.get_meaning(ix), token=tq)
 
 
-def parse_static_phrases(token_stream, token_ctor, auto_uppercase):
+def parse_static_phrases(
+    token_stream: Iterator[Tok], token_ctor: TokenConstructor, auto_uppercase: bool
+) -> Iterator[Tok]:
     """ Use the StaticPhraseStream class to process the token stream
         and replace static phrases with single tokens """
     sps = StaticPhraseStream(token_ctor, auto_uppercase)
@@ -1661,7 +1711,9 @@ class DisambiguationStream(MatchingStream):
             yield token_ctor.Word(t.txt, mm, token=t)
 
 
-def disambiguate_phrases(token_stream, token_ctor):
+def disambiguate_phrases(
+    token_stream: Iterator[Tok], token_ctor: TokenConstructor
+) -> Iterator[Tok]:
 
     """ Parse a stream of tokens looking for common ambiguous multiword phrases
         (i.e. phrases that have a well known very likely interpretation but
@@ -1834,11 +1886,11 @@ def tokens_are_foreign(tokens: TokenList, min_icelandic_ratio: float) -> bool:
     return num_words > 2 and words_in_bin / num_words < min_icelandic_ratio
 
 
-def stems_of_token(t):
+def stems_of_token(t: Dict[str, Any]) -> List[Tuple[str, str]]:
     """ Return a list of word stem descriptors associated with the token t.
         This is an empty list if the token is not a word or person or entity name.
     """
-    kind = t.get("k", TOK.WORD)
+    kind = cast(int, t.get("k", TOK.WORD))
     if kind not in {TOK.WORD, TOK.PERSON, TOK.ENTITY}:
         # No associated stem
         return []

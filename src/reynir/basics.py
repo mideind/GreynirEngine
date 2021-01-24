@@ -159,10 +159,20 @@ class LineReader:
                 stream = open(self._fname, "rb")
             with stream as inp:
                 # Read config file line-by-line from the package resources
+                accumulator = ""
                 for b in inp:
-                    # We get byte strings; convert from utf-8 to strings
+                    # We get byte strings; convert from utf-8 to Python strings
                     s = b.decode("utf-8")
                     self._line += 1
+                    if s.rstrip().endswith("\\"):
+                        # Backslash at end of line: continuation in next line
+                        accumulator += s.strip()[:-1]
+                        continue
+                    if accumulator:
+                        # Add accumulated text from preceding
+                        # backslash-terminated lines, but drop leading whitespace
+                        s = accumulator + s.lstrip()
+                        accumulator = ""
                     # Check for include directive: $include filename.txt
                     if s.startswith("$") and s.lower().startswith("$include "):
                         iname = s.split(maxsplit=1)[1].strip()
@@ -177,11 +187,13 @@ class LineReader:
                             outer_fname=self._fname,
                             outer_line=self._line,
                         )
-                        for incl_s in rdr.lines():
-                            yield incl_s
+                        yield from rdr.lines()
                         self._inner_rdr = None
                     else:
                         yield s
+                if accumulator:
+                    # Catch corner case where last line of file ends with a backslash
+                    yield accumulator
         except (IOError, OSError):
             if self._outer_fname:
                 # This is an include file within an outer config file

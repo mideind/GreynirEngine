@@ -5,8 +5,8 @@
 A fast, efficient natural language processor for Icelandic
 ==========================================================
 
-.. image:: https://travis-ci.com/mideind/GreynirPackage.svg?branch=master
-    :target: https://travis-ci.com/mideind/GreynirPackage
+.. image:: https://github.com/mideind/GreynirPackage/workflows/Python%20package/badge.svg?branch=master
+    :target: https://github.com/mideind/GreynirPackage/actions?query=workflow%3A%22Python+package%22
 
 ********
 Overview
