@@ -430,6 +430,7 @@ Tilgangssetning →
 Viðurkenningarsetning → 
     Viðurkenningartenging BeygingarliðurÁnUmröðunar
     | Viðurkenningartenging BeygingarliðurÁnF
+    | Enda BeygingarliðurMeðUmröðun
 
 Afleiðingarsetning → 
     Afleiðingartenging BeygingarliðurÁnUmröðunar
@@ -632,6 +633,10 @@ Viðurkenningartenging →
     | "jafnvel:ao"? "þó:st" "svo:ao"? "að:st"
     | VillaÞóAð
     | 'þrátt_fyrir:ao' 'það:pfn'_hk_þf_et? "að:st"
+    | Enda
+
+Enda →
+    "enda:st"
 
 $score(+6) Viðurkenningartenging
 
