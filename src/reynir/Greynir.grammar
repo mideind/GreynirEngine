@@ -2399,6 +2399,7 @@ So_1_þf_nh/tala/pers →
     | 'sjá:so'_1_þf_gm/tala/pers
     | 'kveða:so'_1_þf_gm/tala/pers
     | 'sýna:so'_1_þf_gm/tala/pers
+    | 'finna:so'_1_þf_gm/tala/pers
     | SoHorfaÁ/tala/pers
 
 SoHorfaÁ/tala/pers →
