@@ -1615,10 +1615,13 @@ OgSögn_mm_sagnb →
 
 OgSögn_sagnb/tala/kyn →
     # (hefur staðið) keikur í brúnni og mótmælt yfirgangi Rússa
-    LoTengtSögn_nf/tala/kyn? FsAtv? Aðaltenging FsAtv? EinSögn_sagnb/tala/kyn
+    LoTengtSögn_nf/tala/kyn? FsAtv? ÁframOgSögn_sagnb/tala/kyn* Aðaltenging FsAtv? EinSögn_sagnb/tala/kyn
     | LoTengtSögn_nf/tala/kyn? FsAtv? "," Aðaltenging FsAtv? EinSögn_sagnb/tala/kyn FsAtvKomma?
 
 $score(+6) OgSögn_sagnb/tala/kyn # Enn sterkari plús fyrir runu sagnb
+
+ÁframOgSögn_sagnb/tala/kyn →
+    "," EinSögn_sagnb/tala/kyn LoTengtSögn_nf/tala/kyn? FsAtv?
 
 OgSögn_nh/tala/kyn →
     SagnInnskot? Aðaltenging FsAtv? EinSögn_nh/tala/kyn
