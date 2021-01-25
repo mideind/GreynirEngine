@@ -166,6 +166,7 @@ Forskeyti →
     | 'með_öðrum_orðum:ao' ":" | 'með:fs'_þgf 'annar:lo'_hk_þgf_ft 'orð:hk'_þgf_ft ":"
     | 'að_lokum:ao' ":" | 'að:fs'_þgf 'lok:hk'_ft_þgf ":"
     | GreinarForskeyti
+    | NhLiður "," | NhLiður ":"                 # Að veiða eða sleppa, hver er skoðun þín?
 
 GreinarForskeyti →
     Greinarnúmer ":"
