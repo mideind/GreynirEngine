@@ -3246,8 +3246,8 @@ NlBeintAndlag_nf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
 NlBeintAndlag_þf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
 NlBeintAndlag_þgf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
 NlBeintAndlag_ef_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
-NlÓbeintAndlag/fall → Nl/fall | NlSkýringarsetning
-NlÓbeintAndlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
+NlÓbeintAndlag/fall → Nl/fall | NlSkýringarsetning | NlSpurnaraukasetning
+NlÓbeintAndlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn | NlSpurnaraukasetning    # Mér finnst óeðlilegt hvernig málin þróuðust
 NlSagnfylling/fall → Nl/fall | NlSkýringarsetning
 NlSagnfylling/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
 NlSagnfylling_nf_et_p3_hk → NlSkýringarsetning
@@ -5659,7 +5659,7 @@ EinFsAtv →
     Nema? FsMeðFallstjórn
     | EinnAl
     # '(hann tók á móti mér) hlæjandi'
-    | SögnLhNt
+    | SögnLhNt          # Varðandi blákaldan raunveruleikann
     | SamsettFsAtv
     | AlTilv            # Hún horfir þangað sem hann stóð
 
