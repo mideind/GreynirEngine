@@ -485,6 +485,7 @@ SkýringarBotn →
     | SetningUmAðRæða           # Ég taldi að um hefði verið að ræða mistök af hans hálfu
     | SetningSoÞað              # Ég taldi að farið hefði verið ofan í saumana á málinu
     | AtvSkýring                # Ég taldi að hér væri vandamál á ferðinni
+    | SetningÁnF                # Ég taldi að sést hefði til himins
 
 # AtvSkýring er eins og BeygingarliðurMeðUmröðun nema hvað forskeytis er krafist,
 # það er ekki valfrjálst eins og BeygingarliðMeðUmröðun
