@@ -204,6 +204,7 @@ SögnSegja/tala/pers →
     | 'staðhæfa:so'_0_gm_fh/tala/pers
     | 'ítreka:so'_0_gm_fh/tala/pers
     | 'viðurkenna:so'_0_gm_fh/tala/pers
+    | 'álíta:so'_0_gm_fh/tala/pers
 
 AðSögn →
     # , að sögn fulltrúa lögregluyfirvalda
@@ -3984,6 +3985,8 @@ Tala_hk_nf → to_et_hk_nf | to_ft_hk_nf
 NlStak_et_p3/fall/kyn →
     NlStak_p3_et/fall/kyn VeikSögnLhÞt_et/fall/kyn? FsRunaEftirNl?  # fulltrúi bankans í nefndinni
     | NlStak_et_p3/fall/kyn Eða NlStak_p3_et/fall              # Þingnefnd eða hluti Alþingismanna getur lagt fram frumvarp
+    | AnnaðhvortSt Nl/fall Eða Nl/fall/kyn                         # Hér er annaðhvort snjór eða sól  
+    | AnnaðhvortSt Nl/fall/kyn Eða Nl/fall                         # Hér er annaðhvort snjór eða sól  
     | 'hver:fn'_et/fall/kyn Og 'einn:fn'_et/fall/kyn FsRunaEftirNl?   # 'hver og einn [í sinni sveit] (ber ábyrgð)'
     | EinnAf_et_p3/fall/kyn                                         # einn af drengjunum [sem tóku þátt] (vann keppnina)
 
@@ -5512,6 +5515,7 @@ FsMeðFallstjórn →
     | 'bera:so'_lhþt_sb_hk_nf_et "saman:ao" 'við:fs'_þf Nl_þf  # borið saman við (fyrra ár)
     | "fyrir:ao" "nú:ao"? 'utan:fs'_þf Nl_þf
     | "innan:ao" "sem:st" 'utan:fs'_ef Nl_ef
+    | ÁMóti
     | "hvað:ao" FsHvaðVarðar
     # allt frá hruni, allt frá börnum til fullorðinna
     | Allt 'frá:fs'_þgf Nl_þgf
@@ -5601,6 +5605,13 @@ FsMilli →
     'milli:fs'_ef Nl_ef "og:st" Nl_ef
 
 $score(+6) FsMilli
+
+# Sérregla fyrir "á móti" til að koma í veg fyrir að greinist
+# sem forsetningarliður 
+ÁMóti →
+    "á:ao" 'móti:fs'_þgf Nl_þgf
+
+$score(+24) ÁMóti
 
 # Sérregla fyrir "út frá" vegna þess að "út frá því að S" er
 # algengt mynstur sem annars þáttast sem Tíðarsetning
