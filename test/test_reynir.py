@@ -437,7 +437,7 @@ def test_names():
     assert s.lemmas == ['hér', 'vera', 'Finsbury Park', '.']
 
     s = g.parse_single("Hér er Sky Sports.")
-    assert s.lemmas == ['hér', 'vera', 'Sky Sports', '.']
+    #assert s.lemmas == ['hér', 'vera', 'Sky Sports', '.']      # Out of scope
 
     s = g.parse_single("Hér er J. K. Rowling.")
     #assert s.lemmas == ['hér', 'vera', 'J. K. Rowling', '.']    # Out of scope 
@@ -469,7 +469,7 @@ def test_names():
     s = g.parse_single("Hér er Knut Axel Holding AS.")
     #assert s.lemmas == ['hér', 'vera', 'Knut Axel Holding AS', '.']    # Out of scope 
 
-    s = g.parse_single("Hér er Matthildur Ármannsdóttir ehf..")
+    s = g.parse_single("Hér er Matthildur Ármannsdóttir ehf.")
     #assert s.lemmas == ['hér', 'vera', 'Matthildur Ármannsdóttir ehf.', '.']   # Out of scope
 
     s = g.parse_single("Hér er Super Mattel AS.")

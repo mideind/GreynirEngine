@@ -2041,6 +2041,12 @@ def test_neutral_pronoun(r):
         "C st /C IP VP VP so_gm_sagnb /VP VP so_et_fh_gm_p3_þt /VP PP P fs_þgf "
         "/P NP no_et_kvk_þgf /NP /PP PP P fs_þf /P NP pfn_et_hk_p3_þf /NP /PP "
         "/VP /IP /CP-THT /NP-OBJ /VP /IP /S-MAIN p /S0"
+    ) or (
+        s.tree.flat_with_all_variants == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_p3_þgf "
+        "/NP-SUBJ VP VP so_1_nf_subj_op_þgf_et_fh_gm_þt /VP NP-OBJ eo CP-THT "
+        "C st /C IP VP VP so_0_et_hk_lhþt_nf_sb /VP VP so_et_fh_gm_p3_þt /VP "
+        "/VP PP P fs_þgf /P NP no_et_kvk_þgf /NP /PP PP P fs_þf /P NP "
+        "pfn_et_hk_p3_þf /NP /PP /IP /CP-THT /NP-OBJ /VP /IP /S-MAIN p /S0"
     )
 
 
