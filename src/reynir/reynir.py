@@ -851,6 +851,11 @@ class Greynir:
         except StopIteration:
             return None
 
+    def lemmatize(self, sent: str, multiple: bool = False, sort: Callable = None) -> Iterable:
+        """ Utiility function to (simplistically) lemmatize all words in
+            a given string without parsing. """
+        return simple_lemmatize(sent, multiple, sort)
+
     @classmethod
     def cleanup(cls) -> None:
         """ Discard memory resources held by the Greynir class object """
