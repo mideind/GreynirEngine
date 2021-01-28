@@ -164,7 +164,7 @@ Forskeyti →
     | "sem:st" 'segja:so'_lhþt_sb_hk_nf_et ":"      # sem sagt
     | 'aðferð:kvk'_nf_et ":"
     | 'með_öðrum_orðum:ao' ":" | 'með:fs'_þgf 'annar:lo'_hk_þgf_ft 'orð:hk'_þgf_ft ":"
-    | 'að_lokum:ao' ":" | 'að:fs'_þgf 'lok:hk'_ft_þgf ":"
+    | 'að:fs'_þgf 'lok:hk'_ft_þgf ":"
     | GreinarForskeyti
     | NhLiður "," | NhLiður ":"                 # Að veiða eða sleppa, hver er skoðun þín?
 
@@ -1623,7 +1623,7 @@ OgSögn_sagnb/tala/kyn →
 $score(+6) OgSögn_sagnb/tala/kyn # Enn sterkari plús fyrir runu sagnb
 
 ÁframOgSögn_sagnb/tala/kyn →
-    "," EinSögn_sagnb/tala/kyn LoTengtSögn_nf/tala/kyn? FsAtv?
+    ","? EinSögn_sagnb/tala/kyn LoTengtSögn_nf/tala/kyn? FsAtv?
 
 OgSögn_nh/tala/kyn →
     SagnInnskot? Aðaltenging FsAtv? EinSögn_nh/tala/kyn
@@ -2300,15 +2300,12 @@ Andlög/fall/afall →
 
 Andlög/fall/afall/tala/kyn →
     NlÓbeintAndlag/fall LoTengtSögn_nf/tala/kyn? AndlögBotn/fall/afall
-    | UmsnúinAndlög/fall/afall/tala/kyn
+    | UmsnúinAndlög/fall/afall
 
 UmsnúinAndlög/fall/afall →
-    NlBeintAndlag/afall UmsnúinAndlögBotn/fall/afall
+    NlBeintAndlag/afall UmsnúinAndlögBotn/fall
 
-UmsnúinAndlög/fall/afall/tala/kyn → 
-    NlBeintAndlag/afall UmsnúinAndlögBotn/fall/afall
-
-UmsnúinAndlögBotn/fall/afall →
+UmsnúinAndlögBotn/fall →
     NlÓbeintAndlag/fall
     | LoAtviksliður* lo_mst/fall/tala/kyn NlÓbeintAndlag/fall/tala/pers/kyn SamanburðarNafnliður
 

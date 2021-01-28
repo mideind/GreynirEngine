@@ -340,6 +340,9 @@ PATRONYM_SET = frozenset(("föð", "móð", "ætt"))
 # 'of' was also here but caused problems
 FOREIGN_MIDDLE_NAME_SET = frozenset(("van", "de", "den", "der", "el", "al", "von", "la"))
 
+ENTITY_MIDDLE_NAME_SET = frozenset(("in", "a", "an", "for", "and", "the", "for", "on", "of"))
+
+
 # Given names that can also be family names (and thus gender- and caseless as such)
 BOTH_GIVEN_AND_FAMILY_NAMES = frozenset(("Hafstein",))
 
@@ -1325,7 +1328,7 @@ def parse_phrases_2(
 
 
 def parse_phrases_3(
-    token_stream: Iterator[Tok], token_ctor: TokenConstructor
+    db: BIN_Db, token_stream: Iterator[Tok], token_ctor: TokenConstructor
 ) -> Iterator[Tok]:
     """ Parse a stream of tokens looking for phrases and making substitutions.
         Third pass: coalesce uppercase, otherwise unrecognized words with
@@ -1343,7 +1346,7 @@ def parse_phrases_3(
         """ Return True if the token content can be concatenated onto
             an existing entity name """
         # Non-capitalized function words that can appear within entity names
-        if token.txt in ["in", "a", "an", "for", "and", "the", "for", "on", "of"] or token.txt in FOREIGN_MIDDLE_NAME_SET: 
+        if token.txt in ENTITY_MIDDLE_NAME_SET or token.txt in FOREIGN_MIDDLE_NAME_SET: 
             return True
         if token.kind != TOK.ENTITY and token.kind != TOK.WORD:
             return False
@@ -1378,10 +1381,10 @@ def parse_phrases_3(
         while True:
 
             if not concatable and not is_interesting(token):
-                if token.txt and token.txt.split(" ")[-1] in FOREIGN_MIDDLE_NAME_SET and " " in token.txt:
+                if token.txt and " " in token.txt and token.txt.split(" ")[-1] in FOREIGN_MIDDLE_NAME_SET:
                     # Combined in parse_phrases_2() but no capitalized word follows
                     # Should be split up
-                    split = token.txt.split(" ")
+                    split = token.txt.split()
                     first = split[:-1]
                     middle = ""
                     if first[-1] in FOREIGN_MIDDLE_NAME_SET:
@@ -1847,7 +1850,8 @@ class DefaultPipeline:
 
     def parse_phrases_3(self, stream: TokenIterator) -> TokenIterator:
         """ Additional person and entity name logic """
-        return parse_phrases_3(stream, self._token_ctor)
+        assert self._db is not None
+        return parse_phrases_3(self._db, stream, self._token_ctor)
 
     def fix_abbreviations(self, stream: TokenIterator) -> TokenIterator:
         """ Fix sentence splitting relating to abbreviations """
