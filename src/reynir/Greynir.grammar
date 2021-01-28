@@ -2296,7 +2296,7 @@ Sögn_2_nh →
 
 Andlög/fall/afall →
     NlÓbeintAndlag/fall AndlögBotn/fall/afall
-    | UmsnúinAndlög/fall/afall
+    | UmsnúinAndlög/fall/afall          # Konurnar aðlöguðu skóinn sér
 
 Andlög/fall/afall/tala/kyn →
     NlÓbeintAndlag/fall LoTengtSögn_nf/tala/kyn? AndlögBotn/fall/afall
@@ -2315,7 +2315,7 @@ AndlögBotn/fall/afall →
     # (gefa Páli) [talsvert] stærri gjöf/flottari bíl en mér/Sigríði
     | LoAtviksliður* lo_mst/afall/tala/kyn NlBeintAndlag/afall/tala/pers/kyn SamanburðarNafnliður
 
-$score(-50) UmsnúinAndlög/fall/afall
+$score(-10) UmsnúinAndlög/fall/afall
 
 So_2_nh_þf_nf → so_2_þf_nf_nh
 So_2_nh_þf_þf → so_2_þf_þf_nh
