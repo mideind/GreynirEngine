@@ -351,6 +351,192 @@ def test_lemmas():
     assert s.categories is None
     assert s.lemmas_and_cats is None
 
+# Tests for more complex tokenization in bintokenizer
+
+def test_names():
+    g = Greynir()
+    s = g.parse_single("Hér er Jón.")
+    assert s.lemmas == ['hér', 'vera', 'Jón', '.']
+
+    s = g.parse_single("Hér er Díana.")
+    assert s.lemmas == ['hér', 'vera', 'Díana', '.']
+
+    s = g.parse_single("Hér er Jón Daði.")
+    assert s.lemmas == ['hér', 'vera', 'Jón Daði', '.']
+
+    s = g.parse_single("Hér er Díana Valdís.")
+    assert s.lemmas == ['hér', 'vera', 'Díana Valdís', '.']
+
+    s = g.parse_single("Hér er Jón Daði Vignisson.")
+    assert s.lemmas == ['hér', 'vera', 'Jón Daði Vignisson', '.']
+
+    s = g.parse_single("Hér er Díana Valdís Bjartmarsdóttir.")
+    assert s.lemmas == ['hér', 'vera', 'Díana Valdís Bjartmarsdóttir', '.']
+
+    s = g.parse_single("Hér er Björn.")
+    assert s.lemmas == ['hér', 'vera', 'Björn', '.']
+
+    s = g.parse_single("Hér er Blær.")
+    assert s.lemmas == ['hér', 'vera', 'Blær', '.']
+
+    s = g.parse_single("Hér er Björn Arnarson.")
+    assert s.lemmas == ['hér', 'vera', 'Björn Arnarson', '.']
+
+    s = g.parse_single("Hér er Sóley Bjartmarsdóttir.")
+    assert s.lemmas == ['hér', 'vera', 'Sóley Bjartmarsdóttir', '.']
+
+    s = g.parse_single("Hér er Jón Zoëga.")
+    assert s.lemmas == ['hér', 'vera', 'Jón Zoëga', '.']
+
+    s = g.parse_single("Hér er Gyða Waage.")
+    assert s.lemmas == ['hér', 'vera', 'Gyða Waage', '.']
+
+    s = g.parse_single("Hér er Sigríður Á. Andersen.")
+    assert s.lemmas == ['hér', 'vera', 'Sigríður Á. Andersen', '.']
+
+    s = g.parse_single("Hér er Gvendur P. Aspelund.")
+    assert s.lemmas == ['hér', 'vera', 'Gvendur P. Aspelund', '.']
+
+    s = g.parse_single("Hér er Jakob Díönu- og Styrmisson.")
+    assert s.lemmas == ['hér', 'vera', 'Jakob Díönu- og Styrmisson', '.']
+
+    s = g.parse_single("Hér er Gvendur Ragnheiðarson.")
+    assert s.lemmas == ['hér', 'vera', 'Gvendur Ragnheiðarson', '.']
+
+    s = g.parse_single("Hér er Sóley Petrudóttir.")
+    assert s.lemmas == ['hér', 'vera', 'Sóley Petrudóttir', '.']
+
+    s = g.parse_single("Hér er Sóley Péturs- og Petrudóttir.")
+    assert s.lemmas == ['hér', 'vera', 'Sóley Péturs- og Petrudóttir', '.']
+
+    s = g.parse_single("Hér er Svanur Hildar- og Pálsson Scheving.")
+    assert s.lemmas == ['hér', 'vera', 'Svanur Hildar- og Pálsson Scheving', '.']
+
+    s = g.parse_single("Hér eru Áki og Andri Brjánssynir.")
+    #assert s.lemmas == ['hér', 'vera', 'Áki og Andri Brjánssynir', '.']    # Out of scope 
+
+    s = g.parse_single("Hér eru Ína og Una Brjánsdætur.")
+    #assert s.lemmas == ['hér', 'vera', 'Ína og Una Brjánsdætur', '.']    # Out of scope 
+
+    s = g.parse_single("Hér eru Áki og Láki Brjánssynir.")
+    #assert s.lemmas == ['hér', 'vera', 'Áki og Láki Brjánssynir', '.']    # Out of scope 
+
+    s = g.parse_single("Hér eru Ína og Mína Brjánsdætur.")
+    #assert s.lemmas == ['hér', 'vera', 'Ína og Mína Brjánsdætur', '.']    # Out of scope 
+
+    s = g.parse_single("Hér eru Áki og Ína Brjánsbörn.")
+    #assert s.lemmas == ['hér', 'vera', 'Áki og Ína Brjánsbörn', '.']    # Out of scope 
+
+    s = g.parse_single("Hér er Jack Nicholson.")
+    assert s.lemmas == ['hér', 'vera', 'Jack Nicholson', '.']
+
+    s = g.parse_single("Hér er Diane Lane.")
+    assert s.lemmas == ['hér', 'vera', 'Diane Lane', '.']
+
+    s = g.parse_single("Hér er Finsbury Park.")
+    assert s.lemmas == ['hér', 'vera', 'Finsbury Park', '.']
+
+    s = g.parse_single("Hér er Sky Sports.")
+    #assert s.lemmas == ['hér', 'vera', 'Sky Sports', '.']      # Out of scope
+
+    s = g.parse_single("Hér er J. K. Rowling.")
+    #assert s.lemmas == ['hér', 'vera', 'J. K. Rowling', '.']    # Out of scope 
+
+    s = g.parse_single("Hér er Parsley Ecothelial Welmington III.")
+    assert s.lemmas == ['hér', 'vera', 'Parsley Ecothelial Welmington III', '.']
+
+    s = g.parse_single("Hér er Dietrich van Helsing.")
+    assert s.lemmas == ['hér', 'vera', 'Dietrich van Helsing', '.']
+
+    s = g.parse_single("Hér er Helmine van de Fnupft.")
+    assert s.lemmas == ['hér', 'vera', 'Helmine van de Fnupft', '.']
+
+    s = g.parse_single("Hér er Carla de la Cruz.")
+    assert s.lemmas == ['hér', 'vera', 'Carla de la Cruz', '.']
+
+    s = g.parse_single("Hér er Barack Obama.")
+    assert s.lemmas == ['hér', 'vera', 'Barack Obama', '.']
+
+    s = g.parse_single("Hér er Finnur de la Cruz.")
+    assert s.lemmas == ['hér', 'vera', 'Finnur de la Cruz', '.']
+
+    s = g.parse_single("Hér er Derek Árnason.")
+    #assert s.lemmas == ['hér', 'vera', 'Derek Árnason', '.']
+
+    s = g.parse_single("Hér er Díana Woodward.")
+    assert s.lemmas == ['hér', 'vera', 'Díana Woodward', '.']
+
+    s = g.parse_single("Hér er Knut Axel Holding AS.")
+    #assert s.lemmas == ['hér', 'vera', 'Knut Axel Holding AS', '.']    # Out of scope 
+
+    s = g.parse_single("Hér er Matthildur Ármannsdóttir ehf.")
+    #assert s.lemmas == ['hér', 'vera', 'Matthildur Ármannsdóttir ehf.', '.']   # Out of scope
+
+    s = g.parse_single("Hér er Super Mattel AS.")
+    assert s.lemmas == ['hér', 'vera', 'Super Mattel AS', '.']
+
+    s = g.parse_single("Hér er WOW Cyclothon.")
+    #assert s.lemmas == ['hér', 'vera', 'WOW Cyclothon', '.']   # Out of scope
+
+    s = g.parse_single("Hér er SHAPP Games.")
+    assert s.lemmas == ['hér', 'vera', 'SHAPP Games', '.']
+
+    s = g.parse_single("Hér er Fiat a10.")
+    #assert s.lemmas == ['hér', 'vera', 'Fiat a10', '.']        # Out of scope
+
+    s = g.parse_single("Hér er Ikea.")
+    assert s.lemmas == ['hér', 'vera', 'Ikea', '.']
+
+    s = g.parse_single("Hér er Styrmir Halldórsson H225.")
+    #assert s.lemmas == ['hér', 'vera', 'Styrmir Halldórsson H225', '.']    # Out of scope
+
+    s = g.parse_single("Hér er The Trials and Tribulations of the Cat.")
+    assert s.lemmas == ['hér', 'vera', 'The Trials and Tribulations of the Cat', '.']
+
+    s = g.parse_single("Hér er Making Pastels: In Search of Quietness.")
+    assert s.lemmas == ['hér', 'vera', 'Making Pastels', ':', 'In Search of Quietness', '.']
+
+    # False positives to avoid
+    s = g.parse_single("Hér er von Helgu.")
+    assert s.lemmas == ['hér', 'vera', 'von', 'Helga', '.']
+
+    s = g.parse_single("Hér er Helgi Björns.")
+    assert s.lemmas == ['hér', 'vera', 'Helgi Björns', '.']
+
+    s = g.parse_single("Hér er Jón de la.")
+    assert s.lemmas == ['hér', 'vera', 'Jón', 'de', 'la', '.']
+
+def test_compounds_with_numbers():
+    """ Compounds containing numbers, either
+        with a hyphen or not """
+    g = Greynir()
+    
+    # Tokens with letters and numbers are split up so this fails
+    s = g.parse_single("Hér er X3-jeppi.")
+    #assert s.lemmas == ['hér', 'vera', 'X3-jeppi', '.']
+
+    # Tokens with letters and numbers are split up so this fails
+    s = g.parse_single("Hér er Bombardier Q-400.")
+    #assert s.lemmas == ['hér', 'vera', 'Bombardier Q-400', '.']
+
+    # Tokens with letters and numbers are split up so this fails
+    s = g.parse_single("Hér er U20-landsliðið.")
+    #assert s.lemmas == ['hér', 'vera', 'U20-landslið', '.']
+
+    # Tokens with letters and numbers are split up so this fails
+    s = g.parse_single("Hér er ómega-3 fitusýra.")
+    #assert s.lemmas == ['hér', 'vera', 'ómega-3', 'fitusýra', '.']
+
+    # The entity combination doesn't recognize the hyphenated word
+    s = g.parse_single("Hér er Coca Cola-bikarinn.")
+    #assert s.lemmas == ['hér', 'vera', 'Coca Cola-bikar', '.']
+
+"""
+def test_numbers()
+    g = Greynir()
+    s = g.parse_single("Hér er Jón.")
+    assert s.lemmas == ['hér', 'vera', 'Jón', '.']
+"""
 
 def test_sentence_split():
     g = Greynir()

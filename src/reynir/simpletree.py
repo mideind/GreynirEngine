@@ -229,6 +229,7 @@ _DEFAULT_NT_MAP = {
     "Tíðartenging": "C",
     "Tilgangstenging": "C",
     "Viðurkenningartenging": "C",
+    "Enda": "C",
     "Afleiðingartenging": "C",
     "Orsakartenging": "C",
     "OrsakartengingUmröðun": "C",

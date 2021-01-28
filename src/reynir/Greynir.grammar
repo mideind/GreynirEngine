@@ -164,7 +164,9 @@ Forskeyti →
     | "sem:st" 'segja:so'_lhþt_sb_hk_nf_et ":"      # sem sagt
     | 'aðferð:kvk'_nf_et ":"
     | 'með_öðrum_orðum:ao' ":" | 'með:fs'_þgf 'annar:lo'_hk_þgf_ft 'orð:hk'_þgf_ft ":"
+    | 'að:fs'_þgf 'lok:hk'_ft_þgf ":"
     | GreinarForskeyti
+    | NhLiður "," | NhLiður ":"                 # Að veiða eða sleppa, hver er skoðun þín?
 
 GreinarForskeyti →
     Greinarnúmer ":"
@@ -202,6 +204,7 @@ SögnSegja/tala/pers →
     | 'staðhæfa:so'_0_gm_fh/tala/pers
     | 'ítreka:so'_0_gm_fh/tala/pers
     | 'viðurkenna:so'_0_gm_fh/tala/pers
+    | 'álíta:so'_0_gm_fh/tala/pers
 
 AðSögn →
     # , að sögn fulltrúa lögregluyfirvalda
@@ -430,6 +433,7 @@ Tilgangssetning →
 Viðurkenningarsetning → 
     Viðurkenningartenging BeygingarliðurÁnUmröðunar
     | Viðurkenningartenging BeygingarliðurÁnF
+    | Enda BeygingarliðurMeðUmröðun
 
 Afleiðingarsetning → 
     Afleiðingartenging BeygingarliðurÁnUmröðunar
@@ -482,6 +486,7 @@ SkýringarBotn →
     | SetningUmAðRæða           # Ég taldi að um hefði verið að ræða mistök af hans hálfu
     | SetningSoÞað              # Ég taldi að farið hefði verið ofan í saumana á málinu
     | AtvSkýring                # Ég taldi að hér væri vandamál á ferðinni
+    | SetningÁnF                # Ég taldi að sést hefði til himins
 
 # AtvSkýring er eins og BeygingarliðurMeðUmröðun nema hvað forskeytis er krafist,
 # það er ekki valfrjálst eins og BeygingarliðMeðUmröðun
@@ -632,6 +637,10 @@ Viðurkenningartenging →
     | "jafnvel:ao"? "þó:st" "svo:ao"? "að:st"
     | VillaÞóAð
     | 'þrátt_fyrir:ao' 'það:pfn'_hk_þf_et? "að:st"
+    | Enda
+
+Enda →
+    "enda:st"
 
 $score(+6) Viðurkenningartenging
 
@@ -1608,10 +1617,13 @@ OgSögn_mm_sagnb →
 
 OgSögn_sagnb/tala/kyn →
     # (hefur staðið) keikur í brúnni og mótmælt yfirgangi Rússa
-    LoTengtSögn_nf/tala/kyn? FsAtv? Aðaltenging FsAtv? EinSögn_sagnb/tala/kyn
+    LoTengtSögn_nf/tala/kyn? FsAtv? ÁframOgSögn_sagnb/tala/kyn* Aðaltenging FsAtv? EinSögn_sagnb/tala/kyn
     | LoTengtSögn_nf/tala/kyn? FsAtv? "," Aðaltenging FsAtv? EinSögn_sagnb/tala/kyn FsAtvKomma?
 
 $score(+6) OgSögn_sagnb/tala/kyn # Enn sterkari plús fyrir runu sagnb
+
+ÁframOgSögn_sagnb/tala/kyn →
+    ","? EinSögn_sagnb/tala/kyn LoTengtSögn_nf/tala/kyn? FsAtv?
 
 OgSögn_nh/tala/kyn →
     SagnInnskot? Aðaltenging FsAtv? EinSögn_nh/tala/kyn
@@ -2284,15 +2296,26 @@ Sögn_2_nh →
 
 Andlög/fall/afall →
     NlÓbeintAndlag/fall AndlögBotn/fall/afall
+    | UmsnúinAndlög/fall/afall          # Konurnar aðlöguðu skóinn sér
 
 Andlög/fall/afall/tala/kyn →
     NlÓbeintAndlag/fall LoTengtSögn_nf/tala/kyn? AndlögBotn/fall/afall
+    | UmsnúinAndlög/fall/afall
+
+UmsnúinAndlög/fall/afall →
+    NlBeintAndlag/afall UmsnúinAndlögBotn/fall
+
+UmsnúinAndlögBotn/fall →
+    NlÓbeintAndlag/fall
+    | LoAtviksliður* lo_mst/fall/tala/kyn NlÓbeintAndlag/fall/tala/pers/kyn SamanburðarNafnliður
 
 AndlögBotn/fall/afall →
     # (gefa Páli) [stóra] gjöf
     NlBeintAndlag/afall
     # (gefa Páli) [talsvert] stærri gjöf/flottari bíl en mér/Sigríði
     | LoAtviksliður* lo_mst/afall/tala/kyn NlBeintAndlag/afall/tala/pers/kyn SamanburðarNafnliður
+
+$score(-10) UmsnúinAndlög/fall/afall
 
 So_2_nh_þf_nf → so_2_þf_nf_nh
 So_2_nh_þf_þf → so_2_þf_þf_nh
@@ -2374,6 +2397,7 @@ So_1_þf_nh/tala/pers →
     | 'sjá:so'_1_þf_gm/tala/pers
     | 'kveða:so'_1_þf_gm/tala/pers
     | 'sýna:so'_1_þf_gm/tala/pers
+    | 'finna:so'_1_þf_gm/tala/pers
     | SoHorfaÁ/tala/pers
 
 SoHorfaÁ/tala/pers →
@@ -3222,7 +3246,8 @@ NlBeintAndlag_nf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
 NlBeintAndlag_þf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
 NlBeintAndlag_þgf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
 NlBeintAndlag_ef_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
-NlÓbeintAndlag/fall → Nl/fall | NlSkýringarsetning
+NlÓbeintAndlag/fall → Nl/fall | NlSkýringarsetning | NlSpurnaraukasetning
+NlÓbeintAndlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn | NlSpurnaraukasetning    # Mér finnst óeðlilegt hvernig málin þróuðust
 NlSagnfylling/fall → Nl/fall | NlSkýringarsetning
 NlSagnfylling/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
 NlSagnfylling_nf_et_p3_hk → NlSkýringarsetning
@@ -3957,6 +3982,8 @@ Tala_hk_nf → to_et_hk_nf | to_ft_hk_nf
 NlStak_et_p3/fall/kyn →
     NlStak_p3_et/fall/kyn VeikSögnLhÞt_et/fall/kyn? FsRunaEftirNl?  # fulltrúi bankans í nefndinni
     | NlStak_et_p3/fall/kyn Eða NlStak_p3_et/fall              # Þingnefnd eða hluti Alþingismanna getur lagt fram frumvarp
+    | AnnaðhvortSt Nl/fall Eða Nl/fall/kyn                         # Hér er annaðhvort snjór eða sól  
+    | AnnaðhvortSt Nl/fall/kyn Eða Nl/fall                         # Hér er annaðhvort snjór eða sól  
     | 'hver:fn'_et/fall/kyn Og 'einn:fn'_et/fall/kyn FsRunaEftirNl?   # 'hver og einn [í sinni sveit] (ber ábyrgð)'
     | EinnAf_et_p3/fall/kyn                                         # einn af drengjunum [sem tóku þátt] (vann keppnina)
 
@@ -5445,6 +5472,7 @@ LoKommaTengdSögn/tala/fall/kyn →
 LoTengtSögn_nf/tala/kyn →
     LoSamanb_nf/tala/kyn
     | AtviksliðurEinkunn* LoFornafn_nf/tala/kyn # (Hann komst) sjálfur (út úr flakinu)
+    | AtviksliðurEinkunn* RaðTala_nf/tala/kyn   # (Hann varð) fjórði (í hlaupinu)
     | LoTengtSögn_nf/tala/kyn LoKommaTengdSögn_nf/tala/kyn* KommaOgEðaEn LoSamanb_nf/tala/kyn
 
 LoTengtSögn_nf_ft/kyn →
@@ -5484,6 +5512,7 @@ FsMeðFallstjórn →
     | 'bera:so'_lhþt_sb_hk_nf_et "saman:ao" 'við:fs'_þf Nl_þf  # borið saman við (fyrra ár)
     | "fyrir:ao" "nú:ao"? 'utan:fs'_þf Nl_þf
     | "innan:ao" "sem:st" 'utan:fs'_ef Nl_ef
+    | ÁMóti
     | "hvað:ao" FsHvaðVarðar
     # allt frá hruni, allt frá börnum til fullorðinna
     | Allt 'frá:fs'_þgf Nl_þgf
@@ -5574,6 +5603,13 @@ FsMilli →
 
 $score(+6) FsMilli
 
+# Sérregla fyrir "á móti" til að koma í veg fyrir að greinist
+# sem forsetningarliður 
+ÁMóti →
+    "á:ao" 'móti:fs'_þgf Nl_þgf
+
+$score(+24) ÁMóti
+
 # Sérregla fyrir "út frá" vegna þess að "út frá því að S" er
 # algengt mynstur sem annars þáttast sem Tíðarsetning
 FsÚtFrá →
@@ -5634,7 +5670,7 @@ EinFsAtv →
     Nema? FsMeðFallstjórn
     | EinnAl
     # '(hann tók á móti mér) hlæjandi'
-    | SögnLhNt
+    | SögnLhNt          # Varðandi blákaldan raunveruleikann
     | SamsettFsAtv
     | AlTilv            # Hún horfir þangað sem hann stóð
 
