@@ -358,6 +358,7 @@ class BIN_Compressed:
         *,
         singular: bool = False,
         indefinite: bool = False,
+        all_forms: bool = False,
         cat: Optional[str] = None,
         stem: Optional[str] = None,
         utg: Any = NoUtg,
@@ -375,6 +376,8 @@ class BIN_Compressed:
         # singular=False does not force the result to be plural; it
         # simply means that no forcing to singular occurs.
         # The same applies to indefinite=True and False, mutatis mutandis.
+        # However, if all_forms=True, both singular and plural, as well as
+        # definite and indefinite forms, are always returned.
 
         result: Set[MeaningTuple] = set()
         case_latin = case.encode("latin-1")
@@ -395,10 +398,10 @@ class BIN_Compressed:
             # being specified.
             for s in ("NF", "ÞF", "ÞGF", "EF", "2", "3"):
                 beyging = beyging.replace(s, "")
-            if singular:
+            if singular or all_forms:
                 for s in ("ET", "FT"):
                     beyging = beyging.replace(s, "")
-            if indefinite:
+            if indefinite or all_forms:
                 beyging = beyging.replace("gr", "")
                 # For adjectives, we neutralize weak and strong
                 # declension ('VB', 'SB'), but keep the degree (F, M, E)
@@ -413,12 +416,14 @@ class BIN_Compressed:
                 # for from self.lookup(), so we need to be careful to
                 # filter again on the case
                 return False
-            if singular and ("ET" not in beyging):
-                return False
-            if indefinite and any(b in beyging for b in ("gr", "FVB", "EVB")):
-                # For indefinite forms, we don't want the attached definite
-                # article ('gr') or weak declensions of adjectives
-                return False
+            if not all_forms:
+                if singular and ("ET" not in beyging):
+                    # Only return singular forms
+                    return False
+                if indefinite and any(b in beyging for b in ("gr", "FVB", "EVB")):
+                    # For indefinite forms, we don't want the attached definite
+                    # article ('gr') or weak declensions of adjectives
+                    return False
             if beyging_filter is not None and not beyging_filter(beyging):
                 # The user-defined filter fails: return False
                 return False

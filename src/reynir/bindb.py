@@ -325,6 +325,17 @@ class BIN_Db:
 
         return final_w, [m for m in meanings if match(m)]
 
+    def lookup_forms(self, lemma: str, cat: str, case: str) -> List[BIN_Meaning]:
+        """ Lookup all base forms of a particular lemma, in the indicated case.
+            This is mainly used to retrieve inflection forms of nouns, where
+            we want to retrieve singular and plural, definite and indefinite
+            forms in particular cases. """
+        assert self._compressed_bin is not None
+        mset = self._compressed_bin.lookup_case(
+            lemma, case.upper(), stem=lemma, cat=cat, all_forms=True
+        )
+        return list(map(BIN_Meaning._make, mset))
+
     @lru_cache(maxsize=CACHE_SIZE)
     def lookup_name_gender(self, name: str) -> str:
         """ Given a person name, lookup its gender """

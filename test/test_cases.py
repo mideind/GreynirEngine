@@ -400,6 +400,49 @@ def test_casting():
     assert db.cast_to_genitive("Kópavogur", meaning_filter_func=f) == "Kópavogs"
 
 
+def test_forms():
+    from reynir.bindb import BIN_Db
+    db = BIN_Db()
+    l = db.lookup_forms("köttur", "kvk", "nf")
+    assert len(l) == 0
+    l = db.lookup_forms("köttur", "kzk", "nf")
+    assert len(l) == 0
+    try:
+        l = []
+        l = db.lookup_forms("köttur", "kk", "zf")
+    except AssertionError:
+        pass
+    assert len(l) == 0
+    l = db.lookup_forms("kötur", "kk", "nf")
+    assert len(l) == 0
+    l = db.lookup_forms("kettirnir", "kk", "nf")
+    assert len(l) == 0
+    l = db.lookup_forms("köttur", "kk", "nf")
+    om = set(m.ordmynd for m in l)
+    assert "köttur" in om
+    assert "kettir" in om
+    assert "kötturinn" in om
+    assert "kettirnir" in om
+    l = db.lookup_forms("köttur", "kk", "þf")
+    om = set(m.ordmynd for m in l)
+    assert "kött" in om
+    assert "ketti" in om
+    assert "köttinn" in om
+    assert "kettina" in om
+    l = db.lookup_forms("köttur", "kk", "þgf")
+    om = set(m.ordmynd for m in l)
+    assert "ketti" in om
+    assert "köttum" in om
+    assert "kettinum" in om
+    assert "köttunum" in om
+    l = db.lookup_forms("köttur", "kk", "ef")
+    om = set(m.ordmynd for m in l)
+    assert "kattar" in om
+    assert "kattarins" in om
+    assert "katta" in om
+    assert "kattanna" in om
+
+
 def test_addresses():
     from reynir import NounPhrase
     np = NounPhrase("Laugavegi 20b")
@@ -451,5 +494,6 @@ if __name__ == "__main__":
     test_cases(r)
     test_noun_phrases(r)
     test_casting()
+    test_forms()
     test_addresses()
     r.__class__.cleanup()

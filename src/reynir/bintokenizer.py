@@ -534,6 +534,8 @@ def annotate(
                         w_new, m = db.lookup_word(
                             "".join(parts), at_sentence_start, auto_uppercase
                         )
+                    else:
+                        w_new = ""  # Included to silence warning about unbound variable
                     if m:
                         # Found without hyphens: use that word form
                         m = [
@@ -1489,6 +1491,7 @@ class MatchingStream:
         # Phrases we're considering
         state: StateDict = defaultdict(list)
         pdict = self._pdict  # The phrase dictionary
+        token: Optional[Tok]
 
         try:
 
