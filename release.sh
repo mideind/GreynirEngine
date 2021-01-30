@@ -9,9 +9,10 @@ echo "Upload a new GreynirPackage version:" "$1"
 chmod -x src/reynir/*.py
 chmod -x src/reynir/*.cpp
 chmod -x src/reynir/*.grammar
-chmod -x src/reynir/*.grammar.bin
 chmod -x src/reynir/config/*
 chmod -x src/reynir/resources/*
+# Remove binary grammar files as they may be out of date
+rm src/reynir/Greynir.*.bin
 # Create the base source distribution
 rm -rf build/*
 python3 setup.py sdist
