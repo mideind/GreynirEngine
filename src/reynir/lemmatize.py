@@ -30,40 +30,45 @@
 
 """
 
-from typing import Iterable, Union, Callable, Tuple
+from typing import Iterable, Union, Callable, Tuple, List, Optional
 
-from .bintokenizer import tokenize, TOK, Tok
+from .bintokenizer import tokenize, TOK, Tok, TokenIterator
 
 
 def simple_lemmatize(
     sent: str, multiple: bool = False, sort: Callable = None
-) -> Iterable:
-    # Tokenize
-    return _lemmatize(tokenize(sent))
+) -> Iterable[Union[Tuple, List, None]]:
+    """Simplistically lemmatize words in a given string, returning an iterable
+    of (lemma, category) tuples. The default behaviour is to return the
+    first lemma provided by bintokenizer. If multiple lemmas are requested
+    via arg flag, a list of potential (lemma, cat) tuples is returned.
+    Optionally, a sort function can be provided to determine the ordering of
+    potential lemmas."""
 
-
-def _lemmatize(
-    sent: Iterable[Tok], multiple: bool = False, sort: Callable = None
-) -> Iterable[Tuple]:
-    """ Simplistically lemmatize a list of tokens, returning an iterable of
-    (lemma, category) tuples. The default behaviour is to return the
-    first lemma provided by bintokenizer. If multiple lemmas are requested, 
-    returns full list of potential lemmas. A sort function can be provided
-    to determine the ordering of multiple lemmas. """
-    for t in sent:
-        #print(t)
+    # Look up and yield lemmas for each token in text
+    # Should this yield "lemmas" for non-word tokens such as
+    # numbers, dates, URLs, etc.?
+    for t in tokenize(sent):
+        y: Optional[Union[Tuple, List]] = None
         if t.kind == TOK.WORD:
             if t.val:
                 # Known word
-                yield (t.val[0].stofn, t.val[0].ordfl)
+                y = [(v.stofn, v.ordfl) for v in t.val]
             else:
                 # Unknown word: assume it's an entity
-                yield (t.txt, "entity")
+                y = [(t.txt, "entity")]
         elif t.kind == TOK.PERSON:
             assert t.val
-            # Name, gender
-            yield (t.val[0][0], "person_" + t.val[0][1])
+            # Person name w. gender
+            y = [(t.val[0][0], "person_" + t.val[0][1])]
         elif t.kind == TOK.ENTITY or t.kind == TOK.COMPANY:
             # Entity or company name
-            yield (t.txt, "entity")
-
+            y = [(t.txt, "entity")]
+        # We're returning a lemma for this token
+        if y is not None:
+            y = list(set(y))  # Remove duplicates
+            if sort:
+                y = sorted(y, key=sort)
+            if not multiple:
+                y = y[0]  # Naively return first lemma
+            yield y
