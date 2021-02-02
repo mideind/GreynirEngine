@@ -32,6 +32,8 @@
 
 from typing import Iterable, Union, Callable, Tuple, List, Optional
 
+from collections import OrderedDict
+
 from .bintokenizer import tokenize, TOK, Tok, TokenIterator
 
 
@@ -66,7 +68,8 @@ def simple_lemmatize(
             y = [(t.txt, "entity")]
         # We're returning a lemma for this token
         if y is not None:
-            y = list(set(y))  # Remove duplicates
+            # Remove duplicates while preserving order
+            y = list(OrderedDict.fromkeys(y))
             if sort:
                 y = sorted(y, key=sort)
             if not multiple:
