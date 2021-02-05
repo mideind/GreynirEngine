@@ -43,8 +43,9 @@
     binpack.py reads the files ord.csv (originally SHsnid.csv from BÍN), ord.auka.csv
     (additional vocabulary), and ord.add.csv (generated from config/Vocab.conf
     by the program utils/vocab.py in the Greynir repository). Additionally,
-    errata from the BinErrata.conf file are applied during the compression process.
-    These additions and modifications are not a part of the original BÍN source data.
+    errata from the config/BinErrata.conf file are applied during
+    the compression process. These additions and modifications are not a part of
+    the original BÍN source data.
 
     The run-time counterpart of this module is bincompress.py.
 
@@ -68,11 +69,11 @@
 
     This module makes certain additions and modifications to the original
     BÍN source data during the generation of the compressed file.
-    These are described in the comments above.
+    These are described in the comments above and in the code below.
 
 """
 
-from typing import Any, Set, Tuple, Dict, List, Optional, Callable, Iterable, IO
+from typing import Any, Set, Tuple, Dict, List, Optional, Iterable, IO
 
 import os
 import io
@@ -144,7 +145,7 @@ class _Node:
             return None
 
         # Check whether we need to take existing child nodes into account
-        lo = 0
+        lo = mid = 0
         hi = len(self.children)
         ch = fragment[0]
         while hi > lo:

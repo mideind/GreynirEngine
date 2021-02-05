@@ -58,16 +58,12 @@
 
 """
 
-from typing import Any, Set, Tuple, Dict, List, Optional, Callable
+from typing import Any, Set, Tuple, List, Optional, Callable
 
-import os
-import io
-import time
 import struct
 import functools
 import mmap
 import pkg_resources
-from collections import defaultdict
 
 # Import the CFFI wrapper for the bin.cpp C++ module (see also build_bin.py)
 # This is not needed for command-line invocation of bincompress.py,
@@ -83,8 +79,6 @@ from .basics import (
     BIN_COMPRESSED_FILE,
 )
 
-
-_PATH = os.path.dirname(__file__) or "."
 
 INT32 = struct.Struct("<i")
 UINT32 = struct.Struct("<I")
