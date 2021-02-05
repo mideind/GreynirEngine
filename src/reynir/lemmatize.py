@@ -36,22 +36,17 @@ from .bintokenizer import tokenize, TOK, Tok
 
 
 def simple_lemmatize(
-    sent: str, multiple: bool = False, sort: Callable = None
-) -> Iterable:
-    # Tokenize
-    return _lemmatize(tokenize(sent))
-
-
-def _lemmatize(
-    sent: Iterable[Tok], multiple: bool = False, sort: Callable = None
-) -> Iterable[Tuple]:
+    txt: str,
+    *,
+    all_lemmas: bool = False,
+    sortkey: Callable[[BIN_Meaning], Comparable] = None,
+) -> Union[List[str], List[List[str]]]:
     """ Simplistically lemmatize a list of tokens, returning an iterable of
-    (lemma, category) tuples. The default behaviour is to return the
-    first lemma provided by bintokenizer. If multiple lemmas are requested, 
-    returns full list of potential lemmas. A sort function can be provided
-    to determine the ordering of multiple lemmas. """
-    for t in sent:
-        #print(t)
+        (lemma, category) tuples. The default behaviour is to return the
+        first lemma provided by bintokenizer. If multiple lemmas are requested, 
+        returns full list of potential lemmas. A sort function can be provided
+        to determine the ordering of multiple lemmas. """
+    for t in tokenize(txt):
         if t.kind == TOK.WORD:
             if t.val:
                 # Known word

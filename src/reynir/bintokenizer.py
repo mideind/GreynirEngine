@@ -527,6 +527,7 @@ def annotate(
                     # 'málfræði-greining'
                     parts = re.split(r"[" + HYPHEN + EN_DASH + r"]", w)
                     # Start by checking whether it exists in BÍN without hyphens
+                    w_new, m = "", []
                     if all(p[0].islower() for p in parts[1:]):
                         # ...but we only do this if all of the suffixes start
                         # with a lowercase character (so, we don't do this for
@@ -1525,7 +1526,7 @@ class MatchingStream:
                     nonlocal token, newstate, tq
                     if token:
                         tq.append(token)
-                        token = None
+                        token = cast(Tok, None)
                     # sl is the continuation list (possible next tokens)
                     # for each state
                     for sl, ix in state:

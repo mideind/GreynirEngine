@@ -46,8 +46,11 @@ from typing import (
     Tuple,
     NamedTuple,
     Type,
+    TypeVar,
+    Protocol,
     cast,
 )
+from abc import abstractmethod
 import time
 import operator
 import json
@@ -55,6 +58,7 @@ from threading import Lock
 
 from tokenizer import TOK, Tok, correct_spaces, paragraphs, mark_paragraphs
 
+from .bindb import BIN_Meaning
 from .bintokenizer import (
     tokenize as bin_tokenize,
     TokenList,
@@ -93,6 +97,18 @@ ProgressFunc = Optional[Callable[[float], None]]
 ParseResult = Dict[
     str, Union[int, float, Iterable["_Sentence"], Iterable[Iterable["_Sentence"]]]
 ]
+
+
+class Comparable(Protocol):
+
+    """ Protocol for annotating comparable types """
+
+    @abstractmethod
+    def __lt__(self: "CT", other: "CT") -> bool:
+        ...
+
+
+CT = TypeVar("CT", bound=Comparable)
 
 # The default maximum length of a sentence, in tokens, that we attempt to parse
 DEFAULT_MAX_SENT_TOKENS = 90
@@ -611,11 +627,8 @@ class _Job_NP(_Job):
     """ Specialized _Job class that creates _NounPhrase objects
         instead of _Sentence objects """
 
-    def __init__(self,
-        greynir: "Greynir",
-        tokens: Iterable[Tok],
-        *,
-        force_number: str = None
+    def __init__(
+        self, greynir: "Greynir", tokens: Iterable[Tok], *, force_number: str = None
     ) -> None:
         # Parse the tokens with 'Nl' (noun phrase) as the root nonterminal
         # instead of the usual default 'S0' (sentence) root
@@ -833,10 +846,7 @@ class Greynir:
             return None
 
     def parse_noun_phrase(
-        self,
-        noun_phrase: str,
-        *,
-        force_number=None
+        self, noun_phrase: str, *, force_number=None
     ) -> Optional[_NounPhrase]:
         """ Utility function to parse a noun phrase. Note that in most
             cases it is more convenient to use the NounPhrase class
@@ -851,10 +861,16 @@ class Greynir:
         except StopIteration:
             return None
 
-    def lemmatize(self, sent: str, multiple: bool = False, sort: Callable = None) -> Iterable:
+    def lemmatize(
+        self,
+        txt: str,
+        *,
+        all_lemmas: bool = False,
+        sortkey: Callable[[BIN_Meaning], Comparable] = None,
+    ) -> Union[List[str], List[List[str]]]:
         """ Utiility function to (simplistically) lemmatize all words in
             a given string without parsing. """
-        return simple_lemmatize(sent, multiple, sort)
+        return simple_lemmatize(txt, all_lemmas, sortkey)
 
     @classmethod
     def cleanup(cls) -> None:
