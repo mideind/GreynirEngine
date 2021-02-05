@@ -240,7 +240,7 @@ Fyrirsögn →
 FyrirsögnInnihald →
     # Nafnliður í nefnifalli
     Nl_nf Atviksliður? Eignun? Lokatákn?
-    | SetningÁnF Lokatákn?
+    | SetningÁnF_et_p3_hk Lokatákn?
     # 'Um landsins gögn og nauðsynjar'
     | FsMeðFallstjórn
 
@@ -264,8 +264,7 @@ Eignun →
 
 SetningÁnF →
     # Setning án frumlags: 'Stefndi í átt til Bláfjalla', 'Aftengdi sjálfstýringu'
-    SetningÁnF_et_p3/kyn
-    | SetningÁnF_ft_p3/kyn
+    SetningÁnF/tala/p3/kyn
 
 Greinarnúmer →
     # Greinarnúmer, e.t.v. skammstafað, og e.t.v. með fyrirsögn
@@ -486,7 +485,7 @@ SkýringarBotn →
     | SetningUmAðRæða           # Ég taldi að um hefði verið að ræða mistök af hans hálfu
     | SetningSoÞað              # Ég taldi að farið hefði verið ofan í saumana á málinu
     | AtvSkýring                # Ég taldi að hér væri vandamál á ferðinni
-    | SetningÁnF                # Ég taldi að sést hefði til himins
+    | SetningÁnF_et_p3_hk       # Ég taldi að sést hefði til himins
 
 # AtvSkýring er eins og BeygingarliðurMeðUmröðun nema hvað forskeytis er krafist,
 # það er ekki valfrjálst eins og BeygingarliðMeðUmröðun

@@ -236,6 +236,7 @@ class _Sentence:
             # Already calculated and cached
             return self._terminals
         # Generate the terminal list from the parse tree
+        # pylint: disable=not-an-iterable
         self._terminals = [
             Terminal(d.text, d.lemma, d.tcat, d.all_variants, d.index)
             for d in self.terminal_nodes
@@ -263,6 +264,7 @@ class _Sentence:
             return None
         # Note that here we return the BÍN category,
         # not the terminal category (tcat)
+        # pylint: disable=not-an-iterable
         return [d.cat for d in self.terminal_nodes]
 
     @property
@@ -274,6 +276,7 @@ class _Sentence:
         # topic indexing and similar applications. Unknown words and entity
         # names have the category 'entity' in this case, and person names
         # have one of 'person_kk'/'person_kvk'/'person_hk'.
+        # pylint: disable=not-an-iterable
         return [(d.lemma, d.lemma_cat) for d in self.terminal_nodes]
 
     @property

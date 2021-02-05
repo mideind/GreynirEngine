@@ -94,10 +94,7 @@ else:
 T = TypeVar("T")
 # Named tuple for person names, including case and gender
 PersonName = NamedTuple(
-    "PersonName",
-    [
-        ("name", str), ("gender", Optional[str]), ("case", Optional[str])
-    ]
+    "PersonName", [("name", str), ("gender", Optional[str]), ("case", Optional[str])]
 )
 # The type of a list of tokens
 TokenList = List[Tok]
@@ -338,9 +335,13 @@ PATRONYM_SET = frozenset(("föð", "móð", "ætt"))
 # Set of foreign middle names that start with a lower case letter
 # ('Louis de Broglie', 'Jan van Eyck')
 # 'of' was also here but caused problems
-FOREIGN_MIDDLE_NAME_SET = frozenset(("van", "de", "den", "der", "el", "al", "von", "la"))
+FOREIGN_MIDDLE_NAME_SET = frozenset(
+    ("van", "de", "den", "der", "el", "al", "von", "la")
+)
 
-ENTITY_MIDDLE_NAME_SET = frozenset(("in", "a", "an", "for", "and", "the", "for", "on", "of"))
+ENTITY_MIDDLE_NAME_SET = frozenset(
+    ("in", "a", "an", "for", "and", "the", "for", "on", "of")
+)
 
 
 # Given names that can also be family names (and thus gender- and caseless as such)
@@ -461,11 +462,18 @@ class Bin_TOK(TOK):
 
     @staticmethod
     def Word(w: str, m=None, token: Union[None, Tok, Sequence[Tok]] = None) -> Tok:
+        # Note that the m parameter cannot be easily type annotated,
+        # as the Tokenizer package is still using a .pyi (Python 2.7-compatible)
+        # type annotation scheme
         return TOK.Word(w, m)
 
     @staticmethod
     def Number(
-        w: str, n: float, cases=None, genders=None, token: Optional[Tok] = None
+        w: str,
+        n: float,
+        cases: Optional[List[str]] = None,
+        genders: Optional[List[str]] = None,
+        token: Optional[Tok] = None,
     ) -> Tok:
         return TOK.Number(w, n, cases, genders)
 
@@ -602,9 +610,7 @@ def annotate(
 
 
 def match_stem_list(
-    token: Tok,
-    stems: Mapping[str, T],
-    filter_func: Optional[FilterFunction] = None,
+    token: Tok, stems: Mapping[str, T], filter_func: Optional[FilterFunction] = None,
 ) -> Optional[T]:
     """ Find the stem of a word token in given dict, or return None if not found """
     if token.kind != TOK.WORD:
@@ -642,9 +648,7 @@ def add_cases(cases: Set[str], bin_spec: str, default: str = "nf") -> None:
         cases.add(c)
 
 
-def all_cases(
-    token: Tok, filter_func: Optional[FilterFunction] = None
-) -> List[str]:
+def all_cases(token: Tok, filter_func: Optional[FilterFunction] = None) -> List[str]:
     """ Return a list of all cases that the token can be in """
     cases: Set[str] = set()
     if token.kind == TOK.WORD and token.val:
@@ -1103,9 +1107,7 @@ def parse_phrases_2(
                 # all-caps words (those are probably acronyms)
                 return len(tok.txt) == 1 or not tok.txt.isupper()
 
-            def given_names_or_middle_abbrev(
-                tok: Tok,
-            ) -> Optional[List[PersonName]]:
+            def given_names_or_middle_abbrev(tok: Tok,) -> Optional[List[PersonName]]:
                 """ Check for given name or middle abbreviation """
                 gnames = given_names(tok)
                 if gnames is not None:
@@ -1120,7 +1122,7 @@ def parse_phrases_2(
                 if tok.kind != TOK.WORD:
                     return None
                 wrd = tok.txt
-                if len(wrd) > 2 or not wrd[0].isupper():
+                if len(wrd) > 2 or wrd[0].islower():
                     if wrd not in FOREIGN_MIDDLE_NAME_SET:
                         # Accept "Thomas de Broglie", "Ruud van Nistelrooy"
                         return None
@@ -1337,18 +1339,18 @@ def parse_phrases_3(
         a following person name, if any; also coalesce entity names and
         recognize company names by endings ('hf.', 'Inc.', etc.). """
 
-    def is_interesting(token) -> bool:
+    def is_interesting(token: Tok) -> bool:
         """ Return True if this token causes us to want to take
             a further look at the following tokens """
         if token.kind != TOK.ENTITY and token.kind != TOK.WORD:
             return False
         return token.txt[0].isupper()
 
-    def can_concat(token) -> bool:
+    def can_concat(token: Tok) -> bool:
         """ Return True if the token content can be concatenated onto
             an existing entity name """
         # Non-capitalized function words that can appear within entity names
-        if token.txt in ENTITY_MIDDLE_NAME_SET or token.txt in FOREIGN_MIDDLE_NAME_SET: 
+        if token.txt in ENTITY_MIDDLE_NAME_SET or token.txt in FOREIGN_MIDDLE_NAME_SET:
             return True
         if token.kind != TOK.ENTITY and token.kind != TOK.WORD:
             return False
@@ -1361,7 +1363,7 @@ def parse_phrases_3(
                 return False
         return True
 
-    def not_in_bin(token) -> bool:
+    def not_in_bin(token: Tok) -> bool:
         """ Return True if the token is not a normal word found in BÍN """
         if token.kind == TOK.ENTITY:
             return True
@@ -1383,7 +1385,11 @@ def parse_phrases_3(
         while True:
 
             if not concatable and not is_interesting(token):
-                if token.txt and " " in token.txt and token.txt.split(" ")[-1] in FOREIGN_MIDDLE_NAME_SET:
+                if (
+                    token.txt
+                    and " " in token.txt
+                    and token.txt.split(" ")[-1] in FOREIGN_MIDDLE_NAME_SET
+                ):
                     # Combined in parse_phrases_2() but no capitalized word follows
                     # Should be split up
                     split = token.txt.split()
@@ -1405,9 +1411,9 @@ def parse_phrases_3(
                         token = token_ctor.Entity(" ".join(first))
                     yield token
                     if middle:
-                        w, m = db.lookup_word(middle)
+                        _, m = db.lookup_word(middle)
                         yield token_ctor.Word(middle, m)
-                    w, m = db.lookup_word(split[-1])
+                    _, m = db.lookup_word(split[-1])
                     token = token_ctor.Word(split[-1], m)
                 else:
                     yield token
@@ -1674,7 +1680,9 @@ class StaticPhraseStream(MatchingStream):
         # Also note that the entire token queue is sent in as
         # the token paramter, as any token in the queue may
         # contain error information.
-        yield self._token_ctor.Word(w, StaticPhrases.get_meaning(ix), token=tq)
+        yield self._token_ctor.Word(
+            w, cast(List[BIN_Meaning], StaticPhrases.get_meaning(ix)), token=tq
+        )
 
 
 def parse_static_phrases(
@@ -1923,6 +1931,10 @@ def tokens_are_foreign(tokens: TokenIterable, min_icelandic_ratio: float) -> boo
         elif t.kind == TOK.PERSON:
             # Person names count as recognized words
             words_in_bin += 1
+        elif t.kind == TOK.ENTITY:
+            # Entity names do not count as recognized words;
+            # we count each enclosed word in the entity name
+            words_not_in_bin += t.txt.count(" ") + 1
     # Return True if the sentence has at least three words
     # but less than 60% of them are found in BÍN
     num_words = words_in_bin + words_not_in_bin

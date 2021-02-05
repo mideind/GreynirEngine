@@ -354,7 +354,7 @@ def test_lemmas():
 # Tests for more complex tokenization in bintokenizer
 
 def test_names():
-    g = Greynir()
+    g = Greynir(parse_foreign_sentences=True)
     s = g.parse_single("Hér er Jón.")
     assert s.lemmas == ['hér', 'vera', 'Jón', '.']
 
@@ -436,10 +436,10 @@ def test_names():
     s = g.parse_single("Hér er Finsbury Park.")
     assert s.lemmas == ['hér', 'vera', 'Finsbury Park', '.']
 
-    s = g.parse_single("Hér er Sky Sports.")
+    #s = g.parse_single("Hér er Sky Sports.")
     #assert s.lemmas == ['hér', 'vera', 'Sky Sports', '.']      # Out of scope
 
-    s = g.parse_single("Hér er J. K. Rowling.")
+    #s = g.parse_single("Hér er J. K. Rowling.")
     #assert s.lemmas == ['hér', 'vera', 'J. K. Rowling', '.']    # Out of scope 
 
     s = g.parse_single("Hér er Parsley Ecothelial Welmington III.")
@@ -460,16 +460,16 @@ def test_names():
     s = g.parse_single("Hér er Finnur de la Cruz.")
     assert s.lemmas == ['hér', 'vera', 'Finnur de la Cruz', '.']
 
-    s = g.parse_single("Hér er Derek Árnason.")
+    #s = g.parse_single("Hér er Derek Árnason.")
     #assert s.lemmas == ['hér', 'vera', 'Derek Árnason', '.']
 
     s = g.parse_single("Hér er Díana Woodward.")
     assert s.lemmas == ['hér', 'vera', 'Díana Woodward', '.']
 
-    s = g.parse_single("Hér er Knut Axel Holding AS.")
+    #s = g.parse_single("Hér er Knut Axel Holding AS.")
     #assert s.lemmas == ['hér', 'vera', 'Knut Axel Holding AS', '.']    # Out of scope 
 
-    s = g.parse_single("Hér er Matthildur Ármannsdóttir ehf.")
+    #s = g.parse_single("Hér er Matthildur Ármannsdóttir ehf.")
     #assert s.lemmas == ['hér', 'vera', 'Matthildur Ármannsdóttir ehf.', '.']   # Out of scope
 
     s = g.parse_single("Hér er Super Mattel AS.")
@@ -505,6 +505,7 @@ def test_names():
 
     s = g.parse_single("Hér er Jón de la.")
     assert s.lemmas == ['hér', 'vera', 'Jón', 'de', 'la', '.']
+
 
 def test_compounds_with_numbers():
     """ Compounds containing numbers, either
