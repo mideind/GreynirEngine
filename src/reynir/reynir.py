@@ -53,9 +53,8 @@ import operator
 import json
 from threading import Lock
 
-from tokenizer import TOK, Tok, correct_spaces, paragraphs, mark_paragraphs
+from tokenizer import Tok, TOK, correct_spaces, paragraphs, mark_paragraphs
 
-from .bindb import BIN_Meaning
 from .bintokenizer import (
     tokenize as bin_tokenize,
     TokenList,
@@ -614,7 +613,11 @@ class _Job_NP(_Job):
         instead of _Sentence objects """
 
     def __init__(
-        self, greynir: "Greynir", tokens: Iterable[Tok], *, force_number: str = None
+        self,
+        greynir: "Greynir",
+        tokens: Iterable[Tok],
+        *,
+        force_number: Optional[str] = None,
     ) -> None:
         # Parse the tokens with 'Nl' (noun phrase) as the root nonterminal
         # instead of the usual default 'S0' (sentence) root
@@ -832,7 +835,7 @@ class Greynir:
             return None
 
     def parse_noun_phrase(
-        self, noun_phrase: str, *, force_number=None
+        self, noun_phrase: str, *, force_number: Optional[str] = None
     ) -> Optional[_NounPhrase]:
         """ Utility function to parse a noun phrase. Note that in most
             cases it is more convenient to use the NounPhrase class
