@@ -423,7 +423,7 @@ class _Job:
         parse: bool = False,
         root: Optional[str] = None,
         progress_func: ProgressFunc = None,
-        max_sent_tokens: int = DEFAULT_MAX_SENT_TOKENS
+        max_sent_tokens: int = DEFAULT_MAX_SENT_TOKENS,
     ) -> None:
         self._r = greynir
         self._parser = self._r.parser
@@ -750,7 +750,7 @@ class Greynir:
         *,
         split_paragraphs: bool = False,
         progress_func: ProgressFunc = None,
-        max_sent_tokens: int = DEFAULT_MAX_SENT_TOKENS
+        max_sent_tokens: int = DEFAULT_MAX_SENT_TOKENS,
     ) -> _Job:
         """ Submit a text to the tokenizer and parser, yielding a job object.
             The paragraphs and sentences of the text can then be iterated
@@ -782,7 +782,7 @@ class Greynir:
         text: str,
         *,
         progress_func: ProgressFunc = None,
-        max_sent_tokens: int = DEFAULT_MAX_SENT_TOKENS
+        max_sent_tokens: int = DEFAULT_MAX_SENT_TOKENS,
     ) -> ParseResult:
         """ Convenience function to parse text synchronously and return
             a summary of all contained sentences. The progress_func parameter
