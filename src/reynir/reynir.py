@@ -858,7 +858,16 @@ class Greynir:
         sortkey: Callable[[LemmaTuple], Comparable] = None,
     ) -> Union[Iterator[LemmaTuple], Iterator[List[LemmaTuple]]]:
         """ Utiility function to (simplistically) lemmatize all words in
-            a given string without parsing. """
+            a given string without parsing. Returns a generator of
+            (lemma, word category) tuples, one for each text token
+            in the input (text tokens being words, person names and entity names).
+            Punctuation, dates, numbers, e-mail addresses and other token types
+            are skipped and not included in the output.
+            If all_lemmas is True, the function returns a list of tuples
+            with all possible lemmas for each text token.
+            If all_lemmas is True and a sortkey is given, the returned
+            list is sorted using that function as a sort key, cf. the
+            Python built-in list.sort() function. """
         return simple_lemmatize(txt, all_lemmas=all_lemmas, sortkey=sortkey)
 
     @classmethod

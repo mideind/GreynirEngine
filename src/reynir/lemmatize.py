@@ -69,7 +69,13 @@ def simple_lemmatize(
         if t.kind == TOK.WORD:
             if t.val:
                 # Known word
-                y = [(v.stofn, v.ordfl) for v in t.val]
+                if "-" in t.txt:
+                    # The original word already contains a hyphen: leave'em in
+                    y = [(v.stofn, v.ordfl) for v in t.val]
+                else:
+                    # The original word doesn't contain a hyphen: any hyphens
+                    # in the lemmas must come from the compounding algorithm
+                    y = [(v.stofn.replace("-", ""), v.ordfl) for v in t.val]
             else:
                 # Unknown word: assume it's an entity
                 y = [(t.txt, "entity")]
