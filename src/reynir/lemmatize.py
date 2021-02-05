@@ -30,15 +30,16 @@
 
 """
 
-from typing import Optional, Union, Callable, Tuple, List, Iterator, TypeVar, Protocol
+from typing import Optional, Union, Callable, Tuple, List, Iterator, TypeVar
 
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta
 from collections import OrderedDict
 
 from .bintokenizer import tokenize, TOK
 
 
-class Comparable(Protocol):
+# In Python >= 3.8, the base class could be typing.Protocol
+class Comparable(metaclass=ABCMeta):
 
     """ Protocol for annotating comparable types """
 
