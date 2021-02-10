@@ -341,6 +341,10 @@ class _Sentence:
         return self.text
 
 
+# Create a public alias for the _Sentence class
+Sentence: Type[_Sentence] = _Sentence
+
+
 class _NounPhrase(_Sentence):
 
     """ A specialization for parsed noun phrases,

@@ -40,6 +40,7 @@ from .reynir import (
     LemmaTuple,
     ProgressFunc,
     ParseResult,
+    Sentence,
     ICELANDIC_RATIO,
 )
 
