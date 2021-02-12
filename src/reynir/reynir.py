@@ -415,6 +415,10 @@ class _Paragraph:
         return iter(self.sentences())
 
 
+# Create a public alias for the _Paragraph class
+Paragraph: Type[_Paragraph] = _Paragraph
+
+
 class _Job:
 
     """ A parsing job object, allowing incremental parsing of text

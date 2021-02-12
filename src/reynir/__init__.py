@@ -41,6 +41,7 @@ from .reynir import (
     ProgressFunc,
     ParseResult,
     Sentence,
+    Paragraph,
     ICELANDIC_RATIO,
 )
 
