@@ -42,7 +42,6 @@
 from typing import (
     cast,
     Iterable,
-    Iterator,
     Optional,
     Union,
     Dict,
@@ -53,15 +52,9 @@ from typing import (
     Callable,
 )
 
-import os
-import codecs
-import locale
 import threading
 
-from contextlib import contextmanager, closing
 from collections import defaultdict
-from threading import Lock
-from pkg_resources import resource_stream
 
 from .basics import (
     MeaningTuple,
@@ -69,10 +62,6 @@ from .basics import (
     LineReader,
     ALL_CASES,
     ALL_GENDERS,
-    ALL_NUMBERS,
-    SUBCLAUSES,
-    REFLPRN,
-    REFLPRN_SET,
 )
 from .verbframe import VerbFrame
 
@@ -618,8 +607,8 @@ class Settings:
     """ Global settings """
 
     _lock = threading.Lock()
-    loaded = False
-    DEBUG = False
+    loaded: bool = False
+    DEBUG: bool = False
 
     # Configuration settings from the GreynirPackage.conf file
 
@@ -650,8 +639,8 @@ class Settings:
         error = False
         if "=" not in s:
             ix = s.rfind("$error(")  # Must be at the end
+            e: Optional[List[str]] = None
             if ix >= 0:
-                error = True
                 # A typical format is
                 # $error(error_code, right_phrase, right_parts_of_speech)
                 e = s[ix + 7 :].lstrip().rstrip(" )").split(",")
@@ -659,7 +648,7 @@ class Settings:
                     raise ConfigError("Error pragma should have four parameters")
                 s = s[:ix].strip()
             StaticPhrases.add(s)
-            if error:
+            if e is not None:
                 StaticPhrases.add_errors(s.split(",")[0], (e[0], e[1], e[2], e[3]))
             return
         # Check for a meaning spec

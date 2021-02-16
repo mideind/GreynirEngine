@@ -37,7 +37,7 @@
 
 """
 
-from typing import List, Dict, Any, Callable, TypeVar, Union
+from typing import List, Dict, Any, Callable, TypeVar, Generic, cast
 
 from heapq import nsmallest
 from operator import itemgetter
@@ -49,10 +49,14 @@ LRU_DEFAULT = 1024
 LFU_DEFAULT = 512
 
 
-class LRU_Cache:
+_K = TypeVar("_K")
+_V = TypeVar("_V")
+
+
+class LRU_Cache(Generic[_V]):
 
     def __init__(
-        self, user_function: Callable[[Any], Any], maxsize: int=LRU_DEFAULT
+        self, user_function: Callable[..., _V], maxsize: int=LRU_DEFAULT
     ) -> None:
         # Link layout:     [PREV, NEXT, KEY, RESULT]
         root: List[Any] = [None, None, None, None]
@@ -67,7 +71,7 @@ class LRU_Cache:
             cache[key] = last[1] = last = [last, root, key, None]
         root[0] = last
 
-    def __call__(self, *key) -> Any:
+    def __call__(self, *key: Any) -> _V:
         cache = self.cache
         root = self.root
         link = cache.get(key)
@@ -92,28 +96,29 @@ class LRU_Cache:
         return result
 
 
-class LFU_Cache:
+class Counter(Dict[_K, int], Generic[_K]):
+    """ Mapping where default values are zero """
+    def __missing__(self, key: _K) -> int:
+        return 0
+
+
+class LFU_Cache(Generic[_K, _V]):
 
     """ Least-frequently-used (LFU) cache for word lookups.
         Based on a pattern by Raymond Hettinger
     """
 
-    class Counter(dict):
-        """ Mapping where default values are zero """
-        def __missing__(self, key: Any) -> int:
-            return 0
-
     def __init__(self, maxsize: int=LFU_DEFAULT) -> None:
         # Mapping of keys to results
-        self.cache: Dict[Any, Any] = {}
+        self.cache: Dict[_K, _V] = {}
         # Times each key has been accessed
-        self.use_count = self.Counter()
+        self.use_count: Counter[_K] = Counter()
         self.maxsize = maxsize
         self.hits = self.misses = 0
         # The cache may be accessed in parallel by multiple threads
         self.lock = threading.Lock()
 
-    def lookup(self, key: Any, func: Callable[[Any], Any]) -> Any:
+    def lookup(self, key: _K, func: Callable[[_K], _V]) -> _V:
         """ Lookup a key in the cache, calling func(key)
             to obtain the data if not already there """
         with self.lock:
@@ -140,17 +145,16 @@ class LFU_Cache:
 # Define a type variable to allow MyPy to infer the relationship
 # between intermediate types in cached and cached_property
 _T = TypeVar('_T')
-_CachedFunc = Callable[..., _T]
 
 # Define a unique singleton for use as a sentinel
 _NA = object()
 
 
-def cached(func: _CachedFunc) -> _CachedFunc:
+def cached(func: Callable[..., _T]) -> Callable[..., _T]:
     """ A decorator for caching function calls """
     @wraps(func)
-    def wrapper(*args, **kwargs) -> _T:
-        val = getattr(func, "_cache", _NA)
+    def wrapper(*args: Any, **kwargs: Any) -> _T:
+        val = cast(_T, getattr(func, "_cache", _NA))
         if val is _NA:
             val = func(*args, **kwargs)
             setattr(func, "_cache", val)
@@ -158,17 +162,17 @@ def cached(func: _CachedFunc) -> _CachedFunc:
     return wrapper
 
 
-class cached_property:
+class cached_property(Generic[_T]):
 
     """ A decorator for caching instance properties """
 
-    def __init__(self, func):
+    def __init__(self, func: Callable[..., _T]) -> None:
         self.__doc__ = getattr(func, "__doc__")
         self.func = func
 
-    def __get__(self, obj, cls):
+    def __get__(self, obj: Any, cls: Any) -> _T:
         if obj is None:
-            return self
+            return cast(_T, self)  # Hack to satisfy mypy/Pylance
         # Get the property value and put it into the instance's
         # dict instead of the original function
         val = obj.__dict__[self.func.__name__] = self.func(obj)

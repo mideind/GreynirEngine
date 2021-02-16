@@ -45,6 +45,8 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from typing import Any
+
 import io
 import re
 import sys
@@ -61,7 +63,7 @@ if sys.version_info < (3, 6):
     sys.exit(1)
 
 
-def read(*names, **kwargs):
+def read(*names: str, **kwargs: Any) -> str:
     try:
         return io.open(
             join(dirname(__file__), *names),

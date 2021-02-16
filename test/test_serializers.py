@@ -74,6 +74,6 @@ def test_serializers(r):
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
-    r = Greynir()
-    test_serializers(r)
-    r.__class__.cleanup()
+    g = Greynir()
+    test_serializers(g)
+    g.__class__.cleanup()

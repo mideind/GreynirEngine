@@ -116,7 +116,8 @@ class _Sentence:
         assert self._len > 0  # Input should be already sanitized
         self._err_index: Optional[int] = None
         self._error: Optional[ParseError] = None
-        self._tree = self._simplified_tree = None
+        self._simplified_tree: Optional[SimpleTree] = None
+        self._tree = None
         # Number of possible combinations
         self._num: Optional[int] = None
         # Score of best parse tree
@@ -239,7 +240,7 @@ class _Sentence:
         # Generate the terminal list from the parse tree
         # pylint: disable=not-an-iterable
         self._terminals = [
-            Terminal(d.text, d.lemma, d.tcat, d.all_variants, d.index)
+            Terminal(d.text, d.lemma, d.tcat, d.all_variants, d.index or 0)
             for d in self.terminal_nodes
         ]
         return self._terminals
@@ -310,7 +311,7 @@ class _Sentence:
 
     @classmethod
     def load(
-        cls, greynir_cls: GreynirType, tokens: List[Tok], tree: Optional[Dict]
+        cls, greynir_cls: GreynirType, tokens: List[Tok], tree: Optional[Dict[str, str]]
     ) -> "_Sentence":
         """ Load previously dumped data.
             Useful for retrieving parsed data from a database.
@@ -329,7 +330,7 @@ class _Sentence:
         return instance
 
     @classmethod
-    def loads(cls, greynir_cls: GreynirType, json_str: str, **kwargs) -> "_Sentence":
+    def loads(cls, greynir_cls: GreynirType, json_str: str, **kwargs: Any) -> "_Sentence":
         """ Load a previously dumped JSON string.
             Useful for retrieving parsed data from a database.
             Note: Normally, sentences are loaded using Greynir.loads_single(). """

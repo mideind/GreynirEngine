@@ -58,7 +58,7 @@
 
 """
 
-from typing import Any, Set, Tuple, List, Optional, Callable
+from typing import Any, Set, Tuple, List, Optional, Callable, cast
 
 import struct
 import functools
@@ -133,11 +133,11 @@ class BIN_Compressed:
             alphabet_offset,
             subcats_offset,
         ) = struct.unpack("<IIIIIII", self._b[16:44])
-        self._forms_offset = forms_offset
-        self._mappings = self._b[mappings_offset:]
-        self._stems = self._b[stems_offset:]
-        self._case_variants = self._b[variants_offset:]
-        self._meanings = self._b[meanings_offset:]
+        self._forms_offset: int = forms_offset
+        self._mappings: bytes = self._b[mappings_offset:]
+        self._stems: bytes = self._b[stems_offset:]
+        self._case_variants: bytes = self._b[variants_offset:]
+        self._meanings: bytes = self._b[meanings_offset:]
         # Create partial unpacking functions for speed
         self._partial_UINT = functools.partial(UINT32.unpack_from, self._b)
         self._partial_mappings = functools.partial(UINT32.unpack_from, self._mappings)
@@ -149,6 +149,7 @@ class BIN_Compressed:
         self._alphabet_bytes = bytes(
             self._b[alphabet_offset + 4 : alphabet_offset + 4 + alphabet_length]
         )
+        self._alphabet: Set[str]
         # Decode the subcategories ('fl') into a list of strings
         subcats_length = self._UINT(subcats_offset)
         subcats_bytes = bytes(
@@ -156,7 +157,7 @@ class BIN_Compressed:
         )
         self._subcats = [s.decode("latin-1") for s in subcats_bytes.split()]
         # Create a CFFI buffer object pointing to the memory map
-        self._mmap_buffer = ffi.from_buffer(self._b)
+        self._mmap_buffer: bytes = ffi.from_buffer(self._b)  # type: ignore
 
     def _UINT(self, offset: int) -> int:
         """ Return the 32-bit UINT at the indicated offset
@@ -169,9 +170,9 @@ class BIN_Compressed:
             self._mappings = None  # type: ignore
             self._stems = None  # type: ignore
             self._meanings = None  # type: ignore
-            self._alphabet = set()  # type: Set[str]
+            self._alphabet = set()
             self._alphabet_bytes = bytes()
-            self._mmap_buffer = None
+            self._mmap_buffer = cast(bytes, None)
             self._b.close()
             self._b = None  # type: ignore
 
@@ -179,6 +180,7 @@ class BIN_Compressed:
         """ Find and decode a meaning (ordfl, beyging) tuple,
             given its index """
         (off,) = UINT32.unpack_from(self._meanings, ix * 4)
+        assert self._b is not None
         b = bytes(self._b[off : off + 24])
         s = b.decode("latin-1").split(maxsplit=2)
         return s[0], s[1]  # ordfl, beyging
@@ -192,6 +194,7 @@ class BIN_Compressed:
         # Subcategory (fl) index
         cix = bits & (2 ** SUBCAT_BITS - 1)
         p = off + 4
+        assert self._b is not None
         lw = self._b[p]  # Length byte
         p += 1
         b = bytes(self._b[p : p + lw])
@@ -242,6 +245,7 @@ class BIN_Compressed:
             # No case_variants associated with this stem
             return []
         # Skip past the stem itself
+        assert self._b is not None
         p = off + 4
         lw = self._b[p]  # Length byte
         stem = bytes(self._b[p + 1 : p + 1 + lw])
@@ -265,8 +269,8 @@ class BIN_Compressed:
     def _mapping_cffi(self, word: str) -> Optional[int]:
         """ Call the C++ mapping() function that has been wrapped using CFFI"""
         try:
-            m = bin_cffi.mapping(
-                ffi.cast("uint8_t*", self._mmap_buffer), word.encode("latin-1")
+            m: int = bin_cffi.mapping(  # type: ignore
+                ffi.cast("uint8_t*", self._mmap_buffer), word.encode("latin-1")  # type: ignore
             )
             return None if m == 0xFFFFFFFF else m
         except UnicodeEncodeError:
@@ -475,25 +479,25 @@ class BIN_Compressed:
                 result.update(m for m in self.lookup(c) if "NF" in m[5])
         return result
 
-    def nominative(self, word: str, **options) -> Set[MeaningTuple]:
+    def nominative(self, word: str, **options: Any) -> Set[MeaningTuple]:
         """ Returns a set of all nominative forms of the stems of the given word form,
             subject to the constraints in **options.
             Note that the word form is case-sensitive. """
         return self.lookup_case(word, "NF", **options)
 
-    def accusative(self, word: str, **options) -> Set[MeaningTuple]:
+    def accusative(self, word: str, **options: Any) -> Set[MeaningTuple]:
         """ Returns a set of all accusative forms of the stems of the given word form,
             subject to the given constraints on the beyging field.
             Note that the word form is case-sensitive. """
         return self.lookup_case(word, "ÞF", **options)
 
-    def dative(self, word: str, **options) -> Set[MeaningTuple]:
+    def dative(self, word: str, **options: Any) -> Set[MeaningTuple]:
         """ Returns a set of all dative forms of the stems of the given word form,
             subject to the given constraints on the beyging field.
             Note that the word form is case-sensitive. """
         return self.lookup_case(word, "ÞGF", **options)
 
-    def genitive(self, word: str, **options) -> Set[MeaningTuple]:
+    def genitive(self, word: str, **options: Any) -> Set[MeaningTuple]:
         """ Returns a set of all genitive forms of the stems of the given word form,
             subject to the given constraints on the beyging field.
             Note that the word form is case-sensitive. """

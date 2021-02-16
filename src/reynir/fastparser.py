@@ -67,6 +67,7 @@ from typing import (
     Tuple,
     Iterable,
     Iterator,
+    Hashable,
     Callable,
     IO,
     cast,
@@ -77,7 +78,7 @@ import operator
 from threading import Lock
 from functools import reduce
 
-from .binparser import BIN_Parser, simplify_terminal, augment_terminal, Tok
+from .binparser import BIN_Parser, BIN_Token, simplify_terminal, augment_terminal, Tok
 from .grammar import Grammar, GrammarError, Nonterminal, Terminal, Token, Production
 from .settings import Settings
 from .glock import GlobalLock
@@ -91,7 +92,7 @@ from ._eparser import lib as eparser, ffi  # type: ignore
 _PATH = os.path.dirname(__file__) or "."
 
 # The type of an entry on a ParseTreeFlattener stack
-FlattenerType = Union[Tuple[Terminal, Token], Nonterminal]
+FlattenerType = Union[Tuple[Terminal, BIN_Token], Nonterminal]
 ProductionTuple = Tuple[Production, List[Optional["Node"]]]
 
 
@@ -109,9 +110,9 @@ class ParseJob:
         self,
         handle: int,
         grammar: Grammar,
-        tokens: List[Token],
+        tokens: List[BIN_Token],
         terminals: List[Terminal],
-        matching_cache: Dict[int, Any],
+        matching_cache: Dict[Hashable, Any],
     ) -> None:
         self._handle = handle
         self.tokens = tokens
@@ -126,7 +127,7 @@ class ParseJob:
             1-based terminal index to a terminal object. """
         return self.tokens[token].matches(self.terminals[terminal])
 
-    def alloc_cache(self, token, size: int):
+    def alloc_cache(self, token: int, size: int) -> Any:
         """ Allocate a token/terminal matching cache buffer for the given token """
         key = self.tokens[token].key  # Obtain the (hashable) key of the BIN_Token
         try:
@@ -271,7 +272,7 @@ class Node:
         # The terminal corresponding to this node, if it is a leaf node
         self._terminal: Optional[Terminal] = None
         # The token matching this terminal, if this is a leaf node
-        self._token: Optional[Token] = None
+        self._token: Optional[BIN_Token] = None
         # If completed is True, this node represents a completed nonterminal.
         # Otherwise, it is an internal node representing a position within
         # a production of a nonterminal.
@@ -281,7 +282,7 @@ class Node:
 
     @classmethod
     def from_c_node(
-        cls, job: ParseJob, c_node, parent=None, index=0
+        cls, job: ParseJob, c_node: Any, parent=None, index: int=0
     ) -> Optional["Node"]:
         """ Initialize a Python node from a C++ SPPF node structure """
         if c_node == ffi.NULL:
@@ -322,10 +323,10 @@ class Node:
             # and not ambiguous.
             ch = []
 
-            def push_pair(p1, p2):
+            def push_pair(p1, p2) -> None:
                 """ Push a pair of child nodes onto the child list """
 
-                def push_child(p):
+                def push_child(p) -> None:
                     """ Push a single child node onto the child list """
                     if p.label.iNt == nt and p.label.pProd != ffi.NULL:
                         # Interior node for the same nonterminal
@@ -421,7 +422,7 @@ class Node:
         """ Returns True if the node spans one or more tokens """
         return self._end > self._start
 
-    def _first_token(self):
+    def _first_token(self) -> BIN_Token:
         """ Return the first token within the span of this node """
         p = self
         while p._token is None:
@@ -438,7 +439,7 @@ class Node:
             p = cast(Node, f[ix])
         return p._token
 
-    def _last_token(self):
+    def _last_token(self) -> BIN_Token:
         """ Return the last token within the span of this node """
         p = self
         while p._token is None:
@@ -456,12 +457,12 @@ class Node:
         return p._token
 
     @property
-    def token_span(self):
+    def token_span(self) -> Tuple[BIN_Token, BIN_Token]:
         """ Return the first and last tokens under this node """
         return (self._first_token(), self._last_token())
 
     @property
-    def nonterminal(self):
+    def nonterminal(self) -> Optional[Nonterminal]:
         """ Return the nonterminal associated with this node """
         return self._nonterminal
 
@@ -471,27 +472,27 @@ class Node:
         return self._families is not None and len(self._families) >= 2
 
     @property
-    def is_interior(self):
+    def is_interior(self) -> bool:
         """ Returns True if this is an interior node (partially parsed production) """
         return not self._completed
 
     @property
-    def is_completed(self):
+    def is_completed(self) -> bool:
         """ Returns True if this is a node corresponding to a completed nonterminal """
         return self._completed
 
     @property
-    def is_token(self):
+    def is_token(self) -> bool:
         """ Returns True if this is a token node """
         return self._token is not None
 
     @property
-    def terminal(self):
+    def terminal(self) -> Optional[Terminal]:
         """ Return the terminal associated with a token node, or None if none """
         return self._terminal
 
     @property
-    def token(self):
+    def token(self) -> Optional[BIN_Token]:
         """ Return the token associated with a token node, or None if none """
         return self._token
 
@@ -823,7 +824,7 @@ class ParseForestNavigator:
         """ At Epsilon node """
         return None
 
-    def visit_token(self, level: int, node: Node) -> Any:
+    def visit_token(self, level: int, w: Node) -> Any:
         """ At token node """
         return None
 
@@ -833,7 +834,7 @@ class ParseForestNavigator:
         return None
 
     def visit_family(
-        self, results: Any, level: int, node: Node, ix: int, prod: Production
+        self, results: Any, level: int, w: Node, ix: int, prod: Production
     ) -> None:
         """ At a family of children """
         return
@@ -954,11 +955,12 @@ class ParseForestPrinter(ParseForestNavigator):
         # Interior nodes are not printed
         # and do not increment the indentation level
         if self._detailed or not w.is_interior:
+            nt = cast(Nonterminal, w.nonterminal)
             if not self._detailed:
-                if w.is_empty and w.nonterminal.is_optional:
+                if w.is_empty and nt.is_optional:
                     # Skip printing optional nodes that don't contain anything
                     return NotImplemented  # Don't visit child nodes
-            h = w.nonterminal.name
+            h = nt.name
             indent = "  " * level  # Two spaces per indent level
             if self._show_ids:
                 h += " @ {0:x}".format(id(w))
@@ -1032,23 +1034,26 @@ class ParseForestDumper(ParseForestNavigator):
     def visit_token(self, level: int, w: Node) -> Any:
         # Identify this as a terminal/token
         ta = ""  # Augmented terminal
+        assert w.token is not None
+        assert w.terminal is not None
+        name = w.terminal.name
         if self._token_dicts is not None:
             # Get the descriptor dict for this token/terminal match
             td = self._token_dicts[w.token.index]
             if "t" in td and "m" in td:
                 # Calculate an augmented terminal, including additional info from BÍN
-                if td["t"] != w.terminal.name:
+                if td["t"] != name:
                     assert False
                 ta = simplify_terminal(td["t"], td["m"][1])  # Fallback category
                 # The m(3) field is 'beyging'
                 ta = augment_terminal(ta, td["x"].lower(), td["m"][3])
-                if w.terminal.name == ta:
+                if name == ta:
                     ta = ""  # No need to repeat augmented terminal if it is identical
                 else:
                     ta = " " + ta
 
         self._result.append(
-            "T{0} {1} {2}{3}".format(level, w.terminal.name, w.token.dump, ta)
+            "T{0} {1} {2}{3}".format(level, name, w.token.dump, ta)
         )
         return None
 
@@ -1056,11 +1061,12 @@ class ParseForestDumper(ParseForestNavigator):
         # Interior nodes are not dumped
         # and do not increment the indentation level
         if not w.is_interior:
-            if w.is_empty and w.nonterminal.is_optional:
+            nt = cast(Nonterminal, w.nonterminal)
+            if w.is_empty and nt.is_optional:
                 # Skip printing optional nodes that don't contain anything
                 return NotImplemented  # Don't visit child nodes
             # Identify this as a nonterminal
-            self._result.append("N{0} {1}".format(level, w.nonterminal.name))
+            self._result.append("N{0} {1}".format(level, nt.name))
         return None  # No results required, but visit children
 
     def visit_family(
@@ -1152,6 +1158,8 @@ class ParseForestFlattener(ParseForestNavigator):
         """ Add a terminal/token node to the flattened tree """
         # assert level > 0
         # assert self._stack
+        assert w.terminal is not None
+        assert w.token is not None
         node = _FlattenerNode((w.terminal, w.token), w.score)
         assert self._stack is not None
         self._stack = self._stack[0:level]
@@ -1163,6 +1171,7 @@ class ParseForestFlattener(ParseForestNavigator):
         # Interior nodes are not dumped
         # and do not increment the indentation level
         if not w.is_interior:
+            assert w.nonterminal is not None
             if w.is_empty and w.nonterminal.is_optional:
                 # Skip optional nodes that don't contain anything
                 return NotImplemented  # Signal: Don't visit child nodes

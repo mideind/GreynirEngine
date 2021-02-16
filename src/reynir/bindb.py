@@ -41,7 +41,7 @@
 """
 
 from typing import (
-    NamedTuple,
+    Any, NamedTuple,
     Optional,
     Callable,
     List,
@@ -49,7 +49,6 @@ from typing import (
     Iterable,
     Type,
     Dict,
-    Any,
 )
 from typing_extensions import Protocol
 
@@ -82,7 +81,7 @@ MeaningFilterFunc = Callable[[Iterable[BIN_Meaning]], List[BIN_Meaning]]
 # Annotate the case-casting function signature via a callback protocol
 # See https://www.python.org/dev/peps/pep-0544/#callback-protocols
 class CaseFunc(Protocol):
-    def __call__(self, w: str, **options) -> List[BIN_Meaning]:
+    def __call__(self, w: str, **options: Any) -> List[BIN_Meaning]:
         ...
 
 
@@ -93,7 +92,7 @@ CACHE_SIZE_MEANINGS = 2048
 CACHE_SIZE_UNDECLINABLE = 2048
 
 # Compact string representation
-_meaning_repr = lambda self: (
+_meaning_repr: Callable[[BIN_Meaning], str] = lambda self: (
     "(stofn='{0}', {2}/{3}/{1}, ordmynd='{4}', {5})".format(
         self.stofn, self.utg, self.ordfl, self.fl, self.ordmynd, self.beyging
     )
@@ -120,7 +119,7 @@ class _BIN_Session:
             self._cls._singleton = self._cls()
         return self._cls._singleton
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
         """ Python context manager protocol """
         # Return False to re-throw exception from the context, if any
         return False
@@ -140,7 +139,7 @@ class BIN_Db:
     _OPEN_CATS = frozenset(("so", "kk", "hk", "kvk", "lo"))  # Open word categories
 
     # Singleton LFU caches for word meaning lookup
-    _meanings_cache = LFU_Cache(maxsize=CACHE_SIZE_MEANINGS)
+    _meanings_cache: LFU_Cache[str, List[BIN_Meaning]] = LFU_Cache(maxsize=CACHE_SIZE_MEANINGS)
 
     # Singleton instance of BIN_Db, returned by get_db()
     _singleton: Optional["BIN_Db"] = None
@@ -159,13 +158,13 @@ class BIN_Db:
 
     def __init__(self) -> None:
         """ Initialize BIN database wrapper instance """
-        # Cache descriptors for the lookup functions
-        self._meanings_func = lambda key: (
-            self._meanings_cache.lookup(key, self.meanings)
-        )
         # Compressed BÍN wrapper
         # Raises IOError if the compressed file doesn't exist
         self._compressed_bin: Optional[BIN_Compressed] = BIN_Compressed()
+
+    def _meanings_func(self, key: str) -> List[BIN_Meaning]:
+        """ Cache descriptors for the lookup functions """
+        return self._meanings_cache.lookup(key, self.meanings)
 
     def close(self) -> None:
         """ Close the BIN_Compressed() instance """
@@ -243,7 +242,7 @@ class BIN_Db:
         assert self._compressed_bin is not None
         return list(map(BIN_Meaning._make, self._compressed_bin.raw_nominative(w)))
 
-    def lookup_nominative(self, w: str, **options) -> List[BIN_Meaning]:
+    def lookup_nominative(self, w: str, **options: Any) -> List[BIN_Meaning]:
         """ Return meaning tuples for all word forms in nominative
             case for all { kk, kvk, hk, lo } category stems of the given word """
         assert self._compressed_bin is not None
@@ -251,7 +250,7 @@ class BIN_Db:
             map(BIN_Meaning._make, self._compressed_bin.nominative(w, **options))
         )
 
-    def lookup_accusative(self, w: str, **options) -> List[BIN_Meaning]:
+    def lookup_accusative(self, w: str, **options: Any) -> List[BIN_Meaning]:
         """ Return meaning tuples for all word forms in accusative
             case for all { kk, kvk, hk, lo } category stems of the given word """
         assert self._compressed_bin is not None
@@ -259,13 +258,13 @@ class BIN_Db:
             map(BIN_Meaning._make, self._compressed_bin.accusative(w, **options))
         )
 
-    def lookup_dative(self, w: str, **options) -> List[BIN_Meaning]:
+    def lookup_dative(self, w: str, **options: Any) -> List[BIN_Meaning]:
         """ Return meaning tuples for all word forms in dative
             case for all { kk, kvk, hk, lo } category stems of the given word """
         assert self._compressed_bin is not None
         return list(map(BIN_Meaning._make, self._compressed_bin.dative(w, **options)))
 
-    def lookup_genitive(self, w: str, **options) -> List[BIN_Meaning]:
+    def lookup_genitive(self, w: str, **options: Any) -> List[BIN_Meaning]:
         """ Return meaning tuples for all word forms in genitive
             case for all { kk, kvk, hk, lo } category stems of the given word """
         assert self._compressed_bin is not None
@@ -369,6 +368,7 @@ class BIN_Db:
             insert a hyphen between the prefix and the suffix, both in the
             stofn and in the ordmynd fields. If uppercase is additionally True, we
             uppercase the suffix. """
+        concat: Callable[[str], str]
         if insert_hyphen:
             if uppercase:
                 concat = lambda w: prefix + "-" + w.capitalize()

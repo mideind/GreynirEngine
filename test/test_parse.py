@@ -33,19 +33,19 @@
 import pytest
 from collections import defaultdict
 
+from reynir import Greynir
+
 
 @pytest.fixture(scope="module")
 def r():
     """ Provide a module-scoped Greynir instance as a test fixture """
-    from reynir import Greynir
-
     r = Greynir()
     yield r
     # Do teardown here
     r.__class__.cleanup()
 
 
-def test_parse(r, verbose=False):
+def test_parse(r: Greynir, verbose: bool=False) -> None:
 
     sentences = [
         # 0
@@ -582,9 +582,9 @@ def test_terminals(r):
     check_terminals(s.terminals)
 
 
-def test_amounts(r):
+def test_amounts(r: Greynir):
     s = r.parse_single("Tjónið nam 10 milljörðum króna.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 4
     check_terminal(
         t[0],
@@ -612,7 +612,7 @@ def test_amounts(r):
     assert s.tokens[2].val[1] == "ISK"
 
     s = r.parse_single("Tjónið þann 22. maí nam einum milljarði króna.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 6
     check_terminal(
         t[0],
@@ -647,7 +647,7 @@ def test_amounts(r):
     assert s.tokens[4].val[1] == "ISK"
 
     s = r.parse_single("Tjónið þann 19. október 1983 nam 4,8 milljörðum dala.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 6
     check_terminal(
         t[0],
@@ -686,7 +686,7 @@ def test_amounts(r):
     assert s.tokens[4].val[1] == "USD"
 
     s = r.parse_single("Tjónið nam sautján milljörðum breskra punda.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 4
     check_terminal(
         t[0],
@@ -714,7 +714,7 @@ def test_amounts(r):
     assert s.tokens[2].val[1] == "GBP"
 
     s = r.parse_single("Tjónið nam 17 breskum pundum.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 4
     check_terminal(
         t[0],
@@ -742,7 +742,7 @@ def test_amounts(r):
     assert s.tokens[2].val[1] == "GBP"
 
     s = r.parse_single("Tjónið nam tólf hundruð pundum.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 4
     check_terminal(
         t[0],
@@ -770,7 +770,7 @@ def test_amounts(r):
     assert s.tokens[2].val[1] == "GBP"
 
     s = r.parse_single("Tjónið nam 17 pólskum zloty.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 4
     check_terminal(
         t[0],
@@ -798,7 +798,7 @@ def test_amounts(r):
     assert s.tokens[2].val[1] == "PLN"
 
     s = r.parse_single("Tjónið nam 101 indverskri rúpíu.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 4
     check_terminal(
         t[0],
@@ -826,7 +826,7 @@ def test_amounts(r):
     assert s.tokens[2].val[1] == "INR"
 
     s = r.parse_single("Tjónið nam 17 milljónum indónesískra rúpía.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 4
     check_terminal(
         t[0],
@@ -856,7 +856,7 @@ def test_amounts(r):
 
 def test_year_range(r):
     s = r.parse_single("Jón var Íslandsmeistari árin 1944-50.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 8
     check_terminal(
         t[0], text="Jón", lemma="Jón", category="person", variants=["nf", "kk"]
@@ -887,7 +887,7 @@ def test_year_range(r):
 def test_terminal_types(r):
     # tölvupóstfang = email
     s = r.parse_single("Netfangið er valid@my-domain.reallylongtld.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 4
     check_terminal(
         t[2],
@@ -897,7 +897,7 @@ def test_terminal_types(r):
         variants=["nf"],
     ),
     s = r.parse_single("Vefslóðin er http://www.vefur.is.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 4
     check_terminal(
         t[2],
@@ -907,7 +907,7 @@ def test_terminal_types(r):
         variants=["nf"],
     ),
     s = r.parse_single("@notandi2 er betri en @notandi1.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 6
     check_terminal(
         t[0],
@@ -917,13 +917,13 @@ def test_terminal_types(r):
         variants=["nf"],
     ),
     s = r.parse_single("Hér er H2SO4.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 4
     check_terminal(
         t[2], text="H2SO4", lemma="H2SO4", category="sameind", variants=["nf"],
     ),
     s = r.parse_single("570607-6859 er kennitala fyrirtækisins.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 5
     check_terminal(
         t[0],
@@ -933,7 +933,7 @@ def test_terminal_types(r):
         variants=["nf"],
     ),
     s = r.parse_single("867-6998 er símanúmerið hans.")
-    t = s.terminals
+    t = s.terminals or []
     assert len(t) == 5
     check_terminal(
         t[0], text="867-6998", lemma="867-6998", category="símanúmer", variants=["nf"],
@@ -1127,7 +1127,7 @@ def test_attachment(r, verbose=False):
         )  # um þetta .
 
 
-def test_nominative(r):
+def test_nominative(r: Greynir) -> None:
     """ Test conversion of noun phrases to nominative/indefinite/canonical forms """
 
     s = r.parse_single("Frábærum bílskúrum þykir þetta leiðinlegt.")
@@ -1311,7 +1311,7 @@ def test_nominative(r):
     ) == ["Jólasveinn", "hreindýr", "VAGN", "fjöldi", "gjöf", "barn"]
 
 
-def test_ifd_tag(r):
+def test_ifd_tag(r: Greynir) -> None:
     """ Test IFD tagging """
     s = r.parse_single(
         "Að minnsta kosti stal Guðbjörn J. Óskarsson 200 krónum þann 19. júní 2003 "
@@ -2079,51 +2079,51 @@ if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
 
-    r = Greynir()
+    g = Greynir()
     test_compressed_bin()
-    test_parse(r, verbose=True)
-    test_properties(r)
-    test_long_parse(r, verbose=True)
+    test_parse(g, verbose=True)
+    test_properties(g)
+    test_long_parse(g, verbose=True)
     try:
-        test_consistency(r, verbose=True)
+        test_consistency(g, verbose=True)
     except Exception as e:
         print(e)
-    test_terminals(r)
-    test_single(r)
-    test_year_range(r)
-    test_amounts(r)
-    test_complex(r, verbose=True)
-    test_attachment(r, verbose=True)
-    test_measurements(r)
-    test_abbreviations(r)
+    test_terminals(g)
+    test_single(g)
+    test_year_range(g)
+    test_amounts(g)
+    test_complex(g, verbose=True)
+    test_attachment(g, verbose=True)
+    test_measurements(g)
+    test_abbreviations(g)
     try:
-        test_nominative(r)
+        test_nominative(g)
     except Exception as e:
         print(e)
-    test_ifd_tag(r)
-    test_tree_flat(r, verbose=True)
-    test_noun_lemmas(r)
-    test_composite_words(r)
-    test_foreign_names(r)
-    test_vocabulary(r)
-    test_adjective_predicates(r)
-    test_subj_op(r)
-    test_names(r)
-    test_prepositions(r)
-    test_personally(r)
-    test_company(r)
-    test_adjectives(r)
-    test_all_mine(r)
+    test_ifd_tag(g)
+    test_tree_flat(g, verbose=True)
+    test_noun_lemmas(g)
+    test_composite_words(g)
+    test_foreign_names(g)
+    test_vocabulary(g)
+    test_adjective_predicates(g)
+    test_subj_op(g)
+    test_names(g)
+    test_prepositions(g)
+    test_personally(g)
+    test_company(g)
+    test_adjectives(g)
+    test_all_mine(g)
     try:
         test_kludgy_ordinals()
     except Exception as e:
         print(e)
-    test_adjective_dative(r)
-    test_ambig_phrases(r)
-    test_relative_clause(r)
+    test_adjective_dative(g)
+    test_ambig_phrases(g)
+    test_relative_clause(g)
     try:
-        test_neutral_pronoun(r)
+        test_neutral_pronoun(g)
     except Exception as e:
         print(e)
-    test_foreign(r)
-    r.__class__.cleanup()
+    test_foreign(g)
+    g.__class__.cleanup()

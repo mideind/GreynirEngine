@@ -95,6 +95,10 @@ from .version import __version__ as package_version
 _PATH = os.path.dirname(__file__)
 
 
+# The type of a token dictionary returned from describe_token()
+TokenDict = Dict[str, Union[str, int, Tuple[str, str, str, str]]]
+
+
 class WordMatchers:
 
     """ A namespace to enclose the matching functions for various
@@ -812,14 +816,14 @@ class BIN_Token(Token):
         # check matches against grammar terminals.
 
         # We use the normalized form of punctuation when parsing
-        txt = t[2][1] if t[0] == TOK.PUNCTUATION else t[1]
+        txt: str = t[2][1] if t[0] == TOK.PUNCTUATION else t[1]
 
         super().__init__(TOK.descr[t[0]], txt)
 
-        self.t0 = t[0]  # Token type (TOK.WORD, etc.)
-        self.t1 = txt  # Token text
-        self.t1_lower = txt.lower()  # Token text, lower case
-        self.is_compound = False
+        self.t0: int = t[0]  # Token type (TOK.WORD, etc.)
+        self.t1: str = txt  # Token text
+        self.t1_lower: str = txt.lower()  # Token text, lower case
+        self.is_compound: bool = False
         # t2 contains auxiliary token information,
         # such as part-of-speech annotation, numbers, etc.
         if isinstance(t[2], list):
@@ -1384,7 +1388,7 @@ class BIN_Token(Token):
         """ A social security number token matches an ssn (kennitala) terminal """
         return terminal.startswith("kennitala")
 
-    def matches_MOLECULE(self, terminal) -> bool:
+    def matches_MOLECULE(self, terminal: "BIN_Terminal") -> bool:
         """ A molecule token matches a molecule (sameind) terminal """
         return terminal.startswith("sameind")
 
@@ -1553,6 +1557,7 @@ class VariantHandler:
         # pylint: disable=no-member
         n = cast(str, self._name)  # type: ignore
         q = n[0]
+        parts: List[str]
         if q in "\"'":
             # Literal terminal: be careful since the first (literal)
             # part, within quotes, may contain underscores
@@ -1571,7 +1576,7 @@ class VariantHandler:
                 parts += rest[1:].split("_")
         else:
             parts = n.split("_")
-        self._first = parts[0]
+        self._first: str = parts[0]
         # Look up matching function in WordMatchers
         self._matcher = getattr(
             WordMatchers, "matcher_" + self._first, WordMatchers.matcher_default
@@ -1633,12 +1638,12 @@ class VariantHandler:
         return False
 
     @property
-    def first(self):
+    def first(self) -> str:
         """ Return the first part of the terminal name (without variants) """
         return self._first
 
     @property
-    def category(self):
+    def category(self) -> Optional[str]:
         """ Return the word category matched by the terminal """
         return self._first
 
@@ -1649,61 +1654,61 @@ class VariantHandler:
         return self._matcher
 
     @property
-    def colon_cat(self):
+    def colon_cat(self) -> Optional[str]:
         """ Return the string specified after a colon in the terminal name, if any """
         # This is overridden in LiteralTerminal
         return None
 
     @property
-    def num_variants(self):
+    def num_variants(self) -> int:
         """ Return the number of variants in the terminal name """
         return self._vcount
 
     @property
-    def variants(self):
+    def variants(self) -> List[str]:
         """ Returns the variants contained in this terminal name as a list """
         return self._vparts
 
-    def variant(self, index):
+    def variant(self, index: int) -> str:
         """ Return the variant with the given index """
         return self._vparts[index]
 
     @property
-    def verb_cases(self):
+    def verb_cases(self) -> str:
         """ Return the verb cases associated with a so_ terminal, or empty string """
         return self._cases
 
-    def has_variant(self, v):
+    def has_variant(self, v: str) -> bool:
         """ Returns True if the terminal name has the given variant """
         return v in self._vset
 
-    def has_vbits(self, vbits):
+    def has_vbits(self, vbits: int) -> bool:
         """ Return True if this terminal has (all) the variant(s)
             corresponding to the given bit(s) """
         return (self._vbits & vbits) == vbits
 
-    def has_any_vbits(self, vbits):
+    def has_any_vbits(self, vbits: int) -> bool:
         """ Return True if this terminal has any of the variant(s)
             corresponding to the given bit(s) """
         return (self._vbits & vbits) != 0
 
-    def cut_fbits(self, fbits):
+    def cut_fbits(self, fbits: int) -> None:
         """ Mask off the given fbits, making them irrelevant in matches """
         self._fbits &= ~fbits
 
-    def fbits_match(self, fbits):
+    def fbits_match(self, fbits: int) -> bool:
         """ Return True if the given fbits meet all variant criteria """
         # That is: for every bit in self._fbits, there must be a corresponding bit
         # in the given fbits. We test this by turning off all the bits given in the
         # parameter fbits and checking whether there are any bits left.
         return (self._fbits & ~fbits) == 0
 
-    def fbits_match_mask(self, mask, fbits):
+    def fbits_match_mask(self, mask: int, fbits: int) -> bool:
         """ Return True if the given fbits meet the variant criteria after masking """
         return (self._fbits & mask & ~fbits) == 0
 
     @property
-    def gender(self):
+    def gender(self) -> Optional[str]:
         """ Return a gender string corresponding to a variant
             of this terminal, if any """
         if self._vbits & BIN_Token.VBIT_KK:
@@ -1715,7 +1720,7 @@ class VariantHandler:
         return None
 
     @property
-    def case(self):
+    def case(self) -> Optional[str]:
         """ Return a case string corresponding to a variant
             of this terminal, if any """
         if self._vbits & BIN_Token.VBIT_NF:
@@ -1729,57 +1734,57 @@ class VariantHandler:
         return None
 
     @property
-    def is_singular(self):
+    def is_singular(self) -> bool:
         return (self._vbits & BIN_Token.VBIT_ET) != 0
 
     @property
-    def is_plural(self):
+    def is_plural(self) -> bool:
         return (self._vbits & BIN_Token.VBIT_FT) != 0
 
     @property
-    def is_abbrev(self):
+    def is_abbrev(self) -> bool:
         return (self._vbits & BIN_Token.VBIT_ABBREV) != 0
 
     @property
-    def is_nh(self):
+    def is_nh(self) -> bool:
         return (self._vbits & BIN_Token.VBIT_NH) != 0
 
     @property
-    def is_mm(self):
+    def is_mm(self) -> bool:
         return (self._vbits & BIN_Token.VBIT_MM) != 0
 
     @property
-    def is_gm(self):
+    def is_gm(self) -> bool:
         return (self._vbits & BIN_Token.VBIT_GM) != 0
 
     @property
-    def is_subj(self):
+    def is_subj(self) -> bool:
         return (self._vbits & BIN_Token.VBIT_SUBJ) != 0
 
     @property
-    def is_sagnb(self):
+    def is_sagnb(self) -> bool:
         return (self._vbits & BIN_Token.VBIT_SAGNB) != 0
 
     @property
-    def is_op(self):
+    def is_op(self) -> bool:
         return (self._vbits & BIN_Token.VBIT_OP) != 0
 
     @property
-    def is_lh(self):
+    def is_lh(self) -> bool:
         # Lýsingarháttur þátíðar ("LHÞT")
         return (self._vbits & BIN_Token.VBIT_LH) != 0
 
     @property
-    def is_lh_nt(self):
+    def is_lh_nt(self) -> bool:
         # Lýsingarháttur nútíðar ("LH-NT" or "LHNT")
         return (self._vbits & BIN_Token.VBIT_LHNT) == BIN_Token.VBIT_LHNT
 
     @property
-    def is_vh(self):
+    def is_vh(self) -> bool:
         return (self._vbits & BIN_Token.VBIT_VH) != 0
 
     @property
-    def is_bh(self):
+    def is_bh(self) -> bool:
         return (self._vbits & BIN_Token.VBIT_BH) != 0
 
 
@@ -1789,11 +1794,11 @@ class BIN_Terminal(VariantHandler, Terminal):
         for variants in terminal names, including optimizations of variant
         checks and lookups """
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         super().__init__(name)
         # This type of terminal always requires full matching
         # as appropriate for each token kind
-        self.shortcut_match = None
+        self.shortcut_match: Optional[Callable[[str], bool]] = None
 
 
 class SequenceTerminal(BIN_Terminal):
@@ -1807,12 +1812,12 @@ class SequenceTerminal(BIN_Terminal):
     # as well as roman numerals
     _REGEX = re.compile(r"(?:[0-9]+$)|(?:[a-z]{1,2}$)|(?:[ivxlcm]+$)")
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("sequence")
         self.shortcut_match = SequenceTerminal._match
 
     @staticmethod
-    def _match(token_txt):
+    def _match(token_txt: str) -> bool:
         """ Return True if the given (lower case) token text matches a
             sequence, i.e. is a number, a,b,c..., or i,ii,iii... """
         return SequenceTerminal._REGEX.match(token_txt) is not None
@@ -1869,6 +1874,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
             raise GrammarError(
                 "An exact literal terminal with double quotes cannot have variants"
             )
+        self.shortcut_match: Callable[[str], Optional[bool]]
         if self._strong:
             # Invoke the matching function for strong literal terminals
             # directly, saving a comparison at run-time
@@ -1951,7 +1957,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
         return self._match_cat == cat
 
     # pylint: disable=method-hidden
-    def matches(self, t_kind, t_val, t_lit) -> bool:
+    def matches(self, t_kind: str, t_val: str, t_lit: str) -> bool:
         """ A literal terminal matches a token if the token text
             is identical to the literal """
         if self._match_cat is not None and t_kind != self._match_cat:
@@ -1960,7 +1966,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
         # Compare with lemma
         return self._first == t_val
 
-    def matches_strong(self, t_kind, t_val, t_lit) -> bool:
+    def matches_strong(self, t_kind: str, t_val: str, t_lit: str) -> bool:
         """ A literal terminal matches a token if the token text
             is identical to the literal """
         # Note that this function is overridden in __init__ if self._cat is None
@@ -2005,7 +2011,7 @@ class BIN_Grammar(Grammar):
         super().__init__()
 
     @staticmethod
-    def _make_terminal(name):
+    def _make_terminal(name: str) -> BIN_Terminal:
         """ Make BIN_Terminal instances instead of
             plain-vanilla Terminals """
         # Hack to support 'sequence' terminals, which
@@ -2015,13 +2021,13 @@ class BIN_Grammar(Grammar):
         return BIN_Terminal(name)
 
     @staticmethod
-    def _make_literal_terminal(name):
+    def _make_literal_terminal(name: str) -> BIN_LiteralTerminal:
         """ Make BIN_LiteralTerminal instances instead of
             plain-vanilla LiteralTerminals """
         return BIN_LiteralTerminal(name)
 
     @staticmethod
-    def _make_nonterminal(name, fname, line):
+    def _make_nonterminal(name: str, fname: str, line: int) -> BIN_Nonterminal:
         """ Make BIN_Terminal instances instead of
             plain-vanilla Terminals """
         return BIN_Nonterminal(name, fname, line)
@@ -2157,7 +2163,7 @@ def wrap_tokens(
                         right > left + 1 and tlist[left + 1][1] in _SKIP_PARENTHESIS
                     )
 
-                    def is_unknown(t):
+                    def is_unknown(t: Tok) -> bool:
                         """ A token is unknown if it is a TOK.UNKNOWN or if it is a
                             TOK.WORD with no meanings """
                         return (
@@ -2387,12 +2393,12 @@ def canonicalize_token(t: Dict[str, Any]) -> None:
 
 def describe_token(
     index: int, t: Tok, terminal: Optional[BIN_Terminal], meaning: Optional[BIN_Meaning]
-) -> Dict[str, Union[str, int, Tuple[str, str, str, str]]]:
+) -> TokenDict:
     """ Return a compact dictionary describing the token t,
         at the given index within its sentence,
         which matches the given terminal with the given meaning """
     txt = normalized_text(t)
-    d: Dict[str, Union[str, int, Tuple[str, str, str, str]]] = dict(x=txt, ix=index)
+    d: TokenDict = dict(x=txt, ix=index)
     if terminal is not None:
         # There is a token-terminal match
         if t.kind == TOK.PUNCTUATION:

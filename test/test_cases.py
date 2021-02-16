@@ -32,18 +32,19 @@
 
 import pytest
 
+from reynir import Greynir
+
 
 @pytest.fixture(scope="module")
 def r():
     """ Provide a module-scoped Greynir instance as a test fixture """
-    from reynir import Greynir
     r = Greynir()
     yield r
     # Do teardown here
     r.__class__.cleanup()
 
 
-def test_cases(r):
+def test_cases(r: Greynir) -> None:
     s = r.parse_single("Ég átti svakalega stóran hest með fallegasta makkann.")
     np_obj = s.tree.S_MAIN.IP.VP.NP_OBJ
     assert np_obj.nominative_np == "svakalega stór hestur með fallegasta makkann"
@@ -490,10 +491,10 @@ def test_addresses():
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
-    r = Greynir()
-    test_cases(r)
-    test_noun_phrases(r)
+    greynir = Greynir()
+    test_cases(greynir)
+    test_noun_phrases(greynir)
     test_casting()
     test_forms()
     test_addresses()
-    r.__class__.cleanup()
+    greynir.__class__.cleanup()

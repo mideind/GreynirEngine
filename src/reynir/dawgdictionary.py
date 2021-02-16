@@ -57,11 +57,11 @@ class Wordbase:
     """ Container for a singleton instance of the word database """
 
     # All word forms
-    _dawg_all = None  # type: PackedDawgDictionary
+    _dawg_all: Optional["PackedDawgDictionary"] = None
     # Word forms allowed as former parts of compounds
-    _dawg_formers = None  # type: PackedDawgDictionary
+    _dawg_formers: Optional["PackedDawgDictionary"] = None
     # Word forms allowed as last part of compounds
-    _dawg_last = None  # type: PackedDawgDictionary
+    _dawg_last: Optional["PackedDawgDictionary"] = None
 
     _lock = threading.Lock()
 
