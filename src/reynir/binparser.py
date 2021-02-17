@@ -1625,6 +1625,10 @@ class VariantHandler:
         # Convert 'kk', 'kvk', 'hk' to 'no' before doing the compare
         return self._first == BIN_Token.KIND.get(t_kind, t_kind)
 
+    def matches_token(self, token: BIN_Token, m: BIN_Meaning) -> bool:
+        """ Test whether this terminal matches the meaning m of the given token """
+        return self._matcher(token, self, m)
+
     def matches_token_meaning(self, token: BIN_Token) -> Union[bool, BIN_Meaning]:
         """ Return the meaning of the token which matches this terminal,
             if any, or False if none """

@@ -84,6 +84,7 @@ from .matcher import match_pattern
 TerminalMap = Dict[int, Tuple[BIN_Terminal, Optional[BIN_Meaning]]]
 NonterminalMap = Mapping[str, Union[str, Tuple[str, ...]]]
 IdMap = Mapping[str, Dict[str, Union[str, Set[str]]]]
+StatsDict = Dict[str, Union[int, float]]
 
 # Default tree simplifier configuration maps
 
@@ -567,11 +568,11 @@ class SimpleTree:
     def __init__(
         self,
         pgs: Iterable[Iterable[Dict[str, Any]]],
-        stats=None,
+        stats: Optional[StatsDict] = None,
         register=None,
         parent: Optional["SimpleTree"] = None,
         root: Optional["SimpleTree"] = None,
-    ):
+    ) -> None:
         # Keep a link to the original root SimpleTree
         self._root = root
         if root is not None:
@@ -594,11 +595,11 @@ class SimpleTree:
         self._children_cache: Optional[Tuple["SimpleTree", ...]] = None
         self._tag_cache: Optional[List[str]] = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Return a pretty-printed representation of the contained trees """
         return pformat(self._head if self.is_terminal else self._sents)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """ Return a compact representation of this subtree """
         len_self = len(self)
         if len_self == 0:
@@ -1106,10 +1107,10 @@ class SimpleTree:
 
     def _bracket_form(self) -> str:
         """ Return a bracketed representation of the tree """
-        result = []
+        result: List[str] = []
         puncts = frozenset((".", ",", ";", ":", "-", "—", "–"))
 
-        def push(node: Optional["SimpleTree"]):
+        def push(node: Optional["SimpleTree"]) -> None:
             """ Append information about a node to the result list """
             if node is None:
                 return
@@ -1133,7 +1134,7 @@ class SimpleTree:
         return "".join(result)
 
     @property
-    def bracket_form(self):
+    def bracket_form(self) -> str:
         """ Return a bracketed representation of the tree """
         return self._bracket_form()
 
@@ -1168,7 +1169,7 @@ class SimpleTree:
             )
         raise AttributeError("Subtree has no child named '{0}'".format(name))
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: Union[str, int]) -> "SimpleTree":
         """ Return the appropriate child subtree """
         if isinstance(index, str):
             # Handle tree['NP']
@@ -1185,19 +1186,19 @@ class SimpleTree:
             return SimpleTree([[self._children[index]]], root=self.root, parent=self)
         raise IndexError("Subtree has no children")
 
-    def __len__(self):
+    def __len__(self) -> int:
         """ Return the length of this subtree, i.e. the last usable child index + 1 """
         if self._len > 1:
             return self._len
         return len(self._children) if self._children else 0
 
     @property
-    def _text(self):
+    def _text(self) -> str:
         """ Return the original text within this node only, if any """
         return self._head.get("x", "")
 
     @cached_property
-    def _lemma(self):
+    def _lemma(self) -> str:
         """ Return the lemma of this node only, if any """
         lemma = self._head.get("s", self._text)
         if isinstance(lemma, tuple):
@@ -1215,6 +1216,9 @@ class SimpleTree:
         if self._cat not in _DECLINABLE_CATEGORIES:
             # This is not a potentially declined terminal node:
             # return the original text
+            # !!! TODO: self._cat may be None, for instance for TOK.AMOUNT tokens
+            # !!! ('25.000 krónum' or '100 breskum pundum').
+            # !!! In that case, self.tcat is 'no'. Inflection to be implemented.
             return self._text
         txt = self._text
         indefinite = form == "indefinite"

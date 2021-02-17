@@ -215,11 +215,10 @@ class _Sentence:
     @property
     def tidy_text(self) -> str:
         """ Return a [more] correctly spaced text representation of the sentence """
-        terminals = self.terminals
-        if terminals is None:
-            # Not parsed (yet)
+        if self.tree is None:
             txt = self.text
         else:
+            terminals = self.terminal_nodes
             # Use the terminal text representation -
             # it's got fancy em/en-dashes and stuff
             txt = " ".join(t.text for t in terminals)

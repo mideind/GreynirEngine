@@ -343,6 +343,7 @@ HreinYfirsetning →
     | AtvSetning        # Atvikssetning fremst í aðalsetningu
     | Spurnarsetning
     | SamsettSetning    # Annaðhvort X eða Y; bæði X og Y; ýmist X eða Y
+    | TakkFyrirSetning
 
 $score(+2) HreinYfirsetning
 
@@ -468,6 +469,15 @@ $score(+4) Samanburðarsetning
 $score(+5) Tíðarsetning
 $score(-10) Skilyrðissetning # Skilyrðistenging er með plús á móti
 $score(-14) Skilyrðissetning_vh # Draga enn úr skilyrðissetningum sem byggja á viðtengingarhætti
+
+# "Takk fyrir" setning
+
+TakkFyrirSetning →
+    "takk:uh" TakkFyrirBotn?
+
+TakkFyrirBotn →
+    'fyrir:fs'_þf Nl_þf AtvFsAukaInnskot?
+    | "fyrir:ao" FsAtv?
 
 # Fallsetningar - skýringarsetningar og spurnaraukasetningar
 
@@ -5525,6 +5535,7 @@ FsMeðFallstjórn →
     | 'að:fs'_þgf Nl_þgf/tala/kyn lo_sb/fall/tala/kyn   # 'að virðisaukaskatti meðtöldum'
     | 'af:fs'_þgf Nl_þgf NhEinfaldur                    # Af fyrstu fregnum að dæma (virðist veiðitímabilið byrja vel)
     | 'með:fs'_þgf Eða 'án:fs'_ef Nl_ef                 # 'með eða án greindarskerðingar'
+    | FsOkkarÁMilli
     | FsÚtFrá
     | FsÍGegnUm
     | FsUmOgEftir
@@ -5601,6 +5612,11 @@ FsMilli →
     'milli:fs'_ef Nl_ef "og:st" Nl_ef
 
 $score(+6) FsMilli
+
+FsOkkarÁMilli →
+    'ég:pfn'_ef_ft 'á_milli:ao' # okkar á milli
+
+$score(+6) FsOkkarÁMilli
 
 # Sérregla fyrir "á móti" til að koma í veg fyrir að greinist
 # sem forsetningarliður 
