@@ -1891,7 +1891,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
             if self._cat is None or self._match_cat == "punctuation":
                 # Fot literal terminals with no category specification,
                 # i.e. "hvenær", we simply match on the token text with no further ado
-                self.shortcut_match = lambda t_lit: self._first == t_lit
+                self.shortcut_match = lambda t_lit: self._first == t_lit  # type: ignore
             else:
                 # For literal terminals with a category specification,
                 # i.e. "hvenær:ao", we shortcut the match, returning False, if the
@@ -1901,7 +1901,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
                 # for each possible meaning of the word (since we want to select a
                 # meaning that fits the specified category).
                 self.shortcut_match = (
-                    lambda t_lit: False if self._first != t_lit else None
+                    lambda t_lit: False if self._first != t_lit else None  # type: ignore
                 )
         else:
             # For lemma terminals, the matches_first() and matches()
@@ -2117,13 +2117,13 @@ class BIN_Parser(Base_Parser):
         return ftime + "/" + package_version
 
     @staticmethod
-    def _create_wrapped_token(t: Tok, ix: int) -> BIN_Token:
+    def wrap_token(t: Tok, ix: int) -> BIN_Token:
         """ Create an instance of a wrapped token """
         return BIN_Token(t, ix)
 
     def _wrap(self, tokens: Iterable[Tok]) -> List[BIN_Token]:
         """ Sanitize the 'raw' tokens and wrap them in BIN_Token() wrappers """
-        return wrap_tokens(tokens, wrap_func=self._create_wrapped_token)
+        return wrap_tokens(tokens, wrap_func=self.wrap_token)
 
 
 # Abbreviations and stuff that we ignore inside parentheses
@@ -2343,7 +2343,12 @@ def canonicalize_token(t: Dict[str, Any]) -> None:
     t["k"] = TOK.descr[kind]
     if "t" in t:
         # Use category from "m" (BÍN meaning) field if present, otherwise None
-        t["t"] = simplify_terminal(t["t"], t["m"][1] if "m" in t else None)
+        orig_t: str = t["t"]
+        new_t: str = simplify_terminal(orig_t, t["m"][1] if "m" in t else None)
+        if new_t != orig_t:
+            # The terminal name was simplified: keep the original one in the "o" field
+            t["o"] = orig_t
+            t["t"] = new_t
     if "m" in t:
         # Flatten the meaning from a tuple/list
         m = t["m"]

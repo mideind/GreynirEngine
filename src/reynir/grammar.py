@@ -151,7 +151,7 @@ class Nonterminal(GrammarItem):
     """ A nonterminal, either at the left hand side of
         a rule or within a production """
 
-    _INDEX = -1  # Running sequence number (negative) of all nonterminals
+    _index = -1  # Running sequence number (negative) of all nonterminals
 
     def __init__(self, name: str, fname: Optional[str] = None, line: int = 0) -> None:
         super().__init__()
@@ -167,8 +167,8 @@ class Nonterminal(GrammarItem):
         # explicitly nullable?
         self._optional = name.endswith("?") or name.endswith("*")
         # Give all nonterminals a unique, negative sequence number for hashing purposes
-        self._index = Nonterminal._INDEX
-        Nonterminal._INDEX -= 1
+        self._index = Nonterminal._index
+        Nonterminal._index -= 1
         self._hash = id(self).__hash__()
 
     def __hash__(self) -> int:
@@ -254,13 +254,13 @@ class Terminal(GrammarItem):
 
     """ A terminal within a right-hand-side production """
 
-    _INDEX = 1  # Running sequence number (positive) of all terminals
+    _index = 1  # Running sequence number (positive) of all terminals
 
     def __init__(self, name: str) -> None:
         super().__init__()
         self._name = name
-        self._index = Terminal._INDEX
-        Terminal._INDEX += 1
+        self._index = Terminal._index
+        Terminal._index += 1
         # The hash is used quite often so it is worth caching
         self._hash = id(self).__hash__()
 
@@ -378,7 +378,7 @@ class Production:
 
     """ A right-hand side of a grammar rule """
 
-    _INDEX = 0  # Running sequence number of all productions
+    _index = 0  # Running sequence number of all productions
 
     def __init__(
         self,
@@ -400,15 +400,15 @@ class Production:
         # Cache the length of the production as it is used A LOT
         self._len = len(self._rhs)
         # Give all productions a unique sequence number for hashing purposes
-        self._index = Production._INDEX
-        Production._INDEX += 1
+        self._index = Production._index
+        Production._index += 1
         # Cached tuple representation of this production
         self._tuple: Optional[Tuple[int, ...]] = None
 
     @classmethod
     def reset(cls) -> None:
         """ Reset the production index sequence to zero """
-        cls._INDEX = 0
+        cls._index = 0
 
     def append(self, t: GrammarItem) -> None:
         """ Append a terminal or nonterminal to this production """

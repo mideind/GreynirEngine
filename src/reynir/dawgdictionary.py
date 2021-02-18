@@ -39,11 +39,10 @@
 
 """
 
-from typing import Dict, List, Optional, Union, Tuple, Iterator, ItemsView
+from typing import Dict, List, Optional, Union, Tuple, Iterator, ItemsView, cast
 
 import os
 import threading
-import time
 import struct
 import mmap
 import pkg_resources
@@ -331,7 +330,7 @@ class PackedNavigation:
     _UINT32 = struct.Struct("<L")
 
     # Dictionary of edge iteration caches, keyed by byte buffer
-    _iter_caches = dict()  # type: Dict[int, Dict[int, Dict[str, int]]]
+    _iter_caches: Dict[int, Dict[int, Dict[str, int]]] = dict()
 
     def __init__(self,
         nav: Union[FindNavigator, CompoundNavigator],
@@ -345,12 +344,13 @@ class PackedNavigation:
         self._b = b
         self._root_offset = root_offset
         self._encoding = encoding
+        self._iter_cache: Dict[int, Dict[str, int]]
         if id(b) in self._iter_caches:
             # We already have a cache associated with this byte buffer
             self._iter_cache = self._iter_caches[id(b)]
         else:
             # Create a fresh cache for this byte buffer
-            self._iter_cache = self._iter_caches[id(b)] = dict()
+            self._iter_cache = self._iter_caches[id(b)] = cast(Dict[int, Dict[str, int]], dict())
 
     def _iter_from_node(self, offset: int) -> Iterator[Tuple[str, int]]:
         """ A generator for yielding prefixes and next node offset along an edge
@@ -378,6 +378,7 @@ class PackedNavigation:
             of the edge at the given offset. If this is the first time
             that the edge is iterated, cache its unpacked contents
             in a dictionary for quicker subsequent iteration. """
+        d: Dict[str, int]
         try:
             d = self._iter_cache[offset]
         except KeyError:
@@ -401,7 +402,7 @@ class PackedNavigation:
                     # Short-circuit and finish the loop if pop_edge() returns False
                     break
 
-    def _navigate_from_edge(self, prefix, nextnode, matched):
+    def _navigate_from_edge(self, prefix: str, nextnode: int, matched: str) -> None:
         """ Navigate along an edge, accepting partial and full matches """
         # Go along the edge as long as the navigator is accepting
         b = self._b
@@ -441,7 +442,7 @@ class PackedNavigation:
             # continue with the next node
             self._navigate_from_node(nextnode, matched)
 
-    def go(self):
+    def go(self) -> None:
         """ Perform the navigation using the given navigator """
         # The ship is ready to go
         if self._nav.accepting():

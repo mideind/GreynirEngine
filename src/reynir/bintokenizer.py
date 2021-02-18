@@ -482,7 +482,7 @@ class Bin_TOK(TOK):
 def annotate(
     db: BIN_Db,
     token_ctor: TokenConstructor,
-    token_stream: Iterator[Tok],
+    token_stream: TokenIterator,
     *,
     auto_uppercase: bool = False,
     no_sentence_start: bool = False
@@ -704,8 +704,8 @@ def all_genders(token: Tok) -> Optional[List[str]]:
 
 
 def parse_phrases_1(
-    db: BIN_Db, token_ctor: TokenConstructor, token_stream: Iterator[Tok]
-) -> Iterator[Tok]:
+    db: BIN_Db, token_ctor: TokenConstructor, token_stream: TokenIterator
+) -> TokenIterator:
     """ Parse numbers and amounts """
 
     token: Tok = cast(Tok, None)
@@ -918,8 +918,8 @@ def parse_phrases_1(
 
 
 def parse_phrases_2(
-    token_stream: Iterator[Tok], token_ctor: TokenConstructor, auto_uppercase: bool
-) -> Iterator[Tok]:
+    token_stream: TokenIterator, token_ctor: TokenConstructor, auto_uppercase: bool
+) -> TokenIterator:
     """ Parse a stream of tokens looking for phrases and making substitutions.
         Second pass: handle conversion of numbers + currencies into amounts,
         and process person names """
@@ -1334,8 +1334,8 @@ def parse_phrases_2(
 
 
 def parse_phrases_3(
-    db: BIN_Db, token_stream: Iterator[Tok], token_ctor: TokenConstructor
-) -> Iterator[Tok]:
+    db: BIN_Db, token_stream: TokenIterator, token_ctor: TokenConstructor
+) -> TokenIterator:
     """ Parse a stream of tokens looking for phrases and making substitutions.
         Third pass: coalesce uppercase, otherwise unrecognized words with
         a following person name, if any; also coalesce entity names and
@@ -1464,7 +1464,7 @@ def parse_phrases_3(
         yield token
 
 
-def fix_abbreviations(token_stream: Iterator[Tok]) -> Iterator[Tok]:
+def fix_abbreviations(token_stream: TokenIterator) -> TokenIterator:
     """ Fix sentence splitting that may be wrong due to abbreviations """
     token: Tok = cast(Tok, None)
     try:
@@ -1555,13 +1555,13 @@ class MatchingStream:
                 newstate: StateDict = defaultdict(list)
                 key = self.key(token)
 
-                def add_to_state(slist, index):
+                def add_to_state(slist: List[str], index: int) -> None:
                     """ Add the list of subsequent words to the new parser state """
                     next_key = slist[0]
                     rest = slist[1:]
                     newstate[next_key].append((rest, index))
 
-                def accept(state):
+                def accept(state: List[Tuple[List[str], int]]) -> TokenIterator:
                     """ The current token matches the given state, either as
                         a continuation of a previous state or as an initiation
                         of a new phrase """
@@ -1688,8 +1688,8 @@ class StaticPhraseStream(MatchingStream):
 
 
 def parse_static_phrases(
-    token_stream: Iterator[Tok], token_ctor: TokenConstructor, auto_uppercase: bool
-) -> Iterator[Tok]:
+    token_stream: TokenIterator, token_ctor: TokenConstructor, auto_uppercase: bool
+) -> TokenIterator:
     """ Use the StaticPhraseStream class to process the token stream
         and replace static phrases with single tokens """
     sps = StaticPhraseStream(token_ctor, auto_uppercase)
@@ -1773,8 +1773,8 @@ class DisambiguationStream(MatchingStream):
 
 
 def disambiguate_phrases(
-    token_stream: Iterator[Tok], token_ctor: TokenConstructor
-) -> Iterator[Tok]:
+    token_stream: TokenIterator, token_ctor: TokenConstructor
+) -> TokenIterator:
 
     """ Parse a stream of tokens looking for common ambiguous multiword phrases
         (i.e. phrases that have a well known very likely interpretation but
@@ -1911,7 +1911,7 @@ class DefaultPipeline:
                 self._db = None
 
 
-def tokenize(text: StringIterable, **options) -> Iterator[Tok]:
+def tokenize(text: StringIterable, **options: Any) -> TokenIterator:
     """ Tokenize text using the default pipeline """
     pipeline = DefaultPipeline(text, **options)
     return pipeline.tokenize()

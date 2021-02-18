@@ -68,7 +68,6 @@ from typing import (
     Iterable,
     Iterator,
     Hashable,
-    Callable,
     IO,
     cast,
 )
@@ -79,7 +78,7 @@ from threading import Lock
 from functools import reduce
 
 from .binparser import BIN_Parser, BIN_Token, simplify_terminal, augment_terminal, Tok
-from .grammar import Grammar, GrammarError, Nonterminal, Terminal, Token, Production
+from .grammar import Grammar, GrammarError, Nonterminal, Terminal, Production
 from .settings import Settings
 from .glock import GlobalLock
 
@@ -88,8 +87,6 @@ from .glock import GlobalLock
 # pylint: disable=no-name-in-module
 from ._eparser import lib as eparser, ffi  # type: ignore
 
-
-_PATH = os.path.dirname(__file__) or "."
 
 # The type of an entry on a ParseTreeFlattener stack
 FlattenerType = Union[Tuple[Terminal, BIN_Token], Nonterminal]
@@ -121,21 +118,21 @@ class ParseJob:
         self.c_dict: Dict[Any, "Node"] = dict()  # Node pointer conversion dictionary
         self.matching_cache = matching_cache  # Token/terminal matching buffers
 
-    def matches(self, token, terminal) -> bool:
+    def matches(self, token_index: int, terminal_index: int) -> bool:
         """ Convert the token reference from a 0-based token index
             to the token object itself; convert the terminal from a
             1-based terminal index to a terminal object. """
-        return self.tokens[token].matches(self.terminals[terminal])
+        return self.tokens[token_index].matches(self.terminals[terminal_index])
 
     def alloc_cache(self, token: int, size: int) -> Any:
         """ Allocate a token/terminal matching cache buffer for the given token """
         key = self.tokens[token].key  # Obtain the (hashable) key of the BIN_Token
         try:
             # Do we already have a token/terminal cache match buffer for this key?
-            b = self.matching_cache.get(key)
+            b: Any = self.matching_cache.get(key)
             if b is None:
                 # No: create a fresh one (assumed to be initialized to zero)
-                b = self.matching_cache[key] = ffi.new("BYTE[]", size)
+                b = self.matching_cache[key] = ffi.new("BYTE[]", size)  # type: ignore
         except TypeError:
             assert False, "alloc_cache() unable to hash key: {0}".format(repr(key))
         return b
@@ -153,7 +150,7 @@ class ParseJob:
         return self
 
     # noinspection PyUnusedLocal
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
         """ Python context manager protocol """
         self.__class__.delete(self._handle)
         # Return False to re-throw exception from the context, if any
@@ -203,7 +200,7 @@ def matching_func(handle: int, token, terminal) -> bool:
 
 
 @ffi.def_extern()
-def alloc_func(handle, token, size):
+def alloc_func(handle: int, token, size):
     """ Allocate a token/terminal matching cache buffer, at least size bytes.
         If the callback returns ffi.NULL, the parser will allocate its own buffer.
         The point of this callback is to allow re-using buffers for identical tokens,
@@ -592,24 +589,24 @@ class ParseError(Exception):
 
     """ Exception class for parser errors """
 
-    def __init__(self, txt, token_index=None, info=None):
+    def __init__(self, txt: str, token_index: Optional[int]=None, info: Any=None) -> None:
         """ Store an information object with the exception,
             containing the parser state immediately before the error """
-        Exception.__init__(self, txt)
+        super().__init__(txt)
         self._info = info
         self._token_index = token_index
 
     @property
-    def info(self):
+    def info(self) -> Any:
         """ Return the parser state information object """
         return self._info
 
     @property
-    def token_index(self):
+    def token_index(self) -> Optional[int]:
         """ Return the 0-based index of the token where the parser ran out of options """
         return self._token_index
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Return a string representation of the parse error """
         return self.args[0]
 
@@ -690,7 +687,7 @@ class Fast_Parser(BIN_Parser):
         return self
 
     # noinspection PyUnusedLocal
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
         """ Python context manager protocol """
         self.cleanup()
         return False

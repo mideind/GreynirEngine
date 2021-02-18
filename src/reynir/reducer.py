@@ -87,19 +87,17 @@
 
 """
 
-from typing import Dict, DefaultDict, Union, List, Set, Tuple, Optional, Any, cast
+from typing import Dict, DefaultDict, List, Set, Tuple, Optional, Any, cast
 
-import copy
-from collections import defaultdict, Counter
-import threading
+from collections import defaultdict
 
 from typing_extensions import TypedDict
 
 from .grammar import Grammar, Production
-from .fastparser import Node, ParseForestNavigator, ParseForestPrinter, ParseError
-from .settings import Settings, Preferences, NounPreferences
+from .fastparser import Node, ParseForestNavigator
+from .settings import Preferences, NounPreferences
 from .verbframe import VerbFrame
-from .binparser import BIN_Token, BIN_Terminal, BIN_Meaning, Terminal
+from .binparser import BIN_Token, BIN_Terminal, BIN_Meaning
 
 
 # Types for data used in the reduction process
@@ -478,7 +476,7 @@ class ParseForestReducer:
                 v = NULL_SC
             # Memoize the result for this (node, current_key) combination
             visited[(w, current_key)] = v
-            w.score = cast(int, v["sc"])
+            w.score = v["sc"]
             return v
 
         # Start the scoring and reduction process at the root
@@ -794,7 +792,7 @@ class Reducer:
         # Third pass: navigate the tree bottom-up, eliminating lower-rated
         # options (subtrees) in favor of higher rated ones
         score = self._reduce(forest, scores)
-        return forest, cast(int, score["sc"])
+        return forest, score["sc"]
 
     def go(self, forest: Optional[Node]) -> Optional[Node]:
         """ Return only the reduced forest, without its score """

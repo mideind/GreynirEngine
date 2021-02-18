@@ -38,9 +38,9 @@
 """
 
 from typing import (
-    Dict,
+    Dict, FrozenSet,
     List,
-    Mapping,
+    Mapping, Sequence,
     Tuple,
     Iterable,
     Iterator,
@@ -732,8 +732,17 @@ class SimpleTree:
 
     @property
     def terminal(self) -> Optional[str]:
-        """ The terminal matched by this subtree """
+        """ The terminal matched by this subtree. Note that this is a
+            'canonicalized' version of the terminal name, where literal
+            specifications have been simplified
+            (e.g., 'orð:hk'_x_y becomes 'no_hk_x_y') """
         return self._head.get("t")
+
+    @property
+    def original_terminal(self) -> Optional[str]:
+        """ The terminal matched by this subtree, as originally specified
+            in the grammar """
+        return self._head.get("o", self._head.get("t"))
 
     @property
     def terminal_with_all_variants(self) -> Optional[str]:
@@ -883,10 +892,10 @@ class SimpleTree:
     )
 
     @staticmethod
-    def _make_terminal_with_case(cat, variants, terminal, default_case="nf"):
+    def _make_terminal_with_case(cat: str, variants: Set[str], terminal: str, default_case: str="nf") -> str:
         """ Return a terminal identifier with the given category and
             variants, plus the case indicated in the terminal, if any """
-        tcase = set(terminal.split("_")[1:]) & _CASES
+        tcase: Set[str] = set(terminal.split("_")[1:]) & _CASES
         if len(tcase) == 0:
             # If no case given, assume nominative rather than nothing
             tcase = {default_case}
