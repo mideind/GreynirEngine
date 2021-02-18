@@ -66,7 +66,8 @@ from datetime import datetime
 from functools import reduce, lru_cache
 import json
 
-from tokenizer import TOK, Tok, Abbreviations, normalized_text
+from tokenizer import TOK, Tok, normalized_text
+from tokenizer.abbrev import Abbreviations
 
 from .settings import (
     Settings,

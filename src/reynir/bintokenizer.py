@@ -62,7 +62,6 @@ from tokenizer import (
     TOK,
     Tok,
     tokenize_without_annotation,
-    Abbreviations,
     # The following imports are here in order to be visible in clients
     # (they are not used in this module)
     tokenize as raw_tokenize,
@@ -70,6 +69,7 @@ from tokenizer import (
     paragraphs,
     parse_tokens,
 )
+from tokenizer.abbrev import Abbreviations
 
 from .settings import StaticPhrases, AmbigPhrases, DisallowedNames
 from .settings import NamePreferences

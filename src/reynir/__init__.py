@@ -67,8 +67,8 @@ from tokenizer import (
     paragraphs,
     correct_spaces,
     mark_paragraphs,
-    Abbreviations,
 )
+from tokenizer.abbrev import Abbreviations
 from tokenizer import (
     TP_LEFT,
     TP_CENTER,

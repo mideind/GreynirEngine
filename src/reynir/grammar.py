@@ -1540,7 +1540,7 @@ if __name__ == "__main__":
         print("Configuration error: {0}".format(e))
         quit()
 
-    from tokenizer import Abbreviations
+    from tokenizer.abbrev import Abbreviations
 
     # Make sure that the tokenizer has loaded its abbreviations
     # before we parse the grammar, since they are used in error checking
