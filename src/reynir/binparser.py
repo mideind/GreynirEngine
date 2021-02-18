@@ -66,9 +66,7 @@ from datetime import datetime
 from functools import reduce, lru_cache
 import json
 
-from tokenizer import (
-    TOK, Tok, Abbreviations, normalized_text
-)
+from tokenizer import TOK, Tok, Abbreviations, normalized_text
 
 from .settings import (
     Settings,
@@ -2132,6 +2130,7 @@ _SKIP_PARENTHESIS = frozenset(("e.",))  # "d." and "þ." were removed
 
 _T = TypeVar("_T")
 
+
 def wrap_tokens(
     tokens: Iterable[Tok], wrap_func: Optional[Callable[[Tok, int], _T]] = None
 ) -> List[_T]:
@@ -2201,7 +2200,9 @@ def wrap_tokens(
     wrapped_tokens: List[_T] = []
     for ix, t in enumerate(tlist):
         if t is not None and BIN_Token.is_understood(t):
-            wrapped_tokens.append(cast(_T, t) if wrap_func is None else wrap_func(t, ix))
+            wrapped_tokens.append(
+                cast(_T, t) if wrap_func is None else wrap_func(t, ix)
+            )
     return wrapped_tokens
 
 

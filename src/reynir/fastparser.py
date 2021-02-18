@@ -279,7 +279,7 @@ class Node:
 
     @classmethod
     def from_c_node(
-        cls, job: ParseJob, c_node: Any, parent=None, index: int=0
+        cls, job: ParseJob, c_node: Any, parent=None, index: int = 0
     ) -> Optional["Node"]:
         """ Initialize a Python node from a C++ SPPF node structure """
         if c_node == ffi.NULL:
@@ -589,7 +589,9 @@ class ParseError(Exception):
 
     """ Exception class for parser errors """
 
-    def __init__(self, txt: str, token_index: Optional[int]=None, info: Any=None) -> None:
+    def __init__(
+        self, txt: str, token_index: Optional[int] = None, info: Any = None
+    ) -> None:
         """ Store an information object with the exception,
             containing the parser state immediately before the error """
         super().__init__(txt)
@@ -1049,9 +1051,7 @@ class ParseForestDumper(ParseForestNavigator):
                 else:
                     ta = " " + ta
 
-        self._result.append(
-            "T{0} {1} {2}{3}".format(level, name, w.token.dump, ta)
-        )
+        self._result.append("T{0} {1} {2}{3}".format(level, name, w.token.dump, ta))
         return None
 
     def visit_nonterminal(self, level: int, w: Node) -> Any:

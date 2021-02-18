@@ -105,12 +105,14 @@ from .binparser import BIN_Token, BIN_Terminal, BIN_Meaning
 VerbTuple = Tuple[BIN_Terminal, BIN_Token]
 VerbList = List[VerbTuple]
 
+
 class ResultDict(TypedDict, total=False):
     # Score
     sc: int
     # Verb scope information
     so: VerbList
     sl: VerbList
+
 
 VerbStack = List[Optional[VerbList]]
 ChildDict = DefaultDict[int, ResultDict]
@@ -136,9 +138,7 @@ _CASES_SET = BIN_Token.CASES_SET
 _PREP_SCOPE_SET = frozenset(
     ("begin_prep_scope", "purge_prep", "no_prep", "enable_prep_bonus")
 )
-_CONTAINED_VERBS_SET = frozenset(
-    ("begin_prep_scope", "purge_verb")
-)
+_CONTAINED_VERBS_SET = frozenset(("begin_prep_scope", "purge_verb"))
 
 
 class _ReductionScope:

@@ -329,7 +329,9 @@ class _Sentence:
         return instance
 
     @classmethod
-    def loads(cls, greynir_cls: GreynirType, json_str: str, **kwargs: Any) -> "_Sentence":
+    def loads(
+        cls, greynir_cls: GreynirType, json_str: str, **kwargs: Any
+    ) -> "_Sentence":
         """ Load a previously dumped JSON string.
             Useful for retrieving parsed data from a database.
             Note: Normally, sentences are loaded using Greynir.loads_single(). """

@@ -38,9 +38,11 @@
 """
 
 from typing import (
-    Dict, FrozenSet,
+    Dict,
+    FrozenSet,
     List,
-    Mapping, Sequence,
+    Mapping,
+    Sequence,
     Tuple,
     Iterable,
     Iterator,
@@ -892,7 +894,9 @@ class SimpleTree:
     )
 
     @staticmethod
-    def _make_terminal_with_case(cat: str, variants: Set[str], terminal: str, default_case: str="nf") -> str:
+    def _make_terminal_with_case(
+        cat: str, variants: Set[str], terminal: str, default_case: str = "nf"
+    ) -> str:
         """ Return a terminal identifier with the given category and
             variants, plus the case indicated in the terminal, if any """
         tcase: Set[str] = set(terminal.split("_")[1:]) & _CASES

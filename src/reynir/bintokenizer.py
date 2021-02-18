@@ -84,7 +84,10 @@ if "PyPy 7.3.0" in sys.version or "PyPy 7.2." in sys.version:
         except ValueError:
             # String does not contain a space: return it whole
             return s
+
+
 else:
+
     def all_except_suffix(s: str) -> str:
         return s.rsplit(maxsplit=1)[0]
 
@@ -118,22 +121,24 @@ FilterFunction = Callable[[BIN_Meaning], bool]
 MeaningList = Sequence[Tuple[str, int, str, str, str, str]]
 
 # Person names that are not recognized at the start of sentences
-NOT_NAME_AT_SENTENCE_START: FrozenSet[str] = frozenset((
-    "Annar",
-    "Annars",
-    "Kalla",
-    "Sanna",
-    "Gamli",
-    "Gamla",
-    "Vinni",
-    "Vinna",
-    "Vilji",
-    "Vilja",
-    "Ljótur",
-    "Ljót",
-    "Ljóti",
-    "Ljóts",
-))
+NOT_NAME_AT_SENTENCE_START: FrozenSet[str] = frozenset(
+    (
+        "Annar",
+        "Annars",
+        "Kalla",
+        "Sanna",
+        "Gamli",
+        "Gamla",
+        "Vinni",
+        "Vinna",
+        "Vilji",
+        "Vilja",
+        "Ljótur",
+        "Ljót",
+        "Ljóti",
+        "Ljóts",
+    )
+)
 
 # Set of all cases (nominative, accusative, dative, genitive)
 ALL_CASES: FrozenSet[str] = frozenset(["nf", "þf", "þgf", "ef"])
@@ -203,10 +208,17 @@ MULTIPLIERS: Mapping[str, int] = {
 }
 
 # The following must occur as lemmas in BÍN
-DECLINABLE_MULTIPLIERS: FrozenSet[str] = frozenset(("hundrað", "þúsund", "milljón", "milljarður"))
+DECLINABLE_MULTIPLIERS: FrozenSet[str] = frozenset(
+    ("hundrað", "þúsund", "milljón", "milljarður")
+)
 
 # Recognize words for percentages
-PERCENTAGES: Mapping[str, int] = {"prósent": 1, "prósenta": 1, "hundraðshluti": 1, "prósentustig": 1}
+PERCENTAGES: Mapping[str, int] = {
+    "prósent": 1,
+    "prósenta": 1,
+    "hundraðshluti": 1,
+    "prósentustig": 1,
+}
 
 # Recognize words for nationalities (used for currencies)
 NATIONALITIES: Mapping[str, str] = {
@@ -462,7 +474,11 @@ class Bin_TOK(TOK):
         to add token error information. """
 
     @staticmethod
-    def Word(w: str, m: Optional[MeaningList]=None, token: Union[None, Tok, Sequence[Tok]] = None) -> Tok:
+    def Word(
+        w: str,
+        m: Optional[MeaningList] = None,
+        token: Union[None, Tok, Sequence[Tok]] = None,
+    ) -> Tok:
         # Note that the m parameter cannot be easily type annotated,
         # as the Tokenizer package is still using a .pyi (Python 2.7-compatible)
         # type annotation scheme
