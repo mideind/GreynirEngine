@@ -1019,7 +1019,7 @@ class ParseForestDumper(ParseForestNavigator):
     # On index -- Option with index >= 0
     # Q0 -- end indicator (not followed by newline)
 
-    def __init__(self, token_dicts: Dict[int, Dict[str, str]]) -> None:
+    def __init__(self, token_dicts: Optional[Dict[int, Dict[str, str]]]) -> None:
         super().__init__(visit_all=True)  # Visit all nodes
         self._result = ["R1"]  # Start indicator and version number
         self._token_dicts = token_dicts
@@ -1074,7 +1074,9 @@ class ParseForestDumper(ParseForestNavigator):
             self._result.append("O{0} {1}".format(level, ix))
 
     @classmethod
-    def dump_forest(cls, root_node: Node, token_dicts=None) -> str:
+    def dump_forest(
+        cls, root_node: Node, token_dicts: Optional[Dict[int, Dict[str, str]]] = None
+    ) -> str:
         """ Return a string with a multi-line text representation of the parse tree """
         dumper = cls(token_dicts)
         dumper.go(root_node)
