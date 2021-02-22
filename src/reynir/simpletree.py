@@ -1084,7 +1084,7 @@ class SimpleTree:
                 + tag
             )
         # No children
-        tokentype = self._head.get("k") or ""
+        tokentype: str = cast(Optional[str], self._head.get("k")) or ""
         if tokentype == "PUNCTUATION":
             # Punctuation
             return "p"
@@ -1214,7 +1214,10 @@ class SimpleTree:
     @cached_property
     def _lemma(self) -> str:
         """ Return the lemma of this node only, if any """
-        lemma = cast(Union[str, Tuple[Callable, Tuple]], self._head.get("s", self._text))
+        lemma = cast(
+            Union[str, Tuple[Callable[..., str], Tuple]],
+            self._head.get("s", self._text),
+        )
         if isinstance(lemma, tuple):
             # We have a lazy-evaluation function tuple:
             # call it to obtain the lemma

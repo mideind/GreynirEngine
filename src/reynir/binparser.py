@@ -43,7 +43,7 @@
 """
 
 from typing import (
-    cast,
+    Sequence, cast,
     TypeVar,
     Dict,
     Mapping,
@@ -95,7 +95,8 @@ _PATH = os.path.dirname(__file__)
 
 
 # The type of a token dictionary returned from describe_token()
-TokenDict = Dict[str, Union[str, int, Tuple[str, str, str, str], List["TokenDict"]]]
+TokenDictItem = Union[str, int, Tuple[str, str, str, str]]
+TokenDict = Dict[str, TokenDictItem]
 
 
 class WordMatchers:

@@ -301,6 +301,7 @@ class Node:
 
         if lb.iNt >= 0:
             # Token node: find the corresponding terminal
+            assert parent is not None
             tix: int = parent.pList[index]
             node._terminal = job.grammar.lookup_terminal(tix)
             node._token = job.tokens[lb.iNt]
