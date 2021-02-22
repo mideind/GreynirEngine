@@ -95,7 +95,7 @@ _PATH = os.path.dirname(__file__)
 
 
 # The type of a token dictionary returned from describe_token()
-TokenDict = Dict[str, Union[str, int, Tuple[str, str, str, str]]]
+TokenDict = Dict[str, Union[str, int, Tuple[str, str, str, str], List["TokenDict"]]]
 
 
 class WordMatchers:

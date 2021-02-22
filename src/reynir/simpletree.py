@@ -39,10 +39,8 @@
 
 from typing import (
     Dict,
-    FrozenSet,
     List,
     Mapping,
-    Sequence,
     Tuple,
     Iterable,
     Iterator,
@@ -68,6 +66,7 @@ from .binparser import (
     BIN_Terminal,
     augment_terminal,
     canonicalize_token,
+    TokenDict,
 )
 from .fastparser import ParseForestNavigator, Node
 from .bintokenizer import (
@@ -569,7 +568,7 @@ class SimpleTree:
 
     def __init__(
         self,
-        pgs: Iterable[Iterable[Dict[str, Any]]],
+        pgs: Iterable[List[TokenDict]],
         stats: Optional[StatsDict] = None,
         register=None,
         parent: Optional["SimpleTree"] = None,
@@ -586,14 +585,14 @@ class SimpleTree:
             self._register = register
         self._parent = parent
         # Flatten the paragraphs into a sentence array
-        sents: List[Dict[str, Any]] = []
+        sents: List[TokenDict] = []
         if pgs:
             for pg in pgs:
                 sents.extend(pg)
         self._sents = sents
         self._len = len(sents)
-        self._head = sents[0] if self._len == 1 else {}
-        self._children: Optional[List[Dict[str, Any]]] = self._head.get("p")
+        self._head: TokenDict = sents[0] if self._len == 1 else {}
+        self._children = cast(Optional[List[TokenDict]], self._head.get("p"))
         self._children_cache: Optional[Tuple["SimpleTree", ...]] = None
         self._tag_cache: Optional[List[str]] = None
 
@@ -650,14 +649,14 @@ class SimpleTree:
     @property
     def tag(self) -> Optional[str]:
         """ The simplified tag of this subtree, i.e. P, S, NP, VP, ADVP... """
-        return self._head.get("i")
+        return cast(Optional[str], self._head.get("i"))
 
     @property
     def kind(self) -> Optional[str]:
         """ The kind of token associated with this subtree, for example
             'WORD', 'MEASUREMENT' or 'PUNCTUATION', if the subtree is
             a terminal node, or None otherwise """
-        return self._head.get("k")
+        return cast(Optional[str], self._head.get("k"))
 
     @property
     def ifd_tags(self) -> List[str]:
@@ -738,31 +737,32 @@ class SimpleTree:
             'canonicalized' version of the terminal name, where literal
             specifications have been simplified
             (e.g., 'orð:hk'_x_y becomes 'no_hk_x_y') """
-        return self._head.get("t")
+        return cast(Optional[str], self._head.get("t"))
 
     @property
     def original_terminal(self) -> Optional[str]:
         """ The terminal matched by this subtree, as originally specified
             in the grammar """
-        return self._head.get("o", self._head.get("t"))
+        return cast(Optional[str], self._head.get("o", self._head.get("t")))
 
     @property
     def terminal_with_all_variants(self) -> Optional[str]:
         """ The terminal matched by this subtree, with all applicable
             variants in canonical form (in alphabetical order, except for
             verb argument cases) """
-        terminal = self._head.get("a")
+        terminal = cast(Optional[str], self._head.get("a"))
         if terminal is not None:
             # All variants already available in canonical form: we're done
             return terminal
-        terminal = self._head.get("t")
+        terminal = cast(Optional[str], self._head.get("t"))
         if terminal is None:
             return None
         # Reshape the terminal string to the canonical form where
         # the variants are in alphabetical order, except
         # for verb arguments, which are always first, immediately
         # following the terminal category.
-        return augment_terminal(terminal, self._text.lower(), self._head.get("b") or "")
+        beyging = cast(Optional[str], self._head.get("b")) or ""
+        return augment_terminal(terminal, self._text.lower(), beyging)
 
     @cached_property
     def variants(self) -> List[str]:
@@ -776,7 +776,7 @@ class SimpleTree:
         """ Returns a list of all variants associated with
             this subtree's terminal, if any, augmented also by BÍN variants """
         # First, check whether an 'a' field is present
-        a = self._head.get("a")
+        a = cast(Optional[str], self._head.get("a"))
         if a is not None:
             # The 'a' field contains the entire variant set, canonically ordered
             return a.split("_")[1:]
@@ -784,7 +784,8 @@ class SimpleTree:
         if self.terminal in {"sérnafn", "fyrirtæki"}:
             # Don't attempt to augment proper names or company abbreviations
             return vlist
-        bin_variants = BIN_Token.bin_variants(self._head.get("b") or "")
+        beyging = cast(Optional[str], self._head.get("b")) or ""
+        bin_variants = BIN_Token.bin_variants(beyging)
         return vlist + list(bin_variants - set(vlist))  # Add any missing variants
 
     @cached_property
@@ -804,7 +805,7 @@ class SimpleTree:
     def index(self) -> Optional[int]:
         """ Return the associated token index, if this is a terminal,
             otherwise None """
-        return self._head.get("ix") if self.is_terminal else None
+        return cast(Optional[int], self._head.get("ix")) if self.is_terminal else None
 
     @cached_property
     def sentences(self) -> List["SimpleTree"]:
@@ -1131,7 +1132,7 @@ class SimpleTree:
             node_head = node._head
             node_kind = node_head.get("k")
             if node_kind == "NONTERMINAL":
-                result.append("(" + node_head.get("i", ""))
+                result.append("(" + cast(str, node_head.get("i", "")))
                 # Recursively add the children of this nonterminal
                 for child in node.children:
                     result.append(" ")
@@ -1208,12 +1209,12 @@ class SimpleTree:
     @property
     def _text(self) -> str:
         """ Return the original text within this node only, if any """
-        return self._head.get("x", "")
+        return cast(str, self._head.get("x", ""))
 
     @cached_property
     def _lemma(self) -> str:
         """ Return the lemma of this node only, if any """
-        lemma = self._head.get("s", self._text)
+        lemma = cast(Union[str, Tuple[Callable, Tuple]], self._head.get("s", self._text))
         if isinstance(lemma, tuple):
             # We have a lazy-evaluation function tuple:
             # call it to obtain the lemma
@@ -1494,7 +1495,7 @@ class SimpleTree:
         """ Return the word category of this node only, if any """
         # This is the category that is picked up from BÍN, not the terminal
         # category. The terminal category is available in the .tcat property)
-        return self._head.get("c")
+        return cast(Optional[str], self._head.get("c"))
 
     # Set of token kind description strings for tokens that contain text
     _TEXT_TOKEN_DESC = frozenset(TOK.descr[kind] for kind in TOK.TEXT)
@@ -1503,7 +1504,7 @@ class SimpleTree:
     def cat(self) -> str:
         """ Return the word category of this node, if it is a terminal,
             or an empty string otherwise """
-        cat = self._head.get("c", "")
+        cat = cast(str, self._head.get("c", ""))
         if cat:
             return cat
         if self.terminal is not None and self.kind in self._TEXT_TOKEN_DESC:
@@ -1525,9 +1526,9 @@ class SimpleTree:
             return ""
         if k == "PERSON":
             # Return person_kk, person_kvk or person_hk for person names
-            return "person_" + (self._head.get("c") or "hk")
+            return "person_" + (cast(Optional[str], self._head.get("c")) or "hk")
         # Unknown words by convention get a category of 'entity'
-        return self._head.get("c", "entity")
+        return cast(str, self._head.get("c", "entity"))
 
     @property
     def categories(self) -> List[str]:
@@ -1539,7 +1540,7 @@ class SimpleTree:
                 t.extend(ch.categories)
             return t
         # Terminal node: return the associated word category
-        c = self._head.get("c")
+        c = cast(Optional[str], self._head.get("c"))
         if c:
             return [c]
         # If we have a lemma, we must return a corresponding category
@@ -1550,7 +1551,7 @@ class SimpleTree:
     def fl(self) -> str:
         """ Return the BÍN 'fl' field of this node, if it is a terminal,
             or an empty string otherwise """
-        return self._head.get("f", "")
+        return cast(str, self._head.get("f", ""))
 
     @cached_property
     def text(self) -> str:

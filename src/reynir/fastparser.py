@@ -88,6 +88,8 @@ from .glock import GlobalLock
 from ._eparser import lib as eparser, ffi  # type: ignore
 
 
+ffi_NULL: Any = cast(Any, ffi).NULL
+
 # The type of an entry on a ParseTreeFlattener stack
 FlattenerType = Union[Tuple[Terminal, BIN_Token], Nonterminal]
 ProductionTuple = Tuple[Production, List[Optional["Node"]]]
@@ -157,7 +159,9 @@ class ParseJob:
         return False
 
     @classmethod
-    def make(cls, grammar: Grammar, tokens, terminals, matching_cache) -> "ParseJob":
+    def make(
+        cls, grammar: Grammar, tokens: List[BIN_Token], terminals, matching_cache
+    ) -> "ParseJob":
         """ Create a new parse job with for a given token sequence and set of terminals """
         with cls._lock:
             h = cls._seq
@@ -174,38 +178,38 @@ class ParseJob:
             del cls._jobs[handle]
 
     @classmethod
-    def dispatch(cls, handle: int, token, terminal) -> bool:
+    def dispatch(cls, handle: int, token_index: int, terminal_index: int) -> bool:
         """ Dispatch a match request to the correct parse job """
-        return cls._jobs[handle].matches(token, terminal)
+        return cls._jobs[handle].matches(token_index, terminal_index)
 
     @classmethod
-    def alloc(cls, handle: int, token, size: int):
+    def alloc(cls, handle: int, token_index: int, size: int):
         """ Dispatch a cache buffer allocation request to the correct parse job """
-        return cls._jobs[handle].alloc_cache(token, size)
+        return cls._jobs[handle].alloc_cache(token_index, size)
 
 
 # Declare CFFI callback functions to be called from the C++ code
 # See: https://cffi.readthedocs.io/en/latest/using.html#extern-python-new-style-callbacks
 
 
-@ffi.def_extern()
-def matching_func(handle: int, token, terminal) -> bool:
+@ffi.def_extern()  # type: ignore
+def matching_func(handle: int, token_index: int, terminal_index: int) -> bool:
     """ This function is called from the C++ parser to determine
         whether a token matches a terminal. The token is referenced
         by 0-based index, and the terminal by a 1-based index.
         The handle is an arbitrary UINT that was passed to
         earleyParse(). In this case, it is used to identify
         a ParseJob object that dispatches the match query. """
-    return ParseJob.dispatch(handle, token, terminal)
+    return ParseJob.dispatch(handle, token_index, terminal_index)
 
 
-@ffi.def_extern()
-def alloc_func(handle: int, token, size):
+@ffi.def_extern()  # type: ignore
+def alloc_func(handle: int, token_index: int, size: int):
     """ Allocate a token/terminal matching cache buffer, at least size bytes.
         If the callback returns ffi.NULL, the parser will allocate its own buffer.
         The point of this callback is to allow re-using buffers for identical tokens,
         so we avoid making unnecessary matching calls. """
-    return ParseJob.alloc(handle, token, size)
+    return ParseJob.alloc(handle, token_index, size)
 
 
 class Node:
@@ -279,10 +283,10 @@ class Node:
 
     @classmethod
     def from_c_node(
-        cls, job: ParseJob, c_node: Any, parent=None, index: int = 0
+        cls, job: ParseJob, c_node: Any, parent: Any=None, index: int = 0
     ) -> Optional["Node"]:
         """ Initialize a Python node from a C++ SPPF node structure """
-        if c_node == ffi.NULL:
+        if c_node == ffi_NULL:
             return None
 
         lb = c_node.label
@@ -297,7 +301,7 @@ class Node:
 
         if lb.iNt >= 0:
             # Token node: find the corresponding terminal
-            tix = parent.pList[index]
+            tix: int = parent.pList[index]
             node._terminal = job.grammar.lookup_terminal(tix)
             node._token = job.tokens[lb.iNt]
             return node
@@ -305,13 +309,13 @@ class Node:
         # Nonterminal node
         nt = lb.iNt
         node._nonterminal = job.grammar.lookup_nonterminal(nt)
-        node._completed = lb.pProd == ffi.NULL
+        node._completed = lb.pProd == ffi_NULL
         # Cache nonterminal nodes
         job.c_dict[c_node] = node
 
         # Loop through the families of children of this node
         fe = c_node.pHead
-        while fe != ffi.NULL:
+        while fe != ffi_NULL:
 
             # Save on node count by coalescing interior nodes
             # into the child list of the enclosing completed
@@ -320,14 +324,14 @@ class Node:
             # and not ambiguous.
             ch = []
 
-            def push_pair(p1, p2) -> None:
+            def push_pair(p1: Any, p2: Any) -> None:
                 """ Push a pair of child nodes onto the child list """
 
-                def push_child(p) -> None:
+                def push_child(p: Any) -> None:
                     """ Push a single child node onto the child list """
-                    if p.label.iNt == nt and p.label.pProd != ffi.NULL:
+                    if p.label.iNt == nt and p.label.pProd != ffi_NULL:
                         # Interior node for the same nonterminal
-                        if p.pHead.pNext == ffi.NULL:
+                        if p.pHead.pNext == ffi_NULL:
                             # Unambiguous: recurse
                             push_pair(p.pHead.p1, p.pHead.p2)
                         else:
@@ -342,17 +346,17 @@ class Node:
                                 # Add placeholders for the part of the production
                                 # that is missing from the front since we abandon
                                 # the recursion here
-                                ch.extend([ffi.NULL] * (p.label.nDot - 2))
+                                ch.extend([ffi_NULL] * (p.label.nDot - 2))
                             ch.append(p)
-                            ch.append(ffi.NULL)  # Placeholder
+                            ch.append(ffi_NULL)  # Placeholder
                     else:
                         # Terminal, epsilon or unrelated nonterminal
                         ch.append(p)
 
-                if p1 != ffi.NULL and p2 != ffi.NULL:
+                if p1 != ffi_NULL and p2 != ffi_NULL:
                     push_child(p1)
                     push_child(p2)
-                elif p2 != ffi.NULL:
+                elif p2 != ffi_NULL:
                     push_child(p2)
                 else:
                     push_child(p1)
@@ -378,9 +382,9 @@ class Node:
             node._families = other._families[:]
         return node
 
-    def _add_family(self, job: ParseJob, c_prod, c_children) -> None:
+    def _add_family(self, job: ParseJob, c_prod: Any, c_children: Any) -> None:
         """ Add a family of children to this node, in parallel with other families """
-        assert c_prod != ffi.NULL
+        assert c_prod != ffi_NULL
         prod: Production = job.grammar.productions_by_ix[c_prod.nId]
         prio: int = prod.priority
         # Note: lower priority values mean higher priority!
@@ -632,7 +636,7 @@ class Fast_Parser(BIN_Parser):
     """
 
     # The C++ grammar object (a binary blob)
-    _c_grammar = ffi.NULL
+    _c_grammar = ffi_NULL
     # The C++ grammar timestamp
     _c_grammar_ts: Optional[float] = None
 
@@ -644,15 +648,15 @@ class Fast_Parser(BIN_Parser):
             ts = os.path.getmtime(fname)
         except os.error:
             raise GrammarError("Binary grammar file {0} not found".format(fname))
-        if cls._c_grammar == ffi.NULL or cls._c_grammar_ts != ts:
+        if cls._c_grammar == ffi_NULL or cls._c_grammar_ts != ts:
             # Need to load or reload the grammar
-            if cls._c_grammar != ffi.NULL:
+            if cls._c_grammar != ffi_NULL:
                 # Delete previous grammar instance, if any
                 eparser.deleteGrammar(cls._c_grammar)
-                cls._c_grammar = ffi.NULL
+                cls._c_grammar = ffi_NULL
             cls._c_grammar = eparser.newGrammar(fname.encode("utf-8"))
             cls._c_grammar_ts = ts
-            if cls._c_grammar == ffi.NULL:
+            if cls._c_grammar == ffi_NULL:
                 raise GrammarError(
                     "Unable to load binary grammar file {0}".format(fname)
                 )
@@ -721,7 +725,7 @@ class Fast_Parser(BIN_Parser):
 
             node = eparser.earleyParse(self._c_parser, lw, root_index, job.handle, err)
 
-            if node == ffi.NULL:
+            if node == ffi_NULL:
                 ix = err[0]  # Token index
                 if ix >= 1:
                     # Find the error token index in the original (unwrapped) token list
@@ -761,9 +765,9 @@ class Fast_Parser(BIN_Parser):
         """ Delete C++ objects. Must call after last use of Fast_Parser
             to avoid memory leaks. The context manager protocol is recommended
             to guarantee cleanup. """
-        if self._c_parser is not ffi.NULL:
+        if self._c_parser != ffi_NULL:
             eparser.deleteParser(self._c_parser)
-        self._c_parser = ffi.NULL
+        self._c_parser = ffi_NULL
         if Settings.DEBUG:
             eparser.printAllocationReport()
             print(
@@ -773,9 +777,9 @@ class Fast_Parser(BIN_Parser):
     @classmethod
     def discard_grammar(cls) -> None:
         """ Discard the C grammar object instance held as a class attribute """
-        if cls._c_grammar != ffi.NULL:
+        if cls._c_grammar != ffi_NULL:
             eparser.deleteGrammar(cls._c_grammar)
-        cls._c_grammar = ffi.NULL
+        cls._c_grammar = ffi_NULL
         cls._c_grammar_ts = None
 
     @classmethod
