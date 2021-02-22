@@ -345,7 +345,9 @@ class _Sentence:
 
 
 # Create a public alias for the _Sentence class
-Sentence: Type[_Sentence] = _Sentence
+# Note that putting a type annotation here (i.e. Sentence: Type[_Sentence] = _Sentence)
+# is not a good idea, cf. https://mypy.readthedocs.io/en/latest/common_issues.html#variables-vs-type-aliases
+Sentence = _Sentence
 
 
 class _NounPhrase(_Sentence):
@@ -622,7 +624,7 @@ class _Job:
 
 
 # Create a public alias for the _Job class
-Job: Type[_Job] = _Job
+Job = _Job
 
 
 class _Job_NP(_Job):
