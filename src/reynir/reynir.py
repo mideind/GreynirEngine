@@ -621,6 +621,10 @@ class _Job:
         return self._r.parse_foreign_sentences
 
 
+# Create a public alias for the _Job class
+Job: Type[_Job] = _Job
+
+
 class _Job_NP(_Job):
 
     """ Specialized _Job class that creates _NounPhrase objects
@@ -762,7 +766,7 @@ class Greynir:
 
     def submit(
         self,
-        text: str,
+        text: StringIterable,
         parse: bool = False,
         *,
         split_paragraphs: bool = False,
@@ -784,6 +788,7 @@ class Greynir:
         if split_paragraphs:
             # Original text consists of paragraphs separated by newlines:
             # insert paragraph separators before tokenization
+            assert isinstance(text, str)
             text = mark_paragraphs(text)
         tokens = self.tokenize(text)
         return _Job(
