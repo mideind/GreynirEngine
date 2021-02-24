@@ -87,22 +87,35 @@
 
 """
 
-from typing import Dict, Union, List, Set, Tuple, Optional, Any, cast
+from typing import Dict, DefaultDict, List, Set, Tuple, Optional, Any, cast
 
-import copy
-from collections import defaultdict, Counter
-import threading
+from collections import defaultdict
+
+from typing_extensions import TypedDict
 
 from .grammar import Grammar, Production
-from .fastparser import Node, ParseForestNavigator, ParseForestPrinter, ParseError
-from .settings import Settings, Preferences, NounPreferences
+from .fastparser import Node, ParseForestNavigator
+from .settings import Preferences, NounPreferences
 from .verbframe import VerbFrame
-from .binparser import BIN_Token, BIN_Terminal
+from .binparser import BIN_Token, BIN_Terminal, BIN_Meaning
 
 
 # Types for data used in the reduction process
-ResultDict = Dict[str, Union[int, List[str], List[Tuple[BIN_Terminal, BIN_Token]]]]
-ChildDict = Dict[int, ResultDict]
+
+VerbTuple = Tuple[BIN_Terminal, BIN_Token]
+VerbList = List[VerbTuple]
+
+
+class ResultDict(TypedDict, total=False):
+    # Score
+    sc: int
+    # Verb scope information
+    so: VerbList
+    sl: VerbList
+
+
+VerbStack = List[Optional[VerbList]]
+ChildDict = DefaultDict[int, ResultDict]
 ScoreDict = Dict[int, Dict[BIN_Terminal, int]]
 BonusCache = Dict[Tuple[BIN_Terminal, str, BIN_Terminal, BIN_Token], int]
 FinalsDict = Dict[int, Set[BIN_Terminal]]
@@ -110,7 +123,7 @@ TokensDict = Dict[int, BIN_Token]
 KeyTuple = Tuple[Node, int]
 
 # Reducer result dictionary with a null score
-NULL_SC: ResultDict = dict(sc=0)
+NULL_SC: ResultDict = {"sc": 0}
 
 _VERB_PREP_BONUS = 7  # Give 7 extra points for a verb/preposition match
 _VERB_PREP_PENALTY = -2  # Subtract 2 points for a non-match
@@ -125,6 +138,7 @@ _CASES_SET = BIN_Token.CASES_SET
 _PREP_SCOPE_SET = frozenset(
     ("begin_prep_scope", "purge_prep", "no_prep", "enable_prep_bonus")
 )
+_CONTAINED_VERBS_SET = frozenset(("begin_prep_scope", "purge_verb"))
 
 
 class _ReductionScope:
@@ -137,7 +151,7 @@ class _ReductionScope:
     def __init__(self, reducer: "ParseForestReducer", node: Node) -> None:
         self.reducer = reducer
         # Child tree scores
-        self.sc: ChildDict = defaultdict(lambda: dict(sc=0))
+        self.sc: ChildDict = defaultdict(lambda: {"sc": 0})
         # We are only interested in completed nonterminals
         nt = node.nonterminal if node.is_completed else None
         # Verb/preposition matching stuff
@@ -168,9 +182,8 @@ class _ReductionScope:
         """ Add a child node's score to the parent family's score,
             where the parent family has index ix (0..n) """
         d = self.sc[ix]
-        d["sc"] += rd["sc"]  # type: ignore
-        # Carry information about contained prepositions ("fs")
-        # and verbs ("so") up the tree
+        d["sc"] += rd["sc"]
+        # Carry information about contained verbs ("so") up the tree
         for key in ("so", "sl"):
             if key in rd:
                 if key in d:
@@ -178,7 +191,7 @@ class _ReductionScope:
                 else:
                     d[key] = rd[key][:]  # type: ignore
                 if key == "sl":
-                    self.reducer.set_current_verb(rd[key])
+                    self.reducer.set_current_verb(rd["sl"])
 
     def process(self, node: Node) -> ResultDict:
         """ After accumulating scores for all possible productions
@@ -214,13 +227,13 @@ class _ReductionScope:
                 # a separate dict copy (we don't want to clobber the child's dict)
                 # Get score adjustment for this nonterminal, if any
                 # (This is the $score(+/-N) pragma from Greynir.grammar)
-                sc["sc"] += self.reducer._score_adj.get(nt, 0)  # type: ignore
+                sc["sc"] += self.reducer._score_adj.get(nt, 0)
 
                 if nt.has_tag("apply_length_bonus"):
                     # Give this nonterminal a bonus depending on how many tokens
                     # it encloses
                     bonus = (node.end - node.start - 1) * _LENGTH_BONUS_FACTOR
-                    sc["sc"] += bonus  # type: ignore
+                    sc["sc"] += bonus
 
                 if (
                     nt.has_tag("apply_prep_bonus")
@@ -229,14 +242,14 @@ class _ReductionScope:
                     # This is a nonterminal that we like to see in a verb/prep context
                     # An example is Dagsetning which we like to be associated
                     # with a verb rather than a noun phrase
-                    sc["sc"] += _VERB_PREP_BONUS  # type: ignore
+                    sc["sc"] += _VERB_PREP_BONUS
 
                 if nt.has_tag("pick_up_verb"):
-                    verb = cast(List[str], sc.get("so"))
+                    verb = sc.get("so")
                     if verb is not None:
                         sc["sl"] = verb[:]
 
-                if nt.has_any_tag({"begin_prep_scope", "purge_verb"}):
+                if nt.has_any_tag(_CONTAINED_VERBS_SET):
                     # Delete information about contained verbs
                     # SagnRuna, EinSetningÁnF, SagnHluti, NhFyllingAtv
                     # and Setning have this tag
@@ -264,35 +277,42 @@ class ParseForestReducer:
         self._scores = scores
         self._grammar = grammar
         self._score_adj = grammar._nt_scores
-        self._prep_bonus_stack = [None]
-        self._current_verb_stack = [None]
+        self._prep_bonus_stack: VerbStack = [None]
+        self._current_verb_stack: VerbStack = [None]
         self._bonus_cache: BonusCache = dict()
 
-    def push_prep_bonus(self, val):
+    def push_prep_bonus(self, val: Optional[VerbList]) -> None:
         self._prep_bonus_stack.append(val)
 
     def pop_prep_bonus(self) -> None:
         self._prep_bonus_stack.pop()
 
-    def get_prep_bonus(self):
+    def get_prep_bonus(self) -> Optional[VerbList]:
         return self._prep_bonus_stack[-1]
 
-    def push_current_verb(self, val):
+    def push_current_verb(self, val: Optional[VerbList]) -> None:
         self._current_verb_stack.append(val)
 
     def pop_current_verb(self) -> None:
         self._current_verb_stack.pop()
 
-    def get_current_verb(self):
+    def get_current_verb(self) -> Optional[VerbList]:
         return self._current_verb_stack[-1]
 
-    def set_current_verb(self, val):
+    def set_current_verb(self, val: Optional[VerbList]) -> None:
         self._current_verb_stack[-1] = val
 
-    def verb_prep_bonus(self, prep_terminal, prep_token, verb_terminal, verb_token):
+    def verb_prep_bonus(
+        self,
+        prep_terminal: BIN_Terminal,
+        prep_token: str,
+        verb_terminal: BIN_Terminal,
+        verb_token: BIN_Token,
+    ) -> int:
         """ Return a verb/preposition match bonus, as and if applicable """
         # Only do this if the prepositions match the verb being connected to
         m = verb_token.match_with_meaning(verb_terminal)
+        assert isinstance(m, BIN_Meaning)
         verb = m.stofn
         if "MM" in m.beyging:
             # Use MM-NH nominal form for MM verbs,
@@ -322,9 +342,10 @@ class ParseForestReducer:
     def visit_token(self, node: Node) -> ResultDict:
         """ At token node """
         # Return the score of this token/terminal match
-        d: ResultDict = dict()
-        sc = self._scores[node.start][node.terminal]
-        if node.terminal.matches_category("fs"):
+        d: ResultDict = {}
+        nt = cast(BIN_Terminal, node.terminal)
+        sc = self._scores[node.start][nt]
+        if nt.matches_category("fs"):
             # Preposition terminal - this is either a normal fs_case terminal
             # or a literal terminal such as "á:fs"
             prep_bonus = self.get_prep_bonus()
@@ -337,7 +358,7 @@ class ParseForestReducer:
                 # pylint: disable=not-an-iterable
                 for terminal, token in prep_bonus:
                     # Attempt to find the preposition matching bonus in the cache
-                    key = (node.terminal, node.token.lower, terminal, token)
+                    key = (nt, cast(BIN_Token, node.token).lower, terminal, token)
                     bonus = self._bonus_cache.get(key)
                     if bonus is None:
                         bonus = self._bonus_cache[key] = self.verb_prep_bonus(*key)
@@ -350,9 +371,9 @@ class ParseForestReducer:
                             final_bonus = max(final_bonus, bonus)
                 if final_bonus is not None:
                     sc += final_bonus
-        elif node.terminal.matches_category("so"):  # !!! Was .startswith("so")
+        elif nt.matches_category("so"):  # !!! Was .startswith("so")
             # Verb terminal: pick up the verb
-            d["so"] = [(node.terminal, node.token)]
+            d["so"] = [(nt, cast(BIN_Token, node.token))]
         d["sc"] = node.score = sc
         return d
 
@@ -455,7 +476,7 @@ class ParseForestReducer:
                 v = NULL_SC
             # Memoize the result for this (node, current_key) combination
             visited[(w, current_key)] = v
-            w.score = cast(int, v["sc"])
+            w.score = v["sc"]
             return v
 
         # Start the scoring and reduction process at the root
@@ -477,8 +498,8 @@ class OptionFinder(ParseForestNavigator):
     def visit_token(self, level: int, node: Node) -> Any:
         """ At token node """
         # assert node.terminal is not None
-        self._finals[node.start].add(node.terminal)
-        self._tokens[node.start] = node.token
+        self._finals[node.start].add(cast(BIN_Terminal, node.terminal))
+        self._tokens[node.start] = cast(BIN_Token, node.token)
         return None
 
 
@@ -604,7 +625,7 @@ class Reducer:
                     # Noun priorities, i.e. between different genders
                     # of the same word form (for example "ára" which can refer to
                     # three stems with different genders)
-                    if txt_last in noun_prefs:
+                    if txt_last in noun_prefs and t.gender is not None:
                         np = noun_prefs[txt_last].get(t.gender, 0)
                         sc[t] += np
                 elif tfirst == "fs":
@@ -771,7 +792,7 @@ class Reducer:
         # Third pass: navigate the tree bottom-up, eliminating lower-rated
         # options (subtrees) in favor of higher rated ones
         score = self._reduce(forest, scores)
-        return forest, cast(int, score["sc"])
+        return forest, score["sc"]
 
     def go(self, forest: Optional[Node]) -> Optional[Node]:
         """ Return only the reduced forest, without its score """

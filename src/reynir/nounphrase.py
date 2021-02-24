@@ -69,7 +69,7 @@ class NounPhrase:
     # Singleton parser instance
     _greynir: Optional[Greynir] = None
 
-    def __init__(self, np_string: str, *, force_number: str = None) -> None:
+    def __init__(self, np_string: str, *, force_number: Optional[str] = None) -> None:
         """ Initialize a NounPhrase from a text string.
             If force_number is set to "et" or "singular", we only
             consider singular interpretations of the string.

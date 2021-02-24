@@ -41,6 +41,8 @@
 
 """
 
+from typing import IO, Optional
+
 import os
 import stat
 import tempfile
@@ -64,24 +66,26 @@ except ImportError:
     except ImportError:
 
         # Not Unix, not Windows: bail out
-        def _lock_file(file, block):
+        def _lock_file(file: IO, block: bool) -> None:
             raise TypeError("File locking not supported on this platform")
 
-        def _unlock_file(file):
+        def _unlock_file(file: IO) -> None:
             raise TypeError("File locking not supported on this platform")
 
     else:
 
         # Windows
 
-        def _lock_file(file, block):
+        def _lock_file(file: IO, block: bool) -> None:  # type: ignore
             # Lock just the first byte of the file
             retry = True
             while retry:
                 retry = False
                 try:
-                    msvcrt.locking(
-                        file.fileno(), msvcrt.LK_LOCK if block else msvcrt.LK_NBLCK, 1
+                    msvcrt.locking(  # type: ignore
+                        file.fileno(),
+                        msvcrt.LK_LOCK if block else msvcrt.LK_NBLCK,  # type: ignore
+                        1
                     )
                 except OSError as e:
                     if block and e.errno == 36:
@@ -93,10 +97,10 @@ except ImportError:
                             "Couldn't lock {0}, errno is {1}".format(file.name, e.errno)
                         )
 
-        def _unlock_file(file):
+        def _unlock_file(file: IO) -> None:  # type: ignore
             try:
                 file.seek(0)
-                msvcrt.locking(file.fileno(), msvcrt.LK_UNLCK, 1)
+                msvcrt.locking(file.fileno(), msvcrt.LK_UNLCK, 1)  # type: ignore
             except OSError as e:
                 raise LockError(
                     "Couldn't unlock {0}, errno is {1}".format(file.name, e.errno)
@@ -108,13 +112,13 @@ else:
 
     POSIX = True
 
-    def _lock_file(file, block):
+    def _lock_file(file: IO, block: bool) -> None:  # type: ignore
         try:
             fcntl.flock(file.fileno(), fcntl.LOCK_EX | (0 if block else fcntl.LOCK_NB))
         except IOError:
             raise LockError("Couldn't lock {0}".format(file.name))
 
-    def _unlock_file(file):
+    def _unlock_file(file: IO) -> None:  # type: ignore
         # File is automatically unlocked on close
         pass
 
@@ -123,15 +127,15 @@ class GlobalLock:
 
     _TMP_DIR = tempfile.gettempdir()
 
-    def __init__(self, lockname):
+    def __init__(self, lockname: str) -> None:
         """ Initialize a global lock with the given name """
         assert lockname and isinstance(lockname, str)
         # Locate global locks in the system temporary directory
         # (should work on both Windows and Unix/POSIX)
         self._path = os.path.join(self._TMP_DIR, "greynir-" + lockname)
-        self._fp = None
+        self._fp: Optional[IO] = None
 
-    def acquire(self, block=True):
+    def acquire(self, block: bool=True) -> None:
         """ Acquire a global lock, blocking if block = True """
 
         if self._fp is not None:
@@ -175,7 +179,7 @@ class GlobalLock:
         fp.truncate()
         fp.flush()
 
-    def release(self):
+    def release(self) -> None:
         """ Release the lock """
         if self._fp is not None:
             _unlock_file(self._fp)

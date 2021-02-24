@@ -34,26 +34,16 @@
 """
 
 from typing import (
-    cast,
     Iterable,
     Iterator,
     Optional,
-    Union,
-    Dict,
     Tuple,
-    Set,
-    FrozenSet,
-    List,
-    Callable,
 )
 
 import os
 import locale
-import threading
 
-from contextlib import contextmanager, closing
-from collections import defaultdict
-from threading import Lock
+from contextlib import contextmanager
 from pkg_resources import resource_stream
 
 

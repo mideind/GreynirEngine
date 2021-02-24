@@ -17,9 +17,10 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+
+from typing import TYPE_CHECKING
+
 import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
 from datetime import datetime
 
 # -- General configuration ------------------------------------------------
@@ -58,7 +59,11 @@ author = u"Miðeind ehf."
 # Get version string from "../src/reynir/version.py"
 basepath, _ = os.path.split(os.path.realpath(__file__))
 version_path = os.path.join(basepath, "..", "src", "reynir", "version.py")
-exec(open(version_path).read())
+
+if TYPE_CHECKING:
+    __version__ = ""
+else:
+    exec(open(version_path).read())
 
 # The full version, including alpha/beta/rc tags.
 release = __version__  # pylint: disable=undefined-variable

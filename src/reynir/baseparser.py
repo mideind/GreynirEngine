@@ -32,7 +32,7 @@
 
 """
 
-from typing import Union, Dict, List, Iterator, Optional
+from typing import Dict, List, Iterator, Optional
 
 from .grammar import Grammar, GrammarItem, Terminal, Nonterminal, Production
 

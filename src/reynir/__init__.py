@@ -33,11 +33,24 @@
 
 # Expose the Greynir API
 
-from .reynir import Greynir, Reynir, Terminal
+from .reynir import (
+    Greynir,
+    Reynir,
+    Terminal,
+    LemmaTuple,
+    ProgressFunc,
+    ParseResult,
+    Sentence,
+    Paragraph,
+    ICELANDIC_RATIO,
+)
+
 # Import the following _underscored classes to be able to use them
 # in type signatures in derived classes
 from .reynir import (
-    _Job, _Sentence, _Paragraph, ProgressFunc, ParseResult, ICELANDIC_RATIO,
+    _Job,
+    _Sentence,
+    _Paragraph,
 )
 from .nounphrase import NounPhrase
 from .fastparser import ParseForestPrinter, ParseForestDumper, ParseForestFlattener
@@ -49,13 +62,22 @@ from .version import __version__
 # Expose the tokenizer API
 
 from tokenizer import (
-    TOK, Tok, paragraphs, correct_spaces, mark_paragraphs, Abbreviations
+    TOK,
+    Tok,
+    paragraphs,
+    correct_spaces,
+    mark_paragraphs,
 )
+from tokenizer.abbrev import Abbreviations
 from tokenizer import (
-    TP_LEFT, TP_CENTER, TP_RIGHT, TP_NONE, TP_WORD,
+    TP_LEFT,
+    TP_CENTER,
+    TP_RIGHT,
+    TP_NONE,
+    TP_WORD,
     KLUDGY_ORDINALS_PASS_THROUGH,
     KLUDGY_ORDINALS_MODIFY,
-    KLUDGY_ORDINALS_TRANSLATE
+    KLUDGY_ORDINALS_TRANSLATE,
 )
 
 __author__ = "Miðeind ehf."

@@ -62,6 +62,7 @@ from .bintokenizer import (
     StringIterable,
     load_token,
 )
+from .binparser import TokenDict
 from .fastparser import Fast_Parser, ParseError
 from .reducer import Reducer
 from .cache import cached_property
@@ -116,7 +117,8 @@ class _Sentence:
         assert self._len > 0  # Input should be already sanitized
         self._err_index: Optional[int] = None
         self._error: Optional[ParseError] = None
-        self._tree = self._simplified_tree = None
+        self._simplified_tree: Optional[SimpleTree] = None
+        self._tree = None
         # Number of possible combinations
         self._num: Optional[int] = None
         # Score of best parse tree
@@ -214,11 +216,10 @@ class _Sentence:
     @property
     def tidy_text(self) -> str:
         """ Return a [more] correctly spaced text representation of the sentence """
-        terminals = self.terminals
-        if terminals is None:
-            # Not parsed (yet)
+        if self.tree is None:
             txt = self.text
         else:
+            terminals = self.terminal_nodes
             # Use the terminal text representation -
             # it's got fancy em/en-dashes and stuff
             txt = " ".join(t.text for t in terminals)
@@ -239,7 +240,7 @@ class _Sentence:
         # Generate the terminal list from the parse tree
         # pylint: disable=not-an-iterable
         self._terminals = [
-            Terminal(d.text, d.lemma, d.tcat, d.all_variants, d.index)
+            Terminal(d.text, d.lemma, d.tcat, d.all_variants, d.index or 0)
             for d in self.terminal_nodes
         ]
         return self._terminals
@@ -310,7 +311,7 @@ class _Sentence:
 
     @classmethod
     def load(
-        cls, greynir_cls: GreynirType, tokens: List[Tok], tree: Optional[Dict]
+        cls, greynir_cls: GreynirType, tokens: List[Tok], tree: Optional[TokenDict]
     ) -> "_Sentence":
         """ Load previously dumped data.
             Useful for retrieving parsed data from a database.
@@ -329,7 +330,9 @@ class _Sentence:
         return instance
 
     @classmethod
-    def loads(cls, greynir_cls: GreynirType, json_str: str, **kwargs) -> "_Sentence":
+    def loads(
+        cls, greynir_cls: GreynirType, json_str: str, **kwargs: Any
+    ) -> "_Sentence":
         """ Load a previously dumped JSON string.
             Useful for retrieving parsed data from a database.
             Note: Normally, sentences are loaded using Greynir.loads_single(). """
@@ -339,6 +342,12 @@ class _Sentence:
     def __str__(self) -> str:
         """ Return a text representation of a sentence """
         return self.text
+
+
+# Create a public alias for the _Sentence class
+# Note that putting a type annotation here (i.e. Sentence: Type[_Sentence] = _Sentence)
+# is not a good idea, cf. https://mypy.readthedocs.io/en/latest/common_issues.html#variables-vs-type-aliases
+Sentence = _Sentence
 
 
 class _NounPhrase(_Sentence):
@@ -409,6 +418,10 @@ class _Paragraph:
     def __iter__(self) -> Iterator[_Sentence]:
         """ Allow easy iteration of sentences within this paragraph """
         return iter(self.sentences())
+
+
+# Create a public alias for the _Paragraph class
+Paragraph: Type[_Paragraph] = _Paragraph
 
 
 class _Job:
@@ -610,6 +623,10 @@ class _Job:
         return self._r.parse_foreign_sentences
 
 
+# Create a public alias for the _Job class
+Job = _Job
+
+
 class _Job_NP(_Job):
 
     """ Specialized _Job class that creates _NounPhrase objects
@@ -751,7 +768,7 @@ class Greynir:
 
     def submit(
         self,
-        text: str,
+        text: StringIterable,
         parse: bool = False,
         *,
         split_paragraphs: bool = False,
@@ -773,6 +790,7 @@ class Greynir:
         if split_paragraphs:
             # Original text consists of paragraphs separated by newlines:
             # insert paragraph separators before tokenization
+            assert isinstance(text, str)
             text = mark_paragraphs(text)
         tokens = self.tokenize(text)
         return _Job(

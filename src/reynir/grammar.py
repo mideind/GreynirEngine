@@ -63,8 +63,8 @@
 """
 
 from typing import (
+    FrozenSet,
     List,
-    Sequence,
     Dict,
     Set,
     Tuple,
@@ -73,6 +73,7 @@ from typing import (
     Optional,
     Union,
     Any,
+    cast,
 )
 
 import os
@@ -84,7 +85,7 @@ from collections import defaultdict, OrderedDict
 # pylint: disable=no-name-in-module
 if __package__:
     from .settings import Settings, StaticPhrases
-    from .basics import changedlocale
+    from .basics import changedlocale, ConfigError
 else:
     from settings import Settings, StaticPhrases  # type: ignore
     from basics import changedlocale, ConfigError  # type: ignore
@@ -150,7 +151,7 @@ class Nonterminal(GrammarItem):
     """ A nonterminal, either at the left hand side of
         a rule or within a production """
 
-    _INDEX = -1  # Running sequence number (negative) of all nonterminals
+    _index = -1  # Running sequence number (negative) of all nonterminals
 
     def __init__(self, name: str, fname: Optional[str] = None, line: int = 0) -> None:
         super().__init__()
@@ -166,8 +167,8 @@ class Nonterminal(GrammarItem):
         # explicitly nullable?
         self._optional = name.endswith("?") or name.endswith("*")
         # Give all nonterminals a unique, negative sequence number for hashing purposes
-        self._index = Nonterminal._INDEX
-        Nonterminal._INDEX -= 1
+        self._index = Nonterminal._index
+        Nonterminal._index -= 1
         self._hash = id(self).__hash__()
 
     def __hash__(self) -> int:
@@ -225,7 +226,7 @@ class Nonterminal(GrammarItem):
         """ Check whether this nonterminal has been tagged with the given tag """
         return self._tags is not None and tag in self._tags
 
-    def has_any_tag(self, tagset: Set[str]) -> bool:
+    def has_any_tag(self, tagset: FrozenSet[str]) -> bool:
         """ Check whether this nonterminal has been tagged
             with any of the given tags """
         return False if self._tags is None else not self._tags.isdisjoint(tagset)
@@ -236,6 +237,11 @@ class Nonterminal(GrammarItem):
             self._tags = {tag}
         else:
             self._tags.add(tag)
+
+    @property
+    def is_noun_phrase(self) -> bool:
+        """ This is overwritten in BIN_Nonterminal in binparser.py """
+        return False
 
     def __repr__(self) -> str:
         return self._name
@@ -248,13 +254,13 @@ class Terminal(GrammarItem):
 
     """ A terminal within a right-hand-side production """
 
-    _INDEX = 1  # Running sequence number (positive) of all terminals
+    _index = 1  # Running sequence number (positive) of all terminals
 
     def __init__(self, name: str) -> None:
         super().__init__()
         self._name = name
-        self._index = Terminal._INDEX
-        Terminal._INDEX += 1
+        self._index = Terminal._index
+        Terminal._index += 1
         # The hash is used quite often so it is worth caching
         self._hash = id(self).__hash__()
 
@@ -282,7 +288,7 @@ class Terminal(GrammarItem):
         assert ix > 0
         super().set_index(ix)
 
-    def matches(self, t_kind: str, t_val, t_lit) -> bool:
+    def matches(self, t_kind: str, t_val: str, t_lit: str) -> bool:
         """ Does this terminal match the given token? """
         return self._name == t_kind
 
@@ -318,7 +324,7 @@ class LiteralTerminal(Terminal):
             within single or double quotes """
         return True
 
-    def matches(self, t_kind: str, t_val, t_lit) -> bool:
+    def matches(self, t_kind: str, t_val: str, t_lit: str) -> bool:
         """ A literal terminal matches a token if the token text is
             canonically or absolutely identical to the literal """
         if self._strong:
@@ -372,7 +378,7 @@ class Production:
 
     """ A right-hand side of a grammar rule """
 
-    _INDEX = 0  # Running sequence number of all productions
+    _index = 0  # Running sequence number of all productions
 
     def __init__(
         self,
@@ -394,15 +400,15 @@ class Production:
         # Cache the length of the production as it is used A LOT
         self._len = len(self._rhs)
         # Give all productions a unique sequence number for hashing purposes
-        self._index = Production._INDEX
-        Production._INDEX += 1
+        self._index = Production._index
+        Production._index += 1
         # Cached tuple representation of this production
         self._tuple: Optional[Tuple[int, ...]] = None
 
     @classmethod
     def reset(cls) -> None:
         """ Reset the production index sequence to zero """
-        cls._INDEX = 0
+        cls._index = 0
 
     def append(self, t: GrammarItem) -> None:
         """ Append a terminal or nonterminal to this production """
@@ -889,6 +895,7 @@ class Grammar:
                         if rname is None:
                             # Epsilon
                             n = None
+                            sym = ""
                         else:
                             suffix = (
                                 "_".join(vval[vall.index(vx)] for vx in v) if v else ""
@@ -1199,7 +1206,7 @@ class Grammar:
         # multiple physical lines via continuation
         current_line = ""
         # Stack of conditional sections
-        cond_stack = [("", True)]
+        cond_stack: List[Tuple[str, bool]] = [("", True)]
 
         try:
             # Read grammar file line-by-line
@@ -1363,13 +1370,13 @@ class Grammar:
             ):
                 # This nonterminal has only one production,
                 # with only one nonterminal item
-                target = plist[0][1][0]
-                assert target != nt
-                while target in shortcuts:
+                target_nt: Nonterminal = cast(Nonterminal, plist[0][1][0])
+                assert target_nt != nt
+                while target_nt in shortcuts:
                     # Find ultimate destination of shortcut
-                    assert target != shortcuts[target]
-                    target = shortcuts[target]
-                shortcuts[nt] = target
+                    assert target_nt != shortcuts[target_nt]
+                    target = shortcuts[target_nt]
+                shortcuts[nt] = target_nt
 
         # Go through all productions and replace the shortcuts with their targets
         for nt, plist in grammar.items():
@@ -1533,7 +1540,7 @@ if __name__ == "__main__":
         print("Configuration error: {0}".format(e))
         quit()
 
-    from tokenizer import Abbreviations
+    from tokenizer.abbrev import Abbreviations
 
     # Make sure that the tokenizer has loaded its abbreviations
     # before we parse the grammar, since they are used in error checking

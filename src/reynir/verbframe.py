@@ -42,15 +42,12 @@
 from typing import (
     cast,
     Iterable,
-    Iterator,
     Optional,
     Union,
     Dict,
     Tuple,
     Set,
-    FrozenSet,
     List,
-    Callable,
 )
 
 from collections import defaultdict
@@ -59,8 +56,6 @@ from functools import lru_cache
 from .basics import (
     ConfigError,
     ALL_CASES,
-    ALL_GENDERS,
-    ALL_NUMBERS,
     SUBCLAUSES,
     REFLPRN,
     REFLPRN_SET,

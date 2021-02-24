@@ -62,7 +62,6 @@ from tokenizer import (
     TOK,
     Tok,
     tokenize_without_annotation,
-    Abbreviations,
     # The following imports are here in order to be visible in clients
     # (they are not used in this module)
     tokenize as raw_tokenize,
@@ -70,6 +69,7 @@ from tokenizer import (
     paragraphs,
     parse_tokens,
 )
+from tokenizer.abbrev import Abbreviations
 
 from .settings import StaticPhrases, AmbigPhrases, DisallowedNames
 from .settings import NamePreferences
@@ -78,7 +78,7 @@ from .bindb import BIN_Db, BIN_Meaning
 
 if "PyPy 7.3.0" in sys.version or "PyPy 7.2." in sys.version:
     # Patch bug in PyPy 7.2/7.3.0, which may raise an erroneous exception on str.rsplit()
-    def all_except_suffix(s):
+    def all_except_suffix(s: str) -> str:  # type: ignore
         try:
             return s[0 : s.rindex(" ")]
         except ValueError:
@@ -87,7 +87,9 @@ if "PyPy 7.3.0" in sys.version or "PyPy 7.2." in sys.version:
 
 
 else:
-    all_except_suffix = lambda s: s.rsplit(maxsplit=1)[0]
+
+    def all_except_suffix(s: str) -> str:
+        return s.rsplit(maxsplit=1)[0]
 
 
 # Generic type variable
@@ -115,31 +117,35 @@ StateDict = Mapping[str, StateList]
 DisambiguationTuple = Tuple[str, FrozenSet[str]]
 TokenConstructor = Type["Bin_TOK"]
 FilterFunction = Callable[[BIN_Meaning], bool]
+# This type should be identical to tokenizer.MeaningList
+MeaningList = Sequence[Tuple[str, int, str, str, str, str]]
 
 # Person names that are not recognized at the start of sentences
-NOT_NAME_AT_SENTENCE_START = {
-    "Annar",
-    "Annars",
-    "Kalla",
-    "Sanna",
-    "Gamli",
-    "Gamla",
-    "Vinni",
-    "Vinna",
-    "Vilji",
-    "Vilja",
-    "Ljótur",
-    "Ljót",
-    "Ljóti",
-    "Ljóts",
-}
+NOT_NAME_AT_SENTENCE_START: FrozenSet[str] = frozenset(
+    (
+        "Annar",
+        "Annars",
+        "Kalla",
+        "Sanna",
+        "Gamli",
+        "Gamla",
+        "Vinni",
+        "Vinna",
+        "Vilji",
+        "Vilja",
+        "Ljótur",
+        "Ljót",
+        "Ljóti",
+        "Ljóts",
+    )
+)
 
 # Set of all cases (nominative, accusative, dative, genitive)
-ALL_CASES = frozenset(["nf", "þf", "þgf", "ef"])
+ALL_CASES: FrozenSet[str] = frozenset(["nf", "þf", "þgf", "ef"])
 
 # Genders
-GENDER_SET = frozenset(("kk", "kvk", "hk"))
-GENDER_DICT = {"KK": "kk", "KVK": "kvk", "HK": "hk"}
+GENDER_SET: FrozenSet[str] = frozenset(("kk", "kvk", "hk"))
+GENDER_DICT: Mapping[str, str] = {"KK": "kk", "KVK": "kvk", "HK": "hk"}
 
 HYPHEN = "-"  # Normal hyphen
 EN_DASH = "\u2013"  # "–"
@@ -148,10 +154,10 @@ COMPOSITE_HYPHEN = EN_DASH
 COMPOSITE_HYPHENS = HYPHEN + EN_DASH
 
 # Prefixes that can be applied to adjectives with an intervening hyphen
-ADJECTIVE_PREFIXES = frozenset(["hálf", "marg", "semí", "full"])
+ADJECTIVE_PREFIXES: FrozenSet[str] = frozenset(["hálf", "marg", "semí", "full"])
 
 # Recognize words that multiply numbers
-MULTIPLIERS = {
+MULTIPLIERS: Mapping[str, int] = {
     # "núll": 0,
     # "hálfur": 0.5,
     # "helmingur": 0.5,
@@ -192,23 +198,30 @@ MULTIPLIERS = {
     "hundrað": 100,
     "þúsund": 1000,  # !!! Bæði hk og kvk!
     "þús.": 1000,
-    "milljón": 1e6,
-    "milla": 1e6,
-    "millj.": 1e6,
-    "milljarður": 1e9,
-    "miljarður": 1e9,
-    "ma.": 1e9,
-    "mrð.": 1e9,
+    "milljón": 10 ** 6,
+    "milla": 10 ** 6,
+    "millj.": 10 ** 6,
+    "milljarður": 10 ** 9,
+    "miljarður": 10 ** 9,
+    "ma.": 10 ** 9,
+    "mrð.": 10 ** 9,
 }
 
 # The following must occur as lemmas in BÍN
-DECLINABLE_MULTIPLIERS = frozenset(("hundrað", "þúsund", "milljón", "milljarður"))
+DECLINABLE_MULTIPLIERS: FrozenSet[str] = frozenset(
+    ("hundrað", "þúsund", "milljón", "milljarður")
+)
 
 # Recognize words for percentages
-PERCENTAGES = {"prósent": 1, "prósenta": 1, "hundraðshluti": 1, "prósentustig": 1}
+PERCENTAGES: Mapping[str, int] = {
+    "prósent": 1,
+    "prósenta": 1,
+    "hundraðshluti": 1,
+    "prósentustig": 1,
+}
 
 # Recognize words for nationalities (used for currencies)
-NATIONALITIES = {
+NATIONALITIES: Mapping[str, str] = {
     "danskur": "dk",
     "enskur": "uk",
     "breskur": "uk",
@@ -228,7 +241,7 @@ NATIONALITIES = {
 }
 
 # Valid currency combinations
-ISO_CURRENCIES = {
+ISO_CURRENCIES: Mapping[Tuple[str, str], str] = {
     ("dk", "ISK"): "DKK",
     ("is", "ISK"): "ISK",
     ("no", "ISK"): "NOK",
@@ -249,28 +262,28 @@ ISO_CURRENCIES = {
 
 # Amount abbreviations including 'kr' for the ISK
 # Corresponding abbreviations are found in Abbrev.conf
-AMOUNT_ABBREV = {
+AMOUNT_ABBREV: Mapping[str, int] = {
     "kr.": 1,
     "kr": 1,
-    "þ.kr.": 1e3,
-    "þ.kr": 1e3,
-    "þús.kr.": 1e3,
-    "þús.kr": 1e3,
-    "m.kr.": 1e6,
-    "m.kr": 1e6,
-    "mkr.": 1e6,
-    "mkr": 1e6,
-    "ma.kr.": 1e9,
-    "ma.kr": 1e9,
-    "mrð.kr.": 1e9,
-    "mrð.kr": 1e9,
+    "þ.kr.": 10 ** 3,
+    "þ.kr": 10 ** 3,
+    "þús.kr.": 10 ** 3,
+    "þús.kr": 10 ** 3,
+    "m.kr.": 10 ** 6,
+    "m.kr": 10 ** 6,
+    "mkr.": 10 ** 6,
+    "mkr": 10 ** 6,
+    "ma.kr.": 10 ** 9,
+    "ma.kr": 10 ** 9,
+    "mrð.kr.": 10 ** 9,
+    "mrð.kr": 10 ** 9,
 }
 
 # Number words can be marked as subjects (any gender) or as numbers
-NUMBER_CATEGORIES = frozenset(["töl", "to", "kk", "kvk", "hk", "lo"])
+NUMBER_CATEGORIES: FrozenSet[str] = frozenset(["töl", "to", "kk", "kvk", "hk", "lo"])
 
 # Recognize words for currencies
-CURRENCIES = {
+CURRENCIES: Mapping[str, str] = {
     "króna": "ISK",
     "ISK": "ISK",
     "kr.": "ISK",
@@ -306,7 +319,7 @@ CURRENCIES = {
     "EUR": "EUR",
 }
 
-CURRENCY_GENDERS = {
+CURRENCY_GENDERS: Mapping[str, str] = {
     "ISK": "kvk",
     "DKK": "kvk",
     "NOK": "kvk",
@@ -326,30 +339,30 @@ CURRENCY_GENDERS = {
 
 # Set of categories (fl fields in BÍN) that denote
 # person names, Icelandic ('ism' or 'gæl') or foreign ('erm')
-PERSON_NAME_SET = frozenset(("ism", "gæl", "erm"))
+PERSON_NAME_SET: FrozenSet[str] = frozenset(("ism", "gæl", "erm"))
 
 # Set of categories (fl fields in BÍN) for patronyms
 # and matronyms, as well as gender-neutral family names
-PATRONYM_SET = frozenset(("föð", "móð", "ætt"))
+PATRONYM_SET: FrozenSet[str] = frozenset(("föð", "móð", "ætt"))
 
 # Set of foreign middle names that start with a lower case letter
 # ('Louis de Broglie', 'Jan van Eyck')
 # 'of' was also here but caused problems
-FOREIGN_MIDDLE_NAME_SET = frozenset(
+FOREIGN_MIDDLE_NAME_SET: FrozenSet[str] = frozenset(
     ("van", "de", "den", "der", "el", "al", "von", "la")
 )
 
-ENTITY_MIDDLE_NAME_SET = frozenset(
+ENTITY_MIDDLE_NAME_SET: FrozenSet[str] = frozenset(
     ("in", "a", "an", "for", "and", "the", "for", "on", "of")
 )
 
 
 # Given names that can also be family names (and thus gender- and caseless as such)
-BOTH_GIVEN_AND_FAMILY_NAMES = frozenset(("Hafstein",))
+BOTH_GIVEN_AND_FAMILY_NAMES: FrozenSet[str] = frozenset(("Hafstein",))
 
 # Note: these must have a meaning for this to work, so specifying them
 # as abbreviations in Abbrev.conf in Tokenizer is recommended
-_CORPORATION_ENDINGS = frozenset(
+_CORPORATION_ENDINGS: FrozenSet[str] = frozenset(
     [
         "ehf.",
         "ehf",
@@ -395,7 +408,7 @@ _CORPORATION_ENDINGS = frozenset(
 
 # Abbreviations that we explicitly accept as a part of
 # person names, if we are auto-capitalizing
-UPPER_CASE_ABBREVS = frozenset(
+UPPER_CASE_ABBREVS: FrozenSet[str] = frozenset(
     (
         "th",
         "kr",
@@ -440,7 +453,7 @@ UPPER_CASE_ABBREVS = frozenset(
 )
 
 
-def load_token(*args) -> Tuple[int, str, TokenValType]:
+def load_token(*args: Any) -> Tuple[int, str, TokenValType]:
     """ Convert a plain, usually JSON serialized, argument tuple
         to kind, txt, val attributes """
     kind, txt, val = args[0], args[1], args[2]
@@ -461,7 +474,11 @@ class Bin_TOK(TOK):
         to add token error information. """
 
     @staticmethod
-    def Word(w: str, m=None, token: Union[None, Tok, Sequence[Tok]] = None) -> Tok:
+    def Word(
+        w: str,
+        m: Optional[MeaningList] = None,
+        token: Union[None, Tok, Sequence[Tok]] = None,
+    ) -> Tok:
         # Note that the m parameter cannot be easily type annotated,
         # as the Tokenizer package is still using a .pyi (Python 2.7-compatible)
         # type annotation scheme
@@ -481,7 +498,7 @@ class Bin_TOK(TOK):
 def annotate(
     db: BIN_Db,
     token_ctor: TokenConstructor,
-    token_stream: Iterator[Tok],
+    token_stream: TokenIterator,
     *,
     auto_uppercase: bool = False,
     no_sentence_start: bool = False
@@ -588,7 +605,7 @@ def annotate(
                                 for mm in m
                             ]
             # Yield a word tuple with meanings
-            yield token_ctor.Word(w, m, token=t)
+            yield token_ctor.Word(w, cast(MeaningList, m), token=t)
         else:
             # Already have a meaning (most likely from an abbreviation that the
             # tokenizer has recognized), which probably needs conversion
@@ -605,7 +622,7 @@ def annotate(
                     # priority over the dubious abbreviation
                     meanings = m + meanings
                     w = w_new
-            yield token_ctor.Word(w, meanings, token=t)
+            yield token_ctor.Word(w, cast(MeaningList, meanings), token=t)
         # We have yielded a word token: definitely no longer at sentence start
         at_sentence_start = False
 
@@ -685,7 +702,7 @@ def all_genders(token: Tok) -> Optional[List[str]]:
     g = set()
     if token.val:
 
-        def find_gender(m):
+        def find_gender(m: BIN_Meaning) -> Optional[str]:
             if m.ordfl in GENDER_SET:
                 return m.ordfl  # Plain noun
             # Probably number word ('töl' or 'to'): look at its spec
@@ -703,8 +720,8 @@ def all_genders(token: Tok) -> Optional[List[str]]:
 
 
 def parse_phrases_1(
-    db: BIN_Db, token_ctor: TokenConstructor, token_stream: Iterator[Tok]
-) -> Iterator[Tok]:
+    db: BIN_Db, token_ctor: TokenConstructor, token_stream: TokenIterator
+) -> TokenIterator:
     """ Parse numbers and amounts """
 
     token: Tok = cast(Tok, None)
@@ -719,7 +736,7 @@ def parse_phrases_1(
             # Logic for numbers that are partially or entirely
             # written out in words
 
-            def number(tok):
+            def number(tok: Tok):
                 """ If the token denotes a number, return that number - or None """
                 if tok.txt.lower() == "áttu":
                     # Do not accept 'áttu' (stem='átta', no kvk) as a number
@@ -738,7 +755,7 @@ def parse_phrases_1(
 
                 multiplier_next = number(next_token)
 
-                def convert_to_num(token):
+                def convert_to_num(token: Tok) -> Tok:
                     if multiplier is not None:
                         token = token_ctor.Number(
                             token.txt,
@@ -917,8 +934,8 @@ def parse_phrases_1(
 
 
 def parse_phrases_2(
-    token_stream: Iterator[Tok], token_ctor: TokenConstructor, auto_uppercase: bool
-) -> Iterator[Tok]:
+    token_stream: TokenIterator, token_ctor: TokenConstructor, auto_uppercase: bool
+) -> TokenIterator:
     """ Parse a stream of tokens looking for phrases and making substitutions.
         Second pass: handle conversion of numbers + currencies into amounts,
         and process person names """
@@ -931,7 +948,7 @@ def parse_phrases_2(
         token = next(token_stream)
 
         # Maintain a set of full person names encountered
-        names = set()
+        names: Set[PersonName] = set()
 
         at_sentence_start = False
 
@@ -1333,8 +1350,8 @@ def parse_phrases_2(
 
 
 def parse_phrases_3(
-    db: BIN_Db, token_stream: Iterator[Tok], token_ctor: TokenConstructor
-) -> Iterator[Tok]:
+    db: BIN_Db, token_stream: TokenIterator, token_ctor: TokenConstructor
+) -> TokenIterator:
     """ Parse a stream of tokens looking for phrases and making substitutions.
         Third pass: coalesce uppercase, otherwise unrecognized words with
         a following person name, if any; also coalesce entity names and
@@ -1463,7 +1480,7 @@ def parse_phrases_3(
         yield token
 
 
-def fix_abbreviations(token_stream: Iterator[Tok]) -> Iterator[Tok]:
+def fix_abbreviations(token_stream: TokenIterator) -> TokenIterator:
     """ Fix sentence splitting that may be wrong due to abbreviations """
     token: Tok = cast(Tok, None)
     try:
@@ -1554,13 +1571,13 @@ class MatchingStream:
                 newstate: StateDict = defaultdict(list)
                 key = self.key(token)
 
-                def add_to_state(slist, index):
+                def add_to_state(slist: List[str], index: int) -> None:
                     """ Add the list of subsequent words to the new parser state """
                     next_key = slist[0]
                     rest = slist[1:]
                     newstate[next_key].append((rest, index))
 
-                def accept(state):
+                def accept(state: List[Tuple[List[str], int]]) -> TokenIterator:
                     """ The current token matches the given state, either as
                         a continuation of a previous state or as an initiation
                         of a new phrase """
@@ -1687,8 +1704,8 @@ class StaticPhraseStream(MatchingStream):
 
 
 def parse_static_phrases(
-    token_stream: Iterator[Tok], token_ctor: TokenConstructor, auto_uppercase: bool
-) -> Iterator[Tok]:
+    token_stream: TokenIterator, token_ctor: TokenConstructor, auto_uppercase: bool
+) -> TokenIterator:
     """ Use the StaticPhraseStream class to process the token stream
         and replace static phrases with single tokens """
     sps = StaticPhraseStream(token_ctor, auto_uppercase)
@@ -1772,8 +1789,8 @@ class DisambiguationStream(MatchingStream):
 
 
 def disambiguate_phrases(
-    token_stream: Iterator[Tok], token_ctor: TokenConstructor
-) -> Iterator[Tok]:
+    token_stream: TokenIterator, token_ctor: TokenConstructor
+) -> TokenIterator:
 
     """ Parse a stream of tokens looking for common ambiguous multiword phrases
         (i.e. phrases that have a well known very likely interpretation but
@@ -1794,10 +1811,10 @@ class DefaultPipeline:
 
     _token_ctor: TokenConstructor = Bin_TOK
 
-    def __init__(self, text_or_gen: StringIterable, **options) -> None:
+    def __init__(self, text_or_gen: StringIterable, **options: Any) -> None:
         self._text_or_gen = text_or_gen
-        self._auto_uppercase = options.pop("auto_uppercase", False)
-        self._no_sentence_start = options.pop("no_sentence_start", False)
+        self._auto_uppercase: bool = options.pop("auto_uppercase", False)
+        self._no_sentence_start: bool = options.pop("no_sentence_start", False)
         self._options = options
         self._db: Optional[BIN_Db] = None
         # Initialize the default tokenizer pipeline.
@@ -1910,7 +1927,7 @@ class DefaultPipeline:
                 self._db = None
 
 
-def tokenize(text: StringIterable, **options) -> Iterator[Tok]:
+def tokenize(text: StringIterable, **options: Any) -> TokenIterator:
     """ Tokenize text using the default pipeline """
     pipeline = DefaultPipeline(text, **options)
     return pipeline.tokenize()

@@ -309,6 +309,8 @@ def test_lemmas():
         "Hallbjörn borðaði ísinn kl. 14 meðan Icelandair át 3 teppi "
         "frá Íran og Xochitl var tilbeðin."
     )
+    assert s.lemmas is not None
+    assert s.categories is not None
     assert list(zip(s.lemmas, s.categories)) == [
         ("Hallbjörn", "kk"),
         ("borða", "so"),
