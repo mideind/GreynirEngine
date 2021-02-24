@@ -2201,7 +2201,7 @@ class AnnoTree:
             elif skipleft():
                 # Left parenthesis
                 s = skipstring()
-                a = s.split()
+                a = s.split(maxsplit=1)
                 # Extract the node identifier
                 t = a[0]
                 if t[0].isupper():
