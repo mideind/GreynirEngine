@@ -86,8 +86,8 @@ def simple_lemmatize(
         elif t.kind == TOK.ENTITY or t.kind == TOK.COMPANY:
             # Entity or company name
             y = [(t.txt, "entity")]
-        if y:
-            # We're returning a lemma for this token
+        if y is not None:
+            # OK, we're returning one or more lemmas for this token
             # Remove duplicates while preserving order
             y = list(OrderedDict.fromkeys(y))
             if sortkey is not None:
