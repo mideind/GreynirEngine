@@ -38,7 +38,7 @@
 """
 
 from typing import (
-    Dict,
+    Dict, FrozenSet,
     List,
     Mapping,
     Tuple,
@@ -2080,3 +2080,208 @@ class Simplifier(ParseForestNavigator):
     def result(self):
         """ Return nested dictionaries """
         return self._builder.result
+
+
+class AnnoTree:
+
+    """ Encapsulates an Annotald-formatted (bracketed) parse tree.
+
+        An Annotald-formatted string looks as follows:
+
+        (META
+            (ID-CORPUS 43bf66f3-51c4-11e6-8438-04014c605401.10)
+            (ID-LOCAL greynir_corpus_00003.psd,.1)
+            (URL http://www.mbl.is/sport/efstadeild/2016/07/24/ia_ibv_stadan_er_1_0/)
+        )
+        (S0 (S-HEADING
+            (IP
+                (NP-SUBJ
+                    (fn_ft_kk_nf Engir (lemma enginn))
+                    (no_ft_kk_nf atburðir (lemma atburður))
+                )
+                (NP-PRD
+                    (VP
+                        (so_ft_kk_lhþt_nf_sb skráðir (lemma skrá))
+                    )
+                )
+                (ADVP (ao enn (lemma enn)))
+            )
+        ))
+
+    """
+
+    def __init__(self, txt: str) -> None:
+        """ Initializes an AnnoTree from its string representation """
+        self._head: Optional[Dict[str, Any]] = None
+        self._id_corpus = ""
+        self._id_local = ""
+        self._url = ""
+        self.parse(txt)
+
+    def as_simple_tree(self) -> Optional[SimpleTree]:
+        """ Return the AnnoTree as a SimpleTree structure """
+        if self._head is None:
+            return None
+        return SimpleTree([[self._head]])
+
+    @property
+    def id_corpus(self) -> str:
+        """ Return the META ID-CORPUS field, if present """
+        return self._id_corpus
+
+    @property
+    def id_local(self) -> str:
+        """ Return the META ID-LOCAL field, if present """
+        return self._id_local
+
+    @property
+    def url(self) -> str:
+        """ Return the META URL field, if present """
+        return self._url
+
+    def parse(self, txt: str) -> None:
+        """ Parse an Annotald-formatted string """
+        self._head = None
+        self._id_corpus = ""
+        self._id_local = ""
+        self._url = ""
+        if not txt:
+            return
+        # Current character pointer
+        p: int = 0
+        end: int = len(txt)
+        terminators: FrozenSet[str] = frozenset(("(", ")"))
+
+        def skipspace() -> None:
+            """ Advance the p index past any whitespace """
+            nonlocal p
+            while p < end and txt[p].isspace():
+                p += 1
+
+        def skipleft() -> bool:
+            """ Advance the p index past a left parenthesis, if found """
+            # Since skipright() is always called before skipleft(),
+            # we don't need skipspace() here - it's already been called
+            nonlocal p
+            if p < end and txt[p] == "(":
+                p += 1
+                return True
+            return False
+
+        def skipright() -> bool:
+            """ Advance the p index past a right parenthesis, if found """
+            nonlocal p
+            skipspace()
+            if p < end and txt[p] == ")":
+                p += 1
+                return True
+            return False
+
+        def skipstring() -> str:
+            """ Advance the p index until a parenthesis is encountered,
+                and return the underlying string """
+            nonlocal p
+            skipspace()
+            start = p
+            while p < end and txt[p] not in terminators:
+                # !!! TODO: There should be an escape character
+                # !!! for parentheses here
+                p += 1
+            return txt[start:p].rstrip()
+
+        # A stack of nested nonterminal dictionaries,
+        # each having a list of children (nonterminals or terminals)
+        stack: List[List[Dict[str, Any]]] = [[]]
+
+        while True:
+            if skipright():
+                # Right parenthesis
+                # The enclosing nonterminal is done; pop up to the next level above
+                stack.pop()
+            elif skipleft():
+                # Left parenthesis
+                s = skipstring()
+                a = s.split()
+                # Extract the node identifier
+                t = a[0]
+                if t[0].isupper():
+                    # Nonterminal node, or meta tag
+                    if t == "ID-CORPUS":
+                        self._id_corpus = a[1]
+                        if not skipright():
+                            raise ValueError("Expected right parenthesis")
+                        continue
+                    elif t == "ID-LOCAL":
+                        self._id_local = a[1]
+                        if not skipright():
+                            raise ValueError("Expected right parenthesis")
+                        continue
+                    elif t == "URL":
+                        self._url = a[1]
+                        if not skipright():
+                            raise ValueError("Expected right parenthesis")
+                        continue
+                    # Treat this node as a nonterminal with a list of children
+                    children: List[Dict[str, Any]] = []
+                    if t == "META":
+                        # Meta tag
+                        stack[-1].append(
+                            dict(k=t, i=t, p=children)
+                        )
+                    else:
+                        # Regular nonterminal tag
+                        stack[-1].append(
+                            dict(k="NONTERMINAL", i=t, n=_DEFAULT_ID_MAP[t]["name"], p=children)
+                        )
+                    # Push a new level
+                    stack.append(children)
+                else:
+                    # Nonterminal node, or lemma
+                    assert t[0].islower()
+                    if t == "lemma":
+                        # Hack: Set the lemma of the last terminal
+                        assert len(stack) >= 2
+                        assert len(stack[-1]) == 0
+                        assert len(stack[-2]) >= 1
+                        assert stack[-2][-1]["k"] != "NONTERMINAL"
+                        stack[-2][-1]["s"] = a[1]
+                        if not skipright():
+                            raise ValueError("Expected right parenthesis")
+                    else:
+                        # Regular terminal node
+                        v = t.split("_")
+                        cat = v[0]
+                        if cat == "no":
+                            # Obtain the BÍN category for nouns
+                            cat = (set(v) & {"kk", "kvk", "hk"}).pop()
+                        # !!! TODO: The k field should, strictly speaking, reflect
+                        # !!! the token type, i.e. NUMBER, AMOUNT, EMAIL, etc.
+                        # The dictionary fields for terminals are as follows:
+                        # k is the token type
+                        # t is the terminal
+                        # c is the word/terminal category
+                        # x is the original token text
+                        # s is the lemma, which is assigned by the "lemma" handler above
+                        stack[-1].append(
+                            dict(k="WORD", t=t, c=cat, x=a[1])
+                        )
+                        # The terminal node might have a child (a lemma spec),
+                        # so we push a dummy children list
+                        stack.append([])
+            else:
+                # Not a left or right parenthesis:
+                # either we're done or there is an error
+                break
+
+        if p < end:
+            raise ValueError("String is unbalanced or not properly terminated")
+
+        # Skip past the META tag, if present
+        assert len(stack) == 1
+        top = stack[0]
+        p = 0
+        while top[p]["i"] == "META":
+            p += 1
+        assert p < len(top)
+        # Store the first tag after META
+        self._head = top[p]
