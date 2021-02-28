@@ -121,6 +121,8 @@ class CanonicalTokenDict(TypedDict, total=False):
         This scheme is intended for external consumption,
         such as export in JSON format to clients. """
 
+    # Index in original token list
+    ix: int
     # Token kind, as a string (e.g. 'WORD')
     k: str
     # Terminal, normalized (e.g. 'no_kk_et_nf')
@@ -2388,20 +2390,20 @@ def canonicalize_token(source: TokenDict) -> CanonicalTokenDict:
     t = cast(CanonicalTokenDict, source.copy())
 
     # Set the token kind to a readable string
-    kind = t.get("k", TOK.WORD)
+    kind = source.get("k", TOK.WORD)
     t["k"] = TOK.descr[kind]
     if "t" in t:
         # Use category from "m" (BÍN meaning) field if present, otherwise None
         orig_t: str = t["t"]
-        new_t: str = simplify_terminal(orig_t, t["m"][1] if "m" in t else None)
+        new_t: str = simplify_terminal(orig_t, source["m"][1] if "m" in source else None)
         if new_t != orig_t:
             # The terminal name was simplified: keep the original one in the "o" field
             t["o"] = orig_t
             t["t"] = new_t
-    if "m" in t:
+    if "m" in source:
         # Flatten the meaning from a tuple/list
-        m = t["m"]
-        del t["m"]
+        m = source["m"]
+        del cast(TokenDict, t)["m"]
         # s = stofn (lemma)
         # c = ordfl (category)
         # f = fl (class)
@@ -2410,7 +2412,10 @@ def canonicalize_token(source: TokenDict) -> CanonicalTokenDict:
         # lemma, instead of the abbreviation meaning (which is stored in m[0])
         fl = m[2]
         lemma = t["x"] if fl == "skst" else m[0]
-        t.update(dict(s=lemma, c=m[1], f=fl, b=m[3]))
+        t["s"] = lemma
+        t["c"] = m[1]
+        t["f"] = fl
+        t["b"] = m[3]
     if "t" in t and "b" in t:
         # This is a terminal that may have additional information
         # about itself in the 'b' (beyging) field from BÍN.
@@ -2442,8 +2447,8 @@ def canonicalize_token(source: TokenDict) -> CanonicalTokenDict:
             del t["v"]
             # Move the gender to the "c" (category) field
             if "g" in t:
-                t["c"] = t["g"]
-                del t["g"]
+                t["c"] = cast(TokenDict, t)["g"]
+                del cast(TokenDict, t)["g"]
     if kind in (TOK.ENTITY, TOK.WORD) and "s" not in t:
         # Put in a stem for entities and proper names
         t["s"] = t["x"]

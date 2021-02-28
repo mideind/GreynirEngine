@@ -115,16 +115,33 @@
 
 """
 
-from typing import Dict
+from typing import (
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+    TYPE_CHECKING,
+)
 
 import re
+
+if TYPE_CHECKING:
+    from .simpletree import SimpleTree
+
+ContextFunc = Callable[["SimpleTree"], Union[bool, str]]
+ContextDict = Dict[str, Union[str, ContextFunc]]
+ItemList = List[Union["_NestedList", str]]
 
 
 class _NestedList(list):
 
     """ Quick-and-dirty container for nested lists """
 
-    def __init__(self, kind, content):
+    def __init__(self, kind: str, content: ItemList) -> None:
         self._kind = kind
         super().__init__()
         if kind == "(":
@@ -134,10 +151,10 @@ class _NestedList(list):
         super().extend(content)
 
     @property
-    def kind(self):
+    def kind(self) -> str:
         return self._kind
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Nested('{0}') ".format(self._kind) + super().__repr__() + ">"
 
 
@@ -156,7 +173,7 @@ class _CompiledPattern:
     _pattern_cache: Dict[str, "_CompiledPattern"] = dict()
 
     @classmethod
-    def compile(cls, pattern):
+    def compile(cls, pattern: str) -> "_CompiledPattern":
         """ Check whether we've parsed this pattern before, and if so,
             re-use the result """
         if pattern in cls._pattern_cache:
@@ -165,21 +182,21 @@ class _CompiledPattern:
         cp = cls._pattern_cache[pattern] = cls(pattern)
         return cp
 
-    def __init__(self, pattern):
+    def __init__(self, pattern: str) -> None:
         self._items = self._compile(pattern)
 
     @property
-    def items(self):
+    def items(self) -> ItemList:
         """ Return the embedded nested list of matching items """
         return self._items
 
-    def _compile(self, pattern):
+    def _compile(self, pattern: str) -> ItemList:
         """ Compile a matching pattern into a nested list of matching items """
 
         NEST = self._NEST
         FINISHERS = self._FINISHERS
 
-        def nest(items):
+        def nest(items: List[str]) -> ItemList:
             """ Convert any embedded subpatterns, delimited by NEST entries,
                 into nested lists """
             len_items = len(items)
@@ -211,7 +228,11 @@ class _CompiledPattern:
                                             "Mismatched '{0}' in pattern".format(n)
                                         )
                                 # Assemble the resulting nested list
-                                items = items[0:i] + [nested] + items[j + 1 :]
+                                items = (
+                                    items[0:i]
+                                    + cast(List[str], [nested])
+                                    + items[j + 1 :]
+                                )
                                 len_items = len(items)
                                 # ...and continue the outer loop
                                 break
@@ -223,16 +244,16 @@ class _CompiledPattern:
                         # Did not find the starting symbol again
                         raise ValueError("Mismatched '{0}' in pattern".format(item1))
                 i += 1
-            return items
+            return cast(ItemList, items)
 
-        def gen1():
+        def gen1() -> Iterator[str]:
             """ First generator: yield non-null strings from a
                 regex split of the pattern """
             for item in re.split(r"\s+|([\.\|\(\)\{\}\[\]\*\+\?\>\$])", pattern):
                 if item:
                     yield item
 
-        def gen2():
+        def gen2() -> Iterator[str]:
             gen = gen1()
             while True:
                 try:
@@ -262,7 +283,9 @@ class _CompiledPattern:
         return nest(list(gen2()))
 
 
-def single_match(item, tree, context):
+def single_match(
+    item: Union[str, _NestedList], tree: "SimpleTree", context: ContextDict
+) -> bool:
     """ Does the subtree match with item, in and of itself? """
     if isinstance(item, _NestedList):
         if item.kind == "(":
@@ -272,13 +295,13 @@ def single_match(item, tree, context):
             )
         return False
     assert isinstance(item, str)
-    if context is not None and item.startswith("%"):
+    if context and item.startswith("%"):
         # The item has the form %identifier (it's a macro-type item):
         # Look it up in the context dictionary, which can either return a
         # string directly, or a function to call with the tree
         # as an argument. This function can either return a bool result, or
         # a string that we use for the item.
-        result = context.get(item[1:])
+        result: Union[None, str, bool, ContextFunc] = context.get(item[1:])
         if callable(result):
             # The macro resolves to a function: call it with the tree as an argument
             result = result(tree)
@@ -333,7 +356,7 @@ def single_match(item, tree, context):
     return tree.match_tag(item)
 
 
-def unpack(items, ix):
+def unpack(items: ItemList, ix: int) -> Tuple[Union[_NestedList, ItemList], str]:
     """ Unpack an argument for the '>' or '>>' containment operators.
         These are usually lists or sets but may be single items, in
         which case they are interpreted as a set having
@@ -344,7 +367,9 @@ def unpack(items, ix):
     return items[ix : ix + 1], "{"  # Single item: assume set
 
 
-def contained(tree, items, pc, deep, context):
+def contained(
+    tree: "SimpleTree", items: ItemList, pc: int, deep: bool, context: ContextDict
+) -> bool:
     """ Returns True if the tree has children that match the subsequence
         in items[pc], either directly (deep = False) or at any deeper
         level (deep = True) """
@@ -366,7 +391,9 @@ def contained(tree, items, pc, deep, context):
     return f_run(tree.children, subseq, context)
 
 
-def run_sequence(gen, items, context):
+def run_sequence(
+    gen: Iterator["SimpleTree"], items: ItemList, context: ContextDict
+) -> bool:
     """ Match the child nodes of gen with the items, in sequence """
     len_items = len(items)
     # Program counter (index into items)
@@ -376,22 +403,23 @@ def run_sequence(gen, items, context):
         while pc < len_items:
             item = items[pc]
             pc += 1
-            repeat = None
-            stopper = None
+            repeat: Optional[str] = None
+            stopper: Optional[str] = None
             if pc < len_items:
                 if items[pc] in {"*", "+", "?", ">"}:
                     # Repeat specifier
-                    repeat = items[pc]
+                    repeat = cast(str, items[pc])
                     pc += 1
                     if item == "." and repeat in {"*", "+", "?"}:
                         # Limit wildcard repeats if the following item
                         # is concrete, i.e. non-wildcard and non-end
                         if pc < len_items:
-                            if isinstance(items[pc], _NestedList):
-                                if items[pc].kind == "(":
-                                    stopper = items[pc]
-                            elif items[pc] not in {".", "$"}:
-                                stopper = items[pc]
+                            ipc = items[pc]
+                            if isinstance(ipc, _NestedList):
+                                if ipc.kind == "(":
+                                    stopper = cast(str, ipc)
+                            elif ipc not in {".", "$"}:
+                                stopper = cast(str, ipc)
             if item == "$":
                 # Only matches at the end of the list
                 result = pc >= len_items
@@ -466,7 +494,7 @@ def run_sequence(gen, items, context):
     return pc >= len_items
 
 
-def run_set(gen, items, context):
+def run_set(gen: Iterator["SimpleTree"], items: ItemList, context: ContextDict) -> bool:
     """ Run through the subtrees (children) yielded by gen,
         matching them set-wise (unordered) with the items.
         If all items are eventually matched, return True,
@@ -512,7 +540,9 @@ def run_set(gen, items, context):
     return False
 
 
-def match_pattern(tree, pattern, context=None):
+def match_pattern(
+    tree: "SimpleTree", pattern: str, context: Optional[ContextDict] = None
+):
     """ Return the result of a pattern match on a SimpleTree instance """
     cp = _CompiledPattern.compile(pattern)
-    return run_set(iter([tree]), cp.items, context)
+    return run_set(iter([tree]), cp.items, context or {})

@@ -69,7 +69,6 @@ from .binparser import (
     CanonicalTokenDict,
     augment_terminal,
     canonicalize_token,
-    TokenDict,
 )
 from .fastparser import ParseForestNavigator, Node
 from .bintokenizer import (
@@ -81,7 +80,7 @@ from .bintokenizer import (
 from .binparser import describe_token
 from .bindb import BIN_Db, BIN_Meaning
 from .ifdtagger import IFD_Tagset
-from .matcher import match_pattern
+from .matcher import match_pattern, ContextDict
 
 
 # Type for map from token index to (terminal, meaning) tuple
@@ -98,7 +97,10 @@ class SimpleTreeNode(CanonicalTokenDict, total=False):
         such as export in JSON format to clients. """
 
     # Node kind, e.g. 'NONTERMINAL'
-    k: str
+    # Note: since k is also present in CanonicalTokenDict as an int,
+    # we resort to a hack here by using type:ignore to silence mypy's
+    # understandable complaints
+    k: str  # type: ignore
     # Human-readable name of the nonterminal
     n: str
     # Nonterminal name, from the grammar
@@ -611,7 +613,7 @@ class SimpleTree:
                 sents.extend(pg)
         self._sents = sents
         self._len = len(sents)
-        self._head = sents[0] if self._len == 1 else {}
+        self._head = cast(SimpleTreeNode, sents[0] if self._len == 1 else {})
         self._children = cast(Optional[List[CanonicalTokenDict]], self._head.get("p"))
         self._children_cache: Optional[Tuple["SimpleTree", ...]] = None
         self._tag_cache: Optional[List[str]] = None
@@ -1864,13 +1866,13 @@ class SimpleTree:
         # Construct and return the "-st" middle voice stem
         return BIN_Token.mm_verb_stem(self._lemma)
 
-    def all_matches(self, pattern: str, context=None):
+    def all_matches(self, pattern: str, context: ContextDict=None) -> Iterator["SimpleTree"]:
         """ Return all subtree roots, including self, that match the given pattern """
         for subtree in chain([self], self.descendants):
             if match_pattern(subtree, pattern, context):
                 yield subtree
 
-    def first_match(self, pattern: str, context=None):
+    def first_match(self, pattern: str, context: ContextDict=None) -> Optional["SimpleTree"]:
         """ Return the first subtree root, including self, that matches the given
             pattern. If no subtree matches, return None. """
         try:
@@ -1878,7 +1880,7 @@ class SimpleTree:
         except StopIteration:
             return None
 
-    def top_matches(self, pattern: str, context=None):
+    def top_matches(self, pattern: str, context: ContextDict=None) -> Iterator["SimpleTree"]:
         """ Return all subtree roots, including self, that match the given pattern,
             but not recursively, i.e. we don't include matches within matches """
         if match_pattern(self, pattern, context):
@@ -1887,7 +1889,7 @@ class SimpleTree:
             for child in self.children:
                 yield from child.top_matches(pattern, context)
 
-    def match(self, pattern: str, context=None):
+    def match(self, pattern: str, context: ContextDict=None) -> bool:
         """ Return True if this subtree matches the given pattern """
         return match_pattern(self, pattern, context)
 
@@ -1958,7 +1960,7 @@ class SimpleTreeBuilder:
                 # don't bother pushing it
                 continue
             # This is a significant and noteworthy nonterminal
-            children: List[SimpleTreeNode] = []
+            children: List[CanonicalTokenDict] = []
             self._stack[-1].append(
                 SimpleTreeNode(
                     k="NONTERMINAL",
