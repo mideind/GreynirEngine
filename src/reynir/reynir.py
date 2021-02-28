@@ -62,7 +62,7 @@ from .bintokenizer import (
     StringIterable,
     load_token,
 )
-from .binparser import TokenDict
+from .binparser import CanonicalTokenDict, TokenDict
 from .fastparser import Fast_Parser, ParseError
 from .reducer import Reducer
 from .cache import cached_property
@@ -311,7 +311,10 @@ class _Sentence:
 
     @classmethod
     def load(
-        cls, greynir_cls: GreynirType, tokens: List[Tok], tree: Optional[TokenDict]
+        cls,
+        greynir_cls: GreynirType,
+        tokens: List[Tok],
+        tree: Optional[CanonicalTokenDict],
     ) -> "_Sentence":
         """ Load previously dumped data.
             Useful for retrieving parsed data from a database.
