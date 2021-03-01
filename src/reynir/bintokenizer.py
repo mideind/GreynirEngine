@@ -35,6 +35,7 @@
 """
 
 from typing import (
+    TYPE_CHECKING,
     cast,
     Optional,
     NamedTuple,
@@ -71,9 +72,11 @@ from tokenizer import (
 )
 from tokenizer.abbrev import Abbreviations
 
-from .settings import StaticPhrases, AmbigPhrases, DisallowedNames
-from .settings import NamePreferences
+from .settings import StaticPhrases, AmbigPhrases, DisallowedNames, NamePreferences
 from .bindb import BIN_Db, BIN_Meaning
+
+if TYPE_CHECKING:
+    from .binparser import TokenDict
 
 
 if "PyPy 7.3.0" in sys.version or "PyPy 7.2." in sys.version:
@@ -1959,11 +1962,11 @@ def tokens_are_foreign(tokens: TokenIterable, min_icelandic_ratio: float) -> boo
     return num_words > 2 and words_in_bin / num_words < min_icelandic_ratio
 
 
-def stems_of_token(t: Dict[str, Any]) -> List[Tuple[str, str]]:
+def stems_of_token(t: "TokenDict") -> List[Tuple[str, str]]:
     """ Return a list of word stem descriptors associated with the token t.
         This is an empty list if the token is not a word or person or entity name.
     """
-    kind = cast(int, t.get("k", TOK.WORD))
+    kind = t.get("k", TOK.WORD)
     if kind not in {TOK.WORD, TOK.PERSON, TOK.ENTITY}:
         # No associated stem
         return []

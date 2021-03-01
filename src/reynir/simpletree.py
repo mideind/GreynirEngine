@@ -42,6 +42,7 @@ from typing import (
     FrozenSet,
     List,
     Mapping,
+    Sequence,
     Tuple,
     Iterable,
     Iterator,
@@ -58,7 +59,6 @@ from pprint import pformat
 from itertools import chain
 
 from tokenizer import TOK, Tok, correct_spaces
-from typing_extensions import TypedDict
 
 from .cache import cached_property
 from .settings import StaticPhrases
@@ -585,12 +585,11 @@ class MultiReplacer:
 
 class SimpleTree:
 
-    """ A wrapper for a simple parse tree, returned from the
-        TreeUtils.simple_parse() function """
+    """ A wrapper for a simple parse tree """
 
     def __init__(
         self,
-        pgs: Iterable[List[CanonicalTokenDict]],
+        pgs: Iterable[Sequence[CanonicalTokenDict]],
         stats: Optional[StatsDict] = None,
         register=None,
         parent: Optional["SimpleTree"] = None,
@@ -2020,11 +2019,11 @@ class SimpleTreeBuilder:
                     self._stack[-1][-1] = ch0
 
     @property
-    def result(self):
+    def result(self) -> CanonicalTokenDict:
         return self._result[0]
 
     @property
-    def tree(self):
+    def tree(self) -> SimpleTree:
         """ Create and return a SimpleTree instance rooted with the
             result of this builder """
         return SimpleTree([[self.result]])
@@ -2109,7 +2108,7 @@ class Simplifier(ParseForestNavigator):
         return self._builder.tree
 
     @property
-    def result(self):
+    def result(self) -> CanonicalTokenDict:
         """ Return nested dictionaries """
         return self._builder.result
 
