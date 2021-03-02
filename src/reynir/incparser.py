@@ -37,7 +37,7 @@
 """
 
 import time
-from typing import Iterator, List, Optional, Tuple
+from typing import Iterable, Iterator, List, Optional, Tuple
 
 from tokenizer import paragraphs, Tok
 
@@ -66,8 +66,8 @@ class IncrementalParser:
         containing sentences. Typical usage:
 
         toklist = tokenize(text)
-        bp = BIN_Parser()
-        ip = IncrementalParser(bp, toklist)
+        fp = Fast_Parser()
+        ip = IncrementalParser(fp, toklist)
         for p in ip.paragraphs():
             for sent in p.sentences():
                 if sent.parse():
@@ -174,7 +174,7 @@ class IncrementalParser:
                 time.sleep(0)
                 yield Sent(self._ip, sent)
 
-    def __init__(self, parser: Fast_Parser, toklist: List[Tok], verbose: bool=False) -> None:
+    def __init__(self, parser: Fast_Parser, toklist: Iterable[Tok], verbose: bool=False) -> None:
         self._parser = parser
         self._reducer = Reducer(parser.grammar)
         self._num_sent = 0
@@ -186,7 +186,7 @@ class IncrementalParser:
         self._total_tokens = 0
         self._start_time = self._last_time = time.time()
         self._verbose = verbose
-        self._toklist = toklist
+        self._toklist = list(toklist)
 
     def _add_sentence(self, s: "IncrementalParser._IncrementalSentence", num: int) -> None:
         """ Add a processed sentence to the statistics """
