@@ -105,6 +105,8 @@ class TokenDict(TypedDict, total=False):
     k: int
     # Terminal
     t: str
+    # Augmented terminal (optional)
+    a: str
     # Meaning: ordmynd, ordfl, fl, beyging
     m: Tuple[str, str, str, str]
     # Text
@@ -113,6 +115,8 @@ class TokenDict(TypedDict, total=False):
     v: Any
     # Gender (for person tokens only)
     g: str
+    # Error marker (optional)
+    err: int
 
 
 class CanonicalTokenDict(TypedDict, total=False):

@@ -37,12 +37,12 @@
 """
 
 import time
-from collections import defaultdict
+from typing import Iterator, List, Optional, Tuple
 
-from tokenizer import TOK, paragraphs
+from tokenizer import paragraphs, Tok
 
 from .bintokenizer import tokens_are_foreign
-from .fastparser import Fast_Parser, ParseError
+from .fastparser import Fast_Parser, Node, ParseError
 from .reducer import Reducer
 from .settings import Settings
 
@@ -54,6 +54,10 @@ _VERBOSE_AMBIGUITY_THRESHOLD = 1000
 # The ratio of words in a sentence that must be found in BÍN
 # for it to be analyzed as an Icelandic sentence
 ICELANDIC_RATIO = 0.5
+
+
+# The same type is defined in the Tokenizer module
+SentenceTuple = Tuple[int, List[Tok]]
 
 
 class IncrementalParser:
@@ -83,20 +87,20 @@ class IncrementalParser:
 
         """ An internal sentence representation class """
 
-        def __init__(self, ip, s):
+        def __init__(self, ip: "IncrementalParser", s: List[Tok]) -> None:
             self._ip = ip
             self._s = s
             self._len = len(s)
             assert self._len > 0  # Input should be already sanitized
-            self._err_index = None
-            self._tree = None
+            self._err_index: Optional[int] = None
+            self._tree: Optional[Node] = None
             self._score = 0
-            self._error = None
+            self._error: Optional[ParseError] = None
 
         def __len__(self):
             return self._len
 
-        def parse(self):
+        def parse(self) -> bool:
             """ Parse the sentence """
             num = 0
             score = 0
@@ -125,41 +129,41 @@ class IncrementalParser:
             return num > 0
 
         @property
-        def tokens(self):
+        def tokens(self) -> List[Tok]:
             return self._s
 
         @property
-        def tree(self):
+        def tree(self) -> Optional[Node]:
             return self._tree
 
         @property
-        def score(self):
+        def score(self) -> int:
             return self._score
 
         @property
-        def error(self):
+        def error(self) -> Optional[ParseError]:
             return self._error
 
         @property
-        def err_index(self):
+        def err_index(self) -> int:
             return self._len - 1 if self._err_index is None else self._err_index
 
         @property
-        def text(self):
+        def text(self) -> str:
             return " ".join(t.txt for t in self._s if t.txt)
 
-        def __str__(self):
+        def __str__(self) -> str:
             return self.text
 
     class _IncrementalParagraph:
 
         """ An internal paragraph representation class """
 
-        def __init__(self, ip, p):
+        def __init__(self, ip: "IncrementalParser", p: List[SentenceTuple]) -> None:
             self._ip = ip
             self._p = p
 
-        def sentences(self):
+        def sentences(self) -> Iterator["IncrementalParser._IncrementalSentence"]:
             """ Yield the sentences within the paragraph, nicely wrapped """
             Sent = IncrementalParser._IncrementalSentence
             for _, sent in self._p:
@@ -170,7 +174,7 @@ class IncrementalParser:
                 time.sleep(0)
                 yield Sent(self._ip, sent)
 
-    def __init__(self, parser, toklist, verbose=False):
+    def __init__(self, parser: Fast_Parser, toklist: List[Tok], verbose: bool=False) -> None:
         self._parser = parser
         self._reducer = Reducer(parser.grammar)
         self._num_sent = 0
@@ -184,7 +188,7 @@ class IncrementalParser:
         self._verbose = verbose
         self._toklist = toklist
 
-    def _add_sentence(self, s, num):
+    def _add_sentence(self, s: "IncrementalParser._IncrementalSentence", num: int) -> None:
         """ Add a processed sentence to the statistics """
         slen = len(s)
         self._num_sent += 1
@@ -212,39 +216,39 @@ class IncrementalParser:
             )
             self._last_time = current_time
 
-    def paragraphs(self):
+    def paragraphs(self) -> Iterator["IncrementalParser._IncrementalParagraph"]:
         """ Yield the paragraphs from the token stream """
         Para = IncrementalParser._IncrementalParagraph
         for p in paragraphs(self._toklist):
             yield Para(self, p)
 
     @property
-    def num_tokens(self):
+    def num_tokens(self) -> int:
         return self._num_tokens
 
     @property
-    def num_sentences(self):
+    def num_sentences(self) -> int:
         return self._num_sent
 
     @property
-    def num_parsed(self):
+    def num_parsed(self) -> int:
         return self._num_parsed_sent
 
     @property
-    def num_combinations(self):
+    def num_combinations(self) -> int:
         return self._num_combinations
 
     @property
-    def total_score(self):
+    def total_score(self) -> int:
         return self._total_score
 
     @property
-    def ambiguity(self):
+    def ambiguity(self) -> float:
         return (
             (self._total_ambig / self._total_tokens) if self._total_tokens > 0 else 1.0
         )
 
     @property
-    def parse_time(self):
+    def parse_time(self) -> float:
         return time.time() - self._start_time
 
