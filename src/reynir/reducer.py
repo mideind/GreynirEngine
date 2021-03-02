@@ -204,6 +204,8 @@ class _ReductionScope:
                 # Empty node
                 return NULL_SC
 
+            nt = node.nonterminal if node.is_completed else None
+
             if len(csc) == 1:
                 # Not ambiguous: only one result, do a shortcut
                 # Will raise an exception if not exactly one value
@@ -217,11 +219,14 @@ class _ReductionScope:
                 # (and the one with the lowest index
                 # if there are many with the same score)
                 ix, sc = s[0]
-                # And now for the key action of the reducer:
-                # Eliminate all other families
-                node.reduce_to(ix)
+                # If the node nonterminal is marked as "no_reduce",
+                # we leave the child families in place. This feature
+                # is used in query processing.
+                if nt is None or not nt.no_reduce:
+                    # And now for the key action of the reducer:
+                    # Eliminate all other families
+                    node.reduce_to(ix)
 
-            nt = node.nonterminal if node.is_completed else None
             if nt is not None:
                 # We will be adjusting the result: make sure we do so on
                 # a separate dict copy (we don't want to clobber the child's dict)

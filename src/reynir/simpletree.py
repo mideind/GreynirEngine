@@ -38,9 +38,11 @@
 """
 
 from typing import (
-    Dict, FrozenSet,
+    Dict,
+    FrozenSet,
     List,
     Mapping,
+    Sequence,
     Tuple,
     Iterable,
     Iterator,
@@ -64,9 +66,9 @@ from .binparser import (
     BIN_Nonterminal,
     BIN_Token,
     BIN_Terminal,
+    CanonicalTokenDict,
     augment_terminal,
     canonicalize_token,
-    TokenDict,
 )
 from .fastparser import ParseForestNavigator, Node
 from .bintokenizer import (
@@ -78,7 +80,7 @@ from .bintokenizer import (
 from .binparser import describe_token
 from .bindb import BIN_Db, BIN_Meaning
 from .ifdtagger import IFD_Tagset
-from .matcher import match_pattern
+from .matcher import match_pattern, ContextDict
 
 
 # Type for map from token index to (terminal, meaning) tuple
@@ -86,6 +88,26 @@ TerminalMap = Dict[int, Tuple[BIN_Terminal, Optional[BIN_Meaning]]]
 NonterminalMap = Mapping[str, Union[str, Tuple[str, ...]]]
 IdMap = Mapping[str, Dict[str, Union[str, Set[str]]]]
 StatsDict = Dict[str, Union[int, float]]
+
+
+class SimpleTreeNode(CanonicalTokenDict, total=False):
+
+    """ A dictionary representing a node in a SimpleTree.
+        This scheme is intended for external consumption,
+        such as export in JSON format to clients. """
+
+    # Node kind, e.g. 'NONTERMINAL'
+    # Note: since k is also present in CanonicalTokenDict as an int,
+    # we resort to a hack here by using type:ignore to silence mypy's
+    # understandable complaints
+    k: str  # type: ignore
+    # Human-readable name of the nonterminal
+    n: str
+    # Nonterminal name, from the grammar
+    i: str
+    # Child nodes
+    p: List[CanonicalTokenDict]
+
 
 # Default tree simplifier configuration maps
 
@@ -578,12 +600,11 @@ class MultiReplacer:
 
 class SimpleTree:
 
-    """ A wrapper for a simple parse tree, returned from the
-        TreeUtils.simple_parse() function """
+    """ A wrapper for a simple parse tree """
 
     def __init__(
         self,
-        pgs: Iterable[List[TokenDict]],
+        pgs: Iterable[Sequence[CanonicalTokenDict]],
         stats: Optional[StatsDict] = None,
         register=None,
         parent: Optional["SimpleTree"] = None,
@@ -600,14 +621,14 @@ class SimpleTree:
             self._register = register
         self._parent = parent
         # Flatten the paragraphs into a sentence array
-        sents: List[TokenDict] = []
+        sents: List[CanonicalTokenDict] = []
         if pgs:
             for pg in pgs:
                 sents.extend(pg)
         self._sents = sents
         self._len = len(sents)
-        self._head: TokenDict = sents[0] if self._len == 1 else {}
-        self._children = cast(Optional[List[TokenDict]], self._head.get("p"))
+        self._head = cast(SimpleTreeNode, sents[0] if self._len == 1 else {})
+        self._children = cast(Optional[List[CanonicalTokenDict]], self._head.get("p"))
         self._children_cache: Optional[Tuple["SimpleTree", ...]] = None
         self._tag_cache: Optional[List[str]] = None
 
@@ -1859,13 +1880,13 @@ class SimpleTree:
         # Construct and return the "-st" middle voice stem
         return BIN_Token.mm_verb_stem(self._lemma)
 
-    def all_matches(self, pattern: str, context=None):
+    def all_matches(self, pattern: str, context: ContextDict=None) -> Iterator["SimpleTree"]:
         """ Return all subtree roots, including self, that match the given pattern """
         for subtree in chain([self], self.descendants):
             if match_pattern(subtree, pattern, context):
                 yield subtree
 
-    def first_match(self, pattern: str, context=None):
+    def first_match(self, pattern: str, context: ContextDict=None) -> Optional["SimpleTree"]:
         """ Return the first subtree root, including self, that matches the given
             pattern. If no subtree matches, return None. """
         try:
@@ -1873,7 +1894,7 @@ class SimpleTree:
         except StopIteration:
             return None
 
-    def top_matches(self, pattern: str, context=None):
+    def top_matches(self, pattern: str, context: ContextDict=None) -> Iterator["SimpleTree"]:
         """ Return all subtree roots, including self, that match the given pattern,
             but not recursively, i.e. we don't include matches within matches """
         if match_pattern(self, pattern, context):
@@ -1882,7 +1903,7 @@ class SimpleTree:
             for child in self.children:
                 yield from child.top_matches(pattern, context)
 
-    def match(self, pattern: str, context=None):
+    def match(self, pattern: str, context: ContextDict=None) -> bool:
         """ Return True if this subtree matches the given pattern """
         return match_pattern(self, pattern, context)
 
@@ -1902,12 +1923,14 @@ class SimpleTreeBuilder:
         self._nt_map: NonterminalMap = nt_map or _DEFAULT_NT_MAP
         self._id_map: IdMap = id_map or _DEFAULT_ID_MAP
         self._terminal_map: Mapping[str, str] = terminal_map or _DEFAULT_TERMINAL_MAP
-        self._result: List[Dict[str, Any]] = []
+        self._result: List[CanonicalTokenDict] = []
         self._stack = [self._result]
         self._scope: List[str] = [""]  # Sentinel value
         self._pushed: List[int] = []
+        # The state property is a placeholder for client data
+        self.state: Any = None
 
-    def push_terminal(self, d: Dict[str, Any]) -> None:
+    def push_terminal(self, d: CanonicalTokenDict) -> None:
         """ At a terminal (token) node. The d parameter is normally a dict
             containing a canonicalized token. """
         # Check whether this terminal should be pushed as a nonterminal
@@ -1924,7 +1947,9 @@ class SimpleTreeBuilder:
             mapped_id = self._id_map[mapped_t]
             # Use the human-readable name of the nonterminal
             self._stack[-1].append(
-                dict(k="NONTERMINAL", n=mapped_id["name"], i=mapped_t, p=[d])
+                SimpleTreeNode(
+                    k="NONTERMINAL", n=cast(str, mapped_id["name"]), i=mapped_t, p=[d]
+                )
             )
 
     def push_nonterminal(self, nt_base: str) -> None:
@@ -1949,9 +1974,14 @@ class SimpleTreeBuilder:
                 # don't bother pushing it
                 continue
             # This is a significant and noteworthy nonterminal
-            children: List[Dict[str, Any]] = []
+            children: List[CanonicalTokenDict] = []
             self._stack[-1].append(
-                dict(k="NONTERMINAL", n=mapped_id["name"], i=mapped_nt, p=children)
+                SimpleTreeNode(
+                    k="NONTERMINAL",
+                    n=cast(str, mapped_id["name"]),
+                    i=mapped_nt,
+                    p=children,
+                )
             )
             self._stack.append(children)
             self._scope.append(mapped_nt)
@@ -1973,7 +2003,7 @@ class SimpleTreeBuilder:
         # the same nonterminal - or a nonterminal which the parent overrides
         if len(children) == 1:
 
-            ch0 = children[0]
+            ch0 = cast(SimpleTreeNode, children[0])
 
             def collapse_child(d: str) -> bool:
                 """ Determine whether to cut off a child and connect directly
@@ -1996,18 +2026,19 @@ class SimpleTreeBuilder:
                 if collapse_child(mapped_nt):
                     # If so, we eliminate one level and move the children of the child
                     # up to be children of this node
-                    self._stack[-1][-1]["p"] = ch0["p"]
+                    stn = cast(SimpleTreeNode, self._stack[-1][-1])
+                    stn["p"] = ch0["p"]
                 elif replace_parent(mapped_nt):
                     # The child subsumes the parent: replace
                     # the parent by the child
                     self._stack[-1][-1] = ch0
 
     @property
-    def result(self):
+    def result(self) -> CanonicalTokenDict:
         return self._result[0]
 
     @property
-    def tree(self):
+    def tree(self) -> SimpleTree:
         """ Create and return a SimpleTree instance rooted with the
             result of this builder """
         return SimpleTree([[self.result]])
@@ -2067,8 +2098,8 @@ class Simplifier(ParseForestNavigator):
             None if isinstance(meaning, bool) else meaning,
         )
         # Convert from compact form to external (more verbose and descriptive) form
-        canonicalize_token(d)
-        self._builder.push_terminal(d)
+        ct = canonicalize_token(d)
+        self._builder.push_terminal(ct)
         return None
 
     def visit_nonterminal(self, level: int, node: Node) -> Any:
@@ -2092,7 +2123,7 @@ class Simplifier(ParseForestNavigator):
         return self._builder.tree
 
     @property
-    def result(self):
+    def result(self) -> CanonicalTokenDict:
         """ Return nested dictionaries """
         return self._builder.result
 
@@ -2127,7 +2158,7 @@ class AnnoTree:
 
     def __init__(self, txt: str) -> None:
         """ Initializes an AnnoTree from its string representation """
-        self._head: Optional[Dict[str, Any]] = None
+        self._head: Optional[CanonicalTokenDict] = None
         self._id_corpus = ""
         self._id_local = ""
         self._url = ""
@@ -2206,7 +2237,7 @@ class AnnoTree:
 
         # A stack of nested nonterminal dictionaries,
         # each having a list of children (nonterminals or terminals)
-        stack: List[List[Dict[str, Any]]] = [[]]
+        stack: List[List[CanonicalTokenDict]] = [[]]
 
         while True:
             if skipright():
@@ -2243,16 +2274,19 @@ class AnnoTree:
                             raise ValueError("Expected right parenthesis")
                         continue
                     # Treat this node as a nonterminal with a list of children
-                    children: List[Dict[str, Any]] = []
+                    children: List[CanonicalTokenDict] = []
                     if t == "META":
                         # Meta tag
-                        stack[-1].append(
-                            dict(k=t, i=t, p=children)
-                        )
+                        stack[-1].append(SimpleTreeNode(k=t, i=t, p=children))
                     else:
                         # Regular nonterminal tag
                         stack[-1].append(
-                            dict(k="NONTERMINAL", i=t, n=_DEFAULT_ID_MAP[t]["name"], p=children)
+                            SimpleTreeNode(
+                                k="NONTERMINAL",
+                                i=t,
+                                n=cast(str, _DEFAULT_ID_MAP[t]["name"]),
+                                p=children,
+                            )
                         )
                     # Push a new level
                     stack.append(children)
@@ -2283,9 +2317,7 @@ class AnnoTree:
                         # c is the word/terminal category
                         # x is the original token text
                         # s is the lemma, which is assigned by the "lemma" handler above
-                        stack[-1].append(
-                            dict(k="WORD", t=t, c=cat, x=a[1])
-                        )
+                        stack[-1].append(SimpleTreeNode(k="WORD", t=t, c=cat, x=a[1]))
                         # The terminal node might have a child (a lemma spec),
                         # so we push a dummy children list
                         stack.append([])
@@ -2299,7 +2331,7 @@ class AnnoTree:
 
         # Skip past the META tag, if present
         assert len(stack) == 1
-        top = stack[0]
+        top = cast(List[SimpleTreeNode], stack[0])
         p = 0
         while top[p]["i"] == "META":
             p += 1

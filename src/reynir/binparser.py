@@ -43,7 +43,7 @@
 """
 
 from typing import (
-    Sequence, cast,
+    cast,
     TypeVar,
     Dict,
     Mapping,
@@ -57,6 +57,7 @@ from typing import (
     Optional,
     Any,
 )
+from typing_extensions import TypedDict
 
 import os
 import time
@@ -94,9 +95,54 @@ from .version import __version__ as package_version
 _PATH = os.path.dirname(__file__)
 
 
-# The type of a token dictionary returned from describe_token()
-TokenDictItem = Union[str, int, Tuple[str, str, str, str]]
-TokenDict = Dict[str, TokenDictItem]
+class TokenDict(TypedDict, total=False):
+
+    """ The type of a token dictionary returned from describe_token() """
+
+    # Index in original token list
+    ix: int
+    # Kind
+    k: int
+    # Terminal
+    t: str
+    # Meaning: ordmynd, ordfl, fl, beyging
+    m: Tuple[str, str, str, str]
+    # Text
+    x: str
+    # Value
+    v: Any
+    # Gender (for person tokens only)
+    g: str
+
+
+class CanonicalTokenDict(TypedDict, total=False):
+
+    """ A token dictionary returned from canonicalize_token().
+        This scheme is intended for external consumption,
+        such as export in JSON format to clients. """
+
+    # Index in original token list
+    ix: int
+    # Token kind, as a string (e.g. 'WORD')
+    k: str
+    # Terminal, normalized (e.g. 'no_kk_et_nf')
+    t: str
+    # Original terminal (e.g. '"og:st"')
+    o: str
+    # Augmented terminal (e.g. 'so_1_þf_gm_fh_nt')
+    a: str
+    # Text
+    x: str
+    # Lemma
+    s: str
+    # BÍN category ('kk', 'so', 'fs'...)
+    c: str
+    # BÍN fl field ('ism', 'ætt'...)
+    f: str
+    # BÍN inflection (beyging field, e.g. 'GM-FH-NT')
+    b: str
+    # Additional values, depending on token kind
+    v: Union[str, float, Dict[str, Any]]
 
 
 class WordMatchers:
@@ -2336,26 +2382,28 @@ def augment_terminal(terminal: str, text_lower: str, beyging: str) -> str:
     return "_".join(a[0:1] + cases + sorted(list(vset)))
 
 
-def canonicalize_token(t: Dict[str, Any]) -> None:
+def canonicalize_token(source: TokenDict) -> CanonicalTokenDict:
     """ Convert a token in-situ from a compact dictionary representation
         (typically created by TreeUtility._describe_token()) to a normalized,
         verbose form that is appropriate for external consumption """
 
+    t = cast(CanonicalTokenDict, source.copy())
+
     # Set the token kind to a readable string
-    kind = t.get("k", TOK.WORD)
+    kind = source.get("k", TOK.WORD)
     t["k"] = TOK.descr[kind]
     if "t" in t:
         # Use category from "m" (BÍN meaning) field if present, otherwise None
         orig_t: str = t["t"]
-        new_t: str = simplify_terminal(orig_t, t["m"][1] if "m" in t else None)
+        new_t: str = simplify_terminal(orig_t, source["m"][1] if "m" in source else None)
         if new_t != orig_t:
             # The terminal name was simplified: keep the original one in the "o" field
             t["o"] = orig_t
             t["t"] = new_t
-    if "m" in t:
+    if "m" in source:
         # Flatten the meaning from a tuple/list
-        m = t["m"]
-        del t["m"]
+        m = source["m"]
+        del cast(TokenDict, t)["m"]
         # s = stofn (lemma)
         # c = ordfl (category)
         # f = fl (class)
@@ -2364,7 +2412,10 @@ def canonicalize_token(t: Dict[str, Any]) -> None:
         # lemma, instead of the abbreviation meaning (which is stored in m[0])
         fl = m[2]
         lemma = t["x"] if fl == "skst" else m[0]
-        t.update(dict(s=lemma, c=m[1], f=fl, b=m[3]))
+        t["s"] = lemma
+        t["c"] = m[1]
+        t["f"] = fl
+        t["b"] = m[3]
     if "t" in t and "b" in t:
         # This is a terminal that may have additional information
         # about itself in the 'b' (beyging) field from BÍN.
@@ -2374,7 +2425,7 @@ def canonicalize_token(t: Dict[str, Any]) -> None:
         t["a"] = augment_terminal(t["t"], t["x"].lower(), t["b"])
     if "v" in t:
         # Flatten and simplify the val field, if present
-        val = t["v"]
+        val = cast(Any, t["v"])
         if kind == TOK.AMOUNT:
             # Flatten and simplify amounts
             t["v"] = dict(amount=val[0], currency=val[1])
@@ -2392,15 +2443,16 @@ def canonicalize_token(t: Dict[str, Any]) -> None:
             t["v"] = dict(y=val[0], mo=val[1], d=val[2], h=val[3], m=val[4], s=val[5])
         elif kind == TOK.PERSON:
             # Move the nominal form of the name to the "s" (stem) field
-            t["s"] = t["v"]
+            t["s"] = cast(str, t["v"])
             del t["v"]
             # Move the gender to the "c" (category) field
             if "g" in t:
-                t["c"] = t["g"]
-                del t["g"]
+                t["c"] = cast(TokenDict, t)["g"]
+                del cast(TokenDict, t)["g"]
     if kind in (TOK.ENTITY, TOK.WORD) and "s" not in t:
         # Put in a stem for entities and proper names
         t["s"] = t["x"]
+    return t
 
 
 def describe_token(
@@ -2410,7 +2462,7 @@ def describe_token(
         at the given index within its sentence,
         which matches the given terminal with the given meaning """
     txt = normalized_text(t)
-    d: TokenDict = dict(x=txt, ix=index)
+    d = TokenDict(x=txt, ix=index)
     if terminal is not None:
         # There is a token-terminal match
         if t.kind == TOK.PUNCTUATION:

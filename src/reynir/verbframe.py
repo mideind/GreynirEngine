@@ -298,6 +298,7 @@ class VerbFrame:
                 raise ConfigError("Preposition should have exactly one argument")
             if parg[1] not in ALL_CASES and parg[1] not in SUBCLAUSES:
                 parg[1] = REFLPRN.get(parg[1], parg[1])
+                assert parg[1] is not None
                 spl = parg[1].split("_")
                 if spl[-1] == "gr":
                     spl = spl[:-1]
