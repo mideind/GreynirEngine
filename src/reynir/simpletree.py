@@ -294,6 +294,7 @@ _DEFAULT_ID_MAP: IdMap = {
     "S-QUOTE": dict(name="Staðhæfing", overrides="S-MAIN"),
     "S-HEADING": dict(name="Fyrirsögn"),
     "S-PREFIX": dict(name="Forskeyti"),  # Prefix in front of sentence
+    "S-EXPLAIN": dict(name="Skýring"),
     "S-QUE": dict(name="Spurnaraðalsetning", overrides="S-MAIN"),  # Question clause
     "CP-THT": dict(name="Skýringarsetning", overrides="IP-INF"),  # Complement clause
     "CP-QUE": dict(name="Spurnaraukasetning", overrides="NP-OBJ"),  # Question subclause
@@ -310,6 +311,7 @@ _DEFAULT_ID_MAP: IdMap = {
     "CP-ADV-CMP": dict(name="Samanburðarsetning"),  # Adverbial comparative phrase
     "CP-QUOTE": dict(name="Tilvitnun"),  # Direct quote
     "CP-SOURCE": dict(name="Segjandi"),  # Quote source
+    "CP-EXPLAIN": dict(name="Skýring"),
     "IP": dict(name="Beygingarliður"),  # Inflectional phrase
     # Infinitival inflectional phrase
     "IP-INF": dict(name="Beygingarliður", overrides="VP"),
@@ -331,6 +333,7 @@ _DEFAULT_ID_MAP: IdMap = {
     "NP-DAT": dict(name="Þágufallsliður", overrides="NP"),
     "NP-ADDR": dict(name="Heimilisfang", overrides="NP"),
     "NP-COMPANY": dict(name="Fyrirtæki", overrides="NP"),
+    "NP-PERSON": dict(name="Manneskja", overrided="NP"),
     "NP-TITLE": dict(name="Titill", overrides="NP"),
     "NP-LIFESPAN": dict(name="Ævidægur", overrides="NP-TITLE"),
     "NP-SOURCE": dict(name="Heimild"),
@@ -344,8 +347,10 @@ _DEFAULT_ID_MAP: IdMap = {
     "NP-IOBJ": dict(name="Óbeint andlag"),
     "NP-PRD": dict(name="Sagnfylling"),
     "NP-ADP": dict(name="Andlag lýsingarorðs"),
+    "ADJP": dict(name="Lýsingarliður"),
     "ADVP": dict(name="Atviksliður", subject_to={"ADVP"}),
     "ADVP-DIR": dict(name="Áttaratviksliður"),
+    "ADVP-LOC": dict(name="Staðaratviksliður"),
     "ADVP-DATE-ABS": dict(name="Föst dagsetning", overrides="ADVP"),
     "ADVP-DATE-REL": dict(name="Afstæð dagsetning", overrides="ADVP"),
     "ADVP-TIMESTAMP-ABS": dict(name="Fastur tímapunktur", overrides="ADVP"),
@@ -359,6 +364,16 @@ _DEFAULT_ID_MAP: IdMap = {
     "ADVP-PCL": dict(name="Ögn"),
     "PP": dict(
         name="Forsetningarliður",
+        overrides="ADVP",
+        subject_to={"ADVP-DUR-REL", "ADVP-DUR-ABS"},
+    ),
+    "PP-LOC": dict(
+        name="Staðarforsetningarliður",
+        overrides="ADVP",
+        subject_to={"ADVP-DUR-REL", "ADVP-DUR-ABS"},
+    ),
+    "PP-DIR": dict(
+        name="Áttarforsetningarliður",
         overrides="ADVP",
         subject_to={"ADVP-DUR-REL", "ADVP-DUR-ABS"},
     ),
@@ -2202,6 +2217,7 @@ class AnnoTree:
                 # Left parenthesis
                 s = skipstring()
                 a = s.split(maxsplit=1)
+                #print(a)
                 # Extract the node identifier
                 t = a[0]
                 if t[0].isupper():
@@ -2218,6 +2234,11 @@ class AnnoTree:
                         continue
                     elif t == "URL":
                         self._url = a[1]
+                        if not skipright():
+                            raise ValueError("Expected right parenthesis")
+                        continue
+                    elif t == "COMMENT":
+                        # not interested in this information
                         if not skipright():
                             raise ValueError("Expected right parenthesis")
                         continue
