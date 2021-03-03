@@ -830,8 +830,12 @@ class Grammar:
                         r = r[0:-1]
 
                     # Check for variant specs
-                    rsplit = r.split("/")
-                    r = rsplit[0]
+                    if r == "\"/\"" or r == "'/'":
+                        # Hack: Allow specifying the forward slash as "/" or '/'
+                        rsplit = [r]
+                    else:
+                        rsplit = r.split("/")
+                        r = rsplit[0]
                     v: Optional[List[str]] = rsplit[1:]
                     if not v:
                         v = None
