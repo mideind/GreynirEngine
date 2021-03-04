@@ -105,6 +105,8 @@ class TokenDict(TypedDict, total=False):
     k: int
     # Terminal
     t: str
+    # Augmented terminal (optional)
+    a: str
     # Meaning: ordmynd, ordfl, fl, beyging
     m: Tuple[str, str, str, str]
     # Text
@@ -113,6 +115,8 @@ class TokenDict(TypedDict, total=False):
     v: Any
     # Gender (for person tokens only)
     g: str
+    # Error marker (optional)
+    err: int
 
 
 class CanonicalTokenDict(TypedDict, total=False):
@@ -1527,12 +1531,14 @@ class BIN_Token(Token):
     }
 
     @classmethod
-    def is_understood(cls, t: Tok) -> bool:
+    def is_understood(
+        cls, t: Tok, *, understood_punctuation: Optional[str] = None
+    ) -> bool:
         """ Return True if the token type is understood by the BIN Parser """
         if t[0] == TOK.PUNCTUATION:
             # A limited number of punctuation symbols is currently understood
             # Note that we use the normalized punctuation here, i.e. t.val[1]
-            return t[2][1] in cls._UNDERSTOOD_PUNCTUATION
+            return t[2][1] in (understood_punctuation or cls._UNDERSTOOD_PUNCTUATION)
         return t[0] in cls._MATCHING_FUNC
 
     def match_with_meaning(self, terminal: "BIN_Terminal") -> Union[bool, BIN_Meaning]:
@@ -2100,6 +2106,12 @@ class BIN_Parser(Base_Parser):
     _GRAMMAR_FILE = os.path.join(_PATH, _GRAMMAR_NAME)
     _GRAMMAR_BINARY_FILE = _GRAMMAR_FILE + ".bin"
 
+    # Give subclasses a chance to override the punctuation
+    # understood by the parser, i.e. which symbols will be wrapped
+    # in tokens as opposed to being dropped. The default is to
+    # use the _UNDERSTOOD_PUNCTUATION string defined in BIN_Token.
+    _UNDERSTOOD_PUNCTUATION: Optional[str] = None
+
     def __init__(self, verbose: bool = False) -> None:
         super().__init__()
         modified, ts = self.is_grammar_modified()
@@ -2169,7 +2181,8 @@ class BIN_Parser(Base_Parser):
 
     def _wrap(self, tokens: Iterable[Tok]) -> List[BIN_Token]:
         """ Sanitize the 'raw' tokens and wrap them in BIN_Token() wrappers """
-        return wrap_tokens(tokens, wrap_func=self.wrap_token)
+        return wrap_tokens(tokens, wrap_func=self.wrap_token,
+            understood_punctuation=self._UNDERSTOOD_PUNCTUATION)
 
 
 # Abbreviations and stuff that we ignore inside parentheses
@@ -2180,7 +2193,9 @@ _T = TypeVar("_T")
 
 
 def wrap_tokens(
-    tokens: Iterable[Tok], wrap_func: Optional[Callable[[Tok, int], _T]] = None
+    tokens: Iterable[Tok],
+    wrap_func: Optional[Callable[[Tok, int], _T]] = None,
+    understood_punctuation: Optional[str] = None,
 ) -> List[_T]:
     """ Pre-process a token stream, removing tokens that will not be looked at
         during parsing - for instance insignificant punctuation and non-Icelandic
@@ -2247,7 +2262,9 @@ def wrap_tokens(
     # while keeping a back index to the original token
     wrapped_tokens: List[_T] = []
     for ix, t in enumerate(tlist):
-        if t is not None and BIN_Token.is_understood(t):
+        if t is not None and BIN_Token.is_understood(
+            t, understood_punctuation=understood_punctuation
+        ):
             wrapped_tokens.append(
                 cast(_T, t) if wrap_func is None else wrap_func(t, ix)
             )
@@ -2395,7 +2412,9 @@ def canonicalize_token(source: TokenDict) -> CanonicalTokenDict:
     if "t" in t:
         # Use category from "m" (BÍN meaning) field if present, otherwise None
         orig_t: str = t["t"]
-        new_t: str = simplify_terminal(orig_t, source["m"][1] if "m" in source else None)
+        new_t: str = simplify_terminal(
+            orig_t, source["m"][1] if "m" in source else None
+        )
         if new_t != orig_t:
             # The terminal name was simplified: keep the original one in the "o" field
             t["o"] = orig_t
