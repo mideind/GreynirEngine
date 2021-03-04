@@ -369,6 +369,7 @@ _DEFAULT_ID_MAP: IdMap = {
     "NP-IOBJ": dict(name="Óbeint andlag"),
     "NP-PRD": dict(name="Sagnfylling"),
     "NP-ADP": dict(name="Andlag lýsingarorðs"),
+    "NP-EXPLAIN": dict(name="Skýringarliður"),
     "ADJP": dict(name="Lýsingarliður"),
     "ADVP": dict(name="Atviksliður", subject_to={"ADVP"}),
     "ADVP-DIR": dict(name="Áttaratviksliður"),
