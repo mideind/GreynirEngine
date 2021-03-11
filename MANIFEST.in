@@ -12,5 +12,6 @@ include src/reynir/resources/ordalisti-formers.dawg.bin
 include src/reynir/resources/ordalisti-last.dawg.bin
 include src/reynir/resources/ord.compressed
 exclude src/reynir/resources/*.csv
+exclude src/reynir/resources/*.txt
 exclude src/reynir/*.o
 exclude src/reynir/*.so

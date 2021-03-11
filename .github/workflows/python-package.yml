@@ -40,3 +40,11 @@ jobs:
       run: |
         python -m pip install pytest
         pytest
+    - name: Slack notification
+      uses: 8398a7/action-slack@v2
+      with:
+        status: ${{ job.status }}
+        author_name: Integration Testing (Python ${{ matrix.python-version }})
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      if: failure() # Pick up event if the job fails
