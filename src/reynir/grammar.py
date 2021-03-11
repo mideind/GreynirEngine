@@ -153,6 +153,11 @@ class Nonterminal(GrammarItem):
 
     _index = -1  # Running sequence number (negative) of all nonterminals
 
+    # If no_reduce is True for a nonterminal, its child families are
+    # not reduced to the single highest-scoring family after parsing.
+    # This feature is used in query processing.
+    no_reduce: bool = False
+
     def __init__(self, name: str, fname: Optional[str] = None, line: int = 0) -> None:
         super().__init__()
         self._name = name
@@ -185,6 +190,7 @@ class Nonterminal(GrammarItem):
 
     def set_index(self, ix: int) -> None:
         """ Set a new sequence number for this nonterminal """
+        # Nonterminals have negative indices
         assert ix < 0
         super().set_index(ix)
 
@@ -237,6 +243,9 @@ class Nonterminal(GrammarItem):
             self._tags = {tag}
         else:
             self._tags.add(tag)
+        # Optimization for the no_reduce tag
+        if tag == "no_reduce":
+            self.no_reduce = True
 
     @property
     def is_noun_phrase(self) -> bool:
@@ -285,6 +294,7 @@ class Terminal(GrammarItem):
 
     def set_index(self, ix: int) -> None:
         """ Set a new sequence number for this nonterminal """
+        # Terminals have indices larger than zero
         assert ix > 0
         super().set_index(ix)
 
@@ -820,8 +830,12 @@ class Grammar:
                         r = r[0:-1]
 
                     # Check for variant specs
-                    rsplit = r.split("/")
-                    r = rsplit[0]
+                    if r == "\"/\"" or r == "'/'":
+                        # Hack: Allow specifying the forward slash as "/" or '/'
+                        rsplit = [r]
+                    else:
+                        rsplit = r.split("/")
+                        r = rsplit[0]
                     v: Optional[List[str]] = rsplit[1:]
                     if not v:
                         v = None

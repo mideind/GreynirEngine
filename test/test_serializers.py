@@ -71,6 +71,27 @@ def test_serializers(r):
         assert json.loads(orig.dumps(cls, indent=2)) == json.loads(new.dumps(cls, indent=2))
 
 
+def test_annotree():
+    s = """
+            (META (ID-CORPUS 43bf66f3-51c4-11e6-8438-04014c605401.10)
+            (ID-LOCAL greynir_corpus_00003.psd,.1)
+            (URL http://www.mbl.is/sport/efstadeild/2016/07/24/ia_ibv_stadan_er_1_0/))
+        (S0 (S-HEADING (IP (NP-SUBJ (fn_ft_kk_nf Engir (lemma enginn))
+                                    (no_ft_kk_nf atburðir (lemma atburður)))
+                            (NP-PRD (VP (so_ft_kk_lhþt_nf_sb skráðir (lemma skrá))))
+                            (ADVP (ao enn (lemma enn))))))
+
+    """
+    from reynir.simpletree import AnnoTree
+    atree = AnnoTree(s)
+    stree = atree.as_simple_tree()
+    assert stree is not None
+    assert stree.text == "Engir atburðir skráðir enn"
+    assert stree.tidy_text == "Engir atburðir skráðir enn"
+    assert stree.nouns == ["atburður"]
+    assert stree.verbs == ["skrá"]
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
