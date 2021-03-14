@@ -30,14 +30,12 @@
 
 """
 
-import functools
-
 from reynir import Greynir
 from reynir.binparser import augment_terminal
 from reynir.bincompress import BIN_Compressed
 from reynir.bindb import BIN_Db
 from reynir.bintokenizer import TOK
-from tokenizer import correct_spaces, detokenize
+from tokenizer import detokenize
 
 
 def test_augment_terminal():
@@ -558,7 +556,7 @@ def test_sentence_split():
     tlist = list(g.tokenize("Ég hitti dr. Jón Mýrdal áðan."))
     assert len([t for t in tlist if t.kind == TOK.S_BEGIN]) == 1
     assert len([t for t in tlist if t.kind == TOK.S_END]) == 1
-    tlist = list(g.tokenize("Ég hitti hr. Jón Mýrdal áðan."))
+    tlist = list(g.tokenize("Ég hitti t.d. hr. Jón Mýrdal þann 23. maí."))
     assert len([t for t in tlist if t.kind == TOK.S_BEGIN]) == 1
     assert len([t for t in tlist if t.kind == TOK.S_END]) == 1
 
