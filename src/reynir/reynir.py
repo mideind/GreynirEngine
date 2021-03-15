@@ -373,32 +373,32 @@ class _NounPhrase(_Sentence):
     @cached_property
     def nominative(self) -> Optional[str]:
         """ Return nominative form (nefnifall) """
-        return self._get(self._nom)
+        return self._get(_NounPhrase._nom)
 
     @cached_property
     def indefinite(self) -> Optional[str]:
         """ Return indefinite form (nefnifall án greinis) """
-        return self._get(self._ind)
+        return self._get(_NounPhrase._ind)
 
     @cached_property
     def canonical(self) -> Optional[str]:
         """ Return canonical form (nefnifall eintölu án greinis) """
-        return self._get(self._can)
+        return self._get(_NounPhrase._can)
 
     @cached_property
     def accusative(self) -> Optional[str]:
         """ Return accusative form (þolfall) """
-        return self._get(self._acc)
+        return self._get(_NounPhrase._acc)
 
     @cached_property
     def dative(self) -> Optional[str]:
         """ Return dative form (þágufall) """
-        return self._get(self._dat)
+        return self._get(_NounPhrase._dat)
 
     @cached_property
     def genitive(self) -> Optional[str]:
         """ Return genitive form (eignarfall) """
-        return self._get(self._gen)
+        return self._get(_NounPhrase._gen)
 
 
 class _Paragraph:
