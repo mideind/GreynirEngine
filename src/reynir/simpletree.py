@@ -1263,7 +1263,7 @@ class SimpleTree:
         return lemma
 
     def _alternative_form(self, form: str) -> str:
-        """ Return a nominative form of the text within this node only, if any.
+        """ Return an alternative form of the text within this node.
             The form can be 'nominative' for the nominative case only,
             'indefinite' for the indefinite nominative form,
             or 'canonical' for the singular, indefinite, nominative. """
@@ -1295,13 +1295,13 @@ class SimpleTree:
                 for name in txt.split():
                     meanings = lookup_func(name, singular=True, cat=gender)
                     try:
-                        # Try to find an 'ism', 'erm', 'gæl', 'föð' or 'móð'
+                        # Try to find an 'ism', 'erm', 'gæl', 'ætt', 'föð' or 'móð'
                         # nominative form of the correct gender
                         result.append(
                             next(
                                 filter(
-                                    lambda m: m.fl
-                                    in {"ism", "gæl", "erm", "föð", "móð"},
+                                    lambda m: (m.fl
+                                    in {"ism", "gæl", "erm", "föð", "móð", "ætt"}),
                                     meanings,
                                 )
                             ).ordmynd
@@ -1475,8 +1475,8 @@ class SimpleTree:
             filters: Dict[Union[None, str], Callable[[BIN_Meaning], bool]] = {
                 "lo": filter_func_lo,
                 "to": filter_func_with_gender,
-                "fn": filter_func_with_gender,
                 "gr": filter_func_with_gender,
+                "fn": filter_func_with_gender,
                 "pfn": filter_func_without_gender,
             }
             meanings_iter = filter(filters.get(self._cat, filter_func_no), meanings)
@@ -1495,8 +1495,9 @@ class SimpleTree:
                     txt = w.lower()
             except StopIteration:
                 if self._cat == "to" and "ft" in self._vset and canonical:
-                    # Declinable number, for which there is no singular form available,
-                    # such as "tveir": return an empty string
+                    # Declinable number, for which there is no
+                    # singular form available, such as "tveir":
+                    # return an empty string
                     txt = prefix = ""
         return prefix + txt
 
@@ -1662,7 +1663,7 @@ class SimpleTree:
             np = np[0:-2]
         return np
 
-    def _case_np(self, case_property) -> str:
+    def _case_np(self, case_property: Any) -> str:
         """ Return the noun phrase contained within this subtree
             after casting it to the given case """
 

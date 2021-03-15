@@ -34,7 +34,7 @@
 
 """
 
-from typing import Optional
+from typing import Optional, Mapping, Callable
 
 import operator
 
@@ -43,7 +43,7 @@ from .reynir import Greynir, _NounPhrase, SimpleTree
 
 # Format specifiers and how they relate to properties
 # of the contained NounPhrase object
-_FMT = {
+_FMT: Mapping[str, Callable[["_NounPhrase"], str]] = {
     # Icelandic format specifiers
     "nf": operator.attrgetter('nominative'),
     "þf": operator.attrgetter('accusative'),
@@ -149,6 +149,7 @@ class NounPhrase:
                 "Invalid format specifier for NounPhrase: '{0}'".format(spec)
             )
         # Extract the requested property and return it
+        assert self._np is not None
         return fmt(self._np)
 
     @property
