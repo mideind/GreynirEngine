@@ -157,7 +157,7 @@ class BIN_Compressed:
         )
         self._subcats = [s.decode("latin-1") for s in subcats_bytes.split()]
         # Create a CFFI buffer object pointing to the memory map
-        self._mmap_buffer: bytes = ffi.from_buffer(self._b)  # type: ignore
+        self._mmap_buffer: bytes = ffi.from_buffer(self._b)
 
     def _UINT(self, offset: int) -> int:
         """ Return the 32-bit UINT at the indicated offset
@@ -167,14 +167,14 @@ class BIN_Compressed:
     def close(self) -> None:
         """ Close the memory map """
         if self._b is not None:
-            self._mappings = None  # type: ignore
-            self._stems = None  # type: ignore
-            self._meanings = None  # type: ignore
+            self._mappings = cast(bytes, None)
+            self._stems = cast(bytes, None)
+            self._meanings = cast(bytes, None)
             self._alphabet = set()
             self._alphabet_bytes = bytes()
             self._mmap_buffer = cast(bytes, None)
             self._b.close()
-            self._b = None  # type: ignore
+            self._b = cast(mmap.mmap, None)
 
     def meaning(self, ix: int) -> Tuple[str, str]:
         """ Find and decode a meaning (ordfl, beyging) tuple,
@@ -471,7 +471,7 @@ class BIN_Compressed:
     def raw_nominative(self, word: str) -> Set[MeaningTuple]:
         """ Returns a set of all nominative forms of the stems of the given word form.
             Note that the word form is case-sensitive. """
-        result = set()  # type: Set[MeaningTuple]
+        result: Set[MeaningTuple] = set()
         for stem_index, _ in self._raw_lookup(word):
             for c_latin in self.case_variants(stem_index):
                 c = c_latin.decode("latin-1")
