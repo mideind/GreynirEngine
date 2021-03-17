@@ -349,7 +349,7 @@ def single_match(
         if ilist[0] != tree.tcat:
             return False
         # Remaining variants must be a subset of those in the terminal
-        return set(ilist[1:]) <= set(tree.variants)
+        return set(ilist[1:]) <= set(tree.all_variants)
     # Check nonterminal tag
     # NP matches NP as well as NP-POSS, etc.,
     # while NP-POSS only matches NP-POSS
