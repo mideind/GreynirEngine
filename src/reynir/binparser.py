@@ -650,7 +650,7 @@ class BIN_Token(Token):
     VARIANT_EX: Mapping[str, str] = {
         key: val for key, val in VARIANT.items() if val is not None
     }
-    VARIANT_EX["þt"] = "ÞT"  # type: ignore
+    VARIANT_EX["þt"] = "ÞT"
 
     # Bit mapping for all known variants
     VBIT: Mapping[str, int] = {key: 1 << i for i, key in enumerate(VARIANT.keys())}
@@ -1943,7 +1943,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
             if self._cat is None or self._match_cat == "punctuation":
                 # Fot literal terminals with no category specification,
                 # i.e. "hvenær", we simply match on the token text with no further ado
-                self.shortcut_match = lambda t_lit: self._first == t_lit  # type: ignore
+                self.shortcut_match = lambda t_lit: self._first == t_lit
             else:
                 # For literal terminals with a category specification,
                 # i.e. "hvenær:ao", we shortcut the match, returning False, if the
@@ -1953,7 +1953,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
                 # for each possible meaning of the word (since we want to select a
                 # meaning that fits the specified category).
                 self.shortcut_match = (
-                    lambda t_lit: False if self._first != t_lit else None  # type: ignore
+                    lambda t_lit: False if self._first != t_lit else None
                 )
         else:
             # For lemma terminals, the matches_first() and matches()
