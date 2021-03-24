@@ -647,7 +647,7 @@ class BIN_Token(Token):
     }
 
     # Make a copy of VARIANT with the past tense (þt) added
-    VARIANT_EX: Mapping[str, str] = {
+    VARIANT_EX: Dict[str, str] = {
         key: val for key, val in VARIANT.items() if val is not None
     }
     VARIANT_EX["þt"] = "ÞT"
