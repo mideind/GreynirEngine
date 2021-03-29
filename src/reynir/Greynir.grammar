@@ -6921,8 +6921,8 @@ $score(+20) VillaSíðastLiðinn/fall/tala/kyn
 ÁðurEftir →
     "áður:ao"
     | "eftir:ao"
-    | 'á_undan:ao'
-    | 'á_eftir:ao'
+    | 'á:ao' 'undan:ao'
+    | 'á:ao' 'eftir:ao'
 
 $score(+4) ÁðurEftir
 
