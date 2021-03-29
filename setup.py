@@ -120,9 +120,13 @@ setup(
     ],
     keywords=["nlp", "parser", "icelandic"],
     setup_requires=["cffi>=1.13.0"],
-    install_requires=["cffi>=1.13.0", "tokenizer>=2.5.0", "typing_extensions"],
+    install_requires=[
+        "cffi>=1.13.0",
+        "tokenizer>=2.5.0",
+        "islenska>=0.1.0",
+        "typing_extensions"
+    ],
     cffi_modules=[
-        "src/reynir/eparser_build.py:ffibuilder",
-        "src/reynir/bin_build.py:ffibuilder"
+        "src/reynir/eparser_build.py:ffibuilder"
     ],
 )

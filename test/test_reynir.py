@@ -32,8 +32,7 @@
 
 from reynir import Greynir
 from reynir.binparser import augment_terminal
-from reynir.bincompress import BIN_Compressed
-from reynir.bindb import BIN_Db
+from reynir.bindb import GreynirBin
 from reynir.bintokenizer import TOK
 from tokenizer import detokenize
 
@@ -57,244 +56,60 @@ def test_augment_terminal():
     assert a == "so_0_et_kk_lhþt_nf_sb"
 
 
-def test_bin():
-    """ Test querying for different cases of words """
-
-    b = BIN_Compressed()
-
-    def f(word, case, stem, cat, beyging_filter=None):
-        meanings = b.lookup_case(
-            word, case, cat=cat, stem=stem, beyging_filter=beyging_filter
-        )
-        return {(m[4], m[5]) for m in meanings}
-
-    def declension(word, stem, cat, beyging_filter=None):
-        result = []
-
-        def bf(b):
-            if beyging_filter is not None and not beyging_filter(b):
-                return False
-            return "2" not in b and "3" not in b
-
-        for case in ("NF", "ÞF", "ÞGF", "EF"):
-            wf_list = list(f(word, case, stem, cat, bf))
-            result.append(wf_list[0][0] if wf_list else "N/A")
-        return tuple(result)
-
-    lo_filter = lambda b: "EVB" in b and "FT" in b
-
-    assert f("fjarðarins", "NF", "fjörður", "kk") == {("fjörðurinn", "NFETgr")}
-    assert f("breiðustu", "NF", "breiður", "lo", lo_filter) == {
-        ("breiðustu", "EVB-KVK-NFFT"),
-        ("breiðustu", "EVB-HK-NFFT"),
-        ("breiðustu", "EVB-KK-NFFT"),
-    }
-    assert b.lookup_case("fjarðarins", "NF", cat="kk", stem="fjörður") == {
-        ("fjörður", 5697, "kk", "alm", "fjörðurinn", "NFETgr")
-    }
-    assert b.lookup_case("breiðastra", "NF", cat="lo", stem="breiður") == {
-        ("breiður", 388135, "lo", "alm", "breiðastir", "ESB-KK-NFFT"),
-        ("breiður", 388135, "lo", "alm", "breiðastar", "ESB-KVK-NFFT"),
-        ("breiður", 388135, "lo", "alm", "breiðust", "ESB-HK-NFFT"),
-    }
-    assert f("fjarðarins", "ÞF", "fjörður", "kk") == {("fjörðinn", "ÞFETgr")}
-    assert f("breiðustu", "ÞF", "breiður", "lo", lo_filter) == {
-        ("breiðustu", "EVB-KVK-ÞFFT"),
-        ("breiðustu", "EVB-HK-ÞFFT"),
-        ("breiðustu", "EVB-KK-ÞFFT"),
-    }
-    assert f("fjarðarins", "ÞGF", "fjörður", "kk") == {("firðinum", "ÞGFETgr")}
-    assert f("breiðustu", "ÞGF", "breiður", "lo", lo_filter) == {
-        ("breiðustu", "EVB-KVK-ÞGFFT"),
-        ("breiðustu", "EVB-HK-ÞGFFT"),
-        ("breiðustu", "EVB-KK-ÞGFFT"),
-    }
-    assert f("fjarðarins", "EF", "fjörður", "kk") == {("fjarðarins", "EFETgr")}
-    assert f("breiðustu", "EF", "breiður", "lo", lo_filter) == {
-        ("breiðustu", "EVB-KVK-EFFT"),
-        ("breiðustu", "EVB-HK-EFFT"),
-        ("breiðustu", "EVB-KK-EFFT"),
-    }
-    assert declension("brjóstsykur", "brjóstsykur", "kk") == (
-        "brjóstsykur",
-        "brjóstsykur",
-        "brjóstsykri",
-        "brjóstsykurs",
-    )
-    assert declension("smáskífa", "smáskífa", "kvk", lambda b: "ET" in b) == (
-        "smáskífa",
-        "smáskífu",
-        "smáskífu",
-        "smáskífu",
-    )
-    assert declension("smáskífa", "smáskífa", "kvk", lambda b: "FT" in b) == (
-        "smáskífur",
-        "smáskífur",
-        "smáskífum",
-        "smáskífa",
-    )
-    assert declension("ungabarn", "ungabarn", "hk") == (
-        "ungabarn",
-        "ungabarn",
-        "ungabarni",
-        "ungabarns",
-    )
-    assert declension("geymir", "geymir", "kk") == (
-        "geymir",
-        "geymi",
-        "geymi",
-        "geymis",
-    )
-    assert declension("sulta", "sulta", "kvk", lambda b: "ET" in b) == (
-        "sulta",
-        "sultu",
-        "sultu",
-        "sultu",
-    )
-    assert declension("vígi", "vígi", "hk", lambda b: "ET" in b) == (
-        "vígi",
-        "vígi",
-        "vígi",
-        "vígis",
-    )
-    assert declension("buxur", "buxur", "kvk") == ("buxur", "buxur", "buxum", "buxna")
-    assert declension("ríki", "ríki", "hk", lambda b: "ET" in b) == (
-        "ríki",
-        "ríki",
-        "ríki",
-        "ríkis",
-    )
-    assert declension("ríki", "ríki", "hk", lambda b: "FT" in b) == (
-        "ríki",
-        "ríki",
-        "ríkjum",
-        "ríkja",
-    )
-    # assert declension("ríki", "ríkir", "kk") == ("ríkir", "ríki", "ríki", "ríkis")
-    assert declension("brjóstsykurinn", "brjóstsykur", "kk") == (
-        "brjóstsykurinn",
-        "brjóstsykurinn",
-        "brjóstsykrinum",
-        "brjóstsykursins",
-    )
-    assert declension("smáskífan", "smáskífa", "kvk") == (
-        "smáskífan",
-        "smáskífuna",
-        "smáskífunni",
-        "smáskífunnar",
-    )
-    assert declension("ungabarnið", "ungabarn", "hk") == (
-        "ungabarnið",
-        "ungabarnið",
-        "ungabarninu",
-        "ungabarnsins",
-    )
-    assert declension("geymirinn", "geymir", "kk") == (
-        "geymirinn",
-        "geyminn",
-        "geyminum",
-        "geymisins",
-    )
-    assert declension("sultan", "sulta", "kvk") == (
-        "sultan",
-        "sultuna",
-        "sultunni",
-        "sultunnar",
-    )
-    assert declension("vígið", "vígi", "hk") == ("vígið", "vígið", "víginu", "vígisins")
-    assert declension("ríkið", "ríki", "hk") == ("ríkið", "ríkið", "ríkinu", "ríkisins")
-    assert declension("geymarnir", "geymir", "kk") == (
-        "geymarnir",
-        "geymana",
-        "geymunum",
-        "geymanna",
-    )
-    assert declension("sulturnar", "sulta", "kvk") == (
-        "sulturnar",
-        "sulturnar",
-        "sultunum",
-        "sultnanna",
-    )
-    assert declension("vígin", "vígi", "hk") == (
-        "vígin",
-        "vígin",
-        "vígjunum",
-        "vígjanna",
-    )
-    assert declension("buxurnar", "buxur", "kvk") == (
-        "buxurnar",
-        "buxurnar",
-        "buxunum",
-        "buxnanna",
-    )
-    assert declension("ríkin", "ríki", "hk") == (
-        "ríkin",
-        "ríkin",
-        "ríkjunum",
-        "ríkjanna",
-    )
-    assert declension("Vestur-Þýskalands", "Vestur-Þýskaland", "hk") == (
-        "Vestur-Þýskaland",
-        "Vestur-Þýskaland",
-        "Vestur-Þýskalandi",
-        "Vestur-Þýskalands",
-    )
-
-
 def test_bindb():
-    db = BIN_Db()
+    db = GreynirBin()
     # Test the lemma lookup functionality
-    w, m = db.lookup_lemma("eignast")
+    w, m = db.lemma_meanings("eignast")
     assert w == "eignast"
     assert len(m) > 0
     assert m[0].stofn == "eigna"
-    w, m = db.lookup_lemma("ábyrgjast")
+    w, m = db.lemma_meanings("ábyrgjast")
     assert w == "ábyrgjast"
     assert len(m) > 0
     assert m[0].stofn == "ábyrgjast"
-    w, m = db.lookup_lemma("ábyrgja")
+    w, m = db.lemma_meanings("ábyrgja")
     assert w == "ábyrgja"
     assert len(m) > 0
     assert m[0].stofn == "á-byrgja"
-    w, m = db.lookup_lemma("ábyrgir")
+    w, m = db.lemma_meanings("ábyrgir")
     assert w == "ábyrgir"
     assert len(m) == 0
-    w, m = db.lookup_lemma("stór")
+    w, m = db.lemma_meanings("stór")
     assert w == "stór"
     assert len(m) > 0
     assert m[0].stofn == "stór"
-    w, m = db.lookup_lemma("stórar")
+    w, m = db.lemma_meanings("stórar")
     assert w == "stórar"
     assert len(m) == 0
-    w, m = db.lookup_lemma("sig")
+    w, m = db.lemma_meanings("sig")
     assert w == "sig"
     assert len(m) > 0
     assert any(mm.ordfl == "abfn" for mm in m)
-    w, m = db.lookup_lemma("sér")
+    w, m = db.lemma_meanings("sér")
     assert w == "sér"
     assert len(m) > 0
     assert not any(mm.ordfl == "abfn" for mm in m)
-    w, m = db.lookup_lemma("hann")
+    w, m = db.lemma_meanings("hann")
     assert w == "hann"
     assert len(m) > 0
     assert any(mm.ordfl == "pfn" for mm in m)
-    w, m = db.lookup_lemma("hán")
+    w, m = db.lemma_meanings("hán")
     assert w == "hán"
     assert len(m) > 0
     assert any(mm.ordfl == "pfn" for mm in m)
-    w, m = db.lookup_lemma("háns")
+    w, m = db.lemma_meanings("háns")
     assert w == "háns"
     assert len(m) == 0
-    w, m = db.lookup_lemma("hinn")
+    w, m = db.lemma_meanings("hinn")
     assert w == "hinn"
     assert len(m) > 0
     assert any(mm.ordfl == "gr" for mm in m)
-    w, m = db.lookup_lemma("einn")
+    w, m = db.lemma_meanings("einn")
     assert w == "einn"
     assert len(m) > 0
     assert any(mm.ordfl == "lo" for mm in m)
     assert any(mm.ordfl == "fn" for mm in m)
-    w, m = db.lookup_lemma("núll")
+    w, m = db.lemma_meanings("núll")
     assert w == "núll"
     assert len(m) > 0
     assert any(mm.ordfl == "töl" for mm in m)
@@ -436,8 +251,8 @@ def test_names():
     s = g.parse_single("Hér er Finsbury Park.")
     assert s.lemmas == ['hér', 'vera', 'Finsbury Park', '.']
 
-    #s = g.parse_single("Hér er Sky Sports.")
-    #assert s.lemmas == ['hér', 'vera', 'Sky Sports', '.']      # Out of scope
+    s = g.parse_single("Hér er Sky Sports.")
+    assert s.lemmas == ['hér', 'vera', 'Sky Sports', '.']      # Out of scope
 
     #s = g.parse_single("Hér er J. K. Rowling.")
     #assert s.lemmas == ['hér', 'vera', 'J. K. Rowling', '.']    # Out of scope 
@@ -460,8 +275,8 @@ def test_names():
     s = g.parse_single("Hér er Finnur de la Cruz.")
     assert s.lemmas == ['hér', 'vera', 'Finnur de la Cruz', '.']
 
-    #s = g.parse_single("Hér er Derek Árnason.")
-    #assert s.lemmas == ['hér', 'vera', 'Derek Árnason', '.']
+    # s = g.parse_single("Hér er Derek Árnason.")
+    # assert s.lemmas == ['hér', 'vera', 'Derek Árnason', '.']
 
     s = g.parse_single("Hér er Díana Woodward.")
     assert s.lemmas == ['hér', 'vera', 'Díana Woodward', '.']
@@ -475,19 +290,19 @@ def test_names():
     s = g.parse_single("Hér er Super Mattel AS.")
     assert s.lemmas == ['hér', 'vera', 'Super Mattel AS', '.']
 
-    s = g.parse_single("Hér er WOW Cyclothon.")
+    #s = g.parse_single("Hér er WOW Cyclothon.")
     #assert s.lemmas == ['hér', 'vera', 'WOW Cyclothon', '.']   # Out of scope
 
     s = g.parse_single("Hér er SHAPP Games.")
     assert s.lemmas == ['hér', 'vera', 'SHAPP Games', '.']
 
-    s = g.parse_single("Hér er Fiat a10.")
+    #s = g.parse_single("Hér er Fiat a10.")
     #assert s.lemmas == ['hér', 'vera', 'Fiat a10', '.']        # Out of scope
 
     s = g.parse_single("Hér er Ikea.")
     assert s.lemmas == ['hér', 'vera', 'Ikea', '.']
 
-    s = g.parse_single("Hér er Styrmir Halldórsson H225.")
+    #s = g.parse_single("Hér er Styrmir Halldórsson H225.")
     #assert s.lemmas == ['hér', 'vera', 'Styrmir Halldórsson H225', '.']    # Out of scope
 
     s = g.parse_single("Hér er The Trials and Tribulations of the Cat.")
@@ -510,34 +325,29 @@ def test_names():
 def test_compounds_with_numbers():
     """ Compounds containing numbers, either
         with a hyphen or not """
-    g = Greynir()
+    pass
+    # g = Greynir()
     
     # Tokens with letters and numbers are split up so this fails
-    s = g.parse_single("Hér er X3-jeppi.")
+    #s = g.parse_single("Hér er X3-jeppi.")
     #assert s.lemmas == ['hér', 'vera', 'X3-jeppi', '.']
 
     # Tokens with letters and numbers are split up so this fails
-    s = g.parse_single("Hér er Bombardier Q-400.")
+    #s = g.parse_single("Hér er Bombardier Q-400.")
     #assert s.lemmas == ['hér', 'vera', 'Bombardier Q-400', '.']
 
     # Tokens with letters and numbers are split up so this fails
-    s = g.parse_single("Hér er U20-landsliðið.")
+    #s = g.parse_single("Hér er U20-landsliðið.")
     #assert s.lemmas == ['hér', 'vera', 'U20-landslið', '.']
 
     # Tokens with letters and numbers are split up so this fails
-    s = g.parse_single("Hér er ómega-3 fitusýra.")
+    #s = g.parse_single("Hér er ómega-3 fitusýra.")
     #assert s.lemmas == ['hér', 'vera', 'ómega-3', 'fitusýra', '.']
 
     # The entity combination doesn't recognize the hyphenated word
-    s = g.parse_single("Hér er Coca Cola-bikarinn.")
+    #s = g.parse_single("Hér er Coca Cola-bikarinn.")
     #assert s.lemmas == ['hér', 'vera', 'Coca Cola-bikar', '.']
 
-"""
-def test_numbers()
-    g = Greynir()
-    s = g.parse_single("Hér er Jón.")
-    assert s.lemmas == ['hér', 'vera', 'Jón', '.']
-"""
 
 def test_sentence_split():
     g = Greynir()
@@ -575,23 +385,23 @@ def test_auto_uppercase():
 
 
 def test_compounds():
-    db = BIN_Db()
-    _, m = db.lookup_word("fjármála- og efnahagsráðherra")
+    db = GreynirBin()
+    _, m = db.lookup("fjármála- og efnahagsráðherra")
     assert m
     assert m[0].stofn == "fjármála- og efnahags-ráðherra"
     assert m[0].ordmynd == "fjármála- og efnahags-ráðherra"
 
-    _, m = db.lookup_word("tösku- og hanskabúðina")
+    _, m = db.lookup("tösku- og hanskabúðina")
     assert m
     assert m[0].stofn == "tösku- og hanskabúð"
     assert m[0].ordmynd == "tösku- og hanskabúðina"
 
-    _, m = db.lookup_word("Félags- og barnamálaráðherra")
+    _, m = db.lookup("Félags- og barnamálaráðherra")
     assert m
     assert m[0].stofn == "Félags- og barnamála-ráðherra"
     assert m[0].ordmynd == "Félags- og barnamála-ráðherra"
 
-    _, m = db.lookup_word("Félags- og Barnamálaráðherra")  # sic
+    _, m = db.lookup("Félags- og Barnamálaráðherra")  # sic
     assert m
     assert m[0].stofn == "Félags- og barnamála-ráðherra"
     assert m[0].ordmynd == "Félags- og barnamála-ráðherra"
@@ -600,4 +410,3 @@ def test_compounds():
 if __name__ == "__main__":
 
     test_augment_terminal()
-    test_bin()

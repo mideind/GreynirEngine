@@ -73,7 +73,7 @@ from tokenizer import (
 from tokenizer.abbrev import Abbreviations
 
 from .settings import StaticPhrases, AmbigPhrases, DisallowedNames, NamePreferences
-from .bindb import BIN_Db, BIN_Meaning
+from .bindb import GreynirBin, BinMeaning
 
 if TYPE_CHECKING:
     from .binparser import TokenDict
@@ -109,7 +109,7 @@ StringIterable = Union[str, Iterable[str]]
 # The type of a stream of tokens
 TokenIterator = Iterator[Tok]
 # The type of a token val field
-TokenValType = Union[List[BIN_Meaning], List[PersonName], Tuple, None]
+TokenValType = Union[List[BinMeaning], List[PersonName], Tuple, None]
 # The type of a tokenization pipeline phase
 FirstPhaseFunction = Callable[[], TokenIterator]
 FollowingPhaseFunction = Callable[[TokenIterator], TokenIterator]
@@ -119,7 +119,7 @@ StateList = List[StateTuple]
 StateDict = Mapping[str, StateList]
 DisambiguationTuple = Tuple[str, FrozenSet[str]]
 TokenConstructor = Type["Bin_TOK"]
-FilterFunction = Callable[[BIN_Meaning], bool]
+FilterFunction = Callable[[BinMeaning], bool]
 # This type should be identical to tokenizer.MeaningList
 MeaningList = Sequence[Tuple[str, int, str, str, str, str]]
 
@@ -154,7 +154,8 @@ HYPHEN = "-"  # Normal hyphen
 EN_DASH = "\u2013"  # "–"
 EM_DASH = "\u2014"  # "—"
 COMPOSITE_HYPHEN = EN_DASH
-COMPOSITE_HYPHENS = HYPHEN + EN_DASH
+COMPOSITE_HYPHENS = HYPHEN + COMPOSITE_HYPHEN
+HYPHEN_SPLIT_RE = r"[" + COMPOSITE_HYPHENS + r"]"
 
 # Prefixes that can be applied to adjectives with an intervening hyphen
 ADJECTIVE_PREFIXES: FrozenSet[str] = frozenset(["hálf", "marg", "semí", "full"])
@@ -461,7 +462,7 @@ def load_token(*args: Any) -> Tuple[int, str, TokenValType]:
         to kind, txt, val attributes """
     kind, txt, val = args[0], args[1], args[2]
     if kind == TOK.WORD:
-        val = [BIN_Meaning(*v) for v in val]
+        val = [BinMeaning(*v) for v in val]
     elif kind == TOK.PERSON:
         val = [PersonName(*v) for v in val]
     else:
@@ -499,7 +500,7 @@ class Bin_TOK(TOK):
 
 
 def annotate(
-    db: BIN_Db,
+    db: GreynirBin,
     token_ctor: TokenConstructor,
     token_stream: TokenIterator,
     *,
@@ -532,16 +533,16 @@ def annotate(
         w = t.txt
         if not t.val:
             # Look up word in BIN database
-            w, m = db.lookup_word(w, at_sentence_start, auto_uppercase)
+            w, m = db.lookup(w, at_sentence_start, auto_uppercase)
             if not m:
                 # Check exceptional cases involving hyphens
                 w = t.txt
                 if w[0] in COMPOSITE_HYPHENS:
                     # Something like '-menn' in 'þingkonur og -menn'
-                    _, m = db.lookup_word(w[1:], False, False)
+                    _, m = db.lookup(w[1:], False, False)
                     if m:
                         m = [
-                            BIN_Meaning(
+                            BinMeaning(
                                 # We leave the lemma intact here ('maður' for '-menn')
                                 mm.stofn,
                                 mm.utg,
@@ -553,17 +554,17 @@ def annotate(
                             )
                             for mm in m
                         ]
-                elif HYPHEN in w or EN_DASH in w:
+                elif HYPHEN in w or COMPOSITE_HYPHEN in w:
                     # Word with embedded hyphen: 'marg-ítrekaðri',
                     # 'málfræði-greining'
-                    parts = re.split(r"[" + HYPHEN + EN_DASH + r"]", w)
+                    parts = re.split(HYPHEN_SPLIT_RE, w)
                     # Start by checking whether it exists in BÍN without hyphens
                     w_new, m = "", []
                     if all(p[0].islower() for p in parts[1:]):
                         # ...but we only do this if all of the suffixes start
                         # with a lowercase character (so, we don't do this for
                         # 'Syðri-Hnaus' or 'Litla-Brekka')
-                        w_new, m = db.lookup_word(
+                        w_new, m = db.lookup(
                             "".join(parts), at_sentence_start, auto_uppercase
                         )
                     else:
@@ -571,7 +572,7 @@ def annotate(
                     if m:
                         # Found without hyphens: use that word form
                         m = [
-                            BIN_Meaning(
+                            BinMeaning(
                                 # Leave the lemma intact (but it may already contain
                                 # hyphens inserted by the compound word recognizer)
                                 mm.stofn,
@@ -591,10 +592,10 @@ def annotate(
                     else:
                         # Not found without hyphens:
                         # Look up the last part only
-                        _, m = db.lookup_word(parts[-1], False, False)
+                        _, m = db.lookup(parts[-1], False, False)
                         if m:
                             m = [
-                                BIN_Meaning(
+                                BinMeaning(
                                     # In this case, keep the hyphens in the lemma,
                                     # imitating the compound word recognizer
                                     "-".join(parts[:-1] + [mm.stofn]),
@@ -608,23 +609,26 @@ def annotate(
                                 for mm in m
                             ]
             # Yield a word tuple with meanings
-            yield token_ctor.Word(w, cast(MeaningList, m), token=t)
+            yield token_ctor.Word(
+                w if auto_uppercase else t.txt, cast(MeaningList, m), token=t
+            )
         else:
             # Already have a meaning (most likely from an abbreviation that the
             # tokenizer has recognized), which probably needs conversion
-            # from a bare tuple to a BIN_Meaning
-            meanings = list(map(BIN_Meaning._make, t.val))
+            # from a bare tuple to a BinMeaning
+            meanings = list(map(BinMeaning._make, t.val))
             if not w.isupper() and " " not in w and "." not in w:
                 # This token is not in all-caps and does not contain spaces or
                 # periods. It is thus possible that it is an abbreviation that
                 # could have additional meanings as a word in BÍN.
-                w_new, m = db.lookup_word(w, at_sentence_start, auto_uppercase)
+                w_new, m = db.lookup(w, at_sentence_start, auto_uppercase)
                 if m:
                     # Additional meanings found: add them to
                     # the front of the meaning list, giving them a bit of
                     # priority over the dubious abbreviation
                     meanings = m + meanings
-                    w = w_new
+                    if auto_uppercase:
+                        w = w_new
             yield token_ctor.Word(w, cast(MeaningList, meanings), token=t)
         # We have yielded a word token: definitely no longer at sentence start
         at_sentence_start = False
@@ -705,7 +709,7 @@ def all_genders(token: Tok) -> Optional[List[str]]:
     g = set()
     if token.val:
 
-        def find_gender(m: BIN_Meaning) -> Optional[str]:
+        def find_gender(m: BinMeaning) -> Optional[str]:
             if m.ordfl in GENDER_SET:
                 return m.ordfl  # Plain noun
             # Probably number word ('töl' or 'to'): look at its spec
@@ -723,7 +727,7 @@ def all_genders(token: Tok) -> Optional[List[str]]:
 
 
 def parse_phrases_1(
-    db: BIN_Db, token_ctor: TokenConstructor, token_stream: TokenIterator
+    db: GreynirBin, token_ctor: TokenConstructor, token_stream: TokenIterator
 ) -> TokenIterator:
     """ Parse numbers and amounts """
 
@@ -905,7 +909,7 @@ def parse_phrases_1(
                         # prefix in the ordmynd field
                         prefix = all_except_suffix(txt)
                         m = [
-                            BIN_Meaning(
+                            BinMeaning(
                                 prefix + " " + mm.stofn,
                                 mm.utg,
                                 mm.ordfl,
@@ -1353,7 +1357,7 @@ def parse_phrases_2(
 
 
 def parse_phrases_3(
-    db: BIN_Db, token_stream: TokenIterator, token_ctor: TokenConstructor
+    db: GreynirBin, token_stream: TokenIterator, token_ctor: TokenConstructor
 ) -> TokenIterator:
     """ Parse a stream of tokens looking for phrases and making substitutions.
         Third pass: coalesce uppercase, otherwise unrecognized words with
@@ -1380,7 +1384,9 @@ def parse_phrases_3(
         if " " in token.txt:
             return False
         if token.kind == TOK.WORD and token.val:
-            if not any(m.ordfl == "entity" for m in token.val):
+            if any(m.stofn[0].isupper() for m in token.val):
+                # This word has an independent uppercase meaning:
+                # don't concatenate it
                 return False
         return True
 
@@ -1432,9 +1438,9 @@ def parse_phrases_3(
                         token = token_ctor.Entity(" ".join(first))
                     yield token
                     if middle:
-                        _, m = db.lookup_word(middle)
+                        _, m = db.lookup(middle)
                         yield token_ctor.Word(middle, m)
-                    _, m = db.lookup_word(split[-1])
+                    _, m = db.lookup(split[-1])
                     token = token_ctor.Word(split[-1], m)
                 else:
                     yield token
@@ -1697,12 +1703,12 @@ class StaticPhraseStream(MatchingStream):
         w = " ".join([t.txt for t in tq])
         # Add the entire phrase as one 'word' to the token queue.
         # Note that the StaticPhrases meaning list will be converted
-        # to BIN_Meaning tuples in the annotate() pass.
+        # to BinMeaning tuples in the annotate() pass.
         # Also note that the entire token queue is sent in as
         # the token paramter, as any token in the queue may
         # contain error information.
         yield self._token_ctor.Word(
-            w, cast(List[BIN_Meaning], StaticPhrases.get_meaning(ix)), token=tq
+            w, cast(List[BinMeaning], StaticPhrases.get_meaning(ix)), token=tq
         )
 
 
@@ -1771,7 +1777,7 @@ class DisambiguationStream(MatchingStream):
                 # Handle prepositions specially, since we may have additional
                 # preps defined in Main.conf that don't have fs meanings in BÍN
                 w = t.txt.lower()
-                mm = [BIN_Meaning(w, 0, "fs", "alm", w, "-")]
+                mm = [BinMeaning(w, 0, "fs", "alm", w, "-")]
                 cat_set = cat_set - frozenset(("fs",))
                 # !!! BUG: constraining the meanings of prepositions (ordfl=fs)
                 # !!! isn't currently meaningful, since the matcher in binparser.py
@@ -1819,7 +1825,7 @@ class DefaultPipeline:
         self._auto_uppercase: bool = options.pop("auto_uppercase", False)
         self._no_sentence_start: bool = options.pop("no_sentence_start", False)
         self._options = options
-        self._db: Optional[BIN_Db] = None
+        self._db: Optional[GreynirBin] = None
         # Initialize the default tokenizer pipeline.
         # This sequence of phases can be modified in derived classes.
         self._phases: List[PhaseFunction] = [
@@ -1916,7 +1922,7 @@ class DefaultPipeline:
 
         # Thank you Python for enabling this programming pattern ;-)
 
-        with BIN_Db.get_db() as db:
+        with GreynirBin.get_db() as db:
             try:
                 self._db = db
                 # First tokenization phase

@@ -1529,42 +1529,6 @@ def test_composite_words(r):
     assert s.tree.nouns == ["Þing-kona", "maður", "þingvalla-sveit"]
 
 
-def test_compressed_bin():
-    import reynir.bincompress as bc
-
-    binc = bc.BIN_Compressed()
-    assert "gleraugu" in binc
-    assert "Ísland" in binc
-    assert "Vestur-Þýskaland" in binc
-    assert "glerxaugu" not in binc
-    assert "vextir" in binc
-    assert "x" not in binc
-    assert "X" not in binc
-    assert binc.lookup("aðförin") == [
-        ("aðför", 123454, "kvk", "alm", "aðförin", "NFETgr")
-    ]
-    assert binc.lookup("einkabílnum") == [
-        ("einkabíll", 75579, "kk", "alm", "einkabílnum", "ÞGFETgr")
-    ]
-    nominal_forms = [m[4] for m in binc.nominative("einkabílnum") if m[5] == "NFETgr"]
-    assert nominal_forms == ["einkabíllinn"]
-    # Test non-latin-1 code point (should not throw an exception)
-    assert "Domino’s" not in binc
-    # Test errata (BinErrata.conf)
-    assert binc.lookup("Hafnarfjörður") == [
-        ("Hafnarfjörður", 303729, "kk", "örn", "Hafnarfjörður", "NFET")
-    ]
-    assert binc.lookup("Gamli-Oddhóll") == [
-        ("Gamli-Oddhóll", 430106, "kk", "örn", "Gamli-Oddhóll", "NFET")
-    ]
-    assert binc.lookup("Árbæjarkirkja") == [
-        ("Árbæjarkirkja", 453313, "kvk", "örn", "Árbæjarkirkja", "NFET")
-    ]
-    assert binc.lookup("Litlihjalli") == [
-        ("Litlihjalli", 282316, "kk", "göt", "Litlihjalli", "NFET")
-    ]
-
-
 def test_foreign_names(r):
     s = r.parse_single("Aristóteles uppgötvaði þyngdarlögmálið.")
     assert (
@@ -2080,7 +2044,6 @@ if __name__ == "__main__":
     from reynir import Greynir
 
     g = Greynir()
-    test_compressed_bin()
     test_parse(g, verbose=True)
     test_properties(g)
     test_long_parse(g, verbose=True)

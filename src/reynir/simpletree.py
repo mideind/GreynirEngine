@@ -78,13 +78,13 @@ from .bintokenizer import (
     DECLINABLE_MULTIPLIERS,
 )
 from .binparser import describe_token
-from .bindb import BIN_Db, BIN_Meaning
+from .bindb import GreynirBin, BinMeaning
 from .ifdtagger import IFD_Tagset
 from .matcher import match_pattern, ContextDict
 
 
 # Type for map from token index to (terminal, meaning) tuple
-TerminalMap = Dict[int, Tuple[BIN_Terminal, Optional[BIN_Meaning]]]
+TerminalMap = Dict[int, Tuple[BIN_Terminal, Optional[BinMeaning]]]
 NonterminalMap = Mapping[str, Union[str, Tuple[str, ...]]]
 IdMap = Mapping[str, Dict[str, Union[str, Set[str]]]]
 StatsDict = Dict[str, Union[int, float]]
@@ -1020,8 +1020,8 @@ class SimpleTree:
                 # For spelled-out amounts, we look up contained words in BÍN
                 # These may be number prefixes ('sautján'), adjectives ('norskar'),
                 # and nouns ('krónur')
-                with BIN_Db.get_db() as db:
-                    _, m = db.lookup_word(tok_lower, at_sentence_start=False)
+                with GreynirBin.get_db() as db:
+                    _, m = db.lookup(tok_lower, at_sentence_start=False)
                     # We only consider to, töl, lo, currency names or
                     # declinable multipliers ('þúsund', 'milljónir', 'milljarðar')
                     m = list(
@@ -1278,7 +1278,7 @@ class SimpleTree:
         indefinite = form == "indefinite"
         canonical = form == "canonical"
         prefix = ""
-        with BIN_Db.get_db() as db:
+        with GreynirBin.get_db() as db:
 
             # A bit convoluted, but so it goes
             lookup_functions = {
@@ -1335,7 +1335,7 @@ class SimpleTree:
 
             options: Dict[str, Any] = dict(
                 cat=self._cat,
-                stem=lemma,
+                lemma=lemma,
                 singular=canonical,
                 indefinite=indefinite or canonical,
                 # We don't want second or third optional forms of
@@ -1362,7 +1362,7 @@ class SimpleTree:
             # have more than one gender and can even be valid both as
             # singular and plural
 
-            def filter_func_no(m: BIN_Meaning) -> bool:
+            def filter_func_no(m: BinMeaning) -> bool:
                 """ Filter function for nouns """
                 if not canonical and self.tcat != "gata":
                     # Match the original word in terms of number (singular/plural)
@@ -1384,7 +1384,7 @@ class SimpleTree:
                     return False
                 return True
 
-            def filter_func_without_gender(m: BIN_Meaning) -> bool:
+            def filter_func_without_gender(m: BinMeaning) -> bool:
                 """ Filter function for personal pronouns """
                 if not canonical:
                     # Match the original word in terms of number (singular/plural)
@@ -1393,7 +1393,7 @@ class SimpleTree:
                         return False
                 return True
 
-            def filter_func_with_gender(m: BIN_Meaning) -> bool:
+            def filter_func_with_gender(m: BinMeaning) -> bool:
                 """ Filter function for nonpersonal pronouns
                     and declinable number words """
                 # Match the original word in terms of gender
@@ -1407,7 +1407,7 @@ class SimpleTree:
                         return False
                 return True
 
-            def filter_func_lo(m: BIN_Meaning) -> bool:
+            def filter_func_lo(m: BinMeaning) -> bool:
                 """ Filter function for adjectives """
                 # Match the original word in terms of gender
                 gender = next(iter(self._vset & _GENDERS), "kk")
@@ -1472,7 +1472,7 @@ class SimpleTree:
                 return True
 
             # Select and apply the appropriate filter function
-            filters: Dict[Union[None, str], Callable[[BIN_Meaning], bool]] = {
+            filters: Dict[Union[None, str], Callable[[BinMeaning], bool]] = {
                 "lo": filter_func_lo,
                 "to": filter_func_with_gender,
                 "gr": filter_func_with_gender,
@@ -1879,7 +1879,7 @@ class SimpleTree:
         if self.tcat != "so" or "mm" not in self.all_variants:
             # Not a middle voice verb
             return self._lemma
-        # Construct and return the "-st" middle voice stem
+        # Construct and return the "-st" middle voice lemma
         return BIN_Token.mm_verb_stem(self._lemma)
 
     def all_matches(self, pattern: str, context: ContextDict=None) -> Iterator["SimpleTree"]:

@@ -97,7 +97,7 @@ from .grammar import Grammar, Production
 from .fastparser import Node, ParseForestNavigator
 from .settings import Preferences, NounPreferences
 from .verbframe import VerbFrame
-from .binparser import BIN_Token, BIN_Terminal, BIN_Meaning
+from .binparser import BIN_Token, BIN_Terminal, BinMeaning
 
 
 # Types for data used in the reduction process
@@ -317,7 +317,7 @@ class ParseForestReducer:
         """ Return a verb/preposition match bonus, as and if applicable """
         # Only do this if the prepositions match the verb being connected to
         m = verb_token.match_with_meaning(verb_terminal)
-        assert isinstance(m, BIN_Meaning)
+        assert isinstance(m, BinMeaning)
         verb = m.stofn
         if "MM" in m.beyging:
             # Use MM-NH nominal form for MM verbs,

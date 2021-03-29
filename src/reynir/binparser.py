@@ -88,7 +88,7 @@ from .grammar import (
 )
 from .baseparser import Base_Parser
 from .bintokenizer import choose_full_name, HYPHEN, EM_DASH, EN_DASH
-from .bindb import BIN_Meaning
+from .bindb import BinMeaning
 from .version import __version__ as package_version
 
 # This is the base path where we expect to find the Greynir.grammar file
@@ -165,7 +165,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_so(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Match word with verb terminal, i.e. so_xxx """
         if m.ordfl != "so":
@@ -192,7 +192,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_no(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Match word with noun terminal, i.e. no_xxx """
         if m.ordfl not in BIN_Token.NOUNS_SET:
@@ -240,7 +240,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_lo(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Match word with adjective terminal, i.e. lo_xxx """
         if m.ordfl != "lo":
@@ -279,7 +279,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_abfn(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Match word with reflexive pronoun terminal
             (afturbeygt fornafn), abfn_xxx """
@@ -292,7 +292,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_pfn(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Match word with personal pronoun terminal, pfn_xxx """
         if m.ordfl != "pfn":
@@ -306,7 +306,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_stt(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Match word with connective conjunction terminal ('sem', 'er') """
         # This is actually never used by the current grammar,
@@ -316,7 +316,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_eo(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ 'Einkunnarorð': adverb (atviksorð) that is not the same
             as a preposition (forsetning) or pronoun (fornafn)."""
@@ -346,7 +346,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_ao(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Adverbs, excluding meanings explicitly marked as eo """
         if m.ordfl != "ao":
@@ -365,7 +365,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_fs(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Check preposition. Note that in this exceptional case, we
             do not use the BÍN annotation of the token at all. Instead
@@ -402,7 +402,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_töl(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Undeclinable number word ('fimm', 'sex', 'tuttugu'...) """
         # In this case, the terminal may have variants but they are only used
@@ -413,7 +413,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_person(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Check name from static phrases, coming from the GreynirPackage.conf file """
         if m.fl != "nafn":
@@ -440,7 +440,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_gata(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Check street name """
         # Note: we allow street names as well as place names ('örn')
@@ -464,7 +464,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_sérnafn(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Proper name terminal """
         # Only allow a potential interpretation as a proper name if
@@ -493,7 +493,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_default(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Check other terminal categories """
         if not terminal.matches_first(m.ordfl, m.stofn, token.t1_lower):
@@ -529,7 +529,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_strong_literal(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Check whether the meaning matches a strong literal terminal,
             i.e. one that is enclosed in double quotes ("dæmi:hk") """
@@ -537,7 +537,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_lemma_literal(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Check whether the meaning matches a lemma literal terminal,
             i.e. one that is enclosed in single quotes ('dæmi:hk'_nf_et) """
@@ -553,7 +553,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_uppercase_lemma_literal(
-        token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Meaning
+        token: "BIN_Token", terminal: "BIN_Terminal", m: BinMeaning
     ) -> bool:
         """ Check whether the meaning matches an uppercase lemma literal terminal,
             i.e. one that is enclosed in single quotes ('Vestur-Þýskaland:hk'_nf) """
@@ -935,8 +935,9 @@ class BIN_Token(Token):
     def fbits(cls, beyging: str) -> int:
         """ Convert a 'beyging' field from BIN to a set of fbits """
         bit = cls.FBIT
+        or_func: Callable[[int, int], int] = lambda x, y: x | y
         return reduce(
-            lambda x, y: x | y, (b for key, b in bit.items() if key in beyging), 0
+            or_func, (b for key, b in bit.items() if key in beyging), 0
         )
 
     @classmethod
@@ -1466,7 +1467,7 @@ class BIN_Token(Token):
         """ A company token matches a company (fyrirtæki) terminal """
         return terminal.startswith("fyrirtæki")
 
-    def matches_WORD(self, terminal: "BIN_Terminal") -> Union[BIN_Meaning, bool]:
+    def matches_WORD(self, terminal: "BIN_Terminal") -> Union[BinMeaning, bool]:
         """ Match a word token, having the potential part-of-speech meanings
             from the BIN database, with the terminal """
 
@@ -1497,7 +1498,7 @@ class BIN_Token(Token):
 
     # Dispatch table for the token matching functions
     _MATCHING_FUNC: Dict[
-        int, Callable[["BIN_Token", "BIN_Terminal"], Union[BIN_Meaning, bool]]
+        int, Callable[["BIN_Token", "BIN_Terminal"], Union[BinMeaning, bool]]
     ] = {
         TOK.PERSON: matches_PERSON,
         TOK.ENTITY: matches_ENTITY,
@@ -1541,7 +1542,7 @@ class BIN_Token(Token):
             return t[2][1] in (understood_punctuation or cls._UNDERSTOOD_PUNCTUATION)
         return t[0] in cls._MATCHING_FUNC
 
-    def match_with_meaning(self, terminal: "BIN_Terminal") -> Union[bool, BIN_Meaning]:
+    def match_with_meaning(self, terminal: "BIN_Terminal") -> Union[bool, BinMeaning]:
         """ Return False if this token does not match the given terminal;
             otherwise True or the actual meaning tuple that matched """
         # If the terminal is able to shortcut this match without
@@ -1677,11 +1678,11 @@ class VariantHandler:
         # Convert 'kk', 'kvk', 'hk' to 'no' before doing the compare
         return self._first == BIN_Token.KIND.get(t_kind, t_kind)
 
-    def matches_token(self, token: BIN_Token, m: BIN_Meaning) -> bool:
+    def matches_token(self, token: BIN_Token, m: BinMeaning) -> bool:
         """ Test whether this terminal matches the meaning m of the given token """
         return self._matcher(token, self, m)
 
-    def matches_token_meaning(self, token: BIN_Token) -> Union[bool, BIN_Meaning]:
+    def matches_token_meaning(self, token: BIN_Token) -> Union[bool, BinMeaning]:
         """ Return the meaning of the token which matches this terminal,
             if any, or False if none """
         for m in token.t2:
@@ -2463,19 +2464,19 @@ def canonicalize_token(source: TokenDict) -> CanonicalTokenDict:
         elif kind == TOK.PERSON:
             # Move the nominal form of the name to the "s" (stem) field
             t["s"] = cast(str, t["v"])
-            del t["v"]
+            del cast(TokenDict, t)["v"]
             # Move the gender to the "c" (category) field
             if "g" in t:
-                t["c"] = cast(TokenDict, t)["g"]
+                t["c"] = t["g"]
                 del cast(TokenDict, t)["g"]
     if kind in (TOK.ENTITY, TOK.WORD) and "s" not in t:
         # Put in a stem for entities and proper names
         t["s"] = t["x"]
-    return t
+    return cast(CanonicalTokenDict, t)
 
 
 def describe_token(
-    index: int, t: Tok, terminal: Optional[BIN_Terminal], meaning: Optional[BIN_Meaning]
+    index: int, t: Tok, terminal: Optional[BIN_Terminal], meaning: Optional[BinMeaning]
 ) -> TokenDict:
     """ Return a compact dictionary describing the token t,
         at the given index within its sentence,

@@ -343,8 +343,8 @@ def test_noun_phrases(r):
 
 def test_casting():
     """ Test functions to cast words in nominative case to other cases """
-    from reynir.bindb import BIN_Db
-    db = BIN_Db()
+    from reynir.bindb import GreynirBin
+    db = GreynirBin()
 
     assert db.cast_to_accusative("") == ""
     assert db.cast_to_dative("") == ""
@@ -402,8 +402,8 @@ def test_casting():
 
 
 def test_forms():
-    from reynir.bindb import BIN_Db
-    db = BIN_Db()
+    from reynir.bindb import GreynirBin
+    db = GreynirBin()
     l = db.lookup_forms("köttur", "kvk", "nf")
     assert len(l) == 0
     l = db.lookup_forms("köttur", "kzk", "nf")
