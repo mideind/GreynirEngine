@@ -137,14 +137,12 @@ To install this package, assuming Python 3 is your default Python::
 
     $ pip install reynir
 
-If you have **git** and **git-lfs** installed and want to be able to edit
+If you have **git** installed and want to be able to edit
 the source, do like so::
 
     $ git clone https://github.com/mideind/GreynirPackage
     $ cd GreynirPackage
     $ # [ Activate your virtualenv here if you have one ]
-    $ git lfs install
-    $ git pull
     $ pip install -e .
 
 The package source code is now in ``GreynirPackage/src/reynir``.
