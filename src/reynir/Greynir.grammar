@@ -303,7 +303,7 @@ Samtenging →
     "og:st" | "eða:st" | "ellegar:st" | "heldur:st" 
     | "enda:st" | "en:st" | "hvorki:st"
     | 'það:pfn'_hk_nf_et 'vera:so'_0_gm_fh_et_p3 # það er
-    | "þar:ao" 'á_meðal:ao'
+    | "þar:ao" 'á:ao' 'meðal:ao'
     | 'auk_þess:ao' "sem:st" AðvörunAð?
     | 'það_er_að_segja:ao' Tengimerki? "að:st"?
     | "svo:st" "lengi:ao"? "sem:st"
@@ -845,7 +845,7 @@ SamanburðarNlTenging →
     HeldurEn                                # 'Forseti á ekki að gera meiri breytingu á sér (heldur) en forsætisráðherra'
     | ","? Samanburðartenging               # 'Hann á ekki andstæðinga eins og aðrir kjörnir fulltrúar'
     | Samanburðarmerki? "þar:ao" "af:ao"    # 'Fjöldi barna var í vélinni, þar af tvö kornabörn'
-    | Samanburðarmerki? "þar:ao" 'á_meðal:ao'
+    | Samanburðarmerki? "þar:ao" 'á:ao' 'meðal:ao'
     | Samanburðarmerki? 'þar_með_talið:ao'  # Skammstöfunin 'þ.m.t.'
     | Samanburðarmerki? Nema                # Allir vita það, nema ég.
     | ","? "enda:st"                        # 'Réttindi í almennum sjóðum breyttust, enda lægri fjárhæð en áður'
@@ -4939,7 +4939,7 @@ Skýring →
     "svo:st" "sem:st"
     | "sem:st" 'segja:so'_lhþt_sb_hk_nf_et      # sem sagt
     | 'til:fs'_ef 'dæmi:hk'_ef_et | 'til_dæmis:ao'
-    | "þar:ao" 'á_meðal:ao'
+    | "þar:ao" 'á:ao' 'meðal:ao'
     | 'meðal_annars:ao'
     | 'það:pfn'_hk_et_nf 'vera:so'_0_gm_fh_et_p3
     | 'með:fs'_þgf 'annar:lo'_hk_þgf_ft 'orð:hk'_þgf_ft | 'með_öðrum_orðum:ao'
@@ -4992,7 +4992,7 @@ OgAo →
 OgSem →
     "og:st" "sem:stt"? | "eða:st" "sem:stt"? | "ellegar:st" | "en:st" "sem:stt"?
 
-ÞarÁMeðal → "þar:ao" 'á_meðal:ao'
+ÞarÁMeðal → "þar:ao" 'á:ao' 'meðal:ao'
 
 $score(+16) ÞarÁMeðal # Líta frekar á "þar á meðal" sem samtengingu en skýringu
 
@@ -5346,7 +5346,7 @@ HverHvorBotn/kyn →
     'fyrir:fs'_þf 'sig:abfn'_þf                         # fyrir sig
     | 'um:fs'_þf 'sig:abfn'_þf                          # um sig
     | 'í:fs'_þgf 'sinn:fn'_et_hk_þgf 'lag:hk'_et_þgf    # í sínu lagi
-    | 'á_fætur:ao' 'annar:fn'_et_þgf/kyn                # á fætur annarri
+    | 'á:ao' 'fótur:kk'_ft_þf 'annar:fn'_et_þgf/kyn                # á fætur annarri
     | 'af:fs'_þgf 'annar:fn'_et_þgf/kyn                 # af öðru
 
 StaktLoEftirNl/tala/fall/kyn →
@@ -5614,7 +5614,7 @@ FsMilli →
 $score(+6) FsMilli
 
 FsOkkarÁMilli →
-    'ég:pfn'_ef_ft 'á_milli:ao' # okkar á milli
+    'ég:pfn'_ef_ft 'á:ao' 'milli:ao' # okkar á milli
 
 $score(+6) FsOkkarÁMilli
 
