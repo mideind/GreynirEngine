@@ -2245,13 +2245,21 @@ class AnnoTree:
             if skipright():
                 # Right parenthesis
                 # The enclosing nonterminal is done; pop up to the next level above
-                stack.pop()
+                if len(stack) == 1:
+                    # Reached the empty closing parenthesis, 
+                    # don't want to pop last item in stack
+                    p +=1
+                    break
+
+                x = stack.pop()
             elif skipleft():
                 # Left parenthesis
                 s = skipstring()
                 a = s.split(maxsplit=1)
-                #print(a)
                 # Extract the node identifier
+                if not a: 
+                    # Empty parentheses surrounding whole tree
+                    continue
                 t = a[0]
                 if t[0].isupper():
                     # Nonterminal node, or meta tag
