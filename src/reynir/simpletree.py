@@ -2136,7 +2136,7 @@ class AnnoTree:
 
         An Annotald-formatted string looks as follows:
 
-        (META
+        ( (META
             (ID-CORPUS 43bf66f3-51c4-11e6-8438-04014c605401.10)
             (ID-LOCAL greynir_corpus_00003.psd,.1)
             (URL http://www.mbl.is/sport/efstadeild/2016/07/24/ia_ibv_stadan_er_1_0/)
@@ -2154,7 +2154,7 @@ class AnnoTree:
                 )
                 (ADVP (ao enn (lemma enn)))
             )
-        ))
+        )))
 
     """
 
