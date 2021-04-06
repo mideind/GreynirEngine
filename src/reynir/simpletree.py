@@ -151,6 +151,13 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "Skýringarsetning": "CP-THT",
     "SkýringarsetningFramhald": "CP-THT",
     "AtviksAðSetning": "CP-THT",
+    "SkýringarsetningFrumlag": "CP-THT-SUBJ",
+    "SkýringarsetningBeintAndlag": "CP-THT-OBJ",
+    "SkýringarsetningÓbeintAndlag": "CP-THT-IOBJ",
+    "SkýringarsetningSagnfylling": "CP-THT-PRD",
+    "SpurnaraukasetningFrumlag": "CP-QUE-SUBJ",
+    "SpurnaraukasetningBeintAndlag": "CP-QUE-OBJ",
+    "SpurnaraukasetningÓbeintAndlag": "CP-QUE-IOBJ",
     "Spurnaraukasetning": "CP-QUE",
     "BeygingarliðurÁnF": "IP",
     "BeygingarliðurÁnUmröðunar": "IP",
@@ -164,11 +171,15 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "SegirÍ": "IP",
     "BeygingarliðurStýftAndlag": "IP",
     "BlTagl": "IP",
-    "NhLiður": "IP-INF",
+    "NhLiður": ("IP-INF", "VP"),
     "SetningÞað": "IP-INF",
     "ÞaðTenging": "IP-INF",
     "ViðurkenningarNh": "IP-INF",
     "ViðurkenningarNhKomma": "IP-INF",
+    "NafnháttarsetningFrumlag": "IP-INF-SUBJ",
+    "NafnháttarsetningBeintAndlag": "IP-INF-OBJ",
+    "NafnháttarsetningÓbeintAndlag": "IP-INF-IOBJ",
+    "NafnháttarsetningSagnfylling": "IP-INF-PRD",
     "Nl": "NP",
     "NlRunaEða": "NP",
     "SpurnarNafnliður": "NP",
@@ -212,7 +223,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "SagnliðurMeðF": "VP",
     "So": "VP",
     "NhSögnAtv": "VP",
-    "NhLiðir": "VP",
+    #"NhLiðir": "VP",
     "NhSögn": "VP",
     "NhEinfaldur": "VP",
     "SagnliðurÁnF": "VP",
@@ -319,8 +330,36 @@ _DEFAULT_ID_MAP: IdMap = {
     "S-PREFIX": dict(name="Forskeyti"),  # Prefix in front of sentence
     "S-EXPLAIN": dict(name="Skýring"),
     "S-QUE": dict(name="Spurnaraðalsetning", overrides="S-MAIN"),  # Question clause
-    "CP-THT": dict(name="Skýringarsetning", overrides="IP-INF"),  # Complement clause
-    "CP-QUE": dict(name="Spurnaraukasetning", overrides="NP-OBJ"),  # Question subclause
+    "CP-THT": dict(
+        name="Skýringarsetning", 
+        overrides="IP-INF", 
+        subject_to={
+            "CP-THT-SUBJ", 
+            "CP-THT-OBJ", 
+            "CP-THT-IOBJ", 
+            "CP-THT-PRD",
+        },
+    ),  # Complement clause
+    "CP-THT-SUBJ": dict(name="Frumlagsskýringarsetning", overrides="NP-SUBJ"),  # Complement clause
+    "CP-THT-OBJ": dict(name="Bein andlagsskýringarsetning", overrides="NP-OBJ"),  # Complement clause
+    "CP-THT-IOBJ": dict(name="Óbein andlagskýringarsetning", overrides="NP-IOBJ"),  # Complement clause
+    "CP-THT-PRD": dict(name="Sagnfyllingarskýringarsetning", overrides="NP-PRD"),  # Complement clause
+    "CP-QUE": dict(
+        name="Spurnaraukasetning", 
+        overrides={
+            "NP-OBJ",
+        },
+        subject_to={
+            "CP-QUE-SUBJ",
+            "CP-QUE-OBJ",
+            "CP-QUE-IOBJ",
+            "CP-QUE-PRD",
+        },
+    ),  # Question subclause
+    "CP-QUE-SUBJ": dict(name="Frumlagsspurnaraukasetning", overrides="NP-SUBJ"),  # Question subclause
+    "CP-QUE-OBJ": dict(name="Bein andlagsspurnaraukasetning", overrides="NP-OBJ"),  # Question subclause
+    "CP-QUE-IOBJ": dict(name="Óbein andlagspurnaraukasetning", overrides="NP-IOBJ"),  # Question subclause
+    "CP-QUE-PRD": dict(name="Sagnfyllingarspurnaraukasetning", overrides="NP-PRD"),  # Question subclause
     "CP-REL": dict(
         name="Tilvísunarsetning", overrides="S", subject_to={"CP-REL"}
     ),  # Relative clause
@@ -337,7 +376,20 @@ _DEFAULT_ID_MAP: IdMap = {
     "CP-EXPLAIN": dict(name="Skýring"),
     "IP": dict(name="Beygingarliður"),  # Inflectional phrase
     # Infinitival inflectional phrase
-    "IP-INF": dict(name="Beygingarliður", overrides="VP"),
+    "IP-INF": dict(
+        name="Nafnháttarsetning", 
+        overrides="VP",
+        subject_to={
+            "IP-INF-SUBJ",
+            "IP-INF-OBJ",
+            "IP-INF-IOBJ",
+            "IP-INF-PRD",
+        },
+    ),
+    "IP-INF-SUBJ": dict(name="Frumlagsnafnháttarsetning", overrides="NP-SUBJ"),
+    "IP-INF-OBJ": dict(name="Bein andlagsnafnháttarsetning", overrides="NP-OBJ"),
+    "IP-INF-IOBJ": dict(name="Óbein andlagsnafnháttarsetning", overrides="NP-IOBJ"),
+    "IP-INF-PRD": dict(name="Sagnfyllingarnafnháttarsetning", overrides="NP-PRD"),
     "VP": dict(name="Sagnliður", overrides={"VP"}),
     "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
     "NP": dict(
@@ -1644,7 +1696,7 @@ class SimpleTree:
                     if i > 0:
                         children = children[i:]
                     break
-        if len(children) == 1 and children[0].tag == "CP-THT":
+        if len(children) == 1 and "CP-THT" in children[0].tag:
             # If the noun phrase consists only of a CP-THT nonterminal
             # ('skýringarsetning'), add 'það' to the front so the
             # result is something like 'það að fjöldi dæmdra glæpamanna hafi aukist'

@@ -3223,46 +3223,62 @@ NlFrumlagLeppur → 'það:pfn'_hk_nf_et
 
 NlAndlagÞað/fall → 'það:pfn'_hk_et/fall
 
-NlFrumlag/fall → Nl/fall | NlSkýringarsetning
+SkýringarsetningFrumlag → NlSkýringarsetning
+SkýringarsetningBeintAndlag → NlSkýringarsetning
+SkýringarsetningÓbeintAndlag → NlSkýringarsetning
+SkýringarsetningSagnfylling → NlSkýringarsetning
+
+SpurnaraukasetningFrumlag → NlSpurnaraukasetning
+SpurnaraukasetningBeintAndlag → NlSpurnaraukasetning
+SpurnaraukasetningÓbeintAndlag → NlSpurnaraukasetning
+
+NafnháttarsetningFrumlag → NhFylling
+NafnháttarsetningBeintAndlag → NhFylling
+NafnháttarsetningÓbeintAndlag → NhFylling
+NafnháttarsetningSagnfylling → NhFylling
+
+
+
+NlFrumlag/fall → Nl/fall | SkýringarsetningFrumlag
 NlFrumlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
-NlFrumlag_nf_et_p3_hk → NlSkýringarsetning
-NlFrumlag_þf_et_p3_hk → NlSkýringarsetning
-NlFrumlag_þgf_et_p3_hk → NlSkýringarsetning
-NlFrumlag_ef_et_p3_hk → NlSkýringarsetning
+NlFrumlag_nf_et_p3_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_þf_et_p3_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_þgf_et_p3_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_ef_et_p3_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
 NlFrumlag/fall/tala/kyn → Nl/fall/tala/kyn
-NlFrumlag_nf_et_hk → NlSkýringarsetning
-NlFrumlag_þf_et_hk → NlSkýringarsetning
-NlFrumlag_þgf_et_hk → NlSkýringarsetning
-NlFrumlag_ef_et_hk → NlSkýringarsetning
+NlFrumlag_nf_et_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_þf_et_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_þgf_et_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_ef_et_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
 NlFrumlag/fall/tala → Nl/fall/tala
-NlFrumlag_nf_et → NlSkýringarsetning
-NlFrumlag_þf_et → NlSkýringarsetning
-NlFrumlag_þgf_et → NlSkýringarsetning
-NlFrumlag_ef_et → NlSkýringarsetning
+NlFrumlag_nf_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_þf_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_þgf_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_ef_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
 NlFrumlag/fall/tala/pers → Nl/fall/tala/pers
-NlFrumlag_nf_et_p3 → NlSkýringarsetning
-NlFrumlag_þf_et_p3 → NlSkýringarsetning
-NlFrumlag_þgf_et_p3 → NlSkýringarsetning
-NlFrumlag_ef_et_p3 → NlSkýringarsetning
-NlBeintAndlag/fall → Nl/fall | NlSpurnaraukasetning | NlSkýringarsetning
+NlFrumlag_nf_et_p3 → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_þf_et_p3 → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_þgf_et_p3 → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_ef_et_p3 → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlBeintAndlag/fall → Nl/fall | SpurnaraukasetningBeintAndlag | SkýringarsetningBeintAndlag | NafnháttarsetningBeintAndlag
 NlBeintAndlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
-NlBeintAndlag_nf_et_p3_hk → NlSpurnaraukasetning | NlSkýringarsetning
-NlBeintAndlag_þf_et_p3_hk → NlSpurnaraukasetning | NlSkýringarsetning
-NlBeintAndlag_þgf_et_p3_hk → NlSpurnaraukasetning | NlSkýringarsetning
-NlBeintAndlag_ef_et_p3_hk → NlSpurnaraukasetning | NlSkýringarsetning
+NlBeintAndlag_nf_et_p3_hk → SpurnaraukasetningBeintAndlag | SkýringarsetningBeintAndlag | NafnháttarsetningBeintAndlag
+NlBeintAndlag_þf_et_p3_hk → SpurnaraukasetningBeintAndlag | SkýringarsetningBeintAndlag | NafnháttarsetningBeintAndlag
+NlBeintAndlag_þgf_et_p3_hk → SpurnaraukasetningBeintAndlag | SkýringarsetningBeintAndlag | NafnháttarsetningBeintAndlag
+NlBeintAndlag_ef_et_p3_hk → SpurnaraukasetningBeintAndlag | SkýringarsetningBeintAndlag | NafnháttarsetningBeintAndlag
 NlBeintAndlag/fall/tala/pers → Nl/fall/tala/pers
-NlBeintAndlag_nf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
-NlBeintAndlag_þf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
-NlBeintAndlag_þgf_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
-NlBeintAndlag_ef_et_p3 → NlSpurnaraukasetning | NlSkýringarsetning
-NlÓbeintAndlag/fall → Nl/fall | NlSkýringarsetning | NlSpurnaraukasetning
-NlÓbeintAndlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn | NlSpurnaraukasetning    # Mér finnst óeðlilegt hvernig málin þróuðust
-NlSagnfylling/fall → Nl/fall | NlSkýringarsetning
+NlBeintAndlag_nf_et_p3 → SpurnaraukasetningBeintAndlag | SkýringarsetningBeintAndlag | NafnháttarsetningBeintAndlag
+NlBeintAndlag_þf_et_p3 → SpurnaraukasetningBeintAndlag | SkýringarsetningBeintAndlag | NafnháttarsetningBeintAndlag
+NlBeintAndlag_þgf_et_p3 → SpurnaraukasetningBeintAndlag | SkýringarsetningBeintAndlag | NafnháttarsetningBeintAndlag
+NlBeintAndlag_ef_et_p3 → SpurnaraukasetningBeintAndlag | SkýringarsetningBeintAndlag | NafnháttarsetningBeintAndlag
+NlÓbeintAndlag/fall → Nl/fall | SkýringarsetningÓbeintAndlag | SpurnaraukasetningÓbeintAndlag | NafnháttarsetningÓbeintAndlag
+NlÓbeintAndlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn | SkýringarsetningÓbeintAndlag | SpurnaraukasetningÓbeintAndlag  | NafnháttarsetningÓbeintAndlag   # Mér finnst óeðlilegt hvernig málin þróuðust
+NlSagnfylling/fall → Nl/fall | SkýringarsetningSagnfylling | NafnháttarsetningSagnfylling
 NlSagnfylling/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
-NlSagnfylling_nf_et_p3_hk → NlSkýringarsetning
-NlSagnfylling_þf_et_p3_hk → NlSkýringarsetning
-NlSagnfylling_þgf_et_p3_hk → NlSkýringarsetning
-NlSagnfylling_ef_et_p3_hk → NlSkýringarsetning
+NlSagnfylling_nf_et_p3_hk → SkýringarsetningSagnfylling | NafnháttarsetningSagnfylling
+NlSagnfylling_þf_et_p3_hk → SkýringarsetningSagnfylling | NafnháttarsetningSagnfylling
+NlSagnfylling_þgf_et_p3_hk → SkýringarsetningSagnfylling | NafnháttarsetningSagnfylling
+NlSagnfylling_ef_et_p3_hk → SkýringarsetningSagnfylling | NafnháttarsetningSagnfylling
 
 $score(+1) NlBeintAndlag/fall
 $score(+1) NlBeintAndlag/fall/tala/pers
