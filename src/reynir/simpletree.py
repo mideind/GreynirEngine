@@ -2136,7 +2136,7 @@ class AnnoTree:
 
         An Annotald-formatted string looks as follows:
 
-        (META
+        ( (META
             (ID-CORPUS 43bf66f3-51c4-11e6-8438-04014c605401.10)
             (ID-LOCAL greynir_corpus_00003.psd,.1)
             (URL http://www.mbl.is/sport/efstadeild/2016/07/24/ia_ibv_stadan_er_1_0/)
@@ -2154,7 +2154,7 @@ class AnnoTree:
                 )
                 (ADVP (ao enn (lemma enn)))
             )
-        ))
+        )))
 
     """
 
@@ -2245,13 +2245,21 @@ class AnnoTree:
             if skipright():
                 # Right parenthesis
                 # The enclosing nonterminal is done; pop up to the next level above
-                stack.pop()
+                if len(stack) == 1:
+                    # Reached the empty closing parenthesis, 
+                    # don't want to pop last item in stack
+                    p +=1
+                    break
+
+                x = stack.pop()
             elif skipleft():
                 # Left parenthesis
                 s = skipstring()
                 a = s.split(maxsplit=1)
-                #print(a)
                 # Extract the node identifier
+                if not a: 
+                    # Empty parentheses surrounding whole tree
+                    continue
                 t = a[0]
                 if t[0].isupper():
                     # Nonterminal node, or meta tag
