@@ -309,10 +309,11 @@ _DEFAULT_NT_MAP: NonterminalMap = {
 # overrides: we cut off a parent node in favor of this one
 # if there are no intermediate nodes
 
+
 _DEFAULT_ID_MAP: IdMap = {
     "S0": dict(name="Málsgrein"),
     "S0-X": dict(name="Rangt mynduð setning"),
-    "S-MAIN": dict(name="Setning", subject_to={"S-MAIN", "S-QUE", "CP-QUOTE", "IP"}),
+    "S-MAIN": dict(name="Setning", subject_to={"S-MAIN", "S-QUE", "CP-QUOTE", "IP", "CP-REL"}),
     "S-QUOTE": dict(name="Staðhæfing", overrides="S-MAIN"),
     "S-HEADING": dict(name="Fyrirsögn"),
     "S-PREFIX": dict(name="Forskeyti"),  # Prefix in front of sentence
@@ -2235,6 +2236,9 @@ class AnnoTree:
                 # !!! TODO: There should be an escape character
                 # !!! for parentheses here
                 p += 1
+            if txt[start:p].endswith("\\"):
+                if txt[p] == "(" or txt[p] == ")":
+                    p += 1
             return txt[start:p].rstrip()
 
         # A stack of nested nonterminal dictionaries,
@@ -2270,6 +2274,7 @@ class AnnoTree:
                         continue
                     elif t == "ID-LOCAL":
                         self._id_local = a[1]
+                        #print(self._id_local)
                         if not skipright():
                             raise ValueError("Expected right parenthesis")
                         continue
@@ -2318,7 +2323,12 @@ class AnnoTree:
                         cat = v[0]
                         if cat == "no":
                             # Obtain the BÍN category for nouns
-                            cat = (set(v) & {"kk", "kvk", "hk"}).pop()
+                            try:
+                                cat = (set(v) & {"kk", "kvk", "hk"}).pop()
+                            except KeyError:
+                                # Either no_abbrev or gender not present in tag
+                                cat = "hk"
+
                         # !!! TODO: The k field should, strictly speaking, reflect
                         # !!! the token type, i.e. NUMBER, AMOUNT, EMAIL, etc.
                         # The dictionary fields for terminals are as follows:
