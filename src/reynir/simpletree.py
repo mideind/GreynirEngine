@@ -53,7 +53,6 @@ from typing import (
     Callable,
     cast,
 )
-from tokenizer.definitions import BIN_TupleList
 from typing_extensions import Protocol
 
 import re
@@ -61,6 +60,7 @@ from pprint import pformat
 from itertools import chain
 
 from tokenizer import TOK, Tok, correct_spaces
+from tokenizer.definitions import BIN_Tuple, BIN_TupleList
 
 from .cache import cached_property
 from .settings import StaticPhrases
@@ -71,6 +71,7 @@ from .binparser import (
     CanonicalTokenDict,
     augment_terminal,
     canonicalize_token,
+    describe_token,
 )
 from .fastparser import ParseForestNavigator, Node
 from .bintokenizer import (
@@ -79,10 +80,9 @@ from .bintokenizer import (
     MULTIPLIERS,
     DECLINABLE_MULTIPLIERS,
 )
-from .binparser import describe_token
-from .bindb import GreynirBin, BIN_Tuple
-from .ifdtagger import IFD_Tagset  # type: ignore
+from .bindb import GreynirBin
 from .matcher import match_pattern, ContextDict
+from .ifdtagger import IFD_Tagset  # type: ignore
 
 
 # Type for map from token index to (terminal, meaning) tuple
