@@ -30,11 +30,12 @@
 
 """
 
-from typing import Optional, Union, Callable, Tuple, List, Iterator, TypeVar
+from typing import Optional, Union, Callable, Tuple, List, Iterator, TypeVar, cast
 
 from abc import abstractmethod, ABCMeta
 from collections import OrderedDict
 
+from .bindb import BIN_Tuple
 from .bintokenizer import tokenize, TOK
 
 
@@ -57,7 +58,7 @@ def simple_lemmatize(
     txt: str,
     *,
     all_lemmas: bool = False,
-    sortkey: Callable[[LemmaTuple], Comparable] = None,
+    sortkey: Optional[Callable[[LemmaTuple], Comparable]] = None,
 ) -> Union[Iterator[LemmaTuple], Iterator[List[LemmaTuple]]]:
     """ Simplistically lemmatize a list of tokens, returning a generator of
         (lemma, category) tuples. The default behaviour is to return the
@@ -71,18 +72,19 @@ def simple_lemmatize(
                 # Known word
                 if "-" in t.txt:
                     # The original word already contains a hyphen: leave'em in
-                    y = [(v.stofn, v.ordfl) for v in t.val]
+                    y = [(v.stofn, v.ordfl) for v in cast(List[BIN_Tuple], t.val)]
                 else:
                     # The original word doesn't contain a hyphen: any hyphens
                     # in the lemmas must come from the compounding algorithm
-                    y = [(v.stofn.replace("-", ""), v.ordfl) for v in t.val]
+                    y = [(v.stofn.replace("-", ""), v.ordfl) for v in cast(List[BIN_Tuple], t.val)]
             else:
                 # Unknown word: assume it's an entity
                 y = [(t.txt, "entity")]
         elif t.kind == TOK.PERSON:
-            assert t.val
+            assert t.person_names
             # Person name w. gender
-            y = [(t.val[0][0], "person_" + t.val[0][1])]
+            person_name = t.person_names[0]
+            y = [(person_name.name, "person_" + (person_name.gender or "hk"))]
         elif t.kind == TOK.ENTITY or t.kind == TOK.COMPANY:
             # Entity or company name
             y = [(t.txt, "entity")]

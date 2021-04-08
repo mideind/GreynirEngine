@@ -1,3 +1,4 @@
+# type: ignore
 """
 
     test_serializers.py
@@ -31,7 +32,7 @@
 
 import json
 
-import pytest
+import pytest  # type: ignore
 
 
 @pytest.fixture(scope="module")
@@ -63,7 +64,7 @@ def test_serializers(r):
 
         assert new.tree is not None
 
-        assert orig.tokens == new.tokens
+        assert all(ot.equal(nt) for ot, nt in zip(orig.tokens, new.tokens))
         assert orig.terminals == new.terminals
 
         assert orig.tree.flat_with_all_variants == orig.tree.flat_with_all_variants

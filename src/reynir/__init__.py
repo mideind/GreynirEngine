@@ -1,3 +1,4 @@
+#type: ignore
 """
 
     Greynir: Natural language processing for Icelandic

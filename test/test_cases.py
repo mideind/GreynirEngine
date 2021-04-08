@@ -1,3 +1,4 @@
+# type: ignore
 """
 
     test_cases.py
@@ -30,7 +31,7 @@
 
 """
 
-import pytest
+import pytest  # type: ignore
 
 from reynir import Greynir
 
@@ -341,109 +342,6 @@ def test_noun_phrases(r):
     assert np.genitive == "Spánar"
 
 
-def test_casting():
-    """ Test functions to cast words in nominative case to other cases """
-    from reynir.bindb import GreynirBin
-    db = GreynirBin()
-
-    assert db.cast_to_accusative("") == ""
-    assert db.cast_to_dative("") == ""
-    assert db.cast_to_genitive("") == ""
-
-    assert db.cast_to_accusative("xxx") == "xxx"
-    assert db.cast_to_dative("xxx") == "xxx"
-    assert db.cast_to_genitive("xxx") == "xxx"
-
-    assert db.cast_to_accusative("maðurinn") == "manninn"
-    assert db.cast_to_dative("maðurinn") == "manninum"
-    assert db.cast_to_genitive("maðurinn") == "mannsins"
-
-    assert db.cast_to_accusative("mennirnir") == "mennina"
-    assert db.cast_to_dative("mennirnir") == "mönnunum"
-    assert db.cast_to_genitive("mennirnir") == "mannanna"
-
-    assert db.cast_to_accusative("framkvæma") == "framkvæma"
-    assert db.cast_to_dative("framkvæma") == "framkvæma"
-    assert db.cast_to_genitive("framkvæma") == "framkvæma"
-
-    assert db.cast_to_accusative("stóru") == "stóru"
-    assert db.cast_to_dative("stóru") == "stóru"
-    assert db.cast_to_genitive("stóru") == "stóru"
-
-    assert db.cast_to_accusative("stóri") == "stóra"
-    assert db.cast_to_dative("stóri") == "stóra"
-    assert db.cast_to_genitive("stóri") == "stóra"
-
-    assert db.cast_to_accusative("kattarhestur") == "kattarhest"
-    assert db.cast_to_dative("kattarhestur") == "kattarhesti"
-    assert db.cast_to_genitive("kattarhestur") == "kattarhests"
-
-    assert db.cast_to_accusative("Kattarhestur") == "Kattarhest"
-    assert db.cast_to_dative("Kattarhestur") == "Kattarhesti"
-    assert db.cast_to_genitive("Kattarhestur") == "Kattarhests"
-
-    f = lambda mm: [m for m in mm if "2" not in m.beyging]
-    assert db.cast_to_accusative("fjórir", meaning_filter_func=f) == "fjóra"
-    assert db.cast_to_dative("fjórir", meaning_filter_func=f) == "fjórum"
-    assert db.cast_to_genitive("fjórir", meaning_filter_func=f) == "fjögurra"
-
-    assert db.cast_to_accusative("Suður-Afríka") == "Suður-Afríku"
-    assert db.cast_to_dative("Suður-Afríka") == "Suður-Afríku"
-    assert db.cast_to_genitive("Suður-Afríka") == "Suður-Afríku"
-
-    assert db.cast_to_accusative("Vestur-Þýskaland") == "Vestur-Þýskaland"
-    assert db.cast_to_dative("Vestur-Þýskaland") == "Vestur-Þýskalandi"
-    assert db.cast_to_genitive("Vestur-Þýskaland") == "Vestur-Þýskalands"
-
-    f = lambda mm: sorted(mm, key=lambda m: "2" in m.beyging or "3" in m.beyging)
-    assert db.cast_to_accusative("Kópavogur", meaning_filter_func=f) == "Kópavog"
-    assert db.cast_to_dative("Kópavogur", meaning_filter_func=f) == "Kópavogi"
-    assert db.cast_to_genitive("Kópavogur", meaning_filter_func=f) == "Kópavogs"
-
-
-def test_forms():
-    from reynir.bindb import GreynirBin
-    db = GreynirBin()
-    l = db.lookup_forms("köttur", "kvk", "nf")
-    assert len(l) == 0
-    l = db.lookup_forms("köttur", "kzk", "nf")
-    assert len(l) == 0
-    try:
-        l = []
-        l = db.lookup_forms("köttur", "kk", "zf")
-    except AssertionError:
-        pass
-    assert len(l) == 0
-    l = db.lookup_forms("kötur", "kk", "nf")
-    assert len(l) == 0
-    l = db.lookup_forms("kettirnir", "kk", "nf")
-    assert len(l) == 0
-    l = db.lookup_forms("köttur", "kk", "nf")
-    om = set(m.ordmynd for m in l)
-    assert "köttur" in om
-    assert "kettir" in om
-    assert "kötturinn" in om
-    assert "kettirnir" in om
-    l = db.lookup_forms("köttur", "kk", "þf")
-    om = set(m.ordmynd for m in l)
-    assert "kött" in om
-    assert "ketti" in om
-    assert "köttinn" in om
-    assert "kettina" in om
-    l = db.lookup_forms("köttur", "kk", "þgf")
-    om = set(m.ordmynd for m in l)
-    assert "ketti" in om
-    assert "köttum" in om
-    assert "kettinum" in om
-    assert "köttunum" in om
-    l = db.lookup_forms("köttur", "kk", "ef")
-    om = set(m.ordmynd for m in l)
-    assert "kattar" in om
-    assert "kattarins" in om
-    assert "katta" in om
-    assert "kattanna" in om
-
-
 def test_addresses():
     from reynir import NounPhrase
     np = NounPhrase("Laugavegi 20b")
@@ -494,7 +392,5 @@ if __name__ == "__main__":
     greynir = Greynir()
     test_cases(greynir)
     test_noun_phrases(greynir)
-    test_casting()
-    test_forms()
     test_addresses()
     greynir.__class__.cleanup()

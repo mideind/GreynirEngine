@@ -41,7 +41,7 @@
 
 """
 
-from typing import IO, Optional
+from typing import Any, IO, Optional
 
 import os
 import stat
@@ -66,17 +66,17 @@ except ImportError:
     except ImportError:
 
         # Not Unix, not Windows: bail out
-        def _lock_file(file: IO, block: bool) -> None:
+        def _lock_file(file: IO[str], block: bool) -> None:
             raise TypeError("File locking not supported on this platform")
 
-        def _unlock_file(file: IO) -> None:
+        def _unlock_file(file: IO[str]) -> None:
             raise TypeError("File locking not supported on this platform")
 
     else:
 
         # Windows
 
-        def _lock_file(file: IO, block: bool) -> None:  # type: ignore
+        def _lock_file(file: IO[str], block: bool) -> None:  # type: ignore
             # Lock just the first byte of the file
             retry = True
             while retry:
@@ -97,7 +97,7 @@ except ImportError:
                             "Couldn't lock {0}, errno is {1}".format(file.name, e.errno)
                         )
 
-        def _unlock_file(file: IO) -> None:  # type: ignore
+        def _unlock_file(file: IO[str]) -> None:  # type: ignore
             try:
                 file.seek(0)
                 msvcrt.locking(file.fileno(), msvcrt.LK_UNLCK, 1)  # type: ignore
@@ -112,13 +112,13 @@ else:
 
     POSIX = True
 
-    def _lock_file(file: IO, block: bool) -> None:  # type: ignore
+    def _lock_file(file: IO[str], block: bool) -> None:  # type: ignore
         try:
             fcntl.flock(file.fileno(), fcntl.LOCK_EX | (0 if block else fcntl.LOCK_NB))
         except IOError:
             raise LockError("Couldn't lock {0}".format(file.name))
 
-    def _unlock_file(file: IO) -> None:  # type: ignore
+    def _unlock_file(file: IO[str]) -> None:  # type: ignore
         # File is automatically unlocked on close
         pass
 
@@ -133,7 +133,7 @@ class GlobalLock:
         # Locate global locks in the system temporary directory
         # (should work on both Windows and Unix/POSIX)
         self._path = os.path.join(self._TMP_DIR, "greynir-" + lockname)
-        self._fp: Optional[IO] = None
+        self._fp: Optional[IO[str]] = None
 
     def acquire(self, block: bool=True) -> None:
         """ Acquire a global lock, blocking if block = True """
@@ -191,7 +191,7 @@ class GlobalLock:
         self.acquire(block=True)
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
         """ Python context manager protocol """
         self.release()
         return False

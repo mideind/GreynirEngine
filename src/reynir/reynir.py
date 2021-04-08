@@ -39,6 +39,7 @@ from typing import (
     Iterable,
     Iterator,
     Optional,
+    Sequence,
     Union,
     Callable,
     Dict,
@@ -53,16 +54,16 @@ import operator
 import json
 from threading import Lock
 
-from tokenizer import Tok, TOK, correct_spaces, paragraphs, mark_paragraphs
+from tokenizer import Tok, correct_spaces, paragraphs, mark_paragraphs
 
 from .bintokenizer import (
-    tokenize as bin_tokenize,
-    TokenList,
-    tokens_are_foreign,
     StringIterable,
+    TokenList,
+    CanonicalTokenDict,
+    tokenize as bin_tokenize,
+    tokens_are_foreign,
     load_token,
 )
-from .binparser import CanonicalTokenDict, TokenDict
 from .fastparser import Fast_Parser, ParseError
 from .reducer import Reducer
 from .cache import cached_property
@@ -300,7 +301,7 @@ class _Sentence:
             "tree": None if self.tree is None else self.tree._head,
         }
 
-    def dumps(self, greynir_cls: GreynirType, **kwargs) -> str:
+    def dumps(self, greynir_cls: GreynirType, **kwargs: Any) -> str:
         """ Dump internal data of the class instance as a json string.
             Useful for storing parsed data in a database.
             Note: Normally, sentences are dumped using Greynir.dumps_single(). """
@@ -313,7 +314,7 @@ class _Sentence:
     def load(
         cls,
         greynir_cls: GreynirType,
-        tokens: List[Tok],
+        tokens: List[Sequence[Any]],
         tree: Optional[CanonicalTokenDict],
     ) -> "_Sentence":
         """ Load previously dumped data.
@@ -721,23 +722,23 @@ class Greynir:
         return self._parse_foreign_sentences
 
     @classmethod
-    def _dump_token(cls, tok: Tok) -> Tuple:
+    def _dump_token(cls, tok: Tok) -> Tuple[int, str, Any]:
         """ Allow derived classes to override how tokens are dumped """
         # Returns (kind, txt, val) - corresponding to
         # the expected signature of _load_token()
-        return tuple(tok)
+        return (tok.kind, tok.txt, tok.val)
 
     @classmethod
-    def _load_token(cls, *args):
+    def _load_token(cls, *args: Any) -> Tok:
         """ Load token from serialized data """
         return Tok(*load_token(*args))
 
-    def dumps_single(self, sent: _Sentence, **kwargs) -> str:
+    def dumps_single(self, sent: _Sentence, **kwargs: Any) -> str:
         """ Return a _Sentence object in a JSON-formatted string,
             which can be loaded again using loads_single() """
         return sent.dumps(self.__class__, **kwargs)
 
-    def loads_single(self, json_str: str, **kwargs) -> _Sentence:
+    def loads_single(self, json_str: str, **kwargs: Any) -> _Sentence:
         """ Load previously dumped JSON description of a single sentence.
             Useful for retrieving parsed data from a database. """
         return _Sentence.loads(self.__class__, json_str, **kwargs)
@@ -879,7 +880,7 @@ class Greynir:
         txt: str,
         *,
         all_lemmas: bool = False,
-        sortkey: Callable[[LemmaTuple], Comparable] = None,
+        sortkey: Optional[Callable[[LemmaTuple], Comparable]] = None,
     ) -> Union[Iterator[LemmaTuple], Iterator[List[LemmaTuple]]]:
         """ Utiility function to (simplistically) lemmatize all words in
             a given string without parsing. Returns a generator of

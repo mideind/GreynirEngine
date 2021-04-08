@@ -53,6 +53,8 @@ from typing import (
     Callable,
     cast,
 )
+from tokenizer.definitions import BIN_TupleList
+from typing_extensions import Protocol
 
 import re
 from pprint import pformat
@@ -78,16 +80,21 @@ from .bintokenizer import (
     DECLINABLE_MULTIPLIERS,
 )
 from .binparser import describe_token
-from .bindb import GreynirBin, BinMeaning
-from .ifdtagger import IFD_Tagset
+from .bindb import GreynirBin, BIN_Tuple
+from .ifdtagger import IFD_Tagset  # type: ignore
 from .matcher import match_pattern, ContextDict
 
 
 # Type for map from token index to (terminal, meaning) tuple
-TerminalMap = Dict[int, Tuple[BIN_Terminal, Optional[BinMeaning]]]
+TerminalMap = Dict[int, Tuple[BIN_Terminal, Optional[BIN_Tuple]]]
 NonterminalMap = Mapping[str, Union[str, Tuple[str, ...]]]
 IdMap = Mapping[str, Dict[str, Union[str, Set[str]]]]
 StatsDict = Dict[str, Union[int, float]]
+
+
+class CaseFunc(Protocol):
+    def __call__(self, w: str, **kwargs: Any) -> List[BIN_Tuple]:
+        ...
 
 
 class SimpleTreeNode(CanonicalTokenDict, total=False):
@@ -607,7 +614,7 @@ class SimpleTree:
         self,
         pgs: Iterable[Sequence[CanonicalTokenDict]],
         stats: Optional[StatsDict] = None,
-        register=None,
+        register: Any=None,
         parent: Optional["SimpleTree"] = None,
         root: Optional["SimpleTree"] = None,
     ) -> None:
@@ -649,7 +656,7 @@ class SimpleTree:
 
     @classmethod
     def from_deep_tree(
-        cls, deep_tree, toklist: List[Tok], first_token_index: int = 0
+        cls, deep_tree: Optional[Node], toklist: List[Tok], first_token_index: int = 0
     ) -> Optional["SimpleTree"]:
         """ Construct a SimpleTree from a deep (detailed) parse tree """
         # If the deep_tree has nodes referring to tokens with a different
@@ -674,12 +681,12 @@ class SimpleTree:
         return self._parent
 
     @property
-    def stats(self):
+    def stats(self) -> Optional[StatsDict]:
         """ Return the parse statistics, if any, for the root of this subtree """
         return self.root._stats
 
     @property
-    def register(self):
+    def register(self) -> Any:
         """ Return the name register, if any, for the root of this subtree """
         return self.root._register
 
@@ -712,7 +719,7 @@ class SimpleTree:
             # This may potentially be an entity or person name,
             # an amount, a date, or a measurement unit
             tag = str(IFD_Tagset(self._head))
-            result = []
+            result: List[str] = []
             for part in lower_x.split():
                 # Unknown multi-token phrase:
                 # deal with it, simplistically
@@ -954,9 +961,9 @@ class SimpleTree:
         # order, so that we can note the case and gender of a finishing noun
         # (typically a currency name such as 'króna') and use it to qualify
         # a subsequent (but textually preceding) adjective (such as 'danskra').
-        result = []
-        case = None
-        gender = None
+        result: List[str] = []
+        case: Optional[str] = None
+        gender: Optional[str] = None
         terminal_case: Optional[str] = None
         # Token atoms (components of a multiword token)
         a = list(reversed(txt.split()))
@@ -1020,8 +1027,9 @@ class SimpleTree:
                 # For spelled-out amounts, we look up contained words in BÍN
                 # These may be number prefixes ('sautján'), adjectives ('norskar'),
                 # and nouns ('krónur')
+                m: BIN_TupleList
                 with GreynirBin.get_db() as db:
-                    _, m = db.lookup(tok_lower, at_sentence_start=False)
+                    _, m = db.lookup_g(tok_lower, at_sentence_start=False)
                     # We only consider to, töl, lo, currency names or
                     # declinable multipliers ('þúsund', 'milljónir', 'milljarðar')
                     m = list(
@@ -1062,7 +1070,10 @@ class SimpleTree:
                             tc: str = terminal_case  # Make mypy happy
                             m.sort(key=lambda mm: 0 if tc in mm.beyging else 1)
                         # If we can get away with just a 'töl', do it
-                        mm = next((mm for mm in m if mm.ordfl == "töl"), m[0])
+                        # !!! NOTE: The cast below is added to avoid a bug in Pylance/Pyright
+                        mm = cast(
+                            BIN_Tuple, next((mm for mm in m if mm.ordfl == "töl"), m[0])
+                        )
                         if mm.ordfl == "lo" and case is not None and gender is not None:
                             # Looks like this is an adjective: filter down to those that
                             # match the previously seen noun
@@ -1169,7 +1180,7 @@ class SimpleTree:
             node_head = node._head
             node_kind = node_head.get("k")
             if node_kind == "NONTERMINAL":
-                result.append("(" + cast(str, node_head.get("i", "")))
+                result.append("(" + node_head.get("i", ""))
                 # Recursively add the children of this nonterminal
                 for child in node.children:
                     result.append(" ")
@@ -1246,13 +1257,13 @@ class SimpleTree:
     @property
     def _text(self) -> str:
         """ Return the original text within this node only, if any """
-        return cast(str, self._head.get("x", ""))
+        return self._head.get("x", "")
 
     @cached_property
     def _lemma(self) -> str:
         """ Return the lemma of this node only, if any """
         lemma = cast(
-            Union[str, Tuple[Callable[..., str], Tuple]],
+            Union[str, Tuple[Callable[..., str], Tuple[Any, ...]]],
             self._head.get("s", self._text),
         )
         if isinstance(lemma, tuple):
@@ -1281,16 +1292,16 @@ class SimpleTree:
         with GreynirBin.get_db() as db:
 
             # A bit convoluted, but so it goes
-            lookup_functions = {
-                "accusative": db.lookup_accusative,
-                "dative": db.lookup_dative,
-                "genitive": db.lookup_genitive,
+            lookup_functions: Mapping[str, CaseFunc] = {
+                "accusative": db.lookup_accusative_g,
+                "dative": db.lookup_dative_g,
+                "genitive": db.lookup_genitive_g,
             }
-            lookup_func = lookup_functions.get(form, db.lookup_nominative)
+            lookup_func = lookup_functions.get(form, db.lookup_nominative_g)
 
             if self.tcat == "person":
                 # Special case for person names as they may have embedded spaces
-                result = []
+                result: List[str] = []
                 gender = self._cat
                 for name in txt.split():
                     meanings = lookup_func(name, singular=True, cat=gender)
@@ -1300,8 +1311,10 @@ class SimpleTree:
                         result.append(
                             next(
                                 filter(
-                                    lambda m: (m.fl
-                                    in {"ism", "gæl", "erm", "föð", "móð", "ætt"}),
+                                    lambda m: (
+                                        m.fl
+                                        in {"ism", "gæl", "erm", "föð", "móð", "ætt"}
+                                    ),
                                     meanings,
                                 )
                             ).ordmynd
@@ -1333,14 +1346,16 @@ class SimpleTree:
                     txt = txt[1:]
                     prefix += "-"
 
+            # We don't want second or third optional forms of
+            # word declensions; we just stick with the first form
+            bfunc: Callable[[str], bool] = lambda b: "2" not in b and "3" not in b
+
             options: Dict[str, Any] = dict(
                 cat=self._cat,
                 lemma=lemma,
                 singular=canonical,
                 indefinite=indefinite or canonical,
-                # We don't want second or third optional forms of
-                # word declensions; we just stick with the first form
-                beyging_filter=lambda b: "2" not in b and "3" not in b,
+                beyging_filter=bfunc,
             )
             meanings = lookup_func(txt, **options)
             if not meanings and not txt.islower():
@@ -1362,7 +1377,7 @@ class SimpleTree:
             # have more than one gender and can even be valid both as
             # singular and plural
 
-            def filter_func_no(m: BinMeaning) -> bool:
+            def filter_func_no(m: BIN_Tuple) -> bool:
                 """ Filter function for nouns """
                 if not canonical and self.tcat != "gata":
                     # Match the original word in terms of number (singular/plural)
@@ -1384,7 +1399,7 @@ class SimpleTree:
                     return False
                 return True
 
-            def filter_func_without_gender(m: BinMeaning) -> bool:
+            def filter_func_without_gender(m: BIN_Tuple) -> bool:
                 """ Filter function for personal pronouns """
                 if not canonical:
                     # Match the original word in terms of number (singular/plural)
@@ -1393,7 +1408,7 @@ class SimpleTree:
                         return False
                 return True
 
-            def filter_func_with_gender(m: BinMeaning) -> bool:
+            def filter_func_with_gender(m: BIN_Tuple) -> bool:
                 """ Filter function for nonpersonal pronouns
                     and declinable number words """
                 # Match the original word in terms of gender
@@ -1407,7 +1422,7 @@ class SimpleTree:
                         return False
                 return True
 
-            def filter_func_lo(m: BinMeaning) -> bool:
+            def filter_func_lo(m: BIN_Tuple) -> bool:
                 """ Filter function for adjectives """
                 # Match the original word in terms of gender
                 gender = next(iter(self._vset & _GENDERS), "kk")
@@ -1472,7 +1487,7 @@ class SimpleTree:
                 return True
 
             # Select and apply the appropriate filter function
-            filters: Dict[Union[None, str], Callable[[BinMeaning], bool]] = {
+            filters: Dict[Union[None, str], Callable[[BIN_Tuple], bool]] = {
                 "lo": filter_func_lo,
                 "to": filter_func_with_gender,
                 "gr": filter_func_with_gender,
@@ -1545,7 +1560,7 @@ class SimpleTree:
     def cat(self) -> str:
         """ Return the word category of this node, if it is a terminal,
             or an empty string otherwise """
-        cat = cast(str, self._head.get("c", ""))
+        cat: str = self._head.get("c", "")
         if cat:
             return cat
         if self.terminal is not None and self.kind in self._TEXT_TOKEN_DESC:
@@ -1569,14 +1584,14 @@ class SimpleTree:
             # Return person_kk, person_kvk or person_hk for person names
             return "person_" + (cast(Optional[str], self._head.get("c")) or "hk")
         # Unknown words by convention get a category of 'entity'
-        return cast(str, self._head.get("c", "entity"))
+        return self._head.get("c", "entity")
 
     @property
     def categories(self) -> List[str]:
         """ Return a list of word categories within this subtree """
         if self._len > 1 or self._children:
             # Concatenate the categories from the children
-            t = []
+            t: List[str] = []
             for ch in self.children:
                 t.extend(ch.categories)
             return t
@@ -1592,7 +1607,7 @@ class SimpleTree:
     def fl(self) -> str:
         """ Return the BÍN 'fl' field of this node, if it is a terminal,
             or an empty string otherwise """
-        return cast(str, self._head.get("f", ""))
+        return self._head.get("f", "")
 
     @cached_property
     def text(self) -> str:
@@ -1626,7 +1641,7 @@ class SimpleTree:
         # Noun phrase:
         # Concatenate the nominative forms of the child terminals,
         # and the literal text of nested nonterminals (such as NP-POSS and CP-THT)
-        result = []
+        result: List[str] = []
         children = list(self.children)
         # If the noun phrase has an adjective, we keep any leading adverbs
         # ('stórkostlega fallegu blómin', 'ekki vingjarnlegu mennirnir',
@@ -1842,7 +1857,7 @@ class SimpleTree:
         """ Return a list of (lemma, category) tuples for words within this subtree """
         if self._len > 1 or self._children:
             # Concatenate the categories from the children
-            t = []
+            t: List[Tuple[str, str]] = []
             for ch in self.children:
                 t.extend(ch.lemmas_and_cats)
             return t
@@ -1882,13 +1897,17 @@ class SimpleTree:
         # Construct and return the "-st" middle voice lemma
         return BIN_Token.mm_verb_stem(self._lemma)
 
-    def all_matches(self, pattern: str, context: ContextDict=None) -> Iterator["SimpleTree"]:
+    def all_matches(
+        self, pattern: str, context: Optional[ContextDict] = None
+    ) -> Iterator["SimpleTree"]:
         """ Return all subtree roots, including self, that match the given pattern """
         for subtree in chain([self], self.descendants):
             if match_pattern(subtree, pattern, context):
                 yield subtree
 
-    def first_match(self, pattern: str, context: ContextDict=None) -> Optional["SimpleTree"]:
+    def first_match(
+        self, pattern: str, context: Optional[ContextDict] = None
+    ) -> Optional["SimpleTree"]:
         """ Return the first subtree root, including self, that matches the given
             pattern. If no subtree matches, return None. """
         try:
@@ -1896,7 +1915,9 @@ class SimpleTree:
         except StopIteration:
             return None
 
-    def top_matches(self, pattern: str, context: ContextDict=None) -> Iterator["SimpleTree"]:
+    def top_matches(
+        self, pattern: str, context: Optional[ContextDict] = None
+    ) -> Iterator["SimpleTree"]:
         """ Return all subtree roots, including self, that match the given pattern,
             but not recursively, i.e. we don't include matches within matches """
         if match_pattern(self, pattern, context):
@@ -1905,7 +1926,7 @@ class SimpleTree:
             for child in self.children:
                 yield from child.top_matches(pattern, context)
 
-    def match(self, pattern: str, context: ContextDict=None) -> bool:
+    def match(self, pattern: str, context: Optional[ContextDict] = None) -> bool:
         """ Return True if this subtree matches the given pattern """
         return match_pattern(self, pattern, context)
 
@@ -1926,7 +1947,7 @@ class SimpleTreeBuilder:
         self._id_map: IdMap = id_map or _DEFAULT_ID_MAP
         self._terminal_map: Mapping[str, str] = terminal_map or _DEFAULT_TERMINAL_MAP
         self._result: List[CanonicalTokenDict] = []
-        self._stack = [self._result]
+        self._stack: List[List[CanonicalTokenDict]] = [self._result]
         self._scope: List[str] = [""]  # Sentinel value
         self._pushed: List[int] = []
         # The state property is a placeholder for client data
@@ -1937,7 +1958,8 @@ class SimpleTreeBuilder:
             containing a canonicalized token. """
         # Check whether this terminal should be pushed as a nonterminal
         # with a single child
-        cat = d["t"].split("_")[0] if "t" in d else None
+        terminal = d.get("t")
+        cat = terminal.split("_")[0] if terminal else None
         mapped_t = None if cat is None else self._terminal_map.get(cat)
         if mapped_t is None:
             # No: add as a child of the current node in the condensed tree
@@ -2115,7 +2137,7 @@ class Simplifier(ParseForestNavigator):
         self._builder.push_nonterminal(nt_base)
         return None
 
-    def process_results(self, results, node: Node) -> None:
+    def process_results(self, results: Any, node: Node) -> None:
         """ Exiting a nonterminal node """
         self._builder.pop_nonterminal()
 
@@ -2250,7 +2272,7 @@ class AnnoTree:
                 # Left parenthesis
                 s = skipstring()
                 a = s.split(maxsplit=1)
-                #print(a)
+                # print(a)
                 # Extract the node identifier
                 t = a[0]
                 if t[0].isupper():

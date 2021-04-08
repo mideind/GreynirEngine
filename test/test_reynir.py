@@ -1,3 +1,4 @@
+# type: ignore
 """
 
     test_reynir.py
@@ -54,66 +55,6 @@ def test_augment_terminal():
     assert a == "so_2_þgf_þf_et_fh_gm_nt_p1"
     a = augment_terminal("so_0_lhþt_et_kk", "kembdur", "LHÞT-SB-KK-NFET")
     assert a == "so_0_et_kk_lhþt_nf_sb"
-
-
-def test_bindb():
-    db = GreynirBin()
-    # Test the lemma lookup functionality
-    w, m = db.lemma_meanings("eignast")
-    assert w == "eignast"
-    assert len(m) > 0
-    assert m[0].stofn == "eigna"
-    w, m = db.lemma_meanings("ábyrgjast")
-    assert w == "ábyrgjast"
-    assert len(m) > 0
-    assert m[0].stofn == "ábyrgjast"
-    w, m = db.lemma_meanings("ábyrgja")
-    assert w == "ábyrgja"
-    assert len(m) > 0
-    assert m[0].stofn == "á-byrgja"
-    w, m = db.lemma_meanings("ábyrgir")
-    assert w == "ábyrgir"
-    assert len(m) == 0
-    w, m = db.lemma_meanings("stór")
-    assert w == "stór"
-    assert len(m) > 0
-    assert m[0].stofn == "stór"
-    w, m = db.lemma_meanings("stórar")
-    assert w == "stórar"
-    assert len(m) == 0
-    w, m = db.lemma_meanings("sig")
-    assert w == "sig"
-    assert len(m) > 0
-    assert any(mm.ordfl == "abfn" for mm in m)
-    w, m = db.lemma_meanings("sér")
-    assert w == "sér"
-    assert len(m) > 0
-    assert not any(mm.ordfl == "abfn" for mm in m)
-    w, m = db.lemma_meanings("hann")
-    assert w == "hann"
-    assert len(m) > 0
-    assert any(mm.ordfl == "pfn" for mm in m)
-    w, m = db.lemma_meanings("hán")
-    assert w == "hán"
-    assert len(m) > 0
-    assert any(mm.ordfl == "pfn" for mm in m)
-    w, m = db.lemma_meanings("háns")
-    assert w == "háns"
-    assert len(m) == 0
-    w, m = db.lemma_meanings("hinn")
-    assert w == "hinn"
-    assert len(m) > 0
-    assert any(mm.ordfl == "gr" for mm in m)
-    w, m = db.lemma_meanings("einn")
-    assert w == "einn"
-    assert len(m) > 0
-    assert any(mm.ordfl == "lo" for mm in m)
-    assert any(mm.ordfl == "fn" for mm in m)
-    w, m = db.lemma_meanings("núll")
-    assert w == "núll"
-    assert len(m) > 0
-    assert any(mm.ordfl == "töl" for mm in m)
-    assert any(mm.ordfl == "hk" for mm in m)
 
 
 def test_lemmas():
@@ -386,22 +327,22 @@ def test_auto_uppercase():
 
 def test_compounds():
     db = GreynirBin()
-    _, m = db.lookup("fjármála- og efnahagsráðherra")
+    _, m = db.lookup_g("fjármála- og efnahagsráðherra")
     assert m
     assert m[0].stofn == "fjármála- og efnahags-ráðherra"
     assert m[0].ordmynd == "fjármála- og efnahags-ráðherra"
 
-    _, m = db.lookup("tösku- og hanskabúðina")
+    _, m = db.lookup_g("tösku- og hanskabúðina")
     assert m
     assert m[0].stofn == "tösku- og hanskabúð"
     assert m[0].ordmynd == "tösku- og hanskabúðina"
 
-    _, m = db.lookup("Félags- og barnamálaráðherra")
+    _, m = db.lookup_g("Félags- og barnamálaráðherra")
     assert m
     assert m[0].stofn == "Félags- og barnamála-ráðherra"
     assert m[0].ordmynd == "Félags- og barnamála-ráðherra"
 
-    _, m = db.lookup("Félags- og Barnamálaráðherra")  # sic
+    _, m = db.lookup_g("Félags- og Barnamálaráðherra")  # sic
     assert m
     assert m[0].stofn == "Félags- og barnamála-ráðherra"
     assert m[0].ordmynd == "Félags- og barnamála-ráðherra"
