@@ -88,17 +88,17 @@
 """
 
 from typing import Dict, DefaultDict, List, Set, Tuple, Optional, Any, cast
+from typing_extensions import TypedDict
 
 from collections import defaultdict
-from tokenizer.definitions import BIN_Tuple
 
-from typing_extensions import TypedDict
+from tokenizer.definitions import BIN_Tuple
 
 from .grammar import Grammar, Production
 from .fastparser import Node, ParseForestNavigator
 from .settings import Preferences, NounPreferences
 from .verbframe import VerbFrame
-from .binparser import BIN_Token, BIN_Terminal, BIN_Tuple
+from .binparser import BIN_Token, BIN_Terminal
 
 
 # Types for data used in the reduction process
@@ -124,7 +124,7 @@ TokensDict = Dict[int, BIN_Token]
 KeyTuple = Tuple[Node, int]
 
 # Reducer result dictionary with a null score
-NULL_SC: ResultDict = cast(ResultDict, {"sc": 0})
+NULL_SC: ResultDict = {"sc": 0}
 
 _VERB_PREP_BONUS = 7  # Give 7 extra points for a verb/preposition match
 _VERB_PREP_PENALTY = -2  # Subtract 2 points for a non-match
@@ -150,7 +150,7 @@ class _ReductionScope:
     def __init__(self, reducer: "ParseForestReducer", node: Node) -> None:
         self.reducer = reducer
         # Child tree scores
-        self.sc: ChildDict = cast(ChildDict, defaultdict(lambda: {"sc": 0}))
+        self.sc: ChildDict = defaultdict(lambda: {"sc": 0})
         # We are only interested in completed nonterminals
         nt = node.nonterminal if node.is_completed else None
         # Verb/preposition matching stuff
@@ -346,7 +346,7 @@ class ParseForestReducer:
     def visit_token(self, node: Node) -> ResultDict:
         """ At token node """
         # Return the score of this token/terminal match
-        d: ResultDict = cast(ResultDict, {})
+        d: ResultDict = {}
         nt = cast(BIN_Terminal, node.terminal)
         sc = self._scores[node.start][nt]
         if nt.matches_category("fs"):
@@ -553,9 +553,13 @@ class Reducer:
             txt = txt_last = token.lower
             composite = False
             # Get the last part of a composite word (e.g. 'jaðar-áhrifin' -> 'áhrifin')
-            if token.is_word and token.t2 and "-" in cast(Tuple[BIN_Tuple, ...], token.t2)[0].ordmynd:
+            if (
+                token.is_word
+                and token.has_meanings
+                and "-" in token.meanings[0].ordmynd
+            ):
                 composite = True
-                txt_last = cast(Tuple[BIN_Tuple, ...], token.t2)[0].ordmynd.rsplit("-", maxsplit=1)[-1]
+                txt_last = token.meanings[0].ordmynd.rsplit("-", maxsplit=1)[-1]
             # No need to check preferences if the first parts of
             # all possible terminals are equal
             # Look up the preference ordering from GreynirPackage.conf, if any
@@ -620,7 +624,7 @@ class Reducer:
                                 "ætt",
                                 "entity",
                             }
-                            for m in cast(Tuple[BIN_Tuple, ...], token.t2)
+                            for m in token.meanings
                         ):
                             # logging.info(
                             #     "Punishing connection of {0} with 'no' terminal"
@@ -661,7 +665,7 @@ class Reducer:
                     # present participle (lýsingarháttur nútíðar)
                     if txt.endswith("andi") and any(
                         (m.ordfl == "so" and m.beyging in {"LH-NT", "LHNT"})
-                        for m in cast(Tuple[BIN_Tuple, ...], token.t2)
+                        for m in token.meanings
                     ):
                         sc[t] -= 50
                 elif tfirst == "so":
@@ -676,7 +680,7 @@ class Reducer:
                         # In the (rare) cases where there are conflicting scores,
                         # apply the most positive adjustment
                         adjmax = None
-                        for m in cast(Tuple[BIN_Tuple, ...], token.t2):
+                        for m in token.meanings:
                             if m.ordfl == "so":
                                 key = m.stofn + t.verb_cases
                                 score = VerbFrame.verb_score(key)
