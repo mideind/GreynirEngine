@@ -66,7 +66,8 @@ class GreynirBin(GBin):
     def lookup_g(
         self, w: str, at_sentence_start: bool = False, auto_uppercase: bool = False
     ) -> ResultTuple:
-        """ Returns the Greynir version of BIN_Tuple """
+        """ Returns BIN_Tuple instances, which are the Greynir version
+            of islenska.BINMeaning """
         w, m = self._lookup(
             w,
             at_sentence_start,
@@ -77,23 +78,23 @@ class GreynirBin(GBin):
         return w, [BIN_Tuple._make(mm) for mm in m]
 
     def lookup_nominative_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of BIN_Tuple """
+        """ Returns the Greynir version of islenska.BINMeaning """
         return [BIN_Tuple._make(mm) for mm in super().lookup_nominative(w, **options)]
 
     def lookup_accusative_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of BIN_Tuple """
+        """ Returns the Greynir version of islenska.BINMeaning """
         return [BIN_Tuple._make(mm) for mm in super().lookup_accusative(w, **options)]
 
     def lookup_dative_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of BIN_Tuple """
+        """ Returns the Greynir version of islenska.BINMeaning """
         return [BIN_Tuple._make(mm) for mm in super().lookup_dative(w, **options)]
 
     def lookup_genitive_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of BIN_Tuple """
+        """ Returns the Greynir version of islenska.BINMeaning """
         return [BIN_Tuple._make(mm) for mm in super().lookup_genitive(w, **options)]
 
     def meanings(self, w: str) -> List[BIN_Tuple]:
-        """ Low-level lookup of BIN_Tuple tuples for the given word """
+        """ Low-level lookup of BIN_Tuple instances for the given word """
         return [
             BIN_Tuple(k.ord, k.bin_id, k.ofl, k.hluti, k.bmynd, k.mark)
             for k in self._ksnid_lookup(w)

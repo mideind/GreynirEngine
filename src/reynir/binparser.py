@@ -810,9 +810,7 @@ class BIN_Token(Token):
         # check matches against grammar terminals.
 
         # We use the normalized form of punctuation when parsing
-        txt: str = cast(Tuple[int, str], t.val)[
-            1
-        ] if t.kind == TOK.PUNCTUATION else t.txt
+        txt: str = t.punctuation if t.kind == TOK.PUNCTUATION else t.txt
 
         super().__init__(TOK.descr[t.kind], txt)
 
