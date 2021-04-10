@@ -213,10 +213,12 @@ to negotiate custom arrangements.
 
 ----
 
-GreynirPackage embeds the `Database of Icelandic Morphology <https://bin.arnastofnun.is>`_
+GreynirPackage indirectly embeds the `Database of Icelandic Morphology <https://bin.arnastofnun.is>`_
 (`Beygingarlýsing íslensks nútímamáls <https://bin.arnastofnun.is>`_), abbreviated BÍN.
+GreynirPackage does not claim any endorsement by the BÍN authors or copyright holders.
 
-The BÍN source data are publicly available under the CC-BY-4.0 license, as further
+The BÍN source data are publicly available under the
+`CC BY-SA 4.0 license <https://creativecommons.org/licenses/by-sa/4.0/>`_, as further
 detailed `here in English <https://bin.arnastofnun.is/DMII/LTdata/conditions/>`_
 and `here in Icelandic <https://bin.arnastofnun.is/gogn/mimisbrunnur/>`_.
 

@@ -722,7 +722,7 @@ class Greynir:
         return self._parse_foreign_sentences
 
     @classmethod
-    def _dump_token(cls, tok: Tok) -> Tuple[int, str, Any]:
+    def _dump_token(cls, tok: Tok) -> Tuple[Any, ...]:
         """ Allow derived classes to override how tokens are dumped """
         # Returns (kind, txt, val) - corresponding to
         # the expected signature of _load_token()
