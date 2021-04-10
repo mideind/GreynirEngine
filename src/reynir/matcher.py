@@ -28,7 +28,7 @@
         SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     This module exports the function match_pattern() which can determine
-    whether a SimpleTree instance matches a pattern string.
+    whether a "SimpleTree" instance matches a pattern string.
 
     The match patterns are as follows:
     ----------------------------------
@@ -121,6 +121,7 @@ from typing import (
     Iterator,
     List,
     Optional,
+    Set,
     Tuple,
     Union,
     cast,
@@ -137,7 +138,7 @@ ContextDict = Dict[str, Union[str, ContextFunc]]
 ItemList = List[Union["_NestedList", str]]
 
 
-class _NestedList(list):
+class _NestedList(List[Union[str, "_NestedList"]]):
 
     """ Quick-and-dirty container for nested lists """
 
@@ -310,7 +311,7 @@ def single_match(
                 return result
         if result is None:
             raise ValueError("Macro '{0}' not found in context".format(item[1:]))
-        if not isinstance(result, str):
+        if not isinstance(result, str):  # type: ignore
             raise ValueError(
                 "Macro '{0}' must yield a callable or string".format(item[1:])
             )
@@ -419,7 +420,7 @@ def run_sequence(
                                 if ipc.kind == "(":
                                     stopper = cast(str, ipc)
                             elif ipc not in {".", "$"}:
-                                stopper = cast(str, ipc)
+                                stopper = ipc
             if item == "$":
                 # Only matches at the end of the list
                 result = pc >= len_items
@@ -502,7 +503,7 @@ def run_set(gen: Iterator["SimpleTree"], items: ItemList, context: ContextDict) 
     len_items = len(items)
     # Keep a set of items that have not yet been matched
     # by one or more tree nodes
-    unmatched = set(range(len_items))
+    unmatched: Set[int] = set(range(len_items))
     for tree in gen:
         pc = 0
         while pc < len_items:
@@ -543,6 +544,6 @@ def run_set(gen: Iterator["SimpleTree"], items: ItemList, context: ContextDict) 
 def match_pattern(
     tree: "SimpleTree", pattern: str, context: Optional[ContextDict] = None
 ):
-    """ Return the result of a pattern match on a SimpleTree instance """
+    """ Return the result of a pattern match on a "SimpleTree" instance """
     cp = _CompiledPattern.compile(pattern)
     return run_set(iter([tree]), cp.items, context or {})

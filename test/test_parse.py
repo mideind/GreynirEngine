@@ -1,3 +1,4 @@
+#type: ignore
 """
 
     test_parse.py
@@ -30,10 +31,16 @@
 
 """
 
-import pytest
+from typing import List, cast
+
 from collections import defaultdict
 
+import pytest  # type: ignore
+
+from tokenizer.definitions import AmountTuple, DateTimeTuple
+
 from reynir import Greynir
+from reynir.reynir import Terminal
 
 
 @pytest.fixture(scope="module")
@@ -582,9 +589,10 @@ def test_terminals(r):
     check_terminals(s.terminals)
 
 
-def test_amounts(r: Greynir):
+def test_amounts(r: Greynir) -> None:
     s = r.parse_single("Tjónið nam 10 milljörðum króna.")
-    t = s.terminals or []
+    assert s is not None
+    t: List[Terminal] = s.terminals or []
     assert len(t) == 4
     check_terminal(
         t[0],
@@ -608,10 +616,12 @@ def test_amounts(r: Greynir):
         variants=["ft", "þgf", "kk"],
     )
     check_terminal(t[3], text=".", lemma=".", category="", variants=[])
-    assert s.tokens[2].val[0] == 10e9
-    assert s.tokens[2].val[1] == "ISK"
+    num, iso, _, _ = cast(AmountTuple, s.tokens[2].val)
+    assert num == 10e9
+    assert iso == "ISK"
 
     s = r.parse_single("Tjónið þann 22. maí nam einum milljarði króna.")
+    assert s is not None
     t = s.terminals or []
     assert len(t) == 6
     check_terminal(
@@ -642,11 +652,14 @@ def test_amounts(r: Greynir):
         variants=["ft", "þgf", "kk"],
     )
     check_terminal(t[5], text=".", lemma=".", category="", variants=[])
-    assert s.tokens[2].val == (0, 5, 22)
-    assert s.tokens[4].val[0] == 1e9
-    assert s.tokens[4].val[1] == "ISK"
+    dt = cast(DateTimeTuple, s.tokens[2].val)
+    assert dt == (0, 5, 22)
+    num, iso, _, _ = cast(AmountTuple, s.tokens[4].val)
+    assert num == 1e9
+    assert iso == "ISK"
 
     s = r.parse_single("Tjónið þann 19. október 1983 nam 4,8 milljörðum dala.")
+    assert s is not None
     t = s.terminals or []
     assert len(t) == 6
     check_terminal(
@@ -681,11 +694,14 @@ def test_amounts(r: Greynir):
         variants=["ft", "þgf", "kk"],
     )
     check_terminal(t[5], text=".", lemma=".", category="", variants=[])
-    assert s.tokens[2].val == (1983, 10, 19)
-    assert s.tokens[4].val[0] == 4.8e9
-    assert s.tokens[4].val[1] == "USD"
+    dt = cast(DateTimeTuple, s.tokens[2].val)
+    assert dt == (1983, 10, 19)
+    num, iso, _, _ = cast(AmountTuple, s.tokens[4].val)
+    assert num == 4.8e9
+    assert iso == "USD"
 
     s = r.parse_single("Tjónið nam sautján milljörðum breskra punda.")
+    assert s is not None
     t = s.terminals or []
     assert len(t) == 4
     check_terminal(
@@ -710,10 +726,12 @@ def test_amounts(r: Greynir):
         variants=["ft", "þgf", "kk"],
     )
     check_terminal(t[3], text=".", lemma=".", category="", variants=[])
-    assert s.tokens[2].val[0] == 17e9
-    assert s.tokens[2].val[1] == "GBP"
+    num, iso, _, _ = cast(AmountTuple, s.tokens[2].val)
+    assert num == 17e9
+    assert iso == "GBP"
 
     s = r.parse_single("Tjónið nam 17 breskum pundum.")
+    assert s is not None
     t = s.terminals or []
     assert len(t) == 4
     check_terminal(
@@ -738,10 +756,12 @@ def test_amounts(r: Greynir):
         variants=["ft", "þgf", "hk"],
     )
     check_terminal(t[3], text=".", lemma=".", category="", variants=[])
-    assert s.tokens[2].val[0] == 17
-    assert s.tokens[2].val[1] == "GBP"
+    num, iso, _, _ = cast(AmountTuple, s.tokens[2].val)
+    assert num == 17
+    assert iso == "GBP"
 
     s = r.parse_single("Tjónið nam tólf hundruð pundum.")
+    assert s is not None
     t = s.terminals or []
     assert len(t) == 4
     check_terminal(
@@ -766,10 +786,12 @@ def test_amounts(r: Greynir):
         variants=["ft", "þgf", "hk"],
     )
     check_terminal(t[3], text=".", lemma=".", category="", variants=[])
-    assert s.tokens[2].val[0] == 1200
-    assert s.tokens[2].val[1] == "GBP"
+    num, iso, _, _ = cast(AmountTuple, s.tokens[2].val)
+    assert num == 1200
+    assert iso == "GBP"
 
     s = r.parse_single("Tjónið nam 17 pólskum zloty.")
+    assert s is not None
     t = s.terminals or []
     assert len(t) == 4
     check_terminal(
@@ -794,10 +816,12 @@ def test_amounts(r: Greynir):
         variants=["ft", "þgf", "hk"],
     )
     check_terminal(t[3], text=".", lemma=".", category="", variants=[])
-    assert s.tokens[2].val[0] == 17
-    assert s.tokens[2].val[1] == "PLN"
+    num, iso, _, _ = cast(AmountTuple, s.tokens[2].val)
+    assert num == 17
+    assert iso == "PLN"
 
     s = r.parse_single("Tjónið nam 101 indverskri rúpíu.")
+    assert s is not None
     t = s.terminals or []
     assert len(t) == 4
     check_terminal(
@@ -822,10 +846,12 @@ def test_amounts(r: Greynir):
         variants=["et", "þgf", "kvk"],
     )
     check_terminal(t[3], text=".", lemma=".", category="", variants=[])
-    assert s.tokens[2].val[0] == 101
-    assert s.tokens[2].val[1] == "INR"
+    num, iso, _, _ = cast(AmountTuple, s.tokens[2].val)
+    assert num == 101
+    assert iso == "INR"
 
     s = r.parse_single("Tjónið nam 17 milljónum indónesískra rúpía.")
+    assert s is not None
     t = s.terminals or []
     assert len(t) == 4
     check_terminal(
@@ -850,8 +876,9 @@ def test_amounts(r: Greynir):
         variants=["ft", "þgf", "kvk"],
     )
     check_terminal(t[3], text=".", lemma=".", category="", variants=[])
-    assert s.tokens[2].val[0] == 17e6
-    assert s.tokens[2].val[1] == "IDR"
+    num, iso, _, _ = cast(AmountTuple, s.tokens[2].val)
+    assert num == 17e6
+    assert iso == "IDR"
 
 
 def test_year_range(r):
@@ -1529,42 +1556,6 @@ def test_composite_words(r):
     assert s.tree.nouns == ["Þing-kona", "maður", "þingvalla-sveit"]
 
 
-def test_compressed_bin():
-    import reynir.bincompress as bc
-
-    binc = bc.BIN_Compressed()
-    assert "gleraugu" in binc
-    assert "Ísland" in binc
-    assert "Vestur-Þýskaland" in binc
-    assert "glerxaugu" not in binc
-    assert "vextir" in binc
-    assert "x" not in binc
-    assert "X" not in binc
-    assert binc.lookup("aðförin") == [
-        ("aðför", 123454, "kvk", "alm", "aðförin", "NFETgr")
-    ]
-    assert binc.lookup("einkabílnum") == [
-        ("einkabíll", 75579, "kk", "alm", "einkabílnum", "ÞGFETgr")
-    ]
-    nominal_forms = [m[4] for m in binc.nominative("einkabílnum") if m[5] == "NFETgr"]
-    assert nominal_forms == ["einkabíllinn"]
-    # Test non-latin-1 code point (should not throw an exception)
-    assert "Domino’s" not in binc
-    # Test errata (BinErrata.conf)
-    assert binc.lookup("Hafnarfjörður") == [
-        ("Hafnarfjörður", 303729, "kk", "örn", "Hafnarfjörður", "NFET")
-    ]
-    assert binc.lookup("Gamli-Oddhóll") == [
-        ("Gamli-Oddhóll", 430106, "kk", "örn", "Gamli-Oddhóll", "NFET")
-    ]
-    assert binc.lookup("Árbæjarkirkja") == [
-        ("Árbæjarkirkja", 453313, "kvk", "örn", "Árbæjarkirkja", "NFET")
-    ]
-    assert binc.lookup("Litlihjalli") == [
-        ("Litlihjalli", 282316, "kk", "göt", "Litlihjalli", "NFET")
-    ]
-
-
 def test_foreign_names(r):
     s = r.parse_single("Aristóteles uppgötvaði þyngdarlögmálið.")
     assert (
@@ -2080,7 +2071,6 @@ if __name__ == "__main__":
     from reynir import Greynir
 
     g = Greynir()
-    test_compressed_bin()
     test_parse(g, verbose=True)
     test_properties(g)
     test_long_parse(g, verbose=True)

@@ -1,3 +1,4 @@
+# type: ignore
 """
 
     Greynir: Natural language processing for Icelandic
@@ -33,6 +34,8 @@
     The tagset is described here: http://www.malfong.is/files/ot_tagset_files_is.pdf
 
 """
+
+from typing import Any
 
 from .settings import (
     UndeclinableAdjectives,
@@ -330,7 +333,7 @@ class IFD_Tagset:
         ]
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         # Initialize the tagset from a token or from keyword parameters
         if len(args) == 1 and len(kwargs) == 0:
             # Single positional parameter: assume it's a token dict

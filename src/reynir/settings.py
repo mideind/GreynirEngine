@@ -40,6 +40,8 @@
 """
 
 from typing import (
+    Any,
+    DefaultDict,
     cast,
     Iterable,
     Optional,
@@ -55,9 +57,9 @@ from typing import (
 import threading
 
 from collections import defaultdict
+from tokenizer import BIN_Tuple, BIN_TupleList
 
 from .basics import (
-    MeaningTuple,
     ConfigError,
     LineReader,
     ALL_CASES,
@@ -122,7 +124,7 @@ class VerbSubjects:
         """ Returns True if the given verb is only impersonal, i.e. if it appears
             with an $error() pragma in the subject = nf section of verb_subjects
             and cannot be used with a nominative subject: ?'ég dreymdi þig' """
-        return "nf" in VerbSubjects.VERBS_ERRORS.get(verb, set())
+        return "nf" in VerbSubjects.VERBS_ERRORS.get(verb, dict())
 
 
 class Prepositions:
@@ -141,7 +143,7 @@ class Prepositions:
     # A dictionary containing information from $error() pragmas associated
     # with the preposition. Each entry is again a dict of {case: error} specifications,
     # where each error spec is usually a tuple.
-    PP_ERRORS: Dict[str, Dict[str, Tuple]] = defaultdict(dict)
+    PP_ERRORS: Dict[str, Dict[str, Tuple[Any, ...]]] = defaultdict(dict)
 
     @staticmethod
     def add(prep: str, case: str, nh: bool) -> None:
@@ -162,7 +164,7 @@ class Prepositions:
             Prepositions.PP_NH.add(prep)
 
     @staticmethod
-    def add_error(prep: str, case: str, corr: Tuple) -> None:
+    def add_error(prep: str, case: str, corr: Tuple[Any, ...]) -> None:
         """ Add an error correction entry for a preposition and a case.
             An error correction entry is usually a tuple. """
         Prepositions.PP_ERRORS[prep][case] = corr
@@ -214,14 +216,14 @@ class StaticPhrases:
     # Default meaning for static phrases
     MEANING: StaticPhraseTuple = ("ao", "frasi", "-")
     # Dictionary of the static phrases with their meanings
-    MAP: Dict[str, MeaningTuple] = {}
+    MAP: Dict[str, BIN_Tuple] = {}
     # Dictionary of the static phrases with their IFD tags and lemmas
     # { static_phrase : (tag string, lemma string) }
     DETAILS: Dict[str, Tuple[str, str]] = {}
     # List of all static phrases and their meanings
-    LIST: List[Tuple[str, MeaningTuple]] = []
+    LIST: List[Tuple[str, BIN_Tuple]] = []
     # Parsing dictionary keyed by first word of phrase
-    DICT: Dict[str, List[Tuple[List[str], int]]] = defaultdict(list)
+    DICT: DefaultDict[str, List[Tuple[List[str], int]]] = defaultdict(list)
     # Error dictionary:
     # { phrase : (error_code, right_phrase, right_tag_string, right_lemma_string) }
     ERROR_DICT: Dict[str, Tuple[str, str, str, str]] = {}
@@ -249,7 +251,7 @@ class StaticPhrases:
         ix = len(StaticPhrases.LIST)
         m = StaticPhrases.MEANING
 
-        mtuple = (phrase, 0, m[0], m[1], phrase, m[2])
+        mtuple = BIN_Tuple(phrase, 0, m[0], m[1], phrase, m[2])
 
         # Append the phrase as well as its meaning in tuple form
         StaticPhrases.LIST.append((phrase, mtuple))
@@ -281,13 +283,12 @@ class StaticPhrases:
         StaticPhrases.ERROR_DICT[words] = error
 
     @staticmethod
-    def set_meaning(meaning: Iterable) -> None:
+    def set_meaning(meaning: StaticPhraseTuple) -> None:
         """ Set the default meaning for static phrases """
-        StaticPhrases.MEANING = cast(StaticPhraseTuple, tuple(meaning))
-        assert len(StaticPhrases.MEANING) == 3
+        StaticPhrases.MEANING = meaning
 
     @staticmethod
-    def get_meaning(ix: int) -> List[MeaningTuple]:
+    def get_meaning(ix: int) -> BIN_TupleList:
         """ Return the meaning of the phrase with index ix """
         return [StaticPhrases.LIST[ix][1]]
 
@@ -297,7 +298,7 @@ class StaticPhrases:
         return len(StaticPhrases.LIST[ix][0].split())
 
     @staticmethod
-    def lookup(phrase: str) -> Optional[MeaningTuple]:
+    def lookup(phrase: str) -> Optional[BIN_Tuple]:
         """ Lookup an entire phrase """
         return StaticPhrases.MAP.get(phrase)
 
@@ -328,7 +329,7 @@ class AmbigPhrases:
     # i.e. (words, cats) where words and cats are tuples
     LIST: List[Tuple[List[str], Tuple[FrozenSet[str], ...]]] = []
     # Parsing dictionary keyed by first word of phrase
-    DICT: Dict[str, List[Tuple[List[str], int]]] = defaultdict(list)
+    DICT: DefaultDict[str, List[Tuple[List[str], int]]] = defaultdict(list)
     # Error dictionary, { phrase : (error_code, right_phrase, right_parts_of_speech) }
     ERROR_DICT: Dict[str, List[List[str]]] = defaultdict(list)
 
@@ -636,7 +637,6 @@ class Settings:
     @staticmethod
     def _handle_static_phrases(s: str) -> None:
         """ Handle static phrases in the settings section """
-        error = False
         if "=" not in s:
             ix = s.rfind("$error(")  # Must be at the end
             e: Optional[List[str]] = None
@@ -658,7 +658,7 @@ class Settings:
         if par.lower() == "meaning":
             m = val.split()
             if len(m) == 3:
-                StaticPhrases.set_meaning(m)
+                StaticPhrases.set_meaning(cast(StaticPhraseTuple, tuple(m)))
             else:
                 raise ConfigError("Meaning in static_phrases should have 3 arguments")
         else:
