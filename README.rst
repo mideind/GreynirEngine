@@ -37,7 +37,9 @@ using an `Earley-type parser <https://en.wikipedia.org/wiki/Earley_parser>`__
 as `enhanced by Scott and Johnstone <https://www.sciencedirect.com/science/article/pii/S0167642309000951>`__.
 
 Greynir employs the `Tokenizer <https://pypi.org/project/tokenizer/>`__ package,
-by the same authors, to tokenize text.
+by the same authors, to tokenize text, and
+uses `BinPackage <https://pypi.org/project/islenska/>`__ as its database of
+Icelandic vocabulary and morphology.
 
 ********
 Examples
@@ -135,21 +137,15 @@ To install this package, assuming Python 3 is your default Python::
 
     $ pip install reynir
 
-If you have **git** and **git-lfs** installed and want to be able to edit
+If you have **git** installed and want to be able to edit
 the source, do like so::
 
     $ git clone https://github.com/mideind/GreynirPackage
     $ cd GreynirPackage
     $ # [ Activate your virtualenv here if you have one ]
-    $ git lfs install
-    $ git pull
     $ pip install -e .
 
 The package source code is now in ``GreynirPackage/src/reynir``.
-
-Note that **git-lfs** is required to clone and pull the full compressed binary
-files for the *Beygingarlýsing íslensks nútímamáls* (BÍN) database. If it is
-missing, you will get assertion errors when you try to run Greynir.
 
 *****
 Tests
@@ -217,17 +213,16 @@ to negotiate custom arrangements.
 
 ----
 
-GreynirPackage embeds the `Database of Modern Icelandic Inflection <https://bin.arnastofnun.is>`_
+GreynirPackage indirectly embeds the `Database of Icelandic Morphology <https://bin.arnastofnun.is>`_
 (`Beygingarlýsing íslensks nútímamáls <https://bin.arnastofnun.is>`_), abbreviated BÍN.
+GreynirPackage does not claim any endorsement by the BÍN authors or copyright holders.
 
-The BÍN source data are publicly available under the CC-BY-4.0 license, as further
+The BÍN source data are publicly available under the
+`CC BY-SA 4.0 license <https://creativecommons.org/licenses/by-sa/4.0/>`_, as further
 detailed `here in English <https://bin.arnastofnun.is/DMII/LTdata/conditions/>`_
 and `here in Icelandic <https://bin.arnastofnun.is/gogn/mimisbrunnur/>`_.
 
 In accordance with the BÍN license terms, credit is hereby given as follows:
 
-*Beygingarlýsing íslensks nútímamáls. Stofnun Árna Magnússonar í íslenskum fræðum. Höfundur og ritstjóri Kristín Bjarnadóttir.*
-
-GreynirPackage includes certain additions and modifications to the original BÍN
-source data. These are explained in the source code file ``tools/binpack.py``,
-available in the project's `GitHub repository <https://github.com/mideind/GreynirPackage>`_.
+*Beygingarlýsing íslensks nútímamáls. Stofnun Árna Magnússonar í íslenskum fræðum.*
+*Höfundur og ritstjóri Kristín Bjarnadóttir.*

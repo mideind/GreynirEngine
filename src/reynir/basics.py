@@ -34,10 +34,11 @@
 """
 
 from typing import (
+    Callable,
     Iterable,
     Iterator,
+    List,
     Optional,
-    Tuple,
 )
 
 import os
@@ -46,10 +47,6 @@ import locale
 from contextlib import contextmanager
 from pkg_resources import resource_stream
 
-
-# Type of BÍN meaning tuples
-# stofn, utg, ordfl, fl, ordmynd, beyging
-MeaningTuple = Tuple[str, Optional[int], str, str, str, str]
 
 # The locale used by default in the changedlocale function
 _DEFAULT_LOCALE = ("IS_is", "UTF-8")
@@ -69,7 +66,9 @@ BIN_COMPRESSED_FILE = "ord.compressed"
 
 
 @contextmanager
-def changedlocale(new_locale: Optional[str] = None, category: str = "LC_COLLATE"):
+def changedlocale(
+    new_locale: Optional[str] = None, category: str = "LC_COLLATE"
+) -> Iterator[Callable[[str], str]]:
     """ Change locale for collation temporarily within a context (with-statement) """
     # The newone locale parameter should be a tuple: ('is_IS', 'UTF-8')
     # The category should be a string such as 'LC_TIME', 'LC_NUMERIC' etc.
@@ -82,7 +81,7 @@ def changedlocale(new_locale: Optional[str] = None, category: str = "LC_COLLATE"
         locale.setlocale(cat, old_locale)
 
 
-def sort_strings(strings: Iterable[str], loc: Optional[str] = None):
+def sort_strings(strings: Iterable[str], loc: Optional[str] = None) -> List[str]:
     """ Sort a list of strings using the specified locale's collation order """
     # Change locale temporarily for the sort
     with changedlocale(loc) as strxfrm:

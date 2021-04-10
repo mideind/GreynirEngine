@@ -117,8 +117,8 @@ class ParseJob:
         handle: int,
         grammar: Grammar,
         tokens: List[BIN_Token],
-        terminals: List[Terminal],
-        matching_cache: Dict[Hashable, Any],
+        terminals: Dict[int, Terminal],
+        matching_cache: Dict[Tuple[Hashable, ...], Any],
     ) -> None:
         self._handle = handle
         self.tokens = tokens
@@ -167,7 +167,11 @@ class ParseJob:
 
     @classmethod
     def make(
-        cls, grammar: Grammar, tokens: List[BIN_Token], terminals, matching_cache
+        cls,
+        grammar: Grammar,
+        tokens: List[BIN_Token],
+        terminals: Dict[int, Terminal],
+        matching_cache: Dict[Tuple[Hashable, ...], Any],
     ) -> "ParseJob":
         """ Create a new parse job with for a given token sequence and set of terminals """
         with cls._lock:
@@ -330,7 +334,7 @@ class Node:
             # nonterminal. Nodes can be coalesced while they
             # refer to the same nonterminal, are interior,
             # and not ambiguous.
-            ch = []
+            ch: List[Any] = []
 
             def push_pair(p1: Any, p2: Any) -> None:
                 """ Push a pair of child nodes onto the child list """
@@ -568,7 +572,7 @@ class Node:
         if self._families:
             # Show the children in each family
 
-            def child_rep(children):
+            def child_rep(children: Iterable[Optional["Node"]]) -> str:
                 if not children:
                     return ""
                 return "\n".join(
@@ -576,14 +580,15 @@ class Node:
                 )
 
             if len(self._families) == 1:
-                if not self._families[0][1]:
+                children = self._families[0][1]
+                if not children:
                     families_rep = ""
                 else:
-                    families_rep = "\n" + child_rep(self._families[0][1])
+                    families_rep = "\n" + child_rep(children)
             else:
                 families_rep = "\n" + "\n".join(
                     istr + "Option " + str(ix + 1) + ":\n" + child_rep(child)
-                    for ix, (prod, child) in enumerate(self._families)
+                    for ix, (_, child) in enumerate(self._families)
                 )
         return istr + label_rep + families_rep
 
@@ -644,12 +649,12 @@ class Fast_Parser(BIN_Parser):
     """
 
     # The C++ grammar object (a binary blob)
-    _c_grammar = ffi_NULL
+    _c_grammar: Any = ffi_NULL
     # The C++ grammar timestamp
     _c_grammar_ts: Optional[float] = None
 
     @classmethod
-    def _load_binary_grammar(cls):
+    def _load_binary_grammar(cls) -> Any:
         """ Load the binary grammar file into memory, if required """
         fname = cls._GRAMMAR_BINARY_FILE
         try:
@@ -660,9 +665,9 @@ class Fast_Parser(BIN_Parser):
             # Need to load or reload the grammar
             if cls._c_grammar != ffi_NULL:
                 # Delete previous grammar instance, if any
-                eparser.deleteGrammar(cls._c_grammar)
+                eparser.deleteGrammar(cls._c_grammar)  # type: ignore
                 cls._c_grammar = ffi_NULL
-            cls._c_grammar = eparser.newGrammar(fname.encode("utf-8"))
+            cls._c_grammar = eparser.newGrammar(fname.encode("utf-8"))  # type: ignore
             cls._c_grammar_ts = ts
             if cls._c_grammar == ffi_NULL:
                 raise GrammarError(
@@ -682,8 +687,8 @@ class Fast_Parser(BIN_Parser):
             c_grammar = self._load_binary_grammar()
             # Create a C++ parser object for the grammar, passing the proxies for the
             # two Python callback functions into it
-            self._c_parser = eparser.newParser(
-                c_grammar, eparser.matching_func, eparser.alloc_func
+            self._c_parser: Any = eparser.newParser(  # type: ignore
+                c_grammar, eparser.matching_func, eparser.alloc_func  # type: ignore
             )
             # Find the index of the default root nonterminal for this parser instance
             self._root_index = (
@@ -694,7 +699,7 @@ class Fast_Parser(BIN_Parser):
             # as it includes an entry (consisting of one byte per terminal in the
             # grammar, or currently about 5K bytes for Greynir.grammar) for every
             # distinct token that the parser encounters.
-            self._matching_cache: Dict[int, Any] = dict()
+            self._matching_cache: Dict[Tuple[Hashable, ...], Any] = dict()
 
     def __enter__(self):
         """ Python context manager protocol """
@@ -713,7 +718,7 @@ class Fast_Parser(BIN_Parser):
 
         wrapped_tokens = self._wrap(tokens)  # Inherited from BIN_Parser
         lw = len(wrapped_tokens)
-        err = ffi.new("unsigned int*")
+        err: Any = cast(Any, ffi).new("unsigned int*")
         result = None
 
         # Use the context manager protocol to guarantee that the parse job
@@ -731,7 +736,7 @@ class Fast_Parser(BIN_Parser):
                 # Override the default root for this parse
                 root_index = self.grammar.nonterminals[root].index
 
-            node = eparser.earleyParse(self._c_parser, lw, root_index, job.handle, err)
+            node: Any = eparser.earleyParse(self._c_parser, lw, root_index, job.handle, err)  # type: ignore
 
             if node == ffi_NULL:
                 ix = err[0]  # Token index
@@ -758,11 +763,11 @@ class Fast_Parser(BIN_Parser):
             result = Node.from_c_node(job, node)
 
         # Delete the C++ nodes
-        eparser.deleteForest(node)
+        eparser.deleteForest(node)  # type: ignore
         assert result is not None
         return result
 
-    def go_no_exc(self, tokens: Iterable[Tok], **kwargs) -> Optional[Node]:
+    def go_no_exc(self, tokens: Iterable[Tok], **kwargs: Any) -> Optional[Node]:
         """ Simple version of go() that returns None instead of throwing ParseError """
         try:
             return self.go(tokens, **kwargs)
@@ -774,10 +779,10 @@ class Fast_Parser(BIN_Parser):
             to avoid memory leaks. The context manager protocol is recommended
             to guarantee cleanup. """
         if self._c_parser != ffi_NULL:
-            eparser.deleteParser(self._c_parser)
+            eparser.deleteParser(self._c_parser)  # type: ignore
         self._c_parser = ffi_NULL
         if Settings.DEBUG:
-            eparser.printAllocationReport()
+            eparser.printAllocationReport()  # type: ignore
             print(
                 "Matching cache contains {0} entries".format(len(self._matching_cache))
             )
@@ -786,7 +791,7 @@ class Fast_Parser(BIN_Parser):
     def discard_grammar(cls) -> None:
         """ Discard the C grammar object instance held as a class attribute """
         if cls._c_grammar != ffi_NULL:
-            eparser.deleteGrammar(cls._c_grammar)
+            eparser.deleteGrammar(cls._c_grammar)  # type: ignore
         cls._c_grammar = ffi_NULL
         cls._c_grammar_ts = None
 
@@ -924,7 +929,7 @@ class ParseForestPrinter(ParseForestNavigator):
     def __init__(
         self,
         detailed: bool = False,
-        file: Optional[IO] = None,
+        file: Optional[IO[str]] = None,
         show_scores: bool = False,
         show_ids: bool = False,
         visit_all: bool = True,
@@ -962,27 +967,27 @@ class ParseForestPrinter(ParseForestNavigator):
             file=self._file,
         )
 
-    def visit_nonterminal(self, level: int, w: Node) -> Any:
+    def visit_nonterminal(self, level: int, node: Node) -> Any:
         # Interior nodes are not printed
         # and do not increment the indentation level
-        if self._detailed or not w.is_interior:
-            nt = cast(Nonterminal, w.nonterminal)
+        if self._detailed or not node.is_interior:
+            nt = cast(Nonterminal, node.nonterminal)
             if not self._detailed:
-                if w.is_empty and nt.is_optional:
+                if node.is_empty and nt.is_optional:
                     # Skip printing optional nodes that don't contain anything
                     return NotImplemented  # Don't visit child nodes
             h = nt.name
             indent = "  " * level  # Two spaces per indent level
             if self._show_ids:
-                h += " @ {0:x}".format(id(w))
-            print(indent + h + self._score(w), file=self._file)
+                h += " @ {0:x}".format(id(node))
+            print(indent + h + self._score(node), file=self._file)
             if self._skip_duplicates:
                 # We don't want to redisplay entire subtrees that we've
                 # seen before
-                if w in self._visited:
+                if node in self._visited:
                     print(indent + "  <Seen before>", file=self._file)
                     return NotImplemented  # Don't visit child nodes
-                self._visited.add(w)
+                self._visited.add(node)
         return None  # No results required, but visit children
 
     def visit_family(
@@ -996,13 +1001,13 @@ class ParseForestPrinter(ParseForestNavigator):
     @classmethod
     def print_forest(
         cls,
-        root_node,
-        detailed=False,
-        file=None,
-        show_scores=False,
-        show_ids=False,
-        visit_all=True,
-        skip_duplicates=False,
+        root_node: "Node",
+        detailed: bool=False,
+        file: Optional[IO[str]]=None,
+        show_scores: bool=False,
+        show_ids: bool=False,
+        visit_all: bool=True,
+        skip_duplicates: bool=False,
     ):
         """ Print a parse forest to the given file, or stdout if none """
         cls(
@@ -1066,12 +1071,13 @@ class ParseForestDumper(ParseForestNavigator):
         self._result.append("T{0} {1} {2}{3}".format(level, name, w.token.dump, ta))
         return None
 
-    def visit_nonterminal(self, level: int, w: Node) -> Any:
+    def visit_nonterminal(self, level: int, node: Node) -> Any:
         # Interior nodes are not dumped
         # and do not increment the indentation level
-        if not w.is_interior:
-            nt = cast(Nonterminal, w.nonterminal)
-            if w.is_empty and nt.is_optional:
+        if not node.is_interior:
+            nt = node.nonterminal
+            assert nt is not None
+            if node.is_empty and nt.is_optional:
                 # Skip printing optional nodes that don't contain anything
                 return NotImplemented  # Don't visit child nodes
             # Identify this as a nonterminal
@@ -1177,27 +1183,27 @@ class ParseForestFlattener(ParseForestNavigator):
         self._stack[-1].add_child(node)
         return None
 
-    def visit_nonterminal(self, level: int, w: Node) -> Any:
+    def visit_nonterminal(self, level: int, node: Node) -> Any:
         """ Add a nonterminal node to the flattened tree """
         # Interior nodes are not dumped
         # and do not increment the indentation level
-        if not w.is_interior:
-            assert w.nonterminal is not None
-            if w.is_empty and w.nonterminal.is_optional:
+        if not node.is_interior:
+            assert node.nonterminal is not None
+            if node.is_empty and node.nonterminal.is_optional:
                 # Skip optional nodes that don't contain anything
                 return NotImplemented  # Signal: Don't visit child nodes
             # Identify this as a nonterminal
-            node = _FlattenerNode(w.nonterminal, w.score)
+            fnode = _FlattenerNode(node.nonterminal, node.score)
             if level == 0:
                 # New root (must be the only one)
                 assert self._stack is None
-                self._stack = [node]
+                self._stack = [fnode]
             else:
                 # New child of the parent node
                 assert self._stack is not None
                 self._stack = self._stack[0:level]
-                self._stack[-1].add_child(node)
-                self._stack.append(node)
+                self._stack[-1].add_child(fnode)
+                self._stack.append(fnode)
         return None  # No results required, but visit children
 
     def visit_family(

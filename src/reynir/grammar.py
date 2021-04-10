@@ -63,17 +63,19 @@
 """
 
 from typing import (
+    Callable,
+    DefaultDict,
     FrozenSet,
     List,
     Dict,
     Set,
+    TYPE_CHECKING,
     Tuple,
     Iterable,
     Iterator,
     Optional,
     Union,
     Any,
-    cast,
 )
 
 import os
@@ -83,12 +85,12 @@ from datetime import datetime
 from collections import defaultdict, OrderedDict
 
 # pylint: disable=no-name-in-module
-if __package__:
+if TYPE_CHECKING or __package__:
     from .settings import Settings, StaticPhrases
     from .basics import changedlocale, ConfigError
 else:
-    from settings import Settings, StaticPhrases  # type: ignore
-    from basics import changedlocale, ConfigError  # type: ignore
+    from settings import Settings, StaticPhrases
+    from basics import changedlocale, ConfigError
 
 
 ProductionTuple = Tuple[int, "Production"]
@@ -745,7 +747,7 @@ class Grammar:
         # Shortcuts
         terminals = self._terminals
         nonterminals = self._nonterminals
-        grammar = self._nt_dict
+        grammar: Dict[Nonterminal, List[ProductionTuple]] = self._nt_dict
         # Reset the sequence of production indices
         Production.reset()
         # Dictionary of variants, keyed by variant name
@@ -804,7 +806,7 @@ class Grammar:
                 # vfree is a set of 'free variants', i.e. variants that
                 # occur in the right hand side of the production but not in
                 # the nonterminal (those are in vts)
-                vfree = set()
+                vfree: Set[str] = set()
 
                 for r in tokens:
 
@@ -870,7 +872,7 @@ class Grammar:
 
                 # Generate productions for all variants
 
-                def variant_values(vlist):
+                def variant_values(vlist: List[str]) -> Iterator[List[str]]:
                     """ Returns a list of names with all applicable
                         variant options appended """
                     if not vlist:
@@ -1010,19 +1012,19 @@ class Grammar:
                         )
                     add_rhs(nt_id_full, result, priority)
 
-            def variant_names(nt, vts):
+            def variant_names(nt: str, vts: List[str]) -> List[str]:
                 """ Returns a list of names with all applicable
                     variant options appended """
                 result = [nt]
                 for v in vts:
-                    newresult = []
+                    newresult: List[str] = []
                     for vopt in variants[v]:
                         for r in result:
                             newresult.append(r + "_" + vopt)
                     result = newresult
                 return result
 
-            def apply_to_nonterminals(s, func):
+            def apply_to_nonterminals(s: str, func: Callable[[Nonterminal, str], None]) -> None:
                 """ Parse a nonterminal/var list from string s,
                     then apply func(nt, p) to all nonterminals,
                     where p is the parameter of the pragma """
@@ -1101,7 +1103,7 @@ class Grammar:
                     # Pragma $score(int) Nonterminal/var1/var2 ...
                     s = s[len(_PRAGMA_SCORE) :]
 
-                    def set_score(nt, score):
+                    def set_score(nt: Nonterminal, score: str) -> None:
                         self._nt_scores[nt] = int(score)
 
                     apply_to_nonterminals(s, set_score)
@@ -1168,6 +1170,7 @@ class Grammar:
 
                 # Add all previously unknown nonterminal variants
                 for nt_var in variant_names(nt, current_variants):
+                    cnt: Nonterminal
                     if nt_var in nonterminals:
                         cnt = nonterminals[nt_var]
                     else:
@@ -1314,7 +1317,7 @@ class Grammar:
         for _, plist in grammar.items():
             # Loop through the production list of a nonterminal
             for _, p in plist:
-                phrase = []
+                phrase: List[str] = []
                 # Loop through items in a production
                 for item in p:
                     item_text = item.literal_text
@@ -1339,7 +1342,7 @@ class Grammar:
 
         # Check that all nonterminals derive terminal strings
         agenda = [nt for nt in nonterminals.values()]
-        der_t = set()
+        der_t: Set[Nonterminal] = set()
         while agenda:
             reduced = False
             for nt in agenda:
@@ -1384,7 +1387,7 @@ class Grammar:
             ):
                 # This nonterminal has only one production,
                 # with only one nonterminal item
-                target_nt: Nonterminal = cast(Nonterminal, plist[0][1][0])
+                target_nt: Nonterminal = plist[0][1][0]
                 assert target_nt != nt
                 while target_nt in shortcuts:
                     # Find ultimate destination of shortcut
@@ -1489,16 +1492,19 @@ class Grammar:
                 # No binary file or older than text file: write a fresh one
                 self._write_binary(binary_fname)
 
-    def follow_set(self, nonterminal):
+    def follow_set(self, nonterminal: Nonterminal) -> Dict[Terminal, List[List[Production]]]:
         """ Return the set of terminals that can follow
             the given nonterminal, as a dictionary keyed
             by terminal, containing a list of productions
             by which the terminal follows the nonterminal """
 
-        nullable = set()
+        nullable: Set[Nonterminal] = set()
 
-        def is_nullable(nt):
-            def is_nullable_prod(p):
+        def is_nullable(nt: Nonterminal) -> bool:
+            """ Returns True if the nonterminal is nullable """
+
+            def is_nullable_prod(p: Production) -> bool:
+                """ Returns True if the production is nullable """
                 return p.is_empty or all(s in nullable for s in p)
 
             plist = self._nt_dict[nt]
@@ -1512,10 +1518,10 @@ class Grammar:
                     nullable.add(nt)
                     changed = True
 
-        follow = defaultdict(list)
-        seen = set()
+        follow: DefaultDict[Terminal, List[List[Production]]] = defaultdict(list)
+        seen: Set[GrammarItem] = set()
 
-        def add_follow(nt, prod_seq):
+        def add_follow(nt: Nonterminal, prod_seq: List[Production]) -> None:
             plist = self._nt_dict[nt]
             for _, p in plist:
                 for s in p:
@@ -1523,6 +1529,7 @@ class Grammar:
                         follow[s].append(prod_seq + [p])
                         break
                     if s not in seen:
+                        assert isinstance(s, Nonterminal)
                         seen.add(s)
                         add_follow(s, prod_seq + [p])
                     if s not in nullable:

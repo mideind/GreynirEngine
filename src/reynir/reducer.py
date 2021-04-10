@@ -88,16 +88,17 @@
 """
 
 from typing import Dict, DefaultDict, List, Set, Tuple, Optional, Any, cast
+from typing_extensions import TypedDict
 
 from collections import defaultdict
 
-from typing_extensions import TypedDict
+from tokenizer.definitions import BIN_Tuple
 
 from .grammar import Grammar, Production
 from .fastparser import Node, ParseForestNavigator
 from .settings import Preferences, NounPreferences
 from .verbframe import VerbFrame
-from .binparser import BIN_Token, BIN_Terminal, BIN_Meaning
+from .binparser import BIN_Token, BIN_Terminal
 
 
 # Types for data used in the reduction process
@@ -129,8 +130,6 @@ _VERB_PREP_BONUS = 7  # Give 7 extra points for a verb/preposition match
 _VERB_PREP_PENALTY = -2  # Subtract 2 points for a non-match
 _LENGTH_BONUS_FACTOR = 10  # For length bonus, multiply number of tokens by this factor
 
-# Noun categories set
-_NOUN_SET = BIN_Token.GENDERS_SET  # kk, kvk, hk
 _CASES_SET = BIN_Token.CASES_SET
 
 # Tags of nonterminals that allow us to stop copying nodes
@@ -182,7 +181,7 @@ class _ReductionScope:
         """ Add a child node's score to the parent family's score,
             where the parent family has index ix (0..n) """
         d = self.sc[ix]
-        d["sc"] += rd["sc"]
+        d["sc"] += rd.get("sc", 0)
         # Carry information about contained verbs ("so") up the tree
         for key in ("so", "sl"):
             if key in rd:
@@ -317,7 +316,7 @@ class ParseForestReducer:
         """ Return a verb/preposition match bonus, as and if applicable """
         # Only do this if the prepositions match the verb being connected to
         m = verb_token.match_with_meaning(verb_terminal)
-        assert isinstance(m, BIN_Meaning)
+        assert isinstance(m, BIN_Tuple)
         verb = m.stofn
         if "MM" in m.beyging:
             # Use MM-NH nominal form for MM verbs,
@@ -500,11 +499,11 @@ class OptionFinder(ParseForestNavigator):
         self._finals = finals
         self._tokens = tokens
 
-    def visit_token(self, level: int, node: Node) -> Any:
+    def visit_token(self, level: int, w: Node) -> Any:
         """ At token node """
         # assert node.terminal is not None
-        self._finals[node.start].add(cast(BIN_Terminal, node.terminal))
-        self._tokens[node.start] = cast(BIN_Token, node.token)
+        self._finals[w.start].add(cast(BIN_Terminal, w.terminal))
+        self._tokens[w.start] = cast(BIN_Token, w.token)
         return None
 
 
@@ -554,9 +553,13 @@ class Reducer:
             txt = txt_last = token.lower
             composite = False
             # Get the last part of a composite word (e.g. 'jaðar-áhrifin' -> 'áhrifin')
-            if token.is_word and token.t2 and "-" in token.t2[0].ordmynd:
+            if (
+                token.is_word
+                and token.has_meanings
+                and "-" in token.meanings[0].ordmynd
+            ):
                 composite = True
-                txt_last = token.t2[0].ordmynd.rsplit("-", maxsplit=1)[-1]
+                txt_last = token.meanings[0].ordmynd.rsplit("-", maxsplit=1)[-1]
             # No need to check preferences if the first parts of
             # all possible terminals are equal
             # Look up the preference ordering from GreynirPackage.conf, if any
@@ -621,7 +624,7 @@ class Reducer:
                                 "ætt",
                                 "entity",
                             }
-                            for m in token.t2
+                            for m in token.meanings
                         ):
                             # logging.info(
                             #     "Punishing connection of {0} with 'no' terminal"
@@ -662,7 +665,7 @@ class Reducer:
                     # present participle (lýsingarháttur nútíðar)
                     if txt.endswith("andi") and any(
                         (m.ordfl == "so" and m.beyging in {"LH-NT", "LHNT"})
-                        for m in token.t2
+                        for m in token.meanings
                     ):
                         sc[t] -= 50
                 elif tfirst == "so":
@@ -677,7 +680,7 @@ class Reducer:
                         # In the (rare) cases where there are conflicting scores,
                         # apply the most positive adjustment
                         adjmax = None
-                        for m in token.t2:
+                        for m in token.meanings:
                             if m.ordfl == "so":
                                 key = m.stofn + t.verb_cases
                                 score = VerbFrame.verb_score(key)

@@ -35,14 +35,13 @@
 """
 
 from typing import (
-    TYPE_CHECKING,
+    DefaultDict,
+    Dict,
     cast,
     Optional,
-    NamedTuple,
     Tuple,
     List,
     Sequence,
-    Dict,
     Mapping,
     Union,
     Iterable,
@@ -54,6 +53,7 @@ from typing import (
     Any,
     TypeVar,
 )
+from typing_extensions import TypedDict
 
 import sys
 import re
@@ -65,18 +65,78 @@ from tokenizer import (
     tokenize_without_annotation,
     # The following imports are here in order to be visible in clients
     # (they are not used in this module)
-    tokenize as raw_tokenize,
-    correct_spaces,
-    paragraphs,
-    parse_tokens,
+    correct_spaces,  # type: ignore
+    paragraphs,  # type: ignore
+    parse_tokens,  # type: ignore
+)
+from tokenizer.definitions import (
+    BIN_Tuple,
+    BIN_TupleList,
+    CurrencyTuple,
+    NumberTuple,
+    PersonNameList,
+    PersonNameTuple,
+    ValType,
+    DateTimeTuple,
 )
 from tokenizer.abbrev import Abbreviations
 
 from .settings import StaticPhrases, AmbigPhrases, DisallowedNames, NamePreferences
-from .bindb import BIN_Db, BIN_Meaning
+from .bindb import GreynirBin
 
-if TYPE_CHECKING:
-    from .binparser import TokenDict
+
+class TokenDict(TypedDict, total=False):
+
+    """ The type of a token dictionary returned from describe_token() """
+
+    # Index in original token list
+    ix: int
+    # Kind
+    k: int
+    # Terminal
+    t: str
+    # Augmented terminal (optional)
+    a: str
+    # Meaning: ordmynd, ordfl, fl, beyging
+    m: Tuple[str, str, str, str]
+    # Text
+    x: str
+    # Value
+    v: Any
+    # Gender (for person tokens only)
+    g: str
+    # Error marker (optional)
+    err: int
+
+
+class CanonicalTokenDict(TypedDict, total=False):
+
+    """ A token dictionary returned from canonicalize_token().
+        This scheme is intended for external consumption,
+        such as export in JSON format to clients. """
+
+    # Index in original token list
+    ix: int
+    # Token kind, as a string (e.g. 'WORD')
+    k: str
+    # Terminal, normalized (e.g. 'no_kk_et_nf')
+    t: str
+    # Original terminal (e.g. '"og:st"')
+    o: str
+    # Augmented terminal (e.g. 'so_1_þf_gm_fh_nt')
+    a: str
+    # Text
+    x: str
+    # Lemma
+    s: str
+    # BÍN category ('kk', 'so', 'fs'...)
+    c: str
+    # BÍN fl field ('ism', 'ætt'...)
+    f: str
+    # BÍN inflection (beyging field, e.g. 'GM-FH-NT')
+    b: str
+    # Additional values, depending on token kind
+    v: Union[str, float, Dict[str, Any]]
 
 
 if "PyPy 7.3.0" in sys.version or "PyPy 7.2." in sys.version:
@@ -97,10 +157,6 @@ else:
 
 # Generic type variable
 T = TypeVar("T")
-# Named tuple for person names, including case and gender
-PersonName = NamedTuple(
-    "PersonName", [("name", str), ("gender", Optional[str]), ("case", Optional[str])]
-)
 # The type of a list of tokens
 TokenList = List[Tok]
 TokenIterable = Iterable[Tok]
@@ -108,20 +164,16 @@ TokenIterable = Iterable[Tok]
 StringIterable = Union[str, Iterable[str]]
 # The type of a stream of tokens
 TokenIterator = Iterator[Tok]
-# The type of a token val field
-TokenValType = Union[List[BIN_Meaning], List[PersonName], Tuple, None]
 # The type of a tokenization pipeline phase
 FirstPhaseFunction = Callable[[], TokenIterator]
 FollowingPhaseFunction = Callable[[TokenIterator], TokenIterator]
 PhaseFunction = Union[FirstPhaseFunction, FollowingPhaseFunction]
 StateTuple = Tuple[List[str], int]
 StateList = List[StateTuple]
-StateDict = Mapping[str, StateList]
+StateDict = DefaultDict[str, StateList]
 DisambiguationTuple = Tuple[str, FrozenSet[str]]
 TokenConstructor = Type["Bin_TOK"]
-FilterFunction = Callable[[BIN_Meaning], bool]
-# This type should be identical to tokenizer.MeaningList
-MeaningList = Sequence[Tuple[str, int, str, str, str, str]]
+FilterFunction = Callable[[BIN_Tuple], bool]
 
 # Person names that are not recognized at the start of sentences
 NOT_NAME_AT_SENTENCE_START: FrozenSet[str] = frozenset(
@@ -154,7 +206,8 @@ HYPHEN = "-"  # Normal hyphen
 EN_DASH = "\u2013"  # "–"
 EM_DASH = "\u2014"  # "—"
 COMPOSITE_HYPHEN = EN_DASH
-COMPOSITE_HYPHENS = HYPHEN + EN_DASH
+COMPOSITE_HYPHENS = HYPHEN + COMPOSITE_HYPHEN
+HYPHEN_SPLIT_RE = r"[" + COMPOSITE_HYPHENS + r"]"
 
 # Prefixes that can be applied to adjectives with an intervening hyphen
 ADJECTIVE_PREFIXES: FrozenSet[str] = frozenset(["hálf", "marg", "semí", "full"])
@@ -456,17 +509,17 @@ UPPER_CASE_ABBREVS: FrozenSet[str] = frozenset(
 )
 
 
-def load_token(*args: Any) -> Tuple[int, str, TokenValType]:
+def load_token(*args: Any) -> Tuple[int, str, ValType]:
     """ Convert a plain, usually JSON serialized, argument tuple
         to kind, txt, val attributes """
-    kind, txt, val = args[0], args[1], args[2]
+    kind, txt, val = args[:3]
     if kind == TOK.WORD:
-        val = [BIN_Meaning(*v) for v in val]
+        val = [BIN_Tuple(*v) for v in val]
     elif kind == TOK.PERSON:
-        val = [PersonName(*v) for v in val]
+        val = [PersonNameTuple(*v) for v in val]
     else:
         val = tuple(val)
-    return kind, txt, val
+    return kind, txt, cast(ValType, val)
 
 
 class Bin_TOK(TOK):
@@ -478,28 +531,28 @@ class Bin_TOK(TOK):
 
     @staticmethod
     def Word(
-        w: str,
-        m: Optional[MeaningList] = None,
+        t: Union[Tok, str],
+        m: Optional[BIN_TupleList] = None,
         token: Union[None, Tok, Sequence[Tok]] = None,
     ) -> Tok:
         # Note that the m parameter cannot be easily type annotated,
         # as the Tokenizer package is still using a .pyi (Python 2.7-compatible)
         # type annotation scheme
-        return TOK.Word(w, m)
+        return TOK.Word(t, m)
 
     @staticmethod
     def Number(
-        w: str,
+        t: Union[Tok, str],
         n: float,
         cases: Optional[List[str]] = None,
         genders: Optional[List[str]] = None,
         token: Optional[Tok] = None,
     ) -> Tok:
-        return TOK.Number(w, n, cases, genders)
+        return TOK.Number(t, n, cases, genders)
 
 
 def annotate(
-    db: BIN_Db,
+    db: GreynirBin,
     token_ctor: TokenConstructor,
     token_stream: TokenIterator,
     *,
@@ -518,7 +571,7 @@ def annotate(
         if t.kind != TOK.WORD:
             # Not a word: relay the token unchanged
             yield t
-            if t.kind == TOK.S_BEGIN or (t.kind == TOK.PUNCTUATION and t.val[1] == ":"):
+            if t.kind == TOK.S_BEGIN or t.punctuation == ":":
                 # After an S_BEGIN, and also after a colon, we consider ourselves
                 # to be at a sentence starting point - unless
                 # no_sentence_start is set to True
@@ -532,16 +585,16 @@ def annotate(
         w = t.txt
         if not t.val:
             # Look up word in BIN database
-            w, m = db.lookup_word(w, at_sentence_start, auto_uppercase)
+            w, m = db.lookup_g(w, at_sentence_start, auto_uppercase)
             if not m:
                 # Check exceptional cases involving hyphens
                 w = t.txt
                 if w[0] in COMPOSITE_HYPHENS:
                     # Something like '-menn' in 'þingkonur og -menn'
-                    _, m = db.lookup_word(w[1:], False, False)
+                    _, m = db.lookup_g(w[1:], False, False)
                     if m:
                         m = [
-                            BIN_Meaning(
+                            BIN_Tuple(
                                 # We leave the lemma intact here ('maður' for '-menn')
                                 mm.stofn,
                                 mm.utg,
@@ -553,17 +606,17 @@ def annotate(
                             )
                             for mm in m
                         ]
-                elif HYPHEN in w or EN_DASH in w:
+                elif HYPHEN in w or COMPOSITE_HYPHEN in w:
                     # Word with embedded hyphen: 'marg-ítrekaðri',
                     # 'málfræði-greining'
-                    parts = re.split(r"[" + HYPHEN + EN_DASH + r"]", w)
+                    parts = re.split(HYPHEN_SPLIT_RE, w)
                     # Start by checking whether it exists in BÍN without hyphens
                     w_new, m = "", []
                     if all(p[0].islower() for p in parts[1:]):
                         # ...but we only do this if all of the suffixes start
                         # with a lowercase character (so, we don't do this for
                         # 'Syðri-Hnaus' or 'Litla-Brekka')
-                        w_new, m = db.lookup_word(
+                        w_new, m = db.lookup_g(
                             "".join(parts), at_sentence_start, auto_uppercase
                         )
                     else:
@@ -571,7 +624,7 @@ def annotate(
                     if m:
                         # Found without hyphens: use that word form
                         m = [
-                            BIN_Meaning(
+                            BIN_Tuple(
                                 # Leave the lemma intact (but it may already contain
                                 # hyphens inserted by the compound word recognizer)
                                 mm.stofn,
@@ -591,10 +644,10 @@ def annotate(
                     else:
                         # Not found without hyphens:
                         # Look up the last part only
-                        _, m = db.lookup_word(parts[-1], False, False)
+                        _, m = db.lookup_g(parts[-1], False, False)
                         if m:
                             m = [
-                                BIN_Meaning(
+                                BIN_Tuple(
                                     # In this case, keep the hyphens in the lemma,
                                     # imitating the compound word recognizer
                                     "-".join(parts[:-1] + [mm.stofn]),
@@ -608,24 +661,24 @@ def annotate(
                                 for mm in m
                             ]
             # Yield a word tuple with meanings
-            yield token_ctor.Word(w, cast(MeaningList, m), token=t)
+            yield token_ctor.Word(w if auto_uppercase else t.txt, m, token=t)
         else:
             # Already have a meaning (most likely from an abbreviation that the
-            # tokenizer has recognized), which probably needs conversion
-            # from a bare tuple to a BIN_Meaning
-            meanings = list(map(BIN_Meaning._make, t.val))
+            # tokenizer has recognized)
+            meanings = list(t.meanings)
             if not w.isupper() and " " not in w and "." not in w:
                 # This token is not in all-caps and does not contain spaces or
                 # periods. It is thus possible that it is an abbreviation that
                 # could have additional meanings as a word in BÍN.
-                w_new, m = db.lookup_word(w, at_sentence_start, auto_uppercase)
+                w_new, m = db.lookup_g(w, at_sentence_start, auto_uppercase)
                 if m:
                     # Additional meanings found: add them to
                     # the front of the meaning list, giving them a bit of
                     # priority over the dubious abbreviation
                     meanings = m + meanings
-                    w = w_new
-            yield token_ctor.Word(w, cast(MeaningList, meanings), token=t)
+                    if auto_uppercase:
+                        w = w_new
+            yield token_ctor.Word(w, meanings, token=t)
         # We have yielded a word token: definitely no longer at sentence start
         at_sentence_start = False
 
@@ -638,7 +691,7 @@ def match_stem_list(
         return None
     # Go through the meanings with their stems
     if token.val:
-        for m in token.val:
+        for m in token.meanings:
             # If a filter function is given, pass candidates to it
             lower_stofn = m.stofn.lower()
             if lower_stofn in stems and (filter_func is None or filter_func(m)):
@@ -674,7 +727,7 @@ def all_cases(token: Tok, filter_func: Optional[FilterFunction] = None) -> List[
     cases: Set[str] = set()
     if token.kind == TOK.WORD and token.val:
         # Roll through the potential meanings and extract the cases therefrom
-        for m in token.val:
+        for m in token.meanings:
             if filter_func is not None and not filter_func(m):
                 continue
             if m.fl == "ob" or m.beyging == "-":
@@ -702,10 +755,10 @@ def all_genders(token: Tok) -> Optional[List[str]]:
     """ Return a list of the possible genders of the word in the token, if any """
     if token.kind != TOK.WORD:
         return None
-    g = set()
+    g: Set[str] = set()
     if token.val:
 
-        def find_gender(m: BIN_Meaning) -> Optional[str]:
+        def find_gender(m: BIN_Tuple) -> Optional[str]:
             if m.ordfl in GENDER_SET:
                 return m.ordfl  # Plain noun
             # Probably number word ('töl' or 'to'): look at its spec
@@ -714,7 +767,7 @@ def all_genders(token: Tok) -> Optional[List[str]]:
                     return v
             return None
 
-        for meaning in token.val:
+        for meaning in token.meanings:
             gn = find_gender(meaning)
             if gn is not None:
                 g.add(gn)
@@ -723,7 +776,7 @@ def all_genders(token: Tok) -> Optional[List[str]]:
 
 
 def parse_phrases_1(
-    db: BIN_Db, token_ctor: TokenConstructor, token_stream: TokenIterator
+    db: GreynirBin, token_ctor: TokenConstructor, token_stream: TokenIterator
 ) -> TokenIterator:
     """ Parse numbers and amounts """
 
@@ -734,7 +787,7 @@ def parse_phrases_1(
         # Maintain a one-token lookahead
         token = next(token_stream)
         while True:
-            next_token = next(token_stream)
+            next_token: Tok = next(token_stream)
 
             # Logic for numbers that are partially or entirely
             # written out in words
@@ -789,7 +842,7 @@ def parse_phrases_1(
                     # a split into "fimm" and "hundruð".
                     token = token_ctor.Number(
                         token.txt + " " + next_token.txt,
-                        token.val[0] * multiplier_next,
+                        token.number * multiplier_next,
                         next_case,
                         next_gender,
                         token=token,
@@ -801,12 +854,13 @@ def parse_phrases_1(
                     # For abbreviations, we do not know the case,
                     # but we try to retain the previous case information if any
                     token = convert_to_num(token)
+                    num = cast(NumberTuple, token.val)
                     token = token_ctor.Amount(
                         token.txt + " " + next_token.txt,
                         "ISK",
-                        token.val[0] * AMOUNT_ABBREV[next_token.txt],
-                        token.val[1],
-                        token.val[2],
+                        num[0] * AMOUNT_ABBREV[next_token.txt],
+                        num[1],
+                        num[2],
                     )
                     next_token = next(token_stream)
                 else:
@@ -816,7 +870,7 @@ def parse_phrases_1(
                         token = convert_to_num(token)
                         token = token_ctor.Percent(
                             token.txt + " " + next_token.txt,
-                            token.val[0],
+                            token.number,
                             all_cases(next_token),
                             all_genders(next_token),
                         )
@@ -841,7 +895,10 @@ def parse_phrases_1(
                             # having the correct form, i.e.
                             # strong inflection for indefinite nouns or
                             # weak inflection for definite nouns
-                            if next_token.val and "gr" in next_token.val[0].beyging:
+                            if (
+                                next_token.has_meanings
+                                and "gr" in next_token.meanings[0].beyging
+                            ):
                                 # Definite form ('pundið', 'dollarinn')
                                 form = "VB"
                             else:
@@ -862,17 +919,15 @@ def parse_phrases_1(
             # Check for composites:
             # 'stjórnskipunar- og eftirlitsnefnd'
             # 'dómsmála-, viðskipta- og iðnaðarráðherra'
-            tq = []
+            tq: List[Tok] = []
             while (
-                (token.kind == TOK.WORD or token.kind == TOK.ENTITY)
-                and next_token.kind == TOK.PUNCTUATION
-                and next_token.val[1] == COMPOSITE_HYPHEN
-            ):
+                token.kind == TOK.WORD or token.kind == TOK.ENTITY
+            ) and next_token.punctuation == COMPOSITE_HYPHEN:
                 tq.append(token)
                 tq.append(TOK.Punctuation(next_token.txt, normalized=HYPHEN))
                 # Check for optional comma after the prefix
-                comma_token = next(token_stream)
-                if comma_token.kind == TOK.PUNCTUATION and comma_token.val[1] == ",":
+                comma_token: Tok = next(token_stream)
+                if comma_token.punctuation == ",":
                     # A comma is present: append it to the queue
                     # and skip to the next token
                     tq.append(comma_token)
@@ -905,7 +960,7 @@ def parse_phrases_1(
                         # prefix in the ordmynd field
                         prefix = all_except_suffix(txt)
                         m = [
-                            BIN_Meaning(
+                            BIN_Tuple(
                                 prefix + " " + mm.stofn,
                                 mm.utg,
                                 mm.ordfl,
@@ -913,7 +968,7 @@ def parse_phrases_1(
                                 prefix + " " + mm.ordmynd,
                                 mm.beyging,
                             )
-                            for mm in next_token.val
+                            for mm in cast(Tuple[BIN_Tuple, ...], next_token.val)
                         ]
                         # Copy attributes, such as capitalization status
                         # (cf. GreynirCorrect) from the first token in the queue
@@ -951,7 +1006,7 @@ def parse_phrases_2(
         token = next(token_stream)
 
         # Maintain a set of full person names encountered
-        names: Set[PersonName] = set()
+        names: Set[PersonNameTuple] = set()
 
         at_sentence_start = False
 
@@ -965,8 +1020,9 @@ def parse_phrases_2(
             ):
                 # Preserve the case of the number, if available
                 # (milljónir, milljóna, milljónum)
-                cases = token.val[1]
-                genders = token.val[2]
+                num = cast(NumberTuple, token.val)
+                cases = num[1]
+                genders = num[2]
                 cur = None
 
                 if next_token.kind == TOK.WORD:
@@ -996,21 +1052,18 @@ def parse_phrases_2(
                             genders = all_genders(next_token)
                 elif next_token.kind == TOK.CURRENCY:
                     # Already have an ISO identifier for a currency
-                    cur = next_token.val[0]
+                    ct = cast(CurrencyTuple, next_token.val)
+                    cur = ct[0]
                     # Use the case and gender information from the currency name
                     # if no such information was given with the number itself
-                    cases = cases or next_token.val[1]
-                    genders = genders or next_token.val[2]
+                    cases = cases or ct[1]
+                    genders = genders or ct[2]
 
                 if cur is not None:
                     # Create an amount
                     # Use the case and gender information from the number, if any
                     token = token_ctor.Amount(
-                        token.txt + " " + next_token.txt,
-                        cur,
-                        token.val[0],
-                        cases,
-                        genders,
+                        token.txt + " " + next_token.txt, cur, num[0], cases, genders,
                     )
                     # Eat the currency token
                     next_token = next(token_stream)
@@ -1018,8 +1071,8 @@ def parse_phrases_2(
             # Check for [time] [date] (absolute)
             if token.kind == TOK.TIME and next_token.kind == TOK.DATEABS:
                 # Create a time stamp
-                h, m, s = token.val
-                y, mo, d = next_token.val
+                h, m, s = cast(DateTimeTuple, token.val)
+                y, mo, d = cast(DateTimeTuple, next_token.val)
                 token = token_ctor.Timestampabs(
                     token.txt + " " + next_token.txt, y=y, mo=mo, d=d, h=h, m=m, s=s
                 )
@@ -1029,8 +1082,8 @@ def parse_phrases_2(
             # Check for [time] [date] (relative)
             if token.kind == TOK.TIME and next_token.kind == TOK.DATEREL:
                 # Create a time stamp
-                h, m, s = token.val
-                y, mo, d = next_token.val
+                h, m, s = cast(DateTimeTuple, token.val)
+                y, mo, d = cast(DateTimeTuple, next_token.val)
                 token = token_ctor.Timestamprel(
                     token.txt + " " + next_token.txt, y=y, mo=mo, d=d, h=h, m=m, s=s
                 )
@@ -1041,7 +1094,7 @@ def parse_phrases_2(
 
             def stems(
                 tok: Tok, categories: FrozenSet[str], given_name: bool = False
-            ) -> Optional[List[PersonName]]:
+            ) -> Optional[List[PersonNameTuple]]:
                 """ If the token denotes a given name, return its possible
                     interpretations, as a list of PersonName tuples (name, case, gender).
                     If given_name is True, we omit from the list all name forms that
@@ -1055,8 +1108,8 @@ def parse_phrases_2(
                 # Set up the names we're not going to allow
                 dstems = DisallowedNames.STEMS if given_name else {}
                 # Look through the token meanings
-                result = []
-                for m in tok.val:
+                result: List[PersonNameTuple] = []
+                for m in tok.meanings:
                     if m.fl in categories and ("ET" in m.beyging or m.beyging == "-"):
                         # If this is a given name, we cut out name forms
                         # that are frequently ambiguous and wrong,
@@ -1067,7 +1120,7 @@ def parse_phrases_2(
                             # Note the stem ('stofn') and the gender from
                             # the word type ('ordfl')
                             result.append(
-                                PersonName(name=m.stofn, gender=m.ordfl, case=c)
+                                PersonNameTuple(name=m.stofn, gender=m.ordfl, case=c)
                             )
                 return result or None
 
@@ -1076,7 +1129,7 @@ def parse_phrases_2(
                     with any of the given categories """
                 if tok.kind != TOK.WORD or not tok.val:
                     return False
-                return any(m.fl in categories for m in tok.val)
+                return any(m.fl in categories for m in tok.meanings)
 
             def has_other_meaning(tok: Tok, categories: FrozenSet[str]) -> bool:
                 """ Return True if the token can denote something
@@ -1084,10 +1137,10 @@ def parse_phrases_2(
                 if tok.kind != TOK.WORD or not tok.val:
                     return True
                 # Return True if there is a different meaning, not a given name
-                return any(m.fl not in categories for m in tok.val)
+                return any(m.fl not in categories for m in tok.meanings)
 
             # Check for person names
-            def given_names(tok: Tok) -> Optional[List[PersonName]]:
+            def given_names(tok: Tok) -> Optional[List[PersonNameTuple]]:
                 """ Check for Icelandic or foreign person name
                     (category 'ism', 'gæl' or 'erm') """
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
@@ -1096,7 +1149,7 @@ def parse_phrases_2(
                 return stems(tok, PERSON_NAME_SET, given_name=True)
 
             # Check for surnames
-            def surnames(tok: Tok) -> Optional[List[PersonName]]:
+            def surnames(tok: Tok) -> Optional[List[PersonNameTuple]]:
                 """ Check for Icelandic patronym (category 'föð'),
                     matronym (category 'móð') or family names (category 'ætt') """
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
@@ -1128,7 +1181,9 @@ def parse_phrases_2(
                 # all-caps words (those are probably acronyms)
                 return len(tok.txt) == 1 or not tok.txt.isupper()
 
-            def given_names_or_middle_abbrev(tok: Tok,) -> Optional[List[PersonName]]:
+            def given_names_or_middle_abbrev(
+                tok: Tok,
+            ) -> Optional[List[PersonNameTuple]]:
                 """ Check for given name or middle abbreviation """
                 gnames = given_names(tok)
                 if gnames is not None:
@@ -1137,7 +1192,7 @@ def parse_phrases_2(
                         # name and a family name: prepend the family name as
                         # an genderless and caseless option to the list
                         gnames = [
-                            PersonName(name=tok.txt, gender=None, case=None)
+                            PersonNameTuple(name=tok.txt, gender=None, case=None)
                         ] + gnames
                     return gnames
                 if tok.kind != TOK.WORD:
@@ -1149,10 +1204,10 @@ def parse_phrases_2(
                         return None
                 # One or two letters, capitalized: accept as middle name abbrev,
                 # all genders and cases possible
-                return [PersonName(name=wrd, gender=None, case=None)]
+                return [PersonNameTuple(name=wrd, gender=None, case=None)]
 
-            def compatible(pn: PersonName, npn: PersonName) -> bool:
-                """ Return True if the next PersonName (npn) is compatible
+            def compatible(pn: PersonNameTuple, npn: PersonNameTuple) -> bool:
+                """ Return True if the next PersonNameTuple (npn) is compatible
                     with the one we have (pn) """
                 # The neutral gender (hk) is used for family names and is
                 # compatible with both masculine and feminine given names
@@ -1162,14 +1217,18 @@ def parse_phrases_2(
                     return False
                 return True
 
-            gn: Optional[List[PersonName]] = None
-            if token.kind == TOK.WORD and token.val and token.val[0].fl == "nafn":
+            gn: Optional[List[PersonNameTuple]] = None
+            if (
+                token.kind == TOK.WORD
+                and token.has_meanings
+                and token.meanings[0].fl == "nafn"
+            ):
                 # Convert a WORD with fl="nafn" to a PERSON with the correct gender,
                 # in all cases
-                gender = token.val[0].ordfl
+                gender = token.meanings[0].ordfl
                 token = token_ctor.Person(
                     token.txt,
-                    [PersonName(token.txt, gender, case) for case in ALL_CASES],
+                    [PersonNameTuple(token.txt, gender, case) for case in ALL_CASES],
                 )
             else:
                 gn = given_names(token)
@@ -1184,7 +1243,7 @@ def parse_phrases_2(
                     if not ngn:
                         break
                     # Look through the stuff we got and see what is compatible
-                    r = []
+                    r: List[PersonNameTuple] = []
                     # pylint: disable=not-an-iterable
                     for p in gn:
                         # noinspection PyTypeChecker
@@ -1192,7 +1251,7 @@ def parse_phrases_2(
                             if compatible(p, np):
                                 # Compatible: add to result
                                 r.append(
-                                    PersonName(
+                                    PersonNameTuple(
                                         name=p.name + " " + np.name,
                                         gender=p.gender,
                                         case=p.case,
@@ -1212,8 +1271,8 @@ def parse_phrases_2(
                 # for instance 'Dagur Bergþóruson Eggertsson'
 
                 def eat_surnames(
-                    gn: List[PersonName], w: str, patronym: bool, next_token: Tok
-                ) -> Tuple[List[PersonName], str, bool, Tok]:
+                    gn: List[PersonNameTuple], w: str, patronym: bool, next_token: Tok
+                ) -> Tuple[List[PersonNameTuple], str, bool, Tok]:
                     """ Process contiguous known surnames, typically "*dóttir/*son",
                         while they are compatible with the given name
                         we already have """
@@ -1221,7 +1280,7 @@ def parse_phrases_2(
                         sn = surnames(next_token)
                         if not sn:
                             break
-                        r = []
+                        r: List[PersonNameTuple] = []
                         # Found surname: append it to the accumulated name,
                         # if compatible
                         for p in gn:
@@ -1235,7 +1294,7 @@ def parse_phrases_2(
                                     )
                                     case = np.case if np.case != "-" else p.case
                                     r.append(
-                                        PersonName(
+                                        PersonNameTuple(
                                             name=p.name + " " + np.name,
                                             gender=gender,
                                             case=case,
@@ -1268,7 +1327,7 @@ def parse_phrases_2(
                             # if we are auto-capitalizing
                             ntxt = ntxt.capitalize()
                         for ix, p in enumerate(gn):
-                            gn[ix] = PersonName(
+                            gn[ix] = PersonNameTuple(
                                 name=p.name + " " + ntxt, gender=p.gender, case=p.case,
                             )
                         w += " " + ntxt
@@ -1305,7 +1364,7 @@ def parse_phrases_2(
                             if match:
                                 # All given names match: assign the previously seen
                                 # full name
-                                gn[ix] = PersonName(
+                                gn[ix] = PersonNameTuple(
                                     name=lp.name, gender=lp.gender, case=p.case
                                 )
                                 found_name = True
@@ -1336,9 +1395,7 @@ def parse_phrases_2(
             # Yield the current token and advance to the lookahead
             yield token
 
-            if token.kind == TOK.S_BEGIN or (
-                token.kind == TOK.PUNCTUATION and token.val[1] == ":"
-            ):
+            if token.kind == TOK.S_BEGIN or token.punctuation == ":":
                 at_sentence_start = True
             elif token.kind != TOK.PUNCTUATION and token.kind != TOK.ORDINAL:
                 at_sentence_start = False
@@ -1353,7 +1410,7 @@ def parse_phrases_2(
 
 
 def parse_phrases_3(
-    db: BIN_Db, token_stream: TokenIterator, token_ctor: TokenConstructor
+    db: GreynirBin, token_stream: TokenIterator, token_ctor: TokenConstructor
 ) -> TokenIterator:
     """ Parse a stream of tokens looking for phrases and making substitutions.
         Third pass: coalesce uppercase, otherwise unrecognized words with
@@ -1380,7 +1437,9 @@ def parse_phrases_3(
         if " " in token.txt:
             return False
         if token.kind == TOK.WORD and token.val:
-            if not any(m.ordfl == "entity" for m in token.val):
+            if any(m.stofn[0].isupper() for m in token.meanings):
+                # This word has an independent uppercase meaning:
+                # don't concatenate it
                 return False
         return True
 
@@ -1390,7 +1449,7 @@ def parse_phrases_3(
             return True
         assert token.kind == TOK.WORD
         if token.val:
-            if all(m.ordfl != "entity" for m in token.val):
+            if all(m.ordfl != "entity" for m in token.meanings):
                 # This word is found in BÍN and has no 'entity' meanings
                 return False
         return True
@@ -1424,17 +1483,17 @@ def parse_phrases_3(
                         token = token_ctor.Person(
                             " ".join(first),
                             [
-                                PersonName(" ".join(first), pn.gender, pn.case)
-                                for pn in token.val
+                                PersonNameTuple(" ".join(first), pn.gender, pn.case)
+                                for pn in token.person_names
                             ],
                         )
                     else:
                         token = token_ctor.Entity(" ".join(first))
                     yield token
                     if middle:
-                        _, m = db.lookup_word(middle)
+                        _, m = db.lookup_g(middle)
                         yield token_ctor.Word(middle, m)
-                    _, m = db.lookup_word(split[-1])
+                    _, m = db.lookup_g(split[-1])
                     token = token_ctor.Word(split[-1], m)
                 else:
                     yield token
@@ -1460,8 +1519,10 @@ def parse_phrases_3(
                     token = token_ctor.Person(
                         token.txt + " " + next_token.txt,
                         [
-                            PersonName(token.txt + " " + pn.name, pn.gender, pn.case)
-                            for pn in next_token.val
+                            PersonNameTuple(
+                                token.txt + " " + pn.name, pn.gender, pn.case
+                            )
+                            for pn in next_token.person_names
                         ],
                     )
                     next_token = next(token_stream)
@@ -1697,13 +1758,11 @@ class StaticPhraseStream(MatchingStream):
         w = " ".join([t.txt for t in tq])
         # Add the entire phrase as one 'word' to the token queue.
         # Note that the StaticPhrases meaning list will be converted
-        # to BIN_Meaning tuples in the annotate() pass.
+        # to BIN_Tuple tuples in the annotate() pass.
         # Also note that the entire token queue is sent in as
         # the token paramter, as any token in the queue may
         # contain error information.
-        yield self._token_ctor.Word(
-            w, cast(List[BIN_Meaning], StaticPhrases.get_meaning(ix)), token=tq
-        )
+        yield self._token_ctor.Word(w, StaticPhrases.get_meaning(ix), token=tq)
 
 
 def parse_static_phrases(
@@ -1729,7 +1788,7 @@ class DisambiguationStream(MatchingStream):
         """ Generate a phrase key from the given token """
         # Construct a set of all possible lemmas of this word form
         if token.kind == TOK.WORD:
-            return token.txt.lower(), frozenset(m.stofn + "*" for m in token.val)
+            return token.txt.lower(), frozenset(m.stofn + "*" for m in token.meanings)
         return token.txt.lower(), frozenset()
 
     def match_state(self, key: DisambiguationTuple, state: StateDict) -> StateList:
@@ -1771,7 +1830,7 @@ class DisambiguationStream(MatchingStream):
                 # Handle prepositions specially, since we may have additional
                 # preps defined in Main.conf that don't have fs meanings in BÍN
                 w = t.txt.lower()
-                mm = [BIN_Meaning(w, 0, "fs", "alm", w, "-")]
+                mm = [BIN_Tuple(w, 0, "fs", "alm", w, "-")]
                 cat_set = cat_set - frozenset(("fs",))
                 # !!! BUG: constraining the meanings of prepositions (ordfl=fs)
                 # !!! isn't currently meaningful, since the matcher in binparser.py
@@ -1785,7 +1844,7 @@ class DisambiguationStream(MatchingStream):
                 stem = word[:-1] if word[-1] == "*" else None
                 mm.extend(
                     m
-                    for m in t.val
+                    for m in t.meanings
                     if m.ordfl in cat_set and (stem is None or m.stofn == stem)
                 )
             yield token_ctor.Word(t.txt, mm, token=t)
@@ -1819,7 +1878,7 @@ class DefaultPipeline:
         self._auto_uppercase: bool = options.pop("auto_uppercase", False)
         self._no_sentence_start: bool = options.pop("no_sentence_start", False)
         self._options = options
-        self._db: Optional[BIN_Db] = None
+        self._db: Optional[GreynirBin] = None
         # Initialize the default tokenizer pipeline.
         # This sequence of phases can be modified in derived classes.
         self._phases: List[PhaseFunction] = [
@@ -1916,7 +1975,7 @@ class DefaultPipeline:
 
         # Thank you Python for enabling this programming pattern ;-)
 
-        with BIN_Db.get_db() as db:
+        with GreynirBin.get_db() as db:
             try:
                 self._db = db
                 # First tokenization phase
@@ -1997,7 +2056,7 @@ def stems_of_token(t: "TokenDict") -> List[Tuple[str, str]]:
 
 
 def choose_full_name(
-    val: Sequence[Tuple[str, str, str]], case: Optional[str], gender: Optional[str]
+    val: PersonNameList, case: Optional[str], gender: Optional[str]
 ) -> Tuple[str, str]:
     """ From a list of name possibilities in val, and given a case and a gender
         (which may be None), return the best matching full name and gender """
@@ -2025,4 +2084,4 @@ def choose_full_name(
     # If there are many choices, select the nominative case,
     # or the first element as a last resort
     ft = next((fn for fn in fn_list if fn[2] == "nf"), fn_list[0])
-    return ft[0], ft[1] if gender is None else gender
+    return ft[0], (ft[1] if gender is None else gender) or "hk"
