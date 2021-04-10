@@ -2272,8 +2272,7 @@ class AnnoTree:
                     # don't want to pop last item in stack
                     p +=1
                     break
-
-                x = stack.pop()
+                stack.pop()
             elif skipleft():
                 # Left parenthesis
                 s = skipstring()
