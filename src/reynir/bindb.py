@@ -33,14 +33,22 @@
 """
 
 from typing import Any, List, Optional, Tuple
+from functools import lru_cache
 
 from islenska.basics import make_bin_meaning
-from islenska.bindb import GreynirBin as GBin
+from islenska.bindb import GreynirBin as GBin, PERSON_NAME_FL
+from islenska.bindb import MeaningFilterFunc
 
 from tokenizer import BIN_Tuple
 
+from .settings import StaticPhrases
+
 # SHSnid tuple as seen by the Greynir compatibility layer
 ResultTuple = Tuple[str, List[BIN_Tuple]]
+
+
+# Size of name cache for lookup_name_gender
+_NAME_GENDER_CACHE_SIZE = 128
 
 
 class GreynirBin(GBin):
@@ -99,3 +107,22 @@ class GreynirBin(GBin):
             BIN_Tuple(k.ord, k.bin_id, k.ofl, k.hluti, k.bmynd, k.mark)
             for k in self._ksnid_lookup(w)
         ]
+
+    @lru_cache(maxsize=_NAME_GENDER_CACHE_SIZE)
+    def lookup_name_gender(self, name: str) -> str:
+        """ Given a person name, lookup its gender """
+        if not name:
+            return "hk"  # Unknown gender
+        w = name.split(maxsplit=1)[0]  # First name
+        g = self.meanings(w)
+        m = next((x for x in g if x.fl in PERSON_NAME_FL), None)
+        if m:
+            # Found a name meaning
+            return m.ordfl
+        # The first name was not found: check whether the full name is
+        # in the static phrases
+        m = StaticPhrases.lookup(name)
+        if m is not None:
+            if m.fl in PERSON_NAME_FL:
+                return m.ordfl
+        return "hk"  # Unknown gender
