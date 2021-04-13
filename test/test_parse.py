@@ -932,7 +932,7 @@ def test_terminal_types(r):
         lemma="http://www.vefur.is",
         category="vefslóð",
         variants=["nf"],
-    ),
+    )
     s = r.parse_single("@notandi2 er betri en @notandi1.")
     t = s.terminals or []
     assert len(t) == 6
@@ -942,13 +942,37 @@ def test_terminal_types(r):
         lemma="@notandi2",
         category="notandanafn",
         variants=["nf"],
-    ),
+    )
+    check_terminal(
+        t[4],
+        text="@notandi1",
+        lemma="@notandi1",
+        category="notandanafn",
+        variants=["nf"],
+    )
+    s = r.parse_single("@UserTest.1 er betri en @UserTest.2, að mínu mati.")
+    t = s.terminals or []
+    assert len(t) == 10
+    check_terminal(
+        t[0],
+        text="@UserTest.1",
+        lemma="@UserTest.1",
+        category="notandanafn",
+        variants=["nf"],
+    )
+    check_terminal(
+        t[4],
+        text="@UserTest.2",
+        lemma="@UserTest.2",
+        category="notandanafn",
+        variants=["nf"],
+    )
     s = r.parse_single("Hér er H2SO4.")
     t = s.terminals or []
     assert len(t) == 4
     check_terminal(
         t[2], text="H2SO4", lemma="H2SO4", category="sameind", variants=["nf"],
-    ),
+    )
     s = r.parse_single("570607-6859 er kennitala fyrirtækisins.")
     t = s.terminals or []
     assert len(t) == 5
@@ -958,13 +982,13 @@ def test_terminal_types(r):
         lemma="570607-6859",
         category="kennitala",
         variants=["nf"],
-    ),
+    )
     s = r.parse_single("867-6998 er símanúmerið hans.")
     t = s.terminals or []
     assert len(t) == 5
     check_terminal(
         t[0], text="867-6998", lemma="867-6998", category="símanúmer", variants=["nf"],
-    ),
+    )
 
 
 def test_single(r):
