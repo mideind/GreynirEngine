@@ -37,7 +37,6 @@ from functools import lru_cache
 
 from islenska.basics import make_bin_meaning
 from islenska.bindb import GreynirBin as GBin, PERSON_NAME_FL
-from islenska.bindb import MeaningFilterFunc
 
 from tokenizer import BIN_Tuple
 

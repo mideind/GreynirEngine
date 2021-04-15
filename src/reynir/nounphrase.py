@@ -120,7 +120,7 @@ class NounPhrase:
         """ Provide len() for convenience """
         return self._np_string.__len__()
 
-    def __format__(self, spec: str) -> str:
+    def __format__(self, format_spec: str) -> str:
         """ Return the contained string after inflecting it according
             to the format specification, if given """
         # Examples:
@@ -138,15 +138,15 @@ class NounPhrase:
         # np = NounPhrase("þrír skjóttir hestar")
         # >>> f"Umræðuefnið er {np:stofn}"
         # 'Umræðuefnið er skjóttur hestur'
-        if not spec or not self.parsed:
+        if not format_spec or not self.parsed:
             return self._np_string
         # Find the attrgetter (property access function)
         # corresponding to the format spec
-        fmt = _FMT.get(spec)
+        fmt = _FMT.get(format_spec)
         if fmt is None:
             # We don't recognize this format specifier
             raise ValueError(
-                "Invalid format specifier for NounPhrase: '{0}'".format(spec)
+                "Invalid format specifier for NounPhrase: '{0}'".format(format_spec)
             )
         # Extract the requested property and return it
         assert self._np is not None
