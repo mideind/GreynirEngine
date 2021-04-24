@@ -385,7 +385,7 @@ $score(+8) Spurnarsetning
 # [Þrátt fyrir að hann missti eggið](, þá) brotnaði það ekki
 
 AtvSetning →
-    Atvikssetning ","? "þá:ao"? BeygingarliðurMeðUmröðun
+    Atvikssetning ","? "þá:ao"? SetningForskeyti? SagnHluti/tala/pers/kyn Upptalning/tala? KommaAtvikssetning?
 
 $score(+12) AtvSetning
 
@@ -1018,21 +1018,24 @@ SetningSo →
 
     # Hér fyrir neðan eru reglur sem geta *ekki* staðið í skýringarsetningu
     # ('Ég taldi að...')
-
-    # Er/var/hefur verið [í þessu tilviki] spáð betra veðri [á morgun]
-    | HjSögnLhÞtSM_et_p3 FsAtv? So_1_sagnb/fall NlBeintAndlag/fall AtvFsAuka?
-
-    # Fórust með honum átján menn
-    | so_0_mm/pers/tala FsAtv? NlFrumlag_nf/tala/pers AtvFsAuka?
+    | SetningSoSagnliður
 
     # Skal tryggja rétt almennings til að fara um landið
     | SagnliðurÁnF
+
+SetningSoSagnliður → 
+    # Er/var/hefur verið [í þessu tilviki] spáð betra veðri [á morgun]
+    HjSögnLhÞtSM_et_p3 FsAtv? So_1_sagnb/fall NlBeintAndlag/fall AtvFsAuka?
+
+    # Fórust með honum átján menn
+    | so_0_mm/pers/tala FsAtv? NlFrumlag_nf/tala/pers AtvFsAuka?
 
     # Skal í frumvarpinu fólgin greinargerð um tekjur ríkisins og gjöld
     | VeraSkulu_et_p3 FsRuna LoTengtSögn_nf/tala/kyn NlFrumlag_nf/tala/kyn AtvFsAuka?
 
     # Varð uppljómaður bærinn þegar ýtt var á hnappinn
     | So_1_p3_nf/tala NlSagnfylling_nf NlFrumlag_nf/tala AtvFsAuka?
+    
     # Signdi sig maðurinn í mikilli geðshræringu
     | So_1_p3/aukafall/tala NlBeintAndlag/aukafall NlFrumlag_nf/tala AtvFsAuka?
 
@@ -1061,6 +1064,8 @@ SetningSo →
     # Virðist sem Björn hafi fengið aðsvif
     | VirðistSem
 
+
+
 # Hér eru setningargerðir sem byrja á sagnlið, innifela
 # falið 3p. et. frumlag og geta þar af leiðandi staðið
 # í skýringarsetningu (t.d. í framhaldi af 'Ég taldi að...')
@@ -1076,6 +1081,22 @@ SetningSoÞað →
 
     | Sagnliður_lhþt
 
+    | SetningSoÞaðSagnliður
+
+    | SetningSoÞaðBL
+
+    # Með lögum megi tryggja rétt almennings
+    # Áður en ég fer má sækja tölvuna
+    | AtvFsAuka AðvörunKomma? SagnliðurÁnF
+    # Samkvæmt DV hefur verið ráðist í verkið
+    | FsAtv AðvörunKomma? SagnliðurÁnF
+
+SetningSoÞaðBL →
+    # Haldi þessi þróun áfram [þá] er voðinn vís
+    | SagnliðurVh ","? "þá:ao"? SetningForskeyti? SagnHluti/tala/pers/kyn Upptalning/tala? KommaAtvikssetning? FsAtv?
+
+
+SetningSoÞaðSagnliður →
     # Horft hefur verið [til hennar] lostafullum augum
     | So_1_sagnb/fall HjSögnLhÞtSM_et_p3 FsAtv? NlBeintAndlag/fall AtvFsAuka?
 
@@ -1088,21 +1109,14 @@ SetningSoÞað →
     # Ráðist var/hefur verið í verkið [á meðan fólk beið]
     | so_0_mm_sagnb HjSögnLhÞtSM_et_p3 FsAtv Atvikssetning?
 
-    # Haldi þessi þróun áfram [þá] er voðinn vís
-    | SagnliðurVh ","? "þá:ao"? BeygingarliðurMeðUmröðun FsAtv?
-
-    # Með lögum megi tryggja rétt almennings
-    # Áður en ég fer má sækja tölvuna
-    | AtvFsAuka AðvörunKomma? SagnliðurÁnF
-    # Samkvæmt DV hefur verið ráðist í verkið
-    | FsAtv AðvörunKomma? SagnliðurÁnF
-
     # Endurnýja þarf/skal/má [í snatri] leigusamninginn í ár
     | So_1_nh/fall HjSögnMegiSkuliÞurfi_et_p3 FsRuna?
         NlBeintAndlag/fall AtvFsAuka?
 
     # Svo virðist sem Björn hafi fengið aðsvif
     | "svo:ao" VirðistSem
+
+
 
 VirðistSem →
     'virða:so'_op_mm_fh_p3_et SamanburðurSemSetning     # virtist/virðist [sem Björn hafi fengið aðsvif á sviðinu]
