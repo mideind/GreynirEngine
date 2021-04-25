@@ -360,6 +360,9 @@ class WordMatchers:
         token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple
     ) -> bool:
         """ Check name from static phrases, coming from the GreynirPackage.conf file """
+        if m.fl == "ætt":
+            # Allow single family names
+            return True
         if m.fl != "nafn":
             return False
         if terminal.has_vbits(BIN_Token.VBIT_HK):
@@ -720,24 +723,24 @@ class BIN_Token(Token):
 
     _NOT_NOT_EO = frozenset(
         [
-            "inn",
-            "eftir",
-            "til",
-            "upp",
+            #"inn",
+            #"eftir",
+            #"til",
+            #"upp",
             "um",
-            "fram",
+            #"fram",
             "nær",
             "nærri",
-            "út",
+            #"út",
             "meðal",
             "neðan",
             "jafnframt",
             "samt",
-            "af",
-            "fyrir",
-            "því",
-            "saman",
-            "þá",
+            #"af",
+            #"fyrir",
+            #"því",
+            #"saman",
+            #"þá",
         ]
     )
 
