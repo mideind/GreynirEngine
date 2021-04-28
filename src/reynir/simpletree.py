@@ -1355,7 +1355,7 @@ class SimpleTree:
                 lemma=lemma,
                 singular=canonical,
                 indefinite=indefinite or canonical,
-                beyging_filter=bfunc,
+                inflection_filter=bfunc,
             )
             meanings = lookup_func(txt, **options)
             if not meanings and not txt.islower():

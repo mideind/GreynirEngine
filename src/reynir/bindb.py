@@ -35,7 +35,7 @@
 from typing import Any, List, Optional, Tuple
 from functools import lru_cache
 
-from islenska.basics import make_bin_meaning
+from islenska.basics import make_bin_entry
 from islenska.bindb import GreynirBin as GBin, PERSON_NAME_FL
 
 from tokenizer import BIN_Tuple
@@ -74,30 +74,30 @@ class GreynirBin(GBin):
         self, w: str, at_sentence_start: bool = False, auto_uppercase: bool = False
     ) -> ResultTuple:
         """ Returns BIN_Tuple instances, which are the Greynir version
-            of islenska.BINMeaning """
+            of islenska.BinEntry """
         w, m = self._lookup(
             w,
             at_sentence_start,
             auto_uppercase,
             self._meanings_cache_lookup,
-            make_bin_meaning,
+            make_bin_entry,
         )
         return w, [BIN_Tuple._make(mm) for mm in m]
 
     def lookup_nominative_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of islenska.BINMeaning """
+        """ Returns the Greynir version of islenska.BinEntry """
         return [BIN_Tuple._make(mm) for mm in super().lookup_nominative(w, **options)]
 
     def lookup_accusative_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of islenska.BINMeaning """
+        """ Returns the Greynir version of islenska.BinEntry """
         return [BIN_Tuple._make(mm) for mm in super().lookup_accusative(w, **options)]
 
     def lookup_dative_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of islenska.BINMeaning """
+        """ Returns the Greynir version of islenska.BinEntry """
         return [BIN_Tuple._make(mm) for mm in super().lookup_dative(w, **options)]
 
     def lookup_genitive_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of islenska.BINMeaning """
+        """ Returns the Greynir version of islenska.BinEntry """
         return [BIN_Tuple._make(mm) for mm in super().lookup_genitive(w, **options)]
 
     def meanings(self, w: str) -> List[BIN_Tuple]:
