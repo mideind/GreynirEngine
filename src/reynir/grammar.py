@@ -184,11 +184,11 @@ class Nonterminal(GrammarItem):
         # read and processed; therefore it is not suitable for hashing
         return self._hash
 
-    def __eq__(self, other: Any) -> bool:
-        return self is other
+    def __eq__(self, o: Any) -> bool:
+        return self is o
 
-    def __ne__(self, other: Any) -> bool:
-        return self is not other
+    def __ne__(self, o: Any) -> bool:
+        return self is not o
 
     def set_index(self, ix: int) -> None:
         """ Set a new sequence number for this nonterminal """

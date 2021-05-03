@@ -12,7 +12,8 @@ A fast, efficient natural language processor for Icelandic
 Overview
 ********
 
-Greynir is a Python 3 (>= 3.6) package for
+Greynir is a Python 3 (>= 3.6) package,
+published by `Miðeind ehf. <https://mideind.is>`__, for
 **working with Icelandic natural language text**.
 Greynir can parse text into **sentence trees**, find **lemmas**,
 inflect **noun phrases**, assign **part-of-speech tags** and much more.
@@ -23,9 +24,10 @@ actions and opinions.
 
 Full documentation for Greynir is `available here <https://greynir.is/doc/>`__.
 
-Greynir is the engine of `Greynir.is <https://greynir.is>`__, a natural-language
-front end for a database of over 10 million sentences parsed from Icelandic
-news articles, and `Embla <https://embla.is>`__, a voice-driven virtual assistant app
+Greynir is the engine of `Greynir.is <https://greynir.is>`__,
+a natural-language front end for a database of over 10 million
+sentences parsed from Icelandic news articles, and
+`Embla <https://embla.is>`__, a voice-driven virtual assistant app
 for smart devices such as iOS and Android phones.
 
 Greynir includes a hand-written
@@ -179,7 +181,7 @@ about `copyright and licensing <https://greynir.is/doc/copyright.html>`__.
 Copyright and licensing
 ***********************
 
-Greynir is *copyright © 2021 by Miðeind ehf.*
+Greynir is *copyright © 2021* by `Miðeind ehf. <https://mideind.is>`__.
 The original author of this software is *Vilhjálmur Þorsteinsson*.
 
 This software is licensed under the **MIT License**:

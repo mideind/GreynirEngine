@@ -170,19 +170,6 @@ class Prepositions:
         Prepositions.PP_ERRORS[prep][case] = corr
 
 
-class AdjectiveTemplate:
-
-    """ Wrapper around template list of adjective endings """
-
-    # List of tuples: (ending, form_spec)
-    ENDINGS: List[Tuple[str, str]] = []
-
-    @classmethod
-    def add(cls, ending: str, form: str) -> None:
-        """ Add an adjective ending and its associated form. """
-        cls.ENDINGS.append((ending, form))
-
-
 class DisallowedNames:
 
     """ Wrapper around list of disallowed person name forms """
@@ -577,32 +564,6 @@ class NamePreferences:
         NamePreferences.SET.add(name)
 
 
-class BinErrata:
-
-    """ Wrapper around BÍN errata, initialized from the config file """
-
-    DICT: Dict[Tuple[str, str], str] = dict()
-
-    @staticmethod
-    def add(stem: str, ordfl: str, fl: str) -> None:
-        """ Add a BÍN fix. Used by bincompress.py when generating a new
-            compressed vocabulary file. """
-        BinErrata.DICT[(stem, ordfl)] = fl
-
-
-class BinDeletions:
-
-    """ Wrapper around BÍN deletions, initialized from the config file """
-
-    SET: Set[Tuple[str, str, str]] = set()
-
-    @staticmethod
-    def add(stem: str, ordfl: str, fl: str) -> None:
-        """ Add a BÍN fix. Used by bincompress.py when generating a new
-            compressed vocabulary file. """
-        BinDeletions.SET.add((stem, ordfl, fl))
-
-
 class Settings:
 
     """ Global settings """
@@ -858,34 +819,6 @@ class Settings:
         NamePreferences.add(s)
 
     @staticmethod
-    def _handle_bin_errata(s: str) -> None:
-        """ Handle changes to BÍN categories ('fl') """
-        a = s.split()
-        if len(a) != 3:
-            raise ConfigError("Expected 'stem ordfl fl' fields in bin_errata section")
-        stem, ordfl, fl = a
-        if not ordfl.islower() or not fl.islower():
-            raise ConfigError(
-                "Expected lowercase ordfl and fl fields in bin_errata section"
-            )
-        BinErrata.add(stem, ordfl, fl)
-
-    @staticmethod
-    def _handle_bin_deletions(s: str) -> None:
-        """ Handle deletions from BÍN, given as stem/ordfl/fl triples """
-        a = s.split()
-        if len(a) != 3:
-            raise ConfigError(
-                "Expected 'stem ordfl fl' fields in bin_deletions section"
-            )
-        stem, ordfl, fl = a
-        if not ordfl.islower() or not fl.islower():
-            raise ConfigError(
-                "Expected lowercase ordfl and fl fields in bin_deletions section"
-            )
-        BinDeletions.add(stem, ordfl, fl)
-
-    @staticmethod
     def _handle_ambiguous_phrases(s: str) -> None:
         """ Handle ambiguous phrase guidance in the settings section """
         # Format: "word1 word2..." cat1 cat2...
@@ -931,17 +864,6 @@ class Settings:
         AmbigPhrases.add(words, cats_t)
         if error:
             AmbigPhrases.add_error(s[1:q].strip().lower(), e)
-
-    @staticmethod
-    def _handle_adjective_template(s: str) -> None:
-        """ Handle the template for new adjectives in the settings section """
-        # Format: adjective-ending bin-meaning
-        a = s.split()
-        if len(a) != 2:
-            raise ConfigError(
-                "Adjective template should have an ending and a form specifier"
-            )
-        AdjectiveTemplate.add(a[0], a[1])
 
     @staticmethod
     def _handle_disallowed_names(s: str) -> None:
@@ -1008,14 +930,11 @@ class Settings:
                 "name_preferences": Settings._handle_name_preferences,
                 "stem_preferences": Settings._handle_stem_preferences,
                 "ambiguous_phrases": Settings._handle_ambiguous_phrases,
-                "adjective_template": Settings._handle_adjective_template,
                 "undeclinable_adjectives": Settings._handle_undeclinable_adjectives,
                 "disallowed_names": Settings._handle_disallowed_names,
                 "noindex_words": Settings._handle_noindex_words,
                 "topics": Settings._handle_topics,
                 "adjective_predicates": Settings._handle_adjective_predicates,
-                "bin_errata": Settings._handle_bin_errata,
-                "bin_deletions": Settings._handle_bin_deletions,
             }
             handler: Optional[Callable[[str], None]] = None  # Current section handler
 

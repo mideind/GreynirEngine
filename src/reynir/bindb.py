@@ -33,14 +33,21 @@
 """
 
 from typing import Any, List, Optional, Tuple
+from functools import lru_cache
 
-from islenska.basics import make_bin_meaning
-from islenska.bindb import GreynirBin as GBin
+from islenska.basics import make_bin_entry
+from islenska.bindb import GreynirBin as GBin, PERSON_NAME_FL
 
 from tokenizer import BIN_Tuple
 
+from .settings import StaticPhrases
+
 # SHSnid tuple as seen by the Greynir compatibility layer
 ResultTuple = Tuple[str, List[BIN_Tuple]]
+
+
+# Size of name cache for lookup_name_gender
+_NAME_GENDER_CACHE_SIZE = 128
 
 
 class GreynirBin(GBin):
@@ -67,30 +74,30 @@ class GreynirBin(GBin):
         self, w: str, at_sentence_start: bool = False, auto_uppercase: bool = False
     ) -> ResultTuple:
         """ Returns BIN_Tuple instances, which are the Greynir version
-            of islenska.BINMeaning """
+            of islenska.BinEntry """
         w, m = self._lookup(
             w,
             at_sentence_start,
             auto_uppercase,
             self._meanings_cache_lookup,
-            make_bin_meaning,
+            make_bin_entry,
         )
         return w, [BIN_Tuple._make(mm) for mm in m]
 
     def lookup_nominative_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of islenska.BINMeaning """
+        """ Returns the Greynir version of islenska.BinEntry """
         return [BIN_Tuple._make(mm) for mm in super().lookup_nominative(w, **options)]
 
     def lookup_accusative_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of islenska.BINMeaning """
+        """ Returns the Greynir version of islenska.BinEntry """
         return [BIN_Tuple._make(mm) for mm in super().lookup_accusative(w, **options)]
 
     def lookup_dative_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of islenska.BINMeaning """
+        """ Returns the Greynir version of islenska.BinEntry """
         return [BIN_Tuple._make(mm) for mm in super().lookup_dative(w, **options)]
 
     def lookup_genitive_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of islenska.BINMeaning """
+        """ Returns the Greynir version of islenska.BinEntry """
         return [BIN_Tuple._make(mm) for mm in super().lookup_genitive(w, **options)]
 
     def meanings(self, w: str) -> List[BIN_Tuple]:
@@ -99,3 +106,22 @@ class GreynirBin(GBin):
             BIN_Tuple(k.ord, k.bin_id, k.ofl, k.hluti, k.bmynd, k.mark)
             for k in self._ksnid_lookup(w)
         ]
+
+    @lru_cache(maxsize=_NAME_GENDER_CACHE_SIZE)
+    def lookup_name_gender(self, name: str) -> str:
+        """ Given a person name, lookup its gender """
+        if not name:
+            return "hk"  # Unknown gender
+        w = name.split(maxsplit=1)[0]  # First name
+        g = self.meanings(w)
+        m = next((x for x in g if x.fl in PERSON_NAME_FL), None)
+        if m:
+            # Found a name meaning
+            return m.ordfl
+        # The first name was not found: check whether the full name is
+        # in the static phrases
+        m = StaticPhrases.lookup(name)
+        if m is not None:
+            if m.fl in PERSON_NAME_FL:
+                return m.ordfl
+        return "hk"  # Unknown gender

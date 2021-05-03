@@ -1,4 +1,3 @@
-#type: ignore
 """
 
     Greynir: Natural language processing for Icelandic
@@ -79,6 +78,33 @@ from tokenizer import (
     KLUDGY_ORDINALS_PASS_THROUGH,
     KLUDGY_ORDINALS_MODIFY,
     KLUDGY_ORDINALS_TRANSLATE,
+)
+
+__all__ = (
+    "TP_LEFT", "TP_RIGHT", "TP_CENTER", "TP_NONE", "TP_WORD",
+    "KLUDGY_ORDINALS_MODIFY", "KLUDGY_ORDINALS_PASS_THROUGH",
+    "KLUDGY_ORDINALS_TRANSLATE",
+    "Greynir",
+    "Reynir",
+    "Terminal",
+    "LemmaTuple",
+    "ProgressFunc",
+    "ParseResult",
+    "Sentence",
+    "Paragraph",
+    "ICELANDIC_RATIO",
+    "TOK", "Tok",
+    "paragraphs",
+    "correct_spaces",
+    "mark_paragraphs",
+    "_Job",
+    "_Sentence",
+    "_Paragraph",
+    "NounPhrase",
+    "ParseForestPrinter", "ParseForestDumper", "ParseForestFlattener",
+    "ParseError", "ParseForestNavigator",
+    "Settings",
+    "tokenize", "TokenList",
 )
 
 __author__ = "Miðeind ehf."
