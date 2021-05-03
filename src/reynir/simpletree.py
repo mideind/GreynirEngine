@@ -133,7 +133,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "Staðhæfing": ("S-QUOTE", "IP"),  # "Þetta er svona, segir Páll"
     "Tilvísunarsetning": "CP-REL",
     "KommaTilvísunarsetning": "CP-REL",
-    "AðÞvíErSegir": "CP-REL",
+    #"AðÞvíErSegir": "CP-REL",
     "Skilyrði": "CP-COND",
     "Afleiðing": "S-CONS",
     "Spurnarsetning": "S-QUE",
@@ -172,12 +172,13 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "BeygingarliðurÁnUmröðunar": "IP",
     "BeygingarliðurMeðUmröðun": "IP",
     "BeygingarliðurSögnFremst": "IP",
+    "BeygingarliðurMeðLepp": "IP",
     "BeygingarliðurLoÞgf": "IP",  # Mér er frjálst (að fara ferða minna)
     "BeygingarliðurTími": ("IP", "VP"),  # (Þegar) líða fer að jólum
     "SagnarBotn": "IP",
     "ÞóBotn": "IP",
     "SkýringarBotn": "IP",
-    "SegirÍ": "IP",
+    #"SegirÍ": "IP",
     "BeygingarliðurStýftAndlag": "IP",
     "BeygingarliðurVh": "IP",
     "BlTagl": "IP",

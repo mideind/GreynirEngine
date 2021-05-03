@@ -168,6 +168,7 @@ Forskeyti →
     | GreinarForskeyti
     | NhLiður "," | NhLiður ":"                     # Að veiða eða sleppa, hver er skoðun þín?
     | SérnafnEðaManneskja_nf ":"                    # Bjarni: ["Leikurinn var hræðilegur"]
+    | SérnafnEðaManneskja_nf "-:em"                 # Bjarni - ["Leikurinn var hræðilegur"]
     | no ":"                                        # A: [Kaffið er gott í dag.]
 
 GreinarForskeyti →
@@ -428,19 +429,23 @@ Tíðarsetning →
     | Tíðartenging BeygingarliðurÁnF
     | Tíðartenging BeygingarliðurMeðUmröðun
     | Tíðartenging BeygingarliðurTími
+    | Tíðartenging BeygingarliðurMeðLepp
 
 Tilgangssetning → 
     Tilgangstenging BeygingarliðurÁnUmröðunar
     | Tilgangstenging BeygingarliðurÁnF
+    | Tilgangstenging BeygingarliðurMeðLepp
 
 Viðurkenningarsetning → 
     Viðurkenningartenging BeygingarliðurÁnUmröðunar
     | Viðurkenningartenging BeygingarliðurÁnF
     | Enda BeygingarliðurMeðUmröðun
+    | Viðurkenningartenging BeygingarliðurMeðLepp
 
 Afleiðingarsetning → 
     Afleiðingartenging BeygingarliðurÁnUmröðunar
     | Afleiðingartenging BeygingarliðurÁnF
+    | Afleiðingartenging BeygingarliðurMeðLepp
 
 Orsakarsetning →
     Orsakartenging BeygingarliðurÁnUmröðunar
@@ -448,6 +453,8 @@ Orsakarsetning →
     | OrsakartengingUmröðun BeygingarliðurÁnUmröðunar
     | OrsakartengingUmröðun BeygingarliðurÁnF
     | OrsakartengingUmröðun BeygingarliðurMeðUmröðun
+    | Orsakartenging BeygingarliðurMeðLepp
+    | OrsakartengingUmröðun BeygingarliðurMeðLepp
 
 Samanburðarsetning → 
     Samanburðartenging BeygingarliðurÁnUmröðunar # Bara vh.
@@ -460,6 +467,7 @@ Skilyrðissetning →
     | Skilyrðistenging BeygingarliðurMeðUmröðun # 'Ef ekki næðist samkomulag yrði málið svæft'
     | Skilyrðistenging BeygingarliðurÁnF
     | Skilyrðissetning_vh
+    | Skilyrðistenging BeygingarliðurMeðLepp    # Það er rétta aðferðin ef það skapast hættuástand
 
 Skilyrðissetning_vh →
     TengimerkiVh? BeygingarliðurVh
@@ -497,6 +505,7 @@ Skýringartenging →
 
 SkýringarBotn →
     BeygingarliðurÁnUmröðunar   # Ég taldi að Jón hefði dregið sér fé / að málmagnir væri að finna í hreyfli
+    | BeygingarliðurMeðLepp     # Ég taldi að það hefði skapast hættuástand
     | AtvSetning                # Ég taldi að meðan þetta héldi yrðu ekki frekari skakkaföll
     | SetningUmAðRæða           # Ég taldi að um hefði verið að ræða mistök af hans hálfu
     | AtvSkýring                # Ég taldi að hér væri vandamál á ferðinni
@@ -618,6 +627,9 @@ BeygingarliðurMeðUmröðun →
 
 BeygingarliðurMeðUmröðun/tala/pers/kyn →
     SetningForskeyti? SagnHluti/tala/pers/kyn Upptalning/tala? KommaAtvikssetning?
+
+BeygingarliðurMeðLepp →
+    NlFrumlagLeppur SagnHluti/tala/pers/kyn     # Það skapast eitthvað hættuástand
 
 # Mögulegar tengingar í aukasetningum eftir gerð aukasetningar
 Tíðartenging →
@@ -1357,6 +1369,68 @@ SetningAukafallÖfug →
         AtvFsAuka? SagnFramhald/tala/pers/kyn*
 
 $score(-32) SetningAukafallÖfug
+
+# Aukafallssetningar innan tilvísunarsetninga sem innihalda ekki frumlag
+# en geta innihaldið frumlagslepp
+SetningAukafallÁnF →
+
+    # ... langaði [mjög í ferðina / að fara til útlanda strax]
+    # ... [í landinu] fjölgar
+    NlFrumlagLeppur? AðvörunKomma? ÓpSagnliður/aukafall
+
+    # ... hefur [lengi] langað [til útlanda]
+    | NlFrumlagLeppur? AðvörunKomma? HjSögn_et_p3 FsAtv? so_subj_sagnb/aukafall ÓpSagnarBotn?
+
+    # ... er [búið] að dreyma um ferð til útlanda
+    | NlFrumlagLeppur? 'vera:so'_0_gm_fh_et_p3 'búa:so'_lhþt_sb_nf_et_hk?
+        Nhm so_subj_nh_þf ÓpSagnarBotn?
+
+    # ... hafa ofboðið lætin í hundinum [alla daga]
+    | NlFrumlagLeppur? AðvörunKomma? HjSögn/tala/pers FsAtv? so_subj_sagnb/aukafall
+        NlBeintAndlag_nf/tala/pers AtvFsAuka?
+
+    # ... [algjörlega] blöskraði [af öllu hjarta] vitleysan (í Páli), Mig þraut örendið
+    | NlFrumlagLeppur? AðvörunKomma? SögnÓp/aukafall
+
+    # ... ber okkur að nýta (til góðra verka)
+    | NlFrumlagLeppur? AðvörunKomma? so_subj_op/aukafall NlFrumlag/aukafall AtvFs? Nhm So_1_nh/aukafall2 FsAtv?
+
+
+    # ... hefur [ekki] fjölgað á árinu (= ?Það hefur ekki fjölgað köttum á árinu)
+    # ... hefur [ekki] batnað [síðan í gær]
+    | NlFrumlagLeppur? AðvörunKomma? SögnSagnbBreyting AtvFsAuka?
+
+    # ... mun [ekki/enn] fjölga á árinu
+    # ... mun [ekki] vaxa skegg
+    | NlFrumlagLeppur? AðvörunKomma? SögnNhBreyting AtvFsAuka?
+
+    # ... fer/hefur farið fækkandi/fjölgandi
+    | NlFrumlagLeppur? AðvörunKomma? SögnLhNtBreyting AtvFsAuka?
+
+    # ... hefur verið/skal/mun tryggð heilbrigðisþjónusta / réttur til að lifa með reisn
+    | NlFrumlagLeppur? AðvörunKomma? HjSögnLhÞtSM_p3/tala FsAtv? so_2_þgf_þf_lhþt/tala/kyn
+        FsRunaEftirSögn? AukafallLhÞtAndlag/tala/pers/kyn AtvFsAuka?
+    # ... eru þröngar skorður [kyrfilega] settar [í þessu efni]
+    | NlFrumlagLeppur? AðvörunKomma? HjSögnLhÞtSM_p3/tala FsAtv? AukafallLhÞtAndlag/tala/pers/kyn
+        AtvFs? so_2_þgf_þf_lhþt/tala/kyn FsAtv?
+
+    # ... var [í fyrra] [báðum] (falið að stýra rannsóknaverkefni)
+    | NlFrumlagLeppur? AðvörunKomma? SögnAukafallÞgf/tala/kyn
+
+    # ... skal [ekki] gætt (að fara varlega með sprengiefnið)
+    # ... er [ekki] að vænta
+    | NlFrumlagLeppur? SögnAukafallEf
+
+    # ... má strax draga í dag (að Páll sé ekki með öllum mjalla)
+    # ... má skylda til að láta eign sína af hendi
+    # ... má veðja að Guðný snúi aftur í pólitík
+    | NlFrumlagLeppur? AðvörunKomma? HjSögnMegiSkuli_et_p3 FsAtv? So_1_nh/aukafall AðLiður?
+
+    # ... þarf/ætti að undra (að mig langi í ís)
+    # ... verður [ekki] að gera (á Jóni og séra Jóni)
+    | NlFrumlagLeppur? HjSögnÞurfaEiga_et_p3 FsAtv? Nhm So_1_nh/aukafall AðLiður?
+
+
 
 Andlagssagnliður/tala/pers → NlBeintAndlag/aukafall So_1/aukafall/tala/pers
 
@@ -3303,25 +3377,25 @@ NafnháttarsetningSagnfylling → NhFylling
 
 NlFrumlag/fall → Nl/fall | SkýringarsetningFrumlag
 NlFrumlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
-NlFrumlag_nf_et_p3_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
-NlFrumlag_þf_et_p3_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
-NlFrumlag_þgf_et_p3_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
-NlFrumlag_ef_et_p3_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_nf_et_p3_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
+NlFrumlag_þf_et_p3_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
+NlFrumlag_þgf_et_p3_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
+NlFrumlag_ef_et_p3_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
 NlFrumlag/fall/tala/kyn → Nl/fall/tala/kyn
-NlFrumlag_nf_et_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
-NlFrumlag_þf_et_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
-NlFrumlag_þgf_et_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
-NlFrumlag_ef_et_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_nf_et_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
+NlFrumlag_þf_et_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
+NlFrumlag_þgf_et_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
+NlFrumlag_ef_et_hk → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
 NlFrumlag/fall/tala → Nl/fall/tala
-NlFrumlag_nf_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
-NlFrumlag_þf_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
-NlFrumlag_þgf_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
-NlFrumlag_ef_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_nf_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
+NlFrumlag_þf_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
+NlFrumlag_þgf_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
+NlFrumlag_ef_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
 NlFrumlag/fall/tala/pers → Nl/fall/tala/pers
-NlFrumlag_nf_et_p3 → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
-NlFrumlag_þf_et_p3 → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
-NlFrumlag_þgf_et_p3 → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
-NlFrumlag_ef_et_p3 → SkýringarsetningFrumlag | NafnháttarsetningFrumlag
+NlFrumlag_nf_et_p3 → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
+NlFrumlag_þf_et_p3 → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
+NlFrumlag_þgf_et_p3 → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
+NlFrumlag_ef_et_p3 → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
 NlBeintAndlag/fall → Nl/fall | SpurnaraukasetningBeintAndlag | SkýringarsetningBeintAndlag | NafnháttarsetningBeintAndlag
 NlBeintAndlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
 NlBeintAndlag_nf_et_p3_hk → SpurnaraukasetningBeintAndlag | SkýringarsetningBeintAndlag | NafnháttarsetningBeintAndlag
@@ -4786,6 +4860,8 @@ Tengisetning/tala/pers/kyn →
     | BeygingarliðurÁnF/tala/pers/kyn LoTengtSögn_nf/tala/kyn?
     | TengisetningSoÞað # (Lausnirnar sem) kallað var eftir
     | BeygingarliðurStýftAndlag
+    | SetningAukafallÁnF            # Hann nýtur lukkunnar sem skorti í fyrra
+
 
 TengisetningSoÞað →
     SetningSoÞað # (Lausnirnar sem) kallað var eftir
@@ -6981,11 +7057,11 @@ TímaÁkvæðisliður/fall/tala/kyn →
     | SáÞessi/fall/tala/kyn? 'sami:fn'/fall/tala/kyn # 'fyrr í þeim sama mánuði' -- hegðar sér frekar sem lo hér.
     | 'seinn:lo'_evb/fall/tala/kyn      # seinustu tvö árin
     | 'seinn:lo'_mst/fall/tala/kyn      # seinni tvö árin
-    | 'næstkomandi:lo'_sb/fall/tala/kyn
-    | 'síðastliðinn:lo'_sb/fall/tala/kyn
-    | 'undanfarinn:lo'_sb/fall/tala/kyn
-    | 'undangenginn:lo'_sb/fall/tala/kyn
-    | 'fyrstur:lo'_sb/fall/tala/kyn     # fyrstu tvö árin
+    | 'næstkomandi:lo'/fall/tala/kyn
+    | 'síðastliðinn:lo'/fall/tala/kyn
+    | 'undanfarinn:lo'/fall/tala/kyn
+    | 'undangenginn:lo'/fall/tala/kyn
+    | 'fyrstur:lo'/fall/tala/kyn     # fyrstu tvö árin, fyrsta mánuðinn
     # !!! Neðangreind tölu-lýsingarorð eru hvorki merkt með veikri né sterkri beygingu í BÍN
     | 'annar:lo'/fall/tala/kyn          # annan daginn [í röð]
     | 'þriðji:lo'/fall/tala/kyn         # þriðja daginn [í röð]
