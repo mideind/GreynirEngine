@@ -4085,6 +4085,7 @@ TöluorðForskeyti →
     | Allt "að:ao"
     | "innan_við:ao"
     | "svo:st" "sem:st"
+    | "alls:ao"
 
 TöluorðForskeyti/tala/fall/kyn →
     TöluorðForskeyti
@@ -4418,6 +4419,13 @@ Fyrirbæri/fall/kyn →
     | FyrirbæriMeðGreini/fall/kyn
     | FyrirbæriMeðEignarfornafni/fall/kyn
     | Úrslit/fall/kyn
+    | Virði_hk/fall
+
+
+Virði_hk/fall →
+    EfLiður 'virði:hk'/fall             # Einhvers virði, jafnmikils virði, lítils virði
+
+$score(+4) Virði_hk/fall
 
 # Raðnúmer
 
@@ -4435,11 +4443,12 @@ Til → "-:en" | "til:fs" | "og:st" | 'til:fs'_ef "og:st" 'með:fs'_þgf | 'til_
 
 Úrslit →
     tala ":" tala
+    | tala "-:en" tala
 
 Úrslit/fall/kyn →
     Úrslit "-:en"? no_et/fall/kyn
 
-$score(+2) Úrslit/fall/kyn
+$score(+4) Úrslit/fall/kyn
 
 # Manneskja getur verið kk, kvk eða hk ('hán')
 Fyrirbæri/fall/kyn →
@@ -5714,6 +5723,7 @@ $score(+1) FsMeðFallstjórn
 
 MiðaðVið →
     "miðað:so" 'við:fs'_þf
+    | 'miðað_við:fs'_þf         # Samtals eigið fé m.v. síðustu tölur ...
 
 
 $score(+8) MiðaðVið
@@ -6046,12 +6056,19 @@ EinnAl →
     | 'allur:fn'_et_þf_kk 'tími:kk'_gr_et_þf # Allan tímann var mér ljóst að þetta var vonlaust
     | 'allur:fn'_ft_þf_kk "jafna:ao"    # Alla jafna eru menn rólegir yfir þessu
     | 'heill:lo'_sb_nf_et_hk "yfir:ao"  # Heilt yfir eru menn rólegir yfir þessu
+    | 'einhver:fn'_kk_et_þf 'tími:kk'_þf_et  # Einhvern tíma(nn) hefði þetta gengið
+    | ÞannigSéð
     | HliðViðHlið
 
     | ao_zlega so_lhþt_nf_hk_et         # Hreinskilnislega sagt, gróflega séð
     | lo_vb_nf_hk_et_zlega so_lhþt_nf_hk_et # Stórkarlalega ályktað
 
 $tag(no_prep) EinnAl        # Engar forsetningar hér inni - óþarfi að skoða dótturgreinar
+
+ÞannigSéð →
+    | 'þannig:ao' 'sjá:so'_sagnb             # Þannig séð hef ég unnið leikinn
+
+$score(+24) ÞannigSéð
 
 AðNýju →
     'að:fs'_þgf 'nýr:lo'_sb_hk_þgf_et # (sótt er) að nýju (um leyfi)
