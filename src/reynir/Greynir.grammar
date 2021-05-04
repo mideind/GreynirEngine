@@ -537,7 +537,7 @@ $score(-18) StakurSpurnarliður
 
 HeilSpurnaraukasetning → 
     SpurnarNafnliður/tala/fall/kyn FsMeðFallstjórn? BeygingarliðurÁnUmröðunar
-    SpurnarNafnliður/tala/fall/kyn FsMeðFallstjórn? SetningSoÞað
+    | SpurnarNafnliður/tala/fall/kyn FsMeðFallstjórn? SetningSoÞað
     | SpurnarForsetningarliður BeygingarliðurÁnUmröðunar
     | SpurnarForsetningarliður SetningSoÞað
     | SpurnarAtviksorð FsMeðFallstjórn? BeygingarliðurÁnUmröðunar
