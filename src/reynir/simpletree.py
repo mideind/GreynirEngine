@@ -185,7 +185,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "SetningSo": "IP",  # Removed "VP" from here - it creates duplicate IP>VP chains
     "SetningSoÞað": "IP",  # Removed "VP" from here - it creates duplicate IP>VP chains
     "AtvSetning" : "IP",
-    "NhLiður": ("IP-INF"),
+    "NhLiður": "IP-INF",
     "SetningÞað": "IP-INF",
     #"ÞaðTenging": "IP-INF",
     "ViðurkenningarNh": "IP-INF",
@@ -1742,7 +1742,7 @@ class SimpleTree:
                     if i > 0:
                         children = children[i:]
                     break
-        if len(children) == 1 and children[0].tag and "CP-THT" in children[0].tag:
+        if len(children) == 1 and children[0].tag and children[0].tag.startswith("CP-THT"):
             # If the noun phrase consists only of a CP-THT nonterminal
             # ('skýringarsetning'), add 'það' to the front so the
             # result is something like 'það að fjöldi dæmdra glæpamanna hafi aukist'
@@ -2341,7 +2341,7 @@ class AnnoTree:
                 # !!! TODO: There should be an escape character
                 # !!! for parentheses here
                 p += 1
-            if txt[start:p].endswith("\\"):
+            if p and txt[p-1] == "\\":
                 if txt[p] == "(" or txt[p] == ")":
                     p += 1
             return txt[start:p].rstrip()
@@ -2378,7 +2378,6 @@ class AnnoTree:
                         continue
                     elif t == "ID-LOCAL":
                         self._id_local = a[1]
-                        #print(self._id_local)
                         if not skipright():
                             raise ValueError("Expected right parenthesis")
                         continue

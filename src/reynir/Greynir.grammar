@@ -475,6 +475,8 @@ Skilyrðissetning_vh →
 BeygingarliðurVh →
     SagnliðurVh
 
+$tag(keep) BeygingarliðurVh
+
 Hvortsetning →
     # Hvort [heldur] sem bíllinn er lítill eða stór (eyðir hann bensíni)
     HvortSem BeygingarliðurÁnUmröðunar
@@ -3373,7 +3375,19 @@ NafnháttarsetningBeintAndlag → NhFylling
 NafnháttarsetningÓbeintAndlag → NhFylling
 NafnháttarsetningSagnfylling → NhFylling
 
+$tag(keep) SkýringarsetningFrumlag
+$tag(keep) SkýringarsetningBeintAndlag
+$tag(keep) SkýringarsetningÓbeintAndlag
+$tag(keep) SkýringarsetningSagnfylling
 
+$tag(keep) SpurnaraukasetningFrumlag
+$tag(keep) SpurnaraukasetningBeintAndlag
+$tag(keep) SpurnaraukasetningÓbeintAndlag
+
+$tag(keep) NafnháttarsetningFrumlag
+$tag(keep) NafnháttarsetningBeintAndlag
+$tag(keep) NafnháttarsetningÓbeintAndlag
+$tag(keep) NafnháttarsetningSagnfylling
 
 NlFrumlag/fall → Nl/fall | SkýringarsetningFrumlag
 NlFrumlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
