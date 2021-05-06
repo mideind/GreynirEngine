@@ -241,14 +241,14 @@ def test_noun_phrases(r):
     """ Test functions for easy manipulation of noun phrases """
     
     # Doesn't work for some reason
-    #np = r.parse_noun_phrase("þrír lúxus-miðar á Star Wars klukkan þrjú í dag")
-    #assert np.tree is not None
-    #assert np.nominative == "þrír lúxus-miðar á Star Wars klukkan þrjú í dag"
-    #assert np.accusative == "þrjá lúxus-miða á Star Wars klukkan þrjú í dag"
-    #assert np.dative == "þremur lúxus-miðum á Star Wars klukkan þrjú í dag"
-    #assert np.genitive == "þriggja lúxus-miða á Star Wars klukkan þrjú í dag"
-    #assert np.indefinite == "þrír lúxus-miðar á Star Wars klukkan þrjú í dag"
-    #assert np.canonical == "lúxus-miði"
+    np = r.parse_noun_phrase("þrír lúxus-miðar á Star Wars í dag")
+    assert np.tree is not None
+    assert np.nominative == "þrír lúxus-miðar á Star Wars í dag"
+    assert np.accusative == "þrjá lúxus-miða á Star Wars í dag"
+    assert np.dative == "þremur lúxus-miðum á Star Wars í dag"
+    assert np.genitive == "þriggja lúxus-miða á Star Wars í dag"
+    assert np.indefinite == "þrír lúxus-miðar á Star Wars í dag"
+    assert np.canonical == "lúxus-miði"
 
     from reynir import NounPhrase
     np = NounPhrase(
