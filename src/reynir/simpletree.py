@@ -1742,7 +1742,7 @@ class SimpleTree:
                     if i > 0:
                         children = children[i:]
                     break
-        if len(children) == 1 and children[0].tag and children[0].tag.startswith("CP-THT"):
+        if len(children) == 1 and children[0].tag.startswith("CP-THT"):
             # If the noun phrase consists only of a CP-THT nonterminal
             # ('skýringarsetning'), add 'það' to the front so the
             # result is something like 'það að fjöldi dæmdra glæpamanna hafi aukist'
