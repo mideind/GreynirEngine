@@ -499,29 +499,6 @@ class Preferences:
         return Preferences.DICT.get(word, None)
 
 
-class StemPreferences:
-
-    """ Wrapper around stem disambiguation hints, initialized from the config file """
-
-    # Dictionary keyed by word form containing a tuple (worse, better)
-    # where each is a list word stems
-    DICT: Dict[str, Tuple[List[str], List[str]]] = dict()
-
-    @staticmethod
-    def add(word: str, worse: List[str], better: List[str]) -> None:
-        """ Add a preference to the dictionary. Called from the config file handler. """
-        if word in StemPreferences.DICT:
-            raise ConfigError(
-                "Duplicate stem preference for word form {0}".format(word)
-            )
-        StemPreferences.DICT[word] = (worse, better)
-
-    @staticmethod
-    def get(word: str) -> Optional[Tuple[List[str], List[str]]]:
-        """ Return a (worse, better) tuple for the given word form """
-        return StemPreferences.DICT.get(word, None)
-
-
 class NounPreferences:
 
     """ Wrapper for noun preferences, i.e. to assign priorities to different
@@ -779,25 +756,6 @@ class Settings:
         Preferences.add(w[0], w[1:], b, factor)
 
     @staticmethod
-    def _handle_stem_preferences(s: str) -> None:
-        """ Handle stem ambiguity preference hints in the settings section """
-        # Format: word worse1 worse2... < better
-        a = s.lower().split("<", maxsplit=1)
-        if len(a) != 2:
-            raise ConfigError("Ambiguity preference missing less-than sign '<'")
-        w = a[0].split()
-        if len(w) < 2:
-            raise ConfigError(
-                "Ambiguity preference must have at least one 'worse' category"
-            )
-        b = a[1].split()
-        if len(b) < 1:
-            raise ConfigError(
-                "Ambiguity preference must have at least one 'better' category"
-            )
-        StemPreferences.add(w[0], w[1:], b)
-
-    @staticmethod
     def _handle_noun_preferences(s: str) -> None:
         """ Handle noun preference hints in the settings section """
         # Format: noun worse1 worse2... < better
@@ -928,7 +886,6 @@ class Settings:
                 "preferences": Settings._handle_preferences,
                 "noun_preferences": Settings._handle_noun_preferences,
                 "name_preferences": Settings._handle_name_preferences,
-                "stem_preferences": Settings._handle_stem_preferences,
                 "ambiguous_phrases": Settings._handle_ambiguous_phrases,
                 "undeclinable_adjectives": Settings._handle_undeclinable_adjectives,
                 "disallowed_names": Settings._handle_disallowed_names,
