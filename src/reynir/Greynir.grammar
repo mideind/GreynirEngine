@@ -6201,6 +6201,8 @@ AtviksliðurEinkunn →
 AtviksliðurHliðstæður →
     AtviksliðurEinkunn              
 
+$tag(keep) AtviksliðurHliðstæður
+
 UmEðaYfir →
     "um:ao" Eða "yfir:ao"      # Um eða yfir 100 tyrkneskum eldflaugum rigndi yfir Aleppo
 
