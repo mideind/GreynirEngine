@@ -1886,6 +1886,16 @@ class SimpleTree:
                 yield ch
 
     @property
+    def nonterminals(self) -> Iterator["SimpleTree"]:
+        """ Generate all descendant non-terminal nodes of this node,
+            returning a dict with the canonical representation of
+            each non-terminal match """
+        for ch in self.descendants:
+            if not ch.is_terminal:
+                yield ch
+
+
+    @property
     def span(self) -> Tuple[int, int]:
         """ Returns a (start, end) tuple of token indices pointing
             to the first and the last token spanned by this subtree """
