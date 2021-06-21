@@ -919,7 +919,7 @@ class SimpleTree:
     @cached_property
     def _vset(self) -> Set[str]:
         """ Return a set of the variants associated with this subtree's terminal,
-            if any. Note that this set is undordered, so it is not intended for
+            if any. Note that this set is unordered, so it is not intended for
             retrieving the cases of verb subjects. """
         return set(self.all_variants)
 
