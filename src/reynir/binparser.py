@@ -673,7 +673,7 @@ class BIN_Token(Token):
     )
 
     # Dictionary of associated BIN forms, initialized later
-    _VERB_FORMS: Optional[Dict[str, str]] = None
+    _VERB_FORMS: Dict[str, str] = cast(Dict[str, str], None)
 
     # Cache the dictionary of verb subjects from settings.py
     _VERB_SUBJECTS = VerbSubjects.VERBS
