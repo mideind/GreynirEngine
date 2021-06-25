@@ -31,7 +31,7 @@ jobs:
         python -m pip install -e .
     - name: Type check with mypy
       run: |
-        if [ "${{ matrix.python-version }}" == "3.6" ]; then python -m pip install mypy; fi
+        if [ "${{ matrix.python-version }}" == "3.6" ]; then python -m pip install mypy types-setuptools; fi
         if [ "${{ matrix.python-version }}" == "3.6" ]; then mypy --python-version=3.6 src/reynir; fi
     - name: Test with pytest
       run: |
