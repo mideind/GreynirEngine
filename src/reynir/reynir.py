@@ -432,7 +432,7 @@ class _Paragraph:
 
 
 # Create a public alias for the _Paragraph class
-Paragraph: Type[_Paragraph] = _Paragraph
+Paragraph = _Paragraph
 
 
 class _Job:
