@@ -49,6 +49,8 @@ from typing import (
     Type,
     cast,
 )
+from typing_extensions import TypedDict
+
 import time
 import operator
 import json
@@ -93,9 +95,14 @@ Terminal = NamedTuple(
 ProgressFunc = Optional[Callable[[float], None]]
 
 # The type of a parse result
-ParseResult = Dict[
-    str, Union[int, float, Iterable["_Sentence"], Iterable[Iterable["_Sentence"]]]
-]
+class ParseResult(TypedDict):
+    sentences: List["_Sentence"]
+    num_sentences: int
+    num_parsed: int
+    num_tokens: int
+    ambiguity: float
+    parse_time: float
+    reduce_time: float
 
 # The default maximum length of a sentence, in tokens, that we attempt to parse
 DEFAULT_MAX_SENT_TOKENS = 90
@@ -826,7 +833,7 @@ class Greynir:
         # Iterating through the sentences in the job causes
         # them to be parsed and their statistics collected
         sentences = [sent for sent in job]
-        return dict(
+        return ParseResult(
             sentences=sentences,
             num_sentences=job.num_sentences,
             num_parsed=job.num_parsed,

@@ -109,6 +109,8 @@ from .version import __version__ as package_version
 # This is the base path where we expect to find the Greynir.grammar file
 _PATH = os.path.dirname(__file__)
 
+MatcherFunc = Callable[["BIN_Token", "BIN_Terminal", BIN_Tuple], bool]
+
 
 class WordMatchers:
 
@@ -1605,9 +1607,9 @@ class VariantHandler:
             parts = n.split("_")
         self._first: str = parts[0]
         # Look up matching function in WordMatchers
-        self._matcher = getattr(
+        self._matcher = cast(MatcherFunc, getattr(
             WordMatchers, "matcher_" + self._first, WordMatchers.matcher_default
-        )
+        ))
         # The variant set for this terminal, i.e.
         # tname_var1_var2_var3 -> { 'var1', 'var2', 'var3' }
         self._vparts = parts[1:]
@@ -1654,7 +1656,7 @@ class VariantHandler:
 
     def matches_token(self, token: BIN_Token, m: BIN_Tuple) -> bool:
         """ Test whether this terminal matches the meaning m of the given token """
-        return self._matcher(token, self, m)
+        return self._matcher(token, cast(BIN_Terminal, self), m)
 
     def matches_token_meaning(self, token: BIN_Token) -> Union[bool, BIN_Tuple]:
         """ Return the meaning of the token which matches this terminal,
@@ -1662,7 +1664,7 @@ class VariantHandler:
         for m in token.meanings:
             # self._matcher is a reference to a matching function within
             # the WordMatchers class
-            if self._matcher(token, self, m):
+            if self._matcher(token, cast(BIN_Terminal, self), m):
                 # This meaning of the token matches the terminal: return it
                 return m
         # No meaning of the token matches this terminal: return False
