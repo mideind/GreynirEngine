@@ -1007,14 +1007,15 @@ def parse_phrases_2(
 
         # Maintain a one-token lookahead
         token = next(token_stream)
-
         # Maintain a set of full person names encountered
         names: Set[PersonNameTuple] = set()
-        namespan = 0
+        namespan = []
         at_sentence_start = False
 
         while True:
             next_token = next(token_stream)
+            if token.origin_spans:
+                namespan.extend(token.origin_spans)
             # Make the lookahead checks we're interested in
             # Check for [number] [currency] and convert to [amount]
             if token.kind == TOK.NUMBER and (
@@ -1228,11 +1229,12 @@ def parse_phrases_2(
                 # Convert a WORD with fl="nafn" to a PERSON with the correct gender,
                 # in all cases
                 gender = token.meanings[0].ordfl
-                namespan.append(token.original_spans)
+                namespan.extend(token.origin_spans)
                 token = token_ctor.Person(
-                    "",
-                    [PersonNameTuple(token.txt, gender, case) for case in ALL_CASES],
-                    namespan,
+                    token.txt,
+                    m = [PersonNameTuple(token.txt, gender, case) for case in ALL_CASES],
+                    token = token,
+                    span = namespan,
                 )
                 namespan = []
             else:
@@ -1265,10 +1267,12 @@ def parse_phrases_2(
                     if not r:
                         # This next name is not compatible with what we already
                         # have: break
+                        extraspans = []
                         break
                     # Success: switch to new given name list
                     gn = r
                     w += " " + next_token.txt
+                    namespan.extend(next_token.origin_spans)
                     next_token = next(token_stream)
 
                 # Check whether the sequence of given names is followed
@@ -1310,16 +1314,17 @@ def parse_phrases_2(
                         # Compatible: include it and advance to the next token
                         gn = r
                         w += " " + next_token.txt
+                        namespan.extend(next_token.origin_spans)
                         patronym = True
                         next_token = next(token_stream)
-                    return gn, w, patronym, next_token, next_token.origin_spans
+                    return gn, w, patronym, next_token
 
-                gn, w, patronym, next_token, extraspans = eat_surnames(gn, w, patronym, next_token)
+                gn, w, patronym, next_token = eat_surnames(gn, w, patronym, next_token)
 
                 # Must have at least one possible name
                 assert gn is not None
                 assert len(gn) >= 1
-
+                extraspans = []
                 if not patronym:
                     # We stop name parsing after we find one or more Icelandic
                     # patronyms/matronyms. Otherwise, check whether we have an
@@ -1336,6 +1341,7 @@ def parse_phrases_2(
                                 name=p.name + " " + ntxt, gender=p.gender, case=p.case,
                             )
                         w += " " + ntxt
+                        extraspans.extend(next_token.origin_spans)
                         next_token = next(token_stream)
                         # Assume we now have a patronym
                         patronym = True
@@ -1343,7 +1349,7 @@ def parse_phrases_2(
                     if patronym:
                         # We still might have surnames coming up:
                         # eat them too, if present
-                        gn, w, _, next_token, extraspans = eat_surnames(gn, w, patronym, next_token)
+                        gn, w, _, next_token = eat_surnames(gn, w, patronym, next_token)
                         assert gn is not None
                 found_name = False
                 # If we have a full name with patronym, store it
@@ -1372,7 +1378,8 @@ def parse_phrases_2(
                                     name=lp.name, gender=lp.gender, case=p.case
                                 )
                                 found_name = True
-                                namespan.append(extraspans)
+                                if extraspans:
+                                    namespan.extend(extraspans)
                                 break
                 # If this is not a "strong" name, backtrack from recognizing it.
                 # A "weak" name is (1) at the start of a sentence; (2) only one
@@ -1393,11 +1400,13 @@ def parse_phrases_2(
                 if not weak:
                     # Return a person token with the accumulated name
                     # and the intersected set of possible cases
-                    token = token_ctor.Person(w, gn, e=namespan)
+                    if extraspans:
+                        namespan.extend(extraspans)
+                    token = token_ctor.Person(w, gn, span=namespan)
                     namespan = []
             # Yield the current token and advance to the lookahead
             yield token
-
+            namespan = []
             if token.kind == TOK.S_BEGIN or token.punctuation == ":":
                 at_sentence_start = True
             elif token.kind != TOK.PUNCTUATION and token.kind != TOK.ORDINAL:
@@ -1467,7 +1476,9 @@ def parse_phrases_3(
         namespan = []
 
         while True:
-
+            if token.origin_spans:
+                namespan.extend(token.origin_spans)
+            
             if not concatable and not is_interesting(token):
                 if (
                     token.txt
@@ -1495,6 +1506,7 @@ def parse_phrases_3(
                     else:
                         token = token_ctor.Entity(" ".join(first))
                     yield token
+                    namespan = []
                     if middle:
                         _, m = db.lookup_g(middle)
                         yield token_ctor.Word(middle, m)
@@ -1502,6 +1514,7 @@ def parse_phrases_3(
                     token = token_ctor.Word(split[-1], m)
                 else:
                     yield token
+                    namespan = []
                     # Make sure that token is None if next() raises StopIteration
                     token = cast(Tok, None)
                     token = next(token_stream)
@@ -1529,6 +1542,7 @@ def parse_phrases_3(
                             )
                             for pn in next_token.person_names
                         ],
+                        namespan
                     )
                     next_token = next(token_stream)
                 elif can_concat(next_token):
@@ -1538,6 +1552,7 @@ def parse_phrases_3(
                     continue
 
             # Yield the current token and advance to the lookahead
+            namespan = []
             yield token
             token = next_token
 
