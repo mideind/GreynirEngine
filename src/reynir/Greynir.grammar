@@ -3728,7 +3728,7 @@ NlStak_ft_p3_ef_hk → 'vinstri:lo'_ft_ef_hk "-"? 'grænn:lo'_ft_ef_hk
 
 # Sértilvik fyrir "COVID-19" (ath: stutt bandstrik, ekki en- eða em-dash)
 NlStak_et_p3/fall/kvk → NlCovid/fall
-NlCovid/fall → "covid:kvk" "-" "19"
+NlCovid/fall → "covid:kvk" "-" "19:tala"
 
 $score(+4) NlCovid/fall
 

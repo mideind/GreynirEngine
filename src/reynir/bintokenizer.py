@@ -538,7 +538,15 @@ class Bin_TOK(TOK):
         # Note that the m parameter cannot be easily type annotated,
         # as the Tokenizer package is still using a .pyi (Python 2.7-compatible)
         # type annotation scheme
-        return TOK.Word(t, m)
+        r = TOK.Word(t, m)
+        if token is not None:
+            # We are basing this word token on a previously existing
+            # token or list of tokens: copy the original text field(s)
+            if isinstance(token, Tok):
+                r.original = token.original
+            else:
+                r.original = "".join(t.original or "" for t in token)
+        return r
 
     @staticmethod
     def Number(
@@ -549,6 +557,25 @@ class Bin_TOK(TOK):
         token: Optional[Tok] = None,
     ) -> Tok:
         return TOK.Number(t, n, cases, genders)
+
+    @staticmethod
+    def Amount(
+        t: Union[Tok, str],
+        iso: str,
+        n: float,
+        cases: Optional[List[str]] = None,
+        genders: Optional[List[str]] = None,
+        token: Optional[Tok] = None,
+    ) -> Tok:
+        return TOK.Amount(t, iso, n, cases, genders)
+
+    @staticmethod
+    def Person(
+        t: Union[Tok, str],
+        m: Optional[PersonNameList] = None,
+        token: Optional[Tok] = None,
+    ) -> Tok:
+        return TOK.Person(t, m)
 
 
 def annotate(
@@ -840,13 +867,15 @@ def parse_phrases_1(
                     # the token parameter. This ensures that "fimmhundruð"
                     # is correctly marked with an error resulting from
                     # a split into "fimm" and "hundruð".
+                    original = (token.original or "") + (next_token.original or "")
                     token = token_ctor.Number(
-                        token.txt + " " + next_token.txt,
-                        token.number * multiplier_next,
-                        next_case,
-                        next_gender,
+                        t=token.txt + " " + next_token.txt,
+                        n=token.number * multiplier_next,
+                        cases=next_case,
+                        genders=next_gender,
                         token=token,
                     )
+                    token.original = original
                     # Eat the multiplier token
                     next_token = next(token_stream)
                 elif next_token.txt in AMOUNT_ABBREV:
@@ -855,6 +884,7 @@ def parse_phrases_1(
                     # but we try to retain the previous case information if any
                     token = convert_to_num(token)
                     num = cast(NumberTuple, token.val)
+                    original = (token.original or "") + (next_token.original or "")
                     token = token_ctor.Amount(
                         token.txt + " " + next_token.txt,
                         "ISK",
@@ -862,18 +892,21 @@ def parse_phrases_1(
                         num[1],
                         num[2],
                     )
+                    token.original = original
                     next_token = next(token_stream)
                 else:
                     # Check for [number] 'percent'
                     percentage = match_stem_list(next_token, PERCENTAGES)
                     if percentage is not None:
                         token = convert_to_num(token)
+                        original = (token.original or "") + (next_token.original or "")
                         token = token_ctor.Percent(
                             token.txt + " " + next_token.txt,
                             token.number,
                             all_cases(next_token),
                             all_genders(next_token),
                         )
+                        token.original = original
                         # Eat the percentage token
                         next_token = next(token_stream)
                     else:
@@ -904,6 +937,7 @@ def parse_phrases_1(
                             else:
                                 # Indefinite form ('pund', 'dollari')
                                 form = "SB"
+                            original = (token.original or "") + (next_token.original or "")
                             token = token_ctor.Currency(
                                 token.txt + " " + next_token.txt,
                                 iso_code,
@@ -914,6 +948,7 @@ def parse_phrases_1(
                                 ),
                                 [CURRENCY_GENDERS[cur]],
                             )
+                            token.original = original
                             next_token = next(token_stream)
 
             # Check for composites:
@@ -924,7 +959,9 @@ def parse_phrases_1(
                 token.kind == TOK.WORD or token.kind == TOK.ENTITY
             ) and next_token.punctuation == COMPOSITE_HYPHEN:
                 tq.append(token)
-                tq.append(TOK.Punctuation(next_token.txt, normalized=HYPHEN))
+                hyphen = TOK.Punctuation(next_token.txt, normalized=HYPHEN)
+                hyphen.original = next_token.original
+                tq.append(hyphen)
                 # Check for optional comma after the prefix
                 comma_token: Tok = next(token_stream)
                 if comma_token.punctuation == ",":
@@ -954,7 +991,8 @@ def parse_phrases_1(
                         # the last word, but an amalgamated token text.
                         # Note: there is no meaning check for the first
                         # part of the composition, so it can be an unknown word.
-                        txt = " ".join(t.txt for t in tq + [token, next_token])
+                        all_tq = tq + [token, next_token]
+                        txt = " ".join(t.txt for t in all_tq)
                         txt = txt.replace(" -", "-").replace(" ,", ",")
                         # Create a fresh list of meanings with the full
                         # prefix in the ordmynd field
@@ -972,7 +1010,7 @@ def parse_phrases_1(
                         ]
                         # Copy attributes, such as capitalization status
                         # (cf. GreynirCorrect) from the first token in the queue
-                        token = token_ctor.Word(txt, m, token=tq[0])
+                        token = token_ctor.Word(txt, m, token=all_tq)
                         next_token = next(token_stream)
                 else:
                     # Incorrect prediction: make amends and continue
@@ -1004,16 +1042,13 @@ def parse_phrases_2(
 
         # Maintain a one-token lookahead
         token = next(token_stream)
-
         # Maintain a set of full person names encountered
         names: Set[PersonNameTuple] = set()
-
         at_sentence_start = False
 
         while True:
             next_token = next(token_stream)
             # Make the lookahead checks we're interested in
-
             # Check for [number] [currency] and convert to [amount]
             if token.kind == TOK.NUMBER and (
                 next_token.kind == TOK.WORD or next_token.kind == TOK.CURRENCY
@@ -1062,9 +1097,12 @@ def parse_phrases_2(
                 if cur is not None:
                     # Create an amount
                     # Use the case and gender information from the number, if any
+                    original = (token.original or "") + (next_token.original or "")
                     token = token_ctor.Amount(
                         token.txt + " " + next_token.txt, cur, num[0], cases, genders,
+                        token=next_token,
                     )
+                    token.original = original
                     # Eat the currency token
                     next_token = next(token_stream)
 
@@ -1073,9 +1111,11 @@ def parse_phrases_2(
                 # Create a time stamp
                 h, m, s = cast(DateTimeTuple, token.val)
                 y, mo, d = cast(DateTimeTuple, next_token.val)
+                original = (token.original or "") + (next_token.original or "")
                 token = token_ctor.Timestampabs(
                     token.txt + " " + next_token.txt, y=y, mo=mo, d=d, h=h, m=m, s=s
                 )
+                token.original = original
                 # Eat the time token
                 next_token = next(token_stream)
 
@@ -1084,9 +1124,11 @@ def parse_phrases_2(
                 # Create a time stamp
                 h, m, s = cast(DateTimeTuple, token.val)
                 y, mo, d = cast(DateTimeTuple, next_token.val)
+                original = (token.original or "") + (next_token.original or "")
                 token = token_ctor.Timestamprel(
                     token.txt + " " + next_token.txt, y=y, mo=mo, d=d, h=h, m=m, s=s
                 )
+                token.original = original
                 # Eat the time token
                 next_token = next(token_stream)
 
@@ -1218,6 +1260,8 @@ def parse_phrases_2(
                 return True
 
             gn: Optional[List[PersonNameTuple]] = None
+            # Accumulated original token text for person name
+            namespan: str = ""
             if (
                 token.kind == TOK.WORD
                 and token.has_meanings
@@ -1225,11 +1269,14 @@ def parse_phrases_2(
             ):
                 # Convert a WORD with fl="nafn" to a PERSON with the correct gender,
                 # in all cases
+                namespan = token.original or ""
                 gender = token.meanings[0].ordfl
                 token = token_ctor.Person(
                     token.txt,
-                    [PersonNameTuple(token.txt, gender, case) for case in ALL_CASES],
+                    m = [PersonNameTuple(token.txt, gender, case) for case in ALL_CASES],
+                    token = token,
                 )
+                token.original = namespan
             else:
                 gn = given_names(token)
 
@@ -1237,6 +1284,7 @@ def parse_phrases_2(
                 # Found at least one given name: look for a sequence of given names
                 # having compatible genders and cases
                 w = token.txt
+                namespan = token.original or ""
                 patronym = False
                 while True:
                     ngn = given_names_or_middle_abbrev(next_token)
@@ -1264,6 +1312,7 @@ def parse_phrases_2(
                     # Success: switch to new given name list
                     gn = r
                     w += " " + next_token.txt
+                    namespan += next_token.original or ""
                     next_token = next(token_stream)
 
                 # Check whether the sequence of given names is followed
@@ -1305,6 +1354,8 @@ def parse_phrases_2(
                         # Compatible: include it and advance to the next token
                         gn = r
                         w += " " + next_token.txt
+                        nonlocal namespan
+                        namespan += next_token.original or ""
                         patronym = True
                         next_token = next(token_stream)
                     return gn, w, patronym, next_token
@@ -1314,7 +1365,6 @@ def parse_phrases_2(
                 # Must have at least one possible name
                 assert gn is not None
                 assert len(gn) >= 1
-
                 if not patronym:
                     # We stop name parsing after we find one or more Icelandic
                     # patronyms/matronyms. Otherwise, check whether we have an
@@ -1331,6 +1381,7 @@ def parse_phrases_2(
                                 name=p.name + " " + ntxt, gender=p.gender, case=p.case,
                             )
                         w += " " + ntxt
+                        namespan += next_token.original or ""
                         next_token = next(token_stream)
                         # Assume we now have a patronym
                         patronym = True
@@ -1369,13 +1420,11 @@ def parse_phrases_2(
                                 )
                                 found_name = True
                                 break
-
                 # If this is not a "strong" name, backtrack from recognizing it.
                 # A "weak" name is (1) at the start of a sentence; (2) only one
                 # word; (3) that word has a meaning that is not a name;
                 # (4) the name has not been seen in a full form before;
                 # (5) not on a 'well known name' list.
-
                 weak = (
                     at_sentence_start
                     and (" " not in w)
@@ -1391,10 +1440,10 @@ def parse_phrases_2(
                     # Return a person token with the accumulated name
                     # and the intersected set of possible cases
                     token = token_ctor.Person(w, gn)
+                    token.original = namespan
 
             # Yield the current token and advance to the lookahead
             yield token
-
             if token.kind == TOK.S_BEGIN or token.punctuation == ":":
                 at_sentence_start = True
             elif token.kind != TOK.PUNCTUATION and token.kind != TOK.ORDINAL:
@@ -1475,6 +1524,7 @@ def parse_phrases_3(
                     split = token.txt.split()
                     first = split[:-1]
                     middle = ""
+                    orig = token.original
                     if first[-1] in FOREIGN_MIDDLE_NAME_SET:
                         # Allow one more check, in case of "de la"
                         middle = first[-1]
@@ -1489,12 +1539,16 @@ def parse_phrases_3(
                         )
                     else:
                         token = token_ctor.Entity(" ".join(first))
+                    token.original = orig
                     yield token
                     if middle:
                         _, m = db.lookup_g(middle)
-                        yield token_ctor.Word(middle, m)
+                        x = token_ctor.Word(middle, m)
+                        x.original = ""  # TODO: This could be made more intelligent
+                        yield x
                     _, m = db.lookup_g(split[-1])
                     token = token_ctor.Word(split[-1], m)
+                    token.original = ""  # TODO: This could be made more intelligent
                 else:
                     yield token
                     # Make sure that token is None if next() raises StopIteration
@@ -1508,7 +1562,9 @@ def parse_phrases_3(
                 # Allow merging a corporation ending ('ehf.', 'Inc.'). This is fairly
                 # open: any prefix consisting of uppercase words is
                 # allowed, even if they are found in BÍN.
+                original = (token.original or "") + (next_token.original or "")
                 token = token_ctor.Company(token.txt + " " + next_token.txt)
+                token.original = original
                 next_token = next(token_stream)
             elif not_in_bin(token):
                 if next_token.kind == TOK.PERSON and token.txt.istitle():
@@ -1516,6 +1572,7 @@ def parse_phrases_3(
                     # not in BÍN, and the next token is a person: merge the two
                     # tokens into a single person name
                     # 'Jesse' 'John Kelley' -> 'Jesse John Kelley'
+                    original = (token.original or "") + (next_token.original or "")
                     token = token_ctor.Person(
                         token.txt + " " + next_token.txt,
                         [
@@ -1525,10 +1582,13 @@ def parse_phrases_3(
                             for pn in next_token.person_names
                         ],
                     )
+                    token.original = original
                     next_token = next(token_stream)
                 elif can_concat(next_token):
                     # Concatenate the next token and do another loop round
+                    original = (token.original or "") + (next_token.original or "")
                     token = token_ctor.Entity(token.txt + " " + next_token.txt)
+                    token.original = original
                     concatable = True
                     continue
 
@@ -1760,9 +1820,10 @@ class StaticPhraseStream(MatchingStream):
         # Note that the StaticPhrases meaning list will be converted
         # to BIN_Tuple tuples in the annotate() pass.
         # Also note that the entire token queue is sent in as
-        # the token paramter, as any token in the queue may
+        # the token parameter, as any token in the queue may
         # contain error information.
-        yield self._token_ctor.Word(w, StaticPhrases.get_meaning(ix), token=tq)
+        newtok = self._token_ctor.Word(w, StaticPhrases.get_meaning(ix), token=tq)
+        yield newtok
 
 
 def parse_static_phrases(
@@ -1847,6 +1908,7 @@ class DisambiguationStream(MatchingStream):
                     for m in t.meanings
                     if m.ordfl in cat_set and (stem is None or m.stofn == stem)
                 )
+
             yield token_ctor.Word(t.txt, mm, token=t)
 
 

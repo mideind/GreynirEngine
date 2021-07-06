@@ -919,7 +919,7 @@ class SimpleTree:
     @cached_property
     def _vset(self) -> Set[str]:
         """ Return a set of the variants associated with this subtree's terminal,
-            if any. Note that this set is undordered, so it is not intended for
+            if any. Note that this set is unordered, so it is not intended for
             retrieving the cases of verb subjects. """
         return set(self.all_variants)
 
@@ -1884,6 +1884,16 @@ class SimpleTree:
         for ch in self.descendants:
             if ch.is_terminal:
                 yield ch
+
+    @property
+    def nonterminals(self) -> Iterator["SimpleTree"]:
+        """ Generate all descendant non-terminal nodes of this node,
+            returning a dict with the canonical representation of
+            each non-terminal match """
+        for ch in self.descendants:
+            if not ch.is_terminal:
+                yield ch
+
 
     @property
     def span(self) -> Tuple[int, int]:
