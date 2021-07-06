@@ -840,19 +840,15 @@ def parse_phrases_1(
                     # the token parameter. This ensures that "fimmhundruð"
                     # is correctly marked with an error resulting from
                     # a split into "fimm" and "hundruð".
-                    compspan = token.origin_spans
-                    for _ in range(token.origin_spans[0]):
-                        compspan.extend([0])
-                    compspan.extend(next_token.origin_spans)
+                    compspan = token.original + next_token.original
                     token = token_ctor.Number(
                         t=token.txt + " " + next_token.txt,
                         n=token.number * multiplier_next,
                         cases=next_case,
                         genders=next_gender,
                         token=token,
-                        span=compspan,
                     )
-                    compspan = []
+                    token.original = compspan
                     # Eat the multiplier token
                     next_token = next(token_stream)
                 elif next_token.txt in AMOUNT_ABBREV:
@@ -861,27 +857,29 @@ def parse_phrases_1(
                     # but we try to retain the previous case information if any
                     token = convert_to_num(token)
                     num = cast(NumberTuple, token.val)
+                    compspan = token.original + next_token.original
                     token = token_ctor.Amount(
                         token.txt + " " + next_token.txt,
                         "ISK",
                         num[0] * AMOUNT_ABBREV[next_token.txt],
                         num[1],
                         num[2],
-                        span=next_token.origin_spans,
                     )
+                    token.original = compspan
                     next_token = next(token_stream)
                 else:
                     # Check for [number] 'percent'
                     percentage = match_stem_list(next_token, PERCENTAGES)
                     if percentage is not None:
                         token = convert_to_num(token)
+                        compspan = token.original + next_token.original
                         token = token_ctor.Percent(
                             token.txt + " " + next_token.txt,
                             token.number,
                             all_cases(next_token),
                             all_genders(next_token),
-                            span=next_token.origin_spans,
                         )
+                        token.original = compspan
                         # Eat the percentage token
                         next_token = next(token_stream)
                     else:
@@ -912,10 +910,7 @@ def parse_phrases_1(
                             else:
                                 # Indefinite form ('pund', 'dollari')
                                 form = "SB"
-                            combspan = token.origin_spans
-                            for _ in range(next_token.origin_spans[0]):
-                                combspan.extend([0])
-                            combspan.extend(next_token.origin_spans)
+                            compspan = token.original + next_token.original
                             token = token_ctor.Currency(
                                 token.txt + " " + next_token.txt,
                                 iso_code,
@@ -926,7 +921,7 @@ def parse_phrases_1(
                                 ),
                                 [CURRENCY_GENDERS[cur]],
                             )
-                            token.origin_spans = combspan
+                            token.original = compspan
                             next_token = next(token_stream)
 
             # Check for composites:
@@ -969,14 +964,9 @@ def parse_phrases_1(
                         # part of the composition, so it can be an unknown word.
                         txt = " ".join(t.txt for t in tq + [token, next_token])
                         txt = txt.replace(" -", "-").replace(" ,", ",")
-                        compspan = []
+                        compspan = "".join(t.original or t.txt for t in tq + [token, next_token])
                         alltq = tq + [token]
-                        for t in alltq:
-                            if t.origin_spans:
-                                for _ in range(t.origin_spans[0]):
-                                    compspan.extend([0])
-                                compspan.extend(t.origin_spans if t.origin_spans else None)
-                        # Create a fresh list of meanings with the full
+                                                # Create a fresh list of meanings with the full
                         # prefix in the ordmynd field
                         prefix = all_except_suffix(txt)
                         m = [
@@ -993,9 +983,7 @@ def parse_phrases_1(
                         # Copy attributes, such as capitalization status
                         # (cf. GreynirCorrect) from the first token in the queue
                         token = token_ctor.Word(txt, m, token=alltq+[next_token])
-                        for _ in range(token.origin_spans[0]):
-                            compspan.extend([0])
-                        token.origin_spans = compspan + token.origin_spans
+                        token.original = compspan
                         next_token = next(token_stream)
                 else:
                     # Incorrect prediction: make amends and continue
@@ -1029,13 +1017,13 @@ def parse_phrases_2(
         token = next(token_stream)
         # Maintain a set of full person names encountered
         names: Set[PersonNameTuple] = set()
-        namespan = []
+        namespan = ""
         at_sentence_start = False
 
         while True:
             next_token = next(token_stream)
-            if token.origin_spans:
-                namespan.extend(token.origin_spans)
+            if token.original:
+                namespan += token.original
             # Make the lookahead checks we're interested in
             # Check for [number] [currency] and convert to [amount]
             if token.kind == TOK.NUMBER and (
@@ -1085,14 +1073,12 @@ def parse_phrases_2(
                 if cur is not None:
                     # Create an amount
                     # Use the case and gender information from the number, if any
-                    compspan = token.origin_spans
-                    for _ in range(next_token.origin_spans[0]):
-                        compspan.extend([0])
-                    compspan.extend(next_token.origin_spans)
+                    compspan = token.original
+                    compspan += next_token.original
                     token = token_ctor.Amount(
                         token.txt + " " + next_token.txt, cur, num[0], cases, genders, token=next_token,
                     )
-                    token.origin_spans = compspan
+                    token.original = compspan
                     # Eat the currency token
                     next_token = next(token_stream)
 
@@ -1101,11 +1087,12 @@ def parse_phrases_2(
                 # Create a time stamp
                 h, m, s = cast(DateTimeTuple, token.val)
                 y, mo, d = cast(DateTimeTuple, next_token.val)
-                compspan = token.origin_spans.extend([0]).extend(next_token.origin_spans)
+                compspan = token.original
+                compspan += next_token.original
                 token = token_ctor.Timestampabs(
                     token.txt + " " + next_token.txt, y=y, mo=mo, d=d, h=h, m=m, s=s
                 )
-                token.origin_spans = compspan
+                token.original = compspan
                 # Eat the time token
                 next_token = next(token_stream)
 
@@ -1114,14 +1101,12 @@ def parse_phrases_2(
                 # Create a time stamp
                 h, m, s = cast(DateTimeTuple, token.val)
                 y, mo, d = cast(DateTimeTuple, next_token.val)
-                compspan = token.origin_spans
-                for _ in range(next_token.origin_spans[0]):
-                    compspan.extend([0])
-                compspan.extend(next_token.origin_spans)
+                compspan = token.original
+                compspan += next_token.original
                 token = token_ctor.Timestamprel(
                     token.txt + " " + next_token.txt, y=y, mo=mo, d=d, h=h, m=m, s=s
                 )
-                token.origin_spans = compspan
+                token.original = compspan
                 # Eat the time token
                 next_token = next(token_stream)
 
@@ -1262,14 +1247,13 @@ def parse_phrases_2(
                 # in all cases
                 gender = token.meanings[0].ordfl
                 # Add whitespace before token
-                namespan.extend(token.origin_spans)
                 token = token_ctor.Person(
                     token.txt,
                     m = [PersonNameTuple(token.txt, gender, case) for case in ALL_CASES],
                     token = token,
-                    span = namespan,
                 )
-                namespan = []
+                token.original = namespan
+                namespan = ""
             else:
                 gn = given_names(token)
 
@@ -1305,9 +1289,7 @@ def parse_phrases_2(
                     # Success: switch to new given name list
                     gn = r
                     w += " " + next_token.txt
-                    for _ in range(next_token.origin_spans[0]):
-                        namespan.extend([0])
-                    namespan.extend(next_token.origin_spans)
+                    namespan += next_token.original
                     next_token = next(token_stream)
 
                 # Check whether the sequence of given names is followed
@@ -1349,9 +1331,7 @@ def parse_phrases_2(
                         # Compatible: include it and advance to the next token
                         gn = r
                         w += " " + next_token.txt
-                        for _ in range(next_token.origin_spans[0]):
-                            namespan.extend([0])
-                        namespan.extend(next_token.origin_spans)
+                        namespan += next_token.original
                         patronym = True
                         next_token = next(token_stream)
                     return gn, w, patronym, next_token
@@ -1361,7 +1341,7 @@ def parse_phrases_2(
                 # Must have at least one possible name
                 assert gn is not None
                 assert len(gn) >= 1
-                extraspans = []
+                extraspans = ""
                 if not patronym:
                     # We stop name parsing after we find one or more Icelandic
                     # patronyms/matronyms. Otherwise, check whether we have an
@@ -1378,9 +1358,7 @@ def parse_phrases_2(
                                 name=p.name + " " + ntxt, gender=p.gender, case=p.case,
                             )
                         w += " " + ntxt
-                        for _ in range(next_token.origin_spans[0]):
-                            extraspans.extend([0])
-                        extraspans.extend(next_token.origin_spans)
+                        extraspans += next_token.original
                         next_token = next(token_stream)
                         # Assume we now have a patronym
                         patronym = True
@@ -1418,7 +1396,7 @@ def parse_phrases_2(
                                 )
                                 found_name = True
                                 if extraspans:
-                                    namespan.extend(extraspans)
+                                    namespan += extraspans
                                 break
                 # If this is not a "strong" name, backtrack from recognizing it.
                 # A "weak" name is (1) at the start of a sentence; (2) only one
@@ -1440,12 +1418,13 @@ def parse_phrases_2(
                     # Return a person token with the accumulated name
                     # and the intersected set of possible cases
                     if extraspans:
-                        namespan.extend(extraspans)
-                    token = token_ctor.Person(w, gn, span=namespan)
-                    namespan = []
+                        namespan += extraspans
+                    token = token_ctor.Person(w, gn)
+                    token.original = namespan
+                    namespan = ""
             # Yield the current token and advance to the lookahead
             yield token
-            namespan = []
+            namespan = ""
             if token.kind == TOK.S_BEGIN or token.punctuation == ":":
                 at_sentence_start = True
             elif token.kind != TOK.PUNCTUATION and token.kind != TOK.ORDINAL:
@@ -1514,7 +1493,7 @@ def parse_phrases_3(
         concatable = False
 
         while True:
-            
+
             if not concatable and not is_interesting(token):
                 if (
                     token.txt
@@ -1526,14 +1505,11 @@ def parse_phrases_3(
                     split = token.txt.split()
                     first = split[:-1]
                     middle = ""
+                    orig = token.original
                     if first[-1] in FOREIGN_MIDDLE_NAME_SET:
                         # Allow one more check, in case of "de la"
                         middle = first[-1]
                         first = first[:-1]
-                    fspan = token.origin_spans[:len(first[0])]
-                    aspan = token.origin_spans[len(first[0])+len(middle[0]):] if middle else token.origin_spans[len(first[0]):]
-                    if aspan[0] == 0:
-                        aspan = aspan[1:]
                     if token.kind == TOK.PERSON:
                         token = token_ctor.Person(
                             " ".join(first),
@@ -1544,19 +1520,18 @@ def parse_phrases_3(
                         )
                     else:
                         token = token_ctor.Entity(" ".join(first))
-                    token.origin_spans = fspan
+                    token.original = orig
                     yield token
                     if middle:
                         _, m = db.lookup_g(middle)
                         x = token_ctor.Word(middle, m)
-                        x.origin_spans = token.origin_spans[len(first[0]):len(middle[0])]
+                        x.original = ""
                         yield x
                     _, m = db.lookup_g(split[-1])
                     token = token_ctor.Word(split[-1], m)
-                    token.origin_spans = aspan
+                    token.original = ""
                 else:
                     yield token
-                    namespan = []
                     # Make sure that token is None if next() raises StopIteration
                     token = cast(Tok, None)
                     token = next(token_stream)
@@ -1568,12 +1543,10 @@ def parse_phrases_3(
                 # Allow merging a corporation ending ('ehf.', 'Inc.'). This is fairly
                 # open: any prefix consisting of uppercase words is
                 # allowed, even if they are found in BÍN.
-                tspan = token.origin_spans
-                for _ in range(next_token.origin_spans[0]):
-                    tspan.extend([0])
-                tspan.extend(next_token.origin_spans)
+                compspan = token.original
+                compspan += next_token.original
                 token = token_ctor.Company(token.txt + " " + next_token.txt)
-                token.origin_spans = tspan
+                token.original = compspan
                 next_token = next(token_stream)
             elif not_in_bin(token):
                 if next_token.kind == TOK.PERSON and token.txt.istitle():
@@ -1581,10 +1554,8 @@ def parse_phrases_3(
                     # not in BÍN, and the next token is a person: merge the two
                     # tokens into a single person name
                     # 'Jesse' 'John Kelley' -> 'Jesse John Kelley'
-                    tspan = token.origin_spans
-                    for _ in next_token.origin_spans[0]:
-                        tspan.extend([0])
-                    tspan.extend(next_token.origin_spans)
+                    compspan = token.original
+                    compspan += next_token.original
                     token = token_ctor.Person(
                         token.txt + " " + next_token.txt,
                         [
@@ -1594,16 +1565,14 @@ def parse_phrases_3(
                             for pn in next_token.person_names
                         ],
                     )
-                    token.origin_spans = tspan
+                    token.original = compspan
                     next_token = next(token_stream)
                 elif can_concat(next_token):
                     # Concatenate the next token and do another loop round
-                    tspan = token.origin_spans
-                    for _ in next_token.origin_spans[0]:
-                        tspan.extend([0])
-                    tspan.extend(next_token.origin_spans)
+                    compspan = token.original
+                    compspan += next_token.original
                     token = token_ctor.Entity(token.txt + " " + next_token.txt)
-                    token.origin_spans = tspan
+                    token.original = compspan
                     concatable = True
                     continue
 
@@ -1831,12 +1800,10 @@ class StaticPhraseStream(MatchingStream):
 
     def match(self, tq: List[Tok], ix: int) -> Iterable[Tok]:
         w = " ".join([t.txt for t in tq])
-        compspan = []
+        compspan = ""
         for t in tq:
             if t.origin_spans:
-                for _ in range(t.origin_spans[0]):
-                    compspan.extend([0])
-                compspan.extend(t.origin_spans if t.origin_spans else None)
+                compspan += t.original
         # Add the entire phrase as one 'word' to the token queue.
         # Note that the StaticPhrases meaning list will be converted
         # to BIN_Tuple tuples in the annotate() pass.
@@ -1845,7 +1812,7 @@ class StaticPhraseStream(MatchingStream):
         # contain error information.
         newtok = self._token_ctor.Word(w, StaticPhrases.get_meaning(ix), token=tq)
         if len(tq) > 1:
-            newtok.origin_spans = compspan
+            newtok.original = compspan
         yield newtok
 
 
