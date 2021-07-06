@@ -572,7 +572,7 @@ class Bin_TOK(TOK):
     @staticmethod
     def Person(
         t: Union[Tok, str],
-        m: Optional[Sequence[PersonNameTuple]],
+        m: Optional[PersonNameList] = None,
         token: Optional[Tok] = None,
     ) -> Tok:
         return TOK.Person(t, m)
