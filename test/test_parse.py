@@ -1139,7 +1139,7 @@ def test_abbreviations(r):
         "C st /C S-MAIN IP NP-SUBJ no_et_kk_nf person_kk_nf /NP-SUBJ VP "
         "VP-AUX so_et_fh_gm_p3_þt /VP-AUX VP so_1_þf_gm_nh /VP "
         "NP-OBJ pfn_et_hk_p3_þf /NP-OBJ PP P fs_ef /P "
-        "NP no_ef_et_hk C st /C no_ef_et_hk ao /NP /PP CP-ADV-TEMP "
+        "NP no_ef_et_hk C st /C no_ef_et_hk ao /NP /PP /VP CP-ADV-TEMP "
         "C ao st /C IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ VP VP so_0_et_fh_mm_nt_p3 /VP "
         "PP P fs_þgf /P NP lén_þgf /NP /PP /VP /IP /CP-ADV-TEMP /IP /S-MAIN p /S0"
     ) or (
