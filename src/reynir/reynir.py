@@ -95,8 +95,9 @@ Terminal = NamedTuple(
 ProgressFunc = Optional[Callable[[float], None]]
 
 # The type of a parse result
-class ParseResult(TypedDict):
+class ParseResult(TypedDict, total=False):
     sentences: List["_Sentence"]
+    paragraphs: List[List["_Sentence"]]
     num_sentences: int
     num_parsed: int
     num_tokens: int
