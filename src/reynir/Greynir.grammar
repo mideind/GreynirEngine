@@ -312,7 +312,7 @@ Samtenging →
     | "svo:st" "lengi:ao"? "sem:st"
     | "rétt:ao"? "eins:ao" "og:st"
     | "því:st" "að:st"?
-    | "þannig:ao" "að:st"
+    | "þannig:ao"? "að:st"
     | "og:st" "loks:ao" "að:st"
     | SamtengingTímaspursmál
 
@@ -5972,10 +5972,9 @@ $score(+4) FsInnanKommu
 
 FsRunaEftirNl →
     # í Danmörku og hérlendis
-    # !!! ATH: Þetta leyfir ekki 'hérlendis og í Danmörku'
     FsRuna OgAtvEftirNl*
-    # hérlendis og erlendis
-    | AtvEftirNl OgAtvEftirNl*
+    # hérlendis og í Danmörku / víðsvegar um landið
+    | AtvEftirNl OgAtvFsEftirNl*
 
 # Atviksorð sem geta fylgt á eftir nafnliðum
 # !!! Setja í conf?
@@ -5985,9 +5984,15 @@ AtvEftirNl →
     | 'í_ár:ao'
     # hollið þar á undan
     | "þar:ao" ÁðurEftir
+    | "víða:ao" FsRuna # um land / í sveitum
+    | "víðsvegar:ao" FsRuna # um landið
 
 OgAtvEftirNl →
     OgEða AtvEftirNl
+
+OgAtvFsEftirNl →
+    OgAtvEftirNl
+    | OgEða FsRuna
 
 # Hvetja létt til þess að forsetningar séu tengdar nafnlið
 $score(+1) FsRunaEftirNl
