@@ -312,9 +312,13 @@ Samtenging →
     | "svo:st" "lengi:ao"? "sem:st"
     | "rétt:ao"? "eins:ao" "og:st"
     | "því:st" "að:st"?
-    | "þannig:ao"? "að:st"
+    | "þannig:ao" "að:st"
     | "og:st" "loks:ao" "að:st"
     | SamtengingTímaspursmál
+    | SamtengingAð
+
+$score(+2) Samtenging
+$tag(apply_length_bonus) Samtenging
 
 # 'og [því aðeins] tímaspursmál [í þessu sambandi] hvenær (kveikt verður í brennunni)'
 SamtengingTímaspursmál →
@@ -324,8 +328,10 @@ Tímaspursmál →
     'tímaspursmál:hk'_nf_et
     | 'spurning:kvk'_nf_et 'um:fs'_þf 'tími:kk'_þf_et
 
-$score(+2) Samtenging
-$tag(apply_length_bonus) Samtenging
+SamtengingAð →
+    "að:st"
+
+$score(-32) SamtengingAð
 
 Yfirsetning →
     # Yfirsetning getur hafist á runu upphrópana
