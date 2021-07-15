@@ -192,6 +192,8 @@ NOT_NAME_AT_SENTENCE_START: FrozenSet[str] = frozenset(
         "Ljót",
         "Ljóti",
         "Ljóts",
+        "Mikill",
+        "Mikil",
     )
 )
 
