@@ -1228,18 +1228,18 @@ def parse_phrases_2(
             ) -> Optional[List[PersonNameTuple]]:
                 """ Check for given name or middle abbreviation """
                 gnames = given_names(tok)
+                wrd = tok.txt
                 if gnames is not None:
-                    if tok.txt in BOTH_GIVEN_AND_FAMILY_NAMES:
+                    if wrd in BOTH_GIVEN_AND_FAMILY_NAMES:
                         # For instance "Hafstein" which can be both a given
                         # name and a family name: prepend the family name as
                         # an genderless and caseless option to the list
                         gnames = [
-                            PersonNameTuple(name=tok.txt, gender=None, case=None)
+                            PersonNameTuple(name=wrd, gender=None, case=None)
                         ] + gnames
                     return gnames
                 if tok.kind != TOK.WORD:
                     return None
-                wrd = tok.txt
                 if len(wrd) > 2 or wrd[0].islower():
                     if wrd not in FOREIGN_MIDDLE_NAME_SET:
                         # Accept "Thomas de Broglie", "Ruud van Nistelrooy"
