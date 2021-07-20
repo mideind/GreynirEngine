@@ -515,6 +515,8 @@ MIDDLE_NAME_ABBREVS: FrozenSet[str] = frozenset(
 # Not name abbreviations if not followed by period
 NOT_NAME_ABBREVS: FrozenSet[str] = frozenset(("á", "í"))
 
+# Words which should probably be lowercase
+PREFER_LOWERCASE: FrozenSet[str] = frozenset(("á", "bóndi", "ganga", "hæð"))
 
 def load_token(*args: Any) -> Tuple[int, str, ValType]:
     """ Convert a plain, usually JSON serialized, argument tuple
@@ -694,6 +696,8 @@ def annotate(
                                 )
                                 for mm in m
                             ]
+            if auto_uppercase and t.txt in PREFER_LOWERCASE:
+                w = t.txt
             # Yield a word tuple with meanings
             yield token_ctor.Word(w if auto_uppercase else t.txt, m, token=t)
         else:

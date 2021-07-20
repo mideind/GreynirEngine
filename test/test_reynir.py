@@ -331,22 +331,24 @@ def test_auto_uppercase():
     assert "Eliza Reid" in s.tree.persons
 
     s = g.parse_single("hver er hæð jóns")
-    # FIXME: 'hæð' gets capitalized
-    # assert detokenize(s.tokens) == "hver er hæð Jóns"
+    assert detokenize(s.tokens) == "hver er hæð Jóns"
     assert "Jón" in s.tree.persons
 
     s = g.parse_single("hver er hæð sólar í dag í reykjavík")
     assert "Í" not in detokenize(s.tokens)
     assert "Sólar Í Dag Í Reykjavík" not in s.tree.persons
 
-    # FIXME: "Á" gets interpreted as the place name
-    # s = g.parse_single("hver er guðmundur í. hámundarson, sonur hámundar á. guðmundssonar")
-    # assert detokenize(s.tokens) == "hver er Guðmundur Í. Hámundarson, sonur Hámundar Á. Guðmundssonar"
-    # assert "Guðmundur Í. Hámundarson" in s.tree.persons and "Hámundur Á. Guðmundsson" in s.tree.persons
+    s = g.parse_single("hver er guðmundur í. hámundarson, sonur hámundar á. guðmundssonar")
+    assert detokenize(s.tokens) == "hver er Guðmundur Í. Hámundarson, sonur Hámundar Á. Guðmundssonar"
+    assert "Guðmundur Í. Hámundarson" in s.tree.persons and "Hámundur Á. Guðmundsson" in s.tree.persons
 
     # s = g.parse_single("hver er guðmundur í hámundarson, sonur hámundar á guðmundssonar")
-    # assert detokenize(s.tokens) == "hver er Guðmundur í Hámundarson, sonur Hámundar Á Guðmundssonar"
+    # assert detokenize(s.tokens) == "hver er Guðmundur í Hámundarson, sonur Hámundar á Guðmundssonar"
     # assert "Guðmundur" in s.tree.persons and "Hámundur" in s.tree.persons
+
+    s = g.parse_single("ég hitti loft á bíldudal, blæ á seyðisfirði og skúla í keflavík")
+    assert detokenize(s.tokens) == "ég hitti Loft á Bíldudal, Blæ á Seyðisfirði og Skúla í Keflavík"
+    assert "Loftur" in s.tree.persons and "Blær" in s.tree.persons and "Skúli" in s.tree.persons
 
     s = g.parse_single("hver er lofthæna s melkorkudóttir")
     assert detokenize(s.tokens) == "hver er Lofthæna S Melkorkudóttir"
@@ -408,23 +410,20 @@ def test_auto_uppercase():
     assert "Dagur Í. Dagsson" in s.tree.persons
 
     s = g.parse_single("guðmundur er bóndi á stöpum og mjólkar kýr")
-    # FIXME: "bóndi" and "á" get interpreted as placenames
-    # assert detokenize(s.tokens) == "Guðmundur er bóndi á Stöpum og mjólkar kýr"
+    assert detokenize(s.tokens) == "Guðmundur er bóndi á Stöpum og mjólkar kýr"
     assert "Guðmundur" in s.tree.persons and "Guðmundur Er Bóndi" not in s.tree.persons
 
     s = g.parse_single("hvað er gummi í mörgum íþróttafélögum")
     assert detokenize(s.tokens) == "hvað er Gummi í mörgum íþróttafélögum"
     assert "Gummi" in s.tree.persons
 
-    # FIXME: "á" is interpreted as a placename
-    # s = g.parse_single("gunnar á hlíðarenda var vinur njáls á bergþórshvoli")
-    # assert detokenize(s.tokens) == "Gunnar á Hlíðarenda var vinur Njáls á Bergþórshvoli"
-    # assert "Gunnar" in s.tree.persons and "Njáll" in s.tree.persons
+    s = g.parse_single("gunnar á hlíðarenda var vinur njáls á bergþórshvoli")
+    assert detokenize(s.tokens) == "Gunnar á Hlíðarenda var vinur Njáls á Bergþórshvoli"
+    assert "Gunnar" in s.tree.persons and "Njáll" in s.tree.persons
 
-    # Same issue with "á"
-    # s = g.parse_single("ég hitti ástbjörn í hverri viku og gunnu á miðvikudögum")
-    # assert detokenize(s.tokens) == "ég hitti Ástbjörn í hverri viku og Gunnu á miðvikudögum"
-    # assert "Ástbjörn" in s.tree.persons and "Gunna" in s.tree.persons
+    s = g.parse_single("ég hitti ástbjörn í hverri viku og gunnu á miðvikudögum")
+    assert detokenize(s.tokens) == "ég hitti Ástbjörn í hverri viku og Gunnu á miðvikudögum"
+    assert "Ástbjörn" in s.tree.persons and "Gunna" in s.tree.persons
 
 
 def test_compounds():
