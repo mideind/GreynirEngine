@@ -415,7 +415,7 @@ ENTITY_MIDDLE_NAME_SET: FrozenSet[str] = frozenset(
     ("in", "a", "an", "for", "and", "the", "for", "on", "of")
 )
 
-SENTENCE_END_START_TOKENS: FrozenSet[int] = frozenset((TOK.S_END, TOK.S_BEGIN))
+SENTENCE_DELIMITER_TOKENS: FrozenSet[int] = frozenset((TOK.S_END, TOK.S_BEGIN))
 
 # Given names that can also be family names (and thus gender- and caseless as such)
 BOTH_GIVEN_AND_FAMILY_NAMES: FrozenSet[str] = frozenset(("Hafstein",))
@@ -1323,7 +1323,7 @@ def parse_phrases_2(
                                 # Remove sentence end/start tokens
                                 while (
                                     next_next_token.punctuation == "."
-                                    or next_next_token.kind in SENTENCE_END_START_TOKENS
+                                    or next_next_token.kind in SENTENCE_DELIMITER_TOKENS
                                 ):
                                     next_next_token = next(token_stream)
                             except StopIteration:
