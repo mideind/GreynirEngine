@@ -1221,12 +1221,9 @@ def parse_phrases_2(
                 """ Check for unknown (non-Icelandic) surnames """
                 # Accept (most) upper case words as a surnames
                 if auto_uppercase:
-                    if tok.txt in MIDDLE_NAME_ABBREVS:
-                        # We accept 'th', 'kr' and single-letter lowercase
-                        # abbrevs as surnames if auto-uppercasing
-                        return True
                     if tok.txt and not tok.val:
                         # Looks like an unknown word: accept it as a surname
+                        # (might be a foreign name)
                         return True
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
                     # Must start with capital letter
@@ -1259,13 +1256,16 @@ def parse_phrases_2(
                     return None
                 if auto_uppercase and wrd in MIDDLE_NAME_ABBREVS:
                     wrd = wrd.capitalize()
+                # If wrd is longer than middle name abbrevs (possibly with following period)
+                # such as "th.", "kr" or "f."
+                # or not a foreign middle name (like "al", "der", "van")
                 if len(wrd) > 3 or (
                     wrd[0].islower() and wrd not in FOREIGN_MIDDLE_NAME_SET
                 ):
-                    # Accept "Thomas de Broglie", "Ruud van Nistelrooy"
                     return None
-                # One or two letters (possibly with following period), capitalized:
+                # One or two letters (possibly with following period):
                 # accept as middle name abbrev, all genders and cases possible
+                # Also accept lowercase foreign middle names ("Thomas de Broglie", "Ruud van Nistelrooy")
                 return [PersonNameTuple(name=wrd, gender=None, case=None)]
 
             def compatible(pn: PersonNameTuple, npn: PersonNameTuple) -> bool:
