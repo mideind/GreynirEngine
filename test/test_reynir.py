@@ -338,17 +338,34 @@ def test_auto_uppercase():
     assert "Í" not in detokenize(s.tokens)
     assert "Sólar Í Dag Í Reykjavík" not in s.tree.persons
 
-    s = g.parse_single("hver er guðmundur í. hámundarson, sonur hámundar á. guðmundssonar")
-    assert detokenize(s.tokens) == "hver er Guðmundur Í. Hámundarson, sonur Hámundar Á. Guðmundssonar"
-    assert "Guðmundur Í. Hámundarson" in s.tree.persons and "Hámundur Á. Guðmundsson" in s.tree.persons
+    s = g.parse_single(
+        "hver er guðmundur í. hámundarson, sonur hámundar á. guðmundssonar"
+    )
+    assert (
+        detokenize(s.tokens)
+        == "hver er Guðmundur Í. Hámundarson, sonur Hámundar Á. Guðmundssonar"
+    )
+    assert (
+        "Guðmundur Í. Hámundarson" in s.tree.persons
+        and "Hámundur Á. Guðmundsson" in s.tree.persons
+    )
 
     # s = g.parse_single("hver er guðmundur í hámundarson, sonur hámundar á guðmundssonar")
     # assert detokenize(s.tokens) == "hver er Guðmundur í Hámundarson, sonur Hámundar á Guðmundssonar"
     # assert "Guðmundur" in s.tree.persons and "Hámundur" in s.tree.persons
 
-    s = g.parse_single("ég hitti loft á bíldudal, blæ á seyðisfirði og skúla í keflavík")
-    assert detokenize(s.tokens) == "ég hitti Loft á Bíldudal, Blæ á Seyðisfirði og Skúla í Keflavík"
-    assert "Loftur" in s.tree.persons and "Blær" in s.tree.persons and "Skúli" in s.tree.persons
+    s = g.parse_single(
+        "ég hitti loft á bíldudal, blæ á seyðisfirði og skúla í keflavík"
+    )
+    assert (
+        detokenize(s.tokens)
+        == "ég hitti Loft á Bíldudal, Blæ á Seyðisfirði og Skúla í Keflavík"
+    )
+    assert (
+        "Loftur" in s.tree.persons
+        and "Blær" in s.tree.persons
+        and "Skúli" in s.tree.persons
+    )
 
     s = g.parse_single("hver er lofthæna s melkorkudóttir")
     assert detokenize(s.tokens) == "hver er Lofthæna S Melkorkudóttir"
@@ -422,7 +439,10 @@ def test_auto_uppercase():
     assert "Gunnar" in s.tree.persons and "Njáll" in s.tree.persons
 
     s = g.parse_single("ég hitti ástbjörn í hverri viku og gunnu á miðvikudögum")
-    assert detokenize(s.tokens) == "ég hitti Ástbjörn í hverri viku og Gunnu á miðvikudögum"
+    assert (
+        detokenize(s.tokens)
+        == "ég hitti Ástbjörn í hverri viku og Gunnu á miðvikudögum"
+    )
     assert "Ástbjörn" in s.tree.persons and "Gunna" in s.tree.persons
 
 
