@@ -1062,7 +1062,7 @@ def parse_phrases_2(
         while True:
             next_token = (
                 following_tokens.popleft()
-                if len(following_tokens)
+                if following_tokens
                 else next(token_stream)
             )
             # Make the lookahead checks we're interested in
@@ -1366,7 +1366,7 @@ def parse_phrases_2(
                     namespan += next_token.original or ""
                     next_token = (
                         following_tokens.popleft()
-                        if len(following_tokens)
+                        if following_tokens
                         else next(token_stream)
                     )
 
@@ -1442,7 +1442,7 @@ def parse_phrases_2(
                         namespan += next_token.original or ""
                         next_token = (
                             following_tokens.popleft()
-                            if len(following_tokens)
+                            if following_tokens
                             else next(token_stream)
                         )
                         # Assume we now have a patronym
