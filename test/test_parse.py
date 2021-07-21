@@ -1791,8 +1791,7 @@ def test_names(r):
     assert s.tree.nouns == ["sýning", "bíó", "þriðjudagskvöld"]
     s = r.parse_single("Ruud van Nistelrooy og Thomas de Broglie komu í heimsókn.")
     assert "Thomas de Broglie" in s.tree.persons
-    # "Ruud van Nistelrooy" gets interpreted as an entity
-    # assert "Ruud van Nistelrooy" in s.tree.persons
+    assert "Ruud van Nistelrooy" in s.tree.entities
 
     s = r.parse_single("Tómas Í. Guðmundsson og Guðfinna Á. Ákadóttir komu í heimsókn.")
     assert (
