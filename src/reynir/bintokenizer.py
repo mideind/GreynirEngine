@@ -1333,12 +1333,11 @@ def parse_phrases_2(
                                 next_token = next_token.concatenate(token_deque.popleft())
                                 ntxt = next_token.txt
 
-                            else:
-                                if ntxt in NOT_NAME_ABBREVS and not surnames(token_deque[0]):
-                                    # Next token is common word (such as "á", "í")
-                                    # and should only be considered a middle name
-                                    # if next word is a surname
-                                    break
+                            elif ntxt in NOT_NAME_ABBREVS and not surnames(token_deque[0]):
+                                # Next token is common word (such as "á", "í")
+                                # and should only be considered a middle name
+                                # if next word is a surname
+                                break
 
                     # Deal with wrong sentence end/begin (S_END/S_BEGIN) tokens
                     # that sometimes appear in middle of sentence
@@ -1439,13 +1438,10 @@ def parse_phrases_2(
                     # if so, add it to the person names we've already found
                     while unknown_surname(next_token):
                         ntxt = next_token.txt
+
                         if auto_uppercase and ntxt.islower():
-                            if ntxt in NOT_NAME_ABBREVS:
-                                # Don't interpret as middle name abbreviation
-                                break
-                            # Make sure that surnames are capitalized
-                            # if we are auto-capitalizing
                             ntxt = ntxt.capitalize()
+
                         for ix, p in enumerate(gn):
                             gn[ix] = PersonNameTuple(
                                 name=p.name + " " + ntxt, gender=p.gender, case=p.case,
