@@ -1813,7 +1813,11 @@ def test_names(r):
 
     s = r.parse_single("Ég sá Jónínu Á í svifflugi.")
     assert "Jónína Á" in s.tree.persons
+    s = r.parse_single("Ég sá Jónínu Á á Eyrarbakka.")
+    assert "Jónína Á" in s.tree.persons
     s = r.parse_single("Við mættum Þorsteini Í í fallhlífarstökki.")
+    assert "Þorsteinn Í" in s.tree.persons
+    s = r.parse_single("Við mættum Þorsteini Í á Borðeyri.")
     assert "Þorsteinn Í" in s.tree.persons
     s = r.parse_single("Halldór Á Í Jónsson er stór maður")
     assert "Halldór Á Í Jónsson" in s.tree.persons
@@ -1827,6 +1831,13 @@ def test_names(r):
     assert "Hafsteinn B Guðmundsson" in s.tree.persons
     s = r.parse_single("Við hringdum í Hafstein B. Guðmundsson")
     assert "Hafsteinn B. Guðmundsson" in s.tree.persons
+
+    s = r.parse_single("Við hringdum í Guðna Th.")
+    assert "Guðni Th." in s.tree.persons
+    s = r.parse_single("Við hringdum í Baldvin Kr. Magnússon")
+    assert "Baldvin Kr. Magnússon" in s.tree.persons
+    s = r.parse_single("Við hringdum í Baldvin Kr.")
+    assert "Baldvin Kr." in s.tree.persons
 
 
 def test_prepositions(r):

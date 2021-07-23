@@ -34,7 +34,7 @@
 from reynir import Greynir
 from reynir.binparser import augment_terminal
 from reynir.bindb import GreynirBin
-from reynir.bintokenizer import TOK
+from reynir.bintokenizer import MIDDLE_NAME_ABBREVS, NOT_NAME_ABBREVS, TOK
 from tokenizer import detokenize
 
 
@@ -314,6 +314,37 @@ def test_sentence_split():
 
 def test_auto_uppercase():
     g = Greynir(auto_uppercase=True)
+
+    for abbr in MIDDLE_NAME_ABBREVS:
+        if abbr not in NOT_NAME_ABBREVS:
+            # Skip abbreviations that aren't
+            # middle names without a following period
+            s = g.parse_single(f"hér er jón {abbr}")
+            assert (
+                detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}"
+            )
+            assert f"Jón {abbr.capitalize()}" in s.tree.persons
+
+            s = g.parse_single(f"hér er jón {abbr} guðnason")
+            assert (
+                detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()} Guðnason"
+            )
+            assert f"Jón {abbr.capitalize()} Guðnason" in s.tree.persons
+
+        # Middle names with following period
+        s = g.parse_single(f"hér er jón {abbr}.")
+        assert (
+            detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}."
+        )
+        assert f"Jón {abbr.capitalize()}." in s.tree.persons
+
+        s = g.parse_single(f"hér er jón {abbr}. guðnason")
+        assert (
+            detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}. Guðnason"
+        )
+        assert f"Jón {abbr.capitalize()}. Guðnason" in s.tree.persons
+
+
     s = g.parse_single("hver er guðni th jóhannesson")
     assert detokenize(s.tokens) == "hver er Guðni Th Jóhannesson"
     assert "Guðni Th Jóhannesson" in s.tree.persons
@@ -337,6 +368,13 @@ def test_auto_uppercase():
     s = g.parse_single("hver er hæð sólar í dag í reykjavík")
     assert "Í" not in detokenize(s.tokens)
     assert "Sólar Í Dag Í Reykjavík" not in s.tree.persons
+
+    s = g.parse_single("mikil sól var í dag í reykjavík")
+    assert "Í" not in detokenize(s.tokens)
+    assert "Mikill" not in s.tree.persons
+
+    s = g.parse_single("sólin gægðist fram úr skýjunum")
+    assert "Sól" not in s.tree.persons
 
     s = g.parse_single(
         "hver er guðmundur í. hámundarson, sonur hámundar á. guðmundssonar"
@@ -400,14 +438,6 @@ def test_auto_uppercase():
     )
     assert "Dagur B. Eggertsson" in s.tree.persons
 
-    s = g.parse_single("hver er guðrún í.")
-    assert detokenize(s.tokens) == "hver er Guðrún Í."
-    assert "Guðrún Í." in s.tree.persons
-
-    s = g.parse_single("hver er dagur s")
-    assert detokenize(s.tokens) == "hver er Dagur S"
-    assert "Dagur S" in s.tree.persons
-
     s = g.parse_single(
         "úrsúla von der leyen (fædd 8. október 1958) er þýskur stjórnmálamaður "
         "og núverandi forseti framkvæmdastjórnar evrópusambandsins"
@@ -444,6 +474,30 @@ def test_auto_uppercase():
         == "ég hitti Ástbjörn í hverri viku og Gunnu á miðvikudögum"
     )
     assert "Ástbjörn" in s.tree.persons and "Gunna" in s.tree.persons
+
+    s = g.parse_single("ég hringdi í baldvin kr. magnússon")
+    assert (
+        detokenize(s.tokens) == "ég hringdi í Baldvin Kr. Magnússon"
+    )
+    assert "Baldvin Kr. Magnússon" in s.tree.persons
+
+    s = g.parse_single("hafðu samband við jón s. 5885522")
+    assert (
+        detokenize(s.tokens) == "hafðu samband við Jón s. 5885522"
+    )
+    assert "Jón" in s.tree.persons
+
+    s = g.parse_single("hafðu samband við jón s. jónsson")
+    assert (
+        detokenize(s.tokens) == "hafðu samband við Jón S. Jónsson"
+    )
+    assert "Jón S. Jónsson" in s.tree.persons
+
+    s = g.parse_single("ég veit ekki hvar hann baldur er.")
+    assert (
+        detokenize(s.tokens) == "ég veit ekki hvar hann Baldur er."
+    )
+    assert "Baldur" in s.tree.persons
 
 
 def test_compounds():
