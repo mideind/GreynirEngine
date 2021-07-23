@@ -510,7 +510,7 @@ MIDDLE_NAME_ABBREVS: FrozenSet[str] = frozenset(
     )
 )
 
-# Not name abbreviations if not followed by period
+# Not name abbreviations if not followed by period or surname
 NOT_NAME_ABBREVS: FrozenSet[str] = frozenset(("á", "í"))
 
 # Words which should probably be lowercase
