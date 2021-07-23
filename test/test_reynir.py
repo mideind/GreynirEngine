@@ -317,27 +317,42 @@ def test_auto_uppercase():
 
     for abbr in MIDDLE_NAME_ABBREVS:
         if abbr not in NOT_NAME_ABBREVS:
-            # Skip abbreviations that aren't
-            # middle names without a following period
+            # No period, no extra tokens
             s = g.parse_single(f"hér er jón {abbr}")
             assert (
                 detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}"
             )
             assert f"Jón {abbr.capitalize()}" in s.tree.persons
 
-            s = g.parse_single(f"hér er jón {abbr} guðnason")
+            # No period, extra tokens
+            s = g.parse_single(f"við jón {abbr} erum góðir vinir")
             assert (
-                detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()} Guðnason"
+                detokenize(s.tokens) == f"við Jón {abbr.capitalize()} erum góðir vinir"
             )
-            assert f"Jón {abbr.capitalize()} Guðnason" in s.tree.persons
+            assert f"Jón {abbr.capitalize()}" in s.tree.persons
 
-        # Middle names with following period
+        # No period, surname
+        s = g.parse_single(f"hér er jón {abbr} guðnason")
+        assert (
+            detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()} Guðnason"
+        )
+        assert f"Jón {abbr.capitalize()} Guðnason" in s.tree.persons
+
+        # With period, no extra tokens
         s = g.parse_single(f"hér er jón {abbr}.")
         assert (
             detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}."
         )
         assert f"Jón {abbr.capitalize()}." in s.tree.persons
 
+        # With period, extra tokens
+        s = g.parse_single(f"við jón {abbr}. erum góðir vinir")
+        assert (
+            detokenize(s.tokens) == f"við Jón {abbr.capitalize()}. erum góðir vinir"
+        )
+        assert f"Jón {abbr.capitalize()}." in s.tree.persons
+
+        # With period, surname
         s = g.parse_single(f"hér er jón {abbr}. guðnason")
         assert (
             detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}. Guðnason"
@@ -388,9 +403,9 @@ def test_auto_uppercase():
         and "Hámundur Á. Guðmundsson" in s.tree.persons
     )
 
-    # s = g.parse_single("hver er guðmundur í hámundarson, sonur hámundar á guðmundssonar")
-    # assert detokenize(s.tokens) == "hver er Guðmundur í Hámundarson, sonur Hámundar á Guðmundssonar"
-    # assert "Guðmundur" in s.tree.persons and "Hámundur" in s.tree.persons
+    s = g.parse_single("hver er guðmundur í hámundarson, sonur hámundar á guðmundssonar")
+    assert detokenize(s.tokens) == "hver er Guðmundur Í Hámundarson, sonur Hámundar Á Guðmundssonar"
+    assert "Guðmundur Í Hámundarson" in s.tree.persons and "Hámundur Á Guðmundsson" in s.tree.persons
 
     s = g.parse_single(
         "ég hitti loft á bíldudal, blæ á seyðisfirði og skúla í keflavík"
@@ -455,6 +470,10 @@ def test_auto_uppercase():
     s = g.parse_single("hann dagur í. dagsson er forkunnarfagur")
     assert detokenize(s.tokens) == "hann Dagur Í. Dagsson er forkunnarfagur"
     assert "Dagur Í. Dagsson" in s.tree.persons
+
+    s = g.parse_single("hann dagur í dagsson er forkunnarfagur")
+    assert detokenize(s.tokens) == "hann Dagur Í Dagsson er forkunnarfagur"
+    assert "Dagur Í Dagsson" in s.tree.persons
 
     s = g.parse_single("guðmundur er bóndi á stöpum og mjólkar kýr")
     assert detokenize(s.tokens) == "Guðmundur er bóndi á Stöpum og mjólkar kýr"
