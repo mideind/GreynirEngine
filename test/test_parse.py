@@ -1839,6 +1839,10 @@ def test_names(r):
     s = r.parse_single("Við hringdum í Baldvin Kr.")
     assert "Baldvin Kr." in s.tree.persons
 
+    s = r.parse("Við vitum ekki hvaða hesta Jón á. Hann hefur verið bóndi í langan tíma.")
+    assert len(s["sentences"]) == 2
+    assert "Jón" in s["sentences"][0].tree.persons
+
 
 def test_prepositions(r):
     s = r.parse_single("Ég fór niðrá bryggjuna.")

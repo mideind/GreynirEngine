@@ -415,8 +415,6 @@ ENTITY_MIDDLE_NAME_SET: FrozenSet[str] = frozenset(
     ("in", "a", "an", "for", "and", "the", "for", "on", "of")
 )
 
-SENTENCE_DELIMITER_TOKENS: FrozenSet[int] = frozenset((TOK.S_END, TOK.S_BEGIN))
-
 # Given names that can also be family names (and thus gender- and caseless as such)
 BOTH_GIVEN_AND_FAMILY_NAMES: FrozenSet[str] = frozenset(("Hafstein",))
 
@@ -517,6 +515,7 @@ NOT_NAME_ABBREVS: FrozenSet[str] = frozenset(("á", "í"))
 
 # Words which should probably be lowercase
 PREFER_LOWERCASE: FrozenSet[str] = frozenset(("á", "bóndi", "ganga", "hæð"))
+
 
 def load_token(*args: Any) -> Tuple[int, str, ValType]:
     """ Convert a plain, usually JSON serialized, argument tuple
@@ -1061,9 +1060,7 @@ def parse_phrases_2(
 
         while True:
             next_token = (
-                following_tokens.popleft()
-                if following_tokens
-                else next(token_stream)
+                following_tokens.popleft() if following_tokens else next(token_stream)
             )
             # Make the lookahead checks we're interested in
             # Check for [number] [currency] and convert to [amount]
@@ -1254,18 +1251,22 @@ def parse_phrases_2(
                     return gnames
                 if tok.kind != TOK.WORD:
                     return None
-                if auto_uppercase and wrd in MIDDLE_NAME_ABBREVS:
+
+                if auto_uppercase and wrd.rstrip(".") in MIDDLE_NAME_ABBREVS:
+                    # Capitalize middle name abbrevs when auto uppercasing
                     wrd = wrd.capitalize()
-                # If wrd is longer than middle name abbrevs (possibly with following period)
-                # such as "th.", "kr" or "f."
+
+                # If wrd (without following period) is longer than
+                # middle name abbrevs such as "th", "kr" or "f"
                 # or not a foreign middle name (like "al", "der", "van")
-                if len(wrd) > 3 or (
-                    wrd[0].islower() and wrd not in FOREIGN_MIDDLE_NAME_SET
-                ):
+                if (
+                    len(wrd.rstrip(".")) > 2 or wrd[0].islower()
+                ) and wrd not in FOREIGN_MIDDLE_NAME_SET:
                     return None
-                # One or two letters (possibly with following period):
-                # accept as middle name abbrev, all genders and cases possible
-                # Also accept lowercase foreign middle names ("Thomas de Broglie", "Ruud van Nistelrooy")
+
+                # Either:
+                # - One or two letter middle name abbreviation (possibly with following period)
+                # - Lowercase foreign middle name ("Thomas de Broglie", "Ruud van Nistelrooy")
                 return [PersonNameTuple(name=wrd, gender=None, case=None)]
 
             def compatible(pn: PersonNameTuple, npn: PersonNameTuple) -> bool:
@@ -1308,35 +1309,83 @@ def parse_phrases_2(
                 patronym = False
                 while True:
                     next_next_token = None
-                    # Deal with lowercase middle name abbreviations when auto uppercasing
-                    if auto_uppercase and next_token.txt in MIDDLE_NAME_ABBREVS:
-                        next_next_token = next(token_stream)
-                        following_tokens.append(next_next_token)
+                    ntxt = next_token.txt
 
-                        # Check if next token is a period
-                        if next_next_token.punctuation == ".":
-                            # Join to middle name abbreviation
-                            next_token = next_token.concatenate(next_next_token)
-                            following_tokens.popleft()
+                    if auto_uppercase:
+                        # Auto uppercasing of middle names
 
-                            try:
-                                # Remove sentence end/start tokens
-                                while (
-                                    next_next_token.punctuation == "."
-                                    or next_next_token.kind in SENTENCE_DELIMITER_TOKENS
-                                ):
-                                    next_next_token = next(token_stream)
-                            except StopIteration:
-                                # In case abbreviation is last token in sentence
-                                pass
+                        # Interpret "s." as abbreviation of "símanúmer"
+                        # when followed by telephone number
+                        if ntxt == "s.":
+                            next_next_token = next(token_stream)
                             following_tokens.append(next_next_token)
+                            
+                            if next_next_token.kind == TOK.TELNO:
+                                # Followed by telephone number
+                                # -> not a middle name
+                                break
+                            else:
+                                # Interpret as middle name
+                                next_token.txt = ntxt.capitalize()
 
-                        elif next_token.txt in NOT_NAME_ABBREVS:
-                            # If next token isn't followed by a period,
-                            # and shouldn't be considered an abbreviation
-                            break
+                        # Other lowercase middle name abbreviations
+                        elif ntxt in MIDDLE_NAME_ABBREVS:
+                            next_next_token = next(token_stream)
 
-                        next_token.txt = next_token.txt.capitalize()
+                            # Check if next token is a period
+                            if next_next_token.punctuation == ".":
+                                # Concatenate period token to middle name abbrev
+                                next_token = next_token.concatenate(next_next_token)
+                                # Skip period token by not adding to following tokens
+
+                            else:
+                                # Add next_next_token to following_tokens if not a period
+                                following_tokens.append(next_next_token)
+
+                                if ntxt in NOT_NAME_ABBREVS:
+                                    # If next token isn't followed by a period
+                                    # and shouldn't be considered an abbreviation
+                                    # in those cases (words such as "á", "í")
+                                    break
+
+                            next_token.txt = next_token.txt.capitalize()
+
+                        ntxt = next_token.txt
+
+                    # Deal with wrong sentence end/begin (S_END/S_BEGIN) tokens
+                    # that sometimes appear when abbrev ends with period
+                    if (
+                        ntxt.endswith(".")
+                        and ntxt.lower().rstrip(".") in MIDDLE_NAME_ABBREVS
+                    ):
+                        # Ensure middle name is capitalized
+                        next_token.txt = ntxt.capitalize()
+
+                        try:
+                            # Look for S_END/S_BEGIN tokens
+                            next_next_token = (
+                                following_tokens.popleft()
+                                if following_tokens
+                                else next(token_stream)
+                            )
+                            if next_next_token.kind == TOK.S_END:
+                                # If abbrev is last token in sentence,
+                                # we keep the TOK.S_END token
+                                following_tokens.append(next_next_token)
+
+                                next_next_token = next(token_stream)
+                                if next_next_token.kind == TOK.S_BEGIN:
+                                    # Token found after S_END,
+                                    # remove it from following tokens
+                                    following_tokens.pop()
+                                    next_next_token = next(token_stream)
+
+                        except StopIteration:
+                            pass
+
+                        # (Make sure we only have one S_END token)
+                        if next_next_token.kind != TOK.S_END:
+                            following_tokens.append(next_next_token)
 
                     ngn = given_names_or_middle_abbrev(next_token)
                     if not ngn:
