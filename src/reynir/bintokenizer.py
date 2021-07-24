@@ -695,10 +695,13 @@ def annotate(
                                 )
                                 for mm in m
                             ]
-            if auto_uppercase and t.txt in PREFER_LOWERCASE:
-                w = t.txt
+
             # Yield a word tuple with meanings
-            yield token_ctor.Word(w if auto_uppercase else t.txt, m, token=t)
+            yield token_ctor.Word(
+                w if auto_uppercase and t.txt not in PREFER_LOWERCASE else t.txt,
+                m,
+                token=t,
+            )
         else:
             # Already have a meaning (most likely from an abbreviation that the
             # tokenizer has recognized)
@@ -1261,7 +1264,7 @@ def parse_phrases_2(
                 # If wrd (without following period) is longer than
                 # middle name abbrevs such as "th", "kr" or "f"
                 # or not a foreign middle name (like "al", "der", "van")
-                if (
+                elif (
                     len(wrd.rstrip(".")) > 2 or wrd[0].islower()
                 ) and wrd not in FOREIGN_MIDDLE_NAME_SET:
                     return None
