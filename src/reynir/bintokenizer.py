@@ -63,6 +63,7 @@ from collections import defaultdict, deque
 from tokenizer import (
     TOK,
     Tok,
+    TokenStream,
     tokenize_without_annotation,
     # The following imports are here in order to be visible in clients
     # (they are not used in this module)
@@ -1052,17 +1053,16 @@ def parse_phrases_2(
     token: Tok = cast(Tok, None)
 
     try:
-        # Use deque instead of iterator,
-        # as we need longer lookahead during some parts of this phase
-        token_deque: Deque[Tok] = deque(token_stream)
+        # Use TokenStream wrapper for iterator with lookahead
+        token_stream = TokenStream(token_stream)
 
-        token = token_deque.popleft()
+        token = next(token_stream)
         # Maintain a set of full person names encountered
         names: Set[PersonNameTuple] = set()
         at_sentence_start = False
 
-        while token_deque:
-            next_token = token_deque.popleft()
+        while True:
+            next_token = next(token_stream)
 
             # Make the lookahead checks we're interested in
             # Check for [number] [currency] and convert to [amount]
@@ -1120,7 +1120,7 @@ def parse_phrases_2(
                     )
                     token.original = original
                     # Eat the currency token
-                    next_token = token_deque.popleft()
+                    next_token = next(token_stream)
 
             # Check for [time] [date] (absolute)
             if token.kind == TOK.TIME and next_token.kind == TOK.DATEABS:
@@ -1133,7 +1133,7 @@ def parse_phrases_2(
                 )
                 token.original = original
                 # Eat the time token
-                next_token = token_deque.popleft()
+                next_token = next(token_stream)
 
             # Check for [time] [date] (relative)
             if token.kind == TOK.TIME and next_token.kind == TOK.DATEREL:
@@ -1146,7 +1146,7 @@ def parse_phrases_2(
                 )
                 token.original = original
                 # Eat the time token
-                next_token = token_deque.popleft()
+                next_token = next(token_stream)
 
             # Logic for human names
 
@@ -1313,7 +1313,7 @@ def parse_phrases_2(
                 namespan = token.original or ""
                 patronym = False
 
-                while token_deque:
+                while True:
                     ntxt = next_token.txt
 
                     if auto_uppercase:
@@ -1321,7 +1321,7 @@ def parse_phrases_2(
 
                         # Interpret "s." as abbreviation of "símanúmer"
                         # when followed by telephone number
-                        if ntxt == "s." and token_deque[0].kind == TOK.TELNO:
+                        if ntxt == "s." and token_stream.kind() == TOK.TELNO:
                             # Followed by telephone number
                             # -> not a middle name abbreviation
                             break
@@ -1330,13 +1330,17 @@ def parse_phrases_2(
                         if ntxt in MIDDLE_NAME_ABBREVS:
 
                             # Check if next token is a period
-                            if token_deque[0].punctuation == ".":
+                            if token_stream.punctuation() == ".":
                                 # Concatenate period token to middle name abbrev
                                 # and remove period token
-                                next_token = next_token.concatenate(token_deque.popleft())
+                                next_token = next_token.concatenate(next(token_stream))
                                 ntxt = next_token.txt
 
-                            elif ntxt in NOT_NAME_ABBREVS and not surnames(token_deque[0]):
+                            elif (
+                                ntxt in NOT_NAME_ABBREVS
+                                and token_stream[0]
+                                and not surnames(cast(Tok, token_stream[0]))
+                            ):
                                 # Next token is common word (such as "á", "í")
                                 # and should only be considered a middle name
                                 # if next word is a surname
@@ -1348,13 +1352,12 @@ def parse_phrases_2(
                     # However, if abbrev is last token in sentence, we keep the S_END token
                     if (
                         ntxt.endswith(".")
-                        and len(token_deque) > 2
                         and ntxt.rstrip(".").lower() in MIDDLE_NAME_ABBREVS
-                        and token_deque[0].kind == TOK.S_END
-                        and token_deque[1].kind == TOK.S_BEGIN
+                        and token_stream.kind(0) == TOK.S_END
+                        and token_stream.kind(1) == TOK.S_BEGIN
                     ):
-                        token_deque.popleft()  # Remove S_END
-                        token_deque.popleft()  # Remove S_BEGIN
+                        next(token_stream)  # Remove S_END
+                        next(token_stream)  # Remove S_BEGIN
 
                     ngn = given_names_or_middle_abbrev(next_token)
                     if not ngn:
@@ -1382,7 +1385,7 @@ def parse_phrases_2(
                     gn = r
                     w += " " + next_token.txt
                     namespan += next_token.original or ""
-                    next_token = token_deque.popleft()
+                    next_token = next(token_stream)
 
                 # Check whether the sequence of given names is followed
                 # by one or more surnames (patronym/matronym) of the same gender,
@@ -1426,7 +1429,7 @@ def parse_phrases_2(
                         nonlocal namespan
                         namespan += next_token.original or ""
                         patronym = True
-                        next_token = token_deque.popleft()
+                        next_token = next(token_stream)
                     return gn, w, patronym, next_token
 
                 gn, w, patronym, next_token = eat_surnames(gn, w, patronym, next_token)
@@ -1451,7 +1454,7 @@ def parse_phrases_2(
                             )
                         w += " " + ntxt
                         namespan += next_token.original or ""
-                        next_token = token_deque.popleft()
+                        next_token = next(token_stream)
                         # Assume we now have a patronym
                         patronym = True
 
@@ -1519,9 +1522,7 @@ def parse_phrases_2(
                 at_sentence_start = False
             token = next_token
 
-    except IndexError:
-        # Raised in deque.popleft()
-        # instead of StopIteration (when using iterator)
+    except StopIteration:
         pass
 
     # Final token (previous lookahead)
