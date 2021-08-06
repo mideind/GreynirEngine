@@ -150,6 +150,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "Samanburðarsetning": "CP-ADV-CMP",
     "SamanburðurSemSetning": "CP-ADV-CMP",
     "SamanburðarNafnliður": "CP-ADV-CMP",
+    "SamanburðurNl": "CP-ADV-CMP",
     "StakViðhengi": "CP-ADV-CMP",
     "SamanburðarForskeyti": "CP-ADV-CMP",
     "SamanburðurInnskot": "CP-ADV-CMP",
@@ -252,6 +253,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "SögnLhNtBreyting": "VP",  # 'hefur farið fækkandi'
     "SögnNhBreyting": "VP",  # 'mun fækka'
     "SögnÞað": "VP",  # '(það) verður að segjast að...'
+    "SögnÞaðLeppur": "VP",
     "SögnÓp": "VP",  # '(mig) þraut örendið'
     "SögnAðRæða": "VP",
     "SögnAukafallÞgf": "VP",
