@@ -2353,20 +2353,20 @@ SögnMeðF_lhþt/tala/pers/kyn →
 
 SögnErLoMeðF/tala/pers/kyn →
     # Nú er hann bólusettur
-    HjSögnLhÞtSMMeðF/tala/pers SögnErLoBotn/tala/kyn
-    | HjSögnLhÞtSMMeðF/tala/pers LhÞt/tala/kyn
+    HjSögnLhÞtSMMeðF/tala/pers/kyn SögnErLoBotn/tala/kyn
+    | HjSögnLhÞtSMMeðF/tala/pers/kyn LhÞt/tala/kyn
 
-HjSögnLhÞtSMMeðF/tala/pers →
-    HjSögnLhÞtMeðF/tala/pers | HjSögnSkuluMunuMeðF/tala/pers
+HjSögnLhÞtSMMeðF/tala/pers/kyn →
+    HjSögnLhÞtMeðF/tala/pers/kyn | HjSögnSkuluMunuMeðF/tala/pers/kyn
 
-HjSögnLhÞtSMMeðF_p3_et →
-    HjSögnLhÞtMeðF_et_p3 | HjSögnSkuluMunuMeðF_et_p3
+HjSögnLhÞtSMMeðF_p3_et/kyn →
+    HjSögnLhÞtMeðF_et_p3/kyn | HjSögnSkuluMunuMeðF_et_p3/kyn
 
 HjSögnLhÞtSMMeðF_p3_ft →
-    HjSögnLhÞtMeðF_ft_p3 | HjSögnSkuluMunuMeðF_ft_p3
+    HjSögnLhÞtMeðF_ft_p3/kyn | HjSögnSkuluMunuMeðF_ft_p3/kyn
 
 # Lýsingarháttur þátíðar: vera farinn, hafa verið farinn, skal vera farinn, mun vera farinn
-HjSögnLhÞtMeðF/tala/pers →
+HjSögnLhÞtMeðF/tala/pers/kyn →
     'vera:so'/tala/pers NlFrumlag_nf/tala/pers/kyn FsAtv?                                # eru þær [ekki] farnar
     | so_mm/tala/pers NlFrumlag_nf/tala/pers/kyn FsAtv?                            # töldust þær [ekki] farnar
     | 'þykja:so'/tala/pers NlFrumlag_nf/tala/pers/kyn FsAtv? 'vera:so'_nh          # þóttu þær [ekki] vera farnar
@@ -2410,12 +2410,12 @@ HjSögnLhÞtMeðF/tala/pers →
     | 'eiga:so'/tala/pers NlFrumlag_nf/tala/pers/kyn FsAtv? Nhm 'verða:so'_nh      # áttu þær [ekki] að verða farnar
     | 'eiga:so'/tala/pers NlFrumlag_nf/tala/pers/kyn FsAtv? Nhm 'hafa:so'_nh 'verða:so'_sagnb  # eiga þær [ekki] að hafa orðið farnar
 
-$tag(purge_verb) HjSögnLhÞtMeðF/tala/pers
+$tag(purge_verb) HjSögnLhÞtMeðF/tala/pers/kyn
 
-HjSögnSkuluMunuMeðF/tala/pers →
+HjSögnSkuluMunuMeðF/tala/pers/kyn →
     'skulu:so'/tala/pers NlFrumlag_nf/tala/pers/kyn | 'munu:so'/tala/pers NlFrumlag_nf/tala/pers/kyn
 
-$tag(purge_verb) HjSögnSkuluMunuMeðF/tala/pers
+$tag(purge_verb) HjSögnSkuluMunuMeðF/tala/pers/kyn
 
 
 OgSögn_1/fall/tala/pers →
