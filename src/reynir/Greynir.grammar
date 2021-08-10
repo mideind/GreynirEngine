@@ -121,7 +121,6 @@
 /þf = þf
 /et = et
 /p3 = p3
-/expl = expl
 
 # GRAMMAR RULES
 
@@ -959,6 +958,8 @@ Setning_et_p3_hk →
     # Það (verður að viðurkennast að Jón er fær á sínu sviði)
     # Það (mun skapast hætta)
     | NlFrumlagÞað SögnÞað
+    # Sérstök regla fyrir það-sagnir
+    # Það rignir (fyrir norðan)
     | NlFrumlagLeppur SögnÞaðLeppur
     # 'Til stendur/stóð að halda landsfundinn í júní'
     | SetningTilStendur
@@ -978,7 +979,7 @@ SögnÞað →
     | 'verða:so'_0_gm_p3_et FsAtv? NhEinfaldur_mm ","? Skýringarsetning
 
 SögnÞaðLeppur →
-    | LeppSögn FsAtv?
+    | LeppSögn FsAtv?       # Það rignir (fyrir norðan)
 
 # Nýtt undirtré fyrir tengingu sagnar og forsetningar
 $tag(begin_prep_scope) Setning/tala/pers/kyn
@@ -1198,9 +1199,9 @@ $score(+10) VirðistSem # Sennilega rétt greint
 
 SögnFinnstBotn →
     'vera:so'_1_nf_nh NlSagnfylling_nf                 # Finnst þeim vera slagsíða í umfjölluninni
-    | NlFrumlagÞað? LoSamanb_et_nf_hk AðLiður?
+    | NlFrumlagÞað? LoSamanb_et_nf_hk AðLiður?         # Henni finnst það skemmtilegur siður [að ...]
     | NhRuna
-    | so_expl_op_3p_et
+    | so_expl_op_3p_et                                 # Honum finnst rigna á sig
 
 Sagnliður_lhþt →
     EinSögn_lhþt/tala/kyn OgSögn_lhþt/tala/kyn* HjSögnLhÞt_p3/tala
@@ -1796,7 +1797,7 @@ SögnMeðF/tala/pers/kyn →
     SögnMeðF_0/tala/pers/kyn   # Sögn með engu viðfangi: (Í dag) skánaði veðrið
     | SögnMeðF_1/tala/pers/kyn # Sögn með einu viðfangi: (Í dag) sá Jón köttinn
     | SögnMeðF_2/tala/pers/kyn # Sögn með tveimur viðföngum: (Í dag) skrifaði Kata Önnu bréf
-    | SögnMeðF_lhþt/tala/pers/kyn # Sögn með lýsingarhátt þátíðar
+    | SögnMeðF_lhþt/tala/pers/kyn # Sögn með lýsingarhátt þátíðar: (Í dag) var Jón bólusettur
 
 $score(+1) SögnMeðF_0/tala/pers/kyn
 $score(+3) SögnMeðF_1/tala/pers/kyn
@@ -2350,7 +2351,6 @@ SögnMeðF_lhþt/tala/pers/kyn →
     # Nú var hann bólusettur
     SögnErLoMeðF/tala/pers/kyn 
 
-
 SögnErLoMeðF/tala/pers/kyn →
     # Nú er hann bólusettur
     HjSögnLhÞtSMMeðF/tala/pers/kyn SögnErLoBotn/tala/kyn
@@ -2470,6 +2470,7 @@ SögnNhBreyting →
 
 # Frumlagslausar sagnir með frumlagsleppi
 # 'Það snjóaði gífurlega í nótt'
+# 'Það rignir fyrir norðan'
 LeppSögn → so_expl_op_3p_et
 
 # Umraðanir
@@ -3529,6 +3530,8 @@ $score(-2) NlSkýringarsetning
 # (Lögreglan rannsakar) [nú] hvort Jón hafi ekið bílnum
 NlSpurnaraukasetning → AtviksliðurHliðstæður* Spurnaraukasetning
 
+# Það-frumlag sem samræmist sagnfyllingu ekki
+# 'Nú voru það Danir sem unnu leikinn'
 NlFrumlagÞað → 'það:pfn'_hk_nf_et
 
 # Hafa sérstakan hnút fyrir frumlagslepp (NP-ES)
