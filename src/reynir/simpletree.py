@@ -77,8 +77,8 @@ from .fastparser import ParseForestNavigator, Node
 from .bintokenizer import (
     CURRENCIES,
     CURRENCY_GENDERS,
-    MULTIPLIERS,
-    DECLINABLE_MULTIPLIERS,
+    NUMBER_ABBREVS,
+    DECLINABLE_NUMBERS,
 )
 from .bindb import GreynirBin
 from .matcher import match_pattern, ContextDict
@@ -1103,7 +1103,7 @@ class SimpleTree:
                 continue
             if tokentype == "AMOUNT":
                 if tok_lower.endswith("."):
-                    if tok_lower in MULTIPLIERS:
+                    if tok_lower in NUMBER_ABBREVS:
                         # Abbreviations such as 'þús.', 'mrð.': treat as
                         # undeclinable 'töl' tokens
                         result.append("töl")
@@ -1121,7 +1121,7 @@ class SimpleTree:
                             lambda mm: (
                                 (
                                     mm.stofn in CURRENCIES
-                                    or mm.stofn in DECLINABLE_MULTIPLIERS
+                                    or mm.stofn in DECLINABLE_NUMBERS
                                 )
                                 if mm.ordfl in _GENDERS
                                 else mm.ordfl in {"to", "töl", "lo"}
