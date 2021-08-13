@@ -593,6 +593,7 @@ class BIN_Token(Token):
         # Synthetic variants that constrain matching to particular endings
         "x": None,  # lemma ending constraint
         "z": None,  # word form ending constraint
+        "expl": "það", # Verbs with an expletive (leppur); 'það snjóar', 'það rignir'
     }
 
     # Make a copy of VARIANT with the past tense (þt) added
@@ -636,7 +637,7 @@ class BIN_Token(Token):
     VBIT_LEMMA_ENDING = VBIT["x"]
     VBIT_WORD_ENDING = VBIT["z"]
     VBIT_ENDING = VBIT_LEMMA_ENDING | VBIT_WORD_ENDING
-
+    VBIT_EXPL = VBIT["expl"]
     # Mask the following bits off a VBIT set to get an FBIT set
     FBIT_MASK = VBIT_ABBREV | VBIT_SUBJ | VBIT_SCASES | VBIT_ENDING
 
@@ -672,6 +673,7 @@ class BIN_Token(Token):
         "gm",
         "mm",
         "sp",
+        "expl",
     )
 
     # Dictionary of associated BIN forms, initialized later
@@ -740,7 +742,7 @@ class BIN_Token(Token):
             "samt",
             #"af",
             #"fyrir",
-            #"því",
+            "því",
             #"saman",
             #"þá",
         ]
@@ -976,7 +978,7 @@ class BIN_Token(Token):
 
     # Variants that must be present in the terminal
     # if they are present in the verb form
-    _RESTRICTIVE_VARIANTS: Tuple[str, ...] = ("sagnb", "lhþt", "bh", "op", "sp")
+    _RESTRICTIVE_VARIANTS: Tuple[str, ...] = ("sagnb", "lhþt", "bh", "op", "sp", "expl")
 
     @classmethod
     @lru_cache(maxsize=2048)
@@ -1047,12 +1049,14 @@ class BIN_Token(Token):
             return cls.verb_subject_matches(verb, terminal.variant(-1))
 
         # Not a _subj terminal: no match of strictly impersonal verbs
-        # Note that this is overridden in reynir_correct to
+        # Note that this is overridden in greynir_correct to
         # allow impersonal verbs to be used as normal verbs
         # for grammar checking purposes
         if cls.verb_is_strictly_impersonal(verb, form):
             return False
-
+        if terminal.is_expl:
+            if "það" not in form:
+                return False
         if terminal.is_singular and "FT" in form:
             # Can't use plural verb if singular terminal
             return False
@@ -1819,6 +1823,10 @@ class VariantHandler:
     @property
     def is_bh(self) -> bool:
         return (self._vbits & BIN_Token.VBIT_BH) != 0
+
+    @property
+    def is_expl(self) -> bool:
+        return (self._vbits & BIN_Token.VBIT_EXPL) != 0
 
 
 class BIN_Terminal(VariantHandler, Terminal):
