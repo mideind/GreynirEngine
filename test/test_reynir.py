@@ -34,7 +34,7 @@
 from reynir import Greynir
 from reynir.binparser import augment_terminal
 from reynir.bindb import GreynirBin
-from reynir.bintokenizer import TOK
+from reynir.bintokenizer import MIDDLE_NAME_ABBREVS, NOT_NAME_ABBREVS, TOK
 from tokenizer import detokenize
 
 
@@ -314,15 +314,209 @@ def test_sentence_split():
 
 def test_auto_uppercase():
     g = Greynir(auto_uppercase=True)
+
+    for abbr in MIDDLE_NAME_ABBREVS:
+        if abbr not in NOT_NAME_ABBREVS:
+            # No period, no extra tokens
+            s = g.parse_single(f"hér er jón {abbr}")
+            assert (
+                detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}"
+            )
+            assert f"Jón {abbr.capitalize()}" in s.tree.persons
+
+            # No period, extra tokens
+            s = g.parse_single(f"við jón {abbr} erum góðir vinir")
+            assert (
+                detokenize(s.tokens) == f"við Jón {abbr.capitalize()} erum góðir vinir"
+            )
+            assert f"Jón {abbr.capitalize()}" in s.tree.persons
+
+        # No period, surname
+        s = g.parse_single(f"hér er jón {abbr} guðnason")
+        assert (
+            detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()} Guðnason"
+        )
+        assert f"Jón {abbr.capitalize()} Guðnason" in s.tree.persons
+
+        # With period, no extra tokens
+        s = g.parse_single(f"hér er jón {abbr}.")
+        assert (
+            detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}."
+        )
+        assert f"Jón {abbr.capitalize()}." in s.tree.persons
+
+        # With period, extra tokens
+        s = g.parse_single(f"við jón {abbr}. erum góðir vinir")
+        assert (
+            detokenize(s.tokens) == f"við Jón {abbr.capitalize()}. erum góðir vinir"
+        )
+        assert f"Jón {abbr.capitalize()}." in s.tree.persons
+
+        # With period, surname
+        s = g.parse_single(f"hér er jón {abbr}. guðnason")
+        assert (
+            detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}. Guðnason"
+        )
+        assert f"Jón {abbr.capitalize()}. Guðnason" in s.tree.persons
+
+
     s = g.parse_single("hver er guðni th jóhannesson")
     assert detokenize(s.tokens) == "hver er Guðni Th Jóhannesson"
     assert "Guðni Th Jóhannesson" in s.tree.persons
+
+    s = g.parse_single("hver er guðni th. jóhannesson")
+    assert detokenize(s.tokens) == "hver er Guðni Th. Jóhannesson"
+    assert "Guðni Th. Jóhannesson" in s.tree.persons
+
     s = g.parse_single("hver er gunnar thoroddsen")
     assert detokenize(s.tokens) == "hver er Gunnar Thoroddsen"
     assert "Gunnar Thoroddsen" in s.tree.persons
+
     s = g.parse_single("hver er eliza reid")
     assert detokenize(s.tokens) == "hver er Eliza Reid"
     assert "Eliza Reid" in s.tree.persons
+
+    s = g.parse_single("hver er hæð jóns")
+    assert detokenize(s.tokens) == "hver er hæð Jóns"
+    assert "Jón" in s.tree.persons
+
+    s = g.parse_single("hver er hæð sólar í dag í reykjavík")
+    assert "Í" not in detokenize(s.tokens)
+    assert "Sólar Í Dag Í Reykjavík" not in s.tree.persons
+
+    s = g.parse_single("mikil sól var í dag í reykjavík")
+    assert "Í" not in detokenize(s.tokens)
+    assert "Mikill" not in s.tree.persons
+
+    s = g.parse_single("sólin gægðist fram úr skýjunum")
+    assert "Sól" not in s.tree.persons
+
+    s = g.parse_single(
+        "hver er guðmundur í. hámundarson, sonur hámundar á. guðmundssonar"
+    )
+    assert (
+        detokenize(s.tokens)
+        == "hver er Guðmundur Í. Hámundarson, sonur Hámundar Á. Guðmundssonar"
+    )
+    assert (
+        "Guðmundur Í. Hámundarson" in s.tree.persons
+        and "Hámundur Á. Guðmundsson" in s.tree.persons
+    )
+
+    s = g.parse_single("hver er guðmundur í hámundarson, sonur hámundar á guðmundssonar")
+    assert detokenize(s.tokens) == "hver er Guðmundur Í Hámundarson, sonur Hámundar Á Guðmundssonar"
+    assert "Guðmundur Í Hámundarson" in s.tree.persons and "Hámundur Á Guðmundsson" in s.tree.persons
+
+    s = g.parse_single(
+        "ég hitti loft á bíldudal, blæ á seyðisfirði og skúla í keflavík"
+    )
+    assert (
+        detokenize(s.tokens)
+        == "ég hitti Loft á Bíldudal, Blæ á Seyðisfirði og Skúla í Keflavík"
+    )
+    assert (
+        "Loftur" in s.tree.persons
+        and "Blær" in s.tree.persons
+        and "Skúli" in s.tree.persons
+    )
+
+    s = g.parse_single("hver er lofthæna s melkorkudóttir")
+    assert detokenize(s.tokens) == "hver er Lofthæna S Melkorkudóttir"
+    assert "Lofthæna S Melkorkudóttir" in s.tree.persons
+
+    s = g.parse_single("katrín jakobs hitti justin p. j. trudeau um daginn")
+    assert detokenize(s.tokens) == "Katrín Jakobs hitti Justin P. J. Trudeau um daginn"
+    assert (
+        "Katrín Jakobs" in s.tree.persons and "Justin P. J. Trudeau" in s.tree.persons
+    )
+
+    s = g.parse_single("katrín jakobsdóttir hitti justin p j trudeau um daginn")
+    assert (
+        detokenize(s.tokens) == "Katrín Jakobsdóttir hitti Justin P J Trudeau um daginn"
+    )
+    assert (
+        "Katrín Jakobsdóttir" in s.tree.persons
+        and "Justin P J Trudeau" in s.tree.persons
+    )
+
+    s = g.parse_single("rætt var við dag b eggertsson, borgarstjóra reykjavíkur")
+    assert (
+        detokenize(s.tokens)
+        == "rætt var við Dag B Eggertsson, borgarstjóra Reykjavíkur"
+    )
+    assert "Dagur B Eggertsson" in s.tree.persons
+
+    s = g.parse_single("rætt var við dag b. eggertsson, borgarstjóra reykjavíkur")
+    assert (
+        detokenize(s.tokens)
+        == "rætt var við Dag B. Eggertsson, borgarstjóra Reykjavíkur"
+    )
+    assert "Dagur B. Eggertsson" in s.tree.persons
+
+    s = g.parse_single(
+        "úrsúla von der leyen (fædd 8. október 1958) er þýskur stjórnmálamaður "
+        "og núverandi forseti framkvæmdastjórnar evrópusambandsins"
+    )
+    assert (
+        detokenize(s.tokens)
+        == "Úrsúla von der Leyen (fædd 8. október 1958) er þýskur stjórnmálamaður "
+        "og núverandi forseti framkvæmdastjórnar Evrópusambandsins"
+    )
+    assert "Úrsúla von der Leyen" in s.tree.persons
+
+    s = g.parse_single("það er fallegur dagur í dag")
+    assert "Í" not in detokenize(s.tokens)
+
+    s = g.parse_single("hann dagur í. dagsson er forkunnarfagur")
+    assert detokenize(s.tokens) == "hann Dagur Í. Dagsson er forkunnarfagur"
+    assert "Dagur Í. Dagsson" in s.tree.persons
+
+    s = g.parse_single("hann dagur í dagsson er forkunnarfagur")
+    assert detokenize(s.tokens) == "hann Dagur Í Dagsson er forkunnarfagur"
+    assert "Dagur Í Dagsson" in s.tree.persons
+
+    s = g.parse_single("guðmundur er bóndi á stöpum og mjólkar kýr")
+    assert detokenize(s.tokens) == "Guðmundur er bóndi á Stöpum og mjólkar kýr"
+    assert "Guðmundur" in s.tree.persons and "Guðmundur Er Bóndi" not in s.tree.persons
+
+    s = g.parse_single("hvað er gummi í mörgum íþróttafélögum")
+    assert detokenize(s.tokens) == "hvað er Gummi í mörgum íþróttafélögum"
+    assert "Gummi" in s.tree.persons
+
+    s = g.parse_single("gunnar á hlíðarenda var vinur njáls á bergþórshvoli")
+    assert detokenize(s.tokens) == "Gunnar á Hlíðarenda var vinur Njáls á Bergþórshvoli"
+    assert "Gunnar" in s.tree.persons and "Njáll" in s.tree.persons
+
+    s = g.parse_single("ég hitti ástbjörn í hverri viku og gunnu á miðvikudögum")
+    assert (
+        detokenize(s.tokens)
+        == "ég hitti Ástbjörn í hverri viku og Gunnu á miðvikudögum"
+    )
+    assert "Ástbjörn" in s.tree.persons and "Gunna" in s.tree.persons
+
+    s = g.parse_single("ég hringdi í baldvin kr. magnússon")
+    assert (
+        detokenize(s.tokens) == "ég hringdi í Baldvin Kr. Magnússon"
+    )
+    assert "Baldvin Kr. Magnússon" in s.tree.persons
+
+    s = g.parse_single("hafðu samband við jón s. 5885522")
+    assert (
+        detokenize(s.tokens) == "hafðu samband við Jón s. 5885522"
+    )
+    assert "Jón" in s.tree.persons
+
+    s = g.parse_single("hafðu samband við jón s. jónsson")
+    assert (
+        detokenize(s.tokens) == "hafðu samband við Jón S. Jónsson"
+    )
+    assert "Jón S. Jónsson" in s.tree.persons
+
+    s = g.parse_single("ég veit ekki hvar hann baldur er.")
+    assert (
+        detokenize(s.tokens) == "ég veit ekki hvar hann Baldur er."
+    )
+    assert "Baldur" in s.tree.persons
 
 
 def test_compounds():

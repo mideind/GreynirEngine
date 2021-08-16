@@ -1789,6 +1789,59 @@ def test_names(r):
     assert s.tree is not None
     assert s.tree.persons == []
     assert s.tree.nouns == ["sýning", "bíó", "þriðjudagskvöld"]
+    s = r.parse_single("Ruud van Nistelrooy og Thomas de Broglie komu í heimsókn.")
+    assert "Thomas de Broglie" in s.tree.persons
+    assert "Ruud van Nistelrooy" in s.tree.entities
+
+    s = r.parse_single("Tómas Í. Guðmundsson og Guðfinna Á. Ákadóttir komu í heimsókn.")
+    assert (
+        "Tómas Í. Guðmundsson" in s.tree.persons
+        and "Guðfinna Á. Ákadóttir" in s.tree.persons
+    )
+
+    s = r.parse_single("Tómas Í. og Guðfinna Á. komu í heimsókn.")
+    assert "Tómas Í." in s.tree.persons and "Guðfinna Á." in s.tree.persons
+
+    s = r.parse_single("Tómas Í Guðmundsson og Guðfinna Á Ákadóttir komu í heimsókn.")
+    assert (
+        "Tómas Í Guðmundsson" in s.tree.persons
+        and "Guðfinna Á Ákadóttir" in s.tree.persons
+    )
+
+    s = r.parse_single("Tómas Í og Guðfinna Á komu í heimsókn.")
+    assert "Tómas Í" in s.tree.persons and "Guðfinna Á" in s.tree.persons
+
+    s = r.parse_single("Ég sá Jónínu Á í svifflugi.")
+    assert "Jónína Á" in s.tree.persons
+    s = r.parse_single("Ég sá Jónínu Á á Eyrarbakka.")
+    assert "Jónína Á" in s.tree.persons
+    s = r.parse_single("Við mættum Þorsteini Í í fallhlífarstökki.")
+    assert "Þorsteinn Í" in s.tree.persons
+    s = r.parse_single("Við mættum Þorsteini Í á Borðeyri.")
+    assert "Þorsteinn Í" in s.tree.persons
+    s = r.parse_single("Halldór Á Í Jónsson er stór maður")
+    assert "Halldór Á Í Jónsson" in s.tree.persons
+    s = r.parse_single("Halldór Á. Í. Jónsson er stór maður")
+    assert "Halldór Á. Í. Jónsson" in s.tree.persons
+    s = r.parse_single("Við hringdum í Hafstein Í.")
+    assert "Hafsteinn Í." in s.tree.persons
+    s = r.parse_single("Við hringdum í Hafstein Á.")
+    assert "Hafsteinn Á." in s.tree.persons
+    s = r.parse_single("Við hringdum í Hafstein B Guðmundsson")
+    assert "Hafsteinn B Guðmundsson" in s.tree.persons
+    s = r.parse_single("Við hringdum í Hafstein B. Guðmundsson")
+    assert "Hafsteinn B. Guðmundsson" in s.tree.persons
+
+    s = r.parse_single("Við hringdum í Guðna Th.")
+    assert "Guðni Th." in s.tree.persons
+    s = r.parse_single("Við hringdum í Baldvin Kr. Magnússon")
+    assert "Baldvin Kr. Magnússon" in s.tree.persons
+    s = r.parse_single("Við hringdum í Baldvin Kr.")
+    assert "Baldvin Kr." in s.tree.persons
+
+    s = r.parse("Við vitum ekki hvaða hesta Jón á. Hann hefur verið bóndi í langan tíma.")
+    assert len(s["sentences"]) == 2
+    assert "Jón" in s["sentences"][0].tree.persons
 
 
 def test_prepositions(r):

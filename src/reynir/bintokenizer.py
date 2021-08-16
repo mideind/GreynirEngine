@@ -36,6 +36,7 @@
 
 from typing import (
     DefaultDict,
+    Deque,
     Dict,
     cast,
     Optional,
@@ -57,11 +58,12 @@ from typing_extensions import TypedDict
 
 import sys
 import re
-from collections import defaultdict
+from collections import defaultdict, deque
 
 from tokenizer import (
     TOK,
     Tok,
+    TokenStream,
     tokenize_without_annotation,
     # The following imports are here in order to be visible in clients
     # (they are not used in this module)
@@ -192,6 +194,8 @@ NOT_NAME_AT_SENTENCE_START: FrozenSet[str] = frozenset(
         "Ljót",
         "Ljóti",
         "Ljóts",
+        "Mikill",
+        "Mikil",
     )
 )
 
@@ -412,7 +416,6 @@ ENTITY_MIDDLE_NAME_SET: FrozenSet[str] = frozenset(
     ("in", "a", "an", "for", "and", "the", "for", "on", "of")
 )
 
-
 # Given names that can also be family names (and thus gender- and caseless as such)
 BOTH_GIVEN_AND_FAMILY_NAMES: FrozenSet[str] = frozenset(("Hafstein",))
 
@@ -464,7 +467,7 @@ _CORPORATION_ENDINGS: FrozenSet[str] = frozenset(
 
 # Abbreviations that we explicitly accept as a part of
 # person names, if we are auto-capitalizing
-UPPER_CASE_ABBREVS: FrozenSet[str] = frozenset(
+MIDDLE_NAME_ABBREVS: FrozenSet[str] = frozenset(
     (
         "th",
         "kr",
@@ -507,6 +510,12 @@ UPPER_CASE_ABBREVS: FrozenSet[str] = frozenset(
         "ö",
     )
 )
+
+# Not name abbreviations if not followed by period or surname
+NOT_NAME_ABBREVS: FrozenSet[str] = frozenset(("á", "í"))
+
+# Words which should probably be lowercase
+PREFER_LOWERCASE: FrozenSet[str] = frozenset(("á", "bóndi", "ganga", "hæð"))
 
 
 def load_token(*args: Any) -> Tuple[int, str, ValType]:
@@ -687,8 +696,13 @@ def annotate(
                                 )
                                 for mm in m
                             ]
+
             # Yield a word tuple with meanings
-            yield token_ctor.Word(w if auto_uppercase else t.txt, m, token=t)
+            yield token_ctor.Word(
+                w if auto_uppercase and t.txt not in PREFER_LOWERCASE else t.txt,
+                m,
+                token=t,
+            )
         else:
             # Already have a meaning (most likely from an abbreviation that the
             # tokenizer has recognized)
@@ -1039,8 +1053,9 @@ def parse_phrases_2(
     token: Tok = cast(Tok, None)
 
     try:
+        # Use TokenStream wrapper for iterator with lookahead
+        token_stream = TokenStream(token_stream)
 
-        # Maintain a one-token lookahead
         token = next(token_stream)
         # Maintain a set of full person names encountered
         names: Set[PersonNameTuple] = set()
@@ -1048,6 +1063,7 @@ def parse_phrases_2(
 
         while True:
             next_token = next(token_stream)
+
             # Make the lookahead checks we're interested in
             # Check for [number] [currency] and convert to [amount]
             if token.kind == TOK.NUMBER and (
@@ -1204,12 +1220,9 @@ def parse_phrases_2(
                 """ Check for unknown (non-Icelandic) surnames """
                 # Accept (most) upper case words as a surnames
                 if auto_uppercase:
-                    if tok.txt in UPPER_CASE_ABBREVS:
-                        # We accept 'th', 'kr' and single-letter lowercase
-                        # abbrevs as surnames if auto-uppercasing
-                        return True
                     if tok.txt and not tok.val:
                         # Looks like an unknown word: accept it as a surname
+                        # (might be a foreign name)
                         return True
                 if tok.kind != TOK.WORD or not tok.txt[0].isupper():
                     # Must start with capital letter
@@ -1228,24 +1241,37 @@ def parse_phrases_2(
             ) -> Optional[List[PersonNameTuple]]:
                 """ Check for given name or middle abbreviation """
                 gnames = given_names(tok)
+                wrd = tok.txt
                 if gnames is not None:
-                    if tok.txt in BOTH_GIVEN_AND_FAMILY_NAMES:
+                    if wrd in BOTH_GIVEN_AND_FAMILY_NAMES:
                         # For instance "Hafstein" which can be both a given
                         # name and a family name: prepend the family name as
                         # an genderless and caseless option to the list
                         gnames = [
-                            PersonNameTuple(name=tok.txt, gender=None, case=None)
+                            PersonNameTuple(name=wrd, gender=None, case=None)
                         ] + gnames
                     return gnames
+
                 if tok.kind != TOK.WORD:
                     return None
-                wrd = tok.txt
-                if len(wrd) > 2 or wrd[0].islower():
-                    if wrd not in FOREIGN_MIDDLE_NAME_SET:
-                        # Accept "Thomas de Broglie", "Ruud van Nistelrooy"
-                        return None
-                # One or two letters, capitalized: accept as middle name abbrev,
-                # all genders and cases possible
+
+                if auto_uppercase and wrd.rstrip(".") in MIDDLE_NAME_ABBREVS:
+                    # Capitalize middle name abbreviations
+                    wrd = wrd.capitalize()
+                    # Also update token txt
+                    tok.txt = wrd
+
+                # If wrd (without following period) is longer than
+                # middle name abbrevs such as "th", "kr" or "f"
+                # or not a foreign middle name (like "al", "der", "van")
+                elif (
+                    len(wrd.rstrip(".")) > 2 or wrd[0].islower()
+                ) and wrd not in FOREIGN_MIDDLE_NAME_SET:
+                    return None
+
+                # Either:
+                # - One or two letter middle name abbreviation (possibly with following period)
+                # - Lowercase foreign middle name ("Thomas de Broglie", "Ruud van Nistelrooy")
                 return [PersonNameTuple(name=wrd, gender=None, case=None)]
 
             def compatible(pn: PersonNameTuple, npn: PersonNameTuple) -> bool:
@@ -1286,7 +1312,53 @@ def parse_phrases_2(
                 w = token.txt
                 namespan = token.original or ""
                 patronym = False
+
                 while True:
+                    ntxt = next_token.txt
+
+                    if auto_uppercase:
+                        # Auto uppercasing of middle name abbreviations
+
+                        # Interpret "s." as abbreviation of "símanúmer"
+                        # when followed by telephone number
+                        if ntxt == "s." and token_stream.kind() == TOK.TELNO:
+                            # Followed by telephone number
+                            # -> not a middle name abbreviation
+                            break
+
+                        # Other lowercase middle name abbreviations
+                        if ntxt in MIDDLE_NAME_ABBREVS:
+
+                            # Check if next token is a period
+                            if token_stream.punctuation() == ".":
+                                # Concatenate period token to middle name abbrev
+                                # and remove period token
+                                next_token = next_token.concatenate(next(token_stream))
+                                ntxt = next_token.txt
+
+                            elif (
+                                ntxt in NOT_NAME_ABBREVS
+                                and token_stream[0]
+                                and not surnames(cast(Tok, token_stream[0]))
+                            ):
+                                # Next token is common word (such as "á", "í")
+                                # and should only be considered a middle name
+                                # if next word is a surname
+                                break
+
+                    # Deal with wrong sentence end/begin (S_END/S_BEGIN) tokens
+                    # that sometimes appear in middle of sentence
+                    # when middle name abbrevations end with period.
+                    # However, if abbrev is last token in sentence, we keep the S_END token
+                    if (
+                        ntxt.endswith(".")
+                        and ntxt.rstrip(".").lower() in MIDDLE_NAME_ABBREVS
+                        and token_stream.kind(0) == TOK.S_END
+                        and token_stream.kind(1) == TOK.S_BEGIN
+                    ):
+                        next(token_stream)  # Remove S_END
+                        next(token_stream)  # Remove S_BEGIN
+
                     ngn = given_names_or_middle_abbrev(next_token)
                     if not ngn:
                         break
@@ -1372,10 +1444,10 @@ def parse_phrases_2(
                     # if so, add it to the person names we've already found
                     while unknown_surname(next_token):
                         ntxt = next_token.txt
+
                         if auto_uppercase and ntxt.islower():
-                            # Make sure that surnames are capitalized
-                            # if we are auto-capitalizing
                             ntxt = ntxt.capitalize()
+
                         for ix, p in enumerate(gn):
                             gn[ix] = PersonNameTuple(
                                 name=p.name + " " + ntxt, gender=p.gender, case=p.case,
