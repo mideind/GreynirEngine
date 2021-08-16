@@ -36,7 +36,6 @@
 
 from typing import (
     DefaultDict,
-    Deque,
     Dict,
     cast,
     Optional,
@@ -58,12 +57,11 @@ from typing_extensions import TypedDict
 
 import sys
 import re
-from collections import defaultdict, deque
+from collections import defaultdict
 
 from tokenizer import (
     TOK,
     Tok,
-    TokenStream,
     tokenize_without_annotation,
     # The following imports are here in order to be visible in clients
     # (they are not used in this module)
@@ -71,6 +69,7 @@ from tokenizer import (
     paragraphs,  # type: ignore
     parse_tokens,  # type: ignore
 )
+from tokenizer.tokenizer import TokenStream
 from tokenizer.definitions import (
     BIN_Tuple,
     BIN_TupleList,
@@ -1023,8 +1022,10 @@ def parse_phrases_1(
                             for mm in cast(Tuple[BIN_Tuple, ...], next_token.val)
                         ]
                         # Copy attributes, such as capitalization status
-                        # (cf. GreynirCorrect) from the first token in the queue
-                        token = token_ctor.Word(txt, m, token=all_tq[0])
+                        # (cf. GreynirCorrect) from the first token in the queue,
+                        # but send the whole queue so that the original string
+                        # can be preserved
+                        token = token_ctor.Word(txt, m, token=all_tq)
                         next_token = next(token_stream)
                 else:
                     # Incorrect prediction: make amends and continue
@@ -1051,6 +1052,7 @@ def parse_phrases_2(
         and process person names """
 
     token: Tok = cast(Tok, None)
+    next_token: Tok = cast(Tok, None)
 
     try:
         # Use TokenStream wrapper for iterator with lookahead
@@ -1309,7 +1311,7 @@ def parse_phrases_2(
             if gn:
                 # Found at least one given name: look for a sequence of given names
                 # having compatible genders and cases
-                w = token.txt
+                w: str = token.txt or ""
                 namespan = token.original or ""
                 patronym = False
 

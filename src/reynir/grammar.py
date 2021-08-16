@@ -76,6 +76,7 @@ from typing import (
     Optional,
     Union,
     Any,
+    cast,
 )
 
 import os
@@ -1387,7 +1388,7 @@ class Grammar:
             ):
                 # This nonterminal has only one production,
                 # with only one nonterminal item
-                target_nt: Nonterminal = plist[0][1][0]
+                target_nt: Nonterminal = cast(Nonterminal, plist[0][1][0])
                 assert target_nt != nt
                 while target_nt in shortcuts:
                     # Find ultimate destination of shortcut
