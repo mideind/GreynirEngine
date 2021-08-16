@@ -1010,7 +1010,7 @@ def parse_phrases_1(
                         ]
                         # Copy attributes, such as capitalization status
                         # (cf. GreynirCorrect) from the first token in the queue
-                        token = token_ctor.Word(txt, m, token=all_tq)
+                        token = token_ctor.Word(txt, m, token=all_tq[0])
                         next_token = next(token_stream)
                 else:
                     # Incorrect prediction: make amends and continue
