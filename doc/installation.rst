@@ -46,8 +46,7 @@ To install Greynir:
     $ pip3 install reynir
 
 ...or if you want to be able to edit Greynir's source code in-place,
-install ``git`` and ``git-lfs`` (as `described here <https://git-lfs.github.com/>`_)
-and do the following:
+install ``git`` and do the following (note the final dot in the last line):
 
 .. code-block:: bash
 
@@ -55,13 +54,23 @@ and do the following:
     $ cd ~/github
     $ git clone https://github.com/mideind/GreynirPackage
     $ cd GreynirPackage
-    $ git lfs install
     $ git pull
     $ pip install -e .
 
-On the most common Linux x86_64/amd64 systems, ``pip`` will download and
+On most common Linux x86_64/amd64 systems, ``pip`` will download and
 install a binary wheel. On other systems, a source distribution will be
-downloaded and compiled to binary.
+downloaded and compiled to binary. This requires a standard, Python-supported
+C/C++ compiler to be present on the system.
+
+Greynir's binary wheels are in the ``manylinux2010`` format (or newer).
+This means that you will need version 19.0 or newer of ``pip`` to be able
+to install a Greynir wheel. Versions of Python from 3.7 onwards include a
+new-enough ``pip``. Buf if you have Python 3.6, your ``pip`` may need
+upgrading before you install Greynir, like so:
+
+.. code-block:: bash
+
+    $ python3 -m pip install --upgrade pip
 
 Pull requests are welcome in the project's
 `GitHub repository <https://github.com/mideind/GreynirPackage>`_.
