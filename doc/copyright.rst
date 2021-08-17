@@ -7,7 +7,7 @@ Copyright and licensing
     :align: left
     :alt: Miðeind ehf.
 
-Greynir is *copyright © 2021 Miðeind ehf.*, Reykjavík, Iceland.
+GreynirPackage is *copyright © 2021 Miðeind ehf.*, Reykjavík, Iceland.
 
 The project's original author is *Vilhjálmur Þorsteinsson*.
 
@@ -34,7 +34,7 @@ This software is licensed under the MIT License:
 
 .. note::
 
-    GreynirPackage embeds the `Database of Modern Icelandic Inflection <https://bin.arnastofnun.is>`_
+    GreynirPackage indirectly embeds the `Database of Modern Icelandic Inflection <https://bin.arnastofnun.is>`_
     (`Beygingarlýsing íslensks nútímamáls <https://bin.arnastofnun.is>`_), abbreviated BÍN.
 
     The BÍN source data are publicly available under the CC-BY-4.0 license, as further
@@ -45,6 +45,6 @@ This software is licensed under the MIT License:
 
     *Beygingarlýsing íslensks nútímamáls. Stofnun Árna Magnússonar í íslenskum fræðum. Höfundur og ritstjóri Kristín Bjarnadóttir.*
 
-    GreynirPackage includes certain additions and modifications to the original BÍN
-    source data. These are explained in the source code file ``tools/binpack.py``,
-    available in the project's `GitHub repository <https://github.com/mideind/GreynirPackage>`_.
+    GreynirPackage accesses BÍN data through another package from the same authors
+    called BinPackage, and further information is available in that package's
+    `GitHub repository <https://github.com/mideind/BinPackage>`_.

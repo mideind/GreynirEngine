@@ -279,6 +279,9 @@ These variants occur with verbs (``so`` terminal category) only.
 |            | non-nominative (sögn sem krefst frumlags í              |
 |            | aukafalli)                                              |
 +------------+---------------------------------------------------------+
+| expl       | Expletive (leppur), matches verb forms that can be used |
+|            | with an expletive (*það rignir*)                        |
++------------+---------------------------------------------------------+
 
 Noun qualifiers
 ---------------

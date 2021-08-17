@@ -10,7 +10,7 @@ Welcome to Greynir
 *Til að gagnast sem flestum er skjölun Greynis á ensku. - In order to serve
 the widest possible audience, Greynir's documentation is in English.*
 
-Greynir is a Python 3.x package for **working with Icelandic text**,
+Greynir is a Python >= 3.6 package for **working with Icelandic text**,
 including parsing it into **sentence trees**, finding **lemmas**,
 inflecting **noun phrases**, assigning **part-of-speech tags** and much more.
 
@@ -49,10 +49,11 @@ To start using Greynir with Python, you (usually) need
    $ pip install reynir
 
 **No database to set up, no further data to download.**
-The entire `Database of Modern Icelandic
+
+Greynir indirectly embeds the `Database of Modern Icelandic
 Inflection <https://bin.arnastofnun.is/DMII/>`_
 (`Beygingarlýsing íslensks nútímamáls <https://bin.arnastofnun.is>`_),
-with over 6 million entries, is embedded within Greynir in compressed form.
+with over 6 million entries, in compressed form.
 By looking up word forms in this database and applying context-free
 grammar rules (productions) and scoring heuristics, Greynir is able to
 infer what the most likely lemmas are, how they are inflected in the
@@ -92,7 +93,11 @@ technology; changes that may leave low-resource languages at a
 disadvantage unless explicit action is taken to strengthen their position.
 
 Greynir and associated projects received grants from the Icelandic
-Language Technology Fund *(Máltæknisjóður)* in 2016 and 2017.
+Language Technology Fund *(Máltæknisjóður)* in 2016 and 2017, and have
+been partially supported by the Icelandic Government's Language
+Technology Programme The LT Programme is managed by
+`Almannarómur <https://almannaromur.is/>`_ and funded by the Ministry
+of Education, Science and Culture.
 
 
 .. toctree::
