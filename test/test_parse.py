@@ -1881,6 +1881,10 @@ def test_personally(r):
         s.tree.flat_with_all_variants
         == "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf no_et_hk_nf /NP-SUBJ VP VP "
         "so_1_þf_et_fh_gm_nt_p3 /VP NP-OBJ pfn_et_p2_þf ao /NP-OBJ /VP /IP /S-MAIN p /S0"
+    ) or (
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf no_et_hk_nf /NP-SUBJ VP VP "
+        "so_1_þf_subj_op_þf_et_fh_gm_nt /VP NP-OBJ pfn_et_p2_þf ao /NP-OBJ /VP /IP /S-MAIN p /S0"
     )
     s = r.parse_single("Þetta kom illa við þær persónulega.")
     assert s.tree is not None
