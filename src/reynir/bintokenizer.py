@@ -514,7 +514,17 @@ MIDDLE_NAME_ABBREVS: FrozenSet[str] = frozenset(
 NOT_NAME_ABBREVS: FrozenSet[str] = frozenset(("á", "í"))
 
 # Words which should probably be lowercase
-PREFER_LOWERCASE: FrozenSet[str] = frozenset(("á", "bóndi", "ganga", "hæð"))
+PREFER_LOWERCASE: FrozenSet[str] = frozenset(
+    (
+        "á",
+        "bóndi",
+        "frá",
+        "ganga",
+        "hæð",
+        "mikil",
+        "mikill",
+    )
+)
 
 
 def load_token(*args: Any) -> Tuple[int, str, ValType]:
@@ -619,9 +629,14 @@ def annotate(
         # This is a word token
         w = t.txt
         if not t.val:
-            # Look up word in BIN database
-            w, m = db.lookup_g(w, at_sentence_start, auto_uppercase)
+            # Look up word in BÍN database
+            # If word is found in PREFER_LOWERCASE we skip searching uppercase meanings
+            # (if auto_uppercase is True)
+            w, m = db.lookup_g(
+                w, at_sentence_start, auto_uppercase and w not in PREFER_LOWERCASE
+            )
             if not m:
+                # No meaning found in BÍN
                 # Check exceptional cases involving hyphens
                 w = t.txt
                 if w[0] in COMPOSITE_HYPHENS:
@@ -654,8 +669,6 @@ def annotate(
                         w_new, m = db.lookup_g(
                             "".join(parts), at_sentence_start, auto_uppercase
                         )
-                    else:
-                        w_new = ""  # Included to silence warning about unbound variable
                     if m:
                         # Found without hyphens: use that word form
                         m = [
@@ -698,7 +711,7 @@ def annotate(
 
             # Yield a word tuple with meanings
             yield token_ctor.Word(
-                w if auto_uppercase and t.txt not in PREFER_LOWERCASE else t.txt,
+                w if auto_uppercase else t.txt,
                 m,
                 token=t,
             )
