@@ -1875,15 +1875,15 @@ def test_personally(r):
         == "S0 S-MAIN IP NP-SUBJ pfn_et_p1_þgf ao /NP-SUBJ VP VP so_subj_op_þgf_et_fh_gm_þt /VP "
         "NP fn_et_hk_nf /NP NP-PRD eo lo_et_hk_nf_sb /NP-PRD /VP /IP /S-MAIN p /S0"
     )
-    s = r.parse_single("Þetta mál varðar þig persónulega.")
+    s = r.parse_single("Þessi samningur varðar þig persónulega.")
     assert s.tree is not None
     assert (
         s.tree.flat_with_all_variants
-        == "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf no_et_hk_nf /NP-SUBJ VP VP "
+        == "S0 S-MAIN IP NP-SUBJ fn_et_kk_nf no_et_kk_nf /NP-SUBJ VP VP "
         "so_1_þf_et_fh_gm_nt_p3 /VP NP-OBJ pfn_et_p2_þf ao /NP-OBJ /VP /IP /S-MAIN p /S0"
     ) or (
         s.tree.flat_with_all_variants
-        == "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf no_et_hk_nf /NP-SUBJ VP VP "
+        == "S0 S-MAIN IP NP-SUBJ fn_et_kk_nf no_et_kk_nf /NP-SUBJ VP VP "
         "so_1_þf_subj_op_þf_et_fh_gm_nt /VP NP-OBJ pfn_et_p2_þf ao /NP-OBJ /VP /IP /S-MAIN p /S0"
     )
     s = r.parse_single("Þetta kom illa við þær persónulega.")

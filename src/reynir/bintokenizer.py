@@ -629,13 +629,14 @@ def annotate(
         # This is a word token
         w = t.txt
         if not t.val:
-            # Look up word in BIN database
+            # Look up word in BÍN database
             # If word is found in PREFER_LOWERCASE we skip searching uppercase meanings
             # (if auto_uppercase is True)
             w, m = db.lookup_g(
-                w, at_sentence_start, auto_uppercase and not w in PREFER_LOWERCASE
+                w, at_sentence_start, auto_uppercase and w not in PREFER_LOWERCASE
             )
             if not m:
+                # No meaning found in BÍN
                 # Check exceptional cases involving hyphens
                 w = t.txt
                 if w[0] in COMPOSITE_HYPHENS:
@@ -668,8 +669,6 @@ def annotate(
                         w_new, m = db.lookup_g(
                             "".join(parts), at_sentence_start, auto_uppercase
                         )
-                    else:
-                        w_new = ""  # Included to silence warning about unbound variable
                     if m:
                         # Found without hyphens: use that word form
                         m = [
