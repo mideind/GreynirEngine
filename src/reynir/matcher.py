@@ -27,6 +27,7 @@
         TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
         SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+
     This module exports the function match_pattern() which can determine
     whether a "SimpleTree" instance matches a pattern string.
 
@@ -79,6 +80,11 @@
         This is a set-like operator.
 
     `Any1 >> { Any2 Any3 ... }` matches if Any1 matches and has children at any
+        sublevel, however not including nested IP subtrees,
+        that include Any2, Any3 *and* other given arguments
+        (irrespective of order). This is a set-like operator.
+
+    `Any1 >>> { Any2 Any3 ... }` matches if Any1 matches and has children at any
         sublevel that include Any2, Any3 *and* other given arguments
         (irrespective of order). This is a set-like operator.
 
@@ -86,7 +92,12 @@
         that include Any2, Any3 *and* other given arguments in the order specified.
         This is a list-like operator.
 
-    `Any1 >> [ Any2 Any3 ...]` matches if Any1 matches and has children at any sublevel
+    `Any1 >> [ Any2 Any3 ...]` matches if Any1 matches and has children at any sublevel,
+        however not including nested IP subtrees, that include Any2, Any3
+        *and* other given arguments in the order specified.
+        This is a list-like operator.
+
+    `Any1 >>> [ Any2 Any3 ...]` matches if Any1 matches and has children at any sublevel
         that include Any2, Any3 *and* other given arguments in the order specified.
         This is a list-like operator.
 
@@ -342,7 +353,9 @@ def single_match(
         # Single quote: match word lemma(s) of the subtree
         # Note that this is a case-significant compare
         return item[1:-1] == tree.lemma
-    if tree.terminal:
+    if tree.is_terminal:
+        if tree.kind == "PUNCTUATION":
+            return item == "p"
         if tree.terminal == item:
             return True
         ilist = item.split("_")
@@ -369,11 +382,11 @@ def unpack(items: ItemList, ix: int) -> Tuple[Union[_NestedList, ItemList], str]
 
 
 def contained(
-    tree: "SimpleTree", items: ItemList, pc: int, deep: bool, context: ContextDict
+    tree: "SimpleTree", items: ItemList, pc: int, op: str, context: ContextDict
 ) -> bool:
     """ Returns True if the tree has children that match the subsequence
-        in items[pc], either directly (deep = False) or at any deeper
-        level (deep = True) """
+        in items[pc], either directly (op == '>') or at any deeper
+        level (op == '>>' or op == '>>>') """
     subseq, kind = unpack(items, pc)
     if kind == "[":
         f_run = run_sequence
@@ -384,9 +397,15 @@ def contained(
         return False
     # Deep containment: iterate through deep_children, which is
     # a generator of children generators(!)
-    if deep:
+    if op == ">>>":
         return any(
             f_run(gen_children, subseq, context) for gen_children in tree.deep_children
+        )
+    # Deep containment, except skipping IP subtrees
+    if op == ">>":
+        return any(
+            f_run(gen_children, subseq, context)
+            for gen_children in tree.deep_children_filtered(lambda s: s.tag == "IP")
         )
     # Shallow containment: iterate through direct children
     return f_run(tree.children, subseq, context)
@@ -460,12 +479,17 @@ def run_sequence(
                     return False
                 op = ">"
                 if pc < len_items and items[pc] == ">":
-                    # '>>' operator: arbitrary depth containment
+                    # '>>' operator: arbitrary depth containment,
+                    # but skipping IP subtrees
                     pc += 1
                     op = ">>"
+                    if pc < len_items and items[pc] == ">":
+                        # '>>>' operator: arbitrary depth containment
+                        pc += 1
+                        op = ">>>"
                 if pc >= len_items:
                     raise ValueError("Missing argument to '{0}' operator".format(op))
-                result = contained(tree, items, pc, op == ">>", context)
+                result = contained(tree, items, pc, op, context)
                 if not result:
                     return False
                 pc += 1
@@ -501,6 +525,7 @@ def run_set(gen: Iterator["SimpleTree"], items: ItemList, context: ContextDict) 
         If all items are eventually matched, return True,
         otherwise False. """
     len_items = len(items)
+    assert len_items
     # Keep a set of items that have not yet been matched
     # by one or more tree nodes
     unmatched: Set[int] = set(range(len_items))
@@ -516,20 +541,26 @@ def run_set(gen: Iterator["SimpleTree"], items: ItemList, context: ContextDict) 
                 pc += 1
                 op = ">"
                 if pc < len_items and items[pc] == ">":
-                    # Deep match
+                    # Deep match but excluding IP subtrees
                     op = ">>"
                     pc += 1
+                    if pc < len_items and items[pc] == ">":
+                        # Deeper match
+                        op = ">>>"
+                        pc += 1
                 if pc >= len_items:
                     raise ValueError("Missing argument to '{0}' operator".format(op))
                 if result:
                     # Further constrained by containment
-                    result = contained(tree, items, pc, op == ">>", context)
+                    result = contained(tree, items, pc, op, context)
                 pc += 1
                 # Always cut away the 'dummy' extra items corresponding
-                # to the '>' (or '>>') and its argument
+                # to the '>', '>>', '>>>' operators and their argument
                 unmatched -= {pc - 1, pc - 2}
-                if op == ">>":
+                if op == ">>" or op == ">>>":
                     unmatched -= {pc - 3}
+                if op == ">>>":
+                    unmatched -= {pc - 4}
             if result:
                 # We have a match
                 unmatched -= {item_pc}
@@ -538,6 +569,7 @@ def run_set(gen: Iterator["SimpleTree"], items: ItemList, context: ContextDict) 
                 return True
     # Return True if all items got matched at some point
     # by a tree node, otherwise False
+    assert unmatched
     return False
 
 

@@ -60,12 +60,13 @@ Simple matches
   the specified category of terminal, and having at least the variants given,
   if any. ``no`` thus matches all noun terminals, while ``no_nf_et``
   only matches noun terminals in nominative case, singular (but any
-  gender, since a gender variant is not specified).
+  gender, since a gender variant is not specified). ``p`` matches a
+  punctuation terminal.
 
 Wildcard match
 --------------
 
-* A dot ``.`` matches any single tree node.
+* A dot ``.`` matches any single tree node, which can be a terminal or nonterminal.
 
 OR match
 --------
@@ -107,8 +108,15 @@ Hierarchical matches
   (irrespective of order). This is a *set-like* operator.
 
 * ``Any1 >> { Any2 Any3 ... }`` matches if ``Any1`` matches and has children
-  *at any sublevel* that include ``Any2``, ``Any3`` *and* other given arguments
-  (irrespective of order). This is a *set-like* operator.
+  *at any sublevel*, that include ``Any2``, ``Any3`` *and* other given arguments
+  (irrespective of order). However, subtrees of ``IP`` nonterminals are skipped,
+  so nested inflectional phrases are excluded from the search.
+  This is a *set-like* operator.
+
+* ``Any1 >>> { Any2 Any3 ... }`` matches if ``Any1`` matches and has children
+  *at any sublevel*, that include ``Any2``, ``Any3`` *and* other given arguments
+  (irrespective of order). Unlike the ``>>`` operator, subtrees of ``IP`` are
+  included in the search. This is a *set-like* operator.
 
 * ``Any1 > [ Any2 Any3 ... ]`` matches if ``Any1`` matches and has immediate
   children that include ``Any2``, ``Any3`` *and* other given arguments

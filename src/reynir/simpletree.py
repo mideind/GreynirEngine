@@ -133,12 +133,12 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "Staðhæfing": ("S-QUOTE", "IP"),  # "Þetta er svona, segir Páll"
     "Tilvísunarsetning": "CP-REL",
     "KommaTilvísunarsetning": "CP-REL",
-    #"AðÞvíErSegir": "CP-REL",
+    # "AðÞvíErSegir": "CP-REL",
     "Skilyrði": "CP-COND",
     "Afleiðing": "S-CONS",
     "Spurnarsetning": "S-QUE",
     "Sagt": "CP-QUOTE",
-    #"Segjandi": "CP-SOURCE",
+    # "Segjandi": "CP-SOURCE",
     "Forskeyti": "S-PREFIX",
     "Tíðarsetning": "CP-ADV-TEMP",
     "Tilgangssetning": "CP-ADV-PURP",
@@ -179,23 +179,23 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "SagnarBotn": "IP",
     "ÞóBotn": "IP",
     "SkýringarBotn": "IP",
-    #"SegirÍ": "IP",
+    # "SegirÍ": "IP",
     "BeygingarliðurStýftAndlag": "IP",
     "BeygingarliðurVh": "IP",
     "BlTagl": "IP",
     "SetningSo": "IP",  # Removed "VP" from here - it creates duplicate IP>VP chains
     "SetningSoÞað": "IP",  # Removed "VP" from here - it creates duplicate IP>VP chains
-    "AtvSetning" : "IP",
+    "AtvSetning": "IP",
     "NhLiður": "IP-INF",
     "SetningÞað": "IP-INF",
-    #"ÞaðTenging": "IP-INF",
+    # "ÞaðTenging": "IP-INF",
     "ViðurkenningarNh": "IP-INF",
     "ViðurkenningarNhKomma": "IP-INF",
     "NafnháttarsetningFrumlag": "IP-INF-SUBJ",
     "NafnháttarsetningBeintAndlag": "IP-INF-OBJ",
     "NafnháttarsetningÓbeintAndlag": "IP-INF-IOBJ",
     "NafnháttarsetningSagnfylling": "IP-INF-PRD",
-    "SögnFinnstBotn" : "IP-INF-PRD",
+    "SögnFinnstBotn": "IP-INF-PRD",
     "Nl": "NP",
     "NlRunaEða": "NP",
     "SpurnarNafnliður": "NP",
@@ -205,14 +205,14 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "Allra": "NP-POSS",
     # "LoEftirNlMeðÞgf": "NP-DAT",
     "LoViðhengi": "NP-ADP",  # Adjective predicate
-    #"Heimilisfang": "NP-ADDR",
-    #"Fyrirtæki": "NP-COMPANY",
-    #"SérnafnFyrirtæki": "NP-COMPANY",
+    # "Heimilisfang": "NP-ADDR",
+    # "Fyrirtæki": "NP-COMPANY",
+    # "SérnafnFyrirtæki": "NP-COMPANY",
     "Magn": "NP-MEASURE",
     # Note: NP-TITLE is referred to in the program logic below,
     # so be careful when changing it
-    #"Titill": "NP-TITLE",
-    #"FæðingarOgDánardægur": "NP-LIFESPAN",
+    # "Titill": "NP-TITLE",
+    # "FæðingarOgDánardægur": "NP-LIFESPAN",
     "Frumlag": "NP-SUBJ",
     "NlFrumlag": "NP-SUBJ",
     "NlFrumlagÞað": "NP-SUBJ",
@@ -224,7 +224,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "NlNema": "NP-EXCEPT",  # '(söknuðu einskis) nema hestsins'
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
-    #"SögnErLoBotn": "NP-PRD",  # Show '(Hann er) góður / 18 ára' as a predicate argument
+    # "SögnErLoBotn": "NP-PRD",  # Show '(Hann er) góður / 18 ára' as a predicate argument
     "LoTengtSögn": "NP-PRD",
     "LoÞgfNh": "NP-PRD",  # '(Mér er) frjálst (að reykja utandyra)'
     "Aldur": "NP-AGE",
@@ -232,19 +232,18 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "TímaNafnliðurMinni": "NP",
     "TímaMagnNafnliðurStærri": "NP",
     "TímaMagnNafnliðurMinni": "NP",
-    #"Heimild": "NP-SOURCE",
+    # "Heimild": "NP-SOURCE",
     "NlFjárhæð": "NP",
     "Skst": "NP-PREFIX",  # Noun phrase prefix, such as 'COVID-19 smitið'
-    #"Sagnliður": "VP",
+    # "Sagnliður": "VP",
     "SagnRunaKnöpp": "VP",
-    #"SagnliðurMeðF": "VP",
+    # "SagnliðurMeðF": "VP",
     "So": "VP",
-    #"NhSögnAtv": "VP",
-    #"NhLiðir": "VP",
-    #"NhSögn": "VP",
+    # "NhSögnAtv": "VP",
+    # "NhLiðir": "VP",
+    # "NhSögn": "VP",
     "NhEinfaldur": "VP",
     "SagnliðurÁnF": "VP",
-
     "ÖfugurSagnliður": "VP",
     "SagnliðurVh": "VP",
     "HjSögnLhÞt": "VP",  # Auxiliary verb, hjálparsögn
@@ -260,31 +259,31 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "SögnAukafallEf": "VP",
     "SögnÞessGetið": "VP",
     "SetningLoSögn": "VP",
-    #"HreinSögn": "VP",
-    #"EinSögn": "VP",
+    # "HreinSögn": "VP",
+    # "EinSögn": "VP",
     "SögnUmAðRæða": "VP",
     "SögnVarUmAðRæða": "VP",
     "SagnHluti": "VP",
-    #"SagnRuna": "VP",
+    # "SagnRuna": "VP",
     "SagnRunaStýfð": "VP",
     "Andlagssagnliður": "VP",
     "ÓpSagnliður": "VP",
-    "SetningSoSagnliður" : "VP",
-    "SetningSoÞaðSagnliður" : "VP",
-    "NhSögnAtv" : "VP",
-    "Segir" : "VP",
+    "SetningSoSagnliður": "VP",
+    "SetningSoÞaðSagnliður": "VP",
+    "NhSögnAtv": "VP",
+    "Segir": "VP",
     "HjSögn": "VP-AUX",
     "HjSögnNh": "VP-AUX",
     "HjSögnNhMeðSo": "VP-AUX",
     "HjSögnLhÞtSM": "VP-AUX",
-    "HjSögnFinnst" : "VP-AUX",
-    "HjSögnSagnb" : "VP-AUX",
+    "HjSögnFinnst": "VP-AUX",
+    "HjSögnSagnb": "VP-AUX",
     "FsLiður": "PP",
     "FsMeðFallstjórn": "PP",
     "FsFyrirEftir": "PP",
     "FsUmAðRæða": "PP",
     "FsVarUmAðRæða": "PP",
-    #"FsRunaEftirSögn": "PP",
+    # "FsRunaEftirSögn": "PP",
     "AðSögn": "PP",
     "ÍNl": "PP",
     "SpurnarForsetningarliður": "PP",
@@ -292,7 +291,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "AfLiður": "PP",
     "Atviksliður": "ADVP",
     "AlHvortSemUmErAðRæða": "ADVP",
-    #"LoAtviksliðir": "ADVP",
+    # "LoAtviksliðir": "ADVP",
     "EinnAl": "ADVP",
     "AlTilv": "ADVP",
     "AtviksliðurHliðstæður": "ADVP",
@@ -354,42 +353,50 @@ _DEFAULT_NT_MAP: NonterminalMap = {
 _DEFAULT_ID_MAP: IdMap = {
     "S0": dict(name="Málsgrein"),
     "S0-X": dict(name="Rangt mynduð setning"),
-    "S-MAIN": dict(name="Setning", subject_to={"S-MAIN", "S-QUE", "CP-QUOTE", "IP", "CP-REL"}, overrides="S-HEADING"),
+    "S-MAIN": dict(
+        name="Setning",
+        subject_to={"S-MAIN", "S-QUE", "CP-QUOTE", "IP", "CP-REL"},
+        overrides="S-HEADING",
+    ),
     "S-QUOTE": dict(name="Staðhæfing", overrides="S-MAIN"),
     "S-HEADING": dict(name="Fyrirsögn", subject_to="S-MAIN"),
     "S-PREFIX": dict(name="Forskeyti"),  # Prefix in front of sentence
     "S-EXPLAIN": dict(name="Skýring"),
     "S-QUE": dict(name="Spurnaraðalsetning", overrides="S-MAIN"),  # Question clause
     "CP-THT": dict(
-        name="Skýringarsetning", 
-        overrides="IP-INF", 
-        subject_to={
-            "CP-THT-SUBJ", 
-            "CP-THT-OBJ", 
-            "CP-THT-IOBJ", 
-            "CP-THT-PRD",
-        },
+        name="Skýringarsetning",
+        overrides="IP-INF",
+        subject_to={"CP-THT-SUBJ", "CP-THT-OBJ", "CP-THT-IOBJ", "CP-THT-PRD",},
     ),  # Complement clause
-    "CP-THT-SUBJ": dict(name="Frumlagsskýringarsetning", overrides="NP-SUBJ"),  # Complement clause
-    "CP-THT-OBJ": dict(name="Bein andlagsskýringarsetning", overrides="NP-OBJ"),  # Complement clause
-    "CP-THT-IOBJ": dict(name="Óbein andlagskýringarsetning", overrides="NP-IOBJ"),  # Complement clause
-    "CP-THT-PRD": dict(name="Sagnfyllingarskýringarsetning", overrides="NP-PRD"),  # Complement clause
+    "CP-THT-SUBJ": dict(
+        name="Frumlagsskýringarsetning", overrides="NP-SUBJ"
+    ),  # Complement clause
+    "CP-THT-OBJ": dict(
+        name="Bein andlagsskýringarsetning", overrides="NP-OBJ"
+    ),  # Complement clause
+    "CP-THT-IOBJ": dict(
+        name="Óbein andlagskýringarsetning", overrides="NP-IOBJ"
+    ),  # Complement clause
+    "CP-THT-PRD": dict(
+        name="Sagnfyllingarskýringarsetning", overrides="NP-PRD"
+    ),  # Complement clause
     "CP-QUE": dict(
-        name="Spurnaraukasetning", 
-        overrides={
-            "NP-OBJ",
-        },
-        subject_to={
-            "CP-QUE-SUBJ",
-            "CP-QUE-OBJ",
-            "CP-QUE-IOBJ",
-            "CP-QUE-PRD",
-        },
+        name="Spurnaraukasetning",
+        overrides={"NP-OBJ",},
+        subject_to={"CP-QUE-SUBJ", "CP-QUE-OBJ", "CP-QUE-IOBJ", "CP-QUE-PRD",},
     ),  # Question subclause
-    "CP-QUE-SUBJ": dict(name="Frumlagsspurnaraukasetning", overrides="NP-SUBJ"),  # Question subclause
-    "CP-QUE-OBJ": dict(name="Bein andlagsspurnaraukasetning", overrides="NP-OBJ"),  # Question subclause
-    "CP-QUE-IOBJ": dict(name="Óbein andlagspurnaraukasetning", overrides="NP-IOBJ"),  # Question subclause
-    "CP-QUE-PRD": dict(name="Sagnfyllingarspurnaraukasetning", overrides="NP-PRD"),  # Question subclause
+    "CP-QUE-SUBJ": dict(
+        name="Frumlagsspurnaraukasetning", overrides="NP-SUBJ"
+    ),  # Question subclause
+    "CP-QUE-OBJ": dict(
+        name="Bein andlagsspurnaraukasetning", overrides="NP-OBJ"
+    ),  # Question subclause
+    "CP-QUE-IOBJ": dict(
+        name="Óbein andlagspurnaraukasetning", overrides="NP-IOBJ"
+    ),  # Question subclause
+    "CP-QUE-PRD": dict(
+        name="Sagnfyllingarspurnaraukasetning", overrides="NP-PRD"
+    ),  # Question subclause
     "CP-REL": dict(
         name="Tilvísunarsetning", overrides="S", subject_to={"CP-REL"}
     ),  # Relative clause
@@ -407,28 +414,17 @@ _DEFAULT_ID_MAP: IdMap = {
     "IP": dict(name="Beygingarliður"),  # Inflectional phrase
     # Infinitival inflectional phrase
     "IP-INF": dict(
-        name="Nafnháttarsetning", 
+        name="Nafnháttarsetning",
         overrides="VP",
-        subject_to={
-            "IP-INF-SUBJ",
-            "IP-INF-OBJ",
-            "IP-INF-IOBJ",
-            "IP-INF-PRD",
-        },
+        subject_to={"IP-INF-SUBJ", "IP-INF-OBJ", "IP-INF-IOBJ", "IP-INF-PRD",},
     ),
     "IP-INF-SUBJ": dict(name="Frumlagsnafnháttarsetning", overrides="NP-SUBJ"),
     "IP-INF-OBJ": dict(name="Bein andlagsnafnháttarsetning", overrides="NP-OBJ"),
     "IP-INF-IOBJ": dict(name="Óbein andlagsnafnháttarsetning", overrides="NP-IOBJ"),
     "IP-INF-PRD": dict(name="Sagnfyllingarnafnháttarsetning", overrides="NP-PRD"),
-    "VP": dict(name="Sagnliður", overrides={
-        "VP", 
-        "NP", 
-        "NP-PRD",
-        "NP-SUBJ",
-        "NP-OBJ",
-        "NP-IOBJ",
-        "NP-PRD",
-        },
+    "VP": dict(
+        name="Sagnliður",
+        overrides={"VP", "NP", "NP-PRD", "NP-SUBJ", "NP-OBJ", "NP-IOBJ", "NP-PRD",},
     ),
     "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
     "NP": dict(
@@ -700,7 +696,7 @@ class SimpleTree:
         self,
         pgs: Iterable[Sequence[CanonicalTokenDict]],
         stats: Optional[StatsDict] = None,
-        register: Any=None,
+        register: Any = None,
         parent: Optional["SimpleTree"] = None,
         root: Optional["SimpleTree"] = None,
     ) -> None:
@@ -985,6 +981,22 @@ class SimpleTree:
         yield self.children
         for ch in self.children:
             yield from ch.deep_children
+
+    def deep_children_filtered(
+        self, exclude: Callable[["SimpleTree"], bool]
+    ) -> Iterator[Iterator["SimpleTree"]]:
+        """ Generator of generators of children of this tree and its subtrees.
+            This iterator applies an exclusion filter before navigating
+            into a subtree. This is typically used to avoid nested IP nodes. """
+
+        def gen(g: Iterable["SimpleTree"]) -> Iterator["SimpleTree"]:
+            for c in g:
+                if not exclude(c):
+                    yield c
+
+        yield gen(self.children)
+        for ch in gen(self.children):
+            yield from ch.deep_children_filtered(exclude)
 
     def _view(self, level: int) -> str:
         """ Return a string containing an indented map of this subtree """
@@ -1744,7 +1756,11 @@ class SimpleTree:
                     if i > 0:
                         children = children[i:]
                     break
-        if len(children) == 1 and children[0].tag and children[0].tag.startswith("CP-THT"):
+        if (
+            len(children) == 1
+            and children[0].tag
+            and children[0].tag.startswith("CP-THT")
+        ):
             # If the noun phrase consists only of a CP-THT nonterminal
             # ('skýringarsetning'), add 'það' to the front so the
             # result is something like 'það að fjöldi dæmdra glæpamanna hafi aukist'
@@ -1895,7 +1911,6 @@ class SimpleTree:
         for ch in self.descendants:
             if not ch.is_terminal:
                 yield ch
-
 
     @property
     def span(self) -> Tuple[int, int]:
@@ -2353,7 +2368,7 @@ class AnnoTree:
                 # !!! TODO: There should be an escape character
                 # !!! for parentheses here
                 p += 1
-            if p and txt[p-1] == "\\":
+            if p and txt[p - 1] == "\\":
                 if txt[p] == "(" or txt[p] == ")":
                     p += 1
             return txt[start:p].rstrip()
@@ -2367,9 +2382,9 @@ class AnnoTree:
                 # Right parenthesis
                 # The enclosing nonterminal is done; pop up to the next level above
                 if len(stack) == 1:
-                    # Reached the empty closing parenthesis, 
+                    # Reached the empty closing parenthesis,
                     # don't want to pop last item in stack
-                    p +=1
+                    p += 1
                     break
                 stack.pop()
             elif skipleft():
@@ -2377,7 +2392,7 @@ class AnnoTree:
                 s = skipstring()
                 a = s.split(maxsplit=1)
                 # Extract the node identifier
-                if not a: 
+                if not a:
                     # Empty parentheses surrounding whole tree
                     continue
                 t = a[0]
