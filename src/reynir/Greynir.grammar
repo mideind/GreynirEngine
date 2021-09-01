@@ -686,6 +686,8 @@ Tilgangstenging →
     | "svo:st" "að:st"    # Líka afleiðingartenging
     | SvoTenging
 
+$score(+8) Tilgangstenging
+
 Viðurkenningartenging →
     "enda:st" "þótt:st" AðvörunAð?
     | "jafnvel:ao"? "þótt:st" AðvörunAð?
