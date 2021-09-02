@@ -429,7 +429,7 @@ def run_sequence(
                 ipc = items[pc]
                 if isinstance(ipc, str) and ipc in {"*", "+", "?", ">"}:
                     # Repeat specifier
-                    repeat: str = ipc
+                    repeat = ipc
                     pc += 1
                     if item == "." and repeat in {"*", "+", "?"}:
                         # Limit wildcard repeats if the following item
