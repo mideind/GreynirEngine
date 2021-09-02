@@ -66,6 +66,7 @@ from .bintokenizer import (
     tokens_are_foreign,
     load_token,
 )
+from .binparser import BIN_Token
 from .fastparser import Fast_Parser, ParseError
 from .reducer import Reducer
 from .cache import cached_property
@@ -266,6 +267,23 @@ class _Sentence:
         """ Convenience property to return the lemmas only """
         t = self.terminals
         return None if t is None else [terminal.lemma for terminal in t]
+
+    @property
+    def lemmas_mm(self) -> List[str]:
+        """ Convenience property to return the lemmas only, in middle voice
+            if the terminal so specifies """
+        t = self.terminals
+        result = []
+        if t:
+            for terminal in t:
+                if terminal.category != "so" or "mm" not in terminal.variants:
+                    # Not a middle voice verb: return the normal lemma
+                    result.append(terminal.lemma)
+                else:
+                    # Middle voice verb: return the middle voice lemma
+                    # (ending in -st, such as 'dást' for the verb 'dá')
+                    result.append(BIN_Token.mm_verb_stem(terminal.lemma))
+        return result
 
     @property
     def categories(self) -> Optional[List[str]]:
