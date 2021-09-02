@@ -426,9 +426,10 @@ def run_sequence(
             repeat: Optional[str] = None
             stopper: Optional[str] = None
             if pc < len_items:
-                if items[pc] in {"*", "+", "?", ">"}:
+                ipc = items[pc]
+                if isinstance(ipc, str) and ipc in {"*", "+", "?", ">"}:
                     # Repeat specifier
-                    repeat = cast(str, items[pc])
+                    repeat: str = ipc
                     pc += 1
                     if item == "." and repeat in {"*", "+", "?"}:
                         # Limit wildcard repeats if the following item

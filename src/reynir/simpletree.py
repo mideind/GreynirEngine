@@ -1726,6 +1726,23 @@ class SimpleTree:
         # Correct the spaced text coming from the self.text attribute
         return correct_spaces(self.text)
 
+    def substituted_text(self, sub_tree: "SimpleTree", sub_text: str) -> str:
+        """ Return the text of this subtree, albeit substituting the
+            given sub_text for the node sub_tree """
+        if self is sub_tree:
+            # Perform the requested substitution
+            return sub_text
+        if self.is_terminal:
+            # Terminal node: return own text
+            return self._text
+        # Concatenate the substituted text from the children
+        result = []
+        for ch in self.children:
+            sub = ch.substituted_text(sub_tree, sub_text)
+            if sub:
+                result.append(sub)
+        return correct_spaces(" ".join(result))
+
     def _np_form(self, prop_func: Callable[["SimpleTree"], str]) -> str:
         """ Return a nominative form of the noun phrase (or noun/adjective terminal)
             contained within this subtree. Prop is a property accessor that returns
