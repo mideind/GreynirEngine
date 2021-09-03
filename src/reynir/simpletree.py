@@ -1736,7 +1736,7 @@ class SimpleTree:
             # Terminal node: return own text
             return self._text
         # Concatenate the substituted text from the children
-        result = []
+        result: List[str] = []
         for ch in self.children:
             sub = ch.substituted_text(sub_tree, sub_text)
             if sub:

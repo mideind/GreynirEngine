@@ -104,7 +104,7 @@ class IncrementalParser:
             """ Parse the sentence """
             num = 0
             score = 0
-            forest = None
+            forest: Optional[Node] = None
             try:
                 if tokens_are_foreign(self._s, min_icelandic_ratio=ICELANDIC_RATIO):
                     raise ParseError(

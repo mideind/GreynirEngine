@@ -273,7 +273,7 @@ class _Sentence:
         """ Convenience property to return the lemmas only, in middle voice
             if the terminal so specifies """
         t = self.terminals
-        result = []
+        result: List[str] = []
         if t:
             for terminal in t:
                 if terminal.category != "so" or "mm" not in terminal.variants:

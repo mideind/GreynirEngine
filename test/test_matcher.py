@@ -54,6 +54,16 @@ def g():
 
 def test_matcher(g: Greynir, verbose: bool=False) -> None:
 
+    s = g.parse_single("Hún á heiðurinn að þessu.")
+    m = list(s.tree.all_matches(
+        "( "
+            "VP > [ .* VP > { ( 'eiga'|'fá'|'hljóta' ) } .* NP-OBJ > { 'heiður' PP > { 'að' } } ] "
+        "| "
+            "VP > [ .* VP > { ( 'eiga'|'fá'|'hljóta' ) } .* NP-OBJ > { 'heiður' } PP > { 'að' } ] "
+        ") "
+    ))
+    assert len(m) == 1
+
     # Simple condition, correct sentence (vh in both subtrees)
     s = g.parse_single("Ég hefði farið út ef Jón hefði hegðað sér vel.")
     m = list(s.tree.all_matches("VP > { VP > { so_vh } CP-ADV-COND > { IP > { VP >> so_fh }}}"))

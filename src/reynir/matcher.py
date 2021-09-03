@@ -156,10 +156,10 @@ class _NestedList(List[Union[str, "_NestedList"]]):
     def __init__(self, kind: str, content: ItemList) -> None:
         self._kind = kind
         super().__init__()
-        if kind == "(":
-            # Validate a ( x | y | z ...) construct
-            if any(content[i] != "|" for i in range(1, len(content), 2)):
-                raise ValueError("Missing '|' in pattern")
+        #if kind == "(":
+        #    # Validate a ( x | y | z ...) construct
+        #    if any(content[i] != "|" for i in range(1, len(content), 2)):
+        #        raise ValueError("Missing '|' in pattern")
         super().extend(content)
 
     @property
@@ -239,6 +239,31 @@ class _CompiledPattern:
                                         raise ValueError(
                                             "Mismatched '{0}' in pattern".format(n)
                                         )
+                                # Handle the special case of (X|Y|Z)
+                                if finisher == ")":
+                                    result = _NestedList("(", [])
+                                    start = 0
+                                    k = 1
+                                    while k < len(nested):
+                                        nk = nested[k]
+                                        if nk == "|":
+                                            # Append the sequence that preceded the | sign
+                                            if k <= start:
+                                                raise ValueError("Empty or-branch ('|') in pattern")
+                                            if k == start + 1:
+                                                result.append(nested[start])
+                                            else:
+                                                result.append(_NestedList("|", nested[start:k]))
+                                            start = k + 1
+                                        k += 1
+                                    # Append the final sequence
+                                    if k <= start:
+                                        raise ValueError("Empty or-branch ('|') in pattern")
+                                    if k == start + 1:
+                                        result.append(nested[start])
+                                    else:
+                                        result.append(_NestedList("|", nested[start:k]))
+                                    nested = result
                                 # Assemble the resulting nested list
                                 items = (
                                     items[0:i]
@@ -302,9 +327,14 @@ def single_match(
     if isinstance(item, _NestedList):
         if item.kind == "(":
             # A list of choices separated by '|': OR
-            return any(
-                single_match(item[i], tree, context) for i in range(0, len(item), 2)
-            )
+            for it in item:
+                if isinstance(it, _NestedList) and it.kind == "|":
+                    # Not just one simple item: probably NONTERMINAL >|>>|>>> condition
+                    if run_set(iter([tree]), it, context):
+                        return True
+                elif single_match(it, tree, context):
+                    # One simple item
+                    return True
         return False
     assert isinstance(item, str)
     if context and item.startswith("%"):
@@ -457,21 +487,29 @@ def run_sequence(
                 while result:
                     tree = next(gen)
                     if stopper is not None:
-                        result = not single_match(stopper, tree, context)
+                        if single_match(stopper, tree, context):
+                            # Greedy stop
+                            result = False
                     else:
                         result = single_match(item, tree, context)
             elif repeat == "*":
                 if stopper is not None:
-                    result = not single_match(stopper, tree, context)
+                    if single_match(stopper, tree, context):
+                        # Greedy stop
+                        result = False
                 while result:
                     tree = next(gen)
                     if stopper is not None:
-                        result = not single_match(stopper, tree, context)
+                        if single_match(stopper, tree, context):
+                            # Greedy stop
+                            result = False
                     else:
                         result = single_match(item, tree, context)
             elif repeat == "?":
                 if stopper is not None:
-                    result = not single_match(stopper, tree, context)
+                    if single_match(stopper, tree, context):
+                        # Greedy stop
+                        result = False
                 if result:
                     tree = next(gen)
             elif repeat == ">":
