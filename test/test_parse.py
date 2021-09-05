@@ -1078,7 +1078,7 @@ def test_complex(r, verbose=False):
         "fátt eitt sé nefnt.",
         max_sent_tokens=None,
     )
-    #assert d["num_parsed"] == 1        # TODO stopped working
+    assert d["num_parsed"] == 1
     if verbose:
         print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
             .format(d["parse_time"], d["reduce_time"])
