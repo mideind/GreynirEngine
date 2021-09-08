@@ -5715,7 +5715,7 @@ HverHvorBotn/kyn →
     'fyrir:fs'_þf 'sig:abfn'_þf                         # fyrir sig
     | 'um:fs'_þf 'sig:abfn'_þf                          # um sig
     | 'í:fs'_þgf 'sinn:fn'_et_hk_þgf 'lag:hk'_et_þgf    # í sínu lagi
-    | 'á:ao' 'fótur:kk'_ft_þf 'annar:fn'_et_þgf/kyn                # á fætur annarri
+    | 'á:ao' 'fótur:kk'_ft_þf 'annar:fn'_et_þgf/kyn     # á fætur annarri
     | 'af:fs'_þgf 'annar:fn'_et_þgf/kyn                 # af öðru
 
 StaktLoEftirNl/tala/fall/kyn →
@@ -6192,7 +6192,6 @@ Háttaratviksorð →
     | "rosalega:ao"
     | "ótrúlega:ao"
 
-
 # Atviksorð sem geta fylgt á eftir nafnliðum
 # !!! Setja í conf?
 AtvEftirNl →
@@ -6203,6 +6202,7 @@ AtvEftirNl →
     | "þar:ao" ÁðurEftir
     | "víða:ao" FsRuna # um land / í sveitum
     | "víðsvegar:ao" FsRuna # um landið
+    | "hingað:ao" "til:ao" # Fyrirmæli þeirra hingað til hafa verið óskiljanleg
 
 OgAtvEftirNl →
     OgEða AtvEftirNl
