@@ -1078,7 +1078,7 @@ def test_complex(r, verbose=False):
         "fátt eitt sé nefnt.",
         max_sent_tokens=None,
     )
-    #assert d["num_parsed"] == 1        # TODO stopped working
+    assert d["num_parsed"] == 1
     if verbose:
         print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
             .format(d["parse_time"], d["reduce_time"])
@@ -2162,6 +2162,34 @@ def test_þess_getið(r):
     assert "geta" in s.tree.verbs
 
 
+def test_þau(r):
+    s = r.parse_single("Ég sá þau Margréti áður en þau hlupust á brott.")
+    assert s and s.tree
+    assert s.tree.S.IP.VP.NP_OBJ.tidy_text == "þau Margréti"
+    s = r.parse_single("Þær Þórhildur urðu aldrei sáttar eftir þetta.")
+    assert s and s.tree
+    assert s.tree.S.IP.NP_SUBJ.tidy_text == "Þær Þórhildur"
+    s = r.parse_single("Ég fór til þeirra Sigurjóns.")
+    assert s and s.tree
+    assert s.tree.S.IP.VP.PP.NP.tidy_text == "þeirra Sigurjóns"
+    s = r.parse_single("Mér leiddust stælarnir í þeim Gunnlaugi.")
+    assert s and s.tree
+    assert s.tree.S.IP.NP_SUBJ.PP.NP.tidy_text == "þeim Gunnlaugi"
+
+
+def test_aukafall(r):
+    s = r.parse_single("Mér blöskrar framkoma Páls.")
+    assert s and s.tree
+    s = r.parse_single("Mig brestur þolinmæði.")
+    assert s and s.tree
+    s = r.parse_single("Mig grípur mikill geigur.")
+    assert s and s.tree
+    s = r.parse_single("Mig þvarr allur máttur.")
+    assert s and s.tree
+    s = r.parse_single("Mig þraut örendið.")
+    assert s and s.tree
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
@@ -2212,4 +2240,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
     test_foreign(g)
+    test_aukafall(g)
     g.__class__.cleanup()
