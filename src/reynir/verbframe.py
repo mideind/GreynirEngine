@@ -84,7 +84,7 @@ class VerbErrors:
     VERB_PARTICLES_ERRORS: Dict[str, Dict[str, str]] = defaultdict(dict)
     PREPOSITIONS_ERRORS: Dict[str, Dict[str, str]] = defaultdict(dict)
     WRONG_VERBS: Dict[str, str] = dict()
-
+    OBJ_ERRORS: Dict[str, Dict[str, str]] = defaultdict(dict)
     @staticmethod
     def check_args(args: List[str]) -> None:
         for kind in args:
@@ -111,6 +111,8 @@ class VerbErrors:
         errlist = corrlist[0].split("-")
         errkind = errlist[0].strip()
         verb_with_cases = "_".join([verb] + args)
+        if corrlist[0] == "OBJ-CASE":
+            VerbErrors.OBJ_ERRORS[verb][args[0]] = corrlist[1].strip()
         if errkind == "OBJ":
             vargs = cast(VerbWithArgErrorDict, VerbErrors.ERRORS[len(args)])
             arglists = vargs[verb]
@@ -236,9 +238,13 @@ class VerbFrame:
             return None
         return "_".join([self.verb] + self.cases)
 
-    def matches(self, prep_with_case: str) -> bool:
+    def matches_pp(self, prep_with_case: str) -> bool:
         """ Does this verb frame agree with the given preposition[+case]? """
         return prep_with_case in self.preps
+
+    def matches_pcl(self, particle:str) -> bool:
+        """ Does this verb frame agree with the given particle? """
+        return particle == self.particle
 
     @classmethod
     def create_from_config(cls, s: str) -> None:
@@ -322,17 +328,19 @@ class VerbFrame:
         if error:
             # Add this to the error database
             VerbErrors.add_error(verb, args, prepositions, particle, error)
-        else:
-            # Create a VerbFrame instance
-            vf = cls(verb, args, prepositions, particle, score)
-            case_key = vf.case_key
-            if case_key is not None:
-                # This verb frame has cases as arguments
-                cls.CASE_FRAMES[case_key].append(vf)
-            # Add to the dictionary of all verb frames
-            cls.ALL_FRAMES[vf.key].append(vf)
-            # Add to the set of known verb lemmas
-            cls.VERBS.add(verb)
+        # Create a VerbFrame instance
+        # Note: In order to parse verbs with wrong arguments,
+        # the frame needs to be present as a regular VerbFrame instance
+        # that is then marked as an error in GreynirCorrect
+        vf = cls(verb, args, prepositions, particle, score)
+        case_key = vf.case_key
+        if case_key is not None:
+            # This verb frame has cases as arguments
+            cls.CASE_FRAMES[case_key].append(vf)
+        # Add to the dictionary of all verb frames
+        cls.ALL_FRAMES[vf.key].append(vf)
+        # Add to the set of known verb lemmas
+        cls.VERBS.add(verb)
 
     @classmethod
     def known(cls, verb: str) -> bool:
@@ -354,7 +362,17 @@ class VerbFrame:
             # No frames for this verb with its argument cases
             return False
         # Check the frames one by one and return True if any matches are found
-        return any(vf.matches(prep_with_case) for vf in verb_frames)
+        return any(vf.matches_pp(prep_with_case) for vf in verb_frames)
+
+    @classmethod
+    def matches_particle(cls, verb_with_cases: str, particle: str) -> bool:
+        """ Does the given key - i.e. verb with argument cases - match the particle? """
+        verb_frames = cls.CASE_FRAMES.get(verb_with_cases)
+        if not verb_frames:
+            # No frames for this verb with its argument cases
+            return False
+        # Check the frames one by one and return True if any matches are found
+        return any(vf.matches_pcl(particle) for vf in verb_frames)
 
     @classmethod
     @lru_cache(maxsize=1024)
