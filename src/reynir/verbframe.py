@@ -202,6 +202,7 @@ class VerbFrame:
     # e.g. 'skrifa_þgf_þf'
     CASE_FRAMES: Dict[str, List["VerbFrame"]] = defaultdict(list)
     ALL_FRAMES: Dict[str, List["VerbFrame"]] = defaultdict(list)
+    WRONG_CASE_FRAMES: Dict[str, List["VerbFrame"]] = defaultdict(list)
     # All known verb lemmas
     VERBS: Set[str] = set()
 
@@ -325,22 +326,27 @@ class VerbFrame:
 
         args = a[1:]
         # Add to verb database
+        vf = cls(verb, args, prepositions, particle, score)
+        case_key = vf.case_key
         if error:
             # Add this to the error database
             VerbErrors.add_error(verb, args, prepositions, particle, error)
-        # Create a VerbFrame instance
         # Note: In order to parse verbs with wrong arguments,
-        # the frame needs to be present as a regular VerbFrame instance
+        # the frame needs to be present as an extra VerbFrame instance
         # that is then marked as an error in GreynirCorrect
-        vf = cls(verb, args, prepositions, particle, score)
-        case_key = vf.case_key
-        if case_key is not None:
-            # This verb frame has cases as arguments
-            cls.CASE_FRAMES[case_key].append(vf)
-        # Add to the dictionary of all verb frames
-        cls.ALL_FRAMES[vf.key].append(vf)
-        # Add to the set of known verb lemmas
-        cls.VERBS.add(verb)
+            if case_key is not None:
+                # This erroneous verb frame has cases as arguments
+                cls.WRONG_CASE_FRAMES[vf.key].append(vf)
+        # Create a VerbFrame instance
+        else:
+            if case_key is not None:
+                # This verb frame has cases as arguments
+                cls.CASE_FRAMES[case_key].append(vf)
+            # Add to the dictionary of all verb frames
+            cls.ALL_FRAMES[vf.key].append(vf)
+            # Add to the set of known verb lemmas
+            cls.VERBS.add(verb)
+
 
     @classmethod
     def known(cls, verb: str) -> bool:
@@ -352,6 +358,11 @@ class VerbFrame:
         """ Does the given key, e.g. 'skrifa_þgf_þf', match the verb
             with its configured arguments? """
         return verb_with_cases in cls.CASE_FRAMES
+
+    @classmethod
+    def matches_error_arguments(cls, verb_with_cases: str) -> bool:
+        """ Does the given key, match any erroneous verb frames? """
+        return verb_with_cases in cls.WRONG_CASE_FRAMES
 
     @classmethod
     def matches_preposition(cls, verb_with_cases: str, prep_with_case: str) -> bool:
