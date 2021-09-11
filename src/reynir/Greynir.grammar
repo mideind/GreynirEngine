@@ -3666,7 +3666,9 @@ $score(+18) FornafnEinkunn/tala/fall/kyn
 # Lýsingarorð eða eignarfallsliður sem kemur á eftir nafnlið
 
 NlViðbót/tala/fall/kyn →
-    LoEftirNl/tala/fall/kyn     # (Jón) sterki / (Jón), sultuslakur eftir gufubaðið,
+    # (Jón) sterki / (Jón), sultuslakur eftir gufubaðið,
+    # (ítarleg skýrsla) [um fjármögnun þessarar þjónustu], kennd við höfund hennar,
+    FsRunaEftirNl? LoEftirNl/tala/fall/kyn
     | EfLiður LoEftirNlMeðAndlagi/fall/tala/kyn? # (forstöðumenn) fræðaseturs [sunnlendinga] [tengdir flokknum]
 
 # Eintala
@@ -4346,10 +4348,10 @@ Tala_hk_nf → to_et_hk_nf | to_ft_hk_nf
 
 NlStak_et_p3/fall/kyn →
     NlStak_p3_et/fall/kyn VeikSögnLhÞt_et/fall/kyn? FsRunaEftirNl?  # fulltrúi bankans í nefndinni
-    | NlStak_et_p3/fall/kyn Eða NlStak_p3_et/fall              # Þingnefnd eða hluti Alþingismanna getur lagt fram frumvarp
-    | AnnaðhvortSt Nl/fall Eða Nl/fall/kyn                         # Hér er annaðhvort snjór eða sól  
-    | AnnaðhvortSt Nl/fall/kyn Eða Nl/fall                         # Hér er annaðhvort snjór eða sól  
-    | 'hver:fn'_et/fall/kyn Og 'einn:fn'_et/fall/kyn FsRunaEftirNl?   # 'hver og einn [í sinni sveit] (ber ábyrgð)'
+    | NlStak_et_p3/fall/kyn Eða NlStak_p3_et/fall                   # Þingnefnd eða hluti Alþingismanna getur lagt fram frumvarp
+    | AnnaðhvortSt Nl/fall Eða Nl/fall/kyn                          # Hér er annaðhvort snjór eða sól  
+    | AnnaðhvortSt Nl/fall/kyn Eða Nl/fall                          # Hér er annaðhvort snjór eða sól  
+    | 'hver:fn'_et/fall/kyn Og 'einn:fn'_et/fall/kyn FsRunaEftirNl? # 'hver og einn [í sinni sveit] (ber ábyrgð)'
     | EinnAf_et_p3/fall/kyn                                         # einn af drengjunum [sem tóku þátt] (vann keppnina)
 
 # '(svör við bréfi sínu) dagsettu (13. mars sl.)'
@@ -5136,7 +5138,6 @@ HreinAukasetning →
     | Spurnarsetning
     | SamsettSetning    # Annaðhvort X eða Y; bæði X og Y; ýmist X eða Y
 
-
 # Hér er gert ráð fyrir að frumlagslausar atvikssetningar
 # séu alltaf í 3p et hk, sbr. 'þegar kallað var eftir lækni',
 # 'meðan farið var yfir málið'
@@ -5724,14 +5725,23 @@ StaktLoEftirNl/tala/fall/kyn →
 # Stakt lýsingarorð eftir nafnorði gæti líklega tilheyrt næsta nafnorði
 $score(-8) StaktLoEftirNl/tala/fall/kyn
 
-# Lýsingarorð sem getur tekið með sér þágufall
-# !!! ATH: Til eru listar yfir slík orð
+# Lýsingarorð sem getur tekið með sér aukafall
+# (byggt á lista í skránni config/AdjectivePredicates.conf)
 
 # '[sterklega] tengdur Framsóknarflokknum'
 LoEftirNlMeðAndlagi/fall/tala/kyn →
     LoAtviksliðir? lo_sb/sfall/tala/fall/kyn LoViðhengi/sfall
+    # 'jafnan eignuð Framsóknarflokknum'
+    # Ath: 'eignaður' er ekki lýsingarorð í BÍN
+    | LoAtviksliðir? SoLhþtMeðAndlagi/fall/tala/kyn
 
 $score(+4) LoEftirNlMeðAndlagi/fall/tala/kyn
+
+SoLhþtMeðAndlagi/fall/tala/kyn →
+    so_lhþt_sb/fall/tala/kyn NlBeintAndlag_þgf
+
+# Ekki grípa til so_lhþt nema lýsingarorð finnist ekki
+$score(-8) SoLhþtMeðAndlagi/fall/tala/kyn
 
 # '(Ég drakk) hvítu, volgu og feitu mjólkina' / '(Ég sá) hvíta, volga og feita mjólk'
 # '(Íslendingar fluttu fé til annarra) og [í sumum tilvikum] öruggari landa'
@@ -5780,7 +5790,7 @@ LoSamanbFleiri/fall/tala/kyn →
     | Ýmist LoTengtSögn/tala/fall/kyn Eða LoTengtSögn/tala/fall/kyn
     | Ýmist FsAtv Eða LoTengtSögn/tala/fall/kyn
     | Ýmist LoTengtSögn/tala/fall/kyn Eða FsAtv
-    
+
     # bæði skjálfandi og í svitabaði
     | Samanburðarmerki Bæði LoTengtSögn/tala/fall/kyn Og LoTengtSögn/tala/fall/kyn LokatáknEðaKomma
     | Samanburðarmerki Bæði LoTengtSögn/tala/fall/kyn Og FsAtv LokatáknEðaKomma
@@ -6009,7 +6019,6 @@ $score(+6) FsOkkarÁMilli
 
 $score(+24) ÁMóti
 $score(+24) ÁMeðal
-
 
 # Sérregla fyrir "út frá" vegna þess að "út frá því að S" er
 # algengt mynstur sem annars þáttast sem Tíðarsetning
@@ -6422,7 +6431,7 @@ AtviksliðurEinkunn →
 # Sama innihald og AtviksliðurEinkunn en stendur hliðstætt nafnlið 
 # og er því sérstakur atviksliður í trénu
 AtviksliðurHliðstæður →
-    AtviksliðurEinkunn              
+    AtviksliðurEinkunn
 
 $tag(keep) AtviksliðurHliðstæður
 

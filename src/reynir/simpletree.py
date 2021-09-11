@@ -272,6 +272,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "SetningSoÞaðSagnliður": "VP",
     "NhSögnAtv": "VP",
     "Segir": "VP",
+    "SoLhþtMeðAndlagi": "VP",
     "HjSögn": "VP-AUX",
     "HjSögnNh": "VP-AUX",
     "HjSögnNhMeðSo": "VP-AUX",

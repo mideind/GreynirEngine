@@ -480,19 +480,20 @@ def test_consistency(r, verbose=False):
 def test_long_parse(r, verbose=False):
     if verbose:
         print("Long parse test")
-    txt = """
-        [[ Reynt er að efla áhuga ungs fólks á borgarstjórnarmálum með framboðsfundum og skuggakosningum en þótt
-        kjörstaðirnir í þeim séu færðir inn í framhaldsskólana er þátttakan lítil. Dagur B. Eggertsson nýtur mun
-        meira fylgis í embætti borgarstjóra en fylgi Samfylkingarinnar gefur til kynna samkvæmt könnun Fréttablaðsins. ]]
-        [[ Eins og fram kom í fréttum okkar í gær stefnir í met í fjölda framboða fyrir komandi borgarstjórnarkosningar
-        í vor og gætu þau orðið að minnsta kosti fjórtán. Þá þarf minna fylgi nú en áður til að ná inn borgarfulltrúa,
-        því borgarfulltrúum verður fjölgað úr fimmtán í tuttugu og þrjá. ]]
-        [[ Kosningabaráttan fyrir borgarstjórnarkosningarnar í vor er hafin í framhaldsskólum borgarinnar. Samhliða
-        framboðskynningum fara fram skuggakosningar til borgarstjórnar í skólunum. ]]
-        [[ „Þetta er eiginlega æfing í því að taka þátt í lýðræðislegum kosningum. Við reynum að herma eftir því
-        hvernig raunverulegar kosningar fara fram,“ segir Róbert Ferdinandsson kennari á félagsfræðibraut
-        Fjölbrautaskólans við Ármúla. ]]
-    """
+    txt = """[[Reynt er að efla áhuga ungs fólks á borgarstjórnarmálum með
+framboðsfundum og skuggakosningum en þótt kjörstaðirnir í þeim séu færðir
+inn í framhaldsskólana er þátttakan lítil. Dagur B. Eggertsson nýtur mun
+meira fylgis í embætti borgarstjóra en fylgi Samfylkingarinnar gefur til
+kynna samkvæmt könnun Fréttablaðsins.]][[Eins og fram kom í fréttum okkar
+í gær stefnir í met í fjölda framboða fyrir komandi borgarstjórnarkosningar
+í vor og gætu þau orðið að minnsta kosti fjórtán. Þá þarf minna fylgi nú en áður
+til að ná inn borgarfulltrúa, því borgarfulltrúum verður fjölgað úr fimmtán
+í tuttugu og þrjá.]][[Kosningabaráttan fyrir borgarstjórnarkosningarnar
+í vor er hafin í framhaldsskólum borgarinnar. Samhliða framboðskynningum fara
+fram skuggakosningar til borgarstjórnar í skólunum.]][[„Þetta er eiginlega
+æfing í því að taka þátt í lýðræðislegum kosningum. Við reynum að herma eftir því
+hvernig raunverulegar kosningar fara fram,“ segir Róbert Ferdinandsson
+kennari á félagsfræðibraut Fjölbrautaskólans við Ármúla.]]"""
     job = r.submit(txt)
     pg_count = 0
     sent_count = 0
