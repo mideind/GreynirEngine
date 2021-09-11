@@ -29,7 +29,7 @@
 
 
     This module exports the function match_pattern() which can determine
-    whether a "SimpleTree" instance matches a pattern string.
+    whether a SimpleTree instance matches a pattern string.
 
     The match patterns are as follows:
     ----------------------------------
@@ -148,6 +148,12 @@ ContextFunc = Callable[["SimpleTree"], Union[bool, str]]
 ContextDict = Dict[str, Union[str, ContextFunc]]
 ItemList = List[Union["_NestedList", str]]
 
+# Reserved strings in matching expressions
+_NOT_ITEMS = frozenset((">", "*", "+", "?", "[", "(", "{", "]", ")", "}", "$"))
+_NEST = {"(": ")", "[": "]", "{": "}"}
+_FINISHERS = frozenset(_NEST.values())
+_PATTERN_REGEX = r"\s+|([\.\|\(\)\{\}\[\]\*\+\?\>\$])"
+
 
 class _NestedList(List[Union[str, "_NestedList"]]):
 
@@ -156,10 +162,6 @@ class _NestedList(List[Union[str, "_NestedList"]]):
     def __init__(self, kind: str, content: ItemList) -> None:
         self._kind = kind
         super().__init__()
-        #if kind == "(":
-        #    # Validate a ( x | y | z ...) construct
-        #    if any(content[i] != "|" for i in range(1, len(content), 2)):
-        #        raise ValueError("Missing '|' in pattern")
         super().extend(content)
 
     @property
@@ -170,17 +172,10 @@ class _NestedList(List[Union[str, "_NestedList"]]):
         return "<Nested('{0}') ".format(self._kind) + super().__repr__() + ">"
 
 
-# Reserved strings in matching expressions
-_NOT_ITEMS = frozenset((">", "*", "+", "?", "[", "(", "{", "]", ")", "}", "$"))
-
-
 class _CompiledPattern:
 
     """ This class encapsulates a matching pattern that has
         been parsed into a nested list of matching items """
-
-    _NEST = {"(": ")", "[": "]", "{": "}"}
-    _FINISHERS = frozenset(_NEST.values())
 
     _pattern_cache: Dict[str, "_CompiledPattern"] = dict()
 
@@ -205,9 +200,6 @@ class _CompiledPattern:
     def _compile(self, pattern: str) -> ItemList:
         """ Compile a matching pattern into a nested list of matching items """
 
-        NEST = self._NEST
-        FINISHERS = self._FINISHERS
-
         def nest(items: List[str]) -> ItemList:
             """ Convert any embedded subpatterns, delimited by NEST entries,
                 into nested lists """
@@ -216,7 +208,7 @@ class _CompiledPattern:
             while i < len_items:
                 # Look for symbols that open a nested structure
                 item1 = items[i]
-                finisher = NEST.get(item1)
+                finisher = _NEST.get(item1)
                 if finisher is not None:
                     # item1 is an opening symbol for a nested structure,
                     # finishing with the finisher symbol
@@ -235,7 +227,7 @@ class _CompiledPattern:
                                 nested = _NestedList(item1, nest(items[i + 1 : j]))
                                 # Check for nesting errors
                                 for n in nested:
-                                    if isinstance(n, str) and n in FINISHERS:
+                                    if isinstance(n, str) and n in _FINISHERS:
                                         raise ValueError(
                                             "Mismatched '{0}' in pattern".format(n)
                                         )
@@ -249,16 +241,22 @@ class _CompiledPattern:
                                         if nk == "|":
                                             # Append the sequence that preceded the | sign
                                             if k <= start:
-                                                raise ValueError("Empty or-branch ('|') in pattern")
+                                                raise ValueError(
+                                                    "Empty or-branch ('|') in pattern"
+                                                )
                                             if k == start + 1:
                                                 result.append(nested[start])
                                             else:
-                                                result.append(_NestedList("|", nested[start:k]))
+                                                result.append(
+                                                    _NestedList("|", nested[start:k])
+                                                )
                                             start = k + 1
                                         k += 1
                                     # Append the final sequence
                                     if k <= start:
-                                        raise ValueError("Empty or-branch ('|') in pattern")
+                                        raise ValueError(
+                                            "Empty or-branch ('|') in pattern"
+                                        )
                                     if k == start + 1:
                                         result.append(nested[start])
                                     else:
@@ -286,7 +284,7 @@ class _CompiledPattern:
         def gen1() -> Iterator[str]:
             """ First generator: yield non-null strings from a
                 regex split of the pattern """
-            for item in re.split(r"\s+|([\.\|\(\)\{\}\[\]\*\+\?\>\$])", pattern):
+            for item in re.split(_PATTERN_REGEX, pattern):
                 if item:
                     yield item
 
@@ -615,6 +613,6 @@ def run_set(gen: Iterator["SimpleTree"], items: ItemList, context: ContextDict) 
 def match_pattern(
     tree: "SimpleTree", pattern: str, context: Optional[ContextDict] = None
 ):
-    """ Return the result of a pattern match on a "SimpleTree" instance """
+    """ Return the result of a pattern match on a SimpleTree instance """
     cp = _CompiledPattern.compile(pattern)
     return run_set(iter([tree]), cp.items, context or {})
