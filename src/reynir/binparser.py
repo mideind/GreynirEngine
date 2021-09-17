@@ -959,7 +959,7 @@ class BIN_Token(Token):
     def verb_is_strictly_impersonal(cls, verb: str, form: str) -> bool:
         """ Return True if the given verb is strictly impersonal,
             i.e. never appears with a nominative subject """
-        # This is overridden in reynir_correct.checker
+        # This is overridden in reynir_correct.errfinder
         # Note that we don't need to check the form for "OP" here,
         # since that check is done in the _RESTRICTIVE_VARIANTS loop.
         return VerbSubjects.is_strictly_impersonal(verb)
@@ -974,7 +974,7 @@ class BIN_Token(Token):
     @classmethod
     def verb_subject_matches(cls, verb: str, subj: str) -> bool:
         """ Returns True if the given subject type/case is allowed for this verb """
-        # This is overridden in reynir_correct.checker
+        # This is overridden in reynir_correct.overridden
         return subj in cls._VERB_SUBJECTS.get(verb, set())
 
     # Variants that must be present in the terminal
@@ -1129,7 +1129,7 @@ class BIN_Token(Token):
     @classmethod
     def verb_matches_arguments(cls, key: str) -> bool:
         """ Return True if the given arguments are allowed for this verb """
-        # This is overridden in reynir_correct.checker
+        # This is overridden in reynir_correct.errfinder
         return VerbFrame.matches_arguments(key)
 
 

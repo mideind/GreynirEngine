@@ -331,9 +331,9 @@ class VerbFrame:
         if error:
             # Add this to the error database
             VerbErrors.add_error(verb, args, prepositions, particle, error)
-        # Note: In order to parse verbs with wrong arguments,
-        # the frame needs to be present as an extra VerbFrame instance
-        # that is then marked as an error in GreynirCorrect
+            # Note: In order to parse verbs with wrong arguments,
+            # the frame needs to be present as an extra VerbFrame instance
+            # that is then marked as an error in GreynirCorrect
             if case_key is not None:
                 # This erroneous verb frame has cases as arguments
                 cls.WRONG_CASE_FRAMES[vf.key].append(vf)
@@ -361,8 +361,8 @@ class VerbFrame:
 
     @classmethod
     def matches_error_arguments(cls, verb_with_cases: str) -> bool:
-        """ Does the given key, match any erroneous verb frames? """
-        return verb_with_cases in cls.WRONG_CASE_FRAMES
+        """ Does the given key match any erroneous verb frames? """
+        return verb_with_cases in cls.WRONG_CASE_FRAMES.keys()
 
     @classmethod
     def matches_preposition(cls, verb_with_cases: str, prep_with_case: str) -> bool:
