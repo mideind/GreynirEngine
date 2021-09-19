@@ -974,7 +974,7 @@ class BIN_Token(Token):
     @classmethod
     def verb_subject_matches(cls, verb: str, subj: str) -> bool:
         """ Returns True if the given subject type/case is allowed for this verb """
-        # This is overridden in reynir_correct.overridden
+        # This is overridden in reynir_correct.errfinder
         return subj in cls._VERB_SUBJECTS.get(verb, set())
 
     # Variants that must be present in the terminal
@@ -1625,7 +1625,7 @@ class VariantHandler:
         ))
         # The variant set for this terminal, i.e.
         # tname_var1_var2_var3 -> { 'var1', 'var2', 'var3' }
-        self._vparts = parts[1:]
+        self._vparts: List[str] = parts[1:]
         self._vcount = len(self._vparts)
         self._vset = set(self._vparts)
         # Also map variant names to bits in self._vbits

@@ -85,6 +85,7 @@ class VerbErrors:
     PREPOSITIONS_ERRORS: Dict[str, Dict[str, str]] = defaultdict(dict)
     WRONG_VERBS: Dict[str, str] = dict()
     OBJ_ERRORS: Dict[str, Dict[str, str]] = defaultdict(dict)
+
     @staticmethod
     def check_args(args: List[str]) -> None:
         for kind in args:
@@ -243,7 +244,7 @@ class VerbFrame:
         """ Does this verb frame agree with the given preposition[+case]? """
         return prep_with_case in self.preps
 
-    def matches_pcl(self, particle:str) -> bool:
+    def matches_pcl(self, particle: str) -> bool:
         """ Does this verb frame agree with the given particle? """
         return particle == self.particle
 
@@ -347,7 +348,6 @@ class VerbFrame:
             # Add to the set of known verb lemmas
             cls.VERBS.add(verb)
 
-
     @classmethod
     def known(cls, verb: str) -> bool:
         """ Return True if this is a known verb, i.e. described in Verbs.conf """
@@ -362,7 +362,7 @@ class VerbFrame:
     @classmethod
     def matches_error_arguments(cls, verb_with_cases: str) -> bool:
         """ Does the given key match any erroneous verb frames? """
-        return verb_with_cases in cls.WRONG_CASE_FRAMES.keys()
+        return verb_with_cases in cls.WRONG_CASE_FRAMES
 
     @classmethod
     def matches_preposition(cls, verb_with_cases: str, prep_with_case: str) -> bool:
