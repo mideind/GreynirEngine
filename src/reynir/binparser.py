@@ -1616,7 +1616,7 @@ class VariantHandler:
         ))
         # The variant set for this terminal, i.e.
         # tname_var1_var2_var3 -> { 'var1', 'var2', 'var3' }
-        self._vparts = parts[1:]
+        self._vparts: List[str] = parts[1:]
         self._vcount = len(self._vparts)
         self._vset = set(self._vparts)
         # Also map variant names to bits in self._vbits
