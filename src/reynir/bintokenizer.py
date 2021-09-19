@@ -1326,7 +1326,7 @@ def parse_phrases_2(
                 # having compatible genders and cases
                 w: str = token.txt or ""
                 namespan = token.original or ""
-                patronym = False
+                patronym: bool = False
 
                 while True:
                     ntxt = next_token.txt
