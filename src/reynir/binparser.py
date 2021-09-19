@@ -959,7 +959,7 @@ class BIN_Token(Token):
     def verb_is_strictly_impersonal(cls, verb: str, form: str) -> bool:
         """ Return True if the given verb is strictly impersonal,
             i.e. never appears with a nominative subject """
-        # This is overridden in reynir_correct.checker
+        # This is overridden in reynir_correct.errfinder
         # Note that we don't need to check the form for "OP" here,
         # since that check is done in the _RESTRICTIVE_VARIANTS loop.
         return VerbSubjects.is_strictly_impersonal(verb)
@@ -974,6 +974,7 @@ class BIN_Token(Token):
     @classmethod
     def verb_subject_matches(cls, verb: str, subj: str) -> bool:
         """ Returns True if the given subject type/case is allowed for this verb """
+        # This is overridden in reynir_correct.errfinder
         return subj in cls._VERB_SUBJECTS.get(verb, set())
 
     # Variants that must be present in the terminal
@@ -1042,7 +1043,7 @@ class BIN_Token(Token):
                 # in the case indicated in the terminal (second variant,
                 # immediately following the nargs)
                 key = verb + "_" + terminal.variant(1)
-                if not VerbFrame.matches_arguments(key):
+                if not cls.verb_matches_arguments(key):
                     return False
             # Finally, make sure that the subject case (which is always
             # in the last variant) matches the terminal
@@ -1115,7 +1116,7 @@ class BIN_Token(Token):
         # Check whether this verb + the terminal argument specification
         # is found in the verb frame database
         key = verb + terminal.verb_cases
-        if VerbFrame.matches_arguments(key):
+        if cls.verb_matches_arguments(key):
             return True
         if terminal.verb_cases == "" and not VerbFrame.known(verb):
             # Allow unknown verbs to match 0-argument terminals;
@@ -1123,6 +1124,14 @@ class BIN_Token(Token):
             # is not described in Verbs.conf.
             return True
         return False
+
+
+    @classmethod
+    def verb_matches_arguments(cls, key: str) -> bool:
+        """ Return True if the given arguments are allowed for this verb """
+        # This is overridden in reynir_correct.errfinder
+        return VerbFrame.matches_arguments(key)
+
 
     def matches_PERSON(self, terminal: "BIN_Terminal") -> bool:
         """ Handle a person name token, matching it with
@@ -1616,7 +1625,7 @@ class VariantHandler:
         ))
         # The variant set for this terminal, i.e.
         # tname_var1_var2_var3 -> { 'var1', 'var2', 'var3' }
-        self._vparts = parts[1:]
+        self._vparts: List[str] = parts[1:]
         self._vcount = len(self._vparts)
         self._vset = set(self._vparts)
         # Also map variant names to bits in self._vbits
