@@ -590,6 +590,13 @@ class Bin_TOK(TOK):
     ) -> Tok:
         return TOK.Person(t, m)
 
+    @classmethod
+    def before_composition(cls, tq: List[Tok]) -> None:
+        """ Overridable function to look at and eventually
+            modify a token queue before it is amalgamated
+            into a composite word """
+        pass
+
 
 def annotate(
     db: GreynirBin,
@@ -1013,6 +1020,10 @@ def parse_phrases_1(
                         # Note: there is no meaning check for the first
                         # part of the composition, so it can be an unknown word.
                         all_tq = tq + [token, next_token]
+                        # Give the token class a chance to adjust
+                        # the composite token content before the
+                        # composition happens
+                        token_ctor.before_composition(all_tq)
                         txt = " ".join(t.txt for t in all_tq)
                         txt = txt.replace(" -", "-").replace(" ,", ",")
                         # Create a fresh list of meanings with the full
