@@ -81,16 +81,12 @@ GetterFunc = Callable[[SimpleTree], str]
 GreynirType = Type["Greynir"]
 
 # The Sentence.terminals attribute returns a list of Terminal objects
-Terminal = NamedTuple(
-    "Terminal",
-    [
-        ("text", str),
-        ("lemma", str),
-        ("category", str),
-        ("variants", List[str]),
-        ("index", int),
-    ],
-)
+class Terminal(NamedTuple):
+    text: str
+    lemma: str
+    category: str
+    variants: List[str]
+    index: int
 
 # Progress function parameter type
 ProgressFunc = Optional[Callable[[float], None]]

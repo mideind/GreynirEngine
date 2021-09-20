@@ -67,9 +67,6 @@ from tokenizer import (
     paragraphs,
     correct_spaces,
     mark_paragraphs,
-)
-from tokenizer.abbrev import Abbreviations
-from tokenizer import (
     TP_LEFT,
     TP_CENTER,
     TP_RIGHT,
@@ -79,6 +76,10 @@ from tokenizer import (
     KLUDGY_ORDINALS_MODIFY,
     KLUDGY_ORDINALS_TRANSLATE,
 )
+from tokenizer.abbrev import Abbreviations
+
+__author__ = "Miðeind ehf."
+__copyright__ = "(C) 2021 Miðeind ehf."
 
 __all__ = (
     "TP_LEFT", "TP_RIGHT", "TP_CENTER", "TP_NONE", "TP_WORD",
@@ -105,10 +106,8 @@ __all__ = (
     "ParseError", "ParseForestNavigator",
     "Settings",
     "tokenize", "TokenList",
+    "__version__", "__author__", "__copyright__"
 )
-
-__author__ = "Miðeind ehf."
-__copyright__ = "(C) 2021 Miðeind ehf."
 
 Abbreviations.initialize()
 Settings.read("config/GreynirPackage.conf")

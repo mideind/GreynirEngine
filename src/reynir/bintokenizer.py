@@ -63,13 +63,8 @@ from tokenizer import (
     TOK,
     Tok,
     tokenize_without_annotation,
-    # The following imports are here in order to be visible in clients
-    # (they are not used in this module)
-    correct_spaces,  # type: ignore
-    paragraphs,  # type: ignore
-    parse_tokens,  # type: ignore
+    TokenStream,
 )
-from tokenizer.tokenizer import TokenStream
 from tokenizer.definitions import (
     BIN_Tuple,
     BIN_TupleList,
