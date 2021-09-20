@@ -81,12 +81,19 @@ GetterFunc = Callable[[SimpleTree], str]
 GreynirType = Type["Greynir"]
 
 # The Sentence.terminals attribute returns a list of Terminal objects
-class Terminal(NamedTuple):
-    text: str
-    lemma: str
-    category: str
-    variants: List[str]
-    index: int
+# Note: Currently this cannot be converted to class Terminal(NamedTuple)
+# since that causes mypy to complain about the index property overriding a
+# callable on the built-in tuple type.
+Terminal = NamedTuple(
+    "Terminal",
+    [
+        ("text", str),
+        ("lemma", str),
+        ("category", str),
+        ("variants", List[str]),
+        ("index", int),
+    ],
+)
 
 # Progress function parameter type
 ProgressFunc = Optional[Callable[[float], None]]
