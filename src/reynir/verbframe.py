@@ -216,7 +216,7 @@ class VerbFrame:
         score: Optional[int],
     ) -> None:
         self.verb = verb
-        assert 0 <= len(args) <= 2
+        #assert 0 <= len(args) <= 2
         # All arguments
         self.args = args
         # Only case arguments
@@ -300,16 +300,22 @@ class VerbFrame:
         while ix < len(ap):
             # We expect something like 'af þgf', or possibly
             # 'fyrir_hönd þf' (where the underscore needs to be replaced by a space)
+            # or 'milli ef_ft' (detailing the plural)
             p = ap[ix].strip()
             parg = p.split()
-            if len(parg) != 2:
-                raise ConfigError("Preposition should have exactly one argument")
+            #if len(parg) != 2:
+            #    raise ConfigError("Preposition should have exactly one argument")
             if parg[1] not in ALL_CASES and parg[1] not in SUBCLAUSES:
                 parg[1] = REFLPRN.get(parg[1], parg[1])
                 assert parg[1] is not None
                 spl = parg[1].split("_")
-                if spl[-1] == "gr":
-                    spl = spl[:-1]
+                # TODO Handle these variants
+                skip = ["gr", "ft", "est", "mst"]
+                while True:
+                    if spl[-1].strip() in skip:
+                        spl = spl[:-1]
+                    else:
+                        break
                 if spl[-1] not in ALL_CASES:
                     raise ConfigError(
                         "Preposition argument must have a case as its last variant"
@@ -318,14 +324,48 @@ class VerbFrame:
             ix += 1
 
         # Process verb arguments
+        args = []
+        # Process direct object argument
+        op = s.split("|")
+        s = op[0]
+        ix = 1
+        while ix < len(op):
+            # þf
+            # þf_ft
+            # góður_lo_kk_et_þf vegur_kk_et_þf
+            # vegur_kk_et_þf
+            # mnh
+            # nhm
+            # TODO Read complex arguments correctly into VerbFrame
+            obj = op[ix].strip()
+            oarg = obj.split()
+            if oarg[1] not in ALL_CASES and oarg[1] not in SUBCLAUSES:
+                oarg[1] = REFLPRN.get(oarg[1], oarg[1])
+                assert oarg[1] is not None
+                spl = oarg[1].split("_")
+                # TODO Handle these variants
+                skip = ["gr", "ft", "est", "mst"]
+                while True:
+                    if spl[-1].strip() in skip:
+                        spl = spl[:-1]
+                    else:
+                        break
+                if spl[-1] not in ALL_CASES:
+                    raise ConfigError("Object must have a case as its last variant")
+                args.append(oarg[1])
+
+        # Process indirect object argument
         a = s.split()
-        if len(a) < 1 or len(a) > 3:
+        if len(a) < 1:
             raise ConfigError("Verb should have zero, one or two arguments")
+        #if len(a) < 1 or len(a) > 3:
+        #    raise ConfigError("Verb should have zero, one or two arguments")
         verb = a[0]
         if not verb.isalpha():
             raise ConfigError("Verb '{0}' is not a valid word".format(verb))
 
-        args = a[1:]
+        #args = a[1:]
+        args.extend(a[1:])
         # Add to verb database
         vf = cls(verb, args, prepositions, particle, score)
         case_key = vf.case_key
