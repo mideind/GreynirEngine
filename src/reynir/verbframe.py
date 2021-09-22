@@ -107,12 +107,12 @@ class VerbErrors:
         corr: str,
     ) -> None:
         """ Take note of a verb object specification with an $error pragma """
-        VerbErrors.check_args(args)
         corrlist = corr.split(",")
         errlist = corrlist[0].split("-")
         errkind = errlist[0].strip()
         verb_with_cases = "_".join([verb] + args)
         if corrlist[0] == "OBJ-CASE":
+            VerbErrors.check_args(args)
             VerbErrors.OBJ_ERRORS[verb][args[0]] = corrlist[1].strip()
         if errkind == "OBJ":
             vargs = cast(VerbWithArgErrorDict, VerbErrors.ERRORS[len(args)])
