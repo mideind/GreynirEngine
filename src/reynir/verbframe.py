@@ -210,6 +210,8 @@ class VerbFrame:
     def __init__(
         self,
         verb: str,
+        obj: str,
+        iobj: str,
         args: List[str],
         preps: Iterable[Tuple[str, str]],
         particle: Optional[str],
@@ -219,6 +221,8 @@ class VerbFrame:
         #assert 0 <= len(args) <= 2
         # All arguments
         self.args = args
+        self.obj = obj
+        self.iobj = iobj
         # Only case arguments
         self.cases = [arg for arg in args if arg in ALL_CASES]
         pfs = [PrepositionFrame.obtain(prep, case) for prep, case in preps]
@@ -248,126 +252,141 @@ class VerbFrame:
         """ Does this verb frame agree with the given particle? """
         return particle == self.particle
 
+
     @classmethod
     def create_from_config(cls, s: str) -> None:
         """ Handle verb object specifications in the settings section """
         # Format: verb [arg1] [arg2] [/preposition arg]... [*particle] [$pragma(txt)]
         # arg can be nf, þf, þgf, ef, nh, falls, sig/sér/sín, bági_kk_ft_þf
 
-        # Start by handling the $score() pragma, if present
-        score: Optional[int] = None
-        ix = s.rfind("$score(")  # Must be at the end
-        if ix >= 0:
-            sc = s[ix:]
-            s = s[0:ix].strip()
-            if not sc.endswith(")"):
-                raise ConfigError("Invalid score pragma; form should be $score(n)")
-            # There is an associated score with this verb form, to be taken
-            # into consideration by the reducer
-            sc = sc[7:-1].strip()
-            try:
-                score = int(sc)
-            except ValueError:
-                raise ConfigError("Invalid score ('{0}') for verb form".format(sc))
+        def get_score(s: str) -> Tuple[str, Optional[int]]:
+            # Start by handling the $score() pragma, if present
+            score: Optional[int] = None
+            ix = s.rfind("$score(")  # Must be at the end
+            if ix >= 0:
+                sc = s[ix:]
+                s = s[0:ix].strip()
+                if not sc.endswith(")"):
+                    raise ConfigError("Invalid score pragma; form should be $score(n)")
+                # There is an associated score with this verb form, to be taken
+                # into consideration by the reducer
+                sc = sc[7:-1].strip()
+                try:
+                    score = int(sc)
+                except ValueError:
+                    raise ConfigError("Invalid score ('{0}') for verb form".format(sc))
+            return s, score
 
-        # Check for $error
-        error = None
-        ix = s.rfind("$error(")
-        if ix >= 0:
-            if not s.endswith(")"):
-                raise ConfigError("Invalid error pragma; form should be $error(...)")
-            error = s[ix + 7 : -1].strip()
-            s = s[0:ix].strip()
-            if not error:
-                raise ConfigError("Expected error specification in $error(...)")
+        def get_error(s: str) -> Tuple[str, Optional[str]]:
+            # Check for $error
+            error = None
+            ix = s.rfind("$error(")
+            if ix >= 0:
+                if not s.endswith(")"):
+                    raise ConfigError("Invalid error pragma; form should be $error(...)")
+                error = s[ix + 7 : -1].strip()
+                s = s[0:ix].strip()
+                if not error:
+                    raise ConfigError("Expected error specification in $error(...)")
+            return s, error            
 
-        # Process particles, should only be one in each line
-        particle = None
-        ix = s.rfind("*")
-        if ix >= 0:
-            particle = s[ix:].strip()
-            s = s[0:ix].strip()
-            if " " in particle:
-                raise ConfigError("Particle should only be one word")
-            elif len(particle) < 2:
-                raise ConfigError("Particle should be at least one letter")
+        def get_particle(s: str) -> Tuple[str, Optional[str]]:
+            # Process particles, should only be one in each line
+            particle = None
+            ix = s.rfind("*")
+            if ix >= 0:
+                particle = s[ix:].strip()
+                s = s[0:ix].strip()
+                if " " in particle:
+                    raise ConfigError("Particle should only be one word")
+                elif len(particle) < 2:
+                    raise ConfigError("Particle should be at least one letter")
+            return s, particle
 
-        # Process preposition arguments, if any
-        prepositions: List[Tuple[str, str]] = []
-        ap = s.split("/")
-        s = ap[0]
-        ix = 1
-        while ix < len(ap):
-            # We expect something like 'af þgf', or possibly
-            # 'fyrir_hönd þf' (where the underscore needs to be replaced by a space)
-            # or 'milli ef_ft' (detailing the plural)
-            p = ap[ix].strip()
-            parg = p.split()
-            #if len(parg) != 2:
-            #    raise ConfigError("Preposition should have exactly one argument")
-            if parg[1] not in ALL_CASES and parg[1] not in SUBCLAUSES:
-                parg[1] = REFLPRN.get(parg[1], parg[1])
-                assert parg[1] is not None
-                spl = parg[1].split("_")
-                # TODO Handle these variants
-                skip = ["gr", "ft", "est", "mst"]
-                while True:
-                    if spl[-1].strip() in skip:
-                        spl = spl[:-1]
-                    else:
-                        break
-                if spl[-1] not in ALL_CASES:
-                    raise ConfigError(
-                        "Preposition argument must have a case as its last variant"
-                    )
-            prepositions.append((parg[0].replace("_", " "), parg[1]))
-            ix += 1
+        def get_preposition(s: str) -> Tuple[str, Iterable[Tuple[str, str]]]:
+            # Process preposition arguments, if any
+            prepositions: List[Tuple[str, str]] = []
+            ap = s.split("/")
+            s = ap[0]
+            ix = 1
+            while ix < len(ap):
+                # We expect something like 'af þgf', or possibly
+                # 'fyrir_hönd þf' (where the underscore needs to be replaced by a space)
+                # or 'milli ef_ft' (detailing the plural)
+                p = ap[ix].strip()
+                parg = p.split()
+                #if len(parg) != 2:
+                #    raise ConfigError("Preposition should have exactly one argument")
+                if parg[1] not in ALL_CASES and parg[1] not in SUBCLAUSES:
+                    parg[1] = REFLPRN.get(parg[1], parg[1])
+                    assert parg[1] is not None
+                    spl = parg[1].split("_")
+                    skip = ["gr", "ft", "est", "mst"]   # TODO Handle these variants
+                    while True:
+                        if spl[-1].strip() in skip:
+                            spl = spl[:-1]
+                        else:
+                            break
+                    if spl[-1] not in ALL_CASES:
+                        raise ConfigError(
+                            "Preposition argument must have a case as its last variant"
+                        )
+                prepositions.append((parg[0].replace("_", " "), parg[1]))
+                ix += 1
+            return s, prepositions
 
-        # Process verb arguments
-        args = []
-        # Process direct object argument
-        op = s.split("|")
-        s = op[0]
-        ix = 1
-        while ix < len(op):
-            # þf
-            # þf_ft
-            # góður_lo_kk_et_þf vegur_kk_et_þf
-            # vegur_kk_et_þf
-            # mnh
-            # nhm
-            # TODO Read complex arguments correctly into VerbFrame
-            obj = op[ix].strip()
-            oarg = obj.split()
-            if oarg[1] not in ALL_CASES and oarg[1] not in SUBCLAUSES:
-                oarg[1] = REFLPRN.get(oarg[1], oarg[1])
-                assert oarg[1] is not None
-                spl = oarg[1].split("_")
-                # TODO Handle these variants
-                skip = ["gr", "ft", "est", "mst"]
-                while True:
-                    if spl[-1].strip() in skip:
-                        spl = spl[:-1]
-                    else:
-                        break
-                if spl[-1] not in ALL_CASES:
-                    raise ConfigError("Object must have a case as its last variant")
-                args.append(oarg[1])
+        def get_direct_object(s: str) -> Tuple[str, str]:
+            # Process direct object argument
+            op = s.split("|")
+            s = op[0]
+            ix = 1
+            obj: str = ""
+            while ix < len(op):
+                # þf, þf_ft, góður_lo_kk_et_þf vegur_kk_et_þf, vegur_kk_et_þf
+                # mnh, nhm, falls
+                # TODO Read complex arguments correctly into VerbFrame
+                objs = op[ix].strip()
+                oarg = objs.split()
+                if oarg[1] not in ALL_CASES and oarg[1] not in SUBCLAUSES:
+                    oarg[1] = REFLPRN.get(oarg[1], oarg[1])
+                    assert oarg[1] is not None
+                    spl = oarg[1].split("_")
+                    skip = ["gr", "ft", "est", "mst"]   # TODO Handle these variants
+                    while True:
+                        if spl[-1].strip() in skip:
+                            spl = spl[:-1]
+                        else:
+                            break
+                    if spl[-1] not in ALL_CASES:
+                        raise ConfigError("Object must have a case as its last variant")
+                    obj = " ".join(spl)
+            return s, obj
 
-        # Process indirect object argument
-        a = s.split()
-        if len(a) < 1:
-            raise ConfigError("Verb should have zero, one or two arguments")
-        #if len(a) < 1 or len(a) > 3:
-        #    raise ConfigError("Verb should have zero, one or two arguments")
-        verb = a[0]
-        if not verb.isalpha():
-            raise ConfigError("Verb '{0}' is not a valid word".format(verb))
+        def get_indirect_object(s: str) -> Tuple[str, str]:
+            # Process indirect object argument
+            a = s.split()
+            if len(a) < 1:
+                raise ConfigError("Verb should have zero, one or two arguments")
+            #if len(a) < 1 or len(a) > 3:
+            #    raise ConfigError("Verb should have zero, one or two arguments")
+            verb = a[0]
+            if not verb.isalpha():
+                raise ConfigError("Verb '{0}' is not a valid word".format(verb))
+            iobj: str = " ".join(a[1:])
+            return verb, iobj
 
-        #args = a[1:]
-        args.extend(a[1:])
+        s, score = get_score(s)
+        s, error = get_error(s)
+        s, particle = get_particle(s)
+        s, prepositions = get_preposition(s)
+        s, obj = get_direct_object(s)
+        verb, iobj = get_indirect_object(s)
+        args: List[str] = []
+        args.append(iobj)
+        args.append(obj)
+
         # Add to verb database
-        vf = cls(verb, args, prepositions, particle, score)
+        vf = cls(verb=verb, args=args, preps=prepositions, particle=particle, score=score, obj=obj, iobj=iobj)
         case_key = vf.case_key
         if error:
             # Add this to the error database
