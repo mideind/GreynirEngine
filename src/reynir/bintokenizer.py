@@ -103,6 +103,8 @@ class TokenDict(TypedDict, total=False):
     g: str
     # Error marker (optional)
     err: int
+    # IFD tag (optional)
+    i: str
 
 
 class CanonicalTokenDict(TypedDict, total=False):
