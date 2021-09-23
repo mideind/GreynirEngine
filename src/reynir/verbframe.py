@@ -114,7 +114,9 @@ class VerbErrors:
         if corrlist[0] == "OBJ-CASE":
             VerbErrors.check_args(args)
             VerbErrors.OBJ_ERRORS[verb][args[0]] = corrlist[1].strip()
-        if errkind == "OBJ":
+        
+        """
+        elif errkind == "OBJ":
             vargs = cast(VerbWithArgErrorDict, VerbErrors.ERRORS[len(args)])
             arglists = vargs[verb]
             arglists[verb_with_cases] = corr
@@ -156,6 +158,7 @@ class VerbErrors:
             raise ConfigError(
                 "Unknown error type in $error pragma: '{0}'".format(errkind)
             )
+        """
 
 
 class PrepositionFrame:
@@ -303,7 +306,7 @@ class VerbFrame:
                     raise ConfigError("Particle should be at least one letter")
             return s, particle
 
-        def get_preposition(s: str) -> Tuple[str, Iterable[Tuple[str, str]]]:
+        def get_preposition(s: str) -> Tuple[str, List[Tuple[str, str]]]:
             # Process preposition arguments, if any
             prepositions: List[Tuple[str, str]] = []
             ap = s.split("/")
@@ -321,7 +324,7 @@ class VerbFrame:
                     parg[1] = REFLPRN.get(parg[1], parg[1])
                     assert parg[1] is not None
                     spl = parg[1].split("_")
-                    skip = ["gr", "ft", "est", "mst"]   # TODO Handle these variants
+                    skip = ["gr", "ft", "est", "mst", "et", "kk", "kvk", "hk"]   # TODO Handle these variants
                     while True:
                         if spl[-1].strip() in skip:
                             spl = spl[:-1]
@@ -331,6 +334,7 @@ class VerbFrame:
                         raise ConfigError(
                             "Preposition argument must have a case as its last variant"
                         )
+                    parg[1] = spl[-1]
                 prepositions.append((parg[0].replace("_", " "), parg[1]))
                 ix += 1
             return s, prepositions
@@ -339,42 +343,61 @@ class VerbFrame:
             # Process direct object argument
             op = s.split("|")
             s = op[0]
-            ix = 1
             obj: str = ""
-            while ix < len(op):
-                # þf, þf_ft, góður_lo_kk_et_þf vegur_kk_et_þf, vegur_kk_et_þf
-                # mnh, nhm, falls
-                # TODO Read complex arguments correctly into VerbFrame
-                objs = op[ix].strip()
-                oarg = objs.split()
-                if oarg[1] not in ALL_CASES and oarg[1] not in SUBCLAUSES:
-                    oarg[1] = REFLPRN.get(oarg[1], oarg[1])
-                    assert oarg[1] is not None
-                    spl = oarg[1].split("_")
-                    skip = ["gr", "ft", "est", "mst"]   # TODO Handle these variants
+            if len(op) < 1 or len(op) > 2:
+                raise ConfigError("Verb should have zero or one direct object")
+            elif len(op) == 2:
+                pobj = op[1].strip()
+                if pobj not in ALL_CASES and pobj not in SUBCLAUSES:
+                    pobj = pobj.split(" ")[0].strip()
+                    pobj = REFLPRN.get(pobj, pobj)
+                    assert pobj is not None
+                    spl = pobj.split("_")
+                    skip = ["gr", "ft", "est", "mst", "et", "kk", "kvk", "hk"]
                     while True:
                         if spl[-1].strip() in skip:
                             spl = spl[:-1]
                         else:
                             break
                     if spl[-1] not in ALL_CASES:
-                        raise ConfigError("Object must have a case as its last variant")
-                    obj = " ".join(spl)
+                        raise ConfigError(
+                            "Direct object must have a case as its last variant"
+                        )
+                    pobj = spl[-1]
+                obj = pobj
             return s, obj
 
         def get_indirect_object(s: str) -> Tuple[str, str]:
             # Process indirect object argument
             a = s.split()
             if len(a) < 1:
-                raise ConfigError("Verb should have zero, one or two arguments")
+                raise ConfigError("Verb should have zero or one indirect objects")
             #if len(a) < 1 or len(a) > 3:
             #    raise ConfigError("Verb should have zero, one or two arguments")
             verb = a[0]
+            iobj: str = ""
             if not verb.isalpha():
                 raise ConfigError("Verb '{0}' is not a valid word".format(verb))
-            iobj: str = " ".join(a[1:])
-            return verb, iobj
+            if len(a) > 1:
+                piobj = " ".join(a[1:]).strip()
+                if piobj not in ALL_CASES and piobj not in SUBCLAUSES:
+                    piobj = piobj.split(" ")[0].strip()
+                    piobj = REFLPRN.get(piobj, piobj)
+                    assert piobj is not None
+                    spl = piobj.split("_")
+                    skip = ["gr", "ft", "est", "mst", "et", "kk", "kvk", "hk"]
+                    while True:
+                        if spl[-1].strip() in skip:
+                            spl = spl[:-1]
+                        else:
+                            break
+                    if spl[-1] not in ALL_CASES:
+                        raise ConfigError(
+                            "Indirect object must have a case as its last variant"
+                        )
+                    iobj = spl[-1]
 
+            return verb, iobj
         s, score = get_score(s)
         s, error = get_error(s)
         s, particle = get_particle(s)
@@ -382,9 +405,10 @@ class VerbFrame:
         s, obj = get_direct_object(s)
         verb, iobj = get_indirect_object(s)
         args: List[str] = []
-        args.append(iobj)
-        args.append(obj)
-
+        if iobj:
+            args.append(iobj)
+        if obj:
+            args.append(obj)
         # Add to verb database
         vf = cls(verb=verb, args=args, preps=prepositions, particle=particle, score=score, obj=obj, iobj=iobj)
         case_key = vf.case_key
