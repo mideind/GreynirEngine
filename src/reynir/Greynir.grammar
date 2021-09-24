@@ -4323,15 +4323,31 @@ NlStak_p3_ft_nf_hk → Manns_hk_nf
 NlStak_p3_ft_þf_hk → Manns_hk_þf
 NlStak_p3_ft_þgf_hk → Manns_hk_þgf
 
+NlStak_p3_et_nf_kk → VillaManns_nf
+NlStak_p3_et_þf_kk → VillaManns_þf
+NlStak_p3_et_þgf_kk → VillaManns_þgf
+
+NlStak_p3_et_nf_hk → VillaManns_hk_nf
+NlStak_p3_et_þf_hk → VillaManns_hk_þf
+NlStak_p3_et_þgf_hk → VillaManns_hk_þgf
+
+
 Manns_hk/fall → Manns/fall
+VillaManns_hk/fall → VillaManns/fall
 
 # Hafa veika tilhneigingu til að velja karlkyn á 'N manns' umfram hvorugkyn
 $score(-2) Manns_hk/fall
+$score(-2) VillaManns_hk/fall
 
 # Hér ganga beygjanleg töluorð ekki (?'fjórir manns')
 Manns/fall →
     eo* TöluorðForskeyti? Tala_ft_kk/fall "manns:kk"
     | eo* Talnabil "manns:kk" # 50-100 manns
+
+VillaManns/fall → Manns/fall
+
+$tag(error) VillaManns/fall
+
 
 # Tölur í tölustöfum og óbeygjanleg töluorð (fimm, sex, ...)
 Tala/tala/kyn/fall →
