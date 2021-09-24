@@ -71,6 +71,8 @@ VerbZeroArgSet = Set[str]
 VerbWithArgErrorDict = Dict[str, Dict[str, str]]
 
 
+SKIP_VARS = frozenset(("gr", "ft", "est", "mst", "et", "kk", "kvk", "hk"))
+
 class VerbErrors:
 
     """ A container class for verb error data, for instance wrong
@@ -112,53 +114,67 @@ class VerbErrors:
         errkind = errlist[0].strip()
         verb_with_cases = "_".join([verb] + args)
         if corrlist[0] == "OBJ-CASE":
+            pobj = corrlist[1].strip()
             VerbErrors.check_args(args)
-            VerbErrors.OBJ_ERRORS[verb][args[0]] = corrlist[1].strip()
+            if pobj not in ALL_CASES and pobj not in SUBCLAUSES:
+                pobj = pobj.split(" ")[0].strip()
+                pobj = REFLPRN.get(pobj, pobj)
+                assert pobj is not None
+                spl = pobj.split("_")
+                while True:
+                    if spl[-1].strip() in SKIP_VARS:
+                        spl = spl[:-1]
+                    else:
+                        break
+                if spl[-1] not in ALL_CASES:
+                    raise ConfigError(
+                        "Direct object must have a case as its last variant"
+                    )
+                pobj = spl[-1]
+            VerbErrors.OBJ_ERRORS[verb][args[0]] = pobj
         
-        """
-        elif errkind == "OBJ":
-            vargs = cast(VerbWithArgErrorDict, VerbErrors.ERRORS[len(args)])
-            arglists = vargs[verb]
-            arglists[verb_with_cases] = corr
-        elif errkind == "PP":
-            d = VerbErrors.PREPOSITIONS_ERRORS[verb_with_cases]
-            for p, kind in prepositions:
-                d[p] = corr
-                d[p + "_" + kind] = corr
-        elif errkind == "PRTCL":
-            # !!! TODO: Parse the corr string
-            if particle is None:
-                raise ConfigError("Particle error specification must specify particle")
-            VerbErrors.VERB_PARTICLES_ERRORS[verb_with_cases][particle] = corr
-        elif errkind == "ALL":
-            # !!! TODO: Implement this (store specification of a
-            # !!! TODO: replacement of the entire construct)
-            pass
-        elif errkind == "PREDS":
-            # !!! TODO: Implement this
-            pass
-        elif errkind == "WRONG":
-            wrong_kind = errlist[1].strip()
-            if wrong_kind == "VERB":
-                # Wrong verb, must point to completely different verb + args
-                if len(corrlist) != 2:
-                    raise ConfigError("WRONG-VERB must specify correct verb")
-                if particle:
-                    verb_with_cases += "*" + particle
-                if verb_with_cases in VerbErrors.WRONG_VERBS:
-                    pass
-                    # raise ConfigError("WRONG-VERB has already been specified for this verb, argument list and particle")
-                VerbErrors.WRONG_VERBS[verb_with_cases] = corrlist[1]
-            elif wrong_kind == "OBJ":
-                # !!! TODO: Implement this
-                pass
-            else:
-                raise ConfigError("Unknown type of WRONG-XXX in $error pragma")
-        else:
-            raise ConfigError(
-                "Unknown error type in $error pragma: '{0}'".format(errkind)
-            )
-        """
+        # elif errkind == "OBJ":
+        #     vargs = cast(VerbWithArgErrorDict, VerbErrors.ERRORS[len(args)])
+        #     arglists = vargs[verb]
+        #     arglists[verb_with_cases] = corr
+        # elif errkind == "PP":
+        #     d = VerbErrors.PREPOSITIONS_ERRORS[verb_with_cases]
+        #     for p, kind in prepositions:
+        #         d[p] = corr
+        #         d[p + "_" + kind] = corr
+        # elif errkind == "PRTCL":
+        #     # !!! TODO: Parse the corr string
+        #     if particle is None:
+        #         raise ConfigError("Particle error specification must specify particle")
+        #     VerbErrors.VERB_PARTICLES_ERRORS[verb_with_cases][particle] = corr
+        # elif errkind == "ALL":
+        #     # !!! TODO: Implement this (store specification of a
+        #     # !!! TODO: replacement of the entire construct)
+        #     pass
+        # elif errkind == "PREDS":
+        #     # !!! TODO: Implement this
+        #     pass
+        # elif errkind == "WRONG":
+        #     wrong_kind = errlist[1].strip()
+        #     if wrong_kind == "VERB":
+        #         # Wrong verb, must point to completely different verb + args
+        #         if len(corrlist) != 2:
+        #             raise ConfigError("WRONG-VERB must specify correct verb")
+        #         if particle:
+        #             verb_with_cases += "*" + particle
+        #         if verb_with_cases in VerbErrors.WRONG_VERBS:
+        #             pass
+        #             # raise ConfigError("WRONG-VERB has already been specified for this verb, argument list and particle")
+        #         VerbErrors.WRONG_VERBS[verb_with_cases] = corrlist[1]
+        #     elif wrong_kind == "OBJ":
+        #         # !!! TODO: Implement this
+        #         pass
+        #     else:
+        #         raise ConfigError("Unknown type of WRONG-XXX in $error pragma")
+        # else:
+        #     raise ConfigError(
+        #         "Unknown error type in $error pragma: '{0}'".format(errkind)
+        #     )
 
 
 class PrepositionFrame:
@@ -221,13 +237,13 @@ class VerbFrame:
         score: Optional[int],
     ) -> None:
         self.verb = verb
-        #assert 0 <= len(args) <= 2
         # All arguments
         self.args = args
         self.obj = obj
         self.iobj = iobj
         # Only case arguments
         self.cases = [arg for arg in args if arg in ALL_CASES]
+        assert 0 <= len(self.cases) <= 2
         pfs = [PrepositionFrame.obtain(prep, case) for prep, case in preps]
         self.preps: Dict[PrepKey, PrepositionFrame] = {pf.key: pf for pf in pfs}
         self.particle = particle
@@ -302,11 +318,11 @@ class VerbFrame:
                 s = s[0:ix].strip()
                 if " " in particle:
                     raise ConfigError("Particle should only be one word")
-                elif len(particle) < 2:
+                elif not particle:
                     raise ConfigError("Particle should be at least one letter")
             return s, particle
 
-        def get_preposition(s: str) -> Tuple[str, List[Tuple[str, str]]]:
+        def get_prepositions(s: str) -> Tuple[str, List[Tuple[str, str]]]:
             # Process preposition arguments, if any
             prepositions: List[Tuple[str, str]] = []
             ap = s.split("/")
@@ -320,22 +336,8 @@ class VerbFrame:
                 parg = p.split()
                 #if len(parg) != 2:
                 #    raise ConfigError("Preposition should have exactly one argument")
-                if parg[1] not in ALL_CASES and parg[1] not in SUBCLAUSES:
-                    parg[1] = REFLPRN.get(parg[1], parg[1])
-                    assert parg[1] is not None
-                    spl = parg[1].split("_")
-                    skip = ["gr", "ft", "est", "mst", "et", "kk", "kvk", "hk"]   # TODO Handle these variants
-                    while True:
-                        if spl[-1].strip() in skip:
-                            spl = spl[:-1]
-                        else:
-                            break
-                    if spl[-1] not in ALL_CASES:
-                        raise ConfigError(
-                            "Preposition argument must have a case as its last variant"
-                        )
-                    parg[1] = spl[-1]
-                prepositions.append((parg[0].replace("_", " "), parg[1]))
+                case = get_case(parg[1])
+                prepositions.append((parg[0].replace("_", " "), case))
                 ix += 1
             return s, prepositions
 
@@ -343,65 +345,45 @@ class VerbFrame:
             # Process direct object argument
             op = s.split("|")
             s = op[0]
-            obj: str = ""
-            if len(op) < 1 or len(op) > 2:
+            if not 1 <= len(op) <= 2:
                 raise ConfigError("Verb should have zero or one direct object")
-            elif len(op) == 2:
-                pobj = op[1].strip()
-                if pobj not in ALL_CASES and pobj not in SUBCLAUSES:
-                    pobj = pobj.split(" ")[0].strip()
-                    pobj = REFLPRN.get(pobj, pobj)
-                    assert pobj is not None
-                    spl = pobj.split("_")
-                    skip = ["gr", "ft", "est", "mst", "et", "kk", "kvk", "hk"]
-                    while True:
-                        if spl[-1].strip() in skip:
-                            spl = spl[:-1]
-                        else:
-                            break
-                    if spl[-1] not in ALL_CASES:
-                        raise ConfigError(
-                            "Direct object must have a case as its last variant"
-                        )
-                    pobj = spl[-1]
-                obj = pobj
-            return s, obj
+            case: str = ""
+            if len(op) == 2:
+                case = get_case(op[1].strip())
+            return s, case
 
         def get_indirect_object(s: str) -> Tuple[str, str]:
             # Process indirect object argument
             a = s.split()
             if len(a) < 1:
                 raise ConfigError("Verb should have zero or one indirect objects")
-            #if len(a) < 1 or len(a) > 3:
-            #    raise ConfigError("Verb should have zero, one or two arguments")
             verb = a[0]
-            iobj: str = ""
             if not verb.isalpha():
                 raise ConfigError("Verb '{0}' is not a valid word".format(verb))
+            case: str = ""
             if len(a) > 1:
-                piobj = " ".join(a[1:]).strip()
-                if piobj not in ALL_CASES and piobj not in SUBCLAUSES:
-                    piobj = piobj.split(" ")[0].strip()
-                    piobj = REFLPRN.get(piobj, piobj)
-                    assert piobj is not None
-                    spl = piobj.split("_")
-                    skip = ["gr", "ft", "est", "mst", "et", "kk", "kvk", "hk"]
-                    while True:
-                        if spl[-1].strip() in skip:
-                            spl = spl[:-1]
-                        else:
-                            break
-                    if spl[-1] not in ALL_CASES:
-                        raise ConfigError(
-                            "Indirect object must have a case as its last variant"
-                        )
-                    iobj = spl[-1]
+                case = get_case((" ".join(a[1:])))
+            return verb, case
 
-            return verb, iobj
+        def get_case(w: str) -> str:
+            if not w:
+                raise ConfigError("Argument must have a case as a variant")
+            if w not in ALL_CASES and w not in SUBCLAUSES:
+                w = w.split(" ")[0].strip()
+                w = REFLPRN.get(w, w)
+                spl = w.split("_")
+                while spl and spl[-1].strip() in SKIP_VARS:
+                    spl = spl[:-1]
+                if not spl or spl[-1] not in ALL_CASES:
+                    raise ConfigError("Argument must have a case as a variant")
+                return spl[-1]
+            return w
+
+
         s, score = get_score(s)
         s, error = get_error(s)
         s, particle = get_particle(s)
-        s, prepositions = get_preposition(s)
+        s, prepositions = get_prepositions(s)
         s, obj = get_direct_object(s)
         verb, iobj = get_indirect_object(s)
         args: List[str] = []

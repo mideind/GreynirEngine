@@ -4332,21 +4332,24 @@ NlStak_p3_et_þf_hk → VillaManns_hk_þf
 NlStak_p3_et_þgf_hk → VillaManns_hk_þgf
 
 
-Manns_hk/fall → Manns/fall
 VillaManns_hk/fall → VillaManns/fall
+
+VillaManns/fall → Manns/fall
+
+$tag(error) VillaManns/fall
+
+Manns_hk/fall → Manns/fall
+
+$score(-2) VillaManns_hk/fall
 
 # Hafa veika tilhneigingu til að velja karlkyn á 'N manns' umfram hvorugkyn
 $score(-2) Manns_hk/fall
-$score(-2) VillaManns_hk/fall
 
 # Hér ganga beygjanleg töluorð ekki (?'fjórir manns')
 Manns/fall →
     eo* TöluorðForskeyti? Tala_ft_kk/fall "manns:kk"
     | eo* Talnabil "manns:kk" # 50-100 manns
 
-VillaManns/fall → Manns/fall
-
-$tag(error) VillaManns/fall
 
 
 # Tölur í tölustöfum og óbeygjanleg töluorð (fimm, sex, ...)
@@ -7400,7 +7403,17 @@ $score(+4) ÁðurEftir
 AnnaðhvortSt →
     "annaðhvort:st" | VillaAnnaðHvort
 
-# Villureglur // Error rules
+
+# ----------------------------------------------
+#
+# Rules for common grammar errors
+#
+# The following rules are considered innocent or common enough
+# to justify being a part of the main grammar.
+# They are then marked as an error in the grammar checker
+# in the GreynirCorrect package
+#
+# ----------------------------------------------
 
 AðvörunKomma →
     ","
