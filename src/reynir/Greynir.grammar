@@ -5366,10 +5366,6 @@ OgEða →
     | 'og_fleiri:ao'  # (Vísbendingar eru um að samkomubann) o.fl. (aðgerðir séu á döfinni)
     | EnÍOgEða
 
-# 'sem og'
-AðvörunSem → "sem:st"
-$tag(error) AðvörunSem
-
 # Við þurfum að hætta að meta fólk út frá aldri heldur meta það út frá hæfileikum
 OgEðaHeldur → OgEða | "heldur:ao"
 
@@ -7425,6 +7421,10 @@ AðvörunAð →
     "að:st"
 
 $tag(error) AðvörunAð
+
+# 'sem og'
+AðvörunSem → "sem:st"
+$tag(error) AðvörunSem
 
 # 'annað hvort' í tveimur orðum en á að vera eitt
 VillaAnnaðHvort →
