@@ -1595,7 +1595,6 @@ def test_composite_words(r):
             "brekka",
         ]
     )
-    )
     s = r.parse_single(
         "Málfræði-reglurnar sögðu að hann væri frá Vestur-Þýskalandi "
         "og Ytri-Hnausi í Þingvalla-sveit."
