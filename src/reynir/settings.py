@@ -683,7 +683,7 @@ class Settings:
     @staticmethod
     def _handle_prepositions(s: str) -> None:
         """ Handle preposition specifications in the settings section """
-        # Format: pw1 pw2... case [nh]  [$error(X)]
+        # Format: pw1 pw2... case [nh|nhx]  [$error(X)]
         error = False
         corr: Optional[Tuple[str, Optional[str]]] = None
         ix = s.rfind("$error(")  # Must be at the end
