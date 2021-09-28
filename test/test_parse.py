@@ -1564,15 +1564,27 @@ def test_composite_words(r):
     # as an unknown noun - causing 'fiskinn' to be parsed as an adjective
     assert s.lemmas == ["ég", "borða", "sykrisaltan", "fiskinn"]
     s = r.parse_single("Hann hjólaði kattspenntur á kvenbretti niður brekkuna")
-    assert s.lemmas == [
-        "hann",
-        "hjóla",
-        "katt-spenntur",
-        "ær",           #"á",           
-        "kven-bretta",  #"kven-bretti", # 'ær' is said to be the direct object!
-        "niður",
-        "brekka",
-    ]
+    assert (
+        s.lemmas == [
+            "hann",
+            "hjóla",
+            "katt-spenntur",
+            "ær",           #"á",           
+            "kven-bretta",  #"kven-bretti", # 'ær' is said to be the direct object!
+            "niður",
+            "brekka",
+        ]
+    ) or (
+        s.lemmas == [
+            "hann",
+            "hjóla",
+            "katt-spenntur",
+            "á",
+            "kven-bretti",
+            "niður",
+            "brekka",
+        ]
+    )
     s = r.parse_single(
         "Málfræði-reglurnar sögðu að hann væri frá Vestur-Þýskalandi "
         "og Ytri-Hnausi í Þingvalla-sveit."
