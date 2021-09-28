@@ -1584,6 +1584,17 @@ def test_composite_words(r):
             "niður",
             "brekka",
         ]
+    ) or (
+        s.lemmas == [
+            "hann",
+            "hjóla",
+            "katt-spenntur",
+            "á",
+            "kven-bretta",
+            "niður",
+            "brekka",
+        ]
+    )
     )
     s = r.parse_single(
         "Málfræði-reglurnar sögðu að hann væri frá Vestur-Þýskalandi "
