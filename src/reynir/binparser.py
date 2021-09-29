@@ -1065,7 +1065,6 @@ class BIN_Token(Token):
             # Can't use singular verb if plural terminal
             return False
         # Check that person (1st, 2nd, 3rd) and other variant requirements match
-        assert cls._VERB_FORMS is not None
         for v in terminal.variants:
             # Lookup variant to see if it is one of the required ones for verbs
             rq = cls._VERB_FORMS.get(v)

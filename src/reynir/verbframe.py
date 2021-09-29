@@ -57,6 +57,7 @@ from .basics import (
     ALL_CASES,
     SUBCLAUSES,
     REFLPRN,
+    REFLPRN_CASE,
     REFLPRN_SET,
 )
 
@@ -71,6 +72,7 @@ VerbWithArgErrorDict = Dict[str, Dict[str, str]]
 
 
 SKIP_VARS = frozenset(("gr", "ft", "est", "mst", "et", "kk", "kvk", "hk"))
+VALID_ARGS = ALL_CASES | SUBCLAUSES | REFLPRN_SET
 
 
 class VerbErrors:
@@ -89,9 +91,9 @@ class VerbErrors:
     OBJ_ERRORS: Dict[str, Dict[str, str]] = defaultdict(dict)
 
     @staticmethod
-    def check_args(args: List[str]) -> None:
+    def check_args(args: Iterable[str]) -> None:
         for kind in args:
-            if kind not in ALL_CASES | SUBCLAUSES | REFLPRN_SET:
+            if kind not in VALID_ARGS:
                 spl = kind.split("_")
                 # Allow the last variant to be _gr, if the
                 # next-to-last one is a case
@@ -121,11 +123,8 @@ class VerbErrors:
                 pobj = REFLPRN.get(pobj, pobj)
                 assert pobj is not None
                 spl = pobj.split("_")
-                while True:
-                    if spl[-1].strip() in SKIP_VARS:
-                        spl = spl[:-1]
-                    else:
-                        break
+                while spl and spl[-1].strip() in SKIP_VARS:
+                    spl = spl[:-1]
                 if spl[-1] not in ALL_CASES:
                     raise ConfigError(
                         "Direct object must have a case as its last variant"
@@ -279,7 +278,7 @@ class VerbFrame:
         complex = False
 
         def get_score(s: str) -> Tuple[str, Optional[int]]:
-            # Start by handling the $score() pragma, if present
+            """ Handle the $score() pragma, if present """
             score: Optional[int] = None
             ix = s.rfind("$score(")  # Must be at the end
             if ix >= 0:
@@ -297,7 +296,7 @@ class VerbFrame:
             return s, score
 
         def get_error(s: str) -> Tuple[str, Optional[str]]:
-            # Check for $error
+            """ Handle the $error() pragma, if present """
             error = None
             ix = s.rfind("$error(")
             if ix >= 0:
@@ -312,20 +311,20 @@ class VerbFrame:
             return s, error
 
         def get_particle(s: str) -> Tuple[str, Optional[str]]:
-            # Process particles, should only be one in each line
+            """ Process particles, should only be one in each line """
             particle = None
             ix = s.rfind("*")
             if ix >= 0:
                 particle = s[ix:].strip()
-                s = s[0:ix].strip()
-                if " " in particle:
-                    raise ConfigError("Particle should only be one word")
-                elif not particle:
+                s = s[:ix].strip()
+                if not particle:
                     raise ConfigError("Particle should be at least one letter")
+                if " " in particle or "\t" in particle:
+                    raise ConfigError("Particle should only be one word")
             return s, particle
 
         def get_prepositions(s: str) -> Tuple[str, List[Tuple[str, str]]]:
-            # Process preposition arguments, if any
+            """ Process preposition arguments, if any """
             prepositions: List[Tuple[str, str]] = []
             ap = s.split("/")
             s = ap[0]
@@ -344,26 +343,25 @@ class VerbFrame:
             return s, prepositions
 
         def get_direct_object(s: str) -> Tuple[str, str]:
-            # Process direct object argument
+            """ Process direct object argument """
             op = s.split("|")
             s = op[0]
             if not 1 <= len(op) <= 2:
                 raise ConfigError("Verb should have zero or one direct object")
-
-            case: str = ""
+            case = ""
             if len(op) == 2:
                 case = get_case_and_kind(op[1].strip())
             return s, case
 
         def get_indirect_object(s: str) -> Tuple[str, str]:
-            # Process indirect object argument
+            """ Process indirect object argument """
             a = s.split()
             if len(a) < 1:
                 raise ConfigError("Verb should have zero or one indirect objects")
             verb = a[0]
             if not verb.isalpha():
                 raise ConfigError("Verb '{0}' is not a valid word".format(verb))
-            case: str = ""
+            case = ""
             if len(a) > 1:
                 case = get_case_and_kind((" ".join(a[1:])))
             return verb, case
@@ -380,13 +378,13 @@ class VerbFrame:
             # 6: an infinitival clause without the infinitival marker ([mega] nhx)
             # 7: a complement clause ([halda] falls)
             # 8: an interrogative clause ([spyrja] spurns)
-            case: str = ""
-            # kind: int = 1    # Default value
-            refl = REFLPRN.get(w, "")
-            nonlocal complex
             if not w:
                 raise ConfigError("Argument must have a case as a variant")
-            elif w in ALL_CASES:
+            case = ""
+            # kind: int = 1    # Default value
+            refl = REFLPRN_CASE.get(w, "")
+            nonlocal complex
+            if w in ALL_CASES:
                 # Case 1
                 case = w
                 # kind = 1
@@ -421,6 +419,7 @@ class VerbFrame:
                 return spl[-1]
             return case
 
+        # Pick off specifications from the right hand side of the string s
         s, score = get_score(s)
         s, error = get_error(s)
         s, particle = get_particle(s)
@@ -432,36 +431,37 @@ class VerbFrame:
             args.append(iobj)
         if obj:
             args.append(obj)
-        # Add to verb database
-        if not complex:
-            vf = cls(
-                verb=verb,
-                args=args,
-                preps=prepositions,
-                particle=particle,
-                score=score,
-                obj=obj,
-                iobj=iobj,
-            )
-            case_key = vf.case_key
-            if error:
-                # Add this to the error database
-                VerbErrors.add_error(verb, args, prepositions, particle, error)
-                # Note: In order to parse verbs with wrong arguments,
-                # the frame needs to be present as an extra VerbFrame instance
-                # that is then marked as an error in GreynirCorrect
-                if case_key is not None:
-                    # This erroneous verb frame has cases as arguments
-                    cls.WRONG_CASE_FRAMES[vf.key].append(vf)
-            # Create a VerbFrame instance
-            else:
-                if case_key is not None:
-                    # This verb frame has cases as arguments
-                    cls.CASE_FRAMES[case_key].append(vf)
-                # Add to the dictionary of all verb frames
-                cls.ALL_FRAMES[vf.key].append(vf)
-                # Add to the set of known verb lemmas
-                cls.VERBS.add(verb)
+        # Add frame to verb database, if this construct is supported (not 'complex')
+        if complex:
+            return
+        vf = cls(
+            verb=verb,
+            args=args,
+            preps=prepositions,
+            particle=particle,
+            score=score,
+            obj=obj,
+            iobj=iobj,
+        )
+        case_key = vf.case_key
+        if error:
+            # Add this to the error database
+            VerbErrors.add_error(verb, args, prepositions, particle, error)
+            # Note: In order to parse verbs with wrong arguments,
+            # the frame needs to be present as an extra VerbFrame instance
+            # that is then marked as an error in GreynirCorrect
+            if case_key is not None:
+                # This erroneous verb frame has cases as arguments
+                cls.WRONG_CASE_FRAMES[vf.key].append(vf)
+        # Create a VerbFrame instance
+        else:
+            if case_key is not None:
+                # This verb frame has cases as arguments
+                cls.CASE_FRAMES[case_key].append(vf)
+            # Add to the dictionary of all verb frames
+            cls.ALL_FRAMES[vf.key].append(vf)
+            # Add to the set of known verb lemmas
+            cls.VERBS.add(verb)
 
     @classmethod
     def known(cls, verb: str) -> bool:
