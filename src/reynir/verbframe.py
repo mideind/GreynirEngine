@@ -40,7 +40,6 @@
 """
 
 from typing import (
-    cast,
     Iterable,
     Optional,
     Union,
@@ -72,6 +71,7 @@ VerbWithArgErrorDict = Dict[str, Dict[str, str]]
 
 
 SKIP_VARS = frozenset(("gr", "ft", "est", "mst", "et", "kk", "kvk", "hk"))
+
 
 class VerbErrors:
 
@@ -110,9 +110,9 @@ class VerbErrors:
     ) -> None:
         """ Take note of a verb object specification with an $error pragma """
         corrlist = corr.split(",")
-        errlist = corrlist[0].split("-")
-        errkind = errlist[0].strip()
-        verb_with_cases = "_".join([verb] + args)
+        # errlist = corrlist[0].split("-")
+        # errkind = errlist[0].strip()
+        # verb_with_cases = "_".join([verb] + args)
         if corrlist[0] == "OBJ-CASE":
             pobj = corrlist[1].strip()
             VerbErrors.check_args(args)
@@ -132,7 +132,7 @@ class VerbErrors:
                     )
                 pobj = spl[-1]
             VerbErrors.OBJ_ERRORS[verb][args[0]] = pobj
-       
+
         # elif errkind == "OBJ":
         #     vargs = cast(VerbWithArgErrorDict, VerbErrors.ERRORS[len(args)])
         #     arglists = vargs[verb]
@@ -225,8 +225,7 @@ class VerbFrame:
     WRONG_CASE_FRAMES: Dict[str, List["VerbFrame"]] = defaultdict(list)
     # All known verb lemmas
     VERBS: Set[str] = set()
-    COMPLEX = False
-    
+
     def __init__(
         self,
         verb: str,
@@ -277,6 +276,8 @@ class VerbFrame:
         """ Handle verb object specifications in the settings section """
         # Format: verb [arg1] [arg2] [/preposition arg]... [*particle] [$pragma(txt)]
 
+        complex = False
+
         def get_score(s: str) -> Tuple[str, Optional[int]]:
             # Start by handling the $score() pragma, if present
             score: Optional[int] = None
@@ -301,12 +302,14 @@ class VerbFrame:
             ix = s.rfind("$error(")
             if ix >= 0:
                 if not s.endswith(")"):
-                    raise ConfigError("Invalid error pragma; form should be $error(...)")
+                    raise ConfigError(
+                        "Invalid error pragma; form should be $error(...)"
+                    )
                 error = s[ix + 7 : -1].strip()
                 s = s[0:ix].strip()
                 if not error:
                     raise ConfigError("Expected error specification in $error(...)")
-            return s, error            
+            return s, error
 
         def get_particle(s: str) -> Tuple[str, Optional[str]]:
             # Process particles, should only be one in each line
@@ -333,13 +336,14 @@ class VerbFrame:
                 # or 'milli ef_ft' (detailing the plural)
                 p = ap[ix].strip()
                 parg = p.split()
-                #if len(parg) != 2:
+                # if len(parg) != 2:
                 #    raise ConfigError("Preposition should have exactly one argument")
                 case = get_case_and_kind(parg[1])
                 prepositions.append((parg[0].replace("_", " "), case))
                 ix += 1
             if prepositions:
-                COMPLEX = True
+                nonlocal complex
+                complex = True
             return s, prepositions
 
         def get_direct_object(s: str) -> Tuple[str, str]:
@@ -380,24 +384,25 @@ class VerbFrame:
             # 7: a complement clause ([halda] falls)
             # 8: an interrogative clause ([spyrja] spurns)
             case: str = ""
-            #kind: int = 1    # Default value
+            # kind: int = 1    # Default value
             refl = REFLPRN.get(w, "")
+            nonlocal complex
             if not w:
                 raise ConfigError("Argument must have a case as a variant")
             elif w in ALL_CASES:
                 # Case 1
                 case = w
-                #kind = 1
+                # kind = 1
             elif refl and refl in ALL_CASES:
                 # Case 2
                 case = refl
-                #kind = 2
-                cls.COMPLEX = True
-            elif w in SUBCLAUSES: 
+                # kind = 2
+                complex = True
+            elif w in SUBCLAUSES:
                 # Cases 5-8
                 case = w
-                #kind = 5
-                cls.COMPLEX = True
+                # kind = 5
+                complex = True
             elif " " in w:
                 # Cases 4
                 w = w.split(" ")[0].strip()
@@ -406,7 +411,7 @@ class VerbFrame:
                     spl = spl[:-1]
                 if not spl or spl[-1] not in ALL_CASES:
                     raise ConfigError("Argument must have a case as a variant")
-                cls.COMPLEX = True
+                complex = True
                 return spl[-1]
             elif "_" in w:
                 # Case 3
@@ -415,25 +420,32 @@ class VerbFrame:
                     spl = spl[:-1]
                 if not spl or spl[-1] not in ALL_CASES:
                     raise ConfigError("Argument must have a case as a variant")
-                cls.COMPLEX = True
+                complex = True
                 return spl[-1]
             return case
 
-        cls.COMPLEX = False
         s, score = get_score(s)
         s, error = get_error(s)
         s, particle = get_particle(s)
         s, prepositions = get_prepositions(s)
         s, obj = get_direct_object(s)
         verb, iobj = get_indirect_object(s)
-        args: List[str] = []    
+        args: List[str] = []
         if iobj:
             args.append(iobj)
         if obj:
             args.append(obj)
         # Add to verb database
-        if not cls.COMPLEX:
-            vf = cls(verb=verb, args=args, preps=prepositions, particle=particle, score=score, obj=obj, iobj=iobj)
+        if not complex:
+            vf = cls(
+                verb=verb,
+                args=args,
+                preps=prepositions,
+                particle=particle,
+                score=score,
+                obj=obj,
+                iobj=iobj,
+            )
             case_key = vf.case_key
             if error:
                 # Add this to the error database

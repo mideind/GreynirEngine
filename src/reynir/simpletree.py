@@ -1170,9 +1170,7 @@ class SimpleTree:
                             m.sort(key=lambda mm: 0 if tc in mm.beyging else 1)
                         # If we can get away with just a 'töl', do it
                         # !!! NOTE: The cast below is added to avoid a bug in Pylance/Pyright
-                        mm = cast(
-                            BIN_Tuple, next((mm for mm in m if mm.ordfl == "töl"), m[0])
-                        )
+                        mm = next((mm for mm in m if mm.ordfl == "töl"), m[0])
                         if mm.ordfl == "lo" and case is not None and gender is not None:
                             # Looks like this is an adjective: filter down to those that
                             # match the previously seen noun
