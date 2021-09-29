@@ -114,7 +114,7 @@ class VerbErrors:
         corrlist = corr.split(",")
         # errlist = corrlist[0].split("-")
         # errkind = errlist[0].strip()
-        # verb_with_cases = "_".join([verb] + args)
+        verb_with_cases = "_".join([verb] + args)
         if corrlist[0] == "OBJ-CASE":
             pobj = corrlist[1].strip()
             VerbErrors.check_args(args)
@@ -136,11 +136,11 @@ class VerbErrors:
         #     vargs = cast(VerbWithArgErrorDict, VerbErrors.ERRORS[len(args)])
         #     arglists = vargs[verb]
         #     arglists[verb_with_cases] = corr
-        # elif errkind == "PP":
-        #     d = VerbErrors.PREPOSITIONS_ERRORS[verb_with_cases]
-        #     for p, kind in prepositions:
-        #         d[p] = corr
-        #         d[p + "_" + kind] = corr
+        elif corrlist[0].strip() == "PP":
+            d = VerbErrors.PREPOSITIONS_ERRORS[verb_with_cases]
+            for p, kind in prepositions:
+                d[p] = corr
+                d[p + "_" + kind] = corr
         # elif errkind == "PRTCL":
         #     # !!! TODO: Parse the corr string
         #     if particle is None:
