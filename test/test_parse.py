@@ -1163,26 +1163,25 @@ def test_attachment(r, verbose=False):
     """ Test attachment of prepositions to nouns and verbs """
     if verbose:
         print("Testing attachment of prepositions")
-    # s = r.parse_single("Páll talaði við Pál um málið")
-    # assert s.tree.flat == ""
-    # TODO Changes in argument frames have upset this
-    # for _ in range(20):
+    #s = r.parse_single("Páll talaði við Pál um málið")
+    #assert s.tree.flat == ""
+    for _ in range(20):
         # Test consistency for 20 iterations
-        #s = r.parse_single("Ég setti dæmi um þetta í bókina mína.")
-        #assert (
-        #    s.tree.flat == "S0 S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ "  # Ég
-        #    "VP VP so_1_þf_et_p1 /VP NP-OBJ no_et_þf_hk "  # setti dæmi
-        #    "PP P fs_þf /P NP fn_et_þf_hk /NP /PP "  # um þetta
-        #    "/NP-OBJ PP P fs_þf /P NP no_et_þf_kvk fn_et_þf_kvk /NP /PP /VP "  # í bókina mína
-        #    "/IP /S-MAIN p /S0" # .
-        #)  
-        #s = r.parse_single("Ég setti dæmi í bókina mína um þetta.")
-        #assert (
-        #    s.tree.flat == "S0 S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ "  # Ég
-        #    "VP VP so_1_þf_et_p1 /VP NP-OBJ no_et_þf_hk "  # setti dæmi
-        #    "/NP-OBJ PP P fs_þf /P NP no_et_þf_kvk fn_et_þf_kvk "  # í bókina mína
-        #    "PP P fs_þf /P NP fn_et_þf_hk /NP /PP /NP /PP /VP /IP /S-MAIN p /S0" # um þetta .
-        #)  
+        s = r.parse_single("Ég setti dæmi um þetta í bókina mína.")
+        assert (
+            s.tree.flat == "S0 S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ "  # Ég
+            "VP VP so_1_þf_et_p1 /VP NP-OBJ no_et_þf_hk "  # setti dæmi
+            "PP P fs_þf /P NP fn_et_þf_hk /NP /PP "  # um þetta
+            "/NP-OBJ PP P fs_þf /P NP no_et_þf_kvk fn_et_þf_kvk /NP /PP /VP "  # í bókina mína
+            "/IP /S-MAIN p /S0" # .
+        )  
+        s = r.parse_single("Ég setti dæmi í bókina mína um þetta.")
+        assert (
+            s.tree.flat == "S0 S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ "  # Ég
+            "VP VP so_1_þf_et_p1 /VP NP-OBJ no_et_þf_hk "  # setti dæmi
+            "/NP-OBJ PP P fs_þf /P NP no_et_þf_kvk fn_et_þf_kvk "  # í bókina mína
+            "PP P fs_þf /P NP fn_et_þf_hk /NP /PP /NP /PP /VP /IP /S-MAIN p /S0" # um þetta .
+        )  
 
 
 def test_nominative(r: Greynir) -> None:
@@ -1569,28 +1568,8 @@ def test_composite_words(r):
             "hann",
             "hjóla",
             "katt-spenntur",
-            "ær",           #"á",           
-            "kven-bretta",  #"kven-bretti", # 'ær' is said to be the direct object!
-            "niður",
-            "brekka",
-        ]
-    ) or (
-        s.lemmas == [
-            "hann",
-            "hjóla",
-            "katt-spenntur",
-            "á",
-            "kven-bretti",
-            "niður",
-            "brekka",
-        ]
-    ) or (
-        s.lemmas == [
-            "hann",
-            "hjóla",
-            "katt-spenntur",
-            "á",
-            "kven-bretta",
+            "á",           #"á",           
+            "kven-bretti",  #"kven-bretti", # 'ær' is said to be the direct object!
             "niður",
             "brekka",
         ]

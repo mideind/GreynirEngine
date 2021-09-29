@@ -341,9 +341,6 @@ class VerbFrame:
                 case = get_case_and_kind(parg[1])
                 prepositions.append((parg[0].replace("_", " "), case))
                 ix += 1
-            if prepositions:
-                nonlocal complex
-                complex = True
             return s, prepositions
 
         def get_direct_object(s: str) -> Tuple[str, str]:
