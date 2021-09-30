@@ -4323,7 +4323,24 @@ NlStak_p3_ft_nf_hk → Manns_hk_nf
 NlStak_p3_ft_þf_hk → Manns_hk_þf
 NlStak_p3_ft_þgf_hk → Manns_hk_þgf
 
+NlStak_p3_et_nf_kk → VillaManns_nf
+NlStak_p3_et_þf_kk → VillaManns_þf
+NlStak_p3_et_þgf_kk → VillaManns_þgf
+
+NlStak_p3_et_nf_hk → VillaManns_hk_nf
+NlStak_p3_et_þf_hk → VillaManns_hk_þf
+NlStak_p3_et_þgf_hk → VillaManns_hk_þgf
+
+
+VillaManns_hk/fall → VillaManns/fall
+
+VillaManns/fall → Manns/fall
+
+$tag(error) VillaManns/fall
+
 Manns_hk/fall → Manns/fall
+
+$score(-2) VillaManns_hk/fall
 
 # Hafa veika tilhneigingu til að velja karlkyn á 'N manns' umfram hvorugkyn
 $score(-2) Manns_hk/fall
@@ -4332,6 +4349,8 @@ $score(-2) Manns_hk/fall
 Manns/fall →
     eo* TöluorðForskeyti? Tala_ft_kk/fall "manns:kk"
     | eo* Talnabil "manns:kk" # 50-100 manns
+
+
 
 # Tölur í tölustöfum og óbeygjanleg töluorð (fimm, sex, ...)
 Tala/tala/kyn/fall →
@@ -5346,10 +5365,6 @@ OgEða →
     | "svo:st" "sem:st" | "jafnt:ao" "sem:st"
     | 'og_fleiri:ao'  # (Vísbendingar eru um að samkomubann) o.fl. (aðgerðir séu á döfinni)
     | EnÍOgEða
-
-# 'sem og'
-AðvörunSem → "sem:st"
-$tag(error) AðvörunSem
 
 # Við þurfum að hætta að meta fólk út frá aldri heldur meta það út frá hæfileikum
 OgEðaHeldur → OgEða | "heldur:ao"
@@ -7384,7 +7399,17 @@ $score(+4) ÁðurEftir
 AnnaðhvortSt →
     "annaðhvort:st" | VillaAnnaðHvort
 
-# Villureglur // Error rules
+
+# ----------------------------------------------
+#
+# Rules for common grammar errors
+#
+# The following rules are considered innocent or common enough
+# to justify being a part of the main grammar.
+# They are then marked as an error in the grammar checker
+# in the GreynirCorrect package
+#
+# ----------------------------------------------
 
 AðvörunKomma →
     ","
@@ -7396,6 +7421,10 @@ AðvörunAð →
     "að:st"
 
 $tag(error) AðvörunAð
+
+# 'sem og'
+AðvörunSem → "sem:st"
+$tag(error) AðvörunSem
 
 # 'annað hvort' í tveimur orðum en á að vera eitt
 VillaAnnaðHvort →

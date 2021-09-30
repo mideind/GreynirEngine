@@ -55,8 +55,9 @@ _DEFAULT_LOCALE = ("IS_is", "UTF-8")
 ALL_CASES = frozenset(("nf", "þf", "þgf", "ef"))
 ALL_GENDERS = frozenset(("kk", "kvk", "hk"))
 ALL_NUMBERS = frozenset(("et", "ft"))
-SUBCLAUSES = frozenset(("nh", "mnh", "falls"))
+SUBCLAUSES = frozenset(("nh", "nhx", "falls", "spurns"))
 REFLPRN = {"sig": "sig_hk_et_þf", "sér": "sig_hk_et_þgf", "sín": "sig_hk_et_ef"}
+REFLPRN_CASE = {"sig": "þf", "sér": "þgf", "sín": "ef"}
 REFLPRN_SET = frozenset(REFLPRN.keys())
 
 # BÍN compressed file format version (used in tools/binpack.py and bincompress.py)

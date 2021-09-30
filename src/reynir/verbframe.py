@@ -40,7 +40,6 @@
 """
 
 from typing import (
-    cast,
     Iterable,
     Optional,
     Union,
@@ -58,6 +57,7 @@ from .basics import (
     ALL_CASES,
     SUBCLAUSES,
     REFLPRN,
+    REFLPRN_CASE,
     REFLPRN_SET,
 )
 
@@ -69,6 +69,10 @@ VerbZeroArgSet = Set[str]
 # Type of dict of verbs with arguments (1 or 2),
 # where each entry is a list of argument lists
 VerbWithArgErrorDict = Dict[str, Dict[str, str]]
+
+
+SKIP_VARS = frozenset(("gr", "ft", "est", "mst", "et", "kk", "kvk", "hk"))
+VALID_ARGS = ALL_CASES | SUBCLAUSES | REFLPRN_SET
 
 
 class VerbErrors:
@@ -87,9 +91,9 @@ class VerbErrors:
     OBJ_ERRORS: Dict[str, Dict[str, str]] = defaultdict(dict)
 
     @staticmethod
-    def check_args(args: List[str]) -> None:
+    def check_args(args: Iterable[str]) -> None:
         for kind in args:
-            if kind not in ALL_CASES | SUBCLAUSES | REFLPRN_SET:
+            if kind not in VALID_ARGS:
                 spl = kind.split("_")
                 # Allow the last variant to be _gr, if the
                 # next-to-last one is a case
@@ -107,55 +111,69 @@ class VerbErrors:
         corr: str,
     ) -> None:
         """ Take note of a verb object specification with an $error pragma """
-        VerbErrors.check_args(args)
         corrlist = corr.split(",")
-        errlist = corrlist[0].split("-")
-        errkind = errlist[0].strip()
+        # errlist = corrlist[0].split("-")
+        # errkind = errlist[0].strip()
         verb_with_cases = "_".join([verb] + args)
         if corrlist[0] == "OBJ-CASE":
-            VerbErrors.OBJ_ERRORS[verb][args[0]] = corrlist[1].strip()
-        if errkind == "OBJ":
-            vargs = cast(VerbWithArgErrorDict, VerbErrors.ERRORS[len(args)])
-            arglists = vargs[verb]
-            arglists[verb_with_cases] = corr
-        elif errkind == "PP":
+            pobj = corrlist[1].strip()
+            VerbErrors.check_args(args)
+            if pobj not in ALL_CASES and pobj not in SUBCLAUSES:
+                pobj = pobj.split(" ")[0].strip()
+                pobj = REFLPRN.get(pobj, pobj)
+                assert pobj is not None
+                spl = pobj.split("_")
+                while spl and spl[-1].strip() in SKIP_VARS:
+                    spl = spl[:-1]
+                if spl[-1] not in ALL_CASES:
+                    raise ConfigError(
+                        "Direct object must have a case as its last variant"
+                    )
+                pobj = spl[-1]
+            VerbErrors.OBJ_ERRORS[verb][args[0]] = pobj
+
+        # elif errkind == "OBJ":
+        #     vargs = cast(VerbWithArgErrorDict, VerbErrors.ERRORS[len(args)])
+        #     arglists = vargs[verb]
+        #     arglists[verb_with_cases] = corr
+        elif corrlist[0].strip() == "PP":
             d = VerbErrors.PREPOSITIONS_ERRORS[verb_with_cases]
             for p, kind in prepositions:
                 d[p] = corr
                 d[p + "_" + kind] = corr
-        elif errkind == "PRTCL":
-            # !!! TODO: Parse the corr string
-            if particle is None:
-                raise ConfigError("Particle error specification must specify particle")
-            VerbErrors.VERB_PARTICLES_ERRORS[verb_with_cases][particle] = corr
-        elif errkind == "ALL":
-            # !!! TODO: Implement this (store specification of a
-            # !!! TODO: replacement of the entire construct)
-            pass
-        elif errkind == "PREDS":
-            # !!! TODO: Implement this
-            pass
-        elif errkind == "WRONG":
-            wrong_kind = errlist[1].strip()
-            if wrong_kind == "VERB":
-                # Wrong verb, must point to completely different verb + args
-                if len(corrlist) != 2:
-                    raise ConfigError("WRONG-VERB must specify correct verb")
-                if particle:
-                    verb_with_cases += "*" + particle
-                if verb_with_cases in VerbErrors.WRONG_VERBS:
-                    pass
-                    # raise ConfigError("WRONG-VERB has already been specified for this verb, argument list and particle")
-                VerbErrors.WRONG_VERBS[verb_with_cases] = corrlist[1]
-            elif wrong_kind == "OBJ":
-                # !!! TODO: Implement this
-                pass
-            else:
-                raise ConfigError("Unknown type of WRONG-XXX in $error pragma")
-        else:
-            raise ConfigError(
-                "Unknown error type in $error pragma: '{0}'".format(errkind)
-            )
+        # elif errkind == "PRTCL":
+        #     # !!! TODO: Parse the corr string
+        #     if particle is None:
+        #         raise ConfigError("Particle error specification must specify particle")
+        #     VerbErrors.VERB_PARTICLES_ERRORS[verb_with_cases][particle] = corr
+        # elif errkind == "ALL":
+        #     # !!! TODO: Implement this (store specification of a
+        #     # !!! TODO: replacement of the entire construct)
+        #     pass
+        # elif errkind == "PREDS":
+        #     # !!! TODO: Implement this
+        #     pass
+        # elif errkind == "WRONG":
+        #     wrong_kind = errlist[1].strip()
+        #     if wrong_kind == "VERB":
+        #         # Wrong verb, must point to completely different verb + args
+        #         if len(corrlist) != 2:
+        #             raise ConfigError("WRONG-VERB must specify correct verb")
+        #         if particle:
+        #             verb_with_cases += "*" + particle
+        #         if verb_with_cases in VerbErrors.WRONG_VERBS:
+        #             pass
+        #             # raise ConfigError("WRONG-VERB has already been specified for this verb, argument list and particle")
+        #         VerbErrors.WRONG_VERBS[verb_with_cases] = corrlist[1]
+        #     elif wrong_kind == "OBJ":
+        #         # !!! TODO: Implement this
+        #         pass
+        #     else:
+        #         raise ConfigError("Unknown type of WRONG-XXX in $error pragma")
+        # else:
+        #     raise ConfigError(
+        #         "Unknown error type in $error pragma: '{0}'".format(errkind)
+        #     )
 
 
 class PrepositionFrame:
@@ -210,17 +228,21 @@ class VerbFrame:
     def __init__(
         self,
         verb: str,
+        obj: str,
+        iobj: str,
         args: List[str],
         preps: Iterable[Tuple[str, str]],
         particle: Optional[str],
         score: Optional[int],
     ) -> None:
         self.verb = verb
-        assert 0 <= len(args) <= 2
         # All arguments
         self.args = args
+        self.obj = obj
+        self.iobj = iobj
         # Only case arguments
         self.cases = [arg for arg in args if arg in ALL_CASES]
+        assert 0 <= len(self.cases) <= 2
         pfs = [PrepositionFrame.obtain(prep, case) for prep, case in preps]
         self.preps: Dict[PrepKey, PrepositionFrame] = {pf.key: pf for pf in pfs}
         self.particle = particle
@@ -252,82 +274,175 @@ class VerbFrame:
     def create_from_config(cls, s: str) -> None:
         """ Handle verb object specifications in the settings section """
         # Format: verb [arg1] [arg2] [/preposition arg]... [*particle] [$pragma(txt)]
-        # arg can be nf, þf, þgf, ef, nh, falls, sig/sér/sín, bági_kk_ft_þf
 
-        # Start by handling the $score() pragma, if present
-        score: Optional[int] = None
-        ix = s.rfind("$score(")  # Must be at the end
-        if ix >= 0:
-            sc = s[ix:]
-            s = s[0:ix].strip()
-            if not sc.endswith(")"):
-                raise ConfigError("Invalid score pragma; form should be $score(n)")
-            # There is an associated score with this verb form, to be taken
-            # into consideration by the reducer
-            sc = sc[7:-1].strip()
-            try:
-                score = int(sc)
-            except ValueError:
-                raise ConfigError("Invalid score ('{0}') for verb form".format(sc))
+        complex = False
 
-        # Check for $error
-        error = None
-        ix = s.rfind("$error(")
-        if ix >= 0:
-            if not s.endswith(")"):
-                raise ConfigError("Invalid error pragma; form should be $error(...)")
-            error = s[ix + 7 : -1].strip()
-            s = s[0:ix].strip()
-            if not error:
-                raise ConfigError("Expected error specification in $error(...)")
+        def get_score(s: str) -> Tuple[str, Optional[int]]:
+            """ Handle the $score() pragma, if present """
+            score: Optional[int] = None
+            ix = s.rfind("$score(")  # Must be at the end
+            if ix >= 0:
+                sc = s[ix:]
+                s = s[0:ix].strip()
+                if not sc.endswith(")"):
+                    raise ConfigError("Invalid score pragma; form should be $score(n)")
+                # There is an associated score with this verb form, to be taken
+                # into consideration by the reducer
+                sc = sc[7:-1].strip()
+                try:
+                    score = int(sc)
+                except ValueError:
+                    raise ConfigError("Invalid score ('{0}') for verb form".format(sc))
+            return s, score
 
-        # Process particles, should only be one in each line
-        particle = None
-        ix = s.rfind("*")
-        if ix >= 0:
-            particle = s[ix:].strip()
-            s = s[0:ix].strip()
-            if " " in particle:
-                raise ConfigError("Particle should only be one word")
-            elif len(particle) < 2:
-                raise ConfigError("Particle should be at least one letter")
-
-        # Process preposition arguments, if any
-        prepositions: List[Tuple[str, str]] = []
-        ap = s.split("/")
-        s = ap[0]
-        ix = 1
-        while ix < len(ap):
-            # We expect something like 'af þgf', or possibly
-            # 'fyrir_hönd þf' (where the underscore needs to be replaced by a space)
-            p = ap[ix].strip()
-            parg = p.split()
-            if len(parg) != 2:
-                raise ConfigError("Preposition should have exactly one argument")
-            if parg[1] not in ALL_CASES and parg[1] not in SUBCLAUSES:
-                parg[1] = REFLPRN.get(parg[1], parg[1])
-                assert parg[1] is not None
-                spl = parg[1].split("_")
-                if spl[-1] == "gr":
-                    spl = spl[:-1]
-                if spl[-1] not in ALL_CASES:
+        def get_error(s: str) -> Tuple[str, Optional[str]]:
+            """ Handle the $error() pragma, if present """
+            error = None
+            ix = s.rfind("$error(")
+            if ix >= 0:
+                if not s.endswith(")"):
                     raise ConfigError(
-                        "Preposition argument must have a case as its last variant"
+                        "Invalid error pragma; form should be $error(...)"
                     )
-            prepositions.append((parg[0].replace("_", " "), parg[1]))
-            ix += 1
+                error = s[ix + 7 : -1].strip()
+                s = s[0:ix].strip()
+                if not error:
+                    raise ConfigError("Expected error specification in $error(...)")
+            return s, error
 
-        # Process verb arguments
-        a = s.split()
-        if len(a) < 1 or len(a) > 3:
-            raise ConfigError("Verb should have zero, one or two arguments")
-        verb = a[0]
-        if not verb.isalpha():
-            raise ConfigError("Verb '{0}' is not a valid word".format(verb))
+        def get_particle(s: str) -> Tuple[str, Optional[str]]:
+            """ Process particles, should only be one in each line """
+            particle = None
+            ix = s.rfind("*")
+            if ix >= 0:
+                particle = s[ix:].strip()
+                s = s[:ix].strip()
+                if not particle:
+                    raise ConfigError("Particle should be at least one letter")
+                if " " in particle or "\t" in particle:
+                    raise ConfigError("Particle should only be one word")
+            return s, particle
 
-        args = a[1:]
-        # Add to verb database
-        vf = cls(verb, args, prepositions, particle, score)
+        def get_prepositions(s: str) -> Tuple[str, List[Tuple[str, str]]]:
+            """ Process preposition arguments, if any """
+            prepositions: List[Tuple[str, str]] = []
+            ap = s.split("/")
+            s = ap[0]
+            ix = 1
+            while ix < len(ap):
+                # We expect something like 'af þgf', or possibly
+                # 'fyrir_hönd þf' (where the underscore needs to be replaced by a space)
+                # or 'milli ef_ft' (detailing the plural)
+                p = ap[ix].strip()
+                parg = p.split()
+                # if len(parg) != 2:
+                #    raise ConfigError("Preposition should have exactly one argument")
+                case = get_case_and_kind(parg[1])
+                prepositions.append((parg[0].replace("_", " "), case))
+                ix += 1
+            return s, prepositions
+
+        def get_direct_object(s: str) -> Tuple[str, str]:
+            """ Process direct object argument """
+            op = s.split("|")
+            s = op[0]
+            if not 1 <= len(op) <= 2:
+                raise ConfigError("Verb should have zero or one direct object")
+            case = ""
+            if len(op) == 2:
+                case = get_case_and_kind(op[1].strip())
+            return s, case
+
+        def get_indirect_object(s: str) -> Tuple[str, str]:
+            """ Process indirect object argument """
+            a = s.split()
+            if len(a) < 1:
+                raise ConfigError("Verb should have zero or one indirect objects")
+            verb = a[0]
+            if not verb.isalpha():
+                raise ConfigError("Verb '{0}' is not a valid word".format(verb))
+            case = ""
+            if len(a) > 1:
+                case = get_case_and_kind((" ".join(a[1:])))
+            return verb, case
+
+        def get_case_and_kind(w: str) -> str:
+            """ Get case of argument for the case key,
+            along with the argument type. """
+            # Argument denotes:
+            # 1: a case (nf, þf, þgf, ef) - default value
+            # 2: a reflexive pronoun (sig, sér, sín)
+            # 3: a fixed phrase ([halda] hlífiskjöldur_kk_et_þgf)
+            # 4: a multiword fixed phrase ([eiga] góður_lo_kk_et_þf dagur_kk_et_þf)
+            # 5: an infinitival clause with the infinitival marker ([eiga] nh)
+            # 6: an infinitival clause without the infinitival marker ([mega] nhx)
+            # 7: a complement clause ([halda] falls)
+            # 8: an interrogative clause ([spyrja] spurns)
+            if not w:
+                raise ConfigError("Argument must have a case as a variant")
+            case = ""
+            # kind: int = 1    # Default value
+            refl = REFLPRN_CASE.get(w, "")
+            nonlocal complex
+            if w in ALL_CASES:
+                # Case 1
+                case = w
+                # kind = 1
+            elif refl and refl in ALL_CASES:
+                # Case 2
+                case = refl
+                # kind = 2
+                complex = True
+            elif w in SUBCLAUSES:
+                # Cases 5-8
+                case = w
+                # kind = 5
+                complex = True
+            elif " " in w:
+                # Cases 4
+                w = w.split(" ")[0].strip()
+                spl = w.split("_")
+                while spl and spl[-1].strip() in SKIP_VARS:
+                    spl = spl[:-1]
+                if not spl or spl[-1] not in ALL_CASES:
+                    raise ConfigError("Argument must have a case as a variant")
+                complex = True
+                return spl[-1]
+            elif "_" in w:
+                # Case 3
+                spl = w.split("_")
+                while spl and spl[-1].strip() in SKIP_VARS:
+                    spl = spl[:-1]
+                if not spl or spl[-1] not in ALL_CASES:
+                    raise ConfigError("Argument must have a case as a variant")
+                complex = True
+                return spl[-1]
+            return case
+
+        # Pick off specifications from the right hand side of the string s
+        s, score = get_score(s)
+        s, error = get_error(s)
+        s, particle = get_particle(s)
+        s, prepositions = get_prepositions(s)
+        s, obj = get_direct_object(s)
+        verb, iobj = get_indirect_object(s)
+        args: List[str] = []
+        if iobj:
+            args.append(iobj)
+        if obj:
+            args.append(obj)
+        # Add frame to verb database, if this construct is supported (not 'complex')
+        if complex:
+            return
+        vf = cls(
+            verb=verb,
+            args=args,
+            preps=prepositions,
+            particle=particle,
+            score=score,
+            obj=obj,
+            iobj=iobj,
+        )
         case_key = vf.case_key
         if error:
             # Add this to the error database
