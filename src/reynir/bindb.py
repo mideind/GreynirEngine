@@ -38,7 +38,7 @@ from functools import lru_cache
 from islenska.basics import make_bin_entry
 from islenska.bindb import GreynirBin as GBin, PERSON_NAME_FL
 
-from tokenizer import BIN_Tuple
+from tokenizer.definitions import BIN_Tuple
 
 from .settings import StaticPhrases
 

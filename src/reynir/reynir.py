@@ -81,6 +81,9 @@ GetterFunc = Callable[[SimpleTree], str]
 GreynirType = Type["Greynir"]
 
 # The Sentence.terminals attribute returns a list of Terminal objects
+# Note: Currently this cannot be converted to class Terminal(NamedTuple)
+# since that causes mypy to complain about the index property overriding a
+# callable on the built-in tuple type.
 Terminal = NamedTuple(
     "Terminal",
     [
