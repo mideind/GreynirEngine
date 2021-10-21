@@ -5001,7 +5001,7 @@ $score(-5) EfLiðurForskeytiKjarni/tala/kyn
 
 Fornafn/fall/tala/kyn → Fornafn/tala/fall/kyn
 
-Fornafn/tala/fall/kyn → fn/tala/fall/kyn
+Fornafn/tala/fall/kyn → fn/tala/fall/kyn | VillaAnnaðhvort
 
 # Einn og sami veiðimaðurinn, eitt og sama fyrirbæri
 Fornafn_et/fall/kyn → 'einn:fn'_et/fall/kyn Og 'sami:lo'_et/fall/kyn
@@ -5304,7 +5304,7 @@ SvigaInnihald/tala/pers/fall/kyn →
     > Nl/fall/tala          # 'Ég spurði forsætisráðherra, Sigmund Davíð, um málið'
     > Nl/fall               # Sama fall en ekki sama tala
     > SvigaInnihaldFsRuna
-    > SvigaInnihaldNl/fall  # Ef ekki finnst sama fall og tala, prófa almennan nafnlið
+    > AðvörunSvigaInnihaldNl/fall  # Ef ekki finnst sama fall og tala, prófa almennan nafnlið
     > HreinYfirsetning
 
 # Árabil nota en-dash
@@ -5313,13 +5313,13 @@ SvigaInnihald/tala/pers/fall/kyn →
     ártal "-:en" ártal   # 1951-1983
     > ártal "-:en" tala  # 2001-8
 
-SvigaInnihaldNl/fall →
+AðvörunSvigaInnihaldNl/fall →
     Nl
 
 # Nafnliður í öðru falli en það sem verið er að skýra er ekki spennandi kostur
 # og gæti mjög vel verið villa
-$score(-8) SvigaInnihaldNl/fall
-$tag(error) SvigaInnihaldNl/fall
+$score(-8) AðvörunSvigaInnihaldNl/fall
+$tag(error) AðvörunSvigaInnihaldNl/fall
 
 SvigaInnihaldFsRuna →
     FsRuna
