@@ -122,6 +122,16 @@
 /et = et
 /p3 = p3
 
+# Case exlusions made for error rules
+# Öll föll nema nefnifall
+/fallxnf = þf þgf ef
+# Öll föll nema þolfall
+/fallxþf = nf þgf ef
+# Öll föll nema þágufall
+/fallxþgf = nf þf ef
+# Öll föll nema eignarfall
+/fallxef = nf þf þgf
+
 # GRAMMAR RULES
 
 # Note: comments from this point are mostly in Icelandic
@@ -5309,22 +5319,10 @@ SvigaInnihald/tala/pers/fall/kyn →
     > HreinYfirsetning
 
 # Ef ekki finnst sama fall og tala, prófa almennan nafnlið
-Svigainnihald_nf/tala/pers/kyn → 
-    AðvörunSvigaInnihaldNl_þf
-    AðvörunSvigaInnihaldNl_þgf
-    AðvörunSvigaInnihaldNl_ef
-Svigainnihald_þf/tala/pers/kyn → 
-    AðvörunSvigaInnihaldNl_nf
-    AðvörunSvigaInnihaldNl_þgf
-    AðvörunSvigaInnihaldNl_ef
-Svigainnihald_þgf/tala/pers/kyn → 
-    AðvörunSvigaInnihaldNl_nf
-    AðvörunSvigaInnihaldNl_þf
-    AðvörunSvigaInnihaldNl_ef
-Svigainnihald_ef/tala/pers/kyn → 
-    AðvörunSvigaInnihaldNl_nf
-    AðvörunSvigaInnihaldNl_þf
-    AðvörunSvigaInnihaldNl_þgf
+Svigainnihald_nf/tala/pers/kyn → AðvörunSvigaInnihaldNl/fallxnf
+Svigainnihald_þf/tala/pers/kyn → AðvörunSvigaInnihaldNl/fallxþf
+Svigainnihald_þgf/tala/pers/kyn → AðvörunSvigaInnihaldNl/fallxþgf
+Svigainnihald_ef/tala/pers/kyn → AðvörunSvigaInnihaldNl/fallxef
 
 # Árabil nota en-dash
 
@@ -7519,14 +7517,6 @@ $score(-4) VillaFjöldiHluti/fall/kyn
 
 $if(include_errors)
 
-# Öll föll nema nefnifall
-/fallxnf = þf þgf ef
-# Öll föll nema þolfall
-/fallxþf = nf þgf ef
-# Öll föll nema þágufall
-/fallxþgf = nf þf ef
-# Öll föll nema eignarfall
-/fallxef = nf þf þgf
 
 # Regla fyrir villu þar sem fornafn í einkunn
 # er ekki í sama falli og nafnorð, t.d. 'þessum mann'
