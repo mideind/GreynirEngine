@@ -583,6 +583,7 @@ class BIN_Token(Token):
         "sagnb": "SAGNB",  # Sagnbót ('vera' -> 'hefur verið')
         "lhþt": "LHÞT",  # Lýsingarháttur þátíðar ('var lentur')
         "gr": "gr",  # Greinir
+        "expl": "það",  # Verbs with an expletive (leppur); 'það snjóar', 'það rignir'
         # Variants that do not have a corresponding BIN meaning
         "abbrev": None,
         "subj": None,
@@ -593,7 +594,6 @@ class BIN_Token(Token):
         # Synthetic variants that constrain matching to particular endings
         "x": None,  # lemma ending constraint
         "z": None,  # word form ending constraint
-        "expl": "það", # Verbs with an expletive (leppur); 'það snjóar', 'það rignir'
     }
 
     # Make a copy of VARIANT with the past tense (þt) added
@@ -639,7 +639,7 @@ class BIN_Token(Token):
     VBIT_ENDING = VBIT_LEMMA_ENDING | VBIT_WORD_ENDING
     VBIT_EXPL = VBIT["expl"]
     # Mask the following bits off a VBIT set to get an FBIT set
-    FBIT_MASK = VBIT_ABBREV | VBIT_SUBJ | VBIT_SCASES | VBIT_ENDING
+    FBIT_MASK = VBIT_ABBREV | VBIT_SUBJ | VBIT_EXPL | VBIT_SCASES | VBIT_ENDING
 
     CASES = ("nf", "þf", "þgf", "ef")
     CASES_SET = frozenset(CASES)
@@ -1009,6 +1009,9 @@ class BIN_Token(Token):
                 return False
             if terminal.is_plural and "FT" not in form:
                 # Require plural
+                return False
+            # Don't allow the expletive form ('það') for _subj terminals
+            if "það" in form:
                 return False
             form_lh = "LHÞT" in form
             if terminal.is_lh:

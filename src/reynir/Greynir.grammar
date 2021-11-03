@@ -1208,7 +1208,7 @@ SögnFinnstBotn →
     'vera:so'_1_nf_nh NlSagnfylling_nf                 # Finnst þeim vera slagsíða í umfjölluninni
     | NlFrumlagÞað? LoSamanb_et_nf_hk AðLiður?         # Henni finnst það skemmtilegur siður [að ...]
     | NhRuna
-    | so_expl_op_3p_et                                 # Honum finnst rigna á sig
+    | so_expl_op_p3_et                                 # Honum finnst rigna á sig
 
 Sagnliður_lhþt →
     EinSögn_lhþt/tala/kyn OgSögn_lhþt/tala/kyn* HjSögnLhÞt_p3/tala
@@ -1878,8 +1878,8 @@ EinSögn_lhþt/tala/kyn →
     so_0_lhþt/tala/kyn LhÞtBotn/tala/kyn?           # (Mennirnir eru) lentir
     > so_2_þf_þgf_lhþt/tala/kyn NlBeintAndlag_þgf   # (Maðurinn var) sviptur frelsi
     > so_2_þgf_þf_lhþt/tala/kyn NlÓbeintAndlag_þgf  # (Ákvörðunin var) tilkynnt Páli
-    > so_subj_lhþt/tala/kyn Nl_nf/tala              # (Katrín var) valin besti þjálfarinn
-    > so_subj_lhþt_ft/kyn Nl_nf_et                  # (Þau voru) valin efnilegasta sundfólkið
+    > so_subj_lhþt_sb_nf/tala/kyn Nl_nf/tala        # (Katrín var) valin besti þjálfarinn
+    > so_subj_lhþt_sb_nf_ft/kyn Nl_nf_et            # (Þau voru) valin efnilegasta sundfólkið
 
 EinSögnFrh_lhþt/tala/kyn →
     EinSögn_lhþt/tala/kyn                           # (Mennirnir) eru lentir og byrjaðir að grilla
@@ -1903,7 +1903,7 @@ $score(+12) HreinSögn_lhþt/tala/kyn
 Sögn_lhþt/tala/pers/kyn →
     SögnErLo/tala/pers/kyn
     # talin er/hefur verið [liggja undir grun]
-    | so_0_lhþt/tala/kyn HjSögnLhÞtSM/tala/pers LhÞtBotn/tala/kyn?
+    | so_lhþt_sb_nf/tala/kyn HjSögnLhÞtSM/tala/pers LhÞtBotn/tala/kyn?
 
 $score(+8) Sögn_lhþt/tala/pers/kyn
 
@@ -2476,7 +2476,7 @@ SögnNhBreyting →
 # Frumlagslausar sagnir með frumlagsleppi
 # 'Það snjóaði gífurlega í nótt'
 # 'Það rignir fyrir norðan'
-LeppSögn → so_expl_op_3p_et
+LeppSögn → so_expl_op_p3_et
 
 # Umraðanir
 
@@ -2673,7 +2673,7 @@ Sögn_1/tala/pers/kyn →
 
 FáAndlag_þf →
     # Páll fékk bílinn strax endurgreiddan
-    NlBeintAndlag_þf/tala/pers/kyn AtvFs? so_lhþt_þf/tala/kyn
+    NlBeintAndlag_þf/tala/pers/kyn AtvFs? so_lhþt_sb_þf/tala/kyn
 
 # Býli í landinu eru/geta verið/verða/munu vera 3.000/tuttugu [talsins]
 Sögn_1_ft/pers/kyn →
@@ -2758,7 +2758,7 @@ SagnarBotn →
     # (Páll segir) mistökin [ekki] hafa verið (í uppleggi Friðgeirs)
     # Hér er notað HjSögnEkkiVera í stað HjSögnVera til að forðast margræðni
     # gagnvart NhRunu
-    | Nl_þf/tala/kyn AtvFs? HjSögnEkkiVera so_lhþt/tala/kyn?
+    | Nl_þf/tala/kyn AtvFs? HjSögnEkkiVera so_lhþt_sb_nf/tala/kyn?
 
     # (Hann segir) hvern farþega [strax] hafa fengið tíu evrur / hafa farið að grilla
     | Nl_þf/tala/kyn AtvFs? 'hafa:so'_0_nh HreinSögn_sagnb/tala/kyn # !!! Hér vantar að senda þolfall: 'galvaskan að grilla'
@@ -2812,7 +2812,7 @@ SögnMeðF_1/tala/pers/kyn →
     | HjSögnLhÞtSM/tala/pers NlFrumlag_nf/tala/pers/kyn AtvFs? SagnarBotnLhÞt/tala/kyn
 
     # (Þegar gögnin hafa verið lesin) eru eimaðar upp úr þeim upplýsingar [á borð við nöfn]
-    | HjSögnLhÞt/tala/pers FsAtv? so_lhþt_nf/tala/kyn FsAtv? NlFrumlag_nf/tala/pers/kyn
+    | HjSögnLhÞt/tala/pers FsAtv? so_lhþt_sb_nf/tala/kyn FsAtv? NlFrumlag_nf/tala/pers/kyn
 
     # '(og) var Ástþór mjög ósáttur (við útvarpsstjóra)'
     | HjSögnLoMeðF/tala/pers/kyn LoTengtSögn_nf/tala/kyn
@@ -3449,7 +3449,7 @@ NhSögn →
     | so_2_þgf_þgf_nh so_0_gm_vh_p3_et? OgNhSögn_þgf_þgf* FsRunaEftirSögn? NlÓbeintAndlag_þgf NlBeintAndlag_þgf # að taka Páli opnum örmum
     | so_2_þgf_ef_nh so_0_gm_vh_p3_et? OgNhSögn_þgf_ef* FsRunaEftirSögn? NlÓbeintAndlag_þgf NlBeintAndlag_ef # að óska [eigi] og óska Páli góðs bata
     | 'gera:so'_1_þgf_nh so_0_gm_vh_p3_et? NlÓbeintAndlag_þgf LoTengtSögn_nf_et_hk NhFylling # að gera [eigi] Páli kleift að matast með reisn
-    | so_expl_op_3p_et OgNhSögn_expl_op*                     # að rigna gífurlega
+    | so_expl_op_p3_et OgNhSögn_expl_op*                     # að rigna gífurlega
     # að reistar yrðu og byggðar íbúðir / að barinn skyldi fiskurinn og flakaður
     # !!! Ath: sennilega geta aðeins hjálparsagnir staðið í viðtengingarhætti hér,
     # !!! ekki allar sagnir
@@ -3512,7 +3512,7 @@ OgNhSögn_þgf_ef →
 OgNhSögn_lhþt/tala/kyn →
     OgEðaHeldur so_0_lhþt/tala/kyn
 OgNhSögn_expl_op →
-    OgEðaHeldur so_expl_op_3p_et
+    OgEðaHeldur so_expl_op_p3_et
 
 # Gefa til kynna hvar lesa á upp sagnir til að nota í
 # tengingu sagna og forsetninga
@@ -4386,9 +4386,9 @@ NlStak_et_p3/fall/kyn →
 # '(svör við bréfi sínu) dagsettu (13. mars sl.)'
 VeikSögnLhÞt/tala/fall/kyn →
     Atviksliður? EinVeikSögnLhÞt/tala/fall/kyn                      # (Stúlkan sá pabba sinn) [vel og snyrtilega] rakaðan
-    | "," so_lhþt/tala/fall/kyn FsAtv? LokatáknEðaKomma
+    | "," so_lhþt_sb/tala/fall/kyn FsAtv? LokatáknEðaKomma
 
-EinVeikSögnLhÞt/tala/fall/kyn → so_lhþt/tala/fall/kyn
+EinVeikSögnLhÞt/tala/fall/kyn → so_lhþt_sb/tala/fall/kyn
 
 $score(-4) EinVeikSögnLhÞt/tala/fall/kyn
 
@@ -5619,7 +5619,7 @@ LoSemSo/fall/tala/kyn →
     | 'hinn:gr'/fall/tala/kyn eo* so_lhþt_vb/fall/tala/kyn
 
 LoSemSoBotn/fall/tala/kyn →
-    so_lhþt/fall/tala/kyn | so_lh_nt    # bráðlega verðandi brúður
+    so_lhþt_sb/fall/tala/kyn | so_lh_nt    # bráðlega verðandi brúður
 
 $score(-16) LoSemSo/fall/tala/kyn
 
@@ -6337,8 +6337,8 @@ EinnAl →
     | ÞannigSéð
     | HliðViðHlið
 
-    | ao_zlega so_lhþt_nf_hk_et         # Hreinskilnislega sagt, gróflega séð
-    | lo_vb_nf_hk_et_zlega so_lhþt_nf_hk_et # Stórkarlalega ályktað
+    | ao_zlega so_gm_sagnb              # Hreinskilnislega sagt, gróflega séð
+    | lo_vb_nf_hk_et_zlega so_gm_sagnb  # Stórkarlalega ályktað
 
 $tag(no_prep) EinnAl        # Engar forsetningar hér inni - óþarfi að skoða dótturgreinar
 
