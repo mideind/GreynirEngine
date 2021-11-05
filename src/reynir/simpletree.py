@@ -93,7 +93,7 @@ StatsDict = Dict[str, Union[int, float]]
 
 
 class CaseFunc(Protocol):
-    def __call__(self, w: str, **kwargs: Any) -> List[BIN_Tuple]:
+    def __call__(self, w: str, **options: Any) -> List[BIN_Tuple]:
         ...
 
 
