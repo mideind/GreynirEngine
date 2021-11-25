@@ -679,11 +679,13 @@ class Reducer:
                         # object cases, as specified by $score(n) pragmas in Verbs.conf
                         # In the (rare) cases where there are conflicting scores,
                         # apply the most positive adjustment
-                        adjmax = None
+                        adjmax: Optional[int] = None
                         for m in token.meanings:
                             if m.ordfl == "so":
                                 key = m.stofn + t.verb_cases
-                                score = VerbFrame.verb_score(key)
+                                # TODO: Remove the following cast when Pylance learns
+                                # to properly support @lru_cache()
+                                score = cast(Optional[int], VerbFrame.verb_score(key))
                                 if score is not None:
                                     if adjmax is None:
                                         adjmax = score
