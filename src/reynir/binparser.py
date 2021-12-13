@@ -150,7 +150,7 @@ class WordMatchers:
         if "-" in verb:
             verb = verb.rsplit("-", maxsplit=1)[-1]
         # TODO: Remove the following cast when Pylance learns to handle @lru_cache()
-        return cast(bool, token.verb_matches(verb, terminal, m.beyging))
+        return token.verb_matches(verb, terminal, m.beyging)
 
     @staticmethod
     def matcher_no(token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple) -> bool:
