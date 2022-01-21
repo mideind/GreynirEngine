@@ -76,7 +76,7 @@ except ImportError:
 
         # Windows
 
-        def _lock_file(file: IO[str], block: bool) -> None:  # type: ignore
+        def _lock_file(file: IO[str], block: bool) -> None:
             # Lock just the first byte of the file
             retry = True
             while retry:
@@ -97,7 +97,7 @@ except ImportError:
                             "Couldn't lock {0}, errno is {1}".format(file.name, e.errno)
                         )
 
-        def _unlock_file(file: IO[str]) -> None:  # type: ignore
+        def _unlock_file(file: IO[str]) -> None:
             try:
                 file.seek(0)
                 msvcrt.locking(file.fileno(), msvcrt.LK_UNLCK, 1)  # type: ignore
@@ -110,15 +110,15 @@ else:
 
     # Linux/POSIX
 
-    POSIX = True
+    POSIX = True  # type: ignore
 
-    def _lock_file(file: IO[str], block: bool) -> None:  # type: ignore
+    def _lock_file(file: IO[str], block: bool) -> None:
         try:
             fcntl.flock(file.fileno(), fcntl.LOCK_EX | (0 if block else fcntl.LOCK_NB))
         except IOError:
             raise LockError("Couldn't lock {0}".format(file.name))
 
-    def _unlock_file(file: IO[str]) -> None:  # type: ignore
+    def _unlock_file(file: IO[str]) -> None:
         # File is automatically unlocked on close
         pass
 

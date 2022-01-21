@@ -1583,7 +1583,7 @@ class BIN_Token(Token):
     @classmethod
     def init(cls) -> None:
         # Initialize cached dictionary of verb variant forms in BIN
-        cls._VERB_FORMS = {v: cls.VARIANT[v] or "" for v in cls.VERB_VARIANTS}
+        cls._VERB_FORMS = {v: cls.VARIANT[v] or "" for v in cls.VERB_VARIANTS}  # type: ignore
 
 
 BIN_Token.init()

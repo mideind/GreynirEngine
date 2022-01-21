@@ -90,7 +90,7 @@ class VerbSubjects:
         """ Set the case of the subject for the following verbs """
         # if case not in { "þf", "þgf", "ef", "none", "lhþt" }:
         #     raise ConfigError("Unknown verb subject case '{0}' in verb_subjects".format(case))
-        VerbSubjects._CASE = case
+        VerbSubjects._CASE = case  # type: ignore
 
     @staticmethod
     def add(verb: str) -> None:
@@ -272,7 +272,7 @@ class StaticPhrases:
     @staticmethod
     def set_meaning(meaning: StaticPhraseTuple) -> None:
         """ Set the default meaning for static phrases """
-        StaticPhrases.MEANING = meaning
+        StaticPhrases.MEANING = meaning  # type: ignore
 
     @staticmethod
     def get_meaning(ix: int) -> BIN_TupleList:
@@ -369,7 +369,7 @@ class NoIndexWords:
     @staticmethod
     def set_cat(cat: str) -> None:
         """ Set the category for the following word stems """
-        NoIndexWords._CAT = cat
+        NoIndexWords._CAT = cat  # type: ignore
 
     @staticmethod
     def add(stem: str) -> None:
@@ -566,7 +566,7 @@ class Settings:
             val = False
         try:
             if par == "debug":
-                Settings.DEBUG = bool(val)
+                Settings.DEBUG = bool(val)  # type: ignore
             else:
                 raise ConfigError("Unknown configuration parameter '{0}'".format(par))
         except ValueError:
