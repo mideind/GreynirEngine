@@ -139,6 +139,9 @@ _PREP_SCOPE_SET = frozenset(
 )
 _CONTAINED_VERBS_SET = frozenset(("begin_prep_scope", "purge_verb"))
 
+# BÍN categories ('fl') of person and entity names
+_NAMED_ENTITY_FL = frozenset(("ism", "erm", "gæl", "nafn", "föð", "móð", "ætt", "entity"))
+
 
 class _ReductionScope:
 
@@ -612,20 +615,7 @@ class Reducer:
                         # uppercase word that can be a person or entity name and
                         # would thus normally be matched with person or entity
                         # terminal
-                        if any(
-                            m.fl
-                            in {
-                                "ism",
-                                "erm",
-                                "gæl",
-                                "nafn",
-                                "föð",
-                                "móð",
-                                "ætt",
-                                "entity",
-                            }
-                            for m in token.meanings
-                        ):
+                        if any(m.fl in _NAMED_ENTITY_FL for m in token.meanings):
                             # logging.info(
                             #     "Punishing connection of {0} with 'no' terminal"
                             #     .format(tokens[i].t1))

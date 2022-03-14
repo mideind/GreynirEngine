@@ -1155,8 +1155,13 @@ class SimpleTree:
                             )
                             continue
                     else:
-                        # Make sure plural forms are chosen rather than singular ones
-                        m.sort(key=lambda mm: 0 if "FT" in mm.beyging else 1)
+                        # Make sure plural forms are chosen rather than singular ones.
+                        # Also, apply a hack to prefer neutral gender nouns to feminine ones,
+                        # making "þúsund:hk" preferred to "þúsund:kvk".
+                        m.sort(
+                            key=lambda mm: (0 if "FT" in mm.beyging else 2)
+                            + (0 if mm.ordfl == "hk" else 1)
+                        )
                         # Make sure that the case of the terminal is preferred
                         # over other cases
                         if terminal_case is None:
