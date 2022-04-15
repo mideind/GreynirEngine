@@ -1125,8 +1125,8 @@ SetningSoSagnliður →
     | So_1_nh/fall HjSögnNhMeðSo/tala/pers NlFrumlag_nf/tala/pers/kyn
         NlBeintAndlag/fall AtvFsAuka?
 
-    # Farðu [galvaskur] að sækja kaffi strax
-    | Sögn_bh SögnFrh_bh?
+    # [Endilega] farðu [galvaskur] að sækja kaffi strax
+    | BhAtviksliður? Sögn_bh SögnFrh_bh?
 
     # Má með sanni segja (að þeir hafi sloppið með skrekkinn)
     | SagnHlutiMegiSkuli
@@ -1143,6 +1143,10 @@ SetningSoSagnliður →
 
     # Virðist sem Björn hafi fengið aðsvif
     | VirðistSem
+
+
+# Atviksorð leyfileg á undan boðháttarsetningu
+BhAtviksliður → "endilega:ao"
 
 # Hér eru setningargerðir sem byrja á sagnlið, innifela
 # falið 3p. et. frumlag og geta þar af leiðandi staðið
