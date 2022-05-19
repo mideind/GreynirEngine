@@ -961,8 +961,11 @@ def parse_phrases_1(
                             if (
                                 next_token.has_meanings
                                 and "gr" in next_token.meanings[0].beyging
+                                and next_token.meanings[0].stofn != "kró"
                             ):
                                 # Definite form ('pundið', 'dollarinn')
+                                # (We also make sure 'krónum' isn't
+                                # interpreted as definite form of 'kró')
                                 form = "VB"
                             else:
                                 # Indefinite form ('pund', 'dollari')
