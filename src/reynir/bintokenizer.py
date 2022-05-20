@@ -254,18 +254,31 @@ MULTIPLIERS: Mapping[str, int] = {
     "hundrað": 100,
     "þúsund": 1000,  # !!! Bæði hk og kvk!
     "þús.": 1000,
-    "milljón": 10 ** 6,
-    "milla": 10 ** 6,
-    "millj.": 10 ** 6,
-    "milljarður": 10 ** 9,
-    "miljarður": 10 ** 9,
-    "ma.": 10 ** 9,
-    "mrð.": 10 ** 9,
+    "milljón": 10**6,
+    "milla": 10**6,
+    "millj.": 10**6,
+    "milljarður": 10**9,
+    "miljarður": 10**9,
+    "ma.": 10**9,
+    "mrð.": 10**9,
+    "billjón": 10**12,
+    "billjarður": 10**15,
+    "trilljón": 10**18,
+    "trilljarður": 10**21,
 }
 
 # The following must occur as lemmas in BÍN
 DECLINABLE_MULTIPLIERS: FrozenSet[str] = frozenset(
-    ("hundrað", "þúsund", "milljón", "milljarður")
+    (
+        "hundrað",
+        "þúsund",
+        "milljón",
+        "milljarður",
+        "billjón",
+        "billjarður",
+        "trilljón",
+        "trilljarður",
+    )
 )
 
 # Recognize words for percentages
@@ -833,9 +846,14 @@ def all_genders(token: Tok) -> Optional[List[str]]:
 
 
 def parse_phrases_1(
-    db: GreynirBin, token_ctor: TokenConstructor, token_stream: TokenIterator
+    db: GreynirBin,
+    token_ctor: TokenConstructor,
+    token_stream: TokenIterator,
+    no_multiply_numbers: bool,
 ) -> TokenIterator:
-    """ Parse numbers and amounts """
+    """ Parse numbers and amounts. If no_multiply_numbers is False,
+        multiply written numbers and join into single token,
+        otherwise keep them as separate tokens. """
 
     token: Tok = cast(Tok, None)
 
@@ -859,7 +877,15 @@ def parse_phrases_1(
                 )
 
             # Check whether we have an initial number word
-            multiplier = number(token) if token.kind == TOK.WORD else None
+            # If no_multiply_numbers option is set,
+            # don't join and multiply written numbers
+            # e.g. "tíu þúsund" or "fimm hundruð"
+            # (we still join [NUMBER] [WORD] e.g. "10 milljónir")
+            multiplier = (
+                number(token)
+                if token.kind == TOK.WORD and not no_multiply_numbers
+                else None
+            )
 
             # Check for [number] 'hundred|thousand|million|billion'
             while (
@@ -2037,6 +2063,7 @@ class DefaultPipeline:
         self._text_or_gen = text_or_gen
         self._auto_uppercase: bool = options.pop("auto_uppercase", False)
         self._no_sentence_start: bool = options.pop("no_sentence_start", False)
+        self._no_multiply_numbers: bool = options.pop("no_multiply_numbers", False)
         self._options = options
         self._db: Optional[GreynirBin] = None
         # Initialize the default tokenizer pipeline.
@@ -2093,7 +2120,9 @@ class DefaultPipeline:
     def parse_phrases_1(self, stream: TokenIterator) -> TokenIterator:
         """ Numbers and amounts """
         assert self._db is not None
-        return parse_phrases_1(self._db, self._token_ctor, stream)
+        return parse_phrases_1(
+            self._db, self._token_ctor, stream, self._no_multiply_numbers
+        )
 
     def parse_phrases_2(self, stream: TokenIterator) -> TokenIterator:
         """ Currencies, person names """
