@@ -877,13 +877,9 @@ def parse_phrases_1(
                 )
 
             # Check whether we have an initial number word
-            # If no_multiply_numbers option is set,
-            # don't join and multiply written numbers
-            # e.g. "tíu þúsund" or "fimm hundruð"
-            # (we still join [NUMBER] [WORD] e.g. "10 milljónir")
             multiplier = (
                 number(token)
-                if token.kind == TOK.WORD and not no_multiply_numbers
+                if token.kind == TOK.WORD
                 else None
             )
 
@@ -906,6 +902,18 @@ def parse_phrases_1(
                     return token
 
                 if multiplier_next is not None:
+                    if no_multiply_numbers and token.kind != TOK.NUMBER:
+                        # If no_multiply_numbers option is set,
+                        # don't join and multiply written numbers
+                        # e.g. "tíu þúsund" or "fimm hundruð"
+                        # (but still join [NUMBER] [WORD], e.g. "10 milljónir")
+                        token = token_ctor.Word(
+                            t=token.txt,
+                            # (If possible number word is followed by another number word, usually the first word is a number word)
+                            m=[m for m in token.meanings if m.ordfl in NUMBER_CATEGORIES],
+                            token=token,
+                        )
+                        break
                     # Retain the case of the last multiplier, except
                     # if it is genitive (eignarfall) and the previous
                     # token had a case ('hundruðum milljarða' is dative,
