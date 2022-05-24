@@ -44,17 +44,17 @@ from reynir.reynir import Terminal
 
 
 @pytest.fixture(scope="module")
-def g():
+def r():
     """ Provide a module-scoped Greynir instance as a test fixture """
-    g = Greynir()
-    yield g
+    r = Greynir()
+    yield r
     # Do teardown here
-    g.__class__.cleanup()
+    r.__class__.cleanup()
 
 
-def test_matcher(g: Greynir, verbose: bool=False) -> None:
+def test_matcher(r: Greynir, verbose: bool=False) -> None:
 
-    s = g.parse_single("Hún á heiðurinn að þessu.")
+    s = r.parse_single("Hún á heiðurinn að þessu.")
     m = list(s.tree.all_matches(
         "( "
             "VP > [ .* VP > { ( 'eiga'|'fá'|'hljóta' ) } .* NP-OBJ > { 'heiður' PP > { 'að' } } ] "
@@ -65,17 +65,17 @@ def test_matcher(g: Greynir, verbose: bool=False) -> None:
     assert len(m) == 1
 
     # Simple condition, correct sentence (vh in both subtrees)
-    s = g.parse_single("Ég hefði farið út ef Jón hefði hegðað sér vel.")
+    s = r.parse_single("Ég hefði farið út ef Jón hefði hegðað sér vel.")
     m = list(s.tree.all_matches("VP > { VP > { so_vh } CP-ADV-COND > { IP > { VP >> so_fh }}}"))
     assert len(m) == 0
 
     # Simple condition, incorrect sentence (fh in conditional subtree)
-    s = g.parse_single("Ég hefði farið út ef Jón hafði hegðað sér vel.")
+    s = r.parse_single("Ég hefði farið út ef Jón hafði hegðað sér vel.")
     m = list(s.tree.all_matches("VP > { VP > { so_vh } CP-ADV-COND > { IP > { VP >> so_fh }}}"))
     assert len(m) == 1
 
     # Complex condition, incorrect sentence (fh in complex subsentence, fh in conditional subtree)
-    s = g.parse_single("Ég hefði farið út ef Jón, sem Anna elskaði heitt, hafði hegðað sér vel.")
+    s = r.parse_single("Ég hefði farið út ef Jón, sem Anna elskaði heitt, hafði hegðað sér vel.")
     # There are two potential attachments of the CP-ADV-COND subtree
     m = (
         list(s.tree.all_matches("VP > { VP > { so_vh } CP-ADV-COND > { IP > { VP >> so_fh }}}")) +
@@ -84,7 +84,7 @@ def test_matcher(g: Greynir, verbose: bool=False) -> None:
     assert len(m) == 1
 
     # Complex condition, incorrect sentence (vh in complex subsentence, fh in conditional subtree)
-    s = g.parse_single("Ég hefði farið út ef Jón, sem Anna hefði elskað heitt, hafði hegðað sér vel.")
+    s = r.parse_single("Ég hefði farið út ef Jón, sem Anna hefði elskað heitt, hafði hegðað sér vel.")
     # There are two potential attachments of the CP-ADV-COND subtree
     m = (
         list(s.tree.all_matches("VP > { VP > { so_vh } CP-ADV-COND > { IP > { VP >> so_fh }}}")) +
@@ -93,7 +93,7 @@ def test_matcher(g: Greynir, verbose: bool=False) -> None:
     assert len(m) == 1
 
     # Complex condition, correct sentence (fh in complex subsentence, vh in conditional subtree)
-    s = g.parse_single("Ég hefði farið út ef Jón, sem Anna elskaði heitt, hefði hegðað sér vel.")
+    s = r.parse_single("Ég hefði farið út ef Jón, sem Anna elskaði heitt, hefði hegðað sér vel.")
     # There are two potential attachments of the CP-ADV-COND subtree
     m = (
         list(s.tree.all_matches("VP > { VP > { so_vh } CP-ADV-COND > { IP > { VP >> so_fh }}}")) +
@@ -102,7 +102,7 @@ def test_matcher(g: Greynir, verbose: bool=False) -> None:
     assert len(m) == 0
 
     # Complex condition, correct sentence (vh in complex subsentence, vh in conditional subtree)
-    s = g.parse_single("Ég hefði farið út ef Jón, sem Anna hefði elskað heitt, hefði hegðað sér vel.")
+    s = r.parse_single("Ég hefði farið út ef Jón, sem Anna hefði elskað heitt, hefði hegðað sér vel.")
     # There are two potential attachments of the CP-ADV-COND subtree
     m = (
         list(s.tree.all_matches("VP > { VP > { so_vh } CP-ADV-COND > { IP > { VP >> so_fh }}}")) +
