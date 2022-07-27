@@ -152,8 +152,10 @@ MgrInnihald →
     Forskeyti? Yfirsetning StLiður* Lokatákn?
     | Staðhæfing
 
+# "Allt er klárt," segir Jón og bætir við: "Komum þessu í gang."
 Staðhæfing →
     Sagt Segjandi Lokatákn?
+    | Sagt Segjandi Segir SegirÁfram Sagt Lokatákn?
 
 Segjandi →
     Segir               # "Allt er klappað og klárt", segir Jón.
@@ -209,6 +211,15 @@ Segir →
     # , segir/fullyrðir Jón Ásmundsson, fulltrúi samtakanna, í dag í útvarpinu
     "," SögnSegja/tala/pers Heimild_nf/tala/pers AtvFsAuka?
 
+SegirÁfram →
+    "og:st" SögnSegja/tala/pers SegirLíka?
+    | "og:st" SögnSegjaÁfram/tala/pers
+
+$score(+999) SegirÁfram
+
+SegirLíka →
+    "einnig" | "líka"
+
 SögnSegja/tala/pers →
     'segja:so'_0_gm_fh/tala/pers
     | 'skrifa:so'_0_gm_fh/tala/pers
@@ -218,6 +229,10 @@ SögnSegja/tala/pers →
     | 'ítreka:so'_0_gm_fh/tala/pers
     | 'viðurkenna:so'_0_gm_fh/tala/pers
     | 'álíta:so'_0_gm_fh/tala/pers
+
+SögnSegjaÁfram/tala/pers →
+    'bæta:so'_0_gm_fh/tala/pers "við:ao"
+    | 'halda:so'_0_gm_fh/tala/pers "áfram:ao"
 
 AðSögn →
     # , að sögn fulltrúa lögregluyfirvalda
@@ -924,7 +939,8 @@ SamanburðarNlTenging →
 SamanburðarSem → Sem
 
 SamanburðarTengingOg →
-    ","? AðvörunSem? "og:st"                # Erfitt fjarskiptasamband er á staðnum og mikil snjóþyngsli
+    ","? "og:st"                # Erfitt fjarskiptasamband er á staðnum og mikil snjóþyngsli
+    | ","? AðvörunSemOg
 
 $score(-8) SamanburðurNl
 $score(+4) SamanburðarNlTenging
@@ -5378,7 +5394,7 @@ Skýringarliður →
 OgEða →
     "og:st" OgAo?
     | "eða:st" | "ellegar:st" | "eður:st"
-    | "svo:st" "og:st" | AðvörunSem "og:st" | "né:st"
+    | "svo:st" "og:st" | AðvörunSemOg | "né:st"
     | ÞarÁMeðal | 'meðal_annars:ao'
     | 'það:pfn'_hk_et_nf 'vera:so'_0_gm_fh_et_p3
     | "eins:ao" "og:st" | "líkt:ao" "og:st"
@@ -5422,7 +5438,7 @@ $score(-8) KommaOgEðaStrik
 
 Aðaltenging →
     "og:st" | "svo:st" "og:st" | "eða:st" | "ellegar:st" | "heldur:st"
-    | "eins:ao" "og:st" | "en:st" | AðvörunSem "og:st"
+    | "eins:ao" "og:st" | "en:st" | AðvörunSemOg
 
 En → "en:st"
 
@@ -7444,8 +7460,8 @@ AðvörunAð →
 $tag(error) AðvörunAð
 
 # 'sem og'
-AðvörunSem → "sem:st"
-$tag(error) AðvörunSem
+AðvörunSemOg → "sem:st" "og:st"
+$tag(error) AðvörunSemOg
 
 # 'annað hvort' í tveimur orðum en á að vera eitt
 VillaAnnaðHvort →
@@ -7507,7 +7523,7 @@ FjöldiHluti_et_kk/fall →
     | 'helmingur:kk'_et/fall
 
 $tag(error) VillaFjöldiHluti/fall/kyn
-$score(-4) VillaFjöldiHluti/fall/kyn
+$score(-99) VillaFjöldiHluti/fall/kyn
 
 
 # ----------------------------------------------
@@ -7596,7 +7612,7 @@ VillaTvípunkturFs →
     fs/fall ":" Nl/fall
 
 $tag(error) VillaTvípunkturFs
-$score(+99) VillaTvípunkturFs
+$score(-999) VillaTvípunkturFs
 
 NauðsynlegKomma →
     > VillaVantarKommu
