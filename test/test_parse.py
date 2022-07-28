@@ -1500,6 +1500,8 @@ def test_tree_flat(r, verbose=False):
                 s = r.parse_single(sent)
                 np_obj = s.tree.S.IP.VP.NP_OBJ.flat_with_all_variants
                 expected = "NP-OBJ " + t1 + " " + t2 + " /NP-OBJ"
+                if np_obj != expected:
+                    print(np_obj, expected)
                 assert np_obj == expected
 
 

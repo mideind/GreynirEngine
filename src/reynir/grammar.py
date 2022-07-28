@@ -1225,6 +1225,7 @@ class Grammar:
         current_line = ""
         # Stack of conditional sections
         cond_stack: List[Tuple[str, bool]] = [("", True)]
+        new_cond: bool
 
         try:
             # Read grammar file line-by-line
@@ -1270,9 +1271,7 @@ class Grammar:
                         raise GrammarError("$endif() with no matching $if()")
                     if cond != cond_stack[-1][0]:
                         raise GrammarError(
-                            "$endif({0}) does not match $if({1})".format(
-                                cond, cond_stack[-1][0]
-                            )
+                            f"$endif({cond}) does not match $if({cond_stack[-1][0]})"
                         )
                     del cond_stack[-1]
                     s = ""

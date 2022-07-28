@@ -6409,8 +6409,8 @@ FjöldiSaman →
 Fjöldi_þgf →
     'tugur:kk'_ft_þgf           # tugum saman
     | 'hundrað:hk'_ft_þgf       # hundruðum saman
-    | 'þúsund:kvk'_ft_þgf       # þúsundum saman
-    | 'tugþúsundir:kvk'_ft_þgf  # tugþúsundum saman
+    | 'þúsund:hk'_ft_þgf        # þúsundum saman
+    | 'tugþúsundir:kvk'_ft_þgf  # tugþúsundum saman (bara til í kvk.)
     | 'milljón:kvk'_ft_þgf      # milljónum saman
     | 'milljarður:kk'_ft_þgf    # milljörðum saman
 
