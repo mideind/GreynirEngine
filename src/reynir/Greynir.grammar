@@ -154,8 +154,11 @@ MgrInnihald →
 
 # "Allt er klárt," segir Jón og bætir við: "Komum þessu í gang."
 Staðhæfing →
-    Sagt Segjandi Lokatákn?
-    | Sagt Segjandi Segir SegirÁfram Sagt Lokatákn?
+    Sagt Segjandi ÁframSagt? Lokatákn?
+
+ÁframSagt →
+    Segir SegirÁfram Sagt
+
 
 Segjandi →
     Segir               # "Allt er klappað og klárt", segir Jón.
@@ -218,7 +221,7 @@ SegirÁfram →
 $score(+999) SegirÁfram
 
 SegirLíka →
-    "einnig" | "líka"
+    "einnig:ao" | "líka:ao"
 
 SögnSegja/tala/pers →
     'segja:so'_0_gm_fh/tala/pers
@@ -7525,6 +7528,12 @@ FjöldiHluti_et_kk/fall →
 $tag(error) VillaFjöldiHluti/fall/kyn
 $score(-99) VillaFjöldiHluti/fall/kyn
 
+Aðaltenging →
+    > VillaNé
+
+VillaNé → "né:st"
+$tag(error) VillaNé
+$score(-999) VillaNé
 
 # ----------------------------------------------
 #
@@ -7622,12 +7631,6 @@ VillaVantarKommu → ∅
 $tag(error) VillaVantarKommu
 $score(-999) VillaVantarKommu
 
-Aðaltenging →
-    > VillaNé
-
-VillaNé → "né:st"
-$tag(error) VillaNé
-$score(-999) VillaNé
 
 # Sögn í annarri tölu en frumlag: 'Vinnuvika sjómanna eru 7 dagar'
 
