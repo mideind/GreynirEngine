@@ -79,11 +79,16 @@ from tokenizer import (
 from tokenizer.abbrev import Abbreviations
 
 __author__ = "Miðeind ehf."
-__copyright__ = "(C) 2021 Miðeind ehf."
+__copyright__ = "(C) 2022 Miðeind ehf."
 
 __all__ = (
-    "TP_LEFT", "TP_RIGHT", "TP_CENTER", "TP_NONE", "TP_WORD",
-    "KLUDGY_ORDINALS_MODIFY", "KLUDGY_ORDINALS_PASS_THROUGH",
+    "TP_LEFT",
+    "TP_RIGHT",
+    "TP_CENTER",
+    "TP_NONE",
+    "TP_WORD",
+    "KLUDGY_ORDINALS_MODIFY",
+    "KLUDGY_ORDINALS_PASS_THROUGH",
     "KLUDGY_ORDINALS_TRANSLATE",
     "Greynir",
     "Reynir",
@@ -94,7 +99,8 @@ __all__ = (
     "Sentence",
     "Paragraph",
     "ICELANDIC_RATIO",
-    "TOK", "Tok",
+    "TOK",
+    "Tok",
     "paragraphs",
     "correct_spaces",
     "mark_paragraphs",
@@ -102,13 +108,18 @@ __all__ = (
     "_Sentence",
     "_Paragraph",
     "NounPhrase",
-    "ParseForestPrinter", "ParseForestDumper", "ParseForestFlattener",
-    "ParseError", "ParseForestNavigator",
+    "ParseForestPrinter",
+    "ParseForestDumper",
+    "ParseForestFlattener",
+    "ParseError",
+    "ParseForestNavigator",
     "Settings",
-    "tokenize", "TokenList",
-    "__version__", "__author__", "__copyright__"
+    "tokenize",
+    "TokenList",
+    "__version__",
+    "__author__",
+    "__copyright__",
 )
 
 Abbreviations.initialize()
 Settings.read("config/GreynirPackage.conf")
-
