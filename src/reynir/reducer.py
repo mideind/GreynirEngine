@@ -88,7 +88,7 @@
 """
 
 from typing import Dict, DefaultDict, List, Set, Tuple, Optional, Any, cast
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, Required
 
 from collections import defaultdict
 
@@ -109,7 +109,7 @@ VerbList = List[VerbTuple]
 
 class ResultDict(TypedDict, total=False):
     # Score
-    sc: int
+    sc: Required[int]
     # Verb scope information
     so: VerbList
     sl: VerbList
@@ -349,7 +349,7 @@ class ParseForestReducer:
     def visit_token(self, node: Node) -> ResultDict:
         """ At token node """
         # Return the score of this token/terminal match
-        d: ResultDict = {}
+        d: ResultDict = {"sc": 0}
         nt = cast(BIN_Terminal, node.terminal)
         sc = self._scores[node.start][nt]
         if nt.matches_category("fs"):

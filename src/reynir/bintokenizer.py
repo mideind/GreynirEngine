@@ -902,17 +902,18 @@ def parse_phrases_1(
                     return token
 
                 if multiplier_next is not None:
-                    if no_multiply_numbers and token.kind != TOK.NUMBER:
+                    if no_multiply_numbers:
                         # If no_multiply_numbers option is set,
                         # don't join and multiply written numbers
                         # e.g. "tíu þúsund" or "fimm hundruð"
-                        # (but still join [NUMBER] [WORD], e.g. "10 milljónir")
-                        token = token_ctor.Word(
-                            t=token.txt,
-                            # (If possible number word is followed by another number word, usually the first word is a number word)
-                            m=[m for m in token.meanings if m.ordfl in NUMBER_CATEGORIES],
-                            token=token,
-                        )
+                        if token.kind != TOK.NUMBER:
+                            # Written numbers should be word tokens, numbers stay as number tokens
+                            token = token_ctor.Word(
+                                t=token.txt,
+                                # (If possible number word is followed by another number word, usually the first word is a number word)
+                                m=[m for m in token.meanings if m.ordfl in NUMBER_CATEGORIES],
+                                token=token,
+                            )
                         break
                     # Retain the case of the last multiplier, except
                     # if it is genitive (eignarfall) and the previous

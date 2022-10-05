@@ -1417,7 +1417,7 @@ def test_ifd_tag(r: Greynir) -> None:
     ]
 
 
-def test_tree_flat(r, verbose=False):
+def test_tree_flat(r: Greynir, verbose=False):
 
     AMOUNTS = {
         "þf": [
@@ -1486,8 +1486,13 @@ def test_tree_flat(r, verbose=False):
         ),
     }
 
+    no_mul_numbers = r._options.get("no_multiply_numbers") or False
     for verb_case, amounts in AMOUNTS.items():
         for amount, currency_case, t1 in amounts:
+            if no_mul_numbers and " " in amount:
+                # Different behaviour when the no_multiply_numbers
+                # flag is set for '[number] [word]' combinations
+                continue
             for currency, t2 in CURRENCIES[currency_case]:
                 if verb_case == "þf":
                     sent = "Hann skuldaði mér " + amount + " " + currency + "."

@@ -66,12 +66,12 @@ def check_terminal(t, text, lemma, category, variants):
     assert t.text == text
     assert t.lemma == lemma
     assert t.category == category
-    assert set(t.variants) == set(variants)
+    # Ignore variants for undeclinable number words
+    assert t.category == "töl" or set(t.variants) == set(variants)
 
 
-def test_amounts(r: Greynir):
-    # Just to overwrite test_amounts from test_parse
-    pass
+# Overwrite tests from test_parse which use numbers and assume flag is not set
+test_amounts = test_terminals = test_single = lambda r: None
 
 
 def test_no_multiply_numbers(r: Greynir):
@@ -80,13 +80,27 @@ def test_no_multiply_numbers(r: Greynir):
     s = r.parse_single("Tjónið nam 10 milljörðum króna.")
     assert s is not None
     t: List[Terminal] = s.terminals or []
-    assert len(t) == 4
+    assert len(t) == 6
     check_terminal(
         t[2],
-        text="10 milljörðum króna",
-        lemma="10 milljörðum króna",
+        text="10",
+        lemma="10",
+        category="tala",
+        variants=["þgf", "kk", "ft"],
+    )
+    check_terminal(
+        t[3],
+        text="milljörðum",
+        lemma="milljarður",
         category="no",
-        variants=["ft", "þgf", "kk"],
+        variants=["þgf", "kk", "ft"],
+    )
+    check_terminal(
+        t[4],
+        text="króna",
+        lemma="króna",
+        category="no",
+        variants=["ef", "kvk", "ft"],
     )
 
     s = r.parse_single("Tjónið þann 22. maí nam einum milljarði króna.")
@@ -124,7 +138,7 @@ def test_no_multiply_numbers(r: Greynir):
         text="tuttugu",
         lemma="tuttugu",
         category="töl",
-        variants=["ft", "kk", "þgf"],
+        variants=[],
     )
     check_terminal(
         t[4],
@@ -176,7 +190,7 @@ def test_no_multiply_numbers(r: Greynir):
         text="Sex",
         lemma="sex",
         category="töl",
-        variants=["ft", "hk", "nf"],
+        variants=[],
     )
     check_terminal(
         t[1],
@@ -185,14 +199,13 @@ def test_no_multiply_numbers(r: Greynir):
         category="no",
         variants=["ft", "hk", "nf"],
     )
-    # TODO: Declension can be wrong before 'og'
-    # check_terminal(
-    #     t[2],
-    #     text="áttatíu",
-    #     lemma="áttatíu",
-    #     category="töl",
-    #     variants=["ft", "hk", "nf"],
-    # )
+    check_terminal(
+        t[2],
+        text="áttatíu",
+        lemma="áttatíu",
+        category="töl",
+        variants=[],
+    )
     check_terminal(
         t[3],
         text="og",
@@ -208,24 +221,31 @@ def test_no_multiply_numbers(r: Greynir):
         variants=["ft", "kk", "nf"],
     )
 
-    s = r.parse_single("Tjónið nam tólf hundruð pundum.")
+    s = r.parse_single("Tjónið nam tólf hundruðum punda.")
     assert s is not None
     t = s.terminals or []
     assert len(t) == 6
-    # TODO: Is declension wrong? Wants þf instead of þgf
+    check_terminal(
+        t[2],
+        text="tólf",
+        lemma="tólf",
+        category="töl",
+        variants=[],
+    )
+    check_terminal(
+        t[3],
+        text="hundruðum",
+        lemma="hundrað",
+        category="no",
+        variants=["ft", "þgf", "hk"],
+    )
+    # TODO: gets interpreted as 'pundur:kk'?
     # check_terminal(
-    #     t[2],
-    #     text="tólf",
-    #     lemma="tólf",
-    #     category="töl",
-    #     variants=["ft", "þgf", "hk"],
-    # )
-    # check_terminal(
-    #     t[3],
-    #     text="hundruð",
-    #     lemma="hundrað",
+    #     t[4],
+    #     text="punda",
+    #     lemma="pund",
     #     category="no",
-    #     variants=["ft", "þgf", "hk"],
+    #     variants=["ft", "ef", "hk"],
     # )
 
     s = r.parse_single("Sjötíu þúsund manns söfnuðust fyrir á torginu.")
@@ -247,6 +267,25 @@ def test_no_multiply_numbers(r: Greynir):
         variants=["ft", "nf", "hk"],
     )
 
+    s = r.parse_single("7 milljón borðtenniskúlur.")
+    assert s is not None
+    t = s.terminals or []
+    assert len(t) == 4
+    check_terminal(
+        t[0],
+        text="7",
+        lemma="7",
+        category="tala",
+        variants=["kvk", "ft", "nf"],
+    )
+    check_terminal(
+        t[1],
+        text="milljón",
+        lemma="milljón",
+        category="töl",
+        variants=[],  # "kvk", "ft", "nf"],
+    )
+
     s = r.parse_single("Árið áttatíu þúsund sextíu og tvö er í framtíðinni.")
     assert s is not None
     t = s.terminals or []
@@ -265,14 +304,13 @@ def test_no_multiply_numbers(r: Greynir):
         category="no",
         variants=["ft", "nf", "hk"],
     )
-    # TODO: Again, declension is wrong before 'og'
-    # check_terminal(
-    #     t[3],
-    #     text="sextíu",
-    #     lemma="sextíu",
-    #     category="töl",
-    #     variants=["ft", "nf", "hk"],
-    # )
+    check_terminal(
+        t[3],
+        text="sextíu",
+        lemma="sextíu",
+        category="töl",
+        variants=["ft", "nf", "hk"],
+    )
     check_terminal(
         t[5],
         text="tvö",
@@ -299,18 +337,69 @@ def test_no_multiply_numbers(r: Greynir):
         category="no",
         variants=["ft", "nf", "hk"],
     )
-    # TODO: Wrong declension before 'og'
-    # check_terminal(
-    #     t[3],
-    #     text="níutíu",
-    #     lemma="níutíu",
-    #     category="töl",
-    #     variants=["ft", "nf", "hk"],
-    # )
+    check_terminal(
+        t[3],
+        text="níutíu",
+        lemma="níutíu",
+        category="töl",
+        variants=["ft", "nf", "hk"],
+    )
     check_terminal(
         t[5],
         text="þrjú",
         lemma="þrír",
         category="to",
         variants=["ft", "nf", "hk"],
+    )
+
+    s = r.parse_single("Tvö hundruð þúsund og þrír leikmenn mættu á blakmótið.")
+    assert s is not None
+    t = s.terminals or []
+    assert len(t) == 10
+    check_terminal(
+        t[0],
+        text="Tvö",
+        lemma="tveir",
+        category="to",
+        variants=["ft", "hk", "nf"],
+    )
+    check_terminal(
+        t[1],
+        text="hundruð",
+        lemma="hundrað",
+        category="no",
+        variants=["ft", "hk", "nf"],
+    )
+    check_terminal(
+        t[2],
+        text="þúsund",
+        lemma="þúsund",
+        category="töl",
+        variants=["ft", "hk", "nf"],
+    )
+    check_terminal(
+        t[3],
+        text="og",
+        lemma="og",
+        category="st",
+        variants=[],
+    )
+    check_terminal(
+        t[4],
+        text="þrír",
+        lemma="þrír",
+        category="to",
+        variants=["ft", "kk", "nf"],
+    )
+
+    s = r.parse_single("Þúsundir mættu á blakmótið.")
+    assert s is not None
+    t = s.terminals or []
+    assert len(t) == 5
+    check_terminal(
+        t[0],
+        text="Þúsundir",
+        lemma="þúsund",
+        category="no",
+        variants=["ft", "kvk", "nf"],
     )
