@@ -35,12 +35,16 @@ import pytest  # type: ignore
 
 from reynir import Greynir
 
-# Import tests from other files directly into namespace (they get run again with the new Greynir instance from the r function below)
+# Import tests from other files directly into namespace
+# (they get run again with the new Greynir instance from the r function below)
 # in order to see if flag affects other functionality than just written numbers
 from test_cases import test_addresses, test_cases, test_noun_phrases
 from test_matcher import test_matcher
 from test_original import test_original
-from test_parse import *  # Too many to comfortably write, instead we overwrite the only affected test (test_amounts) and the function r
+
+# Too many to comfortably write, instead we
+# overwrite the only affected tests and the function r
+from test_parse import *
 from test_reynir import (
     test_augment_terminal,
     test_auto_uppercase,
