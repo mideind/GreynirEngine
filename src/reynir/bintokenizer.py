@@ -907,10 +907,13 @@ def parse_phrases_1(
                         # don't join and multiply written numbers
                         # e.g. "tíu þúsund" or "fimm hundruð"
                         if token.kind != TOK.NUMBER:
-                            # Written numbers should be word tokens, numbers stay as number tokens
+                            # Written numbers should be word tokens,
+                            # numbers stay as number tokens
+                            # (We filter the meanings because when a
+                            # possible number word is followed by another number word,
+                            # we can probably narrow down the meanings to number words)
                             token = token_ctor.Word(
                                 t=token.txt,
-                                # (If possible number word is followed by another number word, usually the first word is a number word)
                                 m=[m for m in token.meanings if m.ordfl in NUMBER_CATEGORIES],
                                 token=token,
                             )

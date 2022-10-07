@@ -5,8 +5,7 @@
 
     Tests for Greynir no_multiply_numbers flag functionality
 
-    Copyright(C) 2021 by Miðeind ehf.
-    Original author: Vilhjálmur Þorsteinsson
+    Copyright(C) 2022 by Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -243,14 +242,13 @@ def test_no_multiply_numbers(r: Greynir):
         category="no",
         variants=["ft", "þgf", "hk"],
     )
-    # TODO: gets interpreted as 'pundur:kk'?
-    # check_terminal(
-    #     t[4],
-    #     text="punda",
-    #     lemma="pund",
-    #     category="no",
-    #     variants=["ft", "ef", "hk"],
-    # )
+    check_terminal(
+        t[4],
+        text="punda",
+        lemma="pund",
+        category="no",
+        variants=["ft", "ef", "hk"],
+    )
 
     s = r.parse_single("Sjötíu þúsund manns söfnuðust fyrir á torginu.")
     assert s is not None
