@@ -104,7 +104,7 @@ ProductionTuple = Tuple[Production, List[Optional["Node"]]]
 
 class ParseJob:
 
-    """ Dispatch token matching requests coming in from the C++ code """
+    """Dispatch token matching requests coming in from the C++ code"""
 
     # Parse jobs have rotating integer IDs, reaching _MAX_JOBS before cycling back
     _MAX_JOBS = 10_000
@@ -128,13 +128,13 @@ class ParseJob:
         self.matching_cache = matching_cache  # Token/terminal matching buffers
 
     def matches(self, token_index: int, terminal_index: int) -> bool:
-        """ Convert the token reference from a 0-based token index
-            to the token object itself; convert the terminal from a
-            1-based terminal index to a terminal object. """
+        """Convert the token reference from a 0-based token index
+        to the token object itself; convert the terminal from a
+        1-based terminal index to a terminal object."""
         return self.tokens[token_index].matches(self.terminals[terminal_index])
 
     def alloc_cache(self, token: int, size: int) -> Any:
-        """ Allocate a token/terminal matching cache buffer for the given token """
+        """Allocate a token/terminal matching cache buffer for the given token"""
         key = self.tokens[token].key  # Obtain the (hashable) key of the BIN_Token
         try:
             # Do we already have a token/terminal cache match buffer for this key?
@@ -147,7 +147,7 @@ class ParseJob:
         return b
 
     def reset(self) -> None:
-        """ Reset the node pointer conversion dictionary """
+        """Reset the node pointer conversion dictionary"""
         self.c_dict = dict()
 
     @property
@@ -155,12 +155,12 @@ class ParseJob:
         return self._handle
 
     def __enter__(self):
-        """ Python context manager protocol """
+        """Python context manager protocol"""
         return self
 
     # noinspection PyUnusedLocal
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
-        """ Python context manager protocol """
+        """Python context manager protocol"""
         self.__class__.delete(self._handle)
         # Return False to re-throw exception from the context, if any
         return False
@@ -173,7 +173,7 @@ class ParseJob:
         terminals: Dict[int, Terminal],
         matching_cache: Dict[Tuple[Hashable, ...], Any],
     ) -> "ParseJob":
-        """ Create a new parse job with for a given token sequence and set of terminals """
+        """Create a new parse job with for a given token sequence and set of terminals"""
         with cls._lock:
             h = cls._seq
             cls._seq += 1
@@ -184,18 +184,18 @@ class ParseJob:
 
     @classmethod
     def delete(cls, handle: int) -> None:
-        """ Delete a no-longer-used parse job """
+        """Delete a no-longer-used parse job"""
         with cls._lock:
             del cls._jobs[handle]
 
     @classmethod
     def dispatch(cls, handle: int, token_index: int, terminal_index: int) -> bool:
-        """ Dispatch a match request to the correct parse job """
+        """Dispatch a match request to the correct parse job"""
         return cls._jobs[handle].matches(token_index, terminal_index)
 
     @classmethod
     def alloc(cls, handle: int, token_index: int, size: int):
-        """ Dispatch a cache buffer allocation request to the correct parse job """
+        """Dispatch a cache buffer allocation request to the correct parse job"""
         return cls._jobs[handle].alloc_cache(token_index, size)
 
 
@@ -205,55 +205,55 @@ class ParseJob:
 
 @ffi.def_extern()  # type: ignore
 def matching_func(handle: int, token_index: int, terminal_index: int) -> bool:
-    """ This function is called from the C++ parser to determine
-        whether a token matches a terminal. The token is referenced
-        by 0-based index, and the terminal by a 1-based index.
-        The handle is an arbitrary UINT that was passed to
-        earleyParse(). In this case, it is used to identify
-        a ParseJob object that dispatches the match query. """
+    """This function is called from the C++ parser to determine
+    whether a token matches a terminal. The token is referenced
+    by 0-based index, and the terminal by a 1-based index.
+    The handle is an arbitrary UINT that was passed to
+    earleyParse(). In this case, it is used to identify
+    a ParseJob object that dispatches the match query."""
     return ParseJob.dispatch(handle, token_index, terminal_index)
 
 
 @ffi.def_extern()  # type: ignore
 def alloc_func(handle: int, token_index: int, size: int):
-    """ Allocate a token/terminal matching cache buffer, at least size bytes.
-        If the callback returns ffi.NULL, the parser will allocate its own buffer.
-        The point of this callback is to allow re-using buffers for identical tokens,
-        so we avoid making unnecessary matching calls. """
+    """Allocate a token/terminal matching cache buffer, at least size bytes.
+    If the callback returns ffi.NULL, the parser will allocate its own buffer.
+    The point of this callback is to allow re-using buffers for identical tokens,
+    so we avoid making unnecessary matching calls."""
     return ParseJob.alloc(handle, token_index, size)
 
 
 class Node:
 
-    """ Shared Packed Parse Forest (SPPF) node representation,
-        mapped from C++ (see eparser.h/.cpp) to Python.
+    """Shared Packed Parse Forest (SPPF) node representation,
+    mapped from C++ (see eparser.h/.cpp) to Python.
 
-        A C++ node is described by a label tuple of
-        (iNt, nI, nJ, nDot, pProd).
+    A C++ node is described by a label tuple of
+    (iNt, nI, nJ, nDot, pProd).
 
-        nI and nJ are the start and end token indices of the span
-        covered by the node.
+    nI and nJ are the start and end token indices of the span
+    covered by the node.
 
-        If iNt is >= 0, the node describes a token/terminal match
-        and has no children. iNt is the index of the matched token.
+    If iNt is >= 0, the node describes a token/terminal match
+    and has no children. iNt is the index of the matched token.
 
-        If iNt is < 0, it is the index of a nonterminal within the
-        grammar being parsed. If pProd is not ffi.NULL, this is an
-        interior node, corresponding to a dot position of nDot within
-        the production pProd. Otherwise, i.e. if pProd is ffi.NULL,
-        the node describes a completed nonterminal.
+    If iNt is < 0, it is the index of a nonterminal within the
+    grammar being parsed. If pProd is not ffi.NULL, this is an
+    interior node, corresponding to a dot position of nDot within
+    the production pProd. Otherwise, i.e. if pProd is ffi.NULL,
+    the node describes a completed nonterminal.
 
-        Nonterminals, unless they are epsilon (empty) nodes, have
-        a family of child (derivative) productions represented as a
-        linked list starting with pHead. Since the SPPF trees coming
-        from the Earley-Scott parser are binarized, the families have
-        at most two child nodes each. When creating the Python nodes,
-        interior nodes are coalesced as far as possible to form longer
-        lists of children, thereby decreasing the total number of nodes
-        necessary to represent the forest.
+    Nonterminals, unless they are epsilon (empty) nodes, have
+    a family of child (derivative) productions represented as a
+    linked list starting with pHead. Since the SPPF trees coming
+    from the Earley-Scott parser are binarized, the families have
+    at most two child nodes each. When creating the Python nodes,
+    interior nodes are coalesced as far as possible to form longer
+    lists of children, thereby decreasing the total number of nodes
+    necessary to represent the forest.
 
-        A forest of Nodes can be navigated using a subclass of
-        ParseForestNavigator.
+    A forest of Nodes can be navigated using a subclass of
+    ParseForestNavigator.
 
     """
 
@@ -296,7 +296,7 @@ class Node:
     def from_c_node(
         cls, job: ParseJob, c_node: Any, parent: Any = None, index: int = 0
     ) -> Optional["Node"]:
-        """ Initialize a Python node from a C++ SPPF node structure """
+        """Initialize a Python node from a C++ SPPF node structure"""
         if c_node == ffi_NULL:
             return None
 
@@ -337,10 +337,10 @@ class Node:
             ch: List[Any] = []
 
             def push_pair(p1: Any, p2: Any) -> None:
-                """ Push a pair of child nodes onto the child list """
+                """Push a pair of child nodes onto the child list"""
 
                 def push_child(p: Any) -> None:
-                    """ Push a single child node onto the child list """
+                    """Push a single child node onto the child list"""
                     if p.label.iNt == nt and p.label.pProd != ffi_NULL:
                         # Interior node for the same nonterminal
                         if p.pHead.pNext == ffi_NULL:
@@ -381,7 +381,7 @@ class Node:
 
     @classmethod
     def copy(cls, other: "Node") -> "Node":
-        """ Returns a copy of a Node instance """
+        """Returns a copy of a Node instance"""
         node = cls(other._start, other._end)
         node._nonterminal = other._nonterminal
         node._terminal = other._terminal
@@ -395,7 +395,7 @@ class Node:
         return node
 
     def _add_family(self, job: ParseJob, c_prod: Any, c_children: Any) -> None:
-        """ Add a family of children to this node, in parallel with other families """
+        """Add a family of children to this node, in parallel with other families"""
         assert c_prod != ffi_NULL
         prod: Production = job.grammar.productions_by_ix[c_prod.nId]
         prio: int = prod.priority
@@ -422,21 +422,21 @@ class Node:
 
     @property
     def start(self) -> int:
-        """ Return the start token index """
+        """Return the start token index"""
         return self._start
 
     @property
     def end(self) -> int:
-        """ Return the end token index """
+        """Return the end token index"""
         return self._end
 
     @property
     def is_span(self) -> bool:
-        """ Returns True if the node spans one or more tokens """
+        """Returns True if the node spans one or more tokens"""
         return self._end > self._start
 
     def _first_token(self) -> BIN_Token:
-        """ Return the first token within the span of this node """
+        """Return the first token within the span of this node"""
         p = self
         while p._token is None:
             # Note that this function may be called before the
@@ -453,7 +453,7 @@ class Node:
         return p._token
 
     def _last_token(self) -> BIN_Token:
-        """ Return the last token within the span of this node """
+        """Return the last token within the span of this node"""
         p = self
         while p._token is None:
             # Note that this function may be called before the
@@ -471,69 +471,69 @@ class Node:
 
     @property
     def token_span(self) -> Tuple[BIN_Token, BIN_Token]:
-        """ Return the first and last tokens under this node """
+        """Return the first and last tokens under this node"""
         return (self._first_token(), self._last_token())
 
     @property
     def nonterminal(self) -> Optional[Nonterminal]:
-        """ Return the nonterminal associated with this node """
+        """Return the nonterminal associated with this node"""
         return self._nonterminal
 
     @property
     def is_ambiguous(self):
-        """ Return True if this node has more than one family of children """
+        """Return True if this node has more than one family of children"""
         return self._families is not None and len(self._families) >= 2
 
     @property
     def is_interior(self) -> bool:
-        """ Returns True if this is an interior node (partially parsed production) """
+        """Returns True if this is an interior node (partially parsed production)"""
         return not self._completed
 
     @property
     def is_completed(self) -> bool:
-        """ Returns True if this is a node corresponding to a completed nonterminal """
+        """Returns True if this is a node corresponding to a completed nonterminal"""
         return self._completed
 
     @property
     def is_token(self) -> bool:
-        """ Returns True if this is a token node """
+        """Returns True if this is a token node"""
         return self._token is not None
 
     @property
     def terminal(self) -> Optional[Terminal]:
-        """ Return the terminal associated with a token node, or None if none """
+        """Return the terminal associated with a token node, or None if none"""
         return self._terminal
 
     @property
     def token(self) -> Optional[BIN_Token]:
-        """ Return the token associated with a token node, or None if none """
+        """Return the token associated with a token node, or None if none"""
         return self._token
 
     @property
     def has_children(self) -> bool:
-        """ Return True if there are any families of children of this node """
+        """Return True if there are any families of children of this node"""
         return bool(self._families)
 
     @property
     def is_empty(self) -> bool:
-        """ Return True if there is only a single empty family of this node """
+        """Return True if there is only a single empty family of this node"""
         if not self._families:
             return True
         return len(self._families) == 1 and not bool(self._families[0][1])
 
     @property
     def num_families(self) -> int:
-        """ Return the number of families of children of this node """
+        """Return the number of families of children of this node"""
         return len(self._families) if self._families is not None else 0
 
     def enum_children(self) -> Iterator[ProductionTuple]:
-        """ Enumerate families of children """
+        """Enumerate families of children"""
         if self._families:
             for prod, children in self._families:
                 yield (prod, children)
 
     def enum_child_nodes(self) -> Iterator[Optional["Node"]]:
-        """ Enumerate child nodes of this node, one by one """
+        """Enumerate child nodes of this node, one by one"""
         # Note that for reduced trees, a nonterminal node
         # will only have one family of children, which
         # is the list that will be generated by this function.
@@ -551,7 +551,7 @@ class Node:
             assert False, "enum_child_nodes() called on an ambiguous node"
 
     def reduce_to(self, child_ix: int) -> None:
-        """ Eliminate all child families except the given one """
+        """Eliminate all child families except the given one"""
         if self._families and len(self._families) > 1:
             # More than one family to choose from:
             # collapse the list to one survivor
@@ -593,59 +593,59 @@ class Node:
         return istr + label_rep + families_rep
 
     def __repr__(self) -> str:
-        """ Create a reasonably nice text representation of this node
-            and its families of children, if any """
+        """Create a reasonably nice text representation of this node
+        and its families of children, if any"""
         return self._repr(0)
 
     def __str__(self) -> str:
-        """ Return a string representation of this node """
+        """Return a string representation of this node"""
         return "<Node: " + str(self._nonterminal or self._token) + ">"
 
 
 class ParseError(Exception):
 
-    """ Exception class for parser errors """
+    """Exception class for parser errors"""
 
     def __init__(
         self, txt: str, token_index: Optional[int] = None, info: Any = None
     ) -> None:
-        """ Store an information object with the exception,
-            containing the parser state immediately before the error """
+        """Store an information object with the exception,
+        containing the parser state immediately before the error"""
         super().__init__(txt)
         self._info = info
         self._token_index = token_index
 
     @property
     def info(self) -> Any:
-        """ Return the parser state information object """
+        """Return the parser state information object"""
         return self._info
 
     @property
     def token_index(self) -> Optional[int]:
-        """ Return the 0-based index of the token where the parser ran out of options """
+        """Return the 0-based index of the token where the parser ran out of options"""
         return self._token_index
 
     def __str__(self) -> str:
-        """ Return a string representation of the parse error """
+        """Return a string representation of the parse error"""
         return self.args[0]
 
 
 class Fast_Parser(BIN_Parser):
 
-    """ This class wraps an Earley-Scott parser written in C++,
-        which is called via CFFI.
+    """This class wraps an Earley-Scott parser written in C++,
+    which is called via CFFI.
 
-        The class supports the context manager protocol so you can say:
+    The class supports the context manager protocol so you can say:
 
-        with Fast_Parser() as fast_p:
-           node = fast_p.go(...)
+    with Fast_Parser() as fast_p:
+       node = fast_p.go(...)
 
-        C++ objects associated with the parser will then be cleaned
-        up automatically upon exit of the context, whether by normal
-        means or as a consequence of an exception.
+    C++ objects associated with the parser will then be cleaned
+    up automatically upon exit of the context, whether by normal
+    means or as a consequence of an exception.
 
-        Otherwise, i.e. if not using a context manager, call fast_p.cleanup()
-        after using the fast_p parser instance, preferably in a try/finally block.
+    Otherwise, i.e. if not using a context manager, call fast_p.cleanup()
+    after using the fast_p parser instance, preferably in a try/finally block.
     """
 
     # The C++ grammar object (a binary blob)
@@ -655,7 +655,7 @@ class Fast_Parser(BIN_Parser):
 
     @classmethod
     def _load_binary_grammar(cls) -> Any:
-        """ Load the binary grammar file into memory, if required """
+        """Load the binary grammar file into memory, if required"""
         fname = cls._GRAMMAR_BINARY_FILE
         try:
             ts = os.path.getmtime(fname)
@@ -702,19 +702,19 @@ class Fast_Parser(BIN_Parser):
             self._matching_cache: Dict[Tuple[Hashable, ...], Any] = dict()
 
     def __enter__(self):
-        """ Python context manager protocol """
+        """Python context manager protocol"""
         return self
 
     # noinspection PyUnusedLocal
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
-        """ Python context manager protocol """
+        """Python context manager protocol"""
         self.cleanup()
         return False
 
     def go(self, tokens: Iterable[Tok], *, root: Optional[str] = None) -> Node:
-        """ Call the C++ parser module to parse the tokens. The parser's
-            default root nonterminal can be overridden by passing its
-            name in the root parameter. """
+        """Call the C++ parser module to parse the tokens. The parser's
+        default root nonterminal can be overridden by passing its
+        name in the root parameter."""
 
         wrapped_tokens = self._wrap(tokens)  # Inherited from BIN_Parser
         lw = len(wrapped_tokens)
@@ -768,16 +768,16 @@ class Fast_Parser(BIN_Parser):
         return result
 
     def go_no_exc(self, tokens: Iterable[Tok], **kwargs: Any) -> Optional[Node]:
-        """ Simple version of go() that returns None instead of throwing ParseError """
+        """Simple version of go() that returns None instead of throwing ParseError"""
         try:
             return self.go(tokens, **kwargs)
         except ParseError:
             return None
 
     def cleanup(self) -> None:
-        """ Delete C++ objects. Must call after last use of Fast_Parser
-            to avoid memory leaks. The context manager protocol is recommended
-            to guarantee cleanup. """
+        """Delete C++ objects. Must call after last use of Fast_Parser
+        to avoid memory leaks. The context manager protocol is recommended
+        to guarantee cleanup."""
         if self._c_parser != ffi_NULL:
             eparser.deleteParser(self._c_parser)  # type: ignore
         self._c_parser = ffi_NULL
@@ -789,7 +789,7 @@ class Fast_Parser(BIN_Parser):
 
     @classmethod
     def discard_grammar(cls) -> None:
-        """ Discard the C grammar object instance held as a class attribute """
+        """Discard the C grammar object instance held as a class attribute"""
         if cls._c_grammar != ffi_NULL:
             eparser.deleteGrammar(cls._c_grammar)  # type: ignore
         cls._c_grammar = ffi_NULL
@@ -797,7 +797,7 @@ class Fast_Parser(BIN_Parser):
 
     @classmethod
     def num_combinations(cls, forest: Node) -> int:
-        """ Count the number of possible parse tree combinations in the given forest """
+        """Count the number of possible parse tree combinations in the given forest"""
 
         nc: Dict[Node, int] = dict()
         mul = operator.mul
@@ -826,60 +826,60 @@ class Fast_Parser(BIN_Parser):
 
 class ParseForestNavigator:
 
-    """ Base class for navigating parse forests. Override the underscored
-        methods to perform actions at the corresponding points of navigation. """
+    """Base class for navigating parse forests. Override the underscored
+    methods to perform actions at the corresponding points of navigation."""
 
     # pylint: disable=assignment-from-none
 
     def __init__(self, visit_all: bool = False) -> None:
-        """ If visit_all is False, we only visit each packed node once.
-            If True, we visit the entire tree in order. """
+        """If visit_all is False, we only visit each packed node once.
+        If True, we visit the entire tree in order."""
         self._visit_all = visit_all
 
     def visit_epsilon(self, level: int) -> Any:
-        """ At Epsilon node """
+        """At Epsilon node"""
         return None
 
     def visit_token(self, level: int, w: Node) -> Any:
-        """ At token node """
+        """At token node"""
         return None
 
     def visit_nonterminal(self, level: int, node: Node) -> Any:
-        """ At nonterminal node """
+        """At nonterminal node"""
         # Typically returns an accumulation object to collect results
         return None
 
     def visit_family(
         self, results: Any, level: int, w: Node, ix: int, prod: Production
     ) -> None:
-        """ At a family of children """
+        """At a family of children"""
         return
 
     def add_result(self, results: Any, ix: int, r: Any) -> None:
-        """ Append a single result r to the results accumulation object """
+        """Append a single result r to the results accumulation object"""
         return
 
     def process_results(self, results: Any, node: Node) -> Any:
-        """ Process results after visiting children.
-            The results list typically contains tuples (ix, r) where ix is
-            the family index and r is the child result """
+        """Process results after visiting children.
+        The results list typically contains tuples (ix, r) where ix is
+        the family index and r is the child result"""
         return None
 
     def force_visit(
         self, w: Optional[Node], visited: Dict[Optional[Node], Any]
     ) -> bool:
-        """ Override this and return True to visit a node, even if self._visit_all
-            is False and the node has been visited before """
+        """Override this and return True to visit a node, even if self._visit_all
+        is False and the node has been visited before"""
         return False
 
     def go(self, root_node: Node) -> Any:
-        """ Navigate the forest from the root node """
+        """Navigate the forest from the root node"""
 
         # Memoization cache dictionary
         visited: Dict[Optional[Node], Any] = dict()
 
         def _nav_helper(w: Optional[Node], level: int) -> Any:
-            """ Navigate from w """
+            """Navigate from w"""
             if (
                 not self._visit_all
                 and w in visited
@@ -924,7 +924,7 @@ class ParseForestNavigator:
 
 class ParseForestPrinter(ParseForestNavigator):
 
-    """ Print a parse forest to stdout or a file """
+    """Print a parse forest to stdout or a file"""
 
     def __init__(
         self,
@@ -946,18 +946,18 @@ class ParseForestPrinter(ParseForestNavigator):
         self._visited: Set[Node] = set()
 
     def _score(self, w: Node) -> str:
-        """ Return a string showing the node's score """
+        """Return a string showing the node's score"""
         # !!! To enable this, assignment of the .score attribute
         # !!! needs to be uncommented in reducer.py
         return " [{0}]".format(w.score) if self._show_scores else ""
 
     def visit_epsilon(self, level: int) -> None:
-        """ Epsilon (null) node """
+        """Epsilon (null) node"""
         indent = "  " * level  # Two spaces per indent level
         print(indent + "(empty)", file=self._file)
 
     def visit_token(self, level: int, w: Node) -> None:
-        """ Token matching a terminal """
+        """Token matching a terminal"""
         indent = "  " * level  # Two spaces per indent level
         h = str(w.token)
         if self._show_ids:
@@ -993,7 +993,7 @@ class ParseForestPrinter(ParseForestNavigator):
     def visit_family(
         self, results: Any, level: int, w: Node, ix: int, prod: Production
     ) -> None:
-        """ Show trees for different options, if ambiguous """
+        """Show trees for different options, if ambiguous"""
         if w.is_ambiguous:
             indent = "  " * level  # Two spaces per indent level
             print(indent + "Option " + str(ix + 1) + ":", file=self._file)
@@ -1002,14 +1002,14 @@ class ParseForestPrinter(ParseForestNavigator):
     def print_forest(
         cls,
         root_node: "Node",
-        detailed: bool=False,
-        file: Optional[IO[str]]=None,
-        show_scores: bool=False,
-        show_ids: bool=False,
-        visit_all: bool=True,
-        skip_duplicates: bool=False,
+        detailed: bool = False,
+        file: Optional[IO[str]] = None,
+        show_scores: bool = False,
+        show_ids: bool = False,
+        visit_all: bool = True,
+        skip_duplicates: bool = False,
     ):
-        """ Print a parse forest to the given file, or stdout if none """
+        """Print a parse forest to the given file, or stdout if none"""
         cls(
             detailed,
             file,
@@ -1022,7 +1022,7 @@ class ParseForestPrinter(ParseForestNavigator):
 
 class ParseForestDumper(ParseForestNavigator):
 
-    """ Dump a parse forest into a compact string """
+    """Dump a parse forest into a compact string"""
 
     # The result is a string consisting of lines separated by newline characters.
     # The format is as follows:
@@ -1095,7 +1095,7 @@ class ParseForestDumper(ParseForestNavigator):
     def dump_forest(
         cls, root_node: Node, token_dicts: Optional[List[TokenDict]] = None
     ) -> str:
-        """ Return a string with a multi-line text representation of the parse tree """
+        """Return a string with a multi-line text representation of the parse tree"""
         dumper = cls(token_dicts)
         dumper.go(root_node)
         dumper._result.append("Q0")  # End marker
@@ -1104,8 +1104,8 @@ class ParseForestDumper(ParseForestNavigator):
 
 class _FlattenerNode:
 
-    """ A node in a flattened parse tree, produced by
-        the ParseTreeFlattener class (below) """
+    """A node in a flattened parse tree, produced by
+    the ParseTreeFlattener class (below)"""
 
     def __init__(self, p: FlattenerType, score: int) -> None:
         self._p = p
@@ -1153,7 +1153,7 @@ class _FlattenerNode:
 
 class ParseForestFlattener(ParseForestNavigator):
 
-    """ Create a simpler, flatter version of an already disambiguated parse tree """
+    """Create a simpler, flatter version of an already disambiguated parse tree"""
 
     def __init__(self) -> None:
         super().__init__(visit_all=True)  # Visit all nodes
@@ -1168,11 +1168,11 @@ class ParseForestFlattener(ParseForestNavigator):
         return self._stack[0] if self._stack else None
 
     def visit_epsilon(self, level: int) -> Any:
-        """ Epsilon (null) node: not included in a flattened tree """
+        """Epsilon (null) node: not included in a flattened tree"""
         return None
 
     def visit_token(self, level: int, w: Node) -> Any:
-        """ Add a terminal/token node to the flattened tree """
+        """Add a terminal/token node to the flattened tree"""
         # assert level > 0
         # assert self._stack
         assert w.terminal is not None
@@ -1184,7 +1184,7 @@ class ParseForestFlattener(ParseForestNavigator):
         return None
 
     def visit_nonterminal(self, level: int, node: Node) -> Any:
-        """ Add a nonterminal node to the flattened tree """
+        """Add a nonterminal node to the flattened tree"""
         # Interior nodes are not dumped
         # and do not increment the indentation level
         if not node.is_interior:
@@ -1209,13 +1209,13 @@ class ParseForestFlattener(ParseForestNavigator):
     def visit_family(
         self, results: Any, level: int, w: Node, ix: int, prod: Production
     ) -> None:
-        """ Visit different subtree options within a parse forest """
+        """Visit different subtree options within a parse forest"""
         # In this case, the tree should be unambigous
         assert not w.is_ambiguous
 
     @classmethod
     def flatten(cls, root_node: Node) -> Optional[_FlattenerNode]:
-        """ Flatten a parse tree """
+        """Flatten a parse tree"""
         dumper = cls()
         dumper.go(root_node)
         return dumper.root

@@ -114,21 +114,21 @@ MatcherFunc = Callable[["BIN_Token", "BIN_Terminal", BIN_Tuple], bool]
 
 class WordMatchers:
 
-    """ A namespace to enclose the matching functions for various
-        types of word categories and terminals. These functions
-        are called from the BIN_Token.matches_WORD() function.
-        In other words, they are only used to match word tokens
-        (kind==TOK.WORD) with terminals that are potentially
-        matchable with such tokens.
+    """A namespace to enclose the matching functions for various
+    types of word categories and terminals. These functions
+    are called from the BIN_Token.matches_WORD() function.
+    In other words, they are only used to match word tokens
+    (kind==TOK.WORD) with terminals that are potentially
+    matchable with such tokens.
 
-        Enclosing these functions in a separate namespace class
-        improves performance, especially in PyPy, and simplifies
-        the BIN_Token class.
+    Enclosing these functions in a separate namespace class
+    improves performance, especially in PyPy, and simplifies
+    the BIN_Token class.
     """
 
     @staticmethod
     def matcher_so(token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple) -> bool:
-        """ Match word with verb terminal, i.e. so_xxx """
+        """Match word with verb terminal, i.e. so_xxx"""
         if m.ordfl != "so":
             # Not a verb: no match
             return False
@@ -154,7 +154,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_no(token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple) -> bool:
-        """ Match word with noun terminal, i.e. no_xxx """
+        """Match word with noun terminal, i.e. no_xxx"""
         if m.ordfl not in BIN_Token.NOUNS_SET:
             # Not kk, kvk, hk
             return False
@@ -200,7 +200,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_lo(token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple) -> bool:
-        """ Match word with adjective terminal, i.e. lo_xxx """
+        """Match word with adjective terminal, i.e. lo_xxx"""
         if m.ordfl != "lo":
             return False
         if terminal.has_any_vbits(BIN_Token.VBIT_SCASES):
@@ -239,8 +239,8 @@ class WordMatchers:
     def matcher_abfn(
         token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple
     ) -> bool:
-        """ Match word with reflexive pronoun terminal
-            (afturbeygt fornafn), abfn_xxx """
+        """Match word with reflexive pronoun terminal
+        (afturbeygt fornafn), abfn_xxx"""
         if m.ordfl != "abfn":
             return False
         fbits = BIN_Token.get_fbits(m.beyging)
@@ -250,7 +250,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_pfn(token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple) -> bool:
-        """ Match word with personal pronoun terminal, pfn_xxx """
+        """Match word with personal pronoun terminal, pfn_xxx"""
         if m.ordfl != "pfn":
             return False
         fbits = BIN_Token.get_fbits(m.beyging)
@@ -262,7 +262,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_stt(token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple) -> bool:
-        """ Match word with connective conjunction terminal ('sem', 'er') """
+        """Match word with connective conjunction terminal ('sem', 'er')"""
         # This is actually never used by the current grammar,
         # since all instances of stt are of the form "sem:stt"
         # which is handled in matcher_default() / terminal.matches_first()
@@ -270,8 +270,8 @@ class WordMatchers:
 
     @staticmethod
     def matcher_eo(token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple) -> bool:
-        """ 'Einkunnarorð': adverb (atviksorð) that is not the same
-            as a preposition (forsetning) or pronoun (fornafn)."""
+        """'Einkunnarorð': adverb (atviksorð) that is not the same
+        as a preposition (forsetning) or pronoun (fornafn)."""
         if not m.ordfl.endswith("ao"):
             # Do not delete this check or move it inside the if below.
             # It is necessary to ensure that other word categories do not match,
@@ -299,7 +299,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_ao(token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple) -> bool:
-        """ Adverbs, excluding meanings explicitly marked as eo """
+        """Adverbs, excluding meanings explicitly marked as eo"""
         if m.ordfl != "ao":
             return False
         if terminal.has_any_vbits(BIN_Token.VBIT_ENDING):
@@ -316,10 +316,10 @@ class WordMatchers:
 
     @staticmethod
     def matcher_fs(token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple) -> bool:
-        """ Check preposition. Note that in this exceptional case, we
-            do not use the BÍN annotation of the token at all. Instead
-            we look up the token text in Prepositions.PP which is read
-            from the Prepositions.conf file. """
+        """Check preposition. Note that in this exceptional case, we
+        do not use the BÍN annotation of the token at all. Instead
+        we look up the token text in Prepositions.PP which is read
+        from the Prepositions.conf file."""
         if not terminal.num_variants:
             return False
         # Note that in the case of abbreviated prepositions,
@@ -351,7 +351,7 @@ class WordMatchers:
 
     @staticmethod
     def matcher_töl(token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple) -> bool:
-        """ Undeclinable number word ('fimm', 'sex', 'tuttugu'...) """
+        """Undeclinable number word ('fimm', 'sex', 'tuttugu'...)"""
         # In this case, the terminal may have variants but they are only used
         # to signal the context in which the terminal stands. We don't use
         # the variants to disqualify meanings, since the word is undeclinable
@@ -362,7 +362,7 @@ class WordMatchers:
     def matcher_person(
         token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple
     ) -> bool:
-        """ Check name from static phrases, coming from the GreynirPackage.conf file """
+        """Check name from static phrases, coming from the GreynirPackage.conf file"""
         if m.fl == "ætt":
             # Allow single family names
             return True
@@ -392,7 +392,7 @@ class WordMatchers:
     def matcher_gata(
         token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple
     ) -> bool:
-        """ Check street name """
+        """Check street name"""
         # Note: we allow street names as well as place names ('örn')
         # since some street names are also place names, such as 'Einarsnes',
         # and place names tend to have priority in BÍN.
@@ -416,7 +416,7 @@ class WordMatchers:
     def matcher_sérnafn(
         token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple
     ) -> bool:
-        """ Proper name terminal """
+        """Proper name terminal"""
         # Only allow a potential interpretation as a proper name if
         # the token is uppercase but there is no uppercase meaning of
         # the word in BÍN. This excludes for instance "Ísland" which
@@ -445,7 +445,7 @@ class WordMatchers:
     def matcher_default(
         token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple
     ) -> bool:
-        """ Check other terminal categories """
+        """Check other terminal categories"""
         if not terminal.matches_first(m.ordfl, m.stofn, token.t1_lower):
             return False
         if m.beyging == "-":
@@ -481,16 +481,16 @@ class WordMatchers:
     def matcher_strong_literal(
         token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple
     ) -> bool:
-        """ Check whether the meaning matches a strong literal terminal,
-            i.e. one that is enclosed in double quotes ("dæmi:hk") """
+        """Check whether the meaning matches a strong literal terminal,
+        i.e. one that is enclosed in double quotes ("dæmi:hk")"""
         return terminal.matches_first(m.ordfl, m.stofn, token.t1_lower)
 
     @staticmethod
     def matcher_lemma_literal(
         token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple
     ) -> bool:
-        """ Check whether the meaning matches a lemma literal terminal,
-            i.e. one that is enclosed in single quotes ('dæmi:hk'_nf_et) """
+        """Check whether the meaning matches a lemma literal terminal,
+        i.e. one that is enclosed in single quotes ('dæmi:hk'_nf_et)"""
         if not WordMatchers.matcher_default(token, terminal, m):
             return False
         # Special case: We don't allow verb lemma literals to match
@@ -505,28 +505,28 @@ class WordMatchers:
     def matcher_uppercase_lemma_literal(
         token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple
     ) -> bool:
-        """ Check whether the meaning matches an uppercase lemma literal terminal,
-            i.e. one that is enclosed in single quotes ('Vestur-Þýskaland:hk'_nf) """
+        """Check whether the meaning matches an uppercase lemma literal terminal,
+        i.e. one that is enclosed in single quotes ('Vestur-Þýskaland:hk'_nf)"""
         return WordMatchers.matcher_default(token, terminal, m)
 
 
 class BIN_Token(Token):
 
     """
-        Wrapper class for a token to be processed by the parser
+    Wrapper class for a token to be processed by the parser
 
-        The layout of a token tuple coming from the tokenizer is
-        as follows:
+    The layout of a token tuple coming from the tokenizer is
+    as follows:
 
-        t[0] Token type (TOK.WORD, etc.)
-        t[1] Token text
-        t[2] For TOK.WORD: Meaning list, where each item is a tuple:
-            m[0] Word stem
-            m[1] BIN index (integer)
-            m[2] Word type (kk/kvk/hk (=noun), so, lo, ao, fs, etc.)
-            m[3] Word category (alm/fyr/ism etc.)
-            m[4] Word form (in most cases identical to t[1])
-            m[5] Grammatical form (case, gender, number, etc.)
+    t[0] Token type (TOK.WORD, etc.)
+    t[1] Token text
+    t[2] For TOK.WORD: Meaning list, where each item is a tuple:
+        m[0] Word stem
+        m[1] BIN index (integer)
+        m[2] Word type (kk/kvk/hk (=noun), so, lo, ao, fs, etc.)
+        m[3] Word category (alm/fyr/ism etc.)
+        m[4] Word form (in most cases identical to t[1])
+        m[5] Grammatical form (case, gender, number, etc.)
 
     """
 
@@ -728,24 +728,24 @@ class BIN_Token(Token):
 
     _NOT_NOT_EO = frozenset(
         [
-            #"inn",
-            #"eftir",
-            #"til",
-            #"upp",
+            # "inn",
+            # "eftir",
+            # "til",
+            # "upp",
             "um",
-            #"fram",
+            # "fram",
             "nær",
             "nærri",
-            #"út",
+            # "út",
             "meðal",
             "neðan",
             "jafnframt",
             "samt",
-            #"af",
-            #"fyrir",
+            # "af",
+            # "fyrir",
             "því",
-            #"saman",
-            #"þá",
+            # "saman",
+            # "þá",
         ]
     )
 
@@ -879,22 +879,22 @@ class BIN_Token(Token):
 
     @property
     def lower(self) -> str:
-        """ Return the text for this property, in lower case """
+        """Return the text for this property, in lower case"""
         return self.t1_lower
 
     @property
     def index(self) -> int:
-        """ Return the original index of the corresponding token within the sentence """
+        """Return the original index of the corresponding token within the sentence"""
         return self._index
 
     @property
     def error(self) -> Any:
-        """ Return the error object associated with this token, if any """
+        """Return the error object associated with this token, if any"""
         return self._error
 
     @property
     def dump(self) -> str:
-        """ Serialize the token as required for text dumping of trees """
+        """Serialize the token as required for text dumping of trees"""
         if self.t0 == TOK.WORD:
             # Simple case; no token kind or auxiliary information dumped
             return '"' + self.t1 + '"'
@@ -906,14 +906,14 @@ class BIN_Token(Token):
 
     @classmethod
     def fbits(cls, beyging: str) -> int:
-        """ Convert a 'beyging' field from BIN to a set of fbits """
+        """Convert a 'beyging' field from BIN to a set of fbits"""
         bit = cls.FBIT
         or_func: Callable[[int, int], int] = lambda x, y: x | y
         return reduce(or_func, (b for key, b in bit.items() if key in beyging), 0)
 
     @classmethod
     def get_fbits(cls, beyging: str) -> int:
-        """ Get the (cached) fbits for a BIN 'beyging' field """
+        """Get the (cached) fbits for a BIN 'beyging' field"""
         fbits = cls._MEANING_CACHE.get(beyging)
         if fbits is None:
             # Calculate a set of bits that represent the variants
@@ -924,7 +924,7 @@ class BIN_Token(Token):
 
     @classmethod
     def bin_variants(cls, beyging: str) -> Set[str]:
-        """ Return the set of variants coded in the given BÍN beyging string """
+        """Return the set of variants coded in the given BÍN beyging string"""
         if not beyging:
             return set()
         vset = cls._VARIANT_CACHE.get(beyging)
@@ -947,9 +947,9 @@ class BIN_Token(Token):
 
     @staticmethod
     def mm_verb_stem(verb: str) -> str:
-        """ Lookup a verb stem for a 'miðmynd' verb,
-            i.e. "eignast" for "eigna" (which may have appeared
-            as "eignaðist" in the text) """
+        """Lookup a verb stem for a 'miðmynd' verb,
+        i.e. "eignast" for "eigna" (which may have appeared
+        as "eignaðist" in the text)"""
         # This used to be done via a database lookup but it turns
         # out this is unnecessary, since the middle voice verb stems
         # are always formed by adding "st" at the end of the regular
@@ -958,8 +958,8 @@ class BIN_Token(Token):
 
     @classmethod
     def verb_is_strictly_impersonal(cls, verb: str, form: str) -> bool:
-        """ Return True if the given verb is strictly impersonal,
-            i.e. never appears with a nominative subject """
+        """Return True if the given verb is strictly impersonal,
+        i.e. never appears with a nominative subject"""
         # This is overridden in reynir_correct.errfinder
         # Note that we don't need to check the form for "OP" here,
         # since that check is done in the _RESTRICTIVE_VARIANTS loop.
@@ -967,14 +967,14 @@ class BIN_Token(Token):
 
     @classmethod
     def verb_cannot_be_impersonal(cls, verb: str, form: str) -> bool:
-        """ Return True if this verb cannot match an so_xxx_op terminal """
+        """Return True if this verb cannot match an so_xxx_op terminal"""
         # If the verb doesn't have OP (impersonal) in its form, it
         # can't match an _op terminal
         return "OP" not in form
 
     @classmethod
     def verb_subject_matches(cls, verb: str, subj: str) -> bool:
-        """ Returns True if the given subject type/case is allowed for this verb """
+        """Returns True if the given subject type/case is allowed for this verb"""
         # This is overridden in reynir_correct.errfinder
         return subj in cls._VERB_SUBJECTS.get(verb, set())
 
@@ -985,8 +985,8 @@ class BIN_Token(Token):
     @classmethod
     @lru_cache(maxsize=2048)
     def verb_matches(cls, verb: str, terminal: "BIN_Terminal", form: str) -> bool:
-        """ Return True if the verb lemma with the given BÍN inflection string
-            matches the verb terminal (so_xxx_...) """
+        """Return True if the verb lemma with the given BÍN inflection string
+        matches the verb terminal (so_xxx_...)"""
 
         if terminal.is_subj:
             # Verb subject in non-nominative case
@@ -1128,17 +1128,15 @@ class BIN_Token(Token):
             return True
         return False
 
-
     @classmethod
     def verb_matches_arguments(cls, key: str) -> bool:
-        """ Return True if the given arguments are allowed for this verb """
+        """Return True if the given arguments are allowed for this verb"""
         # This is overridden in reynir_correct.errfinder
         return VerbFrame.matches_arguments(key)
 
-
     def matches_PERSON(self, terminal: "BIN_Terminal") -> bool:
-        """ Handle a person name token, matching it with
-            a person_[case]_[gender] terminal """
+        """Handle a person name token, matching it with
+        a person_[case]_[gender] terminal"""
         if terminal.startswith("sérnafn"):
             # We allow a simple person name to match a proper name (sérnafn)
             if not self.is_upper or " " in self.lower:
@@ -1173,7 +1171,7 @@ class BIN_Token(Token):
         )
 
     def matches_ENTITY(self, terminal: "BIN_Terminal") -> bool:
-        """ Handle an entity name token, matching it with an entity terminal """
+        """Handle an entity name token, matching it with an entity terminal"""
         # An entity name is 1) uppercase; 2) can be multi-word (all uppercase, such
         # as "Goldman Sachs"); 3) not found in BÍN
         return terminal.startswith("entity")
@@ -1188,12 +1186,12 @@ class BIN_Token(Token):
         # return all(n[0].isupper() for n in a)
 
     def matches_PUNCTUATION(self, terminal: "BIN_Terminal") -> bool:
-        """ Match a literal terminal with the same content as the punctuation token """
+        """Match a literal terminal with the same content as the punctuation token"""
         return terminal.matches("punctuation", self.t1, self.t1)
 
     def matches_CURRENCY(self, terminal: "BIN_Terminal") -> bool:
-        """ A currency name token matches a noun (no) terminal,
-            or a currency/iso/fall terminal """
+        """A currency name token matches a noun (no) terminal,
+        or a currency/iso/fall terminal"""
         iso, cases, genders = cast(CurrencyTuple, self.t2)
         if terminal.startswith("currency"):
             if terminal.num_variants < 1 or terminal.variant(0).upper() != iso:
@@ -1228,9 +1226,9 @@ class BIN_Token(Token):
         return True
 
     def is_correct_singular_or_plural(self, terminal: "BIN_Terminal") -> bool:
-        """ Match a number with a singular or plural noun (terminal).
-            In Icelandic, all integers whose modulo 100 ends in 1 are
-            singular, except 11. """
+        """Match a number with a singular or plural noun (terminal).
+        In Icelandic, all integers whose modulo 100 ends in 1 are
+        singular, except 11."""
         singular = False
         num = cast(NumberTuple, self.t2)
         orig_i = i = int(num[0])
@@ -1253,7 +1251,7 @@ class BIN_Token(Token):
         return True
 
     def matches_NUMBER(self, terminal: "BIN_Terminal") -> bool:
-        """ A number token matches a 'tala', 'töl' or 'to' terminal """
+        """A number token matches a 'tala', 'töl' or 'to' terminal"""
         tfirst = terminal.first
         num, cases, genders = cast(NumberTuple, self.t2)
 
@@ -1305,7 +1303,7 @@ class BIN_Token(Token):
         return terminal.startswith("talameðbókstaf")
 
     def matches_AMOUNT(self, terminal: "BIN_Terminal") -> bool:
-        """ An amount token matches an amount terminal and a noun terminal """
+        """An amount token matches an amount terminal and a noun terminal"""
         _, iso, cases, genders = cast(AmountTuple, self.t2)
         if terminal.startswith("amount"):
             if terminal.num_variants >= 1 and terminal.variant(0).upper() != iso:
@@ -1343,7 +1341,7 @@ class BIN_Token(Token):
         return True
 
     def matches_PERCENT(self, terminal: "BIN_Terminal") -> bool:
-        """ A percent token matches a number (töl) or noun terminal """
+        """A percent token matches a number (töl) or noun terminal"""
         if terminal.startswith("töl") or terminal.startswith("prósenta"):
             return True
         # Matches number and noun terminals only
@@ -1367,7 +1365,7 @@ class BIN_Token(Token):
         return True
 
     def matches_YEAR(self, terminal: "BIN_Terminal") -> bool:
-        """ A year token matches a number (töl) or year (ártal) terminal """
+        """A year token matches a number (töl) or year (ártal) terminal"""
         if terminal.first not in {"töl", "ártal", "tala"}:
             return False
         # Only singular match ('2014 var gott ár', not '2014 voru góð ár')
@@ -1380,86 +1378,86 @@ class BIN_Token(Token):
         return True
 
     def matches_DATE(self, terminal: "BIN_Terminal") -> bool:
-        """ A date token matches a date (dags) terminal """
+        """A date token matches a date (dags) terminal"""
         return terminal.startswith("dags")
 
     def matches_DATEABS(self, terminal: "BIN_Terminal") -> bool:
-        """ An absolute date token matches an absolute date (dagsföst) terminal """
+        """An absolute date token matches an absolute date (dagsföst) terminal"""
         return terminal.startswith("dagsföst")
 
     def matches_DATEREL(self, terminal: "BIN_Terminal") -> bool:
-        """ A relative date token matches a relative date (dagsafs) terminal """
+        """A relative date token matches a relative date (dagsafs) terminal"""
         return terminal.startswith("dagsafs")
 
     def matches_TIME(self, terminal: "BIN_Terminal") -> bool:
-        """ A time token matches a time (tími) terminal """
+        """A time token matches a time (tími) terminal"""
         return terminal.startswith("tími")
 
     def matches_TIMESTAMP(self, terminal: "BIN_Terminal") -> bool:
-        """ A timestamp token matches a timestamp (tímapunktur) terminal """
+        """A timestamp token matches a timestamp (tímapunktur) terminal"""
         return terminal.startswith("tímapunktur")
 
     def matches_TIMESTAMPABS(self, terminal: "BIN_Terminal") -> bool:
-        """ An absolute timestamp token matches an absolute timestamp
-            (tímapunkturfast) terminal """
+        """An absolute timestamp token matches an absolute timestamp
+        (tímapunkturfast) terminal"""
         return terminal.startswith("tímapunkturfast")
 
     def matches_TIMESTAMPREL(self, terminal: "BIN_Terminal") -> bool:
-        """ A relative timestamp token matches a relative timestamp
-            (tímapunkturafs) terminal """
+        """A relative timestamp token matches a relative timestamp
+        (tímapunkturafs) terminal"""
         return terminal.startswith("tímapunkturafs")
 
     def matches_ORDINAL(self, terminal: "BIN_Terminal") -> bool:
-        """ An ordinal token matches an ordinal (raðnr) terminal """
+        """An ordinal token matches an ordinal (raðnr) terminal"""
         return terminal.startswith("raðnr")
 
     def matches_MEASUREMENT(self, terminal: "BIN_Terminal") -> bool:
-        """ A measurement token matches a measurement (mælieining) terminal """
+        """A measurement token matches a measurement (mælieining) terminal"""
         return terminal.startswith("mælieining")
 
     def matches_DOMAIN(self, terminal: "BIN_Terminal") -> bool:
-        """ A domain token matches a domain (lén) terminal """
+        """A domain token matches a domain (lén) terminal"""
         return terminal.startswith("lén")
 
     def matches_HASHTAG(self, terminal: "BIN_Terminal") -> bool:
-        """ A hashtag token matches a hashtag (myllumerki) terminal """
+        """A hashtag token matches a hashtag (myllumerki) terminal"""
         return terminal.startswith("myllumerki")
 
     def matches_SSN(self, terminal: "BIN_Terminal") -> bool:
-        """ A social security number token matches an ssn (kennitala) terminal """
+        """A social security number token matches an ssn (kennitala) terminal"""
         return terminal.startswith("kennitala")
 
     def matches_MOLECULE(self, terminal: "BIN_Terminal") -> bool:
-        """ A molecule token matches a molecule (sameind) terminal """
+        """A molecule token matches a molecule (sameind) terminal"""
         return terminal.startswith("sameind")
 
     def matches_USERNAME(self, terminal: "BIN_Terminal") -> bool:
-        """ A username token matches a username (notandanafn) terminal """
+        """A username token matches a username (notandanafn) terminal"""
         return terminal.startswith("notandanafn")
 
     def matches_URL(self, terminal: "BIN_Terminal") -> bool:
-        """ A URL token matches a URL (vefslóð) terminal """
+        """A URL token matches a URL (vefslóð) terminal"""
         return terminal.startswith("vefslóð")
 
     def matches_EMAIL(self, terminal: "BIN_Terminal") -> bool:
-        """ A e-mail token matches a e-mail (tölvupóstfang) terminal """
+        """A e-mail token matches a e-mail (tölvupóstfang) terminal"""
         return terminal.startswith("tölvupóstfang")
 
     def matches_SERIALNUMBER(self, terminal: "BIN_Terminal") -> bool:
-        """ A serial number token matches a serial number (vörunúmer) terminal """
+        """A serial number token matches a serial number (vörunúmer) terminal"""
         return terminal.startswith("vörunúmer")
 
     def matches_TELNO(self, terminal: "BIN_Terminal") -> bool:
-        """ A telephone number token matches a telephone number (símanúmer) terminal """
+        """A telephone number token matches a telephone number (símanúmer) terminal"""
         return terminal.startswith("símanúmer")
 
     def matches_COMPANY(self, terminal: "BIN_Terminal") -> bool:
-        """ A company token matches a company (fyrirtæki) terminal """
+        """A company token matches a company (fyrirtæki) terminal"""
         return terminal.startswith("fyrirtæki")
 
     def matches_WORD(self, terminal: "BIN_Terminal") -> Union[BIN_Tuple, bool]:
-        """ Match a word token, having the potential part-of-speech meanings
-            from the BIN database, with the terminal """
+        """Match a word token, having the potential part-of-speech meanings
+        from the BIN database, with the terminal"""
 
         # We have a match if any of the possible part-of-speech meanings
         # of this token match the terminal
@@ -1525,7 +1523,7 @@ class BIN_Token(Token):
     def is_understood(
         cls, t: Tok, *, understood_punctuation: Optional[str] = None
     ) -> bool:
-        """ Return True if the token type is understood by the BIN Parser """
+        """Return True if the token type is understood by the BIN Parser"""
         if t.kind == TOK.PUNCTUATION:
             # A limited number of punctuation symbols is currently understood
             # Note that we use the normalized punctuation here, i.e. t.val[1]
@@ -1535,8 +1533,8 @@ class BIN_Token(Token):
         return t.kind in cls._MATCHING_FUNC
 
     def match_with_meaning(self, terminal: "BIN_Terminal") -> Union[bool, BIN_Tuple]:
-        """ Return False if this token does not match the given terminal;
-            otherwise True or the actual meaning tuple that matched """
+        """Return False if this token does not match the given terminal;
+        otherwise True or the actual meaning tuple that matched"""
         # If the terminal is able to shortcut this match without
         # going through the token-kind specific matching code,
         # allow it to do so. This is used for literal terminals,
@@ -1550,7 +1548,7 @@ class BIN_Token(Token):
         return self._matching_func(self, terminal)
 
     def matches(self, terminal: Terminal) -> bool:
-        """ Return True if this token matches the given terminal """
+        """Return True if this token matches the given terminal"""
         return self.match_with_meaning(cast(BIN_Terminal, terminal)) != False
 
     def __repr__(self) -> str:
@@ -1561,11 +1559,11 @@ class BIN_Token(Token):
 
     @property
     def key(self) -> Tuple[Hashable, ...]:
-        """ Return a hashable key that partitions tokens based on
-            effective identity, i.e. tokens with the same hash can be considered
-            equivalent for parsing purposes. This hash is inter alia used by the
-            alloc_cache() function in fastparser.py to optimize token/terminal
-            matching calls. """
+        """Return a hashable key that partitions tokens based on
+        effective identity, i.e. tokens with the same hash can be considered
+        equivalent for parsing purposes. This hash is inter alia used by the
+        alloc_cache() function in fastparser.py to optimize token/terminal
+        matching calls."""
         if self.t0 == TOK.WORD:
             # For words, the t2 tuple is significant because it may have been
             # cut down by the tokenizer due to the word's context, cf. the
@@ -1575,7 +1573,7 @@ class BIN_Token(Token):
         return self.t0, self.t1
 
     def __hash__(self) -> int:
-        """ Calculate and cache a hash for this token """
+        """Calculate and cache a hash for this token"""
         if self._hash is None:
             self._hash = hash(self.key)
         return self._hash
@@ -1591,9 +1589,9 @@ BIN_Token.init()
 
 class VariantHandler:
 
-    """ Mix-in class used in BIN_Terminal and BIN_LiteralTerminal to add
-        querying of terminal variants as well as mapping of variants to
-        bit arrays for speed """
+    """Mix-in class used in BIN_Terminal and BIN_LiteralTerminal to add
+    querying of terminal variants as well as mapping of variants to
+    bit arrays for speed"""
 
     def __init__(self, name: str) -> None:
         super().__init__(name)  # type: ignore
@@ -1623,9 +1621,12 @@ class VariantHandler:
             parts = n.split("_")
         self._first: str = parts[0]
         # Look up matching function in WordMatchers
-        self._matcher = cast(MatcherFunc, getattr(
-            WordMatchers, "matcher_" + self._first, WordMatchers.matcher_default
-        ))
+        self._matcher = cast(
+            MatcherFunc,
+            getattr(
+                WordMatchers, "matcher_" + self._first, WordMatchers.matcher_default
+            ),
+        )
         # The variant set for this terminal, i.e.
         # tname_var1_var2_var3 -> { 'var1', 'var2', 'var3' }
         self._vparts: List[str] = parts[1:]
@@ -1656,27 +1657,27 @@ class VariantHandler:
             self._cases = ""
 
     def startswith(self, part: str) -> bool:
-        """ Returns True if the terminal name starts with the given string """
+        """Returns True if the terminal name starts with the given string"""
         return self._first == part
 
     def matches_category(self, cat: str) -> bool:
-        """ Returns True if the terminal matches a particular category
-            (overridden in BIN_LiteralTerminal) """
+        """Returns True if the terminal matches a particular category
+        (overridden in BIN_LiteralTerminal)"""
         return self._first == cat
 
     def matches_first(self, t_kind: str, t_val: str, t_lit: str) -> bool:
-        """ Returns True if the first part of the terminal name matches the
-            given word category """
+        """Returns True if the first part of the terminal name matches the
+        given word category"""
         # Convert 'kk', 'kvk', 'hk' to 'no' before doing the compare
         return self._first == BIN_Token.KIND.get(t_kind, t_kind)
 
     def matches_token(self, token: BIN_Token, m: BIN_Tuple) -> bool:
-        """ Test whether this terminal matches the meaning m of the given token """
+        """Test whether this terminal matches the meaning m of the given token"""
         return self._matcher(token, cast(BIN_Terminal, self), m)
 
     def matches_token_meaning(self, token: BIN_Token) -> Union[bool, BIN_Tuple]:
-        """ Return the meaning of the token which matches this terminal,
-            if any, or False if none """
+        """Return the meaning of the token which matches this terminal,
+        if any, or False if none"""
         for m in token.meanings:
             # self._matcher is a reference to a matching function within
             # the WordMatchers class
@@ -1688,78 +1689,78 @@ class VariantHandler:
 
     @property
     def first(self) -> str:
-        """ Return the first part of the terminal name (without variants) """
+        """Return the first part of the terminal name (without variants)"""
         return self._first
 
     @property
     def category(self) -> Optional[str]:
-        """ Return the word category matched by the terminal """
+        """Return the word category matched by the terminal"""
         return self._first
 
     @property
     def matcher(self):
-        """ Return the matcher function within the WordMatchers namespace to
-            be invoked for this terminal """
+        """Return the matcher function within the WordMatchers namespace to
+        be invoked for this terminal"""
         return self._matcher
 
     @property
     def colon_cat(self) -> Optional[str]:
-        """ Return the string specified after a colon in the terminal name, if any """
+        """Return the string specified after a colon in the terminal name, if any"""
         # This is overridden in LiteralTerminal
         return None
 
     @property
     def num_variants(self) -> int:
-        """ Return the number of variants in the terminal name """
+        """Return the number of variants in the terminal name"""
         return self._vcount
 
     @property
     def variants(self) -> List[str]:
-        """ Returns the variants contained in this terminal name as a list """
+        """Returns the variants contained in this terminal name as a list"""
         return self._vparts
 
     def variant(self, index: int) -> str:
-        """ Return the variant with the given index """
+        """Return the variant with the given index"""
         return self._vparts[index]
 
     @property
     def verb_cases(self) -> str:
-        """ Return the verb cases associated with a so_ terminal, or empty string """
+        """Return the verb cases associated with a so_ terminal, or empty string"""
         return self._cases
 
     def has_variant(self, v: str) -> bool:
-        """ Returns True if the terminal name has the given variant """
+        """Returns True if the terminal name has the given variant"""
         return v in self._vset
 
     def has_vbits(self, vbits: int) -> bool:
-        """ Return True if this terminal has (all) the variant(s)
-            corresponding to the given bit(s) """
+        """Return True if this terminal has (all) the variant(s)
+        corresponding to the given bit(s)"""
         return (self._vbits & vbits) == vbits
 
     def has_any_vbits(self, vbits: int) -> bool:
-        """ Return True if this terminal has any of the variant(s)
-            corresponding to the given bit(s) """
+        """Return True if this terminal has any of the variant(s)
+        corresponding to the given bit(s)"""
         return (self._vbits & vbits) != 0
 
     def cut_fbits(self, fbits: int) -> None:
-        """ Mask off the given fbits, making them irrelevant in matches """
+        """Mask off the given fbits, making them irrelevant in matches"""
         self._fbits &= ~fbits
 
     def fbits_match(self, fbits: int) -> bool:
-        """ Return True if the given fbits meet all variant criteria """
+        """Return True if the given fbits meet all variant criteria"""
         # That is: for every bit in self._fbits, there must be a corresponding bit
         # in the given fbits. We test this by turning off all the bits given in the
         # parameter fbits and checking whether there are any bits left.
         return (self._fbits & ~fbits) == 0
 
     def fbits_match_mask(self, mask: int, fbits: int) -> bool:
-        """ Return True if the given fbits meet the variant criteria after masking """
+        """Return True if the given fbits meet the variant criteria after masking"""
         return (self._fbits & mask & ~fbits) == 0
 
     @property
     def gender(self) -> Optional[str]:
-        """ Return a gender string corresponding to a variant
-            of this terminal, if any """
+        """Return a gender string corresponding to a variant
+        of this terminal, if any"""
         if self._vbits & BIN_Token.VBIT_KK:
             return "kk"
         if self._vbits & BIN_Token.VBIT_KVK:
@@ -1770,8 +1771,8 @@ class VariantHandler:
 
     @property
     def case(self) -> Optional[str]:
-        """ Return a case string corresponding to a variant
-            of this terminal, if any """
+        """Return a case string corresponding to a variant
+        of this terminal, if any"""
         if self._vbits & BIN_Token.VBIT_NF:
             return "nf"
         if self._vbits & BIN_Token.VBIT_ÞF:
@@ -1843,9 +1844,9 @@ class VariantHandler:
 
 class BIN_Terminal(VariantHandler, Terminal):
 
-    """ Subclass of Terminal that mixes in support from VariantHandler
-        for variants in terminal names, including optimizations of variant
-        checks and lookups """
+    """Subclass of Terminal that mixes in support from VariantHandler
+    for variants in terminal names, including optimizations of variant
+    checks and lookups"""
 
     def __init__(self, name: str) -> None:
         super().__init__(name)
@@ -1856,10 +1857,10 @@ class BIN_Terminal(VariantHandler, Terminal):
 
 class SequenceTerminal(BIN_Terminal):
 
-    """ Subclass of BIN_Terminal that shortcuts matching for
-        'sequence' terminals. This is done as a special case
-        because sequence terminals can match multiple token
-        types. """
+    """Subclass of BIN_Terminal that shortcuts matching for
+    'sequence' terminals. This is done as a special case
+    because sequence terminals can match multiple token
+    types."""
 
     # A sequence terminal matches integers, a,b,c...,aa,ab,ac...,
     # as well as roman numerals
@@ -1871,15 +1872,15 @@ class SequenceTerminal(BIN_Terminal):
 
     @staticmethod
     def _match(token_txt: str) -> bool:
-        """ Return True if the given (lower case) token text matches a
-            sequence, i.e. is a number, a,b,c..., or i,ii,iii... """
+        """Return True if the given (lower case) token text matches a
+        sequence, i.e. is a number, a,b,c..., or i,ii,iii..."""
         return SequenceTerminal._REGEX.match(token_txt) is not None
 
 
 class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
 
-    """ Subclass of LiteralTerminal that mixes in support from VariantHandler
-        for variants in terminal names """
+    """Subclass of LiteralTerminal that mixes in support from VariantHandler
+    for variants in terminal names"""
 
     def __init__(self, name: str) -> None:
         super().__init__(name)
@@ -1968,9 +1969,9 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
                 self._matcher = WordMatchers.matcher_lemma_literal
 
     def _check_first(self) -> None:
-        """ Replace underscores in the terminal's first part with spaces
-            and check whether the resulting phrase occurs in StaticPhrases
-            or is an abbreviation (because otherwise it will never match) """
+        """Replace underscores in the terminal's first part with spaces
+        and check whether the resulting phrase occurs in StaticPhrases
+        or is an abbreviation (because otherwise it will never match)"""
         phrase = self._first
         if "_" in phrase:
             # Replace underscores within the literal with spaces
@@ -1989,34 +1990,34 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
 
     @property
     def colon_cat(self) -> Optional[str]:
-        """ Return the string occurring after a colon in the terminal name """
+        """Return the string occurring after a colon in the terminal name"""
         return self._cat
 
     @property
     def literal_text(self) -> str:
-        """ If this is a strong literal, return it """
+        """If this is a strong literal, return it"""
         if self._strong:
             return self._first
         return ""
 
     @property
     def category(self) -> Optional[str]:
-        """ Return the word category matched by the terminal """
+        """Return the word category matched by the terminal"""
         return self._match_cat
 
     def startswith(self, part: str) -> bool:
-        """ Override VariantHandler.startswith() """
+        """Override VariantHandler.startswith()"""
         return False
 
     def matches_category(self, cat: str) -> bool:
-        """ Returns True if the terminal matches a particular category
-            (overrides VariantHandler) """
+        """Returns True if the terminal matches a particular category
+        (overrides VariantHandler)"""
         return self._match_cat == cat
 
     # pylint: disable=method-hidden
     def matches(self, t_kind: str, t_val: str, t_lit: str) -> bool:
-        """ A literal terminal matches a token if the token text
-            is identical to the literal """
+        """A literal terminal matches a token if the token text
+        is identical to the literal"""
         if self._match_cat is not None and t_kind != self._match_cat:
             # Match only the word category that was specified
             return False
@@ -2024,8 +2025,8 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
         return self._first == t_val
 
     def matches_strong(self, t_kind: str, t_val: str, t_lit: str) -> bool:
-        """ A literal terminal matches a token if the token text
-            is identical to the literal """
+        """A literal terminal matches a token if the token text
+        is identical to the literal"""
         # Note that this function is overridden in __init__ if self._cat is None
         if self._match_cat is not None and t_kind != self._match_cat:
             # Match only the word category that was specified
@@ -2036,7 +2037,7 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
 
 class BIN_Nonterminal(Nonterminal):
 
-    """ Subclass of Nonterminal with BÍN-specific convenience functions """
+    """Subclass of Nonterminal with BÍN-specific convenience functions"""
 
     def __init__(self, name: str, fname: str, line: int) -> None:
         super().__init__(name, fname, line)
@@ -2046,13 +2047,13 @@ class BIN_Nonterminal(Nonterminal):
 
     @property
     def is_noun_phrase(self) -> bool:
-        """ Return True if this nonterminal denotes a noun phrase """
+        """Return True if this nonterminal denotes a noun phrase"""
         return self._is_noun_phrase
 
     @property
     def first(self) -> str:
-        """ Return the initial part (before any underscores)
-            of the nonterminal name """
+        """Return the initial part (before any underscores)
+        of the nonterminal name"""
         # Do this on demand
         if self._parts is None:
             self._parts = self.name.split("_")
@@ -2061,16 +2062,16 @@ class BIN_Nonterminal(Nonterminal):
 
 class BIN_Grammar(Grammar):
 
-    """ Subclass of Grammar that creates BIN-specific Terminals and LiteralTerminals
-        when parsing a grammar, with support for variants in terminal names """
+    """Subclass of Grammar that creates BIN-specific Terminals and LiteralTerminals
+    when parsing a grammar, with support for variants in terminal names"""
 
     def __init__(self):
         super().__init__()
 
     @staticmethod
     def _make_terminal(name: str) -> BIN_Terminal:
-        """ Make BIN_Terminal instances instead of
-            plain-vanilla Terminals """
+        """Make BIN_Terminal instances instead of
+        plain-vanilla Terminals"""
         # Hack to support 'sequence' terminals, which
         # bind to more than one token type
         if name == "sequence":
@@ -2079,24 +2080,24 @@ class BIN_Grammar(Grammar):
 
     @staticmethod
     def _make_literal_terminal(name: str) -> BIN_LiteralTerminal:
-        """ Make BIN_LiteralTerminal instances instead of
-            plain-vanilla LiteralTerminals """
+        """Make BIN_LiteralTerminal instances instead of
+        plain-vanilla LiteralTerminals"""
         return BIN_LiteralTerminal(name)
 
     @staticmethod
     def _make_nonterminal(name: str, fname: str, line: int) -> BIN_Nonterminal:
-        """ Make BIN_Terminal instances instead of
-            plain-vanilla Terminals """
+        """Make BIN_Terminal instances instead of
+        plain-vanilla Terminals"""
         return BIN_Nonterminal(name, fname, line)
 
 
 class BIN_Parser(Base_Parser):
 
-    """ BIN_Parser parses sentences according to the Icelandic
-        grammar in the Greynir.grammar file. It subclasses Parser
-        and wraps the interface between the BIN grammatical
-        data on one hand and the tokens and grammar terminals on
-        the other. """
+    """BIN_Parser parses sentences according to the Icelandic
+    grammar in the Greynir.grammar file. It subclasses Parser
+    and wraps the interface between the BIN grammatical
+    data on one hand and the tokens and grammar terminals on
+    the other."""
 
     # A singleton instance of the parsed Greynir.grammar
     _grammar: Optional[BIN_Grammar] = None
@@ -2128,9 +2129,9 @@ class BIN_Parser(Base_Parser):
 
     @classmethod
     def is_grammar_modified(cls) -> Tuple[bool, Optional[float]]:
-        """ Returns True if the grammar file has been modified
-            since it was last loaded, as well as the grammar
-            file timestamp if it is known """
+        """Returns True if the grammar file has been modified
+        since it was last loaded, as well as the grammar
+        file timestamp if it is known"""
         if cls._grammar_ts is None:
             # No grammar, so it must need loading
             return (True, None)
@@ -2141,7 +2142,7 @@ class BIN_Parser(Base_Parser):
 
     @classmethod
     def _load_grammar(cls, verbose: bool, ts: Optional[float]) -> BIN_Grammar:
-        """ Load the shared BIN grammar if not already there """
+        """Load the shared BIN grammar if not already there"""
         if ts is None:
             ts = os.path.getmtime(cls._GRAMMAR_FILE)
         t0 = time.time()
@@ -2165,23 +2166,23 @@ class BIN_Parser(Base_Parser):
 
     @property
     def grammar(self) -> BIN_Grammar:
-        """ Return the grammar loaded from Greynir.grammar """
+        """Return the grammar loaded from Greynir.grammar"""
         assert self._grammar is not None
         return self._grammar
 
     @property
     def version(self) -> str:
-        """ Return a composite version string w. grammar file date + package version """
+        """Return a composite version string w. grammar file date + package version"""
         ftime = str(self.grammar.file_time)[0:19]  # YYYY-MM-DD HH:MM:SS
         return ftime + "/" + package_version
 
     @staticmethod
     def wrap_token(t: Tok, ix: int) -> BIN_Token:
-        """ Create an instance of a wrapped token """
+        """Create an instance of a wrapped token"""
         return BIN_Token(t, ix)
 
     def _wrap(self, tokens: Iterable[Tok]) -> List[BIN_Token]:
-        """ Sanitize the 'raw' tokens and wrap them in BIN_Token() wrappers """
+        """Sanitize the 'raw' tokens and wrap them in BIN_Token() wrappers"""
         return wrap_tokens(
             tokens,
             wrap_func=self.wrap_token,
@@ -2201,10 +2202,10 @@ def wrap_tokens(
     wrap_func: Optional[Callable[[Tok, int], _T]] = None,
     understood_punctuation: Optional[str] = None,
 ) -> List[_T]:
-    """ Pre-process a token stream, removing tokens that will not be looked at
-        during parsing - for instance insignificant punctuation and non-Icelandic
-        text within parentheses. The function returns a fresh token list, with
-        each token eventually processed through the wrap_func given, if any. """
+    """Pre-process a token stream, removing tokens that will not be looked at
+    during parsing - for instance insignificant punctuation and non-Icelandic
+    text within parentheses. The function returns a fresh token list, with
+    each token eventually processed through the wrap_func given, if any."""
 
     # Remove stuff that won't be understood in any case
     # Start with runs of unknown words inside parentheses
@@ -2212,9 +2213,9 @@ def wrap_tokens(
     tlen = len(tlist)
 
     def scan_par(left: int) -> int:
-        """ Scan tokens inside parentheses and remove'em all
-            if they are only unknown words - perhaps starting with
-            an abbreviation """
+        """Scan tokens inside parentheses and remove'em all
+        if they are only unknown words - perhaps starting with
+        an abbreviation"""
         right = left + 1
         balance = 0
         while right < tlen:
@@ -2234,8 +2235,8 @@ def wrap_tokens(
                     )
 
                     def is_unknown(t: Tok) -> bool:
-                        """ A token is unknown if it is a TOK.UNKNOWN or if it is a
-                            TOK.WORD with no meanings """
+                        """A token is unknown if it is a TOK.UNKNOWN or if it is a
+                        TOK.WORD with no meanings"""
                         return (
                             t[0] == TOK.UNKNOWN
                             or (t[0] == TOK.WORD and not t[2])
@@ -2276,11 +2277,11 @@ def wrap_tokens(
 
 
 def simplify_terminal(terminal: str, cat: Optional[str] = None) -> str:
-    """ Return a simplified terminal name where literal specifications of
-        the form 'literal:cat'_var1 and "literal:cat" have been converted
-        to cat_var1, with the further complication that kk/kvk/hk are
-        converted to no_kk/no_kvk/no_hk. If the cat parameter is given,
-        it is the fallback if no category is specified in the literal. """
+    """Return a simplified terminal name where literal specifications of
+    the form 'literal:cat'_var1 and "literal:cat" have been converted
+    to cat_var1, with the further complication that kk/kvk/hk are
+    converted to no_kk/no_kvk/no_hk. If the cat parameter is given,
+    it is the fallback if no category is specified in the literal."""
     if terminal[0] not in "\"'":
         # Not a literal terminal: no need to do anything
         return terminal
@@ -2348,8 +2349,8 @@ _PFN_VARIANTS = {
 
 
 def augment_terminal(terminal: str, text_lower: str, beyging: str) -> str:
-    """ Augment a terminal name string with additional variants from BÍN,
-        extracted from the 'beyging' string """
+    """Augment a terminal name string with additional variants from BÍN,
+    extracted from the 'beyging' string"""
     a = terminal.split("_")
     cases = []
     vstart = 1
@@ -2404,9 +2405,9 @@ def augment_terminal(terminal: str, text_lower: str, beyging: str) -> str:
 
 
 def canonicalize_token(source: TokenDict) -> CanonicalTokenDict:
-    """ Convert a token in-situ from a compact dictionary representation
-        (typically created by TreeUtility._describe_token()) to a normalized,
-        verbose form that is appropriate for external consumption """
+    """Convert a token in-situ from a compact dictionary representation
+    (typically created by TreeUtility._describe_token()) to a normalized,
+    verbose form that is appropriate for external consumption"""
 
     t = cast(CanonicalTokenDict, source.copy())
 
@@ -2481,9 +2482,9 @@ def canonicalize_token(source: TokenDict) -> CanonicalTokenDict:
 def describe_token(
     index: int, t: Tok, terminal: Optional[BIN_Terminal], meaning: Optional[BIN_Tuple]
 ) -> TokenDict:
-    """ Return a compact dictionary describing the token t,
-        at the given index within its sentence,
-        which matches the given terminal with the given meaning """
+    """Return a compact dictionary describing the token t,
+    at the given index within its sentence,
+    which matches the given terminal with the given meaning"""
     txt = normalized_text(t)
     d = TokenDict(x=txt, ix=index)
     if terminal is not None:

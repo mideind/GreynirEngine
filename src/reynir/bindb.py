@@ -52,8 +52,8 @@ _NAME_GENDER_CACHE_SIZE = 128
 
 class GreynirBin(GBin):
 
-    """ Overridden class that adds a singleton instance of GreynirBin
-        and a context manager protocol """
+    """Overridden class that adds a singleton instance of GreynirBin
+    and a context manager protocol"""
 
     _singleton: Optional["GreynirBin"] = None
 
@@ -64,7 +64,7 @@ class GreynirBin(GBin):
         return cls._singleton
 
     def __enter__(self) -> "GreynirBin":
-        """ Allow this class to be used in a with statement """
+        """Allow this class to be used in a with statement"""
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
@@ -73,8 +73,8 @@ class GreynirBin(GBin):
     def lookup_g(
         self, w: str, at_sentence_start: bool = False, auto_uppercase: bool = False
     ) -> ResultTuple:
-        """ Returns BIN_Tuple instances, which are the Greynir version
-            of islenska.BinEntry """
+        """Returns BIN_Tuple instances, which are the Greynir version
+        of islenska.BinEntry"""
         w, m = self._lookup(
             w,
             at_sentence_start,
@@ -85,23 +85,23 @@ class GreynirBin(GBin):
         return w, [BIN_Tuple._make(mm) for mm in m]
 
     def lookup_nominative_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of islenska.BinEntry """
+        """Returns the Greynir version of islenska.BinEntry"""
         return [BIN_Tuple._make(mm) for mm in super().lookup_nominative(w, **options)]
 
     def lookup_accusative_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of islenska.BinEntry """
+        """Returns the Greynir version of islenska.BinEntry"""
         return [BIN_Tuple._make(mm) for mm in super().lookup_accusative(w, **options)]
 
     def lookup_dative_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of islenska.BinEntry """
+        """Returns the Greynir version of islenska.BinEntry"""
         return [BIN_Tuple._make(mm) for mm in super().lookup_dative(w, **options)]
 
     def lookup_genitive_g(self, w: str, **options: Any) -> List[BIN_Tuple]:
-        """ Returns the Greynir version of islenska.BinEntry """
+        """Returns the Greynir version of islenska.BinEntry"""
         return [BIN_Tuple._make(mm) for mm in super().lookup_genitive(w, **options)]
 
     def meanings(self, w: str) -> List[BIN_Tuple]:
-        """ Low-level lookup of BIN_Tuple instances for the given word """
+        """Low-level lookup of BIN_Tuple instances for the given word"""
         return [
             BIN_Tuple(k.ord, k.bin_id, k.ofl, k.hluti, k.bmynd, k.mark)
             for k in self._ksnid_lookup(w)
@@ -109,7 +109,7 @@ class GreynirBin(GBin):
 
     @lru_cache(maxsize=_NAME_GENDER_CACHE_SIZE)
     def lookup_name_gender(self, name: str) -> str:
-        """ Given a person name, lookup its gender """
+        """Given a person name, lookup its gender"""
         if not name:
             return "hk"  # Unknown gender
         w = name.split(maxsplit=1)[0]  # First name

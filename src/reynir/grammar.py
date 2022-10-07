@@ -99,25 +99,25 @@ ProductionTuple = Tuple[int, "Production"]
 
 class GrammarError(Exception):
 
-    """ Exception class for errors in a grammar """
+    """Exception class for errors in a grammar"""
 
     def __init__(self, text: str, fname: Optional[str] = None, line: int = 0) -> None:
-        """ A GrammarError contains an error text and optionally the name
-            of a grammar file and a line number where the error occurred """
+        """A GrammarError contains an error text and optionally the name
+        of a grammar file and a line number where the error occurred"""
         super().__init__(text)
         self.fname = fname
         self.line = line
 
     def augment(self, fname: str, line: int) -> None:
-        """ Add filename and line information, if missing """
+        """Add filename and line information, if missing"""
         if self.fname is None:
             self.fname = fname
         if self.line == 0:
             self.line = line
 
     def __str__(self) -> str:
-        """ Create a string representation showing the file name and
-            line number where the error originated, if available """
+        """Create a string representation showing the file name and
+        line number where the error originated, if available"""
         prefix = ""
         if self.line:
             prefix = "Line " + str(self.line) + ": "
@@ -128,31 +128,31 @@ class GrammarError(Exception):
 
 class GrammarItem:
 
-    """ An item that can occur in a production in a grammar.
-        This is either a Nonterminal or a Terminal. """
+    """An item that can occur in a production in a grammar.
+    This is either a Nonterminal or a Terminal."""
 
     def __init__(self) -> None:
         self._index = 0
 
     @property
     def literal_text(self) -> str:
-        """ The literal text of a terminal, if it is a literal terminal """
+        """The literal text of a terminal, if it is a literal terminal"""
         return ""
 
     @property
     def index(self) -> int:
-        """ Return the sequence number of this grammar item """
+        """Return the sequence number of this grammar item"""
         return self._index
 
     def set_index(self, ix: int) -> None:
-        """ Set a new sequence number for this grammar item """
+        """Set a new sequence number for this grammar item"""
         self._index = ix
 
 
 class Nonterminal(GrammarItem):
 
-    """ A nonterminal, either at the left hand side of
-        a rule or within a production """
+    """A nonterminal, either at the left hand side of
+    a rule or within a production"""
 
     _index = -1  # Running sequence number (negative) of all nonterminals
 
@@ -180,7 +180,7 @@ class Nonterminal(GrammarItem):
         self._hash = id(self).__hash__()
 
     def __hash__(self) -> int:
-        """ Use the id of this nonterminal as a basis for the hash """
+        """Use the id of this nonterminal as a basis for the hash"""
         # The index may change after the entire grammar has been
         # read and processed; therefore it is not suitable for hashing
         return self._hash
@@ -192,23 +192,23 @@ class Nonterminal(GrammarItem):
         return self is not o
 
     def set_index(self, ix: int) -> None:
-        """ Set a new sequence number for this nonterminal """
+        """Set a new sequence number for this nonterminal"""
         # Nonterminals have negative indices
         assert ix < 0
         super().set_index(ix)
 
     def add_ref(self) -> None:
-        """ Mark this as being referenced """
+        """Mark this as being referenced"""
         self._ref = True
 
     @property
     def has_ref(self) -> bool:
-        """ Return True if the nonterminal has been referenced in a production """
+        """Return True if the nonterminal has been referenced in a production"""
         return self._ref
 
     @property
     def is_optional(self) -> bool:
-        """ Return True if this nonterminal is explicitly nullable """
+        """Return True if this nonterminal is explicitly nullable"""
         return self._optional
 
     @property
@@ -217,31 +217,31 @@ class Nonterminal(GrammarItem):
 
     @property
     def fname(self) -> str:
-        """ Return the name of the grammar file where this nonterminal was defined """
+        """Return the name of the grammar file where this nonterminal was defined"""
         return self._fname or ""
 
     @property
     def line(self) -> int:
-        """ Return the number of the line within the grammar file
-            where this nt was defined """
+        """Return the number of the line within the grammar file
+        where this nt was defined"""
         return self._line
 
     @property
     def has_tags(self) -> bool:
-        """ Return True if this nonterminal has a tag associated with it """
+        """Return True if this nonterminal has a tag associated with it"""
         return bool(self._tags)
 
     def has_tag(self, tag: str) -> bool:
-        """ Check whether this nonterminal has been tagged with the given tag """
+        """Check whether this nonterminal has been tagged with the given tag"""
         return self._tags is not None and tag in self._tags
 
     def has_any_tag(self, tagset: FrozenSet[str]) -> bool:
-        """ Check whether this nonterminal has been tagged
-            with any of the given tags """
+        """Check whether this nonterminal has been tagged
+        with any of the given tags"""
         return False if self._tags is None else not self._tags.isdisjoint(tagset)
 
     def add_tag(self, tag: str) -> None:
-        """ Add a tag to this nonterminal """
+        """Add a tag to this nonterminal"""
         if self._tags is None:
             self._tags = {tag}
         else:
@@ -252,7 +252,7 @@ class Nonterminal(GrammarItem):
 
     @property
     def is_noun_phrase(self) -> bool:
-        """ This is overwritten in BIN_Nonterminal in binparser.py """
+        """This is overwritten in BIN_Nonterminal in binparser.py"""
         return False
 
     def __repr__(self) -> str:
@@ -264,7 +264,7 @@ class Nonterminal(GrammarItem):
 
 class Terminal(GrammarItem):
 
-    """ A terminal within a right-hand-side production """
+    """A terminal within a right-hand-side production"""
 
     _index = 1  # Running sequence number (positive) of all terminals
 
@@ -291,28 +291,28 @@ class Terminal(GrammarItem):
 
     @property
     def is_literal(self) -> bool:
-        """ Return True if this is a literal terminal, i.e. one enclosed
-            within single or double quotes """
+        """Return True if this is a literal terminal, i.e. one enclosed
+        within single or double quotes"""
         return False
 
     def set_index(self, ix: int) -> None:
-        """ Set a new sequence number for this nonterminal """
+        """Set a new sequence number for this nonterminal"""
         # Terminals have indices larger than zero
         assert ix > 0
         super().set_index(ix)
 
     def matches(self, t_kind: str, t_val: str, t_lit: str) -> bool:
-        """ Does this terminal match the given token? """
+        """Does this terminal match the given token?"""
         return self._name == t_kind
 
 
 class LiteralTerminal(Terminal):
 
-    """ A literal (constant string) terminal within a right-hand-side production.
-        A literal within single quotes 'x' is matched canonically, i.e. with
-        the corresponding word stem, if available.
-        A literal within double quotes "x" is matched absolutely, i.e. with
-        the exact source text (except for a conversion to lowercase). """
+    """A literal (constant string) terminal within a right-hand-side production.
+    A literal within single quotes 'x' is matched canonically, i.e. with
+    the corresponding word stem, if available.
+    A literal within double quotes "x" is matched absolutely, i.e. with
+    the exact source text (except for a conversion to lowercase)."""
 
     def __init__(self, lit: str) -> None:
         q = lit[0]
@@ -326,20 +326,20 @@ class LiteralTerminal(Terminal):
 
     @property
     def literal_text(self) -> str:
-        """ If this is a strong literal, return that literal """
+        """If this is a strong literal, return that literal"""
         if self._strong:
             return self._name[1:-1]
         return ""
 
     @property
     def is_literal(self) -> bool:
-        """ Return True if this is a literal terminal, i.e. one enclosed
-            within single or double quotes """
+        """Return True if this is a literal terminal, i.e. one enclosed
+        within single or double quotes"""
         return True
 
     def matches(self, t_kind: str, t_val: str, t_lit: str) -> bool:
-        """ A literal terminal matches a token if the token text is
-            canonically or absolutely identical to the literal """
+        """A literal terminal matches a token if the token text is
+        canonically or absolutely identical to the literal"""
         if self._strong:
             # Absolute literal match
             return self._name == t_lit
@@ -349,47 +349,47 @@ class LiteralTerminal(Terminal):
 
 class Token:
 
-    """ A single input token as seen by the parser """
+    """A single input token as seen by the parser"""
 
     def __init__(self, kind: str, val: str, lit: Optional[str] = None) -> None:
-        """ A basic token has a kind, a canonical value
-            and an optional literal value, all strings """
+        """A basic token has a kind, a canonical value
+        and an optional literal value, all strings"""
         self._kind = kind
         self._val = val
         self._lit = lit or val
 
     def __repr__(self) -> str:
-        """ Return a simple string representation of this token """
+        """Return a simple string representation of this token"""
         if self._kind == self._val:
             return self._kind
         return "{0}:{1}".format(self._kind, self._val)
 
     @property
     def kind(self) -> str:
-        """ Return the token kind """
+        """Return the token kind"""
         return self._kind
 
     @property
     def text(self) -> str:
-        """ Return the 'canonical' token text, which may be a stem or
-            prototype of the literal, original token text as it appeared
-            in the source """
+        """Return the 'canonical' token text, which may be a stem or
+        prototype of the literal, original token text as it appeared
+        in the source"""
         return self._val
 
     @property
     def literal(self) -> str:
-        """ Return the literal, original token text as it appeared in the source """
+        """Return the literal, original token text as it appeared in the source"""
         return self._lit
 
     def matches(self, terminal: Terminal) -> bool:
-        """ Does this token match the given terminal? """
+        """Does this token match the given terminal?"""
         # By default, ask the terminal
         return terminal.matches(self._kind, self._val, self._lit)
 
 
 class Production:
 
-    """ A right-hand side of a grammar rule """
+    """A right-hand side of a grammar rule"""
 
     _index = 0  # Running sequence number of all productions
 
@@ -401,8 +401,8 @@ class Production:
         priority: int = 0,
     ) -> None:
 
-        """ Initialize a production from a list of
-            right-hand-side nonterminals and terminals """
+        """Initialize a production from a list of
+        right-hand-side nonterminals and terminals"""
 
         self._rhs: List[GrammarItem] = [] if rhs is None else rhs
         # If parsing a grammar file, note the position of the production
@@ -420,11 +420,11 @@ class Production:
 
     @classmethod
     def reset(cls) -> None:
-        """ Reset the production index sequence to zero """
+        """Reset the production index sequence to zero"""
         cls._index = 0
 
     def append(self, t: GrammarItem) -> None:
-        """ Append a terminal or nonterminal to this production """
+        """Append a terminal or nonterminal to this production"""
         self._rhs.append(t)
         self._len += 1
         # Destroy the cached tuple, if any
@@ -436,12 +436,12 @@ class Production:
 
     @property
     def length(self) -> int:
-        """ Return the length of this production """
+        """Return the length of this production"""
         return self._len
 
     @property
     def is_empty(self) -> bool:
-        """ Return True if this is an empty (epsilon) production """
+        """Return True if this is an empty (epsilon) production"""
         return self._len == 0
 
     @property
@@ -458,37 +458,37 @@ class Production:
 
     @property
     def prod(self) -> Tuple[int, ...]:
-        """ Return this production in tuple form """
+        """Return this production in tuple form"""
         if self._tuple is None:
             # Nonterminals have negative indices and terminals have positive ones
             self._tuple = tuple(t.index for t in self._rhs) if self._rhs else tuple()
         return self._tuple
 
     def nonterminal_at(self, dot: int) -> bool:
-        """ Return True if prod[dot] is a nonterminal or completed """
+        """Return True if prod[dot] is a nonterminal or completed"""
         return dot >= self._len or isinstance(self._rhs[dot], Nonterminal)
 
     def __getitem__(self, index: int) -> GrammarItem:
-        """ Return the Terminal or Nonterminal at the given index position """
+        """Return the Terminal or Nonterminal at the given index position"""
         return self._rhs[index]
 
     def __setitem__(self, index: int, item: GrammarItem):
-        """ Set the Terminal or Nonterminal at the given index position """
+        """Set the Terminal or Nonterminal at the given index position"""
         self._rhs[index] = item
 
     def __len__(self) -> int:
-        """ Return the length of this production """
+        """Return the length of this production"""
         return self._len
 
     def __iter__(self) -> Iterator[GrammarItem]:
         return iter(self._rhs)
 
     def __repr__(self) -> str:
-        """ Return a representation of this production """
+        """Return a representation of this production"""
         return "<P: " + repr(self._rhs) + ">"
 
     def __str__(self) -> str:
-        """ Return a representation of this production """
+        """Return a representation of this production"""
         return " ".join([str(t) for t in self._rhs]) if self._rhs else "0"
 
 
@@ -502,28 +502,28 @@ _PRAGMA_ENDIF = "$endif("
 class Grammar:
 
     """
-        A grammar maps nonterminals to a list of right hand sides.
-        Each right hand side is a list of terminals and nonterminals.
+    A grammar maps nonterminals to a list of right hand sides.
+    Each right hand side is a list of terminals and nonterminals.
 
-        The text representation of a grammar is as follows:
+    The text representation of a grammar is as follows:
 
-        A -> A B terminal C
-            | A '/' D
-            | 0
-        B -> terminal "+" C
+    A -> A B terminal C
+        | A '/' D
+        | 0
+    B -> terminal "+" C
 
-        Nonterminals start with uppercase letters.
+    Nonterminals start with uppercase letters.
 
-        Terminals start with lowercase letters or are enclosed
-        in single or double quotes.
+    Terminals start with lowercase letters or are enclosed
+    in single or double quotes.
 
-        0 means an empty (epsilon) production.
+    0 means an empty (epsilon) production.
 
-        As an alternative to the '|' symbol, productions may also
-        be separated by '>'. This indicates a priority ordering
-        between the alternatives, so that the result tree is
-        automatically reduced to the highest-priority alternative
-        in case of ambiguity.
+    As an alternative to the '|' symbol, productions may also
+    be separated by '>'. This indicates a priority ordering
+    between the alternatives, so that the result tree is
+    automatically reduced to the highest-priority alternative
+    in case of ambiguity.
 
     """
 
@@ -558,48 +558,48 @@ class Grammar:
 
     @property
     def nt_dict(self) -> Dict[Nonterminal, List[ProductionTuple]]:
-        """ Return the raw grammar dictionary, Nonterminal -> [ Productions ] """
+        """Return the raw grammar dictionary, Nonterminal -> [ Productions ]"""
         return self._nt_dict
 
     def nt_score(self, nt: Nonterminal) -> int:
-        """ Return the score adjustment for the given nonterminal """
+        """Return the score adjustment for the given nonterminal"""
         return self._nt_scores.get(nt, 0)
 
     @property
     def root(self) -> Optional[Nonterminal]:
-        """ Return the root nonterminal for this grammar """
+        """Return the root nonterminal for this grammar"""
         return self._root
 
     @property
     def terminals(self) -> Dict[str, Terminal]:
-        """ Return a dictionary of terminals in the grammar """
+        """Return a dictionary of terminals in the grammar"""
         return self._terminals
 
     @property
     def nonterminals(self) -> Dict[str, Nonterminal]:
-        """ Return a dictionary of nonterminals in the grammar """
+        """Return a dictionary of nonterminals in the grammar"""
         return self._nonterminals
 
     @property
     def nonterminals_by_ix(self) -> Dict[int, Nonterminal]:
-        """ Return a dictionary of nonterminals in the grammar,
-            indexed by integer < 0 """
+        """Return a dictionary of nonterminals in the grammar,
+        indexed by integer < 0"""
         return self._nonterminals_by_ix
 
     @property
     def terminals_by_ix(self) -> Dict[int, Terminal]:
-        """ Return a dictionary of terminals in the grammar,
-            indexed by integer > 0 """
+        """Return a dictionary of terminals in the grammar,
+        indexed by integer > 0"""
         return self._terminals_by_ix
 
     @property
     def productions_by_ix(self) -> Dict[int, Production]:
-        """ Return a dictionary of productions in the grammar,
-            indexed by integer >= 0 """
+        """Return a dictionary of productions in the grammar,
+        indexed by integer >= 0"""
         return self._productions_by_ix
 
     def lookup(self, index: int) -> Optional[GrammarItem]:
-        """ Look up a nonterminal or terminal by integer index """
+        """Look up a nonterminal or terminal by integer index"""
         if index < 0:
             return self._nonterminals_by_ix.get(index)
         if index > 0:
@@ -608,50 +608,50 @@ class Grammar:
         return None
 
     def lookup_nonterminal(self, index: int) -> Optional[Nonterminal]:
-        """ Look up a nonterminal by (negative) integer index """
+        """Look up a nonterminal by (negative) integer index"""
         return None if index >= 0 else self._nonterminals_by_ix.get(index)
 
     def lookup_terminal(self, index: int) -> Optional[Terminal]:
-        """ Look up a terminal by (positive) integer index """
+        """Look up a terminal by (positive) integer index"""
         return None if index <= 0 else self._terminals_by_ix.get(index)
 
     @property
     def num_nonterminals(self) -> int:
-        """ Return the number of nonterminals in the grammar """
+        """Return the number of nonterminals in the grammar"""
         return len(self._nonterminals)
 
     @property
     def num_terminals(self) -> int:
-        """ Return the number of terminals in the grammar """
+        """Return the number of terminals in the grammar"""
         return len(self._terminals)
 
     @property
     def num_productions(self) -> int:
-        """ Return the total number of productions in the grammar,
-            were each right hand side option is counted as one """
+        """Return the total number of productions in the grammar,
+        were each right hand side option is counted as one"""
         return sum(len(pp) for pp in self._nt_dict.values())
 
     @property
     def file_name(self) -> Optional[str]:
-        """ Return the name of the grammar file, or None """
+        """Return the name of the grammar file, or None"""
         return self._file_name
 
     @property
     def file_time(self) -> Optional[datetime]:
-        """ Return the timestamp of the grammar file, or None """
+        """Return the timestamp of the grammar file, or None"""
         return self._file_time
 
     def set_conditions(self, cond_set: Set[str]) -> None:
-        """ Set the parsing conditions for this grammar,
-            checkable with $if()...$endif() """
+        """Set the parsing conditions for this grammar,
+        checkable with $if()...$endif()"""
         self._conditions = cond_set
 
     def __getitem__(self, nt: Nonterminal) -> List[ProductionTuple]:
-        """ Look up a nonterminal, yielding a list of (priority, production) tuples """
+        """Look up a nonterminal, yielding a list of (priority, production) tuples"""
         return self._nt_dict[nt]
 
     def __str__(self) -> str:
-        """ Return a string representation of this grammar """
+        """Return a string representation of this grammar"""
 
         def to_str(plist: Iterable[ProductionTuple]) -> str:
             return " | ".join([str(p) for _, p in plist])
@@ -662,25 +662,25 @@ class Grammar:
 
     @staticmethod
     def _make_terminal(name: str) -> Terminal:
-        """ Create a new Terminal instance within the grammar """
+        """Create a new Terminal instance within the grammar"""
         # Override this to create custom terminals or add optimizations
         return Terminal(name)
 
     @staticmethod
     def _make_literal_terminal(name: str) -> LiteralTerminal:
-        """ Create a new LiteralTerminal instance within the grammar """
+        """Create a new LiteralTerminal instance within the grammar"""
         # Override this to create custom terminals or add optimizations
         return LiteralTerminal(name)
 
     @staticmethod
     def _make_nonterminal(name: str, fname: str, line: int) -> Nonterminal:
-        """ Create a new Nonterminal instance within the grammar """
+        """Create a new Nonterminal instance within the grammar"""
         # Override this to create custom nonterminals or add optimizations
         return Nonterminal(name, fname, line)
 
     def _write_binary(self, fname: str) -> None:
-        """ Write grammar to binary file. Called after reading a grammar text file
-            that is newer than the corresponding binary file. """
+        """Write grammar to binary file. Called after reading a grammar text file
+        that is newer than the corresponding binary file."""
         with open(fname, "wb") as f:
             if Settings.DEBUG:
                 print("Writing binary grammar file {0}".format(fname))
@@ -716,11 +716,11 @@ class Grammar:
     def read(
         self, fname: str, verbose: bool = False, binary_fname: Optional[str] = None
     ) -> None:
-        """ Read grammar from a text file. Set verbose=True to get diagnostic messages
-            about unused nonterminals and nonterminals that are unreachable
-            from the root.
-            Pass a file name in binary_fname to write a fresh binary file if the
-            grammar text file is newer than the existing binary file. """
+        """Read grammar from a text file. Set verbose=True to get diagnostic messages
+        about unused nonterminals and nonterminals that are unreachable
+        from the root.
+        Pass a file name in binary_fname to write a fresh binary file if the
+        grammar text file is newer than the existing binary file."""
         try:
             with open(fname, "r", encoding="utf-8") as inp:
                 # Read grammar file line-by-line
@@ -736,12 +736,12 @@ class Grammar:
         binary_fname: Optional[str] = None,
         force_new_binary: bool = False,
     ) -> None:
-        """ Read grammar from a generator of lines. Set verbose=True to get
-            diagnostic messages about unused nonterminals and nonterminals that are
-            unreachable from the root. Pass a file name in binary_fname to write
-            a fresh binary file if the grammar text file is newer than the
-            existing binary file. Set force_new_binary=True to write a fresh
-            binary file regardless of timestamps. """
+        """Read grammar from a generator of lines. Set verbose=True to get
+        diagnostic messages about unused nonterminals and nonterminals that are
+        unreachable from the root. Pass a file name in binary_fname to write
+        a fresh binary file if the grammar text file is newer than the
+        existing binary file. Set force_new_binary=True to write a fresh
+        binary file regardless of timestamps."""
 
         # Clear previous file info, if any
         self._file_time = self._file_name = None
@@ -763,8 +763,8 @@ class Grammar:
                 return
 
             def highest_priority(nt_id: str) -> int:
-                """ Return the highest priority index for a production
-                    of the given nonterminal """
+                """Return the highest priority index for a production
+                of the given nonterminal"""
                 try:
                     nt = nonterminals[nt_id]
                     return max(prio for prio, _ in grammar[nt])
@@ -772,14 +772,14 @@ class Grammar:
                     return 0
 
             def parse_rhs(nt_id: str, vts: List[str], s: str, priority: int):
-                """ Parse a right-hand side sequence, eventually with
-                    relative priority within the nonterminal """
+                """Parse a right-hand side sequence, eventually with
+                relative priority within the nonterminal"""
 
                 def add_rhs(
                     nt_id: str, rhs: Optional[Production], priority: int = 0
                 ) -> None:
-                    """ Add a fully expanded right-hand-side production
-                        to a nonterminal rule """
+                    """Add a fully expanded right-hand-side production
+                    to a nonterminal rule"""
                     nt = nonterminals[nt_id]
                     if nt not in grammar:
                         # First production of this nonterminal
@@ -833,7 +833,7 @@ class Grammar:
                         r = r[0:-1]
 
                     # Check for variant specs
-                    if r == "\"/\"" or r == "'/'":
+                    if r == '"/"' or r == "'/'":
                         # Hack: Allow specifying the forward slash as "/" or '/'
                         rsplit = [r]
                     else:
@@ -874,8 +874,8 @@ class Grammar:
                 # Generate productions for all variants
 
                 def variant_values(vlist: List[str]) -> Iterator[List[str]]:
-                    """ Returns a list of names with all applicable
-                        variant options appended """
+                    """Returns a list of names with all applicable
+                    variant options appended"""
                     if not vlist:
                         yield [""]
                         return
@@ -1014,8 +1014,8 @@ class Grammar:
                     add_rhs(nt_id_full, result, priority)
 
             def variant_names(nt: str, vts: List[str]) -> List[str]:
-                """ Returns a list of names with all applicable
-                    variant options appended """
+                """Returns a list of names with all applicable
+                variant options appended"""
                 result = [nt]
                 for v in vts:
                     newresult: List[str] = []
@@ -1025,10 +1025,12 @@ class Grammar:
                     result = newresult
                 return result
 
-            def apply_to_nonterminals(s: str, func: Callable[[Nonterminal, str], None]) -> None:
-                """ Parse a nonterminal/var list from string s,
-                    then apply func(nt, p) to all nonterminals,
-                    where p is the parameter of the pragma """
+            def apply_to_nonterminals(
+                s: str, func: Callable[[Nonterminal, str], None]
+            ) -> None:
+                """Parse a nonterminal/var list from string s,
+                then apply func(nt, p) to all nonterminals,
+                where p is the parameter of the pragma"""
                 ix = s.rfind(")")
                 if ix < 0:
                     raise GrammarError(
@@ -1413,7 +1415,7 @@ class Grammar:
         unreachable = {nt for nt in nonterminals.values()}
 
         def _remove(nt: Nonterminal) -> None:
-            """ Recursively remove all nonterminals that are reachable from nt """
+            """Recursively remove all nonterminals that are reachable from nt"""
             unreachable.remove(nt)
             for _, p in grammar[nt]:
                 for s in p:
@@ -1492,19 +1494,21 @@ class Grammar:
                 # No binary file or older than text file: write a fresh one
                 self._write_binary(binary_fname)
 
-    def follow_set(self, nonterminal: Nonterminal) -> Dict[Terminal, List[List[Production]]]:
-        """ Return the set of terminals that can follow
-            the given nonterminal, as a dictionary keyed
-            by terminal, containing a list of productions
-            by which the terminal follows the nonterminal """
+    def follow_set(
+        self, nonterminal: Nonterminal
+    ) -> Dict[Terminal, List[List[Production]]]:
+        """Return the set of terminals that can follow
+        the given nonterminal, as a dictionary keyed
+        by terminal, containing a list of productions
+        by which the terminal follows the nonterminal"""
 
         nullable: Set[Nonterminal] = set()
 
         def is_nullable(nt: Nonterminal) -> bool:
-            """ Returns True if the nonterminal is nullable """
+            """Returns True if the nonterminal is nullable"""
 
             def is_nullable_prod(p: Production) -> bool:
-                """ Returns True if the production is nullable """
+                """Returns True if the production is nullable"""
                 return p.is_empty or all(s in nullable for s in p)
 
             plist = self._nt_dict[nt]

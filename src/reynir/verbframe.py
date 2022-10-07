@@ -77,8 +77,8 @@ VALID_ARGS = ALL_CASES | SUBCLAUSES | REFLPRN_SET
 
 class VerbErrors:
 
-    """ A container class for verb error data, for instance wrong
-        verb forms and wrong preposition attachment """
+    """A container class for verb error data, for instance wrong
+    verb forms and wrong preposition attachment"""
 
     ERRORS: List[Union[VerbZeroArgSet, VerbWithArgErrorDict]] = [
         set(),
@@ -110,7 +110,7 @@ class VerbErrors:
         particle: Optional[str],
         corr: str,
     ) -> None:
-        """ Take note of a verb object specification with an $error pragma """
+        """Take note of a verb object specification with an $error pragma"""
         corrlist = corr.split(",")
         # errlist = corrlist[0].split("-")
         # errkind = errlist[0].strip()
@@ -178,14 +178,18 @@ class VerbErrors:
 
 class PrepositionFrame:
 
-    """ A class containing information about a preposition frame,
-        i.e. a preposition controlling a particular case and eventually
-        with associated nouns and particles. """
+    """A class containing information about a preposition frame,
+    i.e. a preposition controlling a particular case and eventually
+    with associated nouns and particles."""
 
     # Dictionary of all preposition frames, avoiding duplicates
     FRAMES: Dict[PrepKey, "PrepositionFrame"] = dict()
 
-    def __init__(self, prep: str, case: str,) -> None:
+    def __init__(
+        self,
+        prep: str,
+        case: str,
+    ) -> None:
         self.prep = prep
         self.case = case
 
@@ -199,9 +203,9 @@ class PrepositionFrame:
 
     @classmethod
     def obtain(cls, prep: str, case: str) -> "PrepositionFrame":
-        """ Obtain a preposition frame for the given preposition and argument case,
-            either by returning a previously encountered identical frame,
-            or by creating a new one """
+        """Obtain a preposition frame for the given preposition and argument case,
+        either by returning a previously encountered identical frame,
+        or by creating a new one"""
         key = cls.make_key(prep, case)
         pf = cls.FRAMES.get(key)
         if pf is None:
@@ -213,9 +217,9 @@ class PrepositionFrame:
 
 class VerbFrame:
 
-    """ A class containing information about a verb frame,
-        i.e. a verb with arguments and associated prepositions
-        and particles. """
+    """A class containing information about a verb frame,
+    i.e. a verb with arguments and associated prepositions
+    and particles."""
 
     # Verb frames by key, where the key is 'lemma[_argcase1[_argcase2]]',
     # e.g. 'skrifa_þgf_þf'
@@ -250,35 +254,35 @@ class VerbFrame:
 
     @property
     def key(self) -> str:
-        """ Return a key string containing all args of the verb frame """
+        """Return a key string containing all args of the verb frame"""
         return "_".join([self.verb] + self.args)
 
     @property
     def case_key(self) -> Optional[str]:
-        """ Return a key string containing the cases of the verb frame,
-            or None if this is not a frame with only case arguments """
+        """Return a key string containing the cases of the verb frame,
+        or None if this is not a frame with only case arguments"""
         if len(self.cases) < len(self.args):
             # This verb frame has non-case arguments: return None
             return None
         return "_".join([self.verb] + self.cases)
 
     def matches_pp(self, prep_with_case: str) -> bool:
-        """ Does this verb frame agree with the given preposition[+case]? """
+        """Does this verb frame agree with the given preposition[+case]?"""
         return prep_with_case in self.preps
 
     def matches_pcl(self, particle: str) -> bool:
-        """ Does this verb frame agree with the given particle? """
+        """Does this verb frame agree with the given particle?"""
         return particle == self.particle
 
     @classmethod
     def create_from_config(cls, s: str) -> None:
-        """ Handle verb object specifications in the settings section """
+        """Handle verb object specifications in the settings section"""
         # Format: verb [arg1] [arg2] [/preposition arg]... [*particle] [$pragma(txt)]
 
         complex = False
 
         def get_score(s: str) -> Tuple[str, Optional[int]]:
-            """ Handle the $score() pragma, if present """
+            """Handle the $score() pragma, if present"""
             score: Optional[int] = None
             ix = s.rfind("$score(")  # Must be at the end
             if ix >= 0:
@@ -296,7 +300,7 @@ class VerbFrame:
             return s, score
 
         def get_error(s: str) -> Tuple[str, Optional[str]]:
-            """ Handle the $error() pragma, if present """
+            """Handle the $error() pragma, if present"""
             error = None
             ix = s.rfind("$error(")
             if ix >= 0:
@@ -311,7 +315,7 @@ class VerbFrame:
             return s, error
 
         def get_particle(s: str) -> Tuple[str, Optional[str]]:
-            """ Process particles, should only be one in each line """
+            """Process particles, should only be one in each line"""
             particle = None
             ix = s.rfind("*")
             if ix >= 0:
@@ -324,7 +328,7 @@ class VerbFrame:
             return s, particle
 
         def get_prepositions(s: str) -> Tuple[str, List[Tuple[str, str]]]:
-            """ Process preposition arguments, if any """
+            """Process preposition arguments, if any"""
             prepositions: List[Tuple[str, str]] = []
             ap = s.split("/")
             s = ap[0]
@@ -343,7 +347,7 @@ class VerbFrame:
             return s, prepositions
 
         def get_direct_object(s: str) -> Tuple[str, str]:
-            """ Process direct object argument """
+            """Process direct object argument"""
             op = s.split("|")
             s = op[0]
             if not 1 <= len(op) <= 2:
@@ -354,7 +358,7 @@ class VerbFrame:
             return s, case
 
         def get_indirect_object(s: str) -> Tuple[str, str]:
-            """ Process indirect object argument """
+            """Process indirect object argument"""
             a = s.split()
             if len(a) < 1:
                 raise ConfigError("Verb should have zero or one indirect objects")
@@ -367,8 +371,8 @@ class VerbFrame:
             return verb, case
 
         def get_case_and_kind(w: str) -> str:
-            """ Get case of argument for the case key,
-            along with the argument type. """
+            """Get case of argument for the case key,
+            along with the argument type."""
             # Argument denotes:
             # 1: a case (nf, þf, þgf, ef) - default value
             # 2: a reflexive pronoun (sig, sér, sín)
@@ -465,24 +469,24 @@ class VerbFrame:
 
     @classmethod
     def known(cls, verb: str) -> bool:
-        """ Return True if this is a known verb, i.e. described in Verbs.conf """
+        """Return True if this is a known verb, i.e. described in Verbs.conf"""
         return verb in cls.VERBS
 
     @classmethod
     def matches_arguments(cls, verb_with_cases: str) -> bool:
-        """ Does the given key, e.g. 'skrifa_þgf_þf', match the verb
-            with its configured arguments? """
+        """Does the given key, e.g. 'skrifa_þgf_þf', match the verb
+        with its configured arguments?"""
         return verb_with_cases in cls.CASE_FRAMES
 
     @classmethod
     def matches_error_arguments(cls, verb_with_cases: str) -> bool:
-        """ Does the given key match any erroneous verb frames? """
+        """Does the given key match any erroneous verb frames?"""
         return verb_with_cases in cls.WRONG_CASE_FRAMES
 
     @classmethod
     def matches_preposition(cls, verb_with_cases: str, prep_with_case: str) -> bool:
-        """ Does the given key - i.e. verb with argument cases -
-            match the preposition [+case]? """
+        """Does the given key - i.e. verb with argument cases -
+        match the preposition [+case]?"""
         verb_frames = cls.CASE_FRAMES.get(verb_with_cases)
         if not verb_frames:
             # No frames for this verb with its argument cases
@@ -492,7 +496,7 @@ class VerbFrame:
 
     @classmethod
     def matches_particle(cls, verb_with_cases: str, particle: str) -> bool:
-        """ Does the given key - i.e. verb with argument cases - match the particle? """
+        """Does the given key - i.e. verb with argument cases - match the particle?"""
         verb_frames = cls.CASE_FRAMES.get(verb_with_cases)
         if not verb_frames:
             # No frames for this verb with its argument cases
@@ -503,7 +507,7 @@ class VerbFrame:
     @classmethod
     @lru_cache(maxsize=1024)
     def verb_score(cls, verb_with_cases: str) -> Optional[int]:
-        """ Return the score of a verb frame with particular argument cases """
+        """Return the score of a verb frame with particular argument cases"""
         verb_frames = cls.CASE_FRAMES.get(verb_with_cases)
         if verb_frames is None:
             # No such verb frame, hence no score

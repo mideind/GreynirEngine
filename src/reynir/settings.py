@@ -76,8 +76,8 @@ PreferenceTuple = Tuple[List[str], List[str], int]
 
 class VerbSubjects:
 
-    """ Wrapper around dictionary of verbs and their subjects,
-        initialized from the config file """
+    """Wrapper around dictionary of verbs and their subjects,
+    initialized from the config file"""
 
     # Dictionary of verbs and their associated set of subject cases
     VERBS: Dict[str, Set[str]] = defaultdict(set)
@@ -87,19 +87,19 @@ class VerbSubjects:
 
     @staticmethod
     def set_case(case: str) -> None:
-        """ Set the case of the subject for the following verbs """
+        """Set the case of the subject for the following verbs"""
         # if case not in { "þf", "þgf", "ef", "none", "lhþt" }:
         #     raise ConfigError("Unknown verb subject case '{0}' in verb_subjects".format(case))
         VerbSubjects._CASE = case  # type: ignore
 
     @staticmethod
     def add(verb: str) -> None:
-        """ Add a verb and its arguments. Called from the config file handler. """
+        """Add a verb and its arguments. Called from the config file handler."""
         VerbSubjects.VERBS[verb].add(VerbSubjects._CASE)
 
     @staticmethod
     def add_error(verb: str, corr: str) -> None:
-        """ Add a verb and the correct case. Called from the config file handler. """
+        """Add a verb and the correct case. Called from the config file handler."""
         corrlist = corr.split(",")
         errlist = corrlist[0].split("-")
         errkind = errlist[0].strip()
@@ -121,15 +121,15 @@ class VerbSubjects:
 
     @staticmethod
     def is_strictly_impersonal(verb: str) -> bool:
-        """ Returns True if the given verb is only impersonal, i.e. if it appears
-            with an $error() pragma in the subject = nf section of verb_subjects
-            and cannot be used with a nominative subject: ?'ég dreymdi þig' """
+        """Returns True if the given verb is only impersonal, i.e. if it appears
+        with an $error() pragma in the subject = nf section of verb_subjects
+        and cannot be used with a nominative subject: ?'ég dreymdi þig'"""
         return "nf" in VerbSubjects.VERBS_ERRORS.get(verb, dict())
 
 
 class Prepositions:
 
-    """ Wrapper around dictionary of prepositions, initialized from the config file """
+    """Wrapper around dictionary of prepositions, initialized from the config file"""
 
     # Dictionary of prepositions: preposition -> { set of cases that it controls }
     PP: Dict[str, Set[str]] = defaultdict(set)
@@ -147,7 +147,7 @@ class Prepositions:
 
     @staticmethod
     def add(prep: str, case: str, nh: bool) -> None:
-        """ Add a preposition and its case. Called from the config file handler. """
+        """Add a preposition and its case. Called from the config file handler."""
         if prep.endswith("*"):
             # Star-marked prepositions are 'plain'
             prep = prep[:-1]
@@ -165,40 +165,40 @@ class Prepositions:
 
     @staticmethod
     def add_error(prep: str, case: str, corr: Tuple[Any, ...]) -> None:
-        """ Add an error correction entry for a preposition and a case.
-            An error correction entry is usually a tuple. """
+        """Add an error correction entry for a preposition and a case.
+        An error correction entry is usually a tuple."""
         Prepositions.PP_ERRORS[prep][case] = corr
 
 
 class DisallowedNames:
 
-    """ Wrapper around list of disallowed person name forms """
+    """Wrapper around list of disallowed person name forms"""
 
     # Dictionary of name stems : sets of cases
     STEMS: Dict[str, Set[str]] = {}
 
     @classmethod
     def add(cls, name: str, cases: Iterable[str]) -> None:
-        """ Add an adjective ending and its associated form. """
+        """Add an adjective ending and its associated form."""
         cls.STEMS[name] = set(cases)
 
 
 class UndeclinableAdjectives:
 
-    """ Wrapper around list of undeclinable adjectives """
+    """Wrapper around list of undeclinable adjectives"""
 
     # Set of adjectives
     ADJECTIVES: Set[str] = set()
 
     @classmethod
     def add(cls, wrd: str) -> None:
-        """ Add an adjective """
+        """Add an adjective"""
         cls.ADJECTIVES.add(wrd)
 
 
 class StaticPhrases:
 
-    """ Wrapper around dictionary of static phrases, initialized from the config file """
+    """Wrapper around dictionary of static phrases, initialized from the config file"""
 
     # Default meaning for static phrases
     MEANING: StaticPhraseTuple = ("ao", "frasi", "-")
@@ -217,7 +217,7 @@ class StaticPhrases:
 
     @staticmethod
     def add(spec: str) -> None:
-        """ Add a static phrase to the dictionary. Called from the config file handler. """
+        """Add a static phrase to the dictionary. Called from the config file handler."""
         parts = spec.split(",")
         if len(parts) not in {1, 3}:
             raise ConfigError("Static phrase must include IFD tag list and lemmas")
@@ -271,46 +271,46 @@ class StaticPhrases:
 
     @staticmethod
     def set_meaning(meaning: StaticPhraseTuple) -> None:
-        """ Set the default meaning for static phrases """
+        """Set the default meaning for static phrases"""
         StaticPhrases.MEANING = meaning  # type: ignore
 
     @staticmethod
     def get_meaning(ix: int) -> BIN_TupleList:
-        """ Return the meaning of the phrase with index ix """
+        """Return the meaning of the phrase with index ix"""
         return [StaticPhrases.LIST[ix][1]]
 
     @staticmethod
     def get_length(ix: int) -> int:
-        """ Return the length of the phrase with index ix """
+        """Return the length of the phrase with index ix"""
         return len(StaticPhrases.LIST[ix][0].split())
 
     @staticmethod
     def lookup(phrase: str) -> Optional[BIN_Tuple]:
-        """ Lookup an entire phrase """
+        """Lookup an entire phrase"""
         return StaticPhrases.MAP.get(phrase)
 
     @staticmethod
     def has_details(phrase: str) -> bool:
-        """ Return True if tag and lemma details are available for this phrase """
+        """Return True if tag and lemma details are available for this phrase"""
         return phrase in StaticPhrases.DETAILS
 
     @staticmethod
     def tags(phrase: str) -> Optional[List[str]]:
-        """ Lookup a list of IFD tags for a phrase, if available """
+        """Lookup a list of IFD tags for a phrase, if available"""
         details = StaticPhrases.DETAILS.get(phrase)
         return None if details is None else details[0].split()
 
     @staticmethod
     def lemmas(phrase: str) -> Optional[List[str]]:
-        """ Lookup a list of lemmas for a phrase, if available """
+        """Lookup a list of lemmas for a phrase, if available"""
         details = StaticPhrases.DETAILS.get(phrase)
         return None if details is None else details[1].split()
 
 
 class AmbigPhrases:
 
-    """ Wrapper around dictionary of potentially ambiguous phrases,
-        initialized from the config file """
+    """Wrapper around dictionary of potentially ambiguous phrases,
+    initialized from the config file"""
 
     # List of tuples of ambiguous phrases and their word category lists,
     # i.e. (words, cats) where words and cats are tuples
@@ -322,8 +322,8 @@ class AmbigPhrases:
 
     @staticmethod
     def add(words: List[str], cats: Tuple[FrozenSet[str], ...]) -> None:
-        """ Add an ambiguous phrase to the dictionary.
-            Called from the config file handler. """
+        """Add an ambiguous phrase to the dictionary.
+        Called from the config file handler."""
 
         # First add to phrase list
         ix = len(AmbigPhrases.LIST)
@@ -342,19 +342,19 @@ class AmbigPhrases:
 
     @staticmethod
     def get_cats(ix: int) -> Tuple[FrozenSet[str], ...]:
-        """ Return the word categories for the phrase with index ix """
+        """Return the word categories for the phrase with index ix"""
         return AmbigPhrases.LIST[ix][1]
 
     @staticmethod
     def get_words(ix: int) -> List[str]:
-        """ Return the words for the phrase with index ix """
+        """Return the words for the phrase with index ix"""
         return AmbigPhrases.LIST[ix][0]
 
 
 class NoIndexWords:
 
-    """ Wrapper around set of word stems and categories that should
-        not be indexed """
+    """Wrapper around set of word stems and categories that should
+    not be indexed"""
 
     # Set of (stem, cat) tuples
     SET: Set[Tuple[str, str]] = set()
@@ -368,18 +368,18 @@ class NoIndexWords:
 
     @staticmethod
     def set_cat(cat: str) -> None:
-        """ Set the category for the following word stems """
+        """Set the category for the following word stems"""
         NoIndexWords._CAT = cat  # type: ignore
 
     @staticmethod
     def add(stem: str) -> None:
-        """ Add a word stem and its category. Called from the config file handler. """
+        """Add a word stem and its category. Called from the config file handler."""
         NoIndexWords.SET.add((stem, NoIndexWords._CAT))
 
 
 class Topics:
 
-    """ Wrapper around topics, represented as a dict (name: set) """
+    """Wrapper around topics, represented as a dict (name: set)"""
 
     # Dict of topic name: set
     DICT: Dict[str, Set[str]] = defaultdict(set)
@@ -391,7 +391,7 @@ class Topics:
 
     @staticmethod
     def set_name(name: str) -> None:
-        """ Set the topic name for the words that follow """
+        """Set the topic name for the words that follow"""
         a = name.split("|")
         Topics._name = tname = a[0].strip()
         identifier = a[1].strip() if len(a) > 1 else None
@@ -410,7 +410,7 @@ class Topics:
 
     @staticmethod
     def add(word: str) -> None:
-        """ Add a word stem and its category. Called from the config file handler. """
+        """Add a word stem and its category. Called from the config file handler."""
         if Topics._name is None:
             raise ConfigError(
                 "Must set topic name (topic = X) before specifying topic words"
@@ -440,9 +440,9 @@ class Topics:
 
 class AdjectivePredicates:
 
-    """ A set of arguments and prepositions associated with
-        adjectives, for instance 'tengdur þgf', typically read from
-        the [adjective_predicates] section of AdjectivePredicates.conf """
+    """A set of arguments and prepositions associated with
+    adjectives, for instance 'tengdur þgf', typically read from
+    the [adjective_predicates] section of AdjectivePredicates.conf"""
 
     # dict { adjective lemma : set of possible argument cases }
     ARGUMENTS: Dict[str, Set[str]] = defaultdict(set)
@@ -482,7 +482,7 @@ class AdjectivePredicates:
 
 class Preferences:
 
-    """ Wrapper around disambiguation hints, initialized from the config file """
+    """Wrapper around disambiguation hints, initialized from the config file"""
 
     # Dictionary keyed by word containing a list of tuples (worse, better)
     # where each is a list of terminal prefixes
@@ -490,19 +490,19 @@ class Preferences:
 
     @staticmethod
     def add(word: str, worse: List[str], better: List[str], factor: int) -> None:
-        """ Add a preference to the dictionary. Called from the config file handler. """
+        """Add a preference to the dictionary. Called from the config file handler."""
         Preferences.DICT[word].append((worse, better, factor))
 
     @staticmethod
     def get(word: str) -> Optional[List[PreferenceTuple]]:
-        """ Return a list of (worse, better, factor) tuples for the given word """
+        """Return a list of (worse, better, factor) tuples for the given word"""
         return Preferences.DICT.get(word, None)
 
 
 class NounPreferences:
 
-    """ Wrapper for noun preferences, i.e. to assign priorities to different
-        noun stems that can have identical word forms. """
+    """Wrapper for noun preferences, i.e. to assign priorities to different
+    noun stems that can have identical word forms."""
 
     # This is a dict of noun word forms, giving the relative priorities
     # of different genders
@@ -510,7 +510,7 @@ class NounPreferences:
 
     @staticmethod
     def add(word: str, worse: str, better: str) -> None:
-        """ Add a preference to the dictionary. Called from the config file handler. """
+        """Add a preference to the dictionary. Called from the config file handler."""
         if worse not in ALL_GENDERS or better not in ALL_GENDERS:
             raise ConfigError("Noun priorities must specify genders (kk, kvk, hk)")
         d = NounPreferences.DICT[word]
@@ -531,19 +531,19 @@ class NounPreferences:
 
 class NamePreferences:
 
-    """ Wrapper around well-known person names, initialized from the config file """
+    """Wrapper around well-known person names, initialized from the config file"""
 
     SET: Set[str] = set()
 
     @staticmethod
     def add(name: str) -> None:
-        """ Add a preference to the dictionary. Called from the config file handler. """
+        """Add a preference to the dictionary. Called from the config file handler."""
         NamePreferences.SET.add(name)
 
 
 class Settings:
 
-    """ Global settings """
+    """Global settings"""
 
     _lock = threading.Lock()
     loaded: bool = False
@@ -553,7 +553,7 @@ class Settings:
 
     @staticmethod
     def _handle_settings(s: str) -> None:
-        """ Handle config parameters in the settings section """
+        """Handle config parameters in the settings section"""
         a = s.lower().split("=", maxsplit=1)
         par = a[0].strip().lower()
         sval = a[1].strip()
@@ -574,7 +574,7 @@ class Settings:
 
     @staticmethod
     def _handle_static_phrases(s: str) -> None:
-        """ Handle static phrases in the settings section """
+        """Handle static phrases in the settings section"""
         if "=" not in s:
             ix = s.rfind("$error(")  # Must be at the end
             e: Optional[List[str]] = None
@@ -606,12 +606,12 @@ class Settings:
 
     @staticmethod
     def _handle_verb_objects(s: str) -> None:
-        """ Handle verb object specifications in the settings section """
+        """Handle verb object specifications in the settings section"""
         VerbFrame.create_from_config(s)
 
     @staticmethod
     def _handle_verb_subjects(s: str) -> None:
-        """ Handle verb subject specifications in the settings section """
+        """Handle verb subject specifications in the settings section"""
         # Format: subject = [case] followed by verb list
         a = s.lower().split("=", maxsplit=1)
         if len(a) == 2:
@@ -640,7 +640,7 @@ class Settings:
 
     @staticmethod
     def _handle_undeclinable_adjectives(s: str) -> None:
-        """ Handle list of undeclinable adjectives """
+        """Handle list of undeclinable adjectives"""
         s = s.lower().strip()
         if not s.isalpha():
             raise ConfigError(
@@ -650,7 +650,7 @@ class Settings:
 
     @staticmethod
     def _handle_noindex_words(s: str) -> None:
-        """ Handle no index instructions in the settings section """
+        """Handle no index instructions in the settings section"""
         # Format: category = [cat] followed by word stem list
         a = s.lower().split("=", maxsplit=1)
         par = a[0].strip()
@@ -666,7 +666,7 @@ class Settings:
 
     @staticmethod
     def _handle_topics(s: str) -> None:
-        """ Handle topic specifications """
+        """Handle topic specifications"""
         # Format: name = [topic name] followed by word stem list in the form word/cat
         a = s.split("=", maxsplit=1)
         par = a[0].strip()
@@ -682,7 +682,7 @@ class Settings:
 
     @staticmethod
     def _handle_prepositions(s: str) -> None:
-        """ Handle preposition specifications in the settings section """
+        """Handle preposition specifications in the settings section"""
         # Format: pw1 pw2... case [nh|nhx]  [$error(X)]
         error = False
         corr: Optional[Tuple[str, Optional[str]]] = None
@@ -728,7 +728,7 @@ class Settings:
 
     @staticmethod
     def _handle_preferences(s: str) -> None:
-        """ Handle ambiguity preference hints in the settings section """
+        """Handle ambiguity preference hints in the settings section"""
         # Format: word worse1 worse2... < better
         # If two less-than signs are used, the preference is even stronger (tripled)
         # If three less-than signs are used, the preference is super strong (nine-fold)
@@ -757,7 +757,7 @@ class Settings:
 
     @staticmethod
     def _handle_noun_preferences(s: str) -> None:
-        """ Handle noun preference hints in the settings section """
+        """Handle noun preference hints in the settings section"""
         # Format: noun worse1 worse2... < better
         # The worse and better specifiers are gender names (kk, kvk, hk)
         a = s.lower().split("<", maxsplit=1)
@@ -773,12 +773,12 @@ class Settings:
 
     @staticmethod
     def _handle_name_preferences(s: str) -> None:
-        """ Handle well-known person names in the settings section """
+        """Handle well-known person names in the settings section"""
         NamePreferences.add(s)
 
     @staticmethod
     def _handle_ambiguous_phrases(s: str) -> None:
-        """ Handle ambiguous phrase guidance in the settings section """
+        """Handle ambiguous phrase guidance in the settings section"""
         # Format: "word1 word2..." cat1 cat2...
         error = False
         if s[0] != '"':
@@ -825,7 +825,7 @@ class Settings:
 
     @staticmethod
     def _handle_disallowed_names(s: str) -> None:
-        """ Handle disallowed person name forms from the settings section """
+        """Handle disallowed person name forms from the settings section"""
         # Format: Name-stem case1 case2...
         a = s.split()
         if len(a) < 2:
@@ -869,8 +869,8 @@ class Settings:
             AdjectivePredicates.add(adj, a[1:], prepositions)
 
     @staticmethod
-    def read(fname: str, force: bool=False) -> None:
-        """ Read configuration file """
+    def read(fname: str, force: bool = False) -> None:
+        """Read configuration file"""
 
         with Settings._lock:
 

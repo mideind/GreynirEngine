@@ -47,9 +47,9 @@ from .bintokenizer import TOK
 
 class IFD_Tagset:
 
-    """ Utility class to generate POS tags compatible with
-        the Icelandic Frequency Dictionary (IFD) tagset
-        (cf. http://www.malfong.is/files/ot_tagset_book_is.pdf) """
+    """Utility class to generate POS tags compatible with
+    the Icelandic Frequency Dictionary (IFD) tagset
+    (cf. http://www.malfong.is/files/ot_tagset_book_is.pdf)"""
 
     # Strings that must be present in the grammatical form for variants
     BIN_TO_VARIANT = {
@@ -345,7 +345,7 @@ class IFD_Tagset:
             raise ValueError("Unsupported parameter list")
 
     def _init_from(self, t):
-        """ Initialize the tagset parameters from a dict """
+        """Initialize the tagset parameters from a dict"""
         self._cache = None
         self._kind = t.get("k")
         self._cat = t.get("c")
@@ -377,7 +377,7 @@ class IFD_Tagset:
                         break
 
     def _tagstring(self):
-        """ Calculate the IFD tagstring from the tagset """
+        """Calculate the IFD tagstring from the tagset"""
         if self._kind == "PUNCTUATION":
             return self._txt
         if self._kind in self.KIND_TO_TAG:
@@ -390,12 +390,12 @@ class IFD_Tagset:
         return scheme[1:] if func is None else func()
 
     def has_tag(self, tag):
-        """ Returns True if the tagset contains the given feature,
-            i.e. kk, kvk, þgf, nh, p3, vb, etc. """
+        """Returns True if the tagset contains the given feature,
+        i.e. kk, kvk, þgf, nh, p3, vb, etc."""
         return tag in self._tagset
 
     def __str__(self):
-        """ Return the tags formatted as an IFD compatible string """
+        """Return the tags formatted as an IFD compatible string"""
         if self._cache is None:
             self._cache = self._tagstring()
         return self._cache
@@ -634,9 +634,9 @@ class IFD_Tagset:
 
     @classmethod
     def word_tag_stream(cls, sentence_stream):
-        """ Generator of a (word, tag) stream from a raw token stream.
-            Both the input and the output streams are segmented into
-            sentences. """
+        """Generator of a (word, tag) stream from a raw token stream.
+        Both the input and the output streams are segmented into
+        sentences."""
         for sent in sentence_stream:
             if not sent:
                 continue

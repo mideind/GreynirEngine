@@ -140,13 +140,15 @@ _PREP_SCOPE_SET = frozenset(
 _CONTAINED_VERBS_SET = frozenset(("begin_prep_scope", "purge_verb"))
 
 # BÍN categories ('fl') of person and entity names
-_NAMED_ENTITY_FL = frozenset(("ism", "erm", "gæl", "nafn", "föð", "móð", "ætt", "entity"))
+_NAMED_ENTITY_FL = frozenset(
+    ("ism", "erm", "gæl", "nafn", "föð", "móð", "ætt", "entity")
+)
 
 
 class _ReductionScope:
 
-    """ Class to accumulate information about a nonterminal and its
-        child productions during reduction """
+    """Class to accumulate information about a nonterminal and its
+    child productions during reduction"""
 
     __slots__ = ("reducer", "sc", "pushed_prep_bonus", "start_verb")
 
@@ -174,15 +176,15 @@ class _ReductionScope:
         self.start_verb = verb
 
     def start_family(self, ix: int, prod: Production) -> None:
-        """ Start the processing of a production (numbered ix) of a nonterminal """
+        """Start the processing of a production (numbered ix) of a nonterminal"""
         # Initialize the score of this family of children, so that productions
         # with higher priorities (more negative prio values) get a starting bonus
         self.sc[ix]["sc"] = -10 * prod.priority
         self.reducer.set_current_verb(self.start_verb)
 
     def add_child(self, ix: int, rd: ResultDict) -> None:
-        """ Add a child node's score to the parent family's score,
-            where the parent family has index ix (0..n) """
+        """Add a child node's score to the parent family's score,
+        where the parent family has index ix (0..n)"""
         d = self.sc[ix]
         d["sc"] += rd.get("sc", 0)
         # Carry information about contained verbs ("so") up the tree
@@ -196,9 +198,9 @@ class _ReductionScope:
                     self.reducer.set_current_verb(rd["sl"])
 
     def process(self, node: Node) -> ResultDict:
-        """ After accumulating scores for all possible productions
-            of this nonterminal (families of children), find the
-            highest scoring one and reduce the tree to that child only """
+        """After accumulating scores for all possible productions
+        of this nonterminal (families of children), find the
+        highest scoring one and reduce the tree to that child only"""
         try:
 
             csc = self.sc
@@ -274,9 +276,9 @@ class _ReductionScope:
 
 class ParseForestReducer:
 
-    """ Subclass to navigate a parse forest and reduce it
-        so that the highest-scoring alternative production of a nonterminal
-        (family of children) survives at each point of ambiguity """
+    """Subclass to navigate a parse forest and reduce it
+    so that the highest-scoring alternative production of a nonterminal
+    (family of children) survives at each point of ambiguity"""
 
     def __init__(self, grammar: Grammar, scores: ScoreDict) -> None:
         super().__init__()
@@ -316,7 +318,7 @@ class ParseForestReducer:
         verb_terminal: BIN_Terminal,
         verb_token: BIN_Token,
     ) -> int:
-        """ Return a verb/preposition match bonus, as and if applicable """
+        """Return a verb/preposition match bonus, as and if applicable"""
         # Only do this if the prepositions match the verb being connected to
         m = verb_token.match_with_meaning(verb_terminal)
         assert isinstance(m, BIN_Tuple)
@@ -347,7 +349,7 @@ class ParseForestReducer:
         return _VERB_PREP_PENALTY
 
     def visit_token(self, node: Node) -> ResultDict:
-        """ At token node """
+        """At token node"""
         # Return the score of this token/terminal match
         d: ResultDict = {"sc": 0}
         nt = cast(BIN_Terminal, node.terminal)
@@ -385,8 +387,8 @@ class ParseForestReducer:
         return d
 
     def go(self, root_node: Node) -> ResultDict:
-        """ Perform the reduction, but first split the tree underneath
-            nodes that have the enable_prep_bonus tag """
+        """Perform the reduction, but first split the tree underneath
+        nodes that have the enable_prep_bonus tag"""
 
         # Memoization/caching dict, keyed by node and memoization key
         visited: Dict[KeyTuple, ResultDict] = dict()
@@ -396,15 +398,15 @@ class ParseForestReducer:
         next_key = 0
 
         def enter_key_scope(node: Node) -> bool:
-            """ Return True for a node whose score should not be
-                memoized within the shared packed parse forest """
+            """Return True for a node whose score should not be
+            memoized within the shared packed parse forest"""
             if not node.is_completed or node.nonterminal is None:
                 return False
             return node.nonterminal.has_tag("enable_prep_bonus")
 
         def exit_key_scope(node: Node) -> bool:
-            """ Return True if it is safe to resume memoization
-                of subtree scores from this node onwards """
+            """Return True if it is safe to resume memoization
+            of subtree scores from this node onwards"""
             if not node.is_completed:
                 return False
             nt = node.nonterminal
@@ -424,13 +426,13 @@ class ParseForestReducer:
             return False
 
         def calc_score(w: Node) -> ResultDict:
-            """ Navigate from (w, current_key) where w is a node and current_key
-                is an integer navigation key, carefully controlling the memoization
-                of already visited nodes. When navigating into
-                nodes marked enable_prep_bonus, we create a new unique
-                navigation key, since such nodes - although stored in shared
-                packed form - may have different scores depending on the
-                enclosing (verb) context and thus should not share memoized results.
+            """Navigate from (w, current_key) where w is a node and current_key
+            is an integer navigation key, carefully controlling the memoization
+            of already visited nodes. When navigating into
+            nodes marked enable_prep_bonus, we create a new unique
+            navigation key, since such nodes - although stored in shared
+            packed form - may have different scores depending on the
+            enclosing (verb) context and thus should not share memoized results.
             """
             nonlocal current_key, next_key
             # Has this (node, current_key) tuple been memoized?
@@ -494,8 +496,8 @@ class ParseForestReducer:
 
 class OptionFinder(ParseForestNavigator):
 
-    """ Subclass to navigate a parse forest and populate the set
-        of terminals that match each token """
+    """Subclass to navigate a parse forest and populate the set
+    of terminals that match each token"""
 
     def __init__(self, finals: FinalsDict, tokens: TokensDict) -> None:
         super().__init__()
@@ -503,7 +505,7 @@ class OptionFinder(ParseForestNavigator):
         self._tokens = tokens
 
     def visit_token(self, level: int, w: Node) -> Any:
-        """ At token node """
+        """At token node"""
         # assert node.terminal is not None
         self._finals[w.start].add(cast(BIN_Terminal, w.terminal))
         self._tokens[w.start] = cast(BIN_Token, w.token)
@@ -512,7 +514,7 @@ class OptionFinder(ParseForestNavigator):
 
 class Reducer:
 
-    """ Reduces parse forests to a single most likely parse tree """
+    """Reduces parse forests to a single most likely parse tree"""
 
     def __init__(self, grammar: Grammar) -> None:
         self._grammar = grammar
@@ -520,11 +522,11 @@ class Reducer:
     def _find_options(
         self, forest: Node, finals: FinalsDict, tokens: TokensDict
     ) -> None:
-        """ Find token-terminal match options in a parse forest with a root in w """
+        """Find token-terminal match options in a parse forest with a root in w"""
         OptionFinder(finals, tokens).go(forest)
 
     def _calc_terminal_scores(self, w: Node) -> ScoreDict:
-        """ Calculate the score for each possible terminal/token match """
+        """Calculate the score for each possible terminal/token match"""
 
         # First pass: for each token, find the possible terminals that
         # can correspond to that token
@@ -781,11 +783,11 @@ class Reducer:
         return scores
 
     def _reduce(self, w: Node, scores: ScoreDict) -> ResultDict:
-        """ Reduce a forest with a root in w based on subtree scores """
+        """Reduce a forest with a root in w based on subtree scores"""
         return ParseForestReducer(self._grammar, scores).go(w)
 
     def go_with_score(self, forest: Optional[Node]) -> Tuple[Optional[Node], int]:
-        """ Returns the argument forest after pruning it down to a single tree """
+        """Returns the argument forest after pruning it down to a single tree"""
         if forest is None:
             return None, 0
         scores = self._calc_terminal_scores(forest)
@@ -795,6 +797,6 @@ class Reducer:
         return forest, score["sc"]
 
     def go(self, forest: Optional[Node]) -> Optional[Node]:
-        """ Return only the reduced forest, without its score """
+        """Return only the reduced forest, without its score"""
         w, _ = self.go_with_score(forest)
         return w
