@@ -1,11 +1,11 @@
-#type: ignore
+# type: ignore
 """
 
     test_parse.py
 
     Tests for Greynir module
 
-    Copyright(C) 2021 by Miðeind ehf.
+    Copyright(C) 2022 by Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -45,14 +45,14 @@ from reynir.reynir import Terminal
 
 @pytest.fixture(scope="module")
 def r():
-    """ Provide a module-scoped Greynir instance as a test fixture """
+    """Provide a module-scoped Greynir instance as a test fixture"""
     r = Greynir()
     yield r
     # Do teardown here
     r.__class__.cleanup()
 
 
-def test_parse(r: Greynir, verbose: bool=False) -> None:
+def test_parse(r: Greynir, verbose: bool = False) -> None:
 
     sentences = [
         # 0
@@ -250,9 +250,7 @@ def test_parse(r: Greynir, verbose: bool=False) -> None:
         "borða",
     ]
     assert results[12].tree.verbs == ["horfa", "borða"]
-    assert (
-        results[32].tree.verbs == ["finna", "segja", "gefa", "hafa", "deyja"]
-    ) or (
+    assert (results[32].tree.verbs == ["finna", "segja", "gefa", "hafa", "deyja"]) or (
         results[32].tree.verbs == ["finna", "gefa", "hafa", "deyja"]
     )
     # Test that the parser finds the correct word lemmas
@@ -395,7 +393,7 @@ def test_parse(r: Greynir, verbose: bool=False) -> None:
     ]
 
     def num_pp(s):
-        """ Count the prepositional phrases in the parse tree for sentence s """
+        """Count the prepositional phrases in the parse tree for sentence s"""
         return len([t for t in s.tree.descendants if t.match("PP")])
 
     # Test that the correct number of prepositional phrases (PPs) is generated
@@ -407,10 +405,10 @@ def test_parse(r: Greynir, verbose: bool=False) -> None:
 
 
 def test_consistency(r, verbose=False):
-    """ Check that multiple parses of the same sentences yield exactly
-        the same preposition counts, and also identical scores. This is
-        inter alia to guard agains nondeterminism that may arise from
-        Python's random hash seeds. """
+    """Check that multiple parses of the same sentences yield exactly
+    the same preposition counts, and also identical scores. This is
+    inter alia to guard agains nondeterminism that may arise from
+    Python's random hash seeds."""
 
     sent15 = [
         "Barnið fór í augnrannsóknina eftir húsnæðiskaupin.",
@@ -975,7 +973,11 @@ def test_terminal_types(r):
     t = s.terminals or []
     assert len(t) == 4
     check_terminal(
-        t[2], text="H2SO4", lemma="H2SO4", category="sameind", variants=["nf"],
+        t[2],
+        text="H2SO4",
+        lemma="H2SO4",
+        category="sameind",
+        variants=["nf"],
     )
     s = r.parse_single("570607-6859 er kennitala fyrirtækisins.")
     t = s.terminals or []
@@ -991,7 +993,11 @@ def test_terminal_types(r):
     t = s.terminals or []
     assert len(t) == 5
     check_terminal(
-        t[0], text="867-6998", lemma="867-6998", category="símanúmer", variants=["nf"],
+        t[0],
+        text="867-6998",
+        lemma="867-6998",
+        category="símanúmer",
+        variants=["nf"],
     )
 
 
@@ -1017,8 +1023,10 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
-            .format(d["parse_time"], d["reduce_time"])
+        print(
+            ", parsing: {:.2f} seconds, reduction: {:.2f} seconds".format(
+                d["parse_time"], d["reduce_time"]
+            )
         )
         print("Complex, sentence 2", end="")
     d = r.parse(
@@ -1029,8 +1037,10 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
-            .format(d["parse_time"], d["reduce_time"])
+        print(
+            ", parsing: {:.2f} seconds, reduction: {:.2f} seconds".format(
+                d["parse_time"], d["reduce_time"]
+            )
         )
         print("Complex, sentence 3", end="")
     d = r.parse(
@@ -1040,8 +1050,10 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
-            .format(d["parse_time"], d["reduce_time"])
+        print(
+            ", parsing: {:.2f} seconds, reduction: {:.2f} seconds".format(
+                d["parse_time"], d["reduce_time"]
+            )
         )
         print("Complex, sentence 4", end="")
     d = r.parse(
@@ -1051,8 +1063,10 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
-            .format(d["parse_time"], d["reduce_time"])
+        print(
+            ", parsing: {:.2f} seconds, reduction: {:.2f} seconds".format(
+                d["parse_time"], d["reduce_time"]
+            )
         )
         print("Complex, sentence 5", end="")
     d = r.parse(
@@ -1064,8 +1078,10 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
-            .format(d["parse_time"], d["reduce_time"])
+        print(
+            ", parsing: {:.2f} seconds, reduction: {:.2f} seconds".format(
+                d["parse_time"], d["reduce_time"]
+            )
         )
         print("Complex, sentence 6", end="")
     d = r.parse(
@@ -1081,8 +1097,10 @@ def test_complex(r, verbose=False):
     )
     assert d["num_parsed"] == 1
     if verbose:
-        print(", parsing: {:.2f} seconds, reduction: {:.2f} seconds"
-            .format(d["parse_time"], d["reduce_time"])
+        print(
+            ", parsing: {:.2f} seconds, reduction: {:.2f} seconds".format(
+                d["parse_time"], d["reduce_time"]
+            )
         )
 
 
@@ -1158,13 +1176,12 @@ def test_abbreviations(r):
     # )
 
 
-
 def test_attachment(r, verbose=False):
-    """ Test attachment of prepositions to nouns and verbs """
+    """Test attachment of prepositions to nouns and verbs"""
     if verbose:
         print("Testing attachment of prepositions")
-    #s = r.parse_single("Páll talaði við Pál um málið")
-    #assert s.tree.flat == ""
+    # s = r.parse_single("Páll talaði við Pál um málið")
+    # assert s.tree.flat == ""
     for _ in range(20):
         # Test consistency for 20 iterations
         s = r.parse_single("Ég setti dæmi um þetta í bókina mína.")
@@ -1173,19 +1190,19 @@ def test_attachment(r, verbose=False):
             "VP VP so_1_þf_et_p1 /VP NP-OBJ no_et_þf_hk "  # setti dæmi
             "PP P fs_þf /P NP fn_et_þf_hk /NP /PP "  # um þetta
             "/NP-OBJ PP P fs_þf /P NP no_et_þf_kvk fn_et_þf_kvk /NP /PP /VP "  # í bókina mína
-            "/IP /S-MAIN p /S0" # .
-        )  
+            "/IP /S-MAIN p /S0"  # .
+        )
         s = r.parse_single("Ég setti dæmi í bókina mína um þetta.")
         assert (
             s.tree.flat == "S0 S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ "  # Ég
             "VP VP so_1_þf_et_p1 /VP NP-OBJ no_et_þf_hk "  # setti dæmi
             "/NP-OBJ PP P fs_þf /P NP no_et_þf_kvk fn_et_þf_kvk "  # í bókina mína
-            "PP P fs_þf /P NP fn_et_þf_hk /NP /PP /NP /PP /VP /IP /S-MAIN p /S0" # um þetta .
-        )  
+            "PP P fs_þf /P NP fn_et_þf_hk /NP /PP /NP /PP /VP /IP /S-MAIN p /S0"  # um þetta .
+        )
 
 
 def test_nominative(r: Greynir) -> None:
-    """ Test conversion of noun phrases to nominative/indefinite/canonical forms """
+    """Test conversion of noun phrases to nominative/indefinite/canonical forms"""
 
     s = r.parse_single("Frábærum bílskúrum þykir þetta leiðinlegt.")
     subj = s.tree.S_MAIN.IP.NP_SUBJ
@@ -1322,7 +1339,10 @@ def test_nominative(r: Greynir) -> None:
         "milli vonar og ótta."
     )
     assert len(list(s.tree.all_matches("NP"))) == 6
-    assert len(list(s.tree.top_matches("NP"))) == 3 or len(list(s.tree.top_matches(("NP")))) == 4
+    assert (
+        len(list(s.tree.top_matches("NP"))) == 3
+        or len(list(s.tree.top_matches(("NP")))) == 4
+    )
 
     assert list(n.text for n in s.tree.all_matches("( no | lo)")) == [
         "Stóri",
@@ -1369,7 +1389,7 @@ def test_nominative(r: Greynir) -> None:
 
 
 def test_ifd_tag(r: Greynir) -> None:
-    """ Test IFD tagging """
+    """Test IFD tagging"""
     s = r.parse_single(
         "Að minnsta kosti stal Guðbjörn J. Óskarsson 200 krónum þann 19. júní 2003 "
         "og þyngdist um 300 kg."
@@ -1511,9 +1531,9 @@ def test_tree_flat(r: Greynir, verbose=False):
 
 
 def test_noun_lemmas(r):
-    """ Test abbreviation lemmas ('Schengen' is an abbreviation), proper name
-        lemmas ('Ísland'), and lemmas of literal terminals in the grammar
-        ('munur:kk' in this case) """
+    """Test abbreviation lemmas ('Schengen' is an abbreviation), proper name
+    lemmas ('Ísland'), and lemmas of literal terminals in the grammar
+    ('munur:kk' in this case)"""
     sent = "Schengen rekur mun öflugri gagnagrunn en Ísland gæti gert."
     s = r.parse_single(sent)
     assert s.tree.nouns == ["Schengen", "munur", "gagnagrunnur", "Ísland"]
@@ -1570,17 +1590,15 @@ def test_composite_words(r):
     # as an unknown noun - causing 'fiskinn' to be parsed as an adjective
     assert s.lemmas == ["ég", "borða", "sykrisaltan", "fiskinn"]
     s = r.parse_single("Hann hjólaði kattspenntur á kvenbretti niður brekkuna")
-    assert (
-        s.lemmas == [
-            "hann",
-            "hjóla",
-            "katt-spenntur",
-            "á",           #"á",           
-            "kven-bretti",  #"kven-bretti", # 'ær' is said to be the direct object!
-            "niður",
-            "brekka",
-        ]
-    )
+    assert s.lemmas == [
+        "hann",
+        "hjóla",
+        "katt-spenntur",
+        "á",  # "á",
+        "kven-bretti",  # "kven-bretti", # 'ær' is said to be the direct object!
+        "niður",
+        "brekka",
+    ]
     s = r.parse_single(
         "Málfræði-reglurnar sögðu að hann væri frá Vestur-Þýskalandi "
         "og Ytri-Hnausi í Þingvalla-sveit."
@@ -1624,8 +1642,8 @@ def test_foreign_names(r):
 
 
 def test_vocabulary(r):
-    """ Test words that should be in the vocabulary, coming from
-        ord.auka.csv or ord.add.csv """
+    """Test words that should be in the vocabulary, coming from
+    ord.auka.csv or ord.add.csv"""
     s = r.parse_single(
         """
         Í gær gekk ég út frá ströndum og fékk mér ís.
@@ -1691,7 +1709,7 @@ def test_vocabulary(r):
 
 
 def test_adjective_predicates(r):
-    """ Test adjectives with an associated predicate """
+    """Test adjectives with an associated predicate"""
 
     # Accusative case (þolfall)
     s = r.parse_single(
@@ -1739,7 +1757,7 @@ def test_adjective_predicates(r):
 
 
 def test_subj_op(r):
-    """ Test impersonal verbs """
+    """Test impersonal verbs"""
     # langa
     s = r.parse_single("hestinn langaði í brauð")
     assert s.tree is not None
@@ -1851,7 +1869,9 @@ def test_names(r):
     s = r.parse_single("Við hringdum í Baldvin Kr.")
     assert "Baldvin Kr." in s.tree.persons
 
-    s = r.parse("Við vitum ekki hvaða hesta Jón á. Hann hefur verið bóndi í langan tíma.")
+    s = r.parse(
+        "Við vitum ekki hvaða hesta Jón á. Hann hefur verið bóndi í langan tíma."
+    )
     assert len(s["sentences"]) == 2
     assert "Jón" in s["sentences"][0].tree.persons
 
@@ -1982,10 +2002,10 @@ def test_company(r):
     )
 
     # NP-COMPANY is no longer in the SimpleTree format
-    #assert [t.lemma for t in s.tree.all_matches("NP-COMPANY")] == [
+    # assert [t.lemma for t in s.tree.all_matches("NP-COMPANY")] == [
     #    "Hands ASA",
     #    "Celestial Inc.",
-    #]
+    # ]
     s = r.parse_single("Hann réðst inn á skrifstofu Samherja hf. og rændi gögnum.")
     assert s.tree is not None
     assert (
@@ -1997,7 +2017,7 @@ def test_company(r):
     )
 
     # !!! Note that lemmas of words found in BÍN are in lower case
-    #assert [t.lemma for t in s.tree.all_matches("NP-COMPANY")] == ["Samherja hf."]
+    # assert [t.lemma for t in s.tree.all_matches("NP-COMPANY")] == ["Samherja hf."]
 
 
 def test_kludgy_ordinals():
@@ -2051,11 +2071,7 @@ def test_ambig_phrases(r):
     s = r.parse_single("Hugmynd Jóns varð ofan á í umræðunni.")
     assert has_verbs(s, ("verða",))
     s = r.parse_single("Efsta húsið er það síðasta sem var lokið við.")
-    assert (
-        has_verbs(s, ("vera", "ljúka"))
-    ) or (
-        has_verbs(s, ("vera", "lúka"))
-    )
+    assert (has_verbs(s, ("vera", "ljúka"))) or (has_verbs(s, ("vera", "lúka")))
     s = r.parse_single("Hún var fljót að fara út.")
     assert has_verbs(s, ("vera", "fara"))
     s = r.parse_single("Það var forsenda þess að hún var fljót að maturinn var góður.")
@@ -2185,10 +2201,10 @@ def test_þau(r):
     assert s and s.tree
     assert s.tree.S.IP.VP.PP.NP.tidy_text == "þeirra Sigurjóns"
     s = r.parse_single("Mér leiddust stælarnir í þeim Gunnlaugi.")
-    # The argument frames have been tighened, when the subject frames are 
+    # The argument frames have been tighened, when the subject frames are
     # merged with the object frames this should work for 'leiðast'.
-    #assert s and s.tree
-    #assert s.tree.S.IP.NP_SUBJ.PP.NP.tidy_text == "þeim Gunnlaugi"
+    # assert s and s.tree
+    # assert s.tree.S.IP.NP_SUBJ.PP.NP.tidy_text == "þeim Gunnlaugi"
 
 
 def test_aukafall(r):

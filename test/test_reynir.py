@@ -5,7 +5,7 @@
 
     Tests for Greynir module
 
-    Copyright (C) 2021 Miðeind ehf.
+    Copyright (C) 2022 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -107,187 +107,196 @@ def test_lemmas():
     assert s.categories is None
     assert s.lemmas_and_cats is None
 
+
 # Tests for more complex tokenization in bintokenizer
+
 
 def test_names():
     g = Greynir(parse_foreign_sentences=True)
     s = g.parse_single("Hér er Jón.")
-    assert s.lemmas == ['hér', 'vera', 'Jón', '.']
+    assert s.lemmas == ["hér", "vera", "Jón", "."]
 
     s = g.parse_single("Hér er Díana.")
-    assert s.lemmas == ['hér', 'vera', 'Díana', '.']
+    assert s.lemmas == ["hér", "vera", "Díana", "."]
 
     s = g.parse_single("Hér er Jón Daði.")
-    assert s.lemmas == ['hér', 'vera', 'Jón Daði', '.']
+    assert s.lemmas == ["hér", "vera", "Jón Daði", "."]
 
     s = g.parse_single("Hér er Díana Valdís.")
-    assert s.lemmas == ['hér', 'vera', 'Díana Valdís', '.']
+    assert s.lemmas == ["hér", "vera", "Díana Valdís", "."]
 
     s = g.parse_single("Hér er Jón Daði Vignisson.")
-    assert s.lemmas == ['hér', 'vera', 'Jón Daði Vignisson', '.']
+    assert s.lemmas == ["hér", "vera", "Jón Daði Vignisson", "."]
 
     s = g.parse_single("Hér er Díana Valdís Bjartmarsdóttir.")
-    assert s.lemmas == ['hér', 'vera', 'Díana Valdís Bjartmarsdóttir', '.']
+    assert s.lemmas == ["hér", "vera", "Díana Valdís Bjartmarsdóttir", "."]
 
     s = g.parse_single("Hér er Björn.")
-    assert s.lemmas == ['hér', 'vera', 'Björn', '.']
+    assert s.lemmas == ["hér", "vera", "Björn", "."]
 
     s = g.parse_single("Hér er Blær.")
-    assert s.lemmas == ['hér', 'vera', 'Blær', '.']
+    assert s.lemmas == ["hér", "vera", "Blær", "."]
 
     s = g.parse_single("Hér er Björn Arnarson.")
-    assert s.lemmas == ['hér', 'vera', 'Björn Arnarson', '.']
+    assert s.lemmas == ["hér", "vera", "Björn Arnarson", "."]
 
     s = g.parse_single("Hér er Sóley Bjartmarsdóttir.")
-    assert s.lemmas == ['hér', 'vera', 'Sóley Bjartmarsdóttir', '.']
+    assert s.lemmas == ["hér", "vera", "Sóley Bjartmarsdóttir", "."]
 
     s = g.parse_single("Hér er Jón Zoëga.")
-    assert s.lemmas == ['hér', 'vera', 'Jón Zoëga', '.']
+    assert s.lemmas == ["hér", "vera", "Jón Zoëga", "."]
 
     s = g.parse_single("Hér er Gyða Waage.")
-    assert s.lemmas == ['hér', 'vera', 'Gyða Waage', '.']
+    assert s.lemmas == ["hér", "vera", "Gyða Waage", "."]
 
     s = g.parse_single("Hér er Sigríður Á. Andersen.")
-    assert s.lemmas == ['hér', 'vera', 'Sigríður Á. Andersen', '.']
+    assert s.lemmas == ["hér", "vera", "Sigríður Á. Andersen", "."]
 
     s = g.parse_single("Hér er Gvendur P. Aspelund.")
-    assert s.lemmas == ['hér', 'vera', 'Gvendur P. Aspelund', '.']
+    assert s.lemmas == ["hér", "vera", "Gvendur P. Aspelund", "."]
 
     s = g.parse_single("Hér er Jakob Díönu- og Styrmisson.")
-    assert s.lemmas == ['hér', 'vera', 'Jakob Díönu- og Styrmisson', '.']
+    assert s.lemmas == ["hér", "vera", "Jakob Díönu- og Styrmisson", "."]
 
     s = g.parse_single("Hér er Gvendur Ragnheiðarson.")
-    assert s.lemmas == ['hér', 'vera', 'Gvendur Ragnheiðarson', '.']
+    assert s.lemmas == ["hér", "vera", "Gvendur Ragnheiðarson", "."]
 
     s = g.parse_single("Hér er Sóley Petrudóttir.")
-    assert s.lemmas == ['hér', 'vera', 'Sóley Petrudóttir', '.']
+    assert s.lemmas == ["hér", "vera", "Sóley Petrudóttir", "."]
 
     s = g.parse_single("Hér er Sóley Péturs- og Petrudóttir.")
-    assert s.lemmas == ['hér', 'vera', 'Sóley Péturs- og Petrudóttir', '.']
+    assert s.lemmas == ["hér", "vera", "Sóley Péturs- og Petrudóttir", "."]
 
     s = g.parse_single("Hér er Svanur Hildar- og Pálsson Scheving.")
-    assert s.lemmas == ['hér', 'vera', 'Svanur Hildar- og Pálsson Scheving', '.']
+    assert s.lemmas == ["hér", "vera", "Svanur Hildar- og Pálsson Scheving", "."]
 
     s = g.parse_single("Hér eru Áki og Andri Brjánssynir.")
-    #assert s.lemmas == ['hér', 'vera', 'Áki og Andri Brjánssynir', '.']    # Out of scope 
+    # assert s.lemmas == ['hér', 'vera', 'Áki og Andri Brjánssynir', '.']    # Out of scope
 
     s = g.parse_single("Hér eru Ína og Una Brjánsdætur.")
-    #assert s.lemmas == ['hér', 'vera', 'Ína og Una Brjánsdætur', '.']    # Out of scope 
+    # assert s.lemmas == ['hér', 'vera', 'Ína og Una Brjánsdætur', '.']    # Out of scope
 
     s = g.parse_single("Hér eru Áki og Láki Brjánssynir.")
-    #assert s.lemmas == ['hér', 'vera', 'Áki og Láki Brjánssynir', '.']    # Out of scope 
+    # assert s.lemmas == ['hér', 'vera', 'Áki og Láki Brjánssynir', '.']    # Out of scope
 
     s = g.parse_single("Hér eru Ína og Mína Brjánsdætur.")
-    #assert s.lemmas == ['hér', 'vera', 'Ína og Mína Brjánsdætur', '.']    # Out of scope 
+    # assert s.lemmas == ['hér', 'vera', 'Ína og Mína Brjánsdætur', '.']    # Out of scope
 
     s = g.parse_single("Hér eru Áki og Ína Brjánsbörn.")
-    #assert s.lemmas == ['hér', 'vera', 'Áki og Ína Brjánsbörn', '.']    # Out of scope 
+    # assert s.lemmas == ['hér', 'vera', 'Áki og Ína Brjánsbörn', '.']    # Out of scope
 
     s = g.parse_single("Hér er Jack Nicholson.")
-    assert s.lemmas == ['hér', 'vera', 'Jack Nicholson', '.']
+    assert s.lemmas == ["hér", "vera", "Jack Nicholson", "."]
 
     s = g.parse_single("Hér er Diane Lane.")
-    assert s.lemmas == ['hér', 'vera', 'Diane Lane', '.']
+    assert s.lemmas == ["hér", "vera", "Diane Lane", "."]
 
     s = g.parse_single("Hér er Finsbury Park.")
-    assert s.lemmas == ['hér', 'vera', 'Finsbury Park', '.']
+    assert s.lemmas == ["hér", "vera", "Finsbury Park", "."]
 
     s = g.parse_single("Hér er Sky Sports.")
-    assert s.lemmas == ['hér', 'vera', 'Sky Sports', '.']      # Out of scope
+    assert s.lemmas == ["hér", "vera", "Sky Sports", "."]  # Out of scope
 
-    #s = g.parse_single("Hér er J. K. Rowling.")
-    #assert s.lemmas == ['hér', 'vera', 'J. K. Rowling', '.']    # Out of scope 
+    # s = g.parse_single("Hér er J. K. Rowling.")
+    # assert s.lemmas == ['hér', 'vera', 'J. K. Rowling', '.']    # Out of scope
 
     s = g.parse_single("Hér er Parsley Ecothelial Welmington III.")
-    assert s.lemmas == ['hér', 'vera', 'Parsley Ecothelial Welmington III', '.']
+    assert s.lemmas == ["hér", "vera", "Parsley Ecothelial Welmington III", "."]
 
     s = g.parse_single("Hér er Dietrich van Helsing.")
-    assert s.lemmas == ['hér', 'vera', 'Dietrich van Helsing', '.']
+    assert s.lemmas == ["hér", "vera", "Dietrich van Helsing", "."]
 
     s = g.parse_single("Hér er Helmine van de Fnupft.")
-    assert s.lemmas == ['hér', 'vera', 'Helmine van de Fnupft', '.']
+    assert s.lemmas == ["hér", "vera", "Helmine van de Fnupft", "."]
 
     s = g.parse_single("Hér er Carla de la Cruz.")
-    assert s.lemmas == ['hér', 'vera', 'Carla de la Cruz', '.']
+    assert s.lemmas == ["hér", "vera", "Carla de la Cruz", "."]
 
     s = g.parse_single("Hér er Barack Obama.")
-    assert s.lemmas == ['hér', 'vera', 'Barack Obama', '.']
+    assert s.lemmas == ["hér", "vera", "Barack Obama", "."]
 
     s = g.parse_single("Hér er Finnur de la Cruz.")
-    assert s.lemmas == ['hér', 'vera', 'Finnur de la Cruz', '.']
+    assert s.lemmas == ["hér", "vera", "Finnur de la Cruz", "."]
 
     # s = g.parse_single("Hér er Derek Árnason.")
     # assert s.lemmas == ['hér', 'vera', 'Derek Árnason', '.']
 
     s = g.parse_single("Hér er Díana Woodward.")
-    assert s.lemmas == ['hér', 'vera', 'Díana Woodward', '.']
+    assert s.lemmas == ["hér", "vera", "Díana Woodward", "."]
 
-    #s = g.parse_single("Hér er Knut Axel Holding AS.")
-    #assert s.lemmas == ['hér', 'vera', 'Knut Axel Holding AS', '.']    # Out of scope 
+    # s = g.parse_single("Hér er Knut Axel Holding AS.")
+    # assert s.lemmas == ['hér', 'vera', 'Knut Axel Holding AS', '.']    # Out of scope
 
-    #s = g.parse_single("Hér er Matthildur Ármannsdóttir ehf.")
-    #assert s.lemmas == ['hér', 'vera', 'Matthildur Ármannsdóttir ehf.', '.']   # Out of scope
+    # s = g.parse_single("Hér er Matthildur Ármannsdóttir ehf.")
+    # assert s.lemmas == ['hér', 'vera', 'Matthildur Ármannsdóttir ehf.', '.']   # Out of scope
 
     s = g.parse_single("Hér er Super Mattel AS.")
-    assert s.lemmas == ['hér', 'vera', 'Super Mattel AS', '.']
+    assert s.lemmas == ["hér", "vera", "Super Mattel AS", "."]
 
-    #s = g.parse_single("Hér er WOW Cyclothon.")
-    #assert s.lemmas == ['hér', 'vera', 'WOW Cyclothon', '.']   # Out of scope
+    # s = g.parse_single("Hér er WOW Cyclothon.")
+    # assert s.lemmas == ['hér', 'vera', 'WOW Cyclothon', '.']   # Out of scope
 
     s = g.parse_single("Hér er SHAPP Games.")
-    assert s.lemmas == ['hér', 'vera', 'SHAPP Games', '.']
+    assert s.lemmas == ["hér", "vera", "SHAPP Games", "."]
 
-    #s = g.parse_single("Hér er Fiat a10.")
-    #assert s.lemmas == ['hér', 'vera', 'Fiat a10', '.']        # Out of scope
+    # s = g.parse_single("Hér er Fiat a10.")
+    # assert s.lemmas == ['hér', 'vera', 'Fiat a10', '.']        # Out of scope
 
     s = g.parse_single("Hér er Ikea.")
-    assert s.lemmas == ['hér', 'vera', 'Ikea', '.']
+    assert s.lemmas == ["hér", "vera", "Ikea", "."]
 
-    #s = g.parse_single("Hér er Styrmir Halldórsson H225.")
-    #assert s.lemmas == ['hér', 'vera', 'Styrmir Halldórsson H225', '.']    # Out of scope
+    # s = g.parse_single("Hér er Styrmir Halldórsson H225.")
+    # assert s.lemmas == ['hér', 'vera', 'Styrmir Halldórsson H225', '.']    # Out of scope
 
     s = g.parse_single("Hér er The Trials and Tribulations of the Cat.")
-    assert s.lemmas == ['hér', 'vera', 'The Trials and Tribulations of the Cat', '.']
+    assert s.lemmas == ["hér", "vera", "The Trials and Tribulations of the Cat", "."]
 
     s = g.parse_single("Hér er Making Pastels: In Search of Quietness.")
-    assert s.lemmas == ['hér', 'vera', 'Making Pastels', ':', 'In Search of Quietness', '.']
+    assert s.lemmas == [
+        "hér",
+        "vera",
+        "Making Pastels",
+        ":",
+        "In Search of Quietness",
+        ".",
+    ]
 
     # False positives to avoid
     s = g.parse_single("Hér er von Helgu.")
-    assert s.lemmas == ['hér', 'vera', 'von', 'Helga', '.']
+    assert s.lemmas == ["hér", "vera", "von", "Helga", "."]
 
     s = g.parse_single("Hér er Helgi Björns.")
-    assert s.lemmas == ['hér', 'vera', 'Helgi Björns', '.']
+    assert s.lemmas == ["hér", "vera", "Helgi Björns", "."]
 
     s = g.parse_single("Hér er Jón de la.")
-    assert s.lemmas == ['hér', 'vera', 'Jón', 'de', 'la', '.']
+    assert s.lemmas == ["hér", "vera", "Jón", "de", "la", "."]
 
 
 def test_compounds_with_numbers():
-    """ Compounds containing numbers, either
-        with a hyphen or not """
+    """Compounds containing numbers, either
+    with a hyphen or not"""
     pass
     # g = Greynir()
-    
-    # Tokens with letters and numbers are split up so this fails
-    #s = g.parse_single("Hér er X3-jeppi.")
-    #assert s.lemmas == ['hér', 'vera', 'X3-jeppi', '.']
 
     # Tokens with letters and numbers are split up so this fails
-    #s = g.parse_single("Hér er Bombardier Q-400.")
-    #assert s.lemmas == ['hér', 'vera', 'Bombardier Q-400', '.']
+    # s = g.parse_single("Hér er X3-jeppi.")
+    # assert s.lemmas == ['hér', 'vera', 'X3-jeppi', '.']
 
     # Tokens with letters and numbers are split up so this fails
-    #s = g.parse_single("Hér er U20-landsliðið.")
-    #assert s.lemmas == ['hér', 'vera', 'U20-landslið', '.']
+    # s = g.parse_single("Hér er Bombardier Q-400.")
+    # assert s.lemmas == ['hér', 'vera', 'Bombardier Q-400', '.']
 
     # Tokens with letters and numbers are split up so this fails
-    #s = g.parse_single("Hér er ómega-3 fitusýra.")
-    #assert s.lemmas == ['hér', 'vera', 'ómega-3', 'fitusýra', '.']
+    # s = g.parse_single("Hér er U20-landsliðið.")
+    # assert s.lemmas == ['hér', 'vera', 'U20-landslið', '.']
+
+    # Tokens with letters and numbers are split up so this fails
+    # s = g.parse_single("Hér er ómega-3 fitusýra.")
+    # assert s.lemmas == ['hér', 'vera', 'ómega-3', 'fitusýra', '.']
 
     # The entity combination doesn't recognize the hyphenated word
-    #s = g.parse_single("Hér er Coca Cola-bikarinn.")
-    #assert s.lemmas == ['hér', 'vera', 'Coca Cola-bikar', '.']
+    # s = g.parse_single("Hér er Coca Cola-bikarinn.")
+    # assert s.lemmas == ['hér', 'vera', 'Coca Cola-bikar', '.']
 
 
 def test_sentence_split():
@@ -319,9 +328,7 @@ def test_auto_uppercase():
         if abbr not in NOT_NAME_ABBREVS:
             # No period, no extra tokens
             s = g.parse_single(f"hér er jón {abbr}")
-            assert (
-                detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}"
-            )
+            assert detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}"
             assert f"Jón {abbr.capitalize()}" in s.tree.persons
 
             # No period, extra tokens
@@ -333,32 +340,23 @@ def test_auto_uppercase():
 
         # No period, surname
         s = g.parse_single(f"hér er jón {abbr} guðnason")
-        assert (
-            detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()} Guðnason"
-        )
+        assert detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()} Guðnason"
         assert f"Jón {abbr.capitalize()} Guðnason" in s.tree.persons
 
         # With period, no extra tokens
         s = g.parse_single(f"hér er jón {abbr}.")
-        assert (
-            detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}."
-        )
+        assert detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}."
         assert f"Jón {abbr.capitalize()}." in s.tree.persons
 
         # With period, extra tokens
         s = g.parse_single(f"við jón {abbr}. erum góðir vinir")
-        assert (
-            detokenize(s.tokens) == f"við Jón {abbr.capitalize()}. erum góðir vinir"
-        )
+        assert detokenize(s.tokens) == f"við Jón {abbr.capitalize()}. erum góðir vinir"
         assert f"Jón {abbr.capitalize()}." in s.tree.persons
 
         # With period, surname
         s = g.parse_single(f"hér er jón {abbr}. guðnason")
-        assert (
-            detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}. Guðnason"
-        )
+        assert detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}. Guðnason"
         assert f"Jón {abbr.capitalize()}. Guðnason" in s.tree.persons
-
 
     s = g.parse_single("hver er guðni th jóhannesson")
     assert detokenize(s.tokens) == "hver er Guðni Th Jóhannesson"
@@ -403,9 +401,17 @@ def test_auto_uppercase():
         and "Hámundur Á. Guðmundsson" in s.tree.persons
     )
 
-    s = g.parse_single("hver er guðmundur í hámundarson, sonur hámundar á guðmundssonar")
-    assert detokenize(s.tokens) == "hver er Guðmundur Í Hámundarson, sonur Hámundar Á Guðmundssonar"
-    assert "Guðmundur Í Hámundarson" in s.tree.persons and "Hámundur Á Guðmundsson" in s.tree.persons
+    s = g.parse_single(
+        "hver er guðmundur í hámundarson, sonur hámundar á guðmundssonar"
+    )
+    assert (
+        detokenize(s.tokens)
+        == "hver er Guðmundur Í Hámundarson, sonur Hámundar Á Guðmundssonar"
+    )
+    assert (
+        "Guðmundur Í Hámundarson" in s.tree.persons
+        and "Hámundur Á Guðmundsson" in s.tree.persons
+    )
 
     s = g.parse_single(
         "ég hitti loft á bíldudal, blæ á seyðisfirði og skúla í keflavík"
@@ -495,27 +501,19 @@ def test_auto_uppercase():
     assert "Ástbjörn" in s.tree.persons and "Gunna" in s.tree.persons
 
     s = g.parse_single("ég hringdi í baldvin kr. magnússon")
-    assert (
-        detokenize(s.tokens) == "ég hringdi í Baldvin Kr. Magnússon"
-    )
+    assert detokenize(s.tokens) == "ég hringdi í Baldvin Kr. Magnússon"
     assert "Baldvin Kr. Magnússon" in s.tree.persons
 
     s = g.parse_single("hafðu samband við jón s. 5885522")
-    assert (
-        detokenize(s.tokens) == "hafðu samband við Jón s. 5885522"
-    )
+    assert detokenize(s.tokens) == "hafðu samband við Jón s. 5885522"
     assert "Jón" in s.tree.persons
 
     s = g.parse_single("hafðu samband við jón s. jónsson")
-    assert (
-        detokenize(s.tokens) == "hafðu samband við Jón S. Jónsson"
-    )
+    assert detokenize(s.tokens) == "hafðu samband við Jón S. Jónsson"
     assert "Jón S. Jónsson" in s.tree.persons
 
     s = g.parse_single("ég veit ekki hvar hann baldur er.")
-    assert (
-        detokenize(s.tokens) == "ég veit ekki hvar hann Baldur er."
-    )
+    assert detokenize(s.tokens) == "ég veit ekki hvar hann Baldur er."
     assert "Baldur" in s.tree.persons
 
 

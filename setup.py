@@ -6,7 +6,7 @@
 
     Setup.py
 
-    Copyright (C) 2021 Miðeind ehf.
+    Copyright (C) 2022 Miðeind ehf.
     Original Author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -66,11 +66,11 @@ if sys.version_info < (3, 7):
 def read(*names: str, **kwargs: Any) -> str:
     try:
         return io.open(
-            join(dirname(__file__), *names),
-            encoding=kwargs.get("encoding", "utf8")
+            join(dirname(__file__), *names), encoding=kwargs.get("encoding", "utf8")
         ).read()
     except (IOError, OSError):
         return ""
+
 
 # Load version string from file
 __version__ = "[missing]"
@@ -82,8 +82,9 @@ setup(
     license="MIT",
     description="A natural language parser for Icelandic",
     long_description="{0}\n{1}".format(
-        re.compile("^.. start-badges.*^.. end-badges", re.M | re.S)
-            .sub("", read("README.rst")),
+        re.compile("^.. start-badges.*^.. end-badges", re.M | re.S).sub(
+            "", read("README.rst")
+        ),
         re.sub(":[a-z]+:`~?(.*?)`", r"``\1``", read("CHANGELOG.rst")),
     ),
     author="Miðeind ehf",
@@ -123,9 +124,7 @@ setup(
         "cffi>=1.13.0",
         "tokenizer>=3.4.0",
         "islenska>=0.4.3",
-        "typing_extensions"
+        "typing_extensions",
     ],
-    cffi_modules=[
-        "src/reynir/eparser_build.py:ffibuilder"
-    ],
+    cffi_modules=["src/reynir/eparser_build.py:ffibuilder"],
 )

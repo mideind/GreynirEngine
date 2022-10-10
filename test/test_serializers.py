@@ -5,7 +5,7 @@
 
     Tests for JSON serialization of sentences
 
-    Copyright (C) 2021 by Miðeind ehf.
+    Copyright (C) 2022 by Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -37,8 +37,9 @@ import pytest  # type: ignore
 
 @pytest.fixture(scope="module")
 def r():
-    """ Provide a module-scoped Greynir instance as a test fixture """
+    """Provide a module-scoped Greynir instance as a test fixture"""
     from reynir import Greynir
+
     r = Greynir()
     yield r
     # Do teardown here
@@ -69,7 +70,9 @@ def test_serializers(r):
 
         assert orig.tree.flat_with_all_variants == orig.tree.flat_with_all_variants
         cls = r.__class__
-        assert json.loads(orig.dumps(cls, indent=2)) == json.loads(new.dumps(cls, indent=2))
+        assert json.loads(orig.dumps(cls, indent=2)) == json.loads(
+            new.dumps(cls, indent=2)
+        )
 
 
 def test_annotree():
@@ -84,6 +87,7 @@ def test_annotree():
 
     """
     from reynir.simpletree import AnnoTree
+
     atree = AnnoTree(s)
     stree = atree.as_simple_tree()
     assert stree is not None
@@ -96,6 +100,7 @@ def test_annotree():
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
+
     g = Greynir()
     test_serializers(g)
     g.__class__.cleanup()

@@ -5,7 +5,7 @@
 
     Tests for Greynir module
 
-    Copyright (C) 2021 Miðeind ehf.
+    Copyright (C) 2022 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -39,7 +39,7 @@ from reynir.bintokenizer import tokenize
 
 @pytest.fixture(scope="module")
 def r():
-    """ Provide a module-scoped Greynir instance as a test fixture """
+    """Provide a module-scoped Greynir instance as a test fixture"""
     r = Greynir()
     yield r
     # Do teardown here
@@ -101,10 +101,10 @@ def test_original(r: Greynir) -> None:
     assert sum(len(t.original or "") for t in tlist) == len(s)
 
 
-
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
+
     greynir = Greynir()
     test_original(greynir)
     greynir.__class__.cleanup()

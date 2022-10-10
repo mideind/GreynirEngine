@@ -181,7 +181,7 @@ about `copyright and licensing <https://greynir.is/doc/copyright.html>`__.
 Copyright and licensing
 ***********************
 
-Greynir is *copyright © 2021* by `Miðeind ehf. <https://mideind.is>`__.
+Greynir is *copyright © 2022* by `Miðeind ehf. <https://mideind.is>`__.
 The original author of this software is *Vilhjálmur Þorsteinsson*.
 
 This software is licensed under the **MIT License**:
