@@ -37,7 +37,7 @@
     and build the required CFFI Python wrapper via eparser_build.py.
     The same applies to bin.cpp -> bin.*.so and bin_build.py.
 
-    Note that installing under PyPy >= 3.6 is supported (and recommended
+    Note that installing under PyPy >= 3.7 is supported (and recommended
     for best performance).
 
 """
@@ -58,8 +58,8 @@ from setuptools import find_packages  # type: ignore
 from setuptools import setup  # type: ignore
 
 
-if sys.version_info < (3, 6):
-    print("Greynir requires Python >= 3.6")
+if sys.version_info < (3, 7):
+    print("Greynir requires Python >= 3.7")
     sys.exit(1)
 
 
@@ -108,7 +108,6 @@ setup(
         "Natural Language :: Icelandic",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
