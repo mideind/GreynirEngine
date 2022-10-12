@@ -4,7 +4,7 @@
 
     SimpleTree module
 
-    Copyright (C) 2021 Miðeind ehf.
+    Copyright (C) 2022 Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -99,9 +99,9 @@ class CaseFunc(Protocol):
 
 class SimpleTreeNode(CanonicalTokenDict, total=False):
 
-    """ A dictionary representing a node in a SimpleTree.
-        This scheme is intended for external consumption,
-        such as export in JSON format to clients. """
+    """A dictionary representing a node in a SimpleTree.
+    This scheme is intended for external consumption,
+    such as export in JSON format to clients."""
 
     # Node kind, e.g. 'NONTERMINAL'
     # Note: since k is also present in CanonicalTokenDict as an int,
@@ -367,7 +367,12 @@ _DEFAULT_ID_MAP: IdMap = {
     "CP-THT": dict(
         name="Skýringarsetning",
         overrides="IP-INF",
-        subject_to={"CP-THT-SUBJ", "CP-THT-OBJ", "CP-THT-IOBJ", "CP-THT-PRD",},
+        subject_to={
+            "CP-THT-SUBJ",
+            "CP-THT-OBJ",
+            "CP-THT-IOBJ",
+            "CP-THT-PRD",
+        },
     ),  # Complement clause
     "CP-THT-SUBJ": dict(
         name="Frumlagsskýringarsetning", overrides="NP-SUBJ"
@@ -383,8 +388,15 @@ _DEFAULT_ID_MAP: IdMap = {
     ),  # Complement clause
     "CP-QUE": dict(
         name="Spurnaraukasetning",
-        overrides={"NP-OBJ",},
-        subject_to={"CP-QUE-SUBJ", "CP-QUE-OBJ", "CP-QUE-IOBJ", "CP-QUE-PRD",},
+        overrides={
+            "NP-OBJ",
+        },
+        subject_to={
+            "CP-QUE-SUBJ",
+            "CP-QUE-OBJ",
+            "CP-QUE-IOBJ",
+            "CP-QUE-PRD",
+        },
     ),  # Question subclause
     "CP-QUE-SUBJ": dict(
         name="Frumlagsspurnaraukasetning", overrides="NP-SUBJ"
@@ -417,7 +429,12 @@ _DEFAULT_ID_MAP: IdMap = {
     "IP-INF": dict(
         name="Nafnháttarsetning",
         overrides="VP",
-        subject_to={"IP-INF-SUBJ", "IP-INF-OBJ", "IP-INF-IOBJ", "IP-INF-PRD",},
+        subject_to={
+            "IP-INF-SUBJ",
+            "IP-INF-OBJ",
+            "IP-INF-IOBJ",
+            "IP-INF-PRD",
+        },
     ),
     "IP-INF-SUBJ": dict(name="Frumlagsnafnháttarsetning", overrides="NP-SUBJ"),
     "IP-INF-OBJ": dict(name="Bein andlagsnafnháttarsetning", overrides="NP-OBJ"),
@@ -425,7 +442,15 @@ _DEFAULT_ID_MAP: IdMap = {
     "IP-INF-PRD": dict(name="Sagnfyllingarnafnháttarsetning", overrides="NP-PRD"),
     "VP": dict(
         name="Sagnliður",
-        overrides={"VP", "NP", "NP-PRD", "NP-SUBJ", "NP-OBJ", "NP-IOBJ", "NP-PRD",},
+        overrides={
+            "VP",
+            "NP",
+            "NP-PRD",
+            "NP-SUBJ",
+            "NP-OBJ",
+            "NP-IOBJ",
+            "NP-PRD",
+        },
     ),
     "VP-AUX": dict(name="Hjálparsögn", overrides="VP"),
     "NP": dict(
@@ -629,9 +654,9 @@ _CONJUNCTIONS = frozenset(("og", "eða"))
 
 
 def cut_definite_pronouns(txt: str) -> str:
-    """ Removes definite pronouns from the front of txt and returns the result.
-        However, if the text consists of only definite pronouns, it is returned
-        as-is. """
+    """Removes definite pronouns from the front of txt and returns the result.
+    However, if the text consists of only definite pronouns, it is returned
+    as-is."""
     lower_txt = txt.lower()
     if lower_txt.startswith("það að"):
         # Make an exception for 'það að X sé Y' - this is OK to return,
@@ -666,9 +691,9 @@ def cut_definite_pronouns(txt: str) -> str:
 
 class MultiReplacer:
 
-    """ Utility class to do multiple replacements on a string
-        in a single pass. The replacements are defined in a dict,
-        i.e. { "toReplace" : "byString" }
+    """Utility class to do multiple replacements on a string
+    in a single pass. The replacements are defined in a dict,
+    i.e. { "toReplace" : "byString" }
     """
 
     def __init__(self, replacements: Dict[str, str]) -> None:
@@ -691,7 +716,7 @@ class MultiReplacer:
 
 class SimpleTree:
 
-    """ A wrapper for a simple parse tree """
+    """A wrapper for a simple parse tree"""
 
     def __init__(
         self,
@@ -724,11 +749,11 @@ class SimpleTree:
         self._tag_cache: Optional[List[str]] = None
 
     def __str__(self) -> str:
-        """ Return a pretty-printed representation of the contained trees """
+        """Return a pretty-printed representation of the contained trees"""
         return pformat(self._head if self.is_terminal else self._sents)
 
     def __repr__(self) -> str:
-        """ Return a compact representation of this subtree """
+        """Return a compact representation of this subtree"""
         len_self = len(self)
         if len_self == 0:
             if self._head.get("k") == "PUNCTUATION":
@@ -741,7 +766,7 @@ class SimpleTree:
     def from_deep_tree(
         cls, deep_tree: Optional[Node], toklist: List[Tok], first_token_index: int = 0
     ) -> Optional["SimpleTree"]:
-        """ Construct a SimpleTree from a deep (detailed) parse tree """
+        """Construct a SimpleTree from a deep (detailed) parse tree"""
         # If the deep_tree has nodes referring to tokens with a different
         # index range than the given toklist, pass the difference in the
         # first_token_index parameter. For instance, if the toklist spans
@@ -755,40 +780,40 @@ class SimpleTree:
 
     @property
     def root(self) -> "SimpleTree":
-        """ The original topmost root of this subtree """
+        """The original topmost root of this subtree"""
         return self if self._root is None else self._root
 
     @property
     def parent(self) -> Optional["SimpleTree"]:
-        """ Return the parent of this subtree, or None if it is a root """
+        """Return the parent of this subtree, or None if it is a root"""
         return self._parent
 
     @property
     def stats(self) -> Optional[StatsDict]:
-        """ Return the parse statistics, if any, for the root of this subtree """
+        """Return the parse statistics, if any, for the root of this subtree"""
         return self.root._stats
 
     @property
     def register(self) -> Any:
-        """ Return the name register, if any, for the root of this subtree """
+        """Return the name register, if any, for the root of this subtree"""
         return self.root._register
 
     @property
     def tag(self) -> Optional[str]:
-        """ The simplified tag of this subtree, i.e. P, S, NP, VP, ADVP... """
+        """The simplified tag of this subtree, i.e. P, S, NP, VP, ADVP..."""
         return cast(Optional[str], self._head.get("i"))
 
     @property
     def kind(self) -> Optional[str]:
-        """ The kind of token associated with this subtree, for example
-            'WORD', 'MEASUREMENT' or 'PUNCTUATION', if the subtree is
-            a terminal node, or None otherwise """
+        """The kind of token associated with this subtree, for example
+        'WORD', 'MEASUREMENT' or 'PUNCTUATION', if the subtree is
+        a terminal node, or None otherwise"""
         return cast(Optional[str], self._head.get("k"))
 
     @property
     def ifd_tags(self) -> List[str]:
-        """ Return a list of the Icelandic Frequency Dictionary
-            (IFD) tag(s) for this token """
+        """Return a list of the Icelandic Frequency Dictionary
+        (IFD) tag(s) for this token"""
         if not self.is_terminal:
             return []
         x = self.text
@@ -836,8 +861,8 @@ class SimpleTree:
         return [str(IFD_Tagset(self._head))]
 
     def match_tag(self, item: Union[str, List[str]]) -> bool:
-        """ Return True if the given item matches the tag of this subtree
-            either fully or partially """
+        """Return True if the given item matches the tag of this subtree
+        either fully or partially"""
         tag = self.tag
         if tag is None:
             return False
@@ -850,9 +875,9 @@ class SimpleTree:
         return tags[0 : len(item)] == item
 
     def enclosing_tag(self, item: Union[str, List[str]]) -> Optional["SimpleTree"]:
-        """ Return the closest parent node having a tag
-            that matches the given item, if such a node exists,
-            or None otherwise """
+        """Return the closest parent node having a tag
+        that matches the given item, if such a node exists,
+        or None otherwise"""
         p = self.parent
         while p is not None and not p.match_tag(item):
             p = p.parent
@@ -860,23 +885,23 @@ class SimpleTree:
 
     @property
     def terminal(self) -> Optional[str]:
-        """ The terminal matched by this subtree. Note that this is a
-            'canonicalized' version of the terminal name, where literal
-            specifications have been simplified
-            (e.g., 'orð:hk'_x_y becomes 'no_hk_x_y') """
+        """The terminal matched by this subtree. Note that this is a
+        'canonicalized' version of the terminal name, where literal
+        specifications have been simplified
+        (e.g., 'orð:hk'_x_y becomes 'no_hk_x_y')"""
         return cast(Optional[str], self._head.get("t"))
 
     @property
     def original_terminal(self) -> Optional[str]:
-        """ The terminal matched by this subtree, as originally specified
-            in the grammar """
+        """The terminal matched by this subtree, as originally specified
+        in the grammar"""
         return cast(Optional[str], self._head.get("o", self._head.get("t")))
 
     @property
     def terminal_with_all_variants(self) -> Optional[str]:
-        """ The terminal matched by this subtree, with all applicable
-            variants in canonical form (in alphabetical order, except for
-            verb argument cases) """
+        """The terminal matched by this subtree, with all applicable
+        variants in canonical form (in alphabetical order, except for
+        verb argument cases)"""
         terminal = cast(Optional[str], self._head.get("a"))
         if terminal is not None:
             # All variants already available in canonical form: we're done
@@ -893,15 +918,15 @@ class SimpleTree:
 
     @cached_property
     def variants(self) -> List[str]:
-        """ Returns a list of the variants associated with
-            this subtree's terminal, if any """
+        """Returns a list of the variants associated with
+        this subtree's terminal, if any"""
         t = self.terminal
         return [] if t is None else t.split("_")[1:]
 
     @cached_property
     def all_variants(self) -> List[str]:
-        """ Returns a list of all variants associated with
-            this subtree's terminal, if any, augmented also by BÍN variants """
+        """Returns a list of all variants associated with
+        this subtree's terminal, if any, augmented also by BÍN variants"""
         # First, check whether an 'a' field is present
         a = cast(Optional[str], self._head.get("a"))
         if a is not None:
@@ -917,43 +942,43 @@ class SimpleTree:
 
     @cached_property
     def _vset(self) -> Set[str]:
-        """ Return a set of the variants associated with this subtree's terminal,
-            if any. Note that this set is unordered, so it is not intended for
-            retrieving the cases of verb subjects. """
+        """Return a set of the variants associated with this subtree's terminal,
+        if any. Note that this set is unordered, so it is not intended for
+        retrieving the cases of verb subjects."""
         return set(self.all_variants)
 
     @cached_property
     def tcat(self) -> str:
-        """ The word category associated with this subtree's terminal, if any """
+        """The word category associated with this subtree's terminal, if any"""
         t = self.terminal
         return "" if t is None else t.split("_")[0]
 
     @property
     def index(self) -> Optional[int]:
-        """ Return the associated token index, if this is a terminal,
-            otherwise None """
+        """Return the associated token index, if this is a terminal,
+        otherwise None"""
         return cast(Optional[int], self._head.get("ix")) if self.is_terminal else None
 
     @cached_property
     def sentences(self) -> List["SimpleTree"]:
-        """ A list of the contained sentences """
+        """A list of the contained sentences"""
         return [
             SimpleTree([[sent]], root=self.root, parent=self) for sent in self._sents
         ]
 
     @property
     def has_children(self) -> bool:
-        """ Does this subtree have (proper) children? """
+        """Does this subtree have (proper) children?"""
         return bool(self._children)
 
     @property
     def is_terminal(self) -> bool:
-        """ Is this a terminal node? """
+        """Is this a terminal node?"""
         return self._len == 1 and not self._children
 
     @property
     def _gen_children(self) -> Iterator["SimpleTree"]:
-        """ Generator for children of this tree """
+        """Generator for children of this tree"""
         if self._len > 1:
             # More than one sentence: yield'em
             yield from self.sentences
@@ -964,21 +989,21 @@ class SimpleTree:
 
     @property
     def children(self) -> Iterator["SimpleTree"]:
-        """ Cached generator for children of this tree """
+        """Cached generator for children of this tree"""
         if self._children_cache is None:
             self._children_cache = tuple(self._gen_children)
         yield from self._children_cache
 
     @property
     def descendants(self) -> Iterator["SimpleTree"]:
-        """ Generator for all descendants of this tree, in-order """
+        """Generator for all descendants of this tree, in-order"""
         for child in self.children:
             yield child
             yield from child.descendants
 
     @property
     def deep_children(self) -> Iterator[Iterator["SimpleTree"]]:
-        """ Generator of generators of children of this tree and its subtrees """
+        """Generator of generators of children of this tree and its subtrees"""
         yield self.children
         for ch in self.children:
             yield from ch.deep_children
@@ -986,9 +1011,9 @@ class SimpleTree:
     def deep_children_filtered(
         self, exclude: Callable[["SimpleTree"], bool]
     ) -> Iterator[Iterator["SimpleTree"]]:
-        """ Generator of generators of children of this tree and its subtrees.
-            This iterator applies an exclusion filter before navigating
-            into a subtree. This is typically used to avoid nested IP nodes. """
+        """Generator of generators of children of this tree and its subtrees.
+        This iterator applies an exclusion filter before navigating
+        into a subtree. This is typically used to avoid nested IP nodes."""
 
         def gen(g: Iterable["SimpleTree"]) -> Iterator["SimpleTree"]:
             for c in g:
@@ -1000,7 +1025,7 @@ class SimpleTree:
             yield from ch.deep_children_filtered(exclude)
 
     def _view(self, level: int) -> str:
-        """ Return a string containing an indented map of this subtree """
+        """Return a string containing an indented map of this subtree"""
         if level == 0:
             indent = ""
         else:
@@ -1021,7 +1046,7 @@ class SimpleTree:
 
     @property
     def view(self) -> str:
-        """ Return a nicely formatted string showing this subtree """
+        """Return a nicely formatted string showing this subtree"""
         return self._view(0)
 
     # Convert literal terminals that did not have word category specifiers
@@ -1041,8 +1066,8 @@ class SimpleTree:
     def _make_terminal_with_case(
         cat: str, variants: Set[str], terminal: str, default_case: str = "nf"
     ) -> str:
-        """ Return a terminal identifier with the given category and
-            variants, plus the case indicated in the terminal, if any """
+        """Return a terminal identifier with the given category and
+        variants, plus the case indicated in the terminal, if any"""
         tcase: Set[str] = set(terminal.split("_")[1:]) & _CASES
         if len(tcase) == 0:
             # If no case given, assume nominative rather than nothing
@@ -1051,8 +1076,8 @@ class SimpleTree:
 
     @staticmethod
     def _multiword_token(txt: str, tokentype: str, terminal: str) -> str:
-        """ Return a sequence of terminals corresponding to a multi-word token
-            whose source text is in txt """
+        """Return a sequence of terminals corresponding to a multi-word token
+        whose source text is in txt"""
         # Multi-word tokens can be dates and timestamps, amounts and measurements.
         # We need to jump through several hoops to reconstruct a sequence of
         # terminals that correspond to the source token atoms.
@@ -1221,7 +1246,7 @@ class SimpleTree:
         return " ".join(reversed(result))
 
     def _flat(self, func: Callable[["SimpleTree"], str]) -> str:
-        """ Return a string containing an a flat representation of this subtree """
+        """Return a string containing an a flat representation of this subtree"""
         if self._len > 1 or self._children:
             # Children present: Array or nonterminal
             tag = self.tag or "X"  # Unknown tag (should not occur)
@@ -1259,22 +1284,22 @@ class SimpleTree:
 
     @property
     def flat(self) -> str:
-        """ Return a flat representation of this subtree """
+        """Return a flat representation of this subtree"""
         return self._flat(lambda tree: cast(str, tree.terminal))
 
     @property
     def flat_with_all_variants(self) -> str:
-        """ Return a flat representation of this subtree, where terminals
-            include all applicable variants """
+        """Return a flat representation of this subtree, where terminals
+        include all applicable variants"""
         return self._flat(lambda tree: cast(str, tree.terminal_with_all_variants))
 
     def _bracket_form(self) -> str:
-        """ Return a bracketed representation of the tree """
+        """Return a bracketed representation of the tree"""
         result: List[str] = []
         puncts = frozenset((".", ",", ";", ":", "-", "—", "–"))
 
         def push(node: Optional["SimpleTree"]) -> None:
-            """ Append information about a node to the result list """
+            """Append information about a node to the result list"""
             if node is None:
                 return
             nonlocal result
@@ -1298,11 +1323,11 @@ class SimpleTree:
 
     @property
     def bracket_form(self) -> str:
-        """ Return a bracketed representation of the tree """
+        """Return a bracketed representation of the tree"""
         return self._bracket_form()
 
     def __getattr__(self, name: str) -> "SimpleTree":
-        """ Return the first child of this subtree having the given tag """
+        """Return the first child of this subtree having the given tag"""
         name = name.replace("_", "-")  # Convert NP_POSS to NP-POSS
         index = 1
         # Check for NP1, NP2 etc., i.e. a tag identifier followed by a number
@@ -1333,7 +1358,7 @@ class SimpleTree:
         raise AttributeError("Subtree has no child named '{0}'".format(name))
 
     def __getitem__(self, index: Union[str, int]) -> "SimpleTree":
-        """ Return the appropriate child subtree """
+        """Return the appropriate child subtree"""
         if isinstance(index, str):
             # Handle tree['NP']
             try:
@@ -1350,19 +1375,19 @@ class SimpleTree:
         raise IndexError("Subtree has no children")
 
     def __len__(self) -> int:
-        """ Return the length of this subtree, i.e. the last usable child index + 1 """
+        """Return the length of this subtree, i.e. the last usable child index + 1"""
         if self._len > 1:
             return self._len
         return len(self._children) if self._children else 0
 
     @property
     def _text(self) -> str:
-        """ Return the original text within this node only, if any """
+        """Return the original text within this node only, if any"""
         return self._head.get("x", "")
 
     @cached_property
     def _lemma(self) -> str:
-        """ Return the lemma of this node only, if any """
+        """Return the lemma of this node only, if any"""
         lemma = cast(
             Union[str, Tuple[Callable[..., str], Tuple[Any, ...]]],
             self._head.get("s", self._text),
@@ -1375,10 +1400,10 @@ class SimpleTree:
         return lemma
 
     def _alternative_form(self, form: str) -> str:
-        """ Return an alternative form of the text within this node.
-            The form can be 'nominative' for the nominative case only,
-            'indefinite' for the indefinite nominative form,
-            or 'canonical' for the singular, indefinite, nominative. """
+        """Return an alternative form of the text within this node.
+        The form can be 'nominative' for the nominative case only,
+        'indefinite' for the indefinite nominative form,
+        or 'canonical' for the singular, indefinite, nominative."""
         if self._cat not in _DECLINABLE_CATEGORIES:
             # This is not a potentially declined terminal node:
             # return the original text
@@ -1479,7 +1504,7 @@ class SimpleTree:
             # singular and plural
 
             def filter_func_no(m: BIN_Tuple) -> bool:
-                """ Filter function for nouns """
+                """Filter function for nouns"""
                 if not canonical and self.tcat != "gata":
                     # Match the original word in terms of number (singular/plural)
                     # We don't do this for street names ('gata' terminals)
@@ -1501,7 +1526,7 @@ class SimpleTree:
                 return True
 
             def filter_func_without_gender(m: BIN_Tuple) -> bool:
-                """ Filter function for personal pronouns """
+                """Filter function for personal pronouns"""
                 if not canonical:
                     # Match the original word in terms of number (singular/plural)
                     number = next(iter(self._vset & {"et", "ft"}), "et")
@@ -1510,8 +1535,8 @@ class SimpleTree:
                 return True
 
             def filter_func_with_gender(m: BIN_Tuple) -> bool:
-                """ Filter function for nonpersonal pronouns
-                    and declinable number words """
+                """Filter function for nonpersonal pronouns
+                and declinable number words"""
                 # Match the original word in terms of gender
                 gender = next(iter(self._vset & _GENDERS), "kk")
                 if gender.upper() not in m.beyging:
@@ -1524,7 +1549,7 @@ class SimpleTree:
                 return True
 
             def filter_func_lo(m: BIN_Tuple) -> bool:
-                """ Filter function for adjectives """
+                """Filter function for adjectives"""
                 # Match the original word in terms of gender
                 gender = next(iter(self._vset & _GENDERS), "kk")
                 if gender.upper() not in m.beyging:
@@ -1619,37 +1644,37 @@ class SimpleTree:
 
     @property
     def nominative(self) -> str:
-        """ Return the nominative form of this node only, if any """
+        """Return the nominative form of this node only, if any"""
         return self._alternative_form("nominative")
 
     @property
     def accusative(self) -> str:
-        """ Return the accusative form of this node only, if any """
+        """Return the accusative form of this node only, if any"""
         return self._alternative_form("accusative")
 
     @property
     def dative(self) -> str:
-        """ Return the dative form of this node only, if any """
+        """Return the dative form of this node only, if any"""
         return self._alternative_form("dative")
 
     @property
     def genitive(self) -> str:
-        """ Return the genitive form of this node only, if any """
+        """Return the genitive form of this node only, if any"""
         return self._alternative_form("genitive")
 
     @cached_property
     def indefinite(self) -> str:
-        """ Return the indefinite nominative form of this node only, if any """
+        """Return the indefinite nominative form of this node only, if any"""
         return self._alternative_form("indefinite")
 
     @cached_property
     def canonical(self) -> str:
-        """ Return the singular indefinite nominative form of this node only, if any """
+        """Return the singular indefinite nominative form of this node only, if any"""
         return self._alternative_form("canonical")
 
     @property
     def _cat(self) -> Optional[str]:
-        """ Return the word category of this node only, if any """
+        """Return the word category of this node only, if any"""
         # This is the category that is picked up from BÍN, not the terminal
         # category. The terminal category is available in the .tcat property)
         return cast(Optional[str], self._head.get("c"))
@@ -1659,8 +1684,8 @@ class SimpleTree:
 
     @property
     def cat(self) -> str:
-        """ Return the word category of this node, if it is a terminal,
-            or an empty string otherwise """
+        """Return the word category of this node, if it is a terminal,
+        or an empty string otherwise"""
         cat: str = self._head.get("c", "")
         if cat:
             return cat
@@ -1671,10 +1696,10 @@ class SimpleTree:
 
     @property
     def lemma_cat(self) -> str:
-        """ Return the word category of this node, to be paired with a lemma.
-            This is different from cat in the case of unknown words, where
-            there is no BÍN category, and we return "entity". For non-text
-            tokens/terminals, we return "". """
+        """Return the word category of this node, to be paired with a lemma.
+        This is different from cat in the case of unknown words, where
+        there is no BÍN category, and we return "entity". For non-text
+        tokens/terminals, we return ""."""
         if self.terminal is None:
             return ""
         k = self.kind
@@ -1689,7 +1714,7 @@ class SimpleTree:
 
     @property
     def categories(self) -> List[str]:
-        """ Return a list of word categories within this subtree """
+        """Return a list of word categories within this subtree"""
         if self._len > 1 or self._children:
             # Concatenate the categories from the children
             t: List[str] = []
@@ -1706,13 +1731,13 @@ class SimpleTree:
 
     @property
     def fl(self) -> str:
-        """ Return the BÍN 'fl' field of this node, if it is a terminal,
-            or an empty string otherwise """
+        """Return the BÍN 'fl' field of this node, if it is a terminal,
+        or an empty string otherwise"""
         return self._head.get("f", "")
 
     @cached_property
     def text(self) -> str:
-        """ Return the original text contained within this subtree """
+        """Return the original text contained within this subtree"""
         if self.is_terminal:
             # Terminal node: return own text
             return self._text
@@ -1721,8 +1746,8 @@ class SimpleTree:
 
     @cached_property
     def tidy_text(self) -> str:
-        """ Return the text contained within this subtree
-            after correcting its spacing """
+        """Return the text contained within this subtree
+        after correcting its spacing"""
         if self.is_terminal:
             # Terminal node: return own text
             return self._text
@@ -1730,8 +1755,8 @@ class SimpleTree:
         return correct_spaces(self.text)
 
     def substituted_text(self, sub_tree: "SimpleTree", sub_text: str) -> str:
-        """ Return the text of this subtree, albeit substituting the
-            given sub_text for the node sub_tree """
+        """Return the text of this subtree, albeit substituting the
+        given sub_text for the node sub_tree"""
         if self is sub_tree:
             # Perform the requested substitution
             return sub_text
@@ -1747,9 +1772,9 @@ class SimpleTree:
         return correct_spaces(" ".join(result))
 
     def _np_form(self, prop_func: Callable[["SimpleTree"], str]) -> str:
-        """ Return a nominative form of the noun phrase (or noun/adjective terminal)
-            contained within this subtree. Prop is a property accessor that returns
-            either x.nominative, x.indefinite or x.canonical. """
+        """Return a nominative form of the noun phrase (or noun/adjective terminal)
+        contained within this subtree. Prop is a property accessor that returns
+        either x.nominative, x.indefinite or x.canonical."""
         if self.is_terminal:
             # Terminal node: return its nominative form
             return prop_func(self)
@@ -1801,8 +1826,8 @@ class SimpleTree:
         return np
 
     def _case_np(self, case_property: Any) -> str:
-        """ Return the noun phrase contained within this subtree
-            after casting it to the given case """
+        """Return the noun phrase contained within this subtree
+        after casting it to the given case"""
 
         def prop_func(node: "SimpleTree") -> str:
             if node.is_terminal:
@@ -1817,32 +1842,32 @@ class SimpleTree:
 
     @property
     def nominative_np(self) -> str:
-        """ Return the nominative form of the noun phrase (or noun/adjective terminal)
-            contained within this subtree """
+        """Return the nominative form of the noun phrase (or noun/adjective terminal)
+        contained within this subtree"""
         return self._case_np(SimpleTree.nominative)
 
     @property
     def accusative_np(self) -> str:
-        """ Return the accusative form of the noun phrase (or noun/adjective terminal)
-            contained within this subtree """
+        """Return the accusative form of the noun phrase (or noun/adjective terminal)
+        contained within this subtree"""
         return self._case_np(SimpleTree.accusative)
 
     @property
     def dative_np(self) -> str:
-        """ Return the dative form of the noun phrase (or noun/adjective terminal)
-            contained within this subtree """
+        """Return the dative form of the noun phrase (or noun/adjective terminal)
+        contained within this subtree"""
         return self._case_np(SimpleTree.dative)
 
     @property
     def genitive_np(self) -> str:
-        """ Return the genitive form of the noun phrase (or noun/adjective terminal)
-            contained within this subtree """
+        """Return the genitive form of the noun phrase (or noun/adjective terminal)
+        contained within this subtree"""
         return self._case_np(SimpleTree.genitive)
 
     @cached_property
     def indefinite_np(self) -> str:
-        """ Return the indefinite nominative form of the noun phrase
-            (or noun/adjective terminal) contained within this subtree """
+        """Return the indefinite nominative form of the noun phrase
+        (or noun/adjective terminal) contained within this subtree"""
 
         def prop_func(node: "SimpleTree") -> str:
             if node.is_terminal:
@@ -1857,14 +1882,14 @@ class SimpleTree:
 
     @cached_property
     def canonical_np(self) -> str:
-        """ Return the singular indefinite nominative form of the noun phrase
-            (or noun/adjective terminal) contained within this subtree """
+        """Return the singular indefinite nominative form of the noun phrase
+        (or noun/adjective terminal) contained within this subtree"""
 
         def prop_func(node: SimpleTree) -> str:
-            """ For canonical noun phrases, cut off CP subtrees
-                since they probably don't make sense any more, with the noun
-                phrase having been converted to singular and all.
-                The same applies to NP-POSS. """
+            """For canonical noun phrases, cut off CP subtrees
+            since they probably don't make sense any more, with the noun
+            phrase having been converted to singular and all.
+            The same applies to NP-POSS."""
             if node.is_terminal:
                 if node.tcat == "töl" or (node.tcat == "tala" and "ft" in node._vset):
                     # If we are asking for the canonical (singular) form,
@@ -1901,8 +1926,8 @@ class SimpleTree:
         return self._text
 
     def _list(self, filter_func: Callable[["SimpleTree"], bool]) -> List[str]:
-        """ Return a list of word lemmas that meet the filter criteria
-            within this subtree """
+        """Return a list of word lemmas that meet the filter criteria
+        within this subtree"""
         if self._len > 1 or self._children:
             # Concatenate the text from the children
             t: List[str] = []
@@ -1916,26 +1941,26 @@ class SimpleTree:
 
     @property
     def leaves(self) -> Iterator["SimpleTree"]:
-        """ Generate all descendant leaf (terminal) nodes of this node,
-            returning a dict with the canonical representation of
-            each token/terminal match """
+        """Generate all descendant leaf (terminal) nodes of this node,
+        returning a dict with the canonical representation of
+        each token/terminal match"""
         for ch in self.descendants:
             if ch.is_terminal:
                 yield ch
 
     @property
     def nonterminals(self) -> Iterator["SimpleTree"]:
-        """ Generate all descendant non-terminal nodes of this node,
-            returning a dict with the canonical representation of
-            each non-terminal match """
+        """Generate all descendant non-terminal nodes of this node,
+        returning a dict with the canonical representation of
+        each non-terminal match"""
         for ch in self.descendants:
             if not ch.is_terminal:
                 yield ch
 
     @property
     def span(self) -> Tuple[int, int]:
-        """ Returns a (start, end) tuple of token indices pointing
-            to the first and the last token spanned by this subtree """
+        """Returns a (start, end) tuple of token indices pointing
+        to the first and the last token spanned by this subtree"""
         ix = self.index
         if ix is not None:
             # This is a terminal: return its token index
@@ -1953,39 +1978,39 @@ class SimpleTree:
 
     @property
     def nouns(self):
-        """ Returns the lemmas of all nouns in the subtree """
+        """Returns the lemmas of all nouns in the subtree"""
         return self._list(
             lambda t: t.tcat == "no" or t.tcat == "entity" or t._cat in _GENDERS
         )
 
     @property
     def verbs(self) -> List[str]:
-        """ Returns the lemmas of all verbs in the subtree """
+        """Returns the lemmas of all verbs in the subtree"""
         return self._list(lambda t: t.tcat == "so")
 
     @property
     def persons(self) -> List[str]:
-        """ Returns all person names occurring in the subtree """
+        """Returns all person names occurring in the subtree"""
         return self._list(lambda t: t.tcat == "person")
 
     @property
     def entities(self) -> List[str]:
-        """ Returns all entity names occurring in the subtree """
+        """Returns all entity names occurring in the subtree"""
         return self._list(lambda t: t.tcat == "entity")
 
     @property
     def proper_names(self) -> List[str]:
-        """ Returns all proper names occurring in the subtree """
+        """Returns all proper names occurring in the subtree"""
         return self._list(lambda t: t.tcat == "sérnafn")
 
     @property
     def lemmas(self) -> List[str]:
-        """ Returns the lemmas of all words in the subtree """
+        """Returns the lemmas of all words in the subtree"""
         return self._list(lambda t: True)
 
     @property
     def lemmas_and_cats(self) -> List[Tuple[str, str]]:
-        """ Return a list of (lemma, category) tuples for words within this subtree """
+        """Return a list of (lemma, category) tuples for words within this subtree"""
         if self._len > 1 or self._children:
             # Concatenate the categories from the children
             t: List[Tuple[str, str]] = []
@@ -1999,7 +2024,7 @@ class SimpleTree:
 
     @property
     def lemma(self) -> str:
-        """ Return the lemmas of this subtree as a string """
+        """Return the lemmas of this subtree as a string"""
         if self.is_terminal:
             # Shortcut for terminal node
             return self._lemma
@@ -2007,14 +2032,14 @@ class SimpleTree:
 
     @property
     def own_lemma(self) -> str:
-        """ Return the lemma of the word token matching this terminal,
-            or an empty string if this is not a terminal """
+        """Return the lemma of the word token matching this terminal,
+        or an empty string if this is not a terminal"""
         return self._lemma if self.is_terminal else ""
 
     @property
     def own_lemma_mm(self) -> str:
-        """ Return the middle voice lemma of the word token matching
-            this terminal, or an empty string if this is not a terminal """
+        """Return the middle voice lemma of the word token matching
+        this terminal, or an empty string if this is not a terminal"""
         # A middle voice lemma is the same as the ordinary lemma except
         # in the case of middle voice verbs; there the lemma is the
         # MM-NH form ('eignast' instead of 'eiga' for a word form
@@ -2031,7 +2056,7 @@ class SimpleTree:
     def all_matches(
         self, pattern: str, context: Optional[ContextDict] = None
     ) -> Iterator["SimpleTree"]:
-        """ Return all subtree roots, including self, that match the given pattern """
+        """Return all subtree roots, including self, that match the given pattern"""
         for subtree in chain([self], self.descendants):
             if match_pattern(subtree, pattern, context):
                 yield subtree
@@ -2039,8 +2064,8 @@ class SimpleTree:
     def first_match(
         self, pattern: str, context: Optional[ContextDict] = None
     ) -> Optional["SimpleTree"]:
-        """ Return the first subtree root, including self, that matches the given
-            pattern. If no subtree matches, return None. """
+        """Return the first subtree root, including self, that matches the given
+        pattern. If no subtree matches, return None."""
         try:
             return next(self.all_matches(pattern, context))
         except StopIteration:
@@ -2049,8 +2074,8 @@ class SimpleTree:
     def top_matches(
         self, pattern: str, context: Optional[ContextDict] = None
     ) -> Iterator["SimpleTree"]:
-        """ Return all subtree roots, including self, that match the given pattern,
-            but not recursively, i.e. we don't include matches within matches """
+        """Return all subtree roots, including self, that match the given pattern,
+        but not recursively, i.e. we don't include matches within matches"""
         if match_pattern(self, pattern, context):
             yield self
         else:
@@ -2058,15 +2083,15 @@ class SimpleTree:
                 yield from child.top_matches(pattern, context)
 
     def match(self, pattern: str, context: Optional[ContextDict] = None) -> bool:
-        """ Return True if this subtree matches the given pattern """
+        """Return True if this subtree matches the given pattern"""
         return match_pattern(self, pattern, context)
 
 
 class SimpleTreeBuilder:
 
-    """ A class for building a simplified tree from a full
-        parse tree. The simplification is done according to the
-        maps provided in the constructor. """
+    """A class for building a simplified tree from a full
+    parse tree. The simplification is done according to the
+    maps provided in the constructor."""
 
     def __init__(
         self,
@@ -2085,8 +2110,8 @@ class SimpleTreeBuilder:
         self.state: Any = None
 
     def push_terminal(self, d: CanonicalTokenDict) -> None:
-        """ At a terminal (token) node. The d parameter is normally a dict
-            containing a canonicalized token. """
+        """At a terminal (token) node. The d parameter is normally a dict
+        containing a canonicalized token."""
         # Check whether this terminal should be pushed as a nonterminal
         # with a single child
         terminal = d.get("t")
@@ -2108,8 +2133,8 @@ class SimpleTreeBuilder:
             )
 
     def push_nonterminal(self, nt_base: str) -> None:
-        """ Entering a nonterminal node. Pass None if the nonterminal is
-            not significant, e.g. an interior or optional node. """
+        """Entering a nonterminal node. Pass None if the nonterminal is
+        not significant, e.g. an interior or optional node."""
         self._pushed.append(0)  # Number of items pushed
         if not nt_base:
             return
@@ -2143,15 +2168,15 @@ class SimpleTreeBuilder:
             self._pushed[-1] += 1  # Add to number of items pushed
 
     def pop_nonterminal(self) -> None:
-        """ Exiting a nonterminal node. Calls to pop_nonterminal() must correspond
-            to calls to push_nonterminal(). """
+        """Exiting a nonterminal node. Calls to pop_nonterminal() must correspond
+        to calls to push_nonterminal()."""
         # Pop the same number of entries as push_nonterminal() pushed
         to_pop = self._pushed.pop()
         for _ in range(to_pop):
             self._pop_nonterminal()
 
     def _pop_nonterminal(self) -> None:
-        """ Do the actual popping of a single level pushed by push_nonterminal() """
+        """Do the actual popping of a single level pushed by push_nonterminal()"""
         children = self._stack.pop()
         mapped_nt = self._scope.pop()
         # Check whether this nonterminal has only one child, which is again
@@ -2161,8 +2186,8 @@ class SimpleTreeBuilder:
             ch0 = cast(SimpleTreeNode, children[0])
 
             def collapse_child(d: str) -> bool:
-                """ Determine whether to cut off a child and connect directly
-                    from this node to its children """
+                """Determine whether to cut off a child and connect directly
+                from this node to its children"""
                 if ch0["i"] == d:
                     # Same nonterminal category: do the cut
                     return True
@@ -2172,7 +2197,7 @@ class SimpleTreeBuilder:
                 return ch0["i"] == override
 
             def replace_parent(d: str) -> bool:
-                """ Determine whether to replace the parent with the child """
+                """Determine whether to replace the parent with the child"""
                 # If the child overrides the parent, replace the parent
                 override = self._id_map[ch0["i"]].get("overrides")
                 return d == override
@@ -2194,22 +2219,22 @@ class SimpleTreeBuilder:
 
     @property
     def tree(self) -> SimpleTree:
-        """ Create and return a SimpleTree instance rooted with the
-            result of this builder """
+        """Create and return a SimpleTree instance rooted with the
+        result of this builder"""
         return SimpleTree([[self.result]])
 
 
 class Annotator(ParseForestNavigator):
 
-    """ Utility class to navigate a parse forest and annotate the
-        original token list with the corresponding terminal matches """
+    """Utility class to navigate a parse forest and annotate the
+    original token list with the corresponding terminal matches"""
 
     def __init__(self, tmap: TerminalMap) -> None:
         super().__init__()
         self._tmap = tmap
 
     def visit_token(self, level: int, w: Node) -> Any:
-        """ At token node """
+        """At token node"""
         assert w is not None
         assert w.token is not None
         ix = w.token.index  # Index into original sentence
@@ -2223,8 +2248,8 @@ class Annotator(ParseForestNavigator):
 
 class Simplifier(ParseForestNavigator):
 
-    """ Utility class to construct a simplified, condensed representation of
-        a parse tree in a nested dictionary structure """
+    """Utility class to construct a simplified, condensed representation of
+    a parse tree in a nested dictionary structure"""
 
     def __init__(
         self,
@@ -2241,7 +2266,7 @@ class Simplifier(ParseForestNavigator):
         self._first_token_index = first_token_index
 
     def visit_token(self, level: int, w: Node) -> Any:
-        """ At terminal node, matching a token """
+        """At terminal node, matching a token"""
         assert w.token is not None
         t = cast(BIN_Terminal, w.terminal)
         meaning = w.token.match_with_meaning(t)
@@ -2258,7 +2283,7 @@ class Simplifier(ParseForestNavigator):
         return None
 
     def visit_nonterminal(self, level: int, node: Node) -> Any:
-        """ Entering a nonterminal node """
+        """Entering a nonterminal node"""
         assert node.nonterminal is not None
         nt = cast(BIN_Nonterminal, node.nonterminal)
         if node.is_interior or nt.is_optional:
@@ -2269,50 +2294,50 @@ class Simplifier(ParseForestNavigator):
         return None
 
     def process_results(self, results: Any, node: Node) -> None:
-        """ Exiting a nonterminal node """
+        """Exiting a nonterminal node"""
         self._builder.pop_nonterminal()
 
     @property
     def tree(self) -> SimpleTree:
-        """ Return a SimpleTree object """
+        """Return a SimpleTree object"""
         return self._builder.tree
 
     @property
     def result(self) -> CanonicalTokenDict:
-        """ Return nested dictionaries """
+        """Return nested dictionaries"""
         return self._builder.result
 
 
 class AnnoTree:
 
-    """ Encapsulates an Annotald-formatted (bracketed) parse tree.
+    """Encapsulates an Annotald-formatted (bracketed) parse tree.
 
-        An Annotald-formatted string looks as follows:
+    An Annotald-formatted string looks as follows:
 
-        ( (META
-            (ID-CORPUS 43bf66f3-51c4-11e6-8438-04014c605401.10)
-            (ID-LOCAL greynir_corpus_00003.psd,.1)
-            (URL http://www.mbl.is/sport/efstadeild/2016/07/24/ia_ibv_stadan_er_1_0/)
-        )
-        (S0 (S-HEADING
-            (IP
-                (NP-SUBJ
-                    (fn_ft_kk_nf Engir (lemma enginn))
-                    (no_ft_kk_nf atburðir (lemma atburður))
-                )
-                (NP-PRD
-                    (VP
-                        (so_ft_kk_lhþt_nf_sb skráðir (lemma skrá))
-                    )
-                )
-                (ADVP (ao enn (lemma enn)))
+    ( (META
+        (ID-CORPUS 43bf66f3-51c4-11e6-8438-04014c605401.10)
+        (ID-LOCAL greynir_corpus_00003.psd,.1)
+        (URL http://www.mbl.is/sport/efstadeild/2016/07/24/ia_ibv_stadan_er_1_0/)
+    )
+    (S0 (S-HEADING
+        (IP
+            (NP-SUBJ
+                (fn_ft_kk_nf Engir (lemma enginn))
+                (no_ft_kk_nf atburðir (lemma atburður))
             )
-        )))
+            (NP-PRD
+                (VP
+                    (so_ft_kk_lhþt_nf_sb skráðir (lemma skrá))
+                )
+            )
+            (ADVP (ao enn (lemma enn)))
+        )
+    )))
 
     """
 
     def __init__(self, txt: str) -> None:
-        """ Initializes an AnnoTree from its string representation """
+        """Initializes an AnnoTree from its string representation"""
         self._head: Optional[CanonicalTokenDict] = None
         self._id_corpus = ""
         self._id_local = ""
@@ -2320,28 +2345,28 @@ class AnnoTree:
         self.parse(txt)
 
     def as_simple_tree(self) -> Optional[SimpleTree]:
-        """ Return the AnnoTree as a SimpleTree structure """
+        """Return the AnnoTree as a SimpleTree structure"""
         if self._head is None:
             return None
         return SimpleTree([[self._head]])
 
     @property
     def id_corpus(self) -> str:
-        """ Return the META ID-CORPUS field, if present """
+        """Return the META ID-CORPUS field, if present"""
         return self._id_corpus
 
     @property
     def id_local(self) -> str:
-        """ Return the META ID-LOCAL field, if present """
+        """Return the META ID-LOCAL field, if present"""
         return self._id_local
 
     @property
     def url(self) -> str:
-        """ Return the META URL field, if present """
+        """Return the META URL field, if present"""
         return self._url
 
     def parse(self, txt: str) -> None:
-        """ Parse an Annotald-formatted string """
+        """Parse an Annotald-formatted string"""
         self._head = None
         self._id_corpus = ""
         self._id_local = ""
@@ -2354,13 +2379,13 @@ class AnnoTree:
         terminators: FrozenSet[str] = frozenset(("(", ")"))
 
         def skipspace() -> None:
-            """ Advance the p index past any whitespace """
+            """Advance the p index past any whitespace"""
             nonlocal p
             while p < end and txt[p].isspace():
                 p += 1
 
         def skipleft() -> bool:
-            """ Advance the p index past a left parenthesis, if found """
+            """Advance the p index past a left parenthesis, if found"""
             # Since skipright() is always called before skipleft(),
             # we don't need skipspace() here - it's already been called
             nonlocal p
@@ -2370,7 +2395,7 @@ class AnnoTree:
             return False
 
         def skipright() -> bool:
-            """ Advance the p index past a right parenthesis, if found """
+            """Advance the p index past a right parenthesis, if found"""
             nonlocal p
             skipspace()
             if p < end and txt[p] == ")":
@@ -2379,8 +2404,8 @@ class AnnoTree:
             return False
 
         def skipstring() -> str:
-            """ Advance the p index until a parenthesis is encountered,
-                and return the underlying string """
+            """Advance the p index until a parenthesis is encountered,
+            and return the underlying string"""
             nonlocal p
             skipspace()
             start = p

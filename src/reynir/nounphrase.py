@@ -4,7 +4,7 @@
 
     NounPhrase class implementation
 
-    Copyright (C) 2021 Miðeind ehf.
+    Copyright (C) 2022 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -45,36 +45,36 @@ from .reynir import Greynir, _NounPhrase, SimpleTree
 # of the contained NounPhrase object
 _FMT: Mapping[str, Callable[["_NounPhrase"], str]] = {
     # Icelandic format specifiers
-    "nf": operator.attrgetter('nominative'),
-    "þf": operator.attrgetter('accusative'),
-    "þgf": operator.attrgetter('dative'),
-    "ef": operator.attrgetter('genitive'),
-    "ángr": operator.attrgetter('indefinite'),
-    "stofn": operator.attrgetter('canonical'),
+    "nf": operator.attrgetter("nominative"),
+    "þf": operator.attrgetter("accusative"),
+    "þgf": operator.attrgetter("dative"),
+    "ef": operator.attrgetter("genitive"),
+    "ángr": operator.attrgetter("indefinite"),
+    "stofn": operator.attrgetter("canonical"),
     # English/international format specifiers
-    "nom": operator.attrgetter('nominative'),
-    "acc": operator.attrgetter('accusative'),
-    "dat": operator.attrgetter('dative'),
-    "gen": operator.attrgetter('genitive'),
-    "ind": operator.attrgetter('indefinite'),
-    "can": operator.attrgetter('canonical'),
+    "nom": operator.attrgetter("nominative"),
+    "acc": operator.attrgetter("accusative"),
+    "dat": operator.attrgetter("dative"),
+    "gen": operator.attrgetter("genitive"),
+    "ind": operator.attrgetter("indefinite"),
+    "can": operator.attrgetter("canonical"),
 }
 
 
 class NounPhrase:
 
-    """ A handy container for a noun phrase (nafnliður),
-        allowing it to be easily inflected and formatted """
+    """A handy container for a noun phrase (nafnliður),
+    allowing it to be easily inflected and formatted"""
 
     # Singleton parser instance
     _greynir: Optional[Greynir] = None
 
     def __init__(self, np_string: str, *, force_number: Optional[str] = None) -> None:
-        """ Initialize a NounPhrase from a text string.
-            If force_number is set to "et" or "singular", we only
-            consider singular interpretations of the string.
-            If force_number is set to "ft" or "plural", we only
-            consider plural interpretations of the string. """
+        """Initialize a NounPhrase from a text string.
+        If force_number is set to "et" or "singular", we only
+        consider singular interpretations of the string.
+        If force_number is set to "ft" or "plural", we only
+        consider plural interpretations of the string."""
         self._np_string = np_string or ""
         self._number: Optional[str] = None
         self._person: Optional[str] = None
@@ -107,22 +107,21 @@ class NounPhrase:
                 self._gender = (variants & {"kk", "kvk", "hk"}).pop()
 
     def __str__(self) -> str:
-        """ Return the contained string as-is """
+        """Return the contained string as-is"""
         return self._np_string
 
     def __repr__(self) -> str:
         return "<reynir.NounPhrase('{0}'), {1}>".format(
-            self._np_string,
-            "parsed" if self.parsed else "not parsed"
+            self._np_string, "parsed" if self.parsed else "not parsed"
         )
 
     def __len__(self) -> int:
-        """ Provide len() for convenience """
+        """Provide len() for convenience"""
         return self._np_string.__len__()
 
     def __format__(self, format_spec: str) -> str:
-        """ Return the contained string after inflecting it according
-            to the format specification, if given """
+        """Return the contained string after inflecting it according
+        to the format specification, if given"""
         # Examples:
         # >>> np = NounPhrase('skjótti hesturinn')
         # >>> f"Hér er {np:nf}"
@@ -154,64 +153,63 @@ class NounPhrase:
 
     @property
     def parsed(self) -> bool:
-        """ Return True if the noun phrase was successfully parsed """
+        """Return True if the noun phrase was successfully parsed"""
         return self._np is not None and self._np.tree is not None
 
     @property
     def tree(self) -> Optional[SimpleTree]:
-        """ Return the SimpleTree object corresponding to the noun phrase """
+        """Return the SimpleTree object corresponding to the noun phrase"""
         return None if self._np is None else self._np.tree
 
     @property
     def case(self) -> Optional[str]:
-        """ Return the case of the noun phrase, as originally parsed """
+        """Return the case of the noun phrase, as originally parsed"""
         return self._case
 
     @property
     def number(self) -> Optional[str]:
-        """ Return the number (singular='et'/plural='ft') of the noun phrase,
-            as originally parsed """
+        """Return the number (singular='et'/plural='ft') of the noun phrase,
+        as originally parsed"""
         return self._number
 
     @property
     def person(self) -> Optional[str]:
-        """ Return the person ('p1', 'p2', 'p3') of the noun phrase,
-            as originally parsed """
+        """Return the person ('p1', 'p2', 'p3') of the noun phrase,
+        as originally parsed"""
         return self._person
 
     @property
     def gender(self) -> Optional[str]:
-        """ Return the gender (masculine='kk', feminine='kvk', neutral='hk')
-            of the noun phrase, as originally parsed """
+        """Return the gender (masculine='kk', feminine='kvk', neutral='hk')
+        of the noun phrase, as originally parsed"""
         return self._gender
 
     @property
     def nominative(self) -> Optional[str]:
-        """ Return nominative form (nefnifall) """
+        """Return nominative form (nefnifall)"""
         return None if self._np is None else self._np.nominative
 
     @property
     def indefinite(self) -> Optional[str]:
-        """ Return indefinite form (nefnifall án greinis) """
+        """Return indefinite form (nefnifall án greinis)"""
         return None if self._np is None else self._np.indefinite
 
     @property
     def canonical(self) -> Optional[str]:
-        """ Return canonical form (nefnifall eintölu án greinis) """
+        """Return canonical form (nefnifall eintölu án greinis)"""
         return None if self._np is None else self._np.canonical
 
     @property
     def accusative(self) -> Optional[str]:
-        """ Return accusative form (þolfall) """
+        """Return accusative form (þolfall)"""
         return None if self._np is None else self._np.accusative
 
     @property
     def dative(self) -> Optional[str]:
-        """ Return dative form (þágufall) """
+        """Return dative form (þágufall)"""
         return None if self._np is None else self._np.dative
 
     @property
     def genitive(self) -> Optional[str]:
-        """ Return genitive form (eignarfall) """
+        """Return genitive form (eignarfall)"""
         return None if self._np is None else self._np.genitive
-

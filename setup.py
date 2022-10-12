@@ -6,7 +6,7 @@
 
     Setup.py
 
-    Copyright (C) 2021 Miðeind ehf.
+    Copyright (C) 2022 Miðeind ehf.
     Original Author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -37,7 +37,7 @@
     and build the required CFFI Python wrapper via eparser_build.py.
     The same applies to bin.cpp -> bin.*.so and bin_build.py.
 
-    Note that installing under PyPy >= 3.6 is supported (and recommended
+    Note that installing under PyPy >= 3.7 is supported (and recommended
     for best performance).
 
 """
@@ -54,23 +54,22 @@ import sys
 from glob import glob
 from os.path import basename, dirname, join, splitext
 
-from setuptools import find_packages  # type: ignore
-from setuptools import setup  # type: ignore
+from setuptools import find_packages, setup
 
 
-if sys.version_info < (3, 6):
-    print("Greynir requires Python >= 3.6")
+if sys.version_info < (3, 7):
+    print("Greynir requires Python >= 3.7")
     sys.exit(1)
 
 
 def read(*names: str, **kwargs: Any) -> str:
     try:
         return io.open(
-            join(dirname(__file__), *names),
-            encoding=kwargs.get("encoding", "utf8")
+            join(dirname(__file__), *names), encoding=kwargs.get("encoding", "utf8")
         ).read()
     except (IOError, OSError):
         return ""
+
 
 # Load version string from file
 __version__ = "[missing]"
@@ -82,8 +81,9 @@ setup(
     license="MIT",
     description="A natural language parser for Icelandic",
     long_description="{0}\n{1}".format(
-        re.compile("^.. start-badges.*^.. end-badges", re.M | re.S)
-            .sub("", read("README.rst")),
+        re.compile("^.. start-badges.*^.. end-badges", re.M | re.S).sub(
+            "", read("README.rst")
+        ),
         re.sub(":[a-z]+:`~?(.*?)`", r"``\1``", read("CHANGELOG.rst")),
     ),
     author="Miðeind ehf",
@@ -108,7 +108,6 @@ setup(
         "Natural Language :: Icelandic",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
@@ -124,9 +123,7 @@ setup(
         "cffi>=1.13.0",
         "tokenizer>=3.4.0",
         "islenska>=0.4.3",
-        "typing_extensions"
+        "typing_extensions",
     ],
-    cffi_modules=[
-        "src/reynir/eparser_build.py:ffibuilder"
-    ],
+    cffi_modules=["src/reynir/eparser_build.py:ffibuilder"],
 )

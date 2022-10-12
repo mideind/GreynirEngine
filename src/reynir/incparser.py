@@ -4,7 +4,7 @@
 
     Utility class for incremental parsing of token streams
 
-    Copyright (C) 2021 Miðeind ehf.
+    Copyright (C) 2022 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -62,30 +62,30 @@ SentenceTuple = Tuple[int, List[Tok]]
 
 class IncrementalParser:
 
-    """ Utility class to parse a token list as a sequence of paragraphs
-        containing sentences. Typical usage:
+    """Utility class to parse a token list as a sequence of paragraphs
+    containing sentences. Typical usage:
 
-        toklist = tokenize(text)
-        fp = Fast_Parser()
-        ip = IncrementalParser(fp, toklist)
-        for p in ip.paragraphs():
-            for sent in p.sentences():
-                if sent.parse():
-                    # sentence parsed successfully
-                    # do something with sent.tree
-                else:
-                    # an error occurred in the parse
-                    # the error token index is at sent.err_index
-        num_sentences = ip.num_sentences
-        num_parsed = ip.num_parsed
-        ambiguity = ip.ambiguity
-        parse_time = ip.parse_time
+    toklist = tokenize(text)
+    fp = Fast_Parser()
+    ip = IncrementalParser(fp, toklist)
+    for p in ip.paragraphs():
+        for sent in p.sentences():
+            if sent.parse():
+                # sentence parsed successfully
+                # do something with sent.tree
+            else:
+                # an error occurred in the parse
+                # the error token index is at sent.err_index
+    num_sentences = ip.num_sentences
+    num_parsed = ip.num_parsed
+    ambiguity = ip.ambiguity
+    parse_time = ip.parse_time
 
     """
 
     class _IncrementalSentence:
 
-        """ An internal sentence representation class """
+        """An internal sentence representation class"""
 
         def __init__(self, ip: "IncrementalParser", s: List[Tok]) -> None:
             self._ip = ip
@@ -101,7 +101,7 @@ class IncrementalParser:
             return self._len
 
         def parse(self) -> bool:
-            """ Parse the sentence """
+            """Parse the sentence"""
             num = 0
             score = 0
             forest: Optional[Node] = None
@@ -157,14 +157,14 @@ class IncrementalParser:
 
     class _IncrementalParagraph:
 
-        """ An internal paragraph representation class """
+        """An internal paragraph representation class"""
 
         def __init__(self, ip: "IncrementalParser", p: List[SentenceTuple]) -> None:
             self._ip = ip
             self._p = p
 
         def sentences(self) -> Iterator["IncrementalParser._IncrementalSentence"]:
-            """ Yield the sentences within the paragraph, nicely wrapped """
+            """Yield the sentences within the paragraph, nicely wrapped"""
             Sent = IncrementalParser._IncrementalSentence
             for _, sent in self._p:
                 # Call time.sleep(0) to yield the current thread, i.e.
@@ -174,7 +174,9 @@ class IncrementalParser:
                 time.sleep(0)
                 yield Sent(self._ip, sent)
 
-    def __init__(self, parser: Fast_Parser, toklist: Iterable[Tok], verbose: bool=False) -> None:
+    def __init__(
+        self, parser: Fast_Parser, toklist: Iterable[Tok], verbose: bool = False
+    ) -> None:
         self._parser = parser
         self._reducer = Reducer(parser.grammar)
         self._num_sent = 0
@@ -188,8 +190,10 @@ class IncrementalParser:
         self._verbose = verbose
         self._toklist = list(toklist)
 
-    def _add_sentence(self, s: "IncrementalParser._IncrementalSentence", num: int) -> None:
-        """ Add a processed sentence to the statistics """
+    def _add_sentence(
+        self, s: "IncrementalParser._IncrementalSentence", num: int
+    ) -> None:
+        """Add a processed sentence to the statistics"""
         slen = len(s)
         self._num_sent += 1
         self._num_tokens += slen
@@ -217,7 +221,7 @@ class IncrementalParser:
             self._last_time = current_time
 
     def paragraphs(self) -> Iterator["IncrementalParser._IncrementalParagraph"]:
-        """ Yield the paragraphs from the token stream """
+        """Yield the paragraphs from the token stream"""
         Para = IncrementalParser._IncrementalParagraph
         for p in paragraphs(self._toklist):
             yield Para(self, p)
@@ -251,4 +255,3 @@ class IncrementalParser:
     @property
     def parse_time(self) -> float:
         return time.time() - self._start_time
-

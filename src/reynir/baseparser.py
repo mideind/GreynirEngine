@@ -3,7 +3,7 @@
 
     Parser base module
 
-    Copyright (C) 2021 Miðeind ehf.
+    Copyright (C) 2022 Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -39,9 +39,9 @@ from .grammar import Grammar, GrammarItem, Terminal, Nonterminal, Production
 
 class _PackedProduction:
 
-    """ A container for a packed production, i.e. a grammar Production
-        where the component terminals and nonterminals have been packed
-        into a list of integer indices """
+    """A container for a packed production, i.e. a grammar Production
+    where the component terminals and nonterminals have been packed
+    into a list of integer indices"""
 
     def __init__(self, priority: int, production: Production) -> None:
         # Store the relative priority of this production within its nonterminal
@@ -73,9 +73,9 @@ class _PackedProduction:
 
 class Base_Parser:
 
-    """ Parses a sequence of tokens according to a given grammar and
-        a root nonterminal within that grammar, returning a forest of
-        possible parses. The parses uses an optimized Earley algorithm.
+    """Parses a sequence of tokens according to a given grammar and
+    a root nonterminal within that grammar, returning a forest of
+    possible parses. The parses uses an optimized Earley algorithm.
     """
 
     def __init__(self) -> None:
@@ -85,7 +85,7 @@ class Base_Parser:
         self._terminals: Dict[int, Terminal] = {}
 
     def init_from_grammar(self, g: Grammar) -> None:
-        """ Initialize the parser with the given grammar """
+        """Initialize the parser with the given grammar"""
         nt_d = g.nt_dict
         r = g.root
         assert nt_d is not None
@@ -107,13 +107,13 @@ class Base_Parser:
 
     @classmethod
     def for_grammar(cls, g: Grammar) -> "Base_Parser":
-        """ Create a parser for the Grammar in g """
+        """Create a parser for the Grammar in g"""
         p = cls()
         p.init_from_grammar(g)
         return p
 
     def _lookup(self, ix: int) -> GrammarItem:
-        """ Convert a production item from an index to an object reference """
+        """Convert a production item from an index to an object reference"""
         # Terminals have positive indices
         # Nonterminals have negative indices
         # A zero index is not allowed

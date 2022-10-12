@@ -6,7 +6,7 @@ Installation
 Prerequisites
 -------------
 
-Greynir runs on **CPython 3.6** or newer, and on **PyPy 3.6**
+Greynir runs on **CPython 3.7** or newer, and on **PyPy 3.7**
 or newer (more info on PyPy `here <http://pypy.org/>`_).
 
 On GNU/Linux and similar systems, you may need to have ``python3-dev``
@@ -65,12 +65,7 @@ C/C++ compiler to be present on the system.
 Greynir's binary wheels are in the ``manylinux2010`` format (or newer).
 This means that you will need version 19.0 or newer of ``pip`` to be able
 to install a Greynir wheel. Versions of Python from 3.7 onwards include a
-new-enough ``pip``. Buf if you have Python 3.6, your ``pip`` may need
-upgrading before you install Greynir, like so:
-
-.. code-block:: bash
-
-    $ python3 -m pip install --upgrade pip
+new-enough ``pip``.
 
 Pull requests are welcome in the project's
 `GitHub repository <https://github.com/mideind/GreynirPackage>`_.

@@ -3,7 +3,7 @@
 
     Basic classes module
 
-    Copyright (C) 2021 Miðeind ehf.
+    Copyright (C) 2022 Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -70,7 +70,7 @@ BIN_COMPRESSED_FILE = "ord.compressed"
 def changedlocale(
     new_locale: Optional[str] = None, category: str = "LC_COLLATE"
 ) -> Iterator[Callable[[str], str]]:
-    """ Change locale for collation temporarily within a context (with-statement) """
+    """Change locale for collation temporarily within a context (with-statement)"""
     # The newone locale parameter should be a tuple: ('is_IS', 'UTF-8')
     # The category should be a string such as 'LC_TIME', 'LC_NUMERIC' etc.
     cat = getattr(locale, category)
@@ -83,7 +83,7 @@ def changedlocale(
 
 
 def sort_strings(strings: Iterable[str], loc: Optional[str] = None) -> List[str]:
-    """ Sort a list of strings using the specified locale's collation order """
+    """Sort a list of strings using the specified locale's collation order"""
     # Change locale temporarily for the sort
     with changedlocale(loc) as strxfrm:
         return sorted(strings, key=strxfrm)
@@ -91,7 +91,7 @@ def sort_strings(strings: Iterable[str], loc: Optional[str] = None) -> List[str]
 
 class ConfigError(Exception):
 
-    """ Exception class for configuration errors """
+    """Exception class for configuration errors"""
 
     def __init__(self, s: str) -> None:
         super().__init__(s)
@@ -99,13 +99,13 @@ class ConfigError(Exception):
         self.line = 0
 
     def set_pos(self, fname: str, line: int) -> None:
-        """ Set file name and line information, if not already set """
+        """Set file name and line information, if not already set"""
         if not self.fname:
             self.fname = fname
             self.line = line
 
     def __str__(self) -> str:
-        """ Return a string representation of this exception """
+        """Return a string representation of this exception"""
         s = Exception.__str__(self)
         if not self.fname:
             return s
@@ -114,7 +114,7 @@ class ConfigError(Exception):
 
 class LineReader:
 
-    """ Read lines from a text file, recognizing $include directives """
+    """Read lines from a text file, recognizing $include directives"""
 
     def __init__(
         self,
@@ -132,15 +132,15 @@ class LineReader:
         self._outer_line = outer_line
 
     def fname(self) -> str:
-        """ The name of the file being read """
+        """The name of the file being read"""
         return self._fname if self._inner_rdr is None else self._inner_rdr.fname()
 
     def line(self) -> int:
-        """ The number of the current line within the file """
+        """The number of the current line within the file"""
         return self._line if self._inner_rdr is None else self._inner_rdr.line()
 
     def lines(self) -> Iterator[str]:
-        """ Generator yielding lines from a text file """
+        """Generator yielding lines from a text file"""
         self._line = 0
         try:
             if self._package_name:

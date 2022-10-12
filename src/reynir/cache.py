@@ -54,9 +54,8 @@ _V = TypeVar("_V")
 
 
 class LRU_Cache(Generic[_V]):
-
     def __init__(
-        self, user_function: Callable[..., _V], maxsize: int=LRU_DEFAULT
+        self, user_function: Callable[..., _V], maxsize: int = LRU_DEFAULT
     ) -> None:
         # Link layout:     [PREV, NEXT, KEY, RESULT]
         root: List[Any] = [None, None, None, None]
@@ -97,18 +96,19 @@ class LRU_Cache(Generic[_V]):
 
 
 class Counter(Dict[_K, int], Generic[_K]):
-    """ Mapping where default values are zero """
+    """Mapping where default values are zero"""
+
     def __missing__(self, key: _K) -> int:
         return 0
 
 
 class LFU_Cache(Generic[_K, _V]):
 
-    """ Least-frequently-used (LFU) cache for word lookups.
-        Based on a pattern by Raymond Hettinger
+    """Least-frequently-used (LFU) cache for word lookups.
+    Based on a pattern by Raymond Hettinger
     """
 
-    def __init__(self, maxsize: int=LFU_DEFAULT) -> None:
+    def __init__(self, maxsize: int = LFU_DEFAULT) -> None:
         # Mapping of keys to results
         self.cache: Dict[_K, _V] = {}
         # Times each key has been accessed
@@ -119,8 +119,8 @@ class LFU_Cache(Generic[_K, _V]):
         self.lock = threading.Lock()
 
     def lookup(self, key: _K, func: Callable[[_K], _V]) -> _V:
-        """ Lookup a key in the cache, calling func(key)
-            to obtain the data if not already there """
+        """Lookup a key in the cache, calling func(key)
+        to obtain the data if not already there"""
         with self.lock:
             self.use_count[key] += 1
             # Get cache entry or compute if not found
@@ -134,8 +134,9 @@ class LFU_Cache(Generic[_K, _V]):
 
                 # Purge the 10% least frequently used cache entries
                 if len(self.cache) > self.maxsize:
-                    for key, _ in nsmallest(self.maxsize // 10,
-                        self.use_count.items(), key = itemgetter(1)):
+                    for key, _ in nsmallest(
+                        self.maxsize // 10, self.use_count.items(), key=itemgetter(1)
+                    ):
 
                         del self.cache[key], self.use_count[key]
 
@@ -144,14 +145,15 @@ class LFU_Cache(Generic[_K, _V]):
 
 # Define a type variable to allow MyPy to infer the relationship
 # between intermediate types in cached and cached_property
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 
 # Define a unique singleton for use as a sentinel
 _NA = object()
 
 
 def cached(func: Callable[..., _T]) -> Callable[..., _T]:
-    """ A decorator for caching function calls """
+    """A decorator for caching function calls"""
+
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> _T:
         val = cast(_T, getattr(func, "_cache", _NA))
@@ -159,12 +161,13 @@ def cached(func: Callable[..., _T]) -> Callable[..., _T]:
             val = func(*args, **kwargs)
             setattr(func, "_cache", val)
         return val
+
     return wrapper
 
 
 class cached_property(Generic[_T]):
 
-    """ A decorator for caching instance properties """
+    """A decorator for caching instance properties"""
 
     def __init__(self, func: Callable[..., _T]) -> None:
         self.__doc__ = getattr(func, "__doc__")

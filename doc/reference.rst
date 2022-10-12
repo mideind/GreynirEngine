@@ -57,6 +57,10 @@ The Greynir class
             for the `Tokenizer <https://github.com/mideind/Tokenizer>`__
             package for further information.
 
+            If the parameter ``no_multiply_numbers=True`` is given
+            the tokenizer will not join decimal numbers or number words
+            into a single number token, but rather keep them as separate tokens.
+
             Additionally, if the parameter ``parse_foreign_sentences=True``
             is given, the parser will attempt to parse
             all sentences, even those that seem to be in a foreign language.

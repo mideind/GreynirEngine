@@ -4,7 +4,7 @@
 
     GlobalLock utility class
 
-    Copyright (C) 2021 Miðeind ehf.
+    Copyright (C) 2022 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -49,7 +49,8 @@ import tempfile
 
 
 class LockError(Exception):
-    """ Lock could not be obtained """
+    """Lock could not be obtained"""
+
     pass
 
 
@@ -85,7 +86,7 @@ except ImportError:
                     msvcrt.locking(  # type: ignore
                         file.fileno(),
                         msvcrt.LK_LOCK if block else msvcrt.LK_NBLCK,  # type: ignore
-                        1
+                        1,
                     )
                 except OSError as e:
                     if block and e.errno == 36:
@@ -110,7 +111,7 @@ else:
 
     # Linux/POSIX
 
-    POSIX = True  # type: ignore
+    POSIX = True
 
     def _lock_file(file: IO[str], block: bool) -> None:
         try:
@@ -128,15 +129,15 @@ class GlobalLock:
     _TMP_DIR = tempfile.gettempdir()
 
     def __init__(self, lockname: str) -> None:
-        """ Initialize a global lock with the given name """
+        """Initialize a global lock with the given name"""
         assert lockname and isinstance(lockname, str)
         # Locate global locks in the system temporary directory
         # (should work on both Windows and Unix/POSIX)
         self._path = os.path.join(self._TMP_DIR, "greynir-" + lockname)
         self._fp: Optional[IO[str]] = None
 
-    def acquire(self, block: bool=True) -> None:
-        """ Acquire a global lock, blocking if block = True """
+    def acquire(self, block: bool = True) -> None:
+        """Acquire a global lock, blocking if block = True"""
 
         if self._fp is not None:
             # Already hold the lock
@@ -157,9 +158,12 @@ class GlobalLock:
             if POSIX and fp is not None:
                 os.fchmod(
                     fp.fileno(),
-                    stat.S_IRUSR | stat.S_IWUSR
-                    | stat.S_IRGRP | stat.S_IWGRP
-                    | stat.S_IROTH | stat.S_IWOTH
+                    stat.S_IRUSR
+                    | stat.S_IWUSR
+                    | stat.S_IRGRP
+                    | stat.S_IWGRP
+                    | stat.S_IROTH
+                    | stat.S_IWOTH,
                 )
 
         if fp is None:
@@ -180,18 +184,18 @@ class GlobalLock:
         fp.flush()
 
     def release(self) -> None:
-        """ Release the lock """
+        """Release the lock"""
         if self._fp is not None:
             _unlock_file(self._fp)
             self._fp.close()
             self._fp = None
 
     def __enter__(self):
-        """ Python context manager protocol """
+        """Python context manager protocol"""
         self.acquire(block=True)
         return self
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
-        """ Python context manager protocol """
+        """Python context manager protocol"""
         self.release()
         return False

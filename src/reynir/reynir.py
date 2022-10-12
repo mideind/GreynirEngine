@@ -4,7 +4,7 @@
 
     High-level wrapper for the Greynir tokenizer, parser and reducer
 
-    Copyright (C) 2021 Miðeind ehf.
+    Copyright (C) 2022 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -108,20 +108,21 @@ class ParseResult(TypedDict):
     parse_time: float
     reduce_time: float
 
+
 # The default maximum length of a sentence, in tokens, that we attempt to parse
 DEFAULT_MAX_SENT_TOKENS = 90
 
 
 class _Sentence:
 
-    """ A container for a sentence that has been extracted from the
-        tokenizer. The sentence can be explicitly parsed by calling
-        sentence.parse(). After parsing, a number of query functions
-        are available on the parse tree. """
+    """A container for a sentence that has been extracted from the
+    tokenizer. The sentence can be explicitly parsed by calling
+    sentence.parse(). After parsing, a number of query functions
+    are available on the parse tree."""
 
     def __init__(self, job: "_Job", s: TokenList) -> None:
-        """ NOTE! If attributes are added here, the _Sentence.load() function
-            below needs to be updated accordingly. """
+        """NOTE! If attributes are added here, the _Sentence.load() function
+        below needs to be updated accordingly."""
         self._job = job
         # s is a token list
         self._s = s
@@ -142,11 +143,11 @@ class _Sentence:
             self.parse()
 
     def __len__(self) -> int:
-        """ Return the number of tokens in the sentence """
+        """Return the number of tokens in the sentence"""
         return self._len
 
     def parse(self) -> bool:
-        """ Parse the sentence """
+        """Parse the sentence"""
         if self._num is not None:
             # Already parsed
             return self._num > 0
@@ -172,62 +173,62 @@ class _Sentence:
 
     @property
     def error(self) -> Optional[ParseError]:
-        """ Return the ParseError that occurred when parsing this sentence, or None """
+        """Return the ParseError that occurred when parsing this sentence, or None"""
         return self._error
 
     @property
     def err_index(self) -> Optional[int]:
-        """ Return the index of the error token, if an error occurred;
-            otherwise None """
+        """Return the index of the error token, if an error occurred;
+        otherwise None"""
         return self._err_index
 
     @property
     def tokens(self) -> TokenList:
-        """ Return the tokens in the sentence """
+        """Return the tokens in the sentence"""
         return self._s
 
     def is_foreign(self, min_icelandic_ratio: float = ICELANDIC_RATIO) -> bool:
-        """ Return True if the sentence is probably not in Icelandic """
+        """Return True if the sentence is probably not in Icelandic"""
         return tokens_are_foreign(self.tokens, min_icelandic_ratio)
 
     @property
     def combinations(self) -> Optional[int]:
-        """ Return the number of different parse tree combinations
-            for the sentence, or 0 if no parse tree was found,
-            or None if the sentence hasn't been parsed """
+        """Return the number of different parse tree combinations
+        for the sentence, or 0 if no parse tree was found,
+        or None if the sentence hasn't been parsed"""
         return self._num
 
     @property
     def score(self) -> Optional[int]:
-        """ The score of the best parse tree for the sentence """
+        """The score of the best parse tree for the sentence"""
         return self._score
 
     @property
     def tree(self) -> Optional[SimpleTree]:
-        """ Return the simplified parse tree, or None
-            if the sentence hasn't been parsed """
+        """Return the simplified parse tree, or None
+        if the sentence hasn't been parsed"""
         return self._simplified_tree
 
     @property
     def deep_tree(self) -> Any:
-        """ Return the original deep tree, as constructed by the parser,
-            corresponding directly to grammar nonterminals and terminals """
+        """Return the original deep tree, as constructed by the parser,
+        corresponding directly to grammar nonterminals and terminals"""
         return self._tree
 
     @property
     def flat_tree(self) -> Optional[str]:
-        """ Return a flat text representation of the simplified parse tree """
+        """Return a flat text representation of the simplified parse tree"""
         return None if self.tree is None else self.tree.flat
 
     @cached_property
     def text(self) -> str:
-        """ Return a raw text representation of the sentence,
-            with spaces between all tokens """
+        """Return a raw text representation of the sentence,
+        with spaces between all tokens"""
         return " ".join(t.txt for t in self._s if t.txt)
 
     @property
     def tidy_text(self) -> str:
-        """ Return a [more] correctly spaced text representation of the sentence """
+        """Return a [more] correctly spaced text representation of the sentence"""
         if self.tree is None:
             txt = self.text
         else:
@@ -239,10 +240,10 @@ class _Sentence:
 
     @property
     def terminals(self) -> Optional[List[Terminal]]:
-        """ Return a list of tuples, one for each terminal in the sentence.
-            The tuples contain the original text of the token that matched
-            the terminal, the associated word lemma, the category, and a set
-            of variants (case, number, gender, etc.) """
+        """Return a list of tuples, one for each terminal in the sentence.
+        The tuples contain the original text of the token that matched
+        the terminal, the associated word lemma, the category, and a set
+        of variants (case, number, gender, etc.)"""
         if self.tree is None:
             # Must parse the sentence first, without errors
             return None
@@ -259,22 +260,22 @@ class _Sentence:
 
     @cached_property
     def terminal_nodes(self) -> List[SimpleTree]:
-        """ Return a list of the terminal nodes within the parse tree
-            for this sentence """
+        """Return a list of the terminal nodes within the parse tree
+        for this sentence"""
         if self.tree is None:
             return []
         return [d for d in self.tree.descendants if d.is_terminal]
 
     @property
     def lemmas(self) -> Optional[List[str]]:
-        """ Convenience property to return the lemmas only """
+        """Convenience property to return the lemmas only"""
         t = self.terminals
         return None if t is None else [terminal.lemma for terminal in t]
 
     @property
     def lemmas_mm(self) -> List[str]:
-        """ Convenience property to return the lemmas only, in middle voice
-            if the terminal so specifies """
+        """Convenience property to return the lemmas only, in middle voice
+        if the terminal so specifies"""
         t = self.terminals
         result: List[str] = []
         if t:
@@ -290,7 +291,7 @@ class _Sentence:
 
     @property
     def categories(self) -> Optional[List[str]]:
-        """ Convenience property to return the categories only """
+        """Convenience property to return the categories only"""
         if self.tree is None:
             return None
         # Note that here we return the BÍN category,
@@ -300,7 +301,7 @@ class _Sentence:
 
     @property
     def lemmas_and_cats(self) -> Optional[List[Tuple[str, str]]]:
-        """ Convenience property to return (lemma, category) tuples """
+        """Convenience property to return (lemma, category) tuples"""
         if self.tree is None:
             return None
         # Note that we return the "lemma category", which is suitable for
@@ -312,8 +313,8 @@ class _Sentence:
 
     @property
     def ifd_tags(self) -> Optional[List[str]]:
-        """ Return a list of Icelandic Frequency Dictionary (IFD) tags for
-            the terminals/tokens in this sentence. """
+        """Return a list of Icelandic Frequency Dictionary (IFD) tags for
+        the terminals/tokens in this sentence."""
         if self.tree is None:
             return None
         # Flatten the ifd_tags lists for the individual nodes
@@ -321,18 +322,18 @@ class _Sentence:
         return [ifd_tag for d in self.tree.descendants for ifd_tag in d.ifd_tags]
 
     def dump(self, greynir_cls: GreynirType) -> Dict[str, Any]:
-        """ Dump internal data of the class instance for serialization.
-            Useful for storing parsed data in a database.
-            Note: Normally, sentences are dumped using Greynir.dumps_single(). """
+        """Dump internal data of the class instance for serialization.
+        Useful for storing parsed data in a database.
+        Note: Normally, sentences are dumped using Greynir.dumps_single()."""
         return {
             "tokens": [greynir_cls._dump_token(t) for t in self._s],
             "tree": None if self.tree is None else self.tree._head,
         }
 
     def dumps(self, greynir_cls: GreynirType, **kwargs: Any) -> str:
-        """ Dump internal data of the class instance as a json string.
-            Useful for storing parsed data in a database.
-            Note: Normally, sentences are dumped using Greynir.dumps_single(). """
+        """Dump internal data of the class instance as a json string.
+        Useful for storing parsed data in a database.
+        Note: Normally, sentences are dumped using Greynir.dumps_single()."""
         if "ensure_ascii" not in kwargs:
             # Unless explicitly stated, we are OK with UTF-8 in the generated JSON
             return json.dumps(self.dump(greynir_cls), ensure_ascii=False, **kwargs)
@@ -345,9 +346,9 @@ class _Sentence:
         tokens: List[Sequence[Any]],
         tree: Optional[CanonicalTokenDict],
     ) -> "_Sentence":
-        """ Load previously dumped data.
-            Useful for retrieving parsed data from a database.
-            Note: Normally, sentences are loaded using Greynir.loads_single(). """
+        """Load previously dumped data.
+        Useful for retrieving parsed data from a database.
+        Note: Normally, sentences are loaded using Greynir.loads_single()."""
         instance = cls.__new__(cls)
         instance.__dict__ = {
             "_s": [greynir_cls._load_token(*t) for t in tokens],
@@ -365,14 +366,14 @@ class _Sentence:
     def loads(
         cls, greynir_cls: GreynirType, json_str: str, **kwargs: Any
     ) -> "_Sentence":
-        """ Load a previously dumped JSON string.
-            Useful for retrieving parsed data from a database.
-            Note: Normally, sentences are loaded using Greynir.loads_single(). """
+        """Load a previously dumped JSON string.
+        Useful for retrieving parsed data from a database.
+        Note: Normally, sentences are loaded using Greynir.loads_single()."""
         data = json.loads(json_str, **kwargs)
         return cls.load(greynir_cls, **data)
 
     def __str__(self) -> str:
-        """ Return a text representation of a sentence """
+        """Return a text representation of a sentence"""
         return self.text
 
 
@@ -384,8 +385,8 @@ Sentence = _Sentence
 
 class _NounPhrase(_Sentence):
 
-    """ A specialization for parsed noun phrases,
-        providing easy access to inflectional forms """
+    """A specialization for parsed noun phrases,
+    providing easy access to inflectional forms"""
 
     _nom: GetterFunc = operator.attrgetter("nominative_np")
     _acc: GetterFunc = operator.attrgetter("accusative_np")
@@ -401,45 +402,45 @@ class _NounPhrase(_Sentence):
 
     @cached_property
     def nominative(self) -> Optional[str]:
-        """ Return nominative form (nefnifall) """
+        """Return nominative form (nefnifall)"""
         return self._get(_NounPhrase._nom)
 
     @cached_property
     def indefinite(self) -> Optional[str]:
-        """ Return indefinite form (nefnifall án greinis) """
+        """Return indefinite form (nefnifall án greinis)"""
         return self._get(_NounPhrase._ind)
 
     @cached_property
     def canonical(self) -> Optional[str]:
-        """ Return canonical form (nefnifall eintölu án greinis) """
+        """Return canonical form (nefnifall eintölu án greinis)"""
         return self._get(_NounPhrase._can)
 
     @cached_property
     def accusative(self) -> Optional[str]:
-        """ Return accusative form (þolfall) """
+        """Return accusative form (þolfall)"""
         return self._get(_NounPhrase._acc)
 
     @cached_property
     def dative(self) -> Optional[str]:
-        """ Return dative form (þágufall) """
+        """Return dative form (þágufall)"""
         return self._get(_NounPhrase._dat)
 
     @cached_property
     def genitive(self) -> Optional[str]:
-        """ Return genitive form (eignarfall) """
+        """Return genitive form (eignarfall)"""
         return self._get(_NounPhrase._gen)
 
 
 class _Paragraph:
 
-    """ Encapsulates a paragraph that contains sentences """
+    """Encapsulates a paragraph that contains sentences"""
 
     def __init__(self, job: "_Job", p: Iterable[SentenceTuple]) -> None:
         self._job = job
         self._p = p
 
     def sentences(self) -> Iterable[_Sentence]:
-        """ Yield the sentences within the paragraph, nicely wrapped """
+        """Yield the sentences within the paragraph, nicely wrapped"""
         # self._p is a generator that yields (ix, toklist) tuples,
         # where ix is a starting index of the sentence within the
         # token stream, and toklist is the list of tokens in the sentence,
@@ -448,7 +449,7 @@ class _Paragraph:
             yield self._job._create_sentence(sent)
 
     def __iter__(self) -> Iterator[_Sentence]:
-        """ Allow easy iteration of sentences within this paragraph """
+        """Allow easy iteration of sentences within this paragraph"""
         return iter(self.sentences())
 
 
@@ -458,8 +459,8 @@ Paragraph = _Paragraph
 
 class _Job:
 
-    """ A parsing job object, allowing incremental parsing of text
-        by paragraph and/or sentence.
+    """A parsing job object, allowing incremental parsing of text
+    by paragraph and/or sentence.
     """
 
     def __init__(
@@ -501,7 +502,7 @@ class _Job:
     def _add_sentence(
         self, s: TokenList, num: int, parse_time: float, reduce_time: float
     ) -> None:
-        """ Add a processed sentence to the statistics """
+        """Add a processed sentence to the statistics"""
         slen = len(s)
         self._num_sent += 1
         self._num_tokens += slen
@@ -525,16 +526,16 @@ class _Job:
             self._progress_func((self._num_sent + 1) / self._cnt_sent)
 
     def _create_sentence(self, s: TokenList) -> _Sentence:
-        """ Create a fresh _Sentence object """
+        """Create a fresh _Sentence object"""
         return self._r.create_sentence(self, s)
 
     @property
     def parse_immediately(self) -> bool:
-        """ Return True if sentences in the job should be parsed immediately """
+        """Return True if sentences in the job should be parsed immediately"""
         return self._parse
 
     def paragraphs(self) -> Iterable[_Paragraph]:
-        """ Yield the paragraphs from the token stream """
+        """Yield the paragraphs from the token stream"""
         if self._progress_func is not None:
             # We have a progress function, so we must pre-count
             # the sentences to be processed. This means that all input
@@ -557,14 +558,14 @@ class _Job:
             yield _Paragraph(self, p)
 
     def sentences(self) -> Iterable[_Sentence]:
-        """ Yield the sentences from the token stream """
+        """Yield the sentences from the token stream"""
         for p in self.paragraphs():
             yield from p.sentences()
 
     def parse(self, tokens: TokenList) -> Tuple[Any, int, int]:
-        """ Parse the token sequence, returning a parse tree,
-            the number of trees in the parse forest, and the
-            score of the best tree """
+        """Parse the token sequence, returning a parse tree,
+        the number of trees in the parse forest, and the
+        score of the best tree"""
         num = 0
         score = 0
         forest = None
@@ -596,62 +597,62 @@ class _Job:
             self._add_sentence(tokens, num, parse_time=now - t0, reduce_time=now - t1)
 
     def __iter__(self) -> Iterator[_Sentence]:
-        """ Allow easy iteration of sentences within this job """
+        """Allow easy iteration of sentences within this job"""
         return iter(self.sentences())
 
     @property
     def parser(self) -> Fast_Parser:
-        """ The job's associated parser object """
+        """The job's associated parser object"""
         return self._parser
 
     @property
     def reducer(self) -> Reducer:
-        """ The job's associated reducer object """
+        """The job's associated reducer object"""
         return self._reducer
 
     @property
     def num_tokens(self) -> int:
-        """ Total number of tokens in sentences submitted to this job """
+        """Total number of tokens in sentences submitted to this job"""
         return self._num_tokens
 
     @property
     def num_sentences(self) -> int:
-        """ Total number of sentences submitted to this job """
+        """Total number of sentences submitted to this job"""
         return self._num_sent
 
     @property
     def num_parsed(self) -> int:
-        """ Total number of sentences successfully parsed within this job """
+        """Total number of sentences successfully parsed within this job"""
         return self._num_parsed
 
     @property
     def num_combinations(self) -> int:
-        """ Sum of the total number of parse tree combinations
-            for sentences within this job """
+        """Sum of the total number of parse tree combinations
+        for sentences within this job"""
         return self._num_combinations
 
     @property
     def ambiguity(self) -> float:
-        """ The weighted average total ambiguity of parsed sentences
-            within this job """
+        """The weighted average total ambiguity of parsed sentences
+        within this job"""
         return (
             (self._total_ambig / self._total_tokens) if self._total_tokens > 0 else 1.0
         )
 
     @property
     def parse_time(self) -> float:
-        """ Total time spent on parsing (including reduction) during this job,
-            in seconds """
+        """Total time spent on parsing (including reduction) during this job,
+        in seconds"""
         return self._parse_time
 
     @property
     def reduce_time(self) -> float:
-        """ Total time spent on tree reduction during this job, in seconds """
+        """Total time spent on tree reduction during this job, in seconds"""
         return self._reduce_time
 
     @property
     def parse_foreign_sentences(self) -> bool:
-        """ Return True if foreign-looking sentences should be parsed """
+        """Return True if foreign-looking sentences should be parsed"""
         return self._r.parse_foreign_sentences
 
 
@@ -661,8 +662,8 @@ Job = _Job
 
 class _Job_NP(_Job):
 
-    """ Specialized _Job class that creates _NounPhrase objects
-        instead of _Sentence objects """
+    """Specialized _Job class that creates _NounPhrase objects
+    instead of _Sentence objects"""
 
     def __init__(
         self,
@@ -686,20 +687,32 @@ class _Job_NP(_Job):
         super().__init__(greynir, tokens, parse=True, root=root)
 
     def _create_sentence(self, s: TokenList) -> _NounPhrase:
-        """ Create a fresh _NounPhrase object """
+        """Create a fresh _NounPhrase object"""
         return _NounPhrase(self, s)
 
 
 class Greynir:
 
-    """ Utility class to tokenize and parse text, organized
-        as a sequence of sentences or alternatively as paragraphs
-        of sentences. Typical usage:
+    """Utility class to tokenize and parse text, organized
+    as a sequence of sentences or alternatively as paragraphs
+    of sentences. Typical usage:
 
-        g = Greynir()
-        job = g.submit(my_text)
-        # Iterate through sentences and parse each one:
-        for sent in job:
+    g = Greynir()
+    job = g.submit(my_text)
+    # Iterate through sentences and parse each one:
+    for sent in job:
+        if sent.parse():
+            # sentence parsed successfully
+            # do something with sent.tree
+            print(sent.tree)
+        else:
+            # an error occurred in the parse
+            # the error token index is at sent.err_index
+            pass
+    # Alternatively, split into paragraphs first:
+    job = g.submit(my_text)
+    for p in job.paragraphs(): # Yields paragraphs
+        for sent in p.sentences(): # Yields sentences
             if sent.parse():
                 # sentence parsed successfully
                 # do something with sent.tree
@@ -708,24 +721,12 @@ class Greynir:
                 # an error occurred in the parse
                 # the error token index is at sent.err_index
                 pass
-        # Alternatively, split into paragraphs first:
-        job = g.submit(my_text)
-        for p in job.paragraphs(): # Yields paragraphs
-            for sent in p.sentences(): # Yields sentences
-                if sent.parse():
-                    # sentence parsed successfully
-                    # do something with sent.tree
-                    print(sent.tree)
-                else:
-                    # an error occurred in the parse
-                    # the error token index is at sent.err_index
-                    pass
-        # After parsing all sentences in a job, the following
-        # statistics are available:
-        num_sentences = job.num_sentences   # Total number of sentences
-        num_parsed = job.num_parsed         # Thereof successfully parsed
-        ambiguity = job.ambiguity           # Average ambiguity factor
-        parse_time = job.parse_time         # Elapsed time since job was created
+    # After parsing all sentences in a job, the following
+    # statistics are available:
+    num_sentences = job.num_sentences   # Total number of sentences
+    num_parsed = job.num_parsed         # Thereof successfully parsed
+    ambiguity = job.ambiguity           # Average ambiguity factor
+    parse_time = job.parse_time         # Elapsed time since job was created
 
     """
 
@@ -734,8 +735,8 @@ class Greynir:
     _lock = Lock()
 
     def __init__(self, **options: Any) -> None:
-        """ Tokenization options can be passed as keyword arguments to the
-            Greynir constructor """
+        """Tokenization options can be passed as keyword arguments to the
+        Greynir constructor"""
         # Set parse_foreign_sentences to True to attempt to parse
         # all sentences, even if probably foreign
         self._parse_foreign_sentences: bool = options.pop(
@@ -745,44 +746,44 @@ class Greynir:
 
     @property
     def parse_foreign_sentences(self) -> bool:
-        """ Return True if the parser should attempt to parse sentences
-            that look to be foreign, i.e. not in Icelandic """
+        """Return True if the parser should attempt to parse sentences
+        that look to be foreign, i.e. not in Icelandic"""
         return self._parse_foreign_sentences
 
     @classmethod
     def _dump_token(cls, tok: Tok) -> Tuple[Any, ...]:
-        """ Allow derived classes to override how tokens are dumped """
+        """Allow derived classes to override how tokens are dumped"""
         # Returns (kind, txt, val) - corresponding to
         # the expected signature of _load_token()
         return (tok.kind, tok.txt, tok.val)
 
     @classmethod
     def _load_token(cls, *args: Any) -> Tok:
-        """ Load token from serialized data """
+        """Load token from serialized data"""
         return Tok(*load_token(*args))
 
     def dumps_single(self, sent: _Sentence, **kwargs: Any) -> str:
-        """ Return a _Sentence object in a JSON-formatted string,
-            which can be loaded again using loads_single() """
+        """Return a _Sentence object in a JSON-formatted string,
+        which can be loaded again using loads_single()"""
         return sent.dumps(self.__class__, **kwargs)
 
     def loads_single(self, json_str: str, **kwargs: Any) -> _Sentence:
-        """ Load previously dumped JSON description of a single sentence.
-            Useful for retrieving parsed data from a database. """
+        """Load previously dumped JSON description of a single sentence.
+        Useful for retrieving parsed data from a database."""
         return _Sentence.loads(self.__class__, json_str, **kwargs)
 
     def tokenize(self, text: StringIterable) -> Iterable[Tok]:
-        """ Call the tokenizer (overridable in derived classes) """
+        """Call the tokenizer (overridable in derived classes)"""
         return bin_tokenize(text, **self._options)
 
     def create_sentence(self, job: _Job, s: TokenList) -> _Sentence:
-        """ Override this in derived classes to modify how sentences
-            are created or postprocessed """
+        """Override this in derived classes to modify how sentences
+        are created or postprocessed"""
         return _Sentence(job, s)
 
     @property
     def parser(self) -> Fast_Parser:
-        """ Return the parser instance to be used """
+        """Return the parser instance to be used"""
         with self._lock:
             if Greynir._parser is None:
                 # Initialize a singleton instance of the parser and the reducer.
@@ -793,7 +794,7 @@ class Greynir:
 
     @property
     def reducer(self) -> Reducer:
-        """ Return the reducer instance to be used """
+        """Return the reducer instance to be used"""
         # Should always retrieve the parser attribute first
         assert Greynir._reducer is not None
         return Greynir._reducer
@@ -807,17 +808,17 @@ class Greynir:
         progress_func: ProgressFunc = None,
         max_sent_tokens: int = DEFAULT_MAX_SENT_TOKENS,
     ) -> _Job:
-        """ Submit a text to the tokenizer and parser, yielding a job object.
-            The paragraphs and sentences of the text can then be iterated
-            through via the job object. If parse is set to True, the
-            sentences are automatically parsed before being returned.
-            Otherwise, they need to be explicitly parsed by calling
-            sent.parse(). This is a more incremental, asynchronous
-            approach than Greynir.parse().
-            
-            If progress_func is given, it will be called during processing
-            with a single float parameter between 0.0..1.0 indicating the
-            ratio of progress so far with the parsing job. """
+        """Submit a text to the tokenizer and parser, yielding a job object.
+        The paragraphs and sentences of the text can then be iterated
+        through via the job object. If parse is set to True, the
+        sentences are automatically parsed before being returned.
+        Otherwise, they need to be explicitly parsed by calling
+        sent.parse(). This is a more incremental, asynchronous
+        approach than Greynir.parse().
+
+        If progress_func is given, it will be called during processing
+        with a single float parameter between 0.0..1.0 indicating the
+        ratio of progress so far with the parsing job."""
 
         if split_paragraphs:
             # Original text consists of paragraphs separated by newlines:
@@ -840,9 +841,9 @@ class Greynir:
         progress_func: ProgressFunc = None,
         max_sent_tokens: int = DEFAULT_MAX_SENT_TOKENS,
     ) -> ParseResult:
-        """ Convenience function to parse text synchronously and return
-            a summary of all contained sentences. The progress_func parameter
-            works as described for Greynir.submit(). """
+        """Convenience function to parse text synchronously and return
+        a summary of all contained sentences. The progress_func parameter
+        works as described for Greynir.submit()."""
         tokens = self.tokenize(text)
         job = _Job(
             self,
@@ -867,7 +868,7 @@ class Greynir:
     def parse_single(
         self, sentence: str, *, max_sent_tokens: int = DEFAULT_MAX_SENT_TOKENS
     ) -> Optional[_Sentence]:
-        """ Convenience function to parse a single sentence only """
+        """Convenience function to parse a single sentence only"""
         tokens = self.tokenize(sentence)
         job = _Job(self, tokens, parse=True, max_sent_tokens=max_sent_tokens)
         # Returns None if no sentence could be extracted from the text
@@ -879,7 +880,7 @@ class Greynir:
     def parse_tokens(
         self, tokens: Iterable[Tok], *, max_sent_tokens: int = DEFAULT_MAX_SENT_TOKENS
     ) -> Optional[_Sentence]:
-        """ Convenience function to parse a single sentence from tokens """
+        """Convenience function to parse a single sentence from tokens"""
         job = _Job(self, tokens, parse=True, max_sent_tokens=max_sent_tokens)
         # Returns None if no sentence could be extracted from the text
         try:
@@ -890,9 +891,9 @@ class Greynir:
     def parse_noun_phrase(
         self, noun_phrase: str, *, force_number: Optional[str] = None
     ) -> Optional[_NounPhrase]:
-        """ Utility function to parse a noun phrase. Note that in most
-            cases it is more convenient to use the NounPhrase class
-            for this purpose. """
+        """Utility function to parse a noun phrase. Note that in most
+        cases it is more convenient to use the NounPhrase class
+        for this purpose."""
         # When tokenizing a noun phrase, don't assume that it starts a sentence
         tokens = self.tokenize(noun_phrase)
         # Use a _Job_NP to generate _NounPhrase objects instead of _Sentence objects
@@ -910,22 +911,22 @@ class Greynir:
         all_lemmas: bool = False,
         sortkey: Optional[Callable[[LemmaTuple], Comparable]] = None,
     ) -> Union[Iterator[LemmaTuple], Iterator[List[LemmaTuple]]]:
-        """ Utiility function to (simplistically) lemmatize all words in
-            a given string without parsing. Returns a generator of
-            (lemma, word category) tuples, one for each text token
-            in the input (text tokens being words, person names and entity names).
-            Punctuation, dates, numbers, e-mail addresses and other token types
-            are skipped and not included in the output.
-            If all_lemmas is True, the function returns a list of tuples
-            with all possible lemmas for each text token.
-            If all_lemmas is True and a sortkey is given, the returned
-            list is sorted using that function as a sort key, cf. the
-            Python built-in list.sort() function. """
+        """Utiility function to (simplistically) lemmatize all words in
+        a given string without parsing. Returns a generator of
+        (lemma, word category) tuples, one for each text token
+        in the input (text tokens being words, person names and entity names).
+        Punctuation, dates, numbers, e-mail addresses and other token types
+        are skipped and not included in the output.
+        If all_lemmas is True, the function returns a list of tuples
+        with all possible lemmas for each text token.
+        If all_lemmas is True and a sortkey is given, the returned
+        list is sorted using that function as a sort key, cf. the
+        Python built-in list.sort() function."""
         return simple_lemmatize(txt, all_lemmas=all_lemmas, sortkey=sortkey)
 
     @classmethod
     def cleanup(cls) -> None:
-        """ Discard memory resources held by the Greynir class object """
+        """Discard memory resources held by the Greynir class object"""
         cls._reducer = None
         if cls._parser is not None:
             Fast_Parser.discard_grammar()
