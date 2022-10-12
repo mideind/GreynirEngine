@@ -32,7 +32,7 @@
 
 import json
 
-import pytest  # type: ignore
+import pytest
 
 
 @pytest.fixture(scope="module")

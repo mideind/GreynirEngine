@@ -31,7 +31,7 @@
 
 """
 
-import pytest  # type: ignore
+import pytest
 
 from reynir import Greynir
 from reynir.bintokenizer import tokenize

@@ -111,7 +111,7 @@ else:
 
     # Linux/POSIX
 
-    POSIX = True  # type: ignore
+    POSIX = True
 
     def _lock_file(file: IO[str], block: bool) -> None:
         try:

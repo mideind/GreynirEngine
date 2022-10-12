@@ -35,7 +35,7 @@ from typing import List, cast
 
 from collections import defaultdict
 
-import pytest  # type: ignore
+import pytest
 
 from tokenizer.definitions import AmountTuple, DateTimeTuple
 

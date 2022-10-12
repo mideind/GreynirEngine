@@ -54,8 +54,7 @@ import sys
 from glob import glob
 from os.path import basename, dirname, join, splitext
 
-from setuptools import find_packages  # type: ignore
-from setuptools import setup  # type: ignore
+from setuptools import find_packages, setup
 
 
 if sys.version_info < (3, 7):

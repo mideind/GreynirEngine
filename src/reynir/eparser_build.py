@@ -37,7 +37,7 @@
 
 import os
 import platform
-import cffi  # type: ignore
+import cffi
 
 # Don't change the name of this variable unless you
 # change it in setup.py as well
@@ -132,9 +132,9 @@ elif MACOS:
 else:
     extra_compile_args = ["-std=c++11"]
 
-ffibuilder.cdef(declarations + callbacks)  # type: ignore
+ffibuilder.cdef(declarations + callbacks)
 
-ffibuilder.set_source(  # type: ignore
+ffibuilder.set_source(
     "reynir._eparser",
     # eparser.cpp is written in C++ but must export a pure C interface.
     # This is the reason for the "extern 'C' { ... }" wrapper.
@@ -145,4 +145,4 @@ ffibuilder.set_source(  # type: ignore
 )
 
 if __name__ == "__main__":
-    ffibuilder.compile(verbose=True)  # type: ignore
+    ffibuilder.compile(verbose=True)

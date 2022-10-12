@@ -30,7 +30,7 @@
 
 """
 
-import pytest  # type: ignore
+import pytest
 
 from reynir import Greynir
 
