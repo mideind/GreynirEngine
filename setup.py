@@ -120,7 +120,7 @@ setup(
     keywords=["nlp", "parser", "icelandic"],
     setup_requires=["cffi>=1.13.0"],
     install_requires=[
-        "cffi>=1.13.0",
+        "cffi>=1.15.1",
         "tokenizer>=3.4.0",
         "islenska>=0.4.3",
         "typing_extensions",
