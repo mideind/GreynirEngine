@@ -1,6 +1,8 @@
 name: Build wheels
 
 on: [push]
+  # tags:
+  #     - '**'
 
 jobs:
   build_wheels:
