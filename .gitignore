@@ -85,7 +85,7 @@ log/
 console/
 
 # Virtual environments
-venv/
+venv
 p35/
 p358/
 p359/

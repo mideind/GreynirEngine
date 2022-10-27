@@ -83,7 +83,7 @@ import os
 import struct
 
 from datetime import datetime
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 
 # pylint: disable=no-name-in-module
 if TYPE_CHECKING or __package__:
@@ -529,8 +529,8 @@ class Grammar:
 
     def __init__(self) -> None:
 
-        self._nonterminals: Dict[str, Nonterminal] = OrderedDict()
-        self._terminals: Dict[str, Terminal] = OrderedDict()
+        self._nonterminals: Dict[str, Nonterminal] = dict()
+        self._terminals: Dict[str, Terminal] = dict()
 
         # Dictionary of nonterminals indexed by integers < 0
         self._nonterminals_by_ix: Dict[int, Nonterminal] = {}
@@ -540,7 +540,7 @@ class Grammar:
         self._productions_by_ix: Dict[int, Production] = {}
 
         # Mapping of nonterminals to a list of their productions
-        self._nt_dict: Dict[Nonterminal, List[ProductionTuple]] = OrderedDict()
+        self._nt_dict: Dict[Nonterminal, List[ProductionTuple]] = dict()
         # Nonterminal score adjustment as specified by $score(n)
         self._nt_scores: Dict[Nonterminal, int] = {}
 
@@ -753,7 +753,7 @@ class Grammar:
         Production.reset()
         # Dictionary of variants, keyed by variant name
         # where the values are lists of variant options (strings)
-        variants: Dict[str, List[str]] = OrderedDict()
+        variants: Dict[str, List[str]] = dict()
 
         def parse_line(s: str) -> None:
 
