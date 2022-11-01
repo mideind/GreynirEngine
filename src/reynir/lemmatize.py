@@ -33,7 +33,6 @@
 from typing import Optional, Union, Callable, Tuple, List, Iterator, TypeVar, cast
 
 from abc import abstractmethod, ABCMeta
-from collections import OrderedDict
 
 from .bindb import BIN_Tuple
 from .bintokenizer import tokenize, TOK
@@ -94,7 +93,7 @@ def simple_lemmatize(
         if y is not None:
             # OK, we're returning one or more lemmas for this token
             # Remove duplicates while preserving order
-            y = list(OrderedDict.fromkeys(y))
+            y = list(dict.fromkeys(y))
             if sortkey is not None:
                 y.sort(key=sortkey)
             if all_lemmas:

@@ -5,6 +5,10 @@
 A fast, efficient natural language processor for Icelandic
 ==========================================================
 
+.. image:: https://img.shields.io/github/license/mideind/BinPackage
+.. image:: https://img.shields.io/badge/python-3.7-blue.svg
+.. image:: https://img.shields.io/pypi/v/reynir
+.. image:: https://shields.io/github/v/release/mideind/GreynirPackage?display_name=tag
 .. image:: https://github.com/mideind/GreynirPackage/workflows/Python%20package/badge.svg?branch=master
     :target: https://github.com/mideind/GreynirPackage/actions?query=workflow%3A%22Python+package%22
 
