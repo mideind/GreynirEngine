@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-
+#!/usr/bin/env python3
 """
     Greynir: Natural language processing for Icelandic
 
@@ -41,9 +39,6 @@
     for best performance).
 
 """
-
-from __future__ import print_function
-from __future__ import unicode_literals
 
 from typing import Any
 
@@ -111,6 +106,8 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Libraries :: Python Modules",
@@ -118,10 +115,10 @@ setup(
         "Topic :: Text Processing :: Linguistic",
     ],
     keywords=["nlp", "parser", "icelandic"],
-    setup_requires=["cffi>=1.13.0"],
+    setup_requires=["cffi>=1.15.1"],
     install_requires=[
-        "cffi>=1.13.0",
-        "tokenizer>=3.4.0",
+        "cffi>=1.15.1",
+        "tokenizer>=3.4.2",
         "islenska>=0.4.3",
         "typing_extensions",
     ],
