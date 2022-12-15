@@ -35,7 +35,7 @@
 from typing import Any, List, Optional, Tuple
 from functools import lru_cache
 
-from islenska.basics import make_bin_entry
+from islenska.basics import make_bin_entry, ALL_CASES
 from islenska.bindb import GreynirBin as GBin, PERSON_NAME_FL
 
 from tokenizer.definitions import BIN_Tuple
@@ -108,16 +108,27 @@ class GreynirBin(GBin):
         ]
 
     @lru_cache(maxsize=_NAME_GENDER_CACHE_SIZE)
-    def lookup_name_gender(self, name: str) -> str:
+    def lookup_name_gender(self, name: str, preferred_case: str = "nf") -> str:
         """Given a person name, lookup its gender"""
+        assert preferred_case in ALL_CASES
+
         if not name:
             return "hk"  # Unknown gender
-        w = name.split(maxsplit=1)[0]  # First name
-        g = self.meanings(w)
-        m = next((x for x in g if x.fl in PERSON_NAME_FL), None)
+
+        w = name.split(maxsplit=1)[0]  # Get first name
+        m = self.meanings(w)  # Look up meanings
         if m:
-            # Found a name meaning
-            return m.ordfl
+            # Find all meanings that can be person names
+            nl = [x for x in m if x.fl in PERSON_NAME_FL]
+            if nl:
+                # Find all meanings in the preferred case
+                prefc = [x for x in nl if x.beyging.lower().startswith(preferred_case)]
+                if prefc:
+                    # Found a name meaning in the preferred case
+                    return prefc[0].ordfl
+                # Found a name meaning *not* in the preferred case
+                return nl[0].ordfl
+
         # The first name was not found: check whether the full name is
         # in the static phrases
         m = StaticPhrases.lookup(name)
