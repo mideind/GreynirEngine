@@ -43,7 +43,6 @@
 from typing import Any
 
 import io
-import re
 import sys
 
 from glob import glob
@@ -70,17 +69,16 @@ def read(*names: str, **kwargs: Any) -> str:
 __version__ = "[missing]"
 exec(open(join("src", "reynir", "version.py")).read())
 
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
 setup(
     name="reynir",
     version=__version__,
     license="MIT",
     description="A natural language parser for Icelandic",
-    long_description="{0}\n{1}".format(
-        re.compile("^.. start-badges.*^.. end-badges", re.M | re.S).sub(
-            "", read("README.rst")
-        ),
-        re.sub(":[a-z]+:`~?(.*?)`", r"``\1``", read("CHANGELOG.rst")),
-    ),
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     author="Miðeind ehf",
     author_email="mideind@mideind.is",
     url="https://github.com/mideind/GreynirPackage",
@@ -119,7 +117,7 @@ setup(
     install_requires=[
         "cffi>=1.15.1",
         "tokenizer>=3.4.2",
-        "islenska>=0.4.3",
+        "islenska>=0.4.5",
         "typing_extensions",
     ],
     cffi_modules=["src/reynir/eparser_build.py:ffibuilder"],
