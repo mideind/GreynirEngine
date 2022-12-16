@@ -369,14 +369,14 @@ def test_no_multiply_numbers(r: Greynir):
         t[1],
         text="hundruð",
         lemma="hundrað",
-        category="no",
+        category="to",
         variants=["ft", "hk", "nf"],
     )
     check_terminal(
         t[2],
         text="þúsund",
         lemma="þúsund",
-        category="töl",
+        category="no",
         variants=["ft", "hk", "nf"],
     )
     check_terminal(
