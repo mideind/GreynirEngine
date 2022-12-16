@@ -4,7 +4,7 @@
 ![PyPI](https://img.shields.io/pypi/v/reynir)
 [![Build](https://github.com/mideind/GreynirPackage/actions/workflows/python-package.yml/badge.svg)]()
 
-<img src="https://github.com/mideind/GreynirPackage/doc/_static/greynir-logo-large.png" alt="Greynir" width="200" height="200" align="right" style="margin-left:20px; margin-bottom: 20px;">
+<img src="https://raw.githubusercontent.com/mideind/GreynirPackage/master/doc/_static/greynir-logo-large.png" alt="Greynir" width="200" height="200" align="right" style="margin-left:20px; margin-bottom: 20px;">
 
 # GreynirPackage
 
@@ -179,10 +179,10 @@ as well as important information about
 
 ## Copyright and licensing
 
-Greynir is Copyright © 2022 by [Miðeind ehf.](https://mideind.is).
+Greynir is Copyright © 2022 by [Miðeind ehf.](https://mideind.is).  
 The original author of this software is *Vilhjálmur Þorsteinsson*.
 
-<a href="https://mideind.is"><img src="https://github.com/mideind/GreynirPackage/doc/_static/" alt="Miðeind ehf."
+<a href="https://mideind.is"><img src="https://raw.githubusercontent.com/mideind/GreynirPackage/master/doc/_static/mideind-horizontal-small.png" alt="Miðeind ehf."
     width="214" height="66" align="right" style="margin-left:20px; margin-bottom: 20px;"></a>
 
 This software is licensed under the **MIT License**:
