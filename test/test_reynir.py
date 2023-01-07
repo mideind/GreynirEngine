@@ -251,15 +251,16 @@ def test_names():
     s = g.parse_single("Hér er The Trials and Tribulations of the Cat.")
     assert s.lemmas == ["hér", "vera", "The Trials and Tribulations of the Cat", "."]
 
-    s = g.parse_single("Hér er Making Pastels: In Search of Quietness.")
-    assert s.lemmas == [
-        "hér",
-        "vera",
-        "Making Pastels",
-        ":",
-        "In Search of Quietness",
-        ".",
-    ]
+    # TODO: Re-enable. Currently disabled due to error in latest BÍN release
+    # s = g.parse_single("Hér er Making Pastels: In Search of Quietness.")
+    # assert s.lemmas == [
+    #     "hér",
+    #     "vera",
+    #     "Making Pastels",
+    #     ":",
+    #     "In Search of Quietness",
+    #     ".",
+    # ]
 
     # False positives to avoid
     s = g.parse_single("Hér er von Helgu.")
