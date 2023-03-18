@@ -680,9 +680,11 @@ Tíðartenging →
     | "þá:ao" "er:st"
     | 'um:fs'_þf 'leið:kvk'_þf_et "og:st" # um leið og
     | 'um:fs'_þf 'svipaður:lo'_sb_hk_þf_et 'leyti:hk'_þf_et "og:st" # um svipað leyti og
-    | 'um:fs'_þf 'samur:fn'_hk_þf_et 'leyti:hk'_þf_et "og:st" # um sama leyti og
+    | 'um:fs'_þf 'sami:fn'_hk_þf_et 'leyti:hk'_þf_et "og:st" # um sama leyti og
     | 'á_sama_tíma:ao' "og:st"
     | 'í_sömu_andrá:ao' "og:st"
+    | 'dagur:kk'_þf_et_gr "sem:st" AðvörunAð?
+    | 'sami:fn'_kk_þf_et 'dagur:kk'_þf_et "og:st"
     | "síðan:st" AðvörunAð?
     | "uns:st"
     | "meðan:st" AðvörunAð?
