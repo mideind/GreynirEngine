@@ -10,7 +10,7 @@ Welcome to Greynir
 *Til að gagnast sem flestum er skjölun Greynis á ensku. - In order to serve
 the widest possible audience, Greynir's documentation is in English.*
 
-Greynir is a Python >= 3.7 package for **working with Icelandic text**,
+Greynir is a Python >= 3.9 package for **working with Icelandic text**,
 including parsing it into **sentence trees**, finding **lemmas**,
 inflecting **noun phrases**, assigning **part-of-speech tags** and much more.
 
