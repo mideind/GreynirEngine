@@ -849,7 +849,6 @@ def all_genders(token: Tok) -> Optional[List[str]]:
 
 
 def parse_phrases_1(
-    db: GreynirBin,
     token_ctor: TokenConstructor,
     token_stream: TokenIterator,
     no_multiply_numbers: bool,
@@ -1111,6 +1110,155 @@ def parse_phrases_1(
         yield token
 
 
+# Logic for human names
+def _stems(
+    tok: Tok,
+    categories: FrozenSet[str],
+    given_name: bool = False,
+    at_sentence_start: bool = False,
+) -> Optional[List[PersonNameTuple]]:
+    """If the token denotes a given name, return its possible
+    interpretations, as a list of PersonName tuples (name, case, gender).
+    If given_name is True, we omit from the list all name forms that
+    occur in the disallowed_names section in the configuration file."""
+    if tok.kind != TOK.WORD or not tok.val:
+        return None
+    if at_sentence_start and tok.txt in NOT_NAME_AT_SENTENCE_START:
+        # Disallow certain person names at the start of sentences,
+        # such as 'Annar'
+        return None
+    # Set up the names we're not going to allow
+    dstems = DisallowedNames.STEMS if given_name else {}
+    # Look through the token meanings
+    result: List[PersonNameTuple] = []
+    for m in tok.meanings:
+        if m.fl in categories and ("ET" in m.beyging or m.beyging == "-"):
+            # If this is a given name, we cut out name forms
+            # that are frequently ambiguous and wrong,
+            # i.e. "Frá" as accusative of the name "Frár",
+            # and "Sigurð" in the nominative.
+            c = case(m.beyging, default="-")
+            if m.stofn not in dstems or c not in dstems[m.stofn]:
+                # Note the stem ('stofn') and the gender from
+                # the word type ('ordfl')
+                result.append(
+                    PersonNameTuple(name=m.stofn, gender=m.ordfl, case=c)
+                )
+    return result or None
+
+
+def _has_category(tok: Tok, categories: FrozenSet[str]) -> bool:
+    """Return True if the token matches a meaning
+    with any of the given categories"""
+    if tok.kind != TOK.WORD or not tok.val:
+        return False
+    return any(m.fl in categories for m in tok.meanings)
+
+
+def _has_other_meaning(tok: Tok, categories: FrozenSet[str]) -> bool:
+    """Return True if the token can denote something
+    besides a given name"""
+    if tok.kind != TOK.WORD or not tok.val:
+        return True
+    # Return True if there is a different meaning, not a given name
+    return any(m.fl not in categories for m in tok.meanings)
+
+
+# Check for person names
+def _given_names(tok: Tok, at_sentence_start: bool) -> Optional[List[PersonNameTuple]]:
+    """Check for Icelandic or foreign person name
+    (category 'ism', 'gæl' or 'erm')"""
+    if tok.kind != TOK.WORD or not tok.txt[0].isupper():
+        # Must be a word starting with an uppercase character
+        return None
+    return _stems(tok, PERSON_NAME_SET, given_name=True, at_sentence_start=at_sentence_start)
+
+
+# Check for surnames
+def _surnames(tok: Tok, at_sentence_start: bool) -> Optional[List[PersonNameTuple]]:
+    """Check for Icelandic patronym (category 'föð'),
+    matronym (category 'móð') or family names (category 'ætt')"""
+    if tok.kind != TOK.WORD or not tok.txt[0].isupper():
+        # Must be a word starting with an uppercase character
+        return None
+    return _stems(tok, PATRONYM_SET, at_sentence_start=at_sentence_start)
+
+
+# Check for unknown surnames
+def _unknown_surname(tok: Tok, auto_uppercase: bool) -> bool:
+    """Check for unknown (non-Icelandic) surnames"""
+    # Accept (most) upper case words as a surnames
+    if auto_uppercase:
+        if tok.txt and not tok.val:
+            # Looks like an unknown word: accept it as a surname
+            # (might be a foreign name)
+            return True
+    if tok.kind != TOK.WORD or not tok.txt[0].isupper():
+        # Must start with capital letter
+        return False
+    if _has_category(tok, PATRONYM_SET):
+        # This is a known surname, not an unknown one
+        return False
+    if tok.txt in _CORPORATION_ENDINGS:
+        return False
+    # Allow single-letter abbreviations, but not multi-letter
+    # all-caps words (those are probably acronyms)
+    return len(tok.txt) == 1 or not tok.txt.isupper()
+
+
+def _given_names_or_middle_abbrev(
+    tok: Tok,
+    auto_uppercase: bool,
+    at_sentence_start: bool,
+) -> Optional[List[PersonNameTuple]]:
+    """Check for given name or middle abbreviation"""
+    gnames = _given_names(tok, at_sentence_start)
+    wrd = tok.txt
+    if gnames is not None:
+        if wrd in BOTH_GIVEN_AND_FAMILY_NAMES:
+            # For instance "Hafstein" which can be both a given
+            # name and a family name: prepend the family name as
+            # an genderless and caseless option to the list
+            gnames = [
+                PersonNameTuple(name=wrd, gender=None, case=None)
+            ] + gnames
+        return gnames
+
+    if tok.kind != TOK.WORD:
+        return None
+
+    if auto_uppercase and wrd.rstrip(".") in MIDDLE_NAME_ABBREVS:
+        # Capitalize middle name abbreviations
+        wrd = wrd.capitalize()
+        # Also update token txt
+        tok.txt = wrd
+
+    # If wrd (without following period) is longer than
+    # middle name abbrevs such as "th", "kr" or "f"
+    # or not a foreign middle name (like "al", "der", "van")
+    elif (
+        len(wrd.rstrip(".")) > 2 or wrd[0].islower()
+    ) and wrd not in FOREIGN_MIDDLE_NAME_SET:
+        return None
+
+    # Either:
+    # - One or two letter middle name abbreviation (possibly with following period)
+    # - Lowercase foreign middle name ("Thomas de Broglie", "Ruud van Nistelrooy")
+    return [PersonNameTuple(name=wrd, gender=None, case=None)]
+
+
+def _compatible(pn: PersonNameTuple, npn: PersonNameTuple) -> bool:
+    """Return True if the next PersonNameTuple (npn) is compatible
+    with the one we have (pn)"""
+    # The neutral gender (hk) is used for family names and is
+    # compatible with both masculine and feminine given names
+    if npn.gender and npn.gender != "hk" and (npn.gender != pn.gender):
+        return False
+    if npn.case and npn.case != "-" and (npn.case != pn.case):
+        return False
+    return True
+
+
 def parse_phrases_2(
     token_stream: TokenIterator, token_ctor: TokenConstructor, auto_uppercase: bool
 ) -> TokenIterator:
@@ -1221,143 +1369,6 @@ def parse_phrases_2(
                 # Eat the time token
                 next_token = next(token_stream)
 
-            # Logic for human names
-
-            def stems(
-                tok: Tok, categories: FrozenSet[str], given_name: bool = False
-            ) -> Optional[List[PersonNameTuple]]:
-                """If the token denotes a given name, return its possible
-                interpretations, as a list of PersonName tuples (name, case, gender).
-                If given_name is True, we omit from the list all name forms that
-                occur in the disallowed_names section in the configuration file."""
-                if tok.kind != TOK.WORD or not tok.val:
-                    return None
-                if at_sentence_start and tok.txt in NOT_NAME_AT_SENTENCE_START:
-                    # Disallow certain person names at the start of sentences,
-                    # such as 'Annar'
-                    return None
-                # Set up the names we're not going to allow
-                dstems = DisallowedNames.STEMS if given_name else {}
-                # Look through the token meanings
-                result: List[PersonNameTuple] = []
-                for m in tok.meanings:
-                    if m.fl in categories and ("ET" in m.beyging or m.beyging == "-"):
-                        # If this is a given name, we cut out name forms
-                        # that are frequently ambiguous and wrong,
-                        # i.e. "Frá" as accusative of the name "Frár",
-                        # and "Sigurð" in the nominative.
-                        c = case(m.beyging, default="-")
-                        if m.stofn not in dstems or c not in dstems[m.stofn]:
-                            # Note the stem ('stofn') and the gender from
-                            # the word type ('ordfl')
-                            result.append(
-                                PersonNameTuple(name=m.stofn, gender=m.ordfl, case=c)
-                            )
-                return result or None
-
-            def has_category(tok: Tok, categories: FrozenSet[str]) -> bool:
-                """Return True if the token matches a meaning
-                with any of the given categories"""
-                if tok.kind != TOK.WORD or not tok.val:
-                    return False
-                return any(m.fl in categories for m in tok.meanings)
-
-            def has_other_meaning(tok: Tok, categories: FrozenSet[str]) -> bool:
-                """Return True if the token can denote something
-                besides a given name"""
-                if tok.kind != TOK.WORD or not tok.val:
-                    return True
-                # Return True if there is a different meaning, not a given name
-                return any(m.fl not in categories for m in tok.meanings)
-
-            # Check for person names
-            def given_names(tok: Tok) -> Optional[List[PersonNameTuple]]:
-                """Check for Icelandic or foreign person name
-                (category 'ism', 'gæl' or 'erm')"""
-                if tok.kind != TOK.WORD or not tok.txt[0].isupper():
-                    # Must be a word starting with an uppercase character
-                    return None
-                return stems(tok, PERSON_NAME_SET, given_name=True)
-
-            # Check for surnames
-            def surnames(tok: Tok) -> Optional[List[PersonNameTuple]]:
-                """Check for Icelandic patronym (category 'föð'),
-                matronym (category 'móð') or family names (category 'ætt')"""
-                if tok.kind != TOK.WORD or not tok.txt[0].isupper():
-                    # Must be a word starting with an uppercase character
-                    return None
-                return stems(tok, PATRONYM_SET)
-
-            # Check for unknown surnames
-            def unknown_surname(tok: Tok) -> bool:
-                """Check for unknown (non-Icelandic) surnames"""
-                # Accept (most) upper case words as a surnames
-                if auto_uppercase:
-                    if tok.txt and not tok.val:
-                        # Looks like an unknown word: accept it as a surname
-                        # (might be a foreign name)
-                        return True
-                if tok.kind != TOK.WORD or not tok.txt[0].isupper():
-                    # Must start with capital letter
-                    return False
-                if has_category(tok, PATRONYM_SET):
-                    # This is a known surname, not an unknown one
-                    return False
-                if tok.txt in _CORPORATION_ENDINGS:
-                    return False
-                # Allow single-letter abbreviations, but not multi-letter
-                # all-caps words (those are probably acronyms)
-                return len(tok.txt) == 1 or not tok.txt.isupper()
-
-            def given_names_or_middle_abbrev(
-                tok: Tok,
-            ) -> Optional[List[PersonNameTuple]]:
-                """Check for given name or middle abbreviation"""
-                gnames = given_names(tok)
-                wrd = tok.txt
-                if gnames is not None:
-                    if wrd in BOTH_GIVEN_AND_FAMILY_NAMES:
-                        # For instance "Hafstein" which can be both a given
-                        # name and a family name: prepend the family name as
-                        # an genderless and caseless option to the list
-                        gnames = [
-                            PersonNameTuple(name=wrd, gender=None, case=None)
-                        ] + gnames
-                    return gnames
-
-                if tok.kind != TOK.WORD:
-                    return None
-
-                if auto_uppercase and wrd.rstrip(".") in MIDDLE_NAME_ABBREVS:
-                    # Capitalize middle name abbreviations
-                    wrd = wrd.capitalize()
-                    # Also update token txt
-                    tok.txt = wrd
-
-                # If wrd (without following period) is longer than
-                # middle name abbrevs such as "th", "kr" or "f"
-                # or not a foreign middle name (like "al", "der", "van")
-                elif (
-                    len(wrd.rstrip(".")) > 2 or wrd[0].islower()
-                ) and wrd not in FOREIGN_MIDDLE_NAME_SET:
-                    return None
-
-                # Either:
-                # - One or two letter middle name abbreviation (possibly with following period)
-                # - Lowercase foreign middle name ("Thomas de Broglie", "Ruud van Nistelrooy")
-                return [PersonNameTuple(name=wrd, gender=None, case=None)]
-
-            def compatible(pn: PersonNameTuple, npn: PersonNameTuple) -> bool:
-                """Return True if the next PersonNameTuple (npn) is compatible
-                with the one we have (pn)"""
-                # The neutral gender (hk) is used for family names and is
-                # compatible with both masculine and feminine given names
-                if npn.gender and npn.gender != "hk" and (npn.gender != pn.gender):
-                    return False
-                if npn.case and npn.case != "-" and (npn.case != pn.case):
-                    return False
-                return True
-
             gn: Optional[List[PersonNameTuple]] = None
             # Accumulated original token text for person name
             namespan: str = ""
@@ -1377,12 +1388,12 @@ def parse_phrases_2(
                 )
                 token.original = namespan
             else:
-                gn = given_names(token)
+                gn = _given_names(token, at_sentence_start)
 
             if gn:
                 # Found at least one given name: look for a sequence of given names
                 # having compatible genders and cases
-                w: str = token.txt or ""
+                w = token.txt or ""
                 namespan = token.original or ""
                 patronym: bool = False
 
@@ -1411,8 +1422,8 @@ def parse_phrases_2(
 
                             elif (
                                 ntxt in NOT_NAME_ABBREVS
-                                and token_stream[0]
-                                and not surnames(cast(Tok, token_stream[0]))
+                                and (t0 := token_stream[0])
+                                and not _surnames(t0, at_sentence_start)
                             ):
                                 # Next token is common word (such as "á", "í")
                                 # and should only be considered a middle name
@@ -1432,7 +1443,11 @@ def parse_phrases_2(
                         next(token_stream)  # Remove S_END
                         next(token_stream)  # Remove S_BEGIN
 
-                    ngn = given_names_or_middle_abbrev(next_token)
+                    ngn = _given_names_or_middle_abbrev(
+                        next_token,
+                        auto_uppercase,
+                        at_sentence_start,
+                    )
                     if not ngn:
                         break
                     # Look through the stuff we got and see what is compatible
@@ -1441,7 +1456,7 @@ def parse_phrases_2(
                     for p in gn:
                         # noinspection PyTypeChecker
                         for np in ngn:
-                            if compatible(p, np):
+                            if _compatible(p, np):
                                 # Compatible: add to result
                                 r.append(
                                     PersonNameTuple(
@@ -1474,7 +1489,7 @@ def parse_phrases_2(
                     while they are compatible with the given name
                     we already have"""
                     while True:
-                        sn = surnames(next_token)
+                        sn = _surnames(next_token, at_sentence_start)
                         if not sn:
                             break
                         r: List[PersonNameTuple] = []
@@ -1483,7 +1498,7 @@ def parse_phrases_2(
                         for p in gn:
                             # pylint: disable=not-an-iterable
                             for np in sn:
-                                if compatible(p, np):
+                                if _compatible(p, np):
                                     gender = (
                                         np.gender
                                         if (np.gender and np.gender != "hk")
@@ -1518,7 +1533,7 @@ def parse_phrases_2(
                     # patronyms/matronyms. Otherwise, check whether we have an
                     # unknown uppercase word next;
                     # if so, add it to the person names we've already found
-                    while unknown_surname(next_token):
+                    while _unknown_surname(next_token, auto_uppercase):
                         ntxt = next_token.txt
 
                         if auto_uppercase and ntxt.islower():
@@ -1581,7 +1596,7 @@ def parse_phrases_2(
                     and not patronym
                     and not found_name
                     and (
-                        has_other_meaning(token, PERSON_NAME_SET)
+                        _has_other_meaning(token, PERSON_NAME_SET)
                         and w not in NamePreferences.SET
                     )
                 )
@@ -1608,6 +1623,46 @@ def parse_phrases_2(
         yield token
 
 
+def _is_interesting(token: Tok) -> bool:
+    """Return True if this token causes us to want to take
+    a further look at the following tokens"""
+    if token.kind != TOK.ENTITY and token.kind != TOK.WORD:
+        return False
+    return token.txt[0].isupper()
+
+
+def _can_concat(token: Tok) -> bool:
+    """Return True if the token content can be concatenated onto
+    an existing entity name"""
+    # Non-capitalized function words that can appear within entity names
+    if token.txt in ENTITY_MIDDLE_NAME_SET or token.txt in FOREIGN_MIDDLE_NAME_SET:
+        return True
+    if token.kind != TOK.ENTITY and token.kind != TOK.WORD:
+        return False
+    if not token.txt[0].isupper():
+        return False
+    if " " in token.txt:
+        return False
+    if token.kind == TOK.WORD and token.val:
+        if any(m.stofn[0].isupper() for m in token.meanings):
+            # This word has an independent uppercase meaning:
+            # don't concatenate it
+            return False
+    return True
+
+
+def _not_in_bin(token: Tok) -> bool:
+    """Return True if the token is not a normal word found in BÍN"""
+    if token.kind == TOK.ENTITY:
+        return True
+    assert token.kind == TOK.WORD
+    if token.val:
+        if all(m.ordfl != "entity" for m in token.meanings):
+            # This word is found in BÍN and has no 'entity' meanings
+            return False
+    return True
+
+
 def parse_phrases_3(
     db: GreynirBin, token_stream: TokenIterator, token_ctor: TokenConstructor
 ) -> TokenIterator:
@@ -1615,43 +1670,6 @@ def parse_phrases_3(
     Third pass: coalesce uppercase, otherwise unrecognized words with
     a following person name, if any; also coalesce entity names and
     recognize company names by endings ('hf.', 'Inc.', etc.)."""
-
-    def is_interesting(token: Tok) -> bool:
-        """Return True if this token causes us to want to take
-        a further look at the following tokens"""
-        if token.kind != TOK.ENTITY and token.kind != TOK.WORD:
-            return False
-        return token.txt[0].isupper()
-
-    def can_concat(token: Tok) -> bool:
-        """Return True if the token content can be concatenated onto
-        an existing entity name"""
-        # Non-capitalized function words that can appear within entity names
-        if token.txt in ENTITY_MIDDLE_NAME_SET or token.txt in FOREIGN_MIDDLE_NAME_SET:
-            return True
-        if token.kind != TOK.ENTITY and token.kind != TOK.WORD:
-            return False
-        if not token.txt[0].isupper():
-            return False
-        if " " in token.txt:
-            return False
-        if token.kind == TOK.WORD and token.val:
-            if any(m.stofn[0].isupper() for m in token.meanings):
-                # This word has an independent uppercase meaning:
-                # don't concatenate it
-                return False
-        return True
-
-    def not_in_bin(token: Tok) -> bool:
-        """Return True if the token is not a normal word found in BÍN"""
-        if token.kind == TOK.ENTITY:
-            return True
-        assert token.kind == TOK.WORD
-        if token.val:
-            if all(m.ordfl != "entity" for m in token.meanings):
-                # This word is found in BÍN and has no 'entity' meanings
-                return False
-        return True
 
     # The following declaration is a deliberate mypy hack
     token: Optional[Tok] = None
@@ -1663,7 +1681,7 @@ def parse_phrases_3(
 
         while True:
 
-            if not concatable and not is_interesting(token):
+            if not concatable and not _is_interesting(token):
                 if (
                     token.txt
                     and " " in token.txt
@@ -1716,7 +1734,7 @@ def parse_phrases_3(
                 token = token_ctor.Company(token.txt + " " + next_token.txt)
                 token.original = original
                 next_token = next(token_stream)
-            elif not_in_bin(token):
+            elif _not_in_bin(token):
                 if next_token.kind == TOK.PERSON and token.txt.istitle():
                     # Upper-case word that is either an entity or a word that is
                     # not in BÍN, and the next token is a person: merge the two
@@ -1734,7 +1752,7 @@ def parse_phrases_3(
                     )
                     token.original = original
                     next_token = next(token_stream)
-                elif can_concat(next_token):
+                elif _can_concat(next_token):
                     # Concatenate the next token and do another loop round
                     original = (token.original or "") + (next_token.original or "")
                     token = token_ctor.Entity(token.txt + " " + next_token.txt)
@@ -2145,9 +2163,8 @@ class DefaultPipeline:
 
     def parse_phrases_1(self, stream: TokenIterator) -> TokenIterator:
         """Numbers and amounts"""
-        assert self._db is not None
         return parse_phrases_1(
-            self._db, self._token_ctor, stream, self._no_multiply_numbers
+            self._token_ctor, stream, self._no_multiply_numbers
         )
 
     def parse_phrases_2(self, stream: TokenIterator) -> TokenIterator:
