@@ -4,7 +4,7 @@
 
     Python wrapper for C++ Earley/Scott parser
 
-    Copyright (C) 2022 Miðeind ehf.
+    Copyright © 2023 Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -62,6 +62,7 @@ from typing import (
     Any,
     Optional,
     List,
+    Sequence,
     Set,
     Union,
     Tuple,
@@ -718,8 +719,8 @@ class Fast_Parser(BIN_Parser):
 
         wrapped_tokens = self._wrap(tokens)  # Inherited from BIN_Parser
         lw = len(wrapped_tokens)
-        err: Any = cast(Any, ffi).new("unsigned int*")
-        result = None
+        err: Sequence[int] = cast(Any, ffi).new("unsigned int*")
+        result: Optional[Node] = None
 
         # Use the context manager protocol to guarantee that the parse job
         # handle will be properly deleted even if an exception is thrown
@@ -803,7 +804,7 @@ class Fast_Parser(BIN_Parser):
         mul = operator.mul
 
         def _num_comb(w: Node) -> int:
-            if w is None or w._token is not None:
+            if w._token is not None:
                 # Empty (epsilon) node or token node
                 return 1
             # If a subtree has already been counted, re-use that count

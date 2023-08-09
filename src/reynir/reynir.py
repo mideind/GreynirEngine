@@ -4,7 +4,7 @@
 
     High-level wrapper for the Greynir tokenizer, parser and reducer
 
-    Copyright (C) 2022 Miðeind ehf.
+    Copyright © 2023 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -67,7 +67,7 @@ from .bintokenizer import (
     load_token,
 )
 from .binparser import BIN_Token
-from .fastparser import Fast_Parser, ParseError
+from .fastparser import Fast_Parser, Node, ParseError
 from .reducer import Reducer
 from .cache import cached_property
 from .simpletree import SimpleTree
@@ -562,7 +562,7 @@ class _Job:
         for p in self.paragraphs():
             yield from p.sentences()
 
-    def parse(self, tokens: TokenList) -> Tuple[Any, int, int]:
+    def parse(self, tokens: TokenList) -> Tuple[Node, int, int]:
         """Parse the token sequence, returning a parse tree,
         the number of trees in the parse forest, and the
         score of the best tree"""
@@ -584,12 +584,12 @@ class _Job:
                 raise ParseError("Sentence is probably not in Icelandic", token_index=0)
             forest = self.parser.go(tokens, root=self._root)
             t1 = time.time()
-            if forest is not None:
-                num = Fast_Parser.num_combinations(forest)
-                if num > 1:
-                    # Reduce the parse forest to a single
-                    # "best" (highest-scoring) parse tree
-                    forest, score = self.reducer.go_with_score(forest)
+            num = Fast_Parser.num_combinations(forest)
+            if num > 1:
+                # Reduce the parse forest to a single
+                # "best" (highest-scoring) parse tree
+                forest, score = self.reducer.go_with_score(forest)
+                assert forest is not None
             return forest, num, score
         finally:
             # Accumulate statistics in the job object

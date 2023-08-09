@@ -4,7 +4,7 @@
 
     SimpleTree module
 
-    Copyright (C) 2022 Miðeind ehf.
+    Copyright © 2023 Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -704,7 +704,7 @@ class MultiReplacer:
         # which currently seems to be unable to infer the type of
         # map(re.escape, Iterable[str])
         re_escape: Callable[[str], str] = re.escape
-        escaped = [cast(str, s) for s in map(re_escape, substrs)]
+        escaped = map(re_escape, substrs)
         self._regexp = re.compile("|".join(escaped))
 
     def replace(self, string: str) -> str:
@@ -744,7 +744,7 @@ class SimpleTree:
         self._sents = sents
         self._len = len(sents)
         self._head = cast(SimpleTreeNode, sents[0] if self._len == 1 else {})
-        self._children = cast(Optional[List[CanonicalTokenDict]], self._head.get("p"))
+        self._children = self._head.get("p")
         self._children_cache: Optional[Tuple["SimpleTree", ...]] = None
         self._tag_cache: Optional[List[str]] = None
 
@@ -801,14 +801,14 @@ class SimpleTree:
     @property
     def tag(self) -> Optional[str]:
         """The simplified tag of this subtree, i.e. P, S, NP, VP, ADVP..."""
-        return cast(Optional[str], self._head.get("i"))
+        return self._head.get("i")
 
     @property
     def kind(self) -> Optional[str]:
         """The kind of token associated with this subtree, for example
         'WORD', 'MEASUREMENT' or 'PUNCTUATION', if the subtree is
         a terminal node, or None otherwise"""
-        return cast(Optional[str], self._head.get("k"))
+        return self._head.get("k")
 
     @property
     def ifd_tags(self) -> List[str]:
@@ -889,31 +889,31 @@ class SimpleTree:
         'canonicalized' version of the terminal name, where literal
         specifications have been simplified
         (e.g., 'orð:hk'_x_y becomes 'no_hk_x_y')"""
-        return cast(Optional[str], self._head.get("t"))
+        return self._head.get("t")
 
     @property
     def original_terminal(self) -> Optional[str]:
         """The terminal matched by this subtree, as originally specified
         in the grammar"""
-        return cast(Optional[str], self._head.get("o", self._head.get("t")))
+        return self._head.get("o", self._head.get("t"))
 
     @property
     def terminal_with_all_variants(self) -> Optional[str]:
         """The terminal matched by this subtree, with all applicable
         variants in canonical form (in alphabetical order, except for
         verb argument cases)"""
-        terminal = cast(Optional[str], self._head.get("a"))
+        terminal = self._head.get("a")
         if terminal is not None:
             # All variants already available in canonical form: we're done
             return terminal
-        terminal = cast(Optional[str], self._head.get("t"))
+        terminal = self._head.get("t")
         if terminal is None:
             return None
         # Reshape the terminal string to the canonical form where
         # the variants are in alphabetical order, except
         # for verb arguments, which are always first, immediately
         # following the terminal category.
-        beyging = cast(Optional[str], self._head.get("b")) or ""
+        beyging = self._head.get("b") or ""
         return augment_terminal(terminal, self._text.lower(), beyging)
 
     @cached_property
@@ -928,7 +928,7 @@ class SimpleTree:
         """Returns a list of all variants associated with
         this subtree's terminal, if any, augmented also by BÍN variants"""
         # First, check whether an 'a' field is present
-        a = cast(Optional[str], self._head.get("a"))
+        a = self._head.get("a")
         if a is not None:
             # The 'a' field contains the entire variant set, canonically ordered
             return a.split("_")[1:]
@@ -936,7 +936,7 @@ class SimpleTree:
         if self.terminal in {"sérnafn", "fyrirtæki"}:
             # Don't attempt to augment proper names or company abbreviations
             return vlist
-        beyging = cast(Optional[str], self._head.get("b")) or ""
+        beyging = self._head.get("b") or ""
         bin_variants = BIN_Token.bin_variants(beyging)
         return vlist + list(bin_variants - set(vlist))  # Add any missing variants
 
@@ -957,7 +957,7 @@ class SimpleTree:
     def index(self) -> Optional[int]:
         """Return the associated token index, if this is a terminal,
         otherwise None"""
-        return cast(Optional[int], self._head.get("ix")) if self.is_terminal else None
+        return self._head.get("ix") if self.is_terminal else None
 
     @cached_property
     def sentences(self) -> List["SimpleTree"]:
@@ -1258,7 +1258,7 @@ class SimpleTree:
                 + tag
             )
         # No children
-        tokentype: str = cast(Optional[str], self._head.get("k")) or ""
+        tokentype: str = self._head.get("k") or ""
         if tokentype == "PUNCTUATION":
             # Punctuation
             return "p"
@@ -1677,7 +1677,7 @@ class SimpleTree:
         """Return the word category of this node only, if any"""
         # This is the category that is picked up from BÍN, not the terminal
         # category. The terminal category is available in the .tcat property)
-        return cast(Optional[str], self._head.get("c"))
+        return self._head.get("c")
 
     # Set of token kind description strings for tokens that contain text
     _TEXT_TOKEN_DESC = frozenset(TOK.descr[kind] for kind in TOK.TEXT)
@@ -1708,7 +1708,7 @@ class SimpleTree:
             return ""
         if k == "PERSON":
             # Return person_kk, person_kvk or person_hk for person names
-            return "person_" + (cast(Optional[str], self._head.get("c")) or "hk")
+            return "person_" + (self._head.get("c") or "hk")
         # Unknown words by convention get a category of 'entity'
         return self._head.get("c", "entity")
 
@@ -1722,7 +1722,7 @@ class SimpleTree:
                 t.extend(ch.categories)
             return t
         # Terminal node: return the associated word category
-        c = cast(Optional[str], self._head.get("c"))
+        c = self._head.get("c")
         if c:
             return [c]
         # If we have a lemma, we must return a corresponding category

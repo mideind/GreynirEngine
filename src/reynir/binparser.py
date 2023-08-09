@@ -4,7 +4,7 @@
 
     BIN parser module
 
-    Copyright (C) 2022 Miðeind ehf.
+    Copyright © 2023 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -1852,7 +1852,7 @@ class BIN_Terminal(VariantHandler, Terminal):
         super().__init__(name)
         # This type of terminal always requires full matching
         # as appropriate for each token kind
-        self.shortcut_match: Optional[Callable[[str], bool]] = None
+        self.shortcut_match: Optional[Callable[[str], Optional[bool]]] = None
 
 
 class SequenceTerminal(BIN_Terminal):
@@ -1868,7 +1868,7 @@ class SequenceTerminal(BIN_Terminal):
 
     def __init__(self) -> None:
         super().__init__("sequence")
-        self.shortcut_match = SequenceTerminal._match
+        self.shortcut_match: Optional[Callable[[str], Optional[bool]]] = SequenceTerminal._match
 
     @staticmethod
     def _match(token_txt: str) -> bool:
@@ -2267,7 +2267,7 @@ def wrap_tokens(
     # while keeping a back index to the original token
     wrapped_tokens: List[_T] = []
     for ix, t in enumerate(tlist):
-        if t is not None and BIN_Token.is_understood(
+        if BIN_Token.is_understood(
             t, understood_punctuation=understood_punctuation
         ):
             wrapped_tokens.append(

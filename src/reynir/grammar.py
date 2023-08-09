@@ -4,7 +4,7 @@
 
     Grammar module
 
-    Copyright (C) 2022 Miðeind ehf.
+    Copyright © 2023 Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -1576,28 +1576,30 @@ if __name__ == "__main__":
     if len(args) == 2:
         fname = args[1]
 
-    ts = os.path.getmtime(fname)
-    if ts is None:
+    try:
+        ts = os.path.getmtime(fname)
+    except OSError:
         print("Unable to read grammar file {0}".format(fname))
-    else:
+        quit()
+
+    print(
+        "Reading grammar file {0} with timestamp {1:%Y-%m-%d %H:%M:%S}\n".format(
+            fname, datetime.fromtimestamp(ts)
+        )
+    )
+    import time
+
+    t0 = time.time()
+    g = Grammar()
+    try:
+        g.read(fname, verbose=True)
         print(
-            "Reading grammar file {0} with timestamp {1:%Y-%m-%d %H:%M:%S}\n".format(
-                fname, datetime.fromtimestamp(ts)
+            "Grammar parsed and loaded in {0:.2f} seconds".format(time.time() - t0)
+        )
+        print(
+            "Grammar has {0:,} terminals, {1:,} nonterminals and {2:,} productions".format(
+                g.num_terminals, g.num_nonterminals, g.num_productions
             )
         )
-        import time
-
-        t0 = time.time()
-        g = Grammar()
-        try:
-            g.read(fname, verbose=True)
-            print(
-                "Grammar parsed and loaded in {0:.2f} seconds".format(time.time() - t0)
-            )
-            print(
-                "Grammar has {0:,} terminals, {1:,} nonterminals and {2:,} productions".format(
-                    g.num_terminals, g.num_nonterminals, g.num_productions
-                )
-            )
-        except GrammarError as err:
-            print(str(err))
+    except GrammarError as err:
+        print(str(err))

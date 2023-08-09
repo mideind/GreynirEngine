@@ -1,5 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/)
+[![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)](https://www.python.org/downloads/release/python-3817/)
 ![Release](https://shields.io/github/v/release/mideind/GreynirPackage?display_name=tag)
 ![PyPI](https://img.shields.io/pypi/v/reynir)
 [![Build](https://github.com/mideind/GreynirPackage/actions/workflows/python-package.yml/badge.svg)]()
@@ -12,7 +12,7 @@
 
 ## Overview
 
-Greynir is a Python 3 (>= 3.7) package,
+Greynir is a Python 3 (>= 3.8) package,
 published by [Miðeind ehf.](https://mideind.is), for
 **working with Icelandic natural language text**.
 Greynir can parse text into **sentence trees**, find **lemmas**,
@@ -107,7 +107,7 @@ P                               # Root
 
 ## Prerequisites
 
-This package runs on CPython 3.7 or newer, and on PyPy 3.7 or newer.
+This package runs on CPython 3.8 or newer, and on PyPy 3.9 or newer.
 
 To find out which version of Python you have, enter:
 
@@ -179,7 +179,7 @@ as well as important information about
 
 ## Copyright and licensing
 
-Greynir is Copyright © 2022 by [Miðeind ehf.](https://mideind.is).  
+Greynir is Copyright © 2023 by [Miðeind ehf.](https://mideind.is).  
 The original author of this software is *Vilhjálmur Þorsteinsson*.
 
 <a href="https://mideind.is"><img src="https://raw.githubusercontent.com/mideind/GreynirPackage/master/doc/_static/mideind-horizontal-small.png" alt="Miðeind ehf."

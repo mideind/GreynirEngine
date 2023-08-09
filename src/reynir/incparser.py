@@ -4,7 +4,7 @@
 
     Utility class for incremental parsing of token streams
 
-    Copyright (C) 2022 Miðeind ehf.
+    Copyright © 2023 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -111,10 +111,9 @@ class IncrementalParser:
                         "Sentence is probably not in Icelandic", token_index=0
                     )
                 forest = self._ip._parser.go(self._s)
-                if forest is not None:
-                    num = Fast_Parser.num_combinations(forest)
-                    if num > 1:
-                        forest, score = self._ip._reducer.go_with_score(forest)
+                num = Fast_Parser.num_combinations(forest)
+                if num > 1:
+                    forest, score = self._ip._reducer.go_with_score(forest)
             except ParseError as e:
                 # The ParseError may originate in the reducer.go_with_score()
                 # function, and in that case, forest is not None; be sure to reset it

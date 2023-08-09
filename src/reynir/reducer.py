@@ -4,7 +4,7 @@
 
     Reducer module
 
-    Copyright (C) 2022 Miðeind ehf.
+    Copyright © 2023 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -371,13 +371,12 @@ class ParseForestReducer:
                     bonus = self._bonus_cache.get(key)
                     if bonus is None:
                         bonus = self._bonus_cache[key] = self.verb_prep_bonus(*key)
-                    if bonus is not None:
-                        # Found a bonus, which can be positive or negative
-                        if final_bonus is None:
-                            final_bonus = bonus
-                        else:
-                            # Give the highest bonus that is available
-                            final_bonus = max(final_bonus, bonus)
+                    # Found a bonus, which can be positive or negative
+                    if final_bonus is None:
+                        final_bonus = bonus
+                    else:
+                        # Give the highest bonus that is available
+                        final_bonus = max(final_bonus, bonus)
                 if final_bonus is not None:
                     sc += final_bonus
         elif nt.matches_category("so"):  # !!! Was .startswith("so")
@@ -489,8 +488,6 @@ class ParseForestReducer:
             return v
 
         # Start the scoring and reduction process at the root
-        if root_node is None:
-            return NULL_SC
         return calc_score(root_node)
 
 
@@ -675,9 +672,7 @@ class Reducer:
                         for m in token.meanings:
                             if m.ordfl == "so":
                                 key = m.stofn + t.verb_cases
-                                # TODO: Remove the following cast when Pylance learns
-                                # to properly support @lru_cache()
-                                score = cast(Optional[int], VerbFrame.verb_score(key))
+                                score = VerbFrame.verb_score(key)
                                 if score is not None:
                                     if adjmax is None:
                                         adjmax = score

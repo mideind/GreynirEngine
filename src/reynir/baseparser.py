@@ -3,7 +3,7 @@
 
     Parser base module
 
-    Copyright (C) 2022 Miðeind ehf.
+    Copyright © 2023 Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -98,9 +98,7 @@ class Base_Parser:
         self._nt_dict = {}
         for nt, plist in nt_d.items():
             self._nt_dict[nt.index] = (
-                None
-                if plist is None
-                else [_PackedProduction(prio, p) for prio, p in plist]
+                [_PackedProduction(prio, p) for prio, p in plist]
             )
         self._nonterminals = g.nonterminals_by_ix
         self._terminals = g.terminals_by_ix

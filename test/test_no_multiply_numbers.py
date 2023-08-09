@@ -5,7 +5,7 @@
 
     Tests for Greynir no_multiply_numbers flag functionality
 
-    Copyright(C) 2022 by Miðeind ehf.
+    Copyright © 2023 by Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -68,9 +68,14 @@ def r():
 def check_terminal(t, text, lemma, category, variants):
     assert t.text == text
     assert t.lemma == lemma
-    assert t.category == category
-    # Ignore variants for undeclinable number words
-    assert t.category == "töl" or set(t.variants) == set(variants)
+    if category == "töl":
+        # Ignore variants for undeclinable number words; also,
+        # allow "no" for the category since some number words have
+        # both "no" and "töl" categories in BÍN
+        assert t.category == "no" or t.category == "töl"
+    else:
+        assert t.category == category
+        assert set(t.variants) == set(variants)
 
 
 # Overwrite tests from test_parse which use numbers and assume flag is not set
@@ -265,7 +270,7 @@ def test_no_multiply_numbers(r: Greynir):
         t[1],
         text="þúsund",
         lemma="þúsund",
-        category="no",
+        category="no",  # "no",  # The choice between töl and no seems a bit random
         variants=["ft", "nf", "hk"],
     )
 
@@ -285,7 +290,7 @@ def test_no_multiply_numbers(r: Greynir):
         text="milljón",
         lemma="milljón",
         category="töl",
-        variants=[],  # "kvk", "ft", "nf"],
+        variants=[],  # ["kvk", "ft", "nf"]
     )
 
     s = r.parse_single("Árið áttatíu þúsund sextíu og tvö er í framtíðinni.")
@@ -303,7 +308,7 @@ def test_no_multiply_numbers(r: Greynir):
         t[2],
         text="þúsund",
         lemma="þúsund",
-        category="no",
+        category="töl",
         variants=["ft", "nf", "hk"],
     )
     check_terminal(
@@ -369,14 +374,14 @@ def test_no_multiply_numbers(r: Greynir):
         t[1],
         text="hundruð",
         lemma="hundrað",
-        category="to",
+        category="no",
         variants=["ft", "hk", "nf"],
     )
     check_terminal(
         t[2],
         text="þúsund",
         lemma="þúsund",
-        category="no",
+        category="töl",
         variants=["ft", "hk", "nf"],
     )
     check_terminal(

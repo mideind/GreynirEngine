@@ -7,7 +7,7 @@ Copyright and licensing
     :align: left
     :alt: Miðeind ehf.
 
-GreynirPackage is *copyright © 2022 Miðeind ehf.*, Reykjavík, Iceland.
+GreynirPackage is *copyright © 2023 Miðeind ehf.*, Reykjavík, Iceland.
 
 The project's original author is *Vilhjálmur Þorsteinsson*.
 

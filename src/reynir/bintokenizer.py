@@ -4,7 +4,7 @@
 
     Dictionary-aware tokenization layer
 
-    Copyright (C) 2022 Miðeind ehf.
+    Copyright © 2023 Miðeind ehf.
 
     This software is licensed under the MIT License:
 
@@ -1465,7 +1465,10 @@ def parse_phrases_2(
                 # for instance 'Dagur Bergþóruson Eggertsson'
 
                 def eat_surnames(
-                    gn: List[PersonNameTuple], w: str, patronym: bool, next_token: Tok
+                    gn: List[PersonNameTuple],
+                    w: str,
+                    patronym: bool,
+                    next_token: Tok,
                 ) -> Tuple[List[PersonNameTuple], str, bool, Tok]:
                     """Process contiguous known surnames, typically "*dóttir/*son",
                     while they are compatible with the given name
@@ -1651,7 +1654,7 @@ def parse_phrases_3(
         return True
 
     # The following declaration is a deliberate mypy hack
-    token: Tok = cast(Tok, None)
+    token: Optional[Tok] = None
     try:
 
         # Maintain a one-token lookahead
@@ -1753,7 +1756,7 @@ def parse_phrases_3(
 
 def fix_abbreviations(token_stream: TokenIterator) -> TokenIterator:
     """Fix sentence splitting that may be wrong due to abbreviations"""
-    token: Tok = cast(Tok, None)
+    token: Optional[Tok] = None
     try:
         # Maintain a one-token lookahead
         token = next(token_stream)
@@ -1826,7 +1829,7 @@ class MatchingStream:
 
                 token = next(token_stream)
 
-                if token.txt is None:
+                if not token.txt:
                     # Not a word: no match; yield the token queue
                     if tq:
                         yield from tq

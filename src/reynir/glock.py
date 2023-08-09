@@ -4,7 +4,7 @@
 
     GlobalLock utility class
 
-    Copyright (C) 2022 Miðeind ehf.
+    Copyright © 2023 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -54,7 +54,7 @@ class LockError(Exception):
     pass
 
 
-POSIX = False
+POSIX: bool = False
 
 try:
     # Try Linux/POSIX
@@ -111,7 +111,7 @@ else:
 
     # Linux/POSIX
 
-    POSIX = True
+    POSIX = True  # type: ignore
 
     def _lock_file(file: IO[str], block: bool) -> None:
         try:
@@ -153,21 +153,21 @@ class GlobalLock:
             # Note that there may be a race here. Multiple processes
             # could fail on the r+ open and open the file a+, but only
             # one will get the the lock and write a pid.
-            fp = open(path, "a+")
-            # Make sure that the file is readable and writable by others
-            if POSIX and fp is not None:
-                os.fchmod(
-                    fp.fileno(),
-                    stat.S_IRUSR
-                    | stat.S_IWUSR
-                    | stat.S_IRGRP
-                    | stat.S_IWGRP
-                    | stat.S_IROTH
-                    | stat.S_IWOTH,
-                )
-
-        if fp is None:
-            raise LockError("Couldn't open or create lock file {0}".format(path))
+            try:
+                fp = open(path, "a+")
+                # Make sure that the file is readable and writable by others
+                if POSIX:
+                    os.fchmod(
+                        fp.fileno(),
+                        stat.S_IRUSR
+                        | stat.S_IWUSR
+                        | stat.S_IRGRP
+                        | stat.S_IWGRP
+                        | stat.S_IROTH
+                        | stat.S_IWOTH,
+                    )
+            except IOError:
+                raise LockError("Couldn't open or create lock file {0}".format(path))
 
         self._fp = fp
 

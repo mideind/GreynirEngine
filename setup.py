@@ -4,7 +4,7 @@
 
     Setup.py
 
-    Copyright (C) 2022 Miðeind ehf.
+    Copyright © 2023 Miðeind ehf.
     Original Author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -35,7 +35,7 @@
     and build the required CFFI Python wrapper via eparser_build.py.
     The same applies to bin.cpp -> bin.*.so and bin_build.py.
 
-    Note that installing under PyPy >= 3.7 is supported (and recommended
+    Note that installing under PyPy >= 3.9 is supported (and recommended
     for best performance).
 
 """
@@ -51,8 +51,8 @@ from os.path import basename, dirname, join, splitext
 from setuptools import find_packages, setup
 
 
-if sys.version_info < (3, 7):
-    print("Greynir requires Python >= 3.7")
+if sys.version_info < (3, 8):
+    print("Greynir requires Python >= 3.8")
     sys.exit(1)
 
 
@@ -101,7 +101,6 @@ setup(
         "Natural Language :: Icelandic",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
@@ -113,6 +112,9 @@ setup(
         "Topic :: Text Processing :: Linguistic",
     ],
     keywords=["nlp", "parser", "icelandic"],
+    # Note: cffi 1.15.1 is the version built into PyPy 3.9.
+    # Do not specify a higher version as that would prevent installation on PyPy 3.9,
+    # unless you know what you're doing.
     setup_requires=["cffi>=1.15.1"],
     install_requires=[
         "cffi>=1.15.1",
