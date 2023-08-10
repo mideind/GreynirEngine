@@ -73,6 +73,11 @@ def check_terminal(t, text, lemma, category, variants):
         # allow "no" for the category since some number words have
         # both "no" and "töl" categories in BÍN
         assert t.category == "no" or t.category == "töl"
+    elif category == "to":
+        # Allow "no" for the category since declinable number words have
+        # both "no" and "to" categories in BÍN
+        assert t.category == "no" or t.category == "to"
+        assert set(t.variants) == set(variants)
     else:
         assert t.category == category
         assert set(t.variants) == set(variants)
@@ -374,7 +379,7 @@ def test_no_multiply_numbers(r: Greynir):
         t[1],
         text="hundruð",
         lemma="hundrað",
-        category="no",
+        category="to",
         variants=["ft", "hk", "nf"],
     )
     check_terminal(
