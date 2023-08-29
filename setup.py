@@ -118,8 +118,8 @@ setup(
     setup_requires=["cffi>=1.15.1"],
     install_requires=[
         "cffi>=1.15.1",
-        "tokenizer>=3.4.2",
-        "islenska>=0.4.6",
+        "tokenizer>=3.4.3",
+        "islenska>=0.4.8",
         "typing_extensions",
     ],
     cffi_modules=["src/reynir/eparser_build.py:ffibuilder"],
