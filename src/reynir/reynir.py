@@ -697,6 +697,7 @@ class Greynir:
     as a sequence of sentences or alternatively as paragraphs
     of sentences. Typical usage:
 
+    ```python
     g = Greynir()
     job = g.submit(my_text)
     # Iterate through sentences and parse each one:
@@ -727,6 +728,7 @@ class Greynir:
     num_parsed = job.num_parsed         # Thereof successfully parsed
     ambiguity = job.ambiguity           # Average ambiguity factor
     parse_time = job.parse_time         # Elapsed time since job was created
+    ```
 
     """
 
