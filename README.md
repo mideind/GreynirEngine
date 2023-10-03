@@ -6,7 +6,7 @@
 
 <img src="https://raw.githubusercontent.com/mideind/GreynirPackage/master/doc/_static/greynir-logo-large.png" alt="Greynir" width="200" height="200" align="right" style="margin-left:20px; margin-bottom: 20px;">
 
-# GreynirPackage
+# GreynirEngine
 
 **A fast, efficient natural language processor for Icelandic**
 
