@@ -19,14 +19,14 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "pypy-3.9", "pypy-3.10"]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install GreynirPackage
       run: |
-        python -m pip install --upgrade pip wheel setuptools
+        python -m pip install --upgrade pip wheel setuptools pytest
         python -m pip install git+https://github.com/mideind/Tokenizer#egg=tokenizer
         python -m pip install -e .
     # - name: Type check with mypy
@@ -36,8 +36,7 @@ jobs:
     #     mypy --python-version=3.9 src/reynir
     - name: Test with pytest
       run: |
-        python -m pip install pytest
-        pytest
+        python -m pytest
     - name: Slack notification
       uses: 8398a7/action-slack@v2
       with:

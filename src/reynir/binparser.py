@@ -812,7 +812,6 @@ class BIN_Token(Token):
     _VARIANT_CACHE: Dict[str, Set[str]] = {}
 
     def __init__(self, t: Tok, original_index: int) -> None:
-
         # Here, we convert a token coming from the Tokenizer (TOK class)
         # to a token object that will be seen by the parser and used to
         # check matches against grammar terminals.
@@ -1868,7 +1867,9 @@ class SequenceTerminal(BIN_Terminal):
 
     def __init__(self) -> None:
         super().__init__("sequence")
-        self.shortcut_match: Optional[Callable[[str], Optional[bool]]] = SequenceTerminal._match
+        self.shortcut_match: Optional[
+            Callable[[str], Optional[bool]]
+        ] = SequenceTerminal._match
 
     @staticmethod
     def _match(token_txt: str) -> bool:
@@ -2267,7 +2268,7 @@ def wrap_tokens(
     # while keeping a back index to the original token
     wrapped_tokens: List[_T] = []
     for ix, t in enumerate(tlist):
-        if BIN_Token.is_understood(
+        if t is not None and BIN_Token.is_understood(
             t, understood_punctuation=understood_punctuation
         ):
             wrapped_tokens.append(

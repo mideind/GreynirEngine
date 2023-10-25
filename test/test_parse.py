@@ -53,7 +53,6 @@ def r():
 
 
 def test_parse(r: Greynir, verbose: bool = False) -> None:
-
     sentences = [
         # 0
         "Hér er verið að gera tilraunir með þáttun.",
@@ -419,7 +418,6 @@ def test_consistency(r, verbose=False):
         "Ég sendi póstinn með kettinum til Ísafjarðar",
     ]
     for tc15, tc45 in zip(sent15, sent45):
-
         cnt = defaultdict(int)
         scores = defaultdict(int)
         ptime = 0.0
@@ -540,6 +538,11 @@ def test_foreign(r):
     assert not s.is_foreign()
     s = r.parse_single("Linie lotnicze WOW Air ogłosiły")
     assert s.is_foreign()
+
+
+def test_edge_cases(r):
+    # Test that the parser does not crash on these edge cases
+    r.parse_single("(x)")
 
 
 def check_terminal(t, text, lemma, category, variants):
@@ -1438,7 +1441,6 @@ def test_ifd_tag(r: Greynir) -> None:
 
 
 def test_tree_flat(r: Greynir, verbose=False):
-
     AMOUNTS = {
         "þf": [
             ("13", "þf", "tala"),
