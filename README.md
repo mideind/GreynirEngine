@@ -8,7 +8,7 @@
 
 # GreynirEngine
 
-**A fast, efficient natural language processor for Icelandic**
+**A fast, efficient natural language processing engine for Icelandic**
 
 ## Overview
 
