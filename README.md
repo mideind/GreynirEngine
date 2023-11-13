@@ -1,10 +1,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)](https://www.python.org/downloads/release/python-3817/)
-![Release](https://shields.io/github/v/release/mideind/GreynirPackage?display_name=tag)
+![Release](https://shields.io/github/v/release/mideind/GreynirEngine?display_name=tag)
 ![PyPI](https://img.shields.io/pypi/v/reynir)
-[![Build](https://github.com/mideind/GreynirPackage/actions/workflows/python-package.yml/badge.svg)]()
+[![Build](https://github.com/mideind/GreynirEngine/actions/workflows/python-package.yml/badge.svg)]()
 
-<img src="https://raw.githubusercontent.com/mideind/GreynirPackage/master/doc/_static/greynir-logo-large.png" alt="Greynir" width="200" height="200" align="right" style="margin-left:20px; margin-bottom: 20px;">
+<img src="https://raw.githubusercontent.com/mideind/GreynirEngine/master/doc/_static/greynir-logo-large.png" alt="Greynir" width="200" height="200" align="right" style="margin-left:20px; margin-bottom: 20px;">
 
 # GreynirEngine
 
@@ -31,7 +31,7 @@ sentences parsed from Icelandic news articles, and
 for smart devices such as iOS and Android phones.
 
 Greynir includes a hand-written
-[context-free grammar](https://github.com/mideind/GreynirPackage/blob/master/src/reynir/Greynir.grammar)
+[context-free grammar](https://github.com/mideind/GreynirEngine/blob/master/src/reynir/Greynir.grammar)
 for the Icelandic language, consisting of over 7,000 lines of grammatical
 productions in [extended Backus-Naur format](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form).
 Its fast C++ parser core is able to cope with long and ambiguous sentences,
@@ -122,7 +122,7 @@ system to set up Greynir successfully. This is
 because a source distribution install requires a C++ compiler and linker:
 
 ````sh
-# Debian or Ubuntu:
+# Debian or Ubuntu
 sudo apt-get install python3-dev
 ````
 
@@ -145,18 +145,18 @@ If you have **git** installed and want to be able to edit
 the source, do like so:
 
 ````sh
-git clone https://github.com/mideind/GreynirPackage
-cd GreynirPackage
+git clone https://github.com/mideind/GreynirEngine
+cd GreynirEngine
 # [ Activate your virtualenv here if you have one ]
 pip install -e .
 ````
 
-The package source code is in `GreynirPackage/src/reynir`.
+The package source code is in `GreynirEngine/src/reynir`.
 
 ## Tests
 
 To run the built-in tests, install [pytest](https://docs.pytest.org/en/latest),
-`cd` to your `GreynirPackage` subdirectory (and optionally activate your
+`cd` to your `GreynirEngine` subdirectory (and optionally activate your
 virtualenv), then run:
 
 ````sh
@@ -177,12 +177,31 @@ and [reference information](https://greynir.is/doc/reference.html),
 as well as important information about
 [copyright and licensing](https://greynir.is/doc/copyright.html).
 
+## Troubleshooting
+
+If parsing seems to hang, it is possible that a lock file that GreynirEngine
+uses has been left locked. This can happen if a Python process that uses
+GreynirEngine is killed abruptly. The solution is to delete the lock file
+and try again:
+
+On Linux and macOS:
+
+````sh
+rm /tmp/greynir-grammar  # May require sudo privileges
+````
+
+On Windows:
+
+````cmd
+del %TEMP%\greynir-grammar
+````
+
 ## Copyright and licensing
 
 Greynir is Copyright © 2023 by [Miðeind ehf.](https://mideind.is).  
 The original author of this software is *Vilhjálmur Þorsteinsson*.
 
-<a href="https://mideind.is"><img src="https://raw.githubusercontent.com/mideind/GreynirPackage/master/doc/_static/mideind-horizontal-small.png" alt="Miðeind ehf."
+<a href="https://mideind.is"><img src="https://raw.githubusercontent.com/mideind/GreynirEngine/master/doc/_static/mideind-horizontal-small.png" alt="Miðeind ehf."
     width="214" height="66" align="right" style="margin-left:20px; margin-bottom: 20px;"></a>
 
 This software is licensed under the **MIT License**:
@@ -212,9 +231,9 @@ to negotiate custom arrangements.
 
 ----
 
-GreynirPackage indirectly embeds the [Database of Icelandic Morphology](https://bin.arnastofnun.is),
+GreynirEngine indirectly embeds the [Database of Icelandic Morphology](https://bin.arnastofnun.is),
 ([Beygingarlýsing íslensks nútímamáls](https://bin.arnastofnun.is)), abbreviated BÍN.
-GreynirPackage does not claim any endorsement by the BÍN authors or copyright holders.
+GreynirEngine does not claim any endorsement by the BÍN authors or copyright holders.
 
 The BÍN source data are publicly available under the
 [CC BY-SA 4.0 license](https://creativecommons.org/licenses/by-sa/4.0/), as further
