@@ -119,7 +119,7 @@ setup(
     setup_requires=["cffi>=1.15.1"],
     install_requires=[
         "cffi>=1.15.1",
-        "tokenizer>=3.4.3",
+        "tokenizer>=3.4.4",
         "islenska>=0.4.8",
         "typing_extensions",
     ],
