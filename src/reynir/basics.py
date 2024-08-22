@@ -45,7 +45,7 @@ import os
 import locale
 
 from contextlib import contextmanager
-from pkg_resources import resource_stream
+import importlib.resources as importlib_resources
 
 
 # The locale used by default in the changedlocale function
@@ -90,7 +90,6 @@ def sort_strings(strings: Iterable[str], loc: Optional[str] = None) -> List[str]
 
 
 class ConfigError(Exception):
-
     """Exception class for configuration errors"""
 
     def __init__(self, s: str) -> None:
@@ -113,7 +112,6 @@ class ConfigError(Exception):
 
 
 class LineReader:
-
     """Read lines from a text file, recognizing $include directives"""
 
     def __init__(
@@ -144,7 +142,8 @@ class LineReader:
         self._line = 0
         try:
             if self._package_name:
-                stream = resource_stream(self._package_name, self._fname)
+                ref = importlib_resources.files("reynir").joinpath(self._fname)
+                stream = ref.open("rb")
             else:
                 stream = open(self._fname, "rb")
             with stream as inp:
