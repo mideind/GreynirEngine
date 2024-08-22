@@ -90,6 +90,7 @@ p35/
 p358/
 p359/
 p37/
+pypy*
 
 # Installer logs
 pip-log.txt

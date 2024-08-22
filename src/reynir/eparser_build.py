@@ -132,6 +132,10 @@ elif MACOS:
 else:
     extra_compile_args = ["-std=c++11"]
 
+# On some systems, the linker needs to be told to use the C++ compiler
+# due to changes in the default behaviour of distutils
+os.environ["LDCXXSHARED"] = "c++ -shared"
+
 ffibuilder.cdef(declarations + callbacks)
 
 ffibuilder.set_source(

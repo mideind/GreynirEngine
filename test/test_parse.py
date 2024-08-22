@@ -219,7 +219,7 @@ def test_parse(r: Greynir, verbose: bool = False) -> None:
     assert results[32].tree.nouns == [
         "mynd",
         "þjóðskjalasafn",
-        "Bandaríkin",
+        "Bandaríki",
         "skyn",
         "flugmaður",
         "saga",
