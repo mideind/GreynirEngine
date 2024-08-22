@@ -38,14 +38,12 @@ from .bindb import BIN_Tuple
 from .bintokenizer import tokenize, TOK
 
 
-# In Python >= 3.8, the base class could be typing.Protocol
+# TODO: In Python >= 3.8, the base class could be typing.Protocol
 class Comparable(metaclass=ABCMeta):
-
     """Protocol for annotating comparable types"""
 
     @abstractmethod
-    def __lt__(self: "CT", other: "CT") -> bool:
-        ...
+    def __lt__(self: "CT", other: "CT") -> bool: ...
 
 
 CT = TypeVar("CT", bound=Comparable)

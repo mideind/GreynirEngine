@@ -43,17 +43,10 @@
 from typing import Any
 
 import io
-import sys
-
 from glob import glob
 from os.path import basename, dirname, join, splitext
 
 from setuptools import find_packages, setup
-
-
-if sys.version_info < (3, 8):
-    print("Greynir requires Python >= 3.8")
-    sys.exit(1)
 
 
 def read(*names: str, **kwargs: Any) -> str:
@@ -101,7 +94,6 @@ setup(
         "Natural Language :: Icelandic",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
@@ -120,7 +112,7 @@ setup(
     install_requires=[
         "cffi>=1.15.1",
         "tokenizer>=3.4.4",
-        "islenska>=0.4.8",
+        "islenska>=1.0.2",
         "typing_extensions",
     ],
     cffi_modules=["src/reynir/eparser_build.py:ffibuilder"],
