@@ -52,8 +52,8 @@ install ``git`` and do the following (note the final dot in the last line):
 
     $ mkdir ~/github
     $ cd ~/github
-    $ git clone https://github.com/mideind/GreynirPackage
-    $ cd GreynirPackage
+    $ git clone https://github.com/mideind/GreynirEngine
+    $ cd GreynirEngine
     $ git pull
     $ pip install -e .
 
@@ -68,7 +68,7 @@ to install a Greynir wheel. Versions of Python from 3.7 onwards include a
 new-enough ``pip``.
 
 Pull requests are welcome in the project's
-`GitHub repository <https://github.com/mideind/GreynirPackage>`_.
+`GitHub repository <https://github.com/mideind/GreynirEngine>`_.
 
 
 Install into a virtualenv

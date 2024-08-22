@@ -48,9 +48,9 @@ master_doc = "index"
 
 # General information about the project.
 year = datetime.now().year
-project = u"Greynir"
-copyright = u"{0} Miðeind ehf".format(year)
-author = u"Miðeind ehf."
+project = "Greynir"
+copyright = "{0} Miðeind ehf".format(year)
+author = "Miðeind ehf."
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -109,7 +109,7 @@ html_theme_options = {
     "logo_text_align": "center",
     "description": "Natural Language Processing for Icelandic",
     "github_user": "mideind",
-    "github_repo": "GreynirPackage",
+    "github_repo": "GreynirEngine",
     "github_button": True,
     "sidebar_collapse": False,
     "fixed_sidebar": True,
@@ -150,7 +150,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "Greynir.tex", "Greynir Documentation", u"Miðeind ehf.", "manual")
+    (master_doc, "Greynir.tex", "Greynir Documentation", "Miðeind ehf.", "manual")
 ]
 
 
@@ -177,4 +177,3 @@ texinfo_documents = [
         "NLP",
     )
 ]
-

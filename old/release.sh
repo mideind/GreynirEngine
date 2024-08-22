@@ -1,10 +1,10 @@
 #!/bin/bash
-# Build a GreynirPackage release and upload it to PyPi
+# Build a GreynirEngine release and upload it to PyPi
 if [ "$1" = "" ]; then
    echo "Version name argument missing"
    exit 1
 fi
-echo "Upload a new GreynirPackage version:" "$1"
+echo "Upload a new GreynirEngine version:" "$1"
 # Fix permission bits
 chmod -x src/reynir/*.py
 chmod -x src/reynir/*.cpp

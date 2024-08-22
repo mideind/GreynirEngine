@@ -122,4 +122,4 @@ __all__ = (
 )
 
 Abbreviations.initialize()
-Settings.read("config/GreynirPackage.conf")
+Settings.read("config/GreynirEngine.conf")

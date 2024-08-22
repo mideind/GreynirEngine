@@ -113,7 +113,6 @@ MatcherFunc = Callable[["BIN_Token", "BIN_Terminal", BIN_Tuple], bool]
 
 
 class WordMatchers:
-
     """A namespace to enclose the matching functions for various
     types of word categories and terminals. These functions
     are called from the BIN_Token.matches_WORD() function.
@@ -362,7 +361,7 @@ class WordMatchers:
     def matcher_person(
         token: "BIN_Token", terminal: "BIN_Terminal", m: BIN_Tuple
     ) -> bool:
-        """Check name from static phrases, coming from the GreynirPackage.conf file"""
+        """Check name from static phrases, coming from the GreynirEngine.conf file"""
         if m.fl == "ætt":
             # Allow single family names
             return True
@@ -511,7 +510,6 @@ class WordMatchers:
 
 
 class BIN_Token(Token):
-
     """
     Wrapper class for a token to be processed by the parser
 
@@ -1587,7 +1585,6 @@ BIN_Token.init()
 
 
 class VariantHandler:
-
     """Mix-in class used in BIN_Terminal and BIN_LiteralTerminal to add
     querying of terminal variants as well as mapping of variants to
     bit arrays for speed"""
@@ -1842,7 +1839,6 @@ class VariantHandler:
 
 
 class BIN_Terminal(VariantHandler, Terminal):
-
     """Subclass of Terminal that mixes in support from VariantHandler
     for variants in terminal names, including optimizations of variant
     checks and lookups"""
@@ -1855,7 +1851,6 @@ class BIN_Terminal(VariantHandler, Terminal):
 
 
 class SequenceTerminal(BIN_Terminal):
-
     """Subclass of BIN_Terminal that shortcuts matching for
     'sequence' terminals. This is done as a special case
     because sequence terminals can match multiple token
@@ -1867,9 +1862,9 @@ class SequenceTerminal(BIN_Terminal):
 
     def __init__(self) -> None:
         super().__init__("sequence")
-        self.shortcut_match: Optional[
-            Callable[[str], Optional[bool]]
-        ] = SequenceTerminal._match
+        self.shortcut_match: Optional[Callable[[str], Optional[bool]]] = (
+            SequenceTerminal._match
+        )
 
     @staticmethod
     def _match(token_txt: str) -> bool:
@@ -1879,7 +1874,6 @@ class SequenceTerminal(BIN_Terminal):
 
 
 class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
-
     """Subclass of LiteralTerminal that mixes in support from VariantHandler
     for variants in terminal names"""
 
@@ -1954,8 +1948,8 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
                 # will be called, which again calls BIN_LiteralTerminal.matches()
                 # for each possible meaning of the word (since we want to select a
                 # meaning that fits the specified category).
-                func2: Callable[[str], Optional[bool]] = (
-                    lambda t_lit: False if self._first != t_lit else None
+                func2: Callable[[str], Optional[bool]] = lambda t_lit: (
+                    False if self._first != t_lit else None
                 )
                 self.shortcut_match = func2
         else:
@@ -2037,7 +2031,6 @@ class BIN_LiteralTerminal(VariantHandler, LiteralTerminal):
 
 
 class BIN_Nonterminal(Nonterminal):
-
     """Subclass of Nonterminal with BÍN-specific convenience functions"""
 
     def __init__(self, name: str, fname: str, line: int) -> None:
@@ -2062,7 +2055,6 @@ class BIN_Nonterminal(Nonterminal):
 
 
 class BIN_Grammar(Grammar):
-
     """Subclass of Grammar that creates BIN-specific Terminals and LiteralTerminals
     when parsing a grammar, with support for variants in terminal names"""
 
@@ -2093,7 +2085,6 @@ class BIN_Grammar(Grammar):
 
 
 class BIN_Parser(Base_Parser):
-
     """BIN_Parser parses sentences according to the Icelandic
     grammar in the Greynir.grammar file. It subclasses Parser
     and wraps the interface between the BIN grammatical
@@ -2240,7 +2231,8 @@ def wrap_tokens(
                     def is_unknown(t: Optional[Tok]) -> bool:
                         """A token is unknown if it is a TOK.UNKNOWN or if it is a
                         TOK.WORD with no meanings"""
-                        if t is None: return False
+                        if t is None:
+                            return False
                         return (
                             t[0] == TOK.UNKNOWN
                             or (t[0] == TOK.WORD and not t[2])

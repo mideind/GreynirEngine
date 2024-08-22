@@ -69,7 +69,7 @@ numbers, punctuation and other tokens. For this, it uses the separate
 same authors, which is automatically installed with Greynir.
 
 After tokenization, Greynir proceeds to **parse** the text according to a
-`context-free grammar <https://github.com/mideind/GreynirPackage/blob/master/src/reynir/Greynir.grammar>`_
+`context-free grammar <https://github.com/mideind/GreynirEngine/blob/master/src/reynir/Greynir.grammar>`_
 for the modern Icelandic language. This grammar contains rules describing
 how sentences and the various subparts thereof can be validly constructed.
 

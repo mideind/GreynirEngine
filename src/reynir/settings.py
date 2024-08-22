@@ -26,7 +26,7 @@
         TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
         SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-    This module reads and interprets the GreynirPackage.conf
+    This module reads and interprets the GreynirEngine.conf
     configuration file. The file can include other files using the $include
     directive, making it easier to arrange configuration sections into logical
     and manageable pieces.
@@ -75,7 +75,6 @@ PreferenceTuple = Tuple[List[str], List[str], int]
 
 
 class VerbSubjects:
-
     """Wrapper around dictionary of verbs and their subjects,
     initialized from the config file"""
 
@@ -128,7 +127,6 @@ class VerbSubjects:
 
 
 class Prepositions:
-
     """Wrapper around dictionary of prepositions, initialized from the config file"""
 
     # Dictionary of prepositions: preposition -> { set of cases that it controls }
@@ -171,7 +169,6 @@ class Prepositions:
 
 
 class DisallowedNames:
-
     """Wrapper around list of disallowed person name forms"""
 
     # Dictionary of name stems : sets of cases
@@ -184,7 +181,6 @@ class DisallowedNames:
 
 
 class UndeclinableAdjectives:
-
     """Wrapper around list of undeclinable adjectives"""
 
     # Set of adjectives
@@ -197,7 +193,6 @@ class UndeclinableAdjectives:
 
 
 class StaticPhrases:
-
     """Wrapper around dictionary of static phrases, initialized from the config file"""
 
     # Default meaning for static phrases
@@ -308,7 +303,6 @@ class StaticPhrases:
 
 
 class AmbigPhrases:
-
     """Wrapper around dictionary of potentially ambiguous phrases,
     initialized from the config file"""
 
@@ -352,7 +346,6 @@ class AmbigPhrases:
 
 
 class NoIndexWords:
-
     """Wrapper around set of word stems and categories that should
     not be indexed"""
 
@@ -378,7 +371,6 @@ class NoIndexWords:
 
 
 class Topics:
-
     """Wrapper around topics, represented as a dict (name: set)"""
 
     # Dict of topic name: set
@@ -439,7 +431,6 @@ class Topics:
 
 
 class AdjectivePredicates:
-
     """A set of arguments and prepositions associated with
     adjectives, for instance 'tengdur þgf', typically read from
     the [adjective_predicates] section of AdjectivePredicates.conf"""
@@ -481,7 +472,6 @@ class AdjectivePredicates:
 
 
 class Preferences:
-
     """Wrapper around disambiguation hints, initialized from the config file"""
 
     # Dictionary keyed by word containing a list of tuples (worse, better)
@@ -500,7 +490,6 @@ class Preferences:
 
 
 class NounPreferences:
-
     """Wrapper for noun preferences, i.e. to assign priorities to different
     noun stems that can have identical word forms."""
 
@@ -530,7 +519,6 @@ class NounPreferences:
 
 
 class NamePreferences:
-
     """Wrapper around well-known person names, initialized from the config file"""
 
     SET: Set[str] = set()
@@ -542,14 +530,13 @@ class NamePreferences:
 
 
 class Settings:
-
     """Global settings"""
 
     _lock = threading.Lock()
     loaded: bool = False
     DEBUG: bool = False
 
-    # Configuration settings from the GreynirPackage.conf file
+    # Configuration settings from the GreynirEngine.conf file
 
     @staticmethod
     def _handle_settings(s: str) -> None:

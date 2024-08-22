@@ -29,7 +29,7 @@ processing over 10 million sentences in over 515.000 articles. Its
 optimized C++ parsing core is fast and efficient enough to parse
 real-world text according to a
 `context-free grammar for the Icelandic
-language <https://github.com/mideind/GreynirPackage/blob/master/src/reynir/Greynir.grammar>`_
+language <https://github.com/mideind/GreynirEngine/blob/master/src/reynir/Greynir.grammar>`_
 with over 22,000 productions.
 
 To get acquainted with Greynir, we recommend that you start with
@@ -60,7 +60,7 @@ infer what the most likely lemmas are, how they are inflected in the
 parsed text, and where they fit in the overall sentence structure.
 
 Greynir is thoroughly documented, and its source code is of course
-`available on GitHub <https://github.com/mideind/GreynirPackage>`_.
+`available on GitHub <https://github.com/mideind/GreynirEngine>`_.
 
 Enabling your application
 -------------------------

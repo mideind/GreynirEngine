@@ -1560,7 +1560,7 @@ if __name__ == "__main__":
     try:
         # Read configuration file
         basepath, _ = os.path.split(os.path.realpath(__file__))
-        Settings.read(os.path.join(basepath, "config", "GreynirPackage.conf"))
+        Settings.read(os.path.join(basepath, "config", "GreynirEngine.conf"))
     except ConfigError as e:
         print("Configuration error: {0}".format(e))
         quit()

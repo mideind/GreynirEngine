@@ -40,22 +40,10 @@
 
 """
 
-from typing import Any
-
-import io
 from glob import glob
-from os.path import basename, dirname, join, splitext
+from os.path import basename, join, splitext
 
 from setuptools import find_packages, setup
-
-
-def read(*names: str, **kwargs: Any) -> str:
-    try:
-        return io.open(
-            join(dirname(__file__), *names), encoding=kwargs.get("encoding", "utf8")
-        ).read()
-    except (IOError, OSError):
-        return ""
 
 
 # Load version string from file
@@ -74,7 +62,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Miðeind ehf",
     author_email="mideind@mideind.is",
-    url="https://github.com/mideind/GreynirPackage",
+    url="https://github.com/mideind/GreynirEngine",
     packages=find_packages("src"),
     package_dir={"": "src"},
     py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],

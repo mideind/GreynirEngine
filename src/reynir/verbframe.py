@@ -26,7 +26,7 @@
         TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
         SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-    This module reads and interprets the GreynirPackage.conf
+    This module reads and interprets the GreynirEngine.conf
     configuration file. The file can include other files using the $include
     directive, making it easier to arrange configuration sections into logical
     and manageable pieces.
@@ -76,7 +76,6 @@ VALID_ARGS = ALL_CASES | SUBCLAUSES | REFLPRN_SET
 
 
 class VerbErrors:
-
     """A container class for verb error data, for instance wrong
     verb forms and wrong preposition attachment"""
 
@@ -177,7 +176,6 @@ class VerbErrors:
 
 
 class PrepositionFrame:
-
     """A class containing information about a preposition frame,
     i.e. a preposition controlling a particular case and eventually
     with associated nouns and particles."""
@@ -216,7 +214,6 @@ class PrepositionFrame:
 
 
 class VerbFrame:
-
     """A class containing information about a verb frame,
     i.e. a verb with arguments and associated prepositions
     and particles."""
