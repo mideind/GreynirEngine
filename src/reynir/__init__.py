@@ -33,6 +33,8 @@
 
 # Expose the Greynir API
 
+import importlib.metadata
+
 from .reynir import (
     Greynir,
     Reynir,
@@ -57,7 +59,6 @@ from .fastparser import ParseForestPrinter, ParseForestDumper, ParseForestFlatte
 from .fastparser import ParseError, ParseForestNavigator
 from .settings import Settings
 from .bintokenizer import tokenize, TokenList
-from .version import __version__
 
 # Expose the tokenizer API
 
@@ -80,6 +81,7 @@ from tokenizer.abbrev import Abbreviations
 
 __author__ = "Miðeind ehf."
 __copyright__ = "© 2023 Miðeind ehf."
+__version__ = importlib.metadata.version("reynir")
 
 __all__ = (
     "TP_LEFT",

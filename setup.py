@@ -46,16 +46,12 @@ from os.path import basename, join, splitext
 from setuptools import find_packages, setup
 
 
-# Load version string from file
-__version__ = "[missing]"
-exec(open(join("src", "reynir", "version.py")).read())
-
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
     name="reynir",
-    version=__version__,
+    version="3.5.7",
     license="MIT",
     description="A natural language parser for Icelandic",
     long_description=long_description,
@@ -99,7 +95,7 @@ setup(
     setup_requires=["cffi>=1.15.1"],
     install_requires=[
         "cffi>=1.15.1",
-        "tokenizer>=3.4.4",
+        "tokenizer>=3.4.5",
         "islenska>=1.0.2",
         "typing_extensions",
     ],

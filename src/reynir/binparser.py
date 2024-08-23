@@ -66,6 +66,7 @@ import re
 from datetime import datetime
 from functools import reduce, lru_cache
 import json
+import importlib.metadata
 
 from tokenizer.definitions import (
     BIN_Tuple,
@@ -104,7 +105,6 @@ from .bintokenizer import (
     TokenDict,
     CanonicalTokenDict,
 )
-from .version import __version__ as package_version
 
 # This is the base path where we expect to find the Greynir.grammar file
 _PATH = os.path.dirname(__file__)
@@ -2166,6 +2166,7 @@ class BIN_Parser(Base_Parser):
     def version(self) -> str:
         """Return a composite version string w. grammar file date + package version"""
         ftime = str(self.grammar.file_time)[0:19]  # YYYY-MM-DD HH:MM:SS
+        package_version = importlib.metadata.version("reynir")
         return ftime + "/" + package_version
 
     @staticmethod
