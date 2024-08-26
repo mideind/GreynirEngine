@@ -12,7 +12,7 @@
 
 ## Overview
 
-Greynir is a Python 3 (>= 3.9) package,
+Greynir is a Python 3 (>=3.9) package,
 published by [Miðeind ehf.](https://mideind.is), for
 **working with Icelandic natural language text**.
 Greynir can parse text into **sentence trees**, find **lemmas**,

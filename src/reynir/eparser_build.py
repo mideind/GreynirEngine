@@ -45,6 +45,7 @@ ffibuilder = cffi.FFI()
 
 WINDOWS = platform.system() == "Windows"
 MACOS = platform.system() == "Darwin"
+IMPLEMENTATION = platform.python_implementation()
 
 # What follows is the actual Python-wrapped C interface to eparser.*.so
 
@@ -128,13 +129,15 @@ if WINDOWS:
     extra_compile_args = ["/Zc:offsetof-"]
 elif MACOS:
     os.environ["CFLAGS"] = "-stdlib=libc++"  # Fixes PyPy build on macOS 10.15.6+
-    extra_compile_args = ["-mmacosx-version-min=10.7", "-stdlib=libc++"]
+    os.environ["MACOSX_DEPLOYMENT_TARGET"] = "10.9"
+    extra_compile_args = ["-mmacosx-version-min=10.9", "-stdlib=libc++"]
 else:
     extra_compile_args = ["-std=c++11"]
 
 # On some systems, the linker needs to be told to use the C++ compiler
-# due to changes in the default behaviour of distutils
-os.environ["LDCXXSHARED"] = "c++ -shared"
+# under PyPy due to changes in the default behaviour of distutils.
+if IMPLEMENTATION == "PyPy":
+    os.environ["LDCXXSHARED"] = "c++ -shared"
 
 ffibuilder.cdef(declarations + callbacks)
 

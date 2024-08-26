@@ -41,7 +41,7 @@
 """
 
 from glob import glob
-from os.path import basename, join, splitext
+from os.path import basename, splitext
 
 from setuptools import find_packages, setup
 
@@ -82,6 +82,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Libraries :: Python Modules",
@@ -96,7 +97,7 @@ setup(
     install_requires=[
         "cffi>=1.15.1",
         "tokenizer>=3.4.5",
-        "islenska>=1.0.2",
+        "islenska>=1.0.3",
         "typing_extensions",
     ],
     cffi_modules=["src/reynir/eparser_build.py:ffibuilder"],

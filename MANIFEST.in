@@ -9,5 +9,7 @@ exclude src/reynir/_eparser.cpp
 include src/reynir/config/*.conf
 exclude src/reynir/resources/*.csv
 exclude src/reynir/resources/*.txt
+exclude src/reynir/resources/.DS_Store
 exclude src/reynir/*.o
 exclude src/reynir/*.so
+exclude src/reynir/.DS_Store
