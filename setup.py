@@ -43,7 +43,8 @@
 from glob import glob
 from os.path import basename, splitext
 
-from setuptools import find_packages, setup
+from setuptools import find_packages
+from setuptools import setup  # type: ignore
 
 
 with open("README.md", "r", encoding="utf-8") as fh:

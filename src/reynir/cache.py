@@ -64,7 +64,7 @@ class LRU_Cache(Generic[_V]):
         cache: Dict[Any, List[Any]] = {}
         self.cache = cache
 
-        last = root
+        last: List[Any] = root
         for _ in range(maxsize):
             key = object()
             cache[key] = last[1] = last = [last, root, key, None]

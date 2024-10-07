@@ -18,7 +18,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Mapping, Any
 
 import os
 from datetime import datetime
@@ -103,7 +103,7 @@ html_theme = "alabaster"
 html_sidebars = {
     "**": ["about.html", "navigation.html", "relations.html", "searchbox.html"]
 }
-html_theme_options = {
+html_theme_options: Mapping[str, Any] = {
     "logo": "GreynirLogo400.png",
     "logo_name": False,
     "logo_text_align": "center",

@@ -674,7 +674,7 @@ class Fast_Parser(BIN_Parser):
                 raise GrammarError(
                     "Unable to load binary grammar file {0}".format(fname)
                 )
-        return cast(Any, cls._c_grammar)
+        return cls._c_grammar
 
     def __init__(self, verbose: bool = False, root: Optional[str] = None) -> None:
 
