@@ -46,6 +46,9 @@ dependencies = [
 
 [project.urls]
 Repository = "https://github.com/mideind/GreynirEngine"
+Homepage = "https://greynir.is"
+Documentation = "https://greynir.is/doc/"
+Issues = "https://github.com/mideind/GreynirEngine/issues"
 
 [project.optional-dependencies]
 # dev dependencies
