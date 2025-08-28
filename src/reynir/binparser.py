@@ -1546,7 +1546,7 @@ class BIN_Token(Token):
 
     def matches(self, terminal: Terminal) -> bool:
         """Return True if this token matches the given terminal"""
-        return self.match_with_meaning(cast(BIN_Terminal, terminal)) != False
+        return self.match_with_meaning(cast(BIN_Terminal, terminal)) != False # noqa: E712
 
     def __repr__(self) -> str:
         return "[" + self.kind + ": " + self.t1 + "]"

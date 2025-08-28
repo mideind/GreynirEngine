@@ -1060,7 +1060,7 @@ class Grammar:
                             # Found a nonterminal to which this pragma applies
                             func(nonterminals[vname], param)
                             cnt += 1
-                        except:
+                        except Exception:
                             raise GrammarError(
                                 "Invalid pragma argument '{0}'".format(param),
                                 fname,
@@ -1376,7 +1376,7 @@ class Grammar:
         shortcuts: Dict[Nonterminal, Nonterminal] = {}
 
         for nt, plist in grammar.items():
-            if not "_" in nt.name:
+            if "_" not in nt.name:
                 # 'Pure' nonterminal with no variants: don't shortcut
                 continue
             if self.nt_score(nt) != 0 or nt.has_tags:
