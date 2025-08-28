@@ -60,7 +60,7 @@ include-package-data = true
 where = ["src"]
 
 [tool.setuptools.package-data]
-islenska = ["py.typed"]
+reynir = ["py.typed"]
 
 [tool.ruff]
 line-length = 88

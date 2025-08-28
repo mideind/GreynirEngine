@@ -24,12 +24,11 @@ jobs:
     - name: Install GreynirEngine
       run: |
         python -m pip install uv
-        uv pip install --system pip wheel setuptools pytest
+        uv pip install --system wheel setuptools pytest ruff
         uv pip install --system -e .
     - name: Lint with ruff
       run: |
-        if [ "${{ matrix.python-version }}" == "3.9" ]; then uv pip install --system ruff; fi
-        if [ "${{ matrix.python-version }}" == "3.9" ]; then ruff check src/reynir; fi
+        ruff check src/reynir
     - name: Test with pytest
       run: |
         python -m pytest
