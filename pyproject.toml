@@ -38,9 +38,9 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "cffi>=1.15.1",
-    "tokenizer>=3.4.5",
-    "islenska>=1.0.3",
+    "cffi>=1.17.1",
+    "tokenizer>=3.5.1",
+    "islenska>=1.0.4",
     "typing_extensions",
 ]
 
