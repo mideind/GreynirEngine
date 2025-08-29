@@ -31,7 +31,7 @@ jobs:
         run: python -m cibuildwheel --output-dir wheelhouse
         # Options (https://cibuildwheel.readthedocs.io/en/stable/options/)
         env:
-          CIBW_SKIP: cp36-* cp37-* cp38-* *pp37-* pp38-* *musllinux*
+          CIBW_SKIP: cp36-* cp37-* cp38-* *pp37-* pp38-* *musllinux* pp*-win*
           CIBW_BEFORE_BUILD_MACOS: python3 -m pip install --upgrade setuptools wheel cffi
           CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_ARCHS_WINDOWS: "AMD64"
