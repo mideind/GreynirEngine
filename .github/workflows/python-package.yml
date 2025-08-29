@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13.0-rc.1", "pypy-3.9", "pypy-3.10"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", '3.14.0-beta.4', "pypy-3.9", "pypy-3.10", "pypy-3.11"]
 
     steps:
     - uses: actions/checkout@v4
@@ -23,8 +23,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install GreynirEngine
       run: |
-        python -m pip install --upgrade pip wheel setuptools pytest
-        python -m pip install -e .
+        python -m pip install uv
+        uv pip install --system wheel setuptools pytest ruff
+        uv pip install --system -e .
+    - name: Lint with ruff
+      run: |
+        ruff check src/reynir
     - name: Test with pytest
       run: |
         python -m pytest

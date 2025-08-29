@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=61.0", "cffi>=1.15.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reynir"
+version = "3.5.8"
+description = "A natural language parser for Icelandic"
+authors = [{ name = "Miðeind ehf.", email = "mideind@mideind.is" }]
+maintainers = [{ name = "Miðeind ehf.", email = "mideind@mideind.is" }]
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { text = "MIT License" }
+keywords = ["nlp", "parser", "icelandic"]
+classifiers = [
+    # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Unix",
+    "Operating System :: POSIX",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Natural Language :: Icelandic",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+    "Topic :: Text Processing :: Linguistic",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "cffi>=1.17.1",
+    "tokenizer>=3.5.1",
+    "islenska>=1.0.4",
+    "typing_extensions",
+]
+
+[project.urls]
+Repository = "https://github.com/mideind/GreynirEngine"
+Homepage = "https://greynir.is"
+Documentation = "https://greynir.is/doc/"
+Issues = "https://github.com/mideind/GreynirEngine/issues"
+
+[project.optional-dependencies]
+# dev dependencies
+dev = ["pytest"]
+
+# *** Configuration of tools ***
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+reynir = ["py.typed"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+#lint.select = ["ALL"] # We use default rules for now
+# extend-select = ["E501"] # Complain about line length
+# Ignore specific rules
+# (we should aim to have these as few as possible)
+ignore = [
+    "E731", # 'E731: Do not assign a lambda expression, use a def'
+]
+
+[tool.isort]
+# This forces these imports to placed at the top
+known_future_library = ["__future__", "typing", "typing_extensions"]
+line_length = 88
