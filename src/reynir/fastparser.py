@@ -97,6 +97,7 @@ from ._eparser import lib as eparser, ffi  # type: ignore
 
 
 ffi_NULL: Any = cast(Any, ffi).NULL
+ffi_new: Any = cast(Any, ffi).new
 
 # The type of an entry on a ParseTreeFlattener stack
 FlattenerType = Union[Tuple[Terminal, BIN_Token], Nonterminal]
@@ -137,12 +138,13 @@ class ParseJob:
     def alloc_cache(self, token: int, size: int) -> Any:
         """Allocate a token/terminal matching cache buffer for the given token"""
         key = self.tokens[token].key  # Obtain the (hashable) key of the BIN_Token
+        b: Any
         try:
             # Do we already have a token/terminal cache match buffer for this key?
-            b: Any = self.matching_cache.get(key)
+            b = self.matching_cache.get(key)
             if b is None:
                 # No: create a fresh one (assumed to be initialized to zero)
-                b = self.matching_cache[key] = ffi.new("BYTE[]", size)  # type: ignore
+                b = self.matching_cache[key] = ffi_new("BYTE[]", size)
         except TypeError:
             assert False, "alloc_cache() unable to hash key: {0}".format(repr(key))
         return b
@@ -666,9 +668,9 @@ class Fast_Parser(BIN_Parser):
             # Need to load or reload the grammar
             if cls._c_grammar != ffi_NULL:
                 # Delete previous grammar instance, if any
-                eparser.deleteGrammar(cls._c_grammar)  # type: ignore
+                cast(Any, eparser).deleteGrammar(cls._c_grammar)
                 cls._c_grammar = ffi_NULL
-            cls._c_grammar = eparser.newGrammar(fname.encode("utf-8"))  # type: ignore
+            cls._c_grammar = cast(Any, eparser).newGrammar(fname.encode("utf-8"))
             cls._c_grammar_ts = ts
             if cls._c_grammar == ffi_NULL:
                 raise GrammarError(
@@ -719,7 +721,7 @@ class Fast_Parser(BIN_Parser):
 
         wrapped_tokens = self._wrap(tokens)  # Inherited from BIN_Parser
         lw = len(wrapped_tokens)
-        err: Sequence[int] = cast(Any, ffi).new("unsigned int*")
+        err: Sequence[int] = ffi_new("unsigned int*")
         result: Optional[Node] = None
 
         # Use the context manager protocol to guarantee that the parse job

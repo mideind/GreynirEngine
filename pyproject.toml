@@ -52,7 +52,7 @@ Issues = "https://github.com/mideind/GreynirEngine/issues"
 
 [project.optional-dependencies]
 # dev dependencies
-dev = ["pytest"]
+dev = ["pytest", "setuptools"]
 
 # *** Configuration of tools ***
 
