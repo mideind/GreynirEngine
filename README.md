@@ -147,7 +147,7 @@ and each token annotated with its lemma and POS tag (`no`=noun, `so`=verb):
 
 ## Prerequisites
 
-This package runs on CPython 3.9 or newer, and on PyPy 3.9 or newer.
+This package runs on CPython 3.9 or newer, and on PyPy 3.11 or newer.
 
 To find out which version of Python you have, enter:
 
