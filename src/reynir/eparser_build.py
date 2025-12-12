@@ -139,6 +139,10 @@ else:
 if IMPLEMENTATION == "PyPy":
     os.environ["LDCXXSHARED"] = "c++ -shared"
 
+# Use the Python stable ABI (abi3) for CPython, allowing a single wheel
+# to work across multiple Python versions (3.9+). PyPy doesn't support abi3.
+py_limited_api = "cp39" if IMPLEMENTATION == "CPython" else False
+
 ffibuilder.cdef(declarations + callbacks)
 
 ffibuilder.set_source(
@@ -149,6 +153,7 @@ ffibuilder.set_source(
     source_extension=".cpp",
     sources=["src/reynir/eparser.cpp"],
     extra_compile_args=extra_compile_args,
+    py_limited_api=py_limited_api,
 )
 
 if __name__ == "__main__":
