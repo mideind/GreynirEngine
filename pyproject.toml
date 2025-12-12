@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reynir"
-version = "3.5.8"
+version = "3.6.0"
 description = "A natural language parser for Icelandic"
 authors = [{ name = "Miðeind ehf.", email = "mideind@mideind.is" }]
 maintainers = [{ name = "Miðeind ehf.", email = "mideind@mideind.is" }]
