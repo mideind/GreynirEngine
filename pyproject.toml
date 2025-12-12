@@ -39,7 +39,7 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
     "cffi>=1.17.1",
-    "tokenizer>=3.5.1",
+    "tokenizer>=3.6.0",
     "islenska>=1.0.4",
     "typing_extensions",
 ]
