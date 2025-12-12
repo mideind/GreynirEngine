@@ -105,6 +105,46 @@ P                               # Root
 ['sól']
 ````
 
+### Extracting lemmas and POS tags for web display
+
+Greynir preserves the original text of each token, including surrounding whitespace.
+This allows you to reconstruct the exact original input while annotating it
+with linguistic information such as lemmas and part-of-speech (POS) tags.
+
+````python
+from reynir import Greynir
+
+g = Greynir()
+sent = g.parse_single("Ása   sá   sól.")
+
+# Build a map from token index to terminal node
+terminal_map = {node.index: node for node in sent.terminal_nodes}
+
+html_parts = []
+for i, tok in enumerate(sent.tokens):
+    # tok.original preserves the original text with spacing
+    original = tok.original or ""
+    if i in terminal_map:
+        node = terminal_map[i]
+        # Wrap with linguistic info (lemma and POS tag)
+        html_parts.append(
+            f'<span data-lemma="{node.lemma}" data-pos="{node.tcat}">'
+            f'{original}</span>'
+        )
+    else:
+        html_parts.append(original)
+
+html = "".join(html_parts)
+print(html)
+````
+
+The program outputs the following HTML, with the original spacing preserved
+and each token annotated with its lemma and POS tag (`no`=noun, `so`=verb):
+
+````html
+<span data-lemma="Ása" data-pos="no">Ása</span><span data-lemma="sjá" data-pos="so">   sá</span><span data-lemma="sól" data-pos="no">   sól</span><span data-lemma="." data-pos="">.</span>
+````
+
 ## Prerequisites
 
 This package runs on CPython 3.9 or newer, and on PyPy 3.9 or newer.
