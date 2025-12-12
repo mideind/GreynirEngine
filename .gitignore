@@ -92,6 +92,10 @@ p359/
 p37/
 pypy*
 
+# uv stuff
+uv.lock
+.python-version
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt

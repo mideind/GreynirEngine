@@ -105,7 +105,7 @@ def test_parse(r: Greynir, verbose: bool = False) -> None:
         "Eftir vanfjármögnun úrbóta sl. kjörtímabil, í margyfirlýstu góðæri "
         "þar sem fjárlagafrumvarp 2017 var samt undir núlli tekjumegin, "
         "er deginum ljósara að mikla viðbótarfjármögnun þarf svo koma megi "
-        "mörgu í betra horf á næstu 1-2 árum.",
+        "mörgu í betra horf á næstu 1 - 2 árum.",
         # 22
         "Lögreglan fer ekki nánar ofan í það hvaða skemmdir það voru.",
         # 23
@@ -2023,9 +2023,9 @@ def test_company(r):
 
 
 def test_kludgy_ordinals():
-    from reynir import Greynir, KLUDGY_ORDINALS_PASS_THROUGH
+    from reynir import Greynir
 
-    r2 = Greynir(handle_kludgy_ordinals=KLUDGY_ORDINALS_PASS_THROUGH)
+    r2 = Greynir()
     s = r2.parse_single(
         "Hann keypti 3ja herbergja íbúð á 1stu hæðinni "
         "en hún átti 2ja strokka mótorhjól af 4ðu kynslóð."

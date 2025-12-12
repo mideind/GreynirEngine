@@ -198,7 +198,7 @@ del %TEMP%\greynir-grammar
 
 ## Copyright and licensing
 
-Greynir is Copyright © 2016-2024 by [Miðeind ehf.](https://mideind.is).  
+Greynir is Copyright © 2016-2025 by [Miðeind ehf.](https://mideind.is).
 The original author of this software is *Vilhjálmur Þorsteinsson*.
 
 <a href="https://mideind.is"><img src="https://raw.githubusercontent.com/mideind/GreynirEngine/master/doc/_static/mideind-horizontal-small.png" alt="Miðeind ehf."

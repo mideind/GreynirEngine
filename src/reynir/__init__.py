@@ -73,9 +73,6 @@ from tokenizer import (
     TP_RIGHT,
     TP_NONE,
     TP_WORD,
-    KLUDGY_ORDINALS_PASS_THROUGH,
-    KLUDGY_ORDINALS_MODIFY,
-    KLUDGY_ORDINALS_TRANSLATE,
 )
 from tokenizer.abbrev import Abbreviations
 
@@ -89,9 +86,6 @@ __all__ = (
     "TP_CENTER",
     "TP_NONE",
     "TP_WORD",
-    "KLUDGY_ORDINALS_MODIFY",
-    "KLUDGY_ORDINALS_PASS_THROUGH",
-    "KLUDGY_ORDINALS_TRANSLATE",
     "Greynir",
     "Reynir",
     "Terminal",
