@@ -135,9 +135,14 @@ else:
     extra_compile_args = ["-std=c++11"]
 
 # On some systems, the linker needs to be told to use the C++ compiler
-# under PyPy due to changes in the default behaviour of distutils.
+# due to changes in the default behaviour of distutils/setuptools, which
+# otherwise link the C++ extension with the C driver and omit libstdc++,
+# causing an "undefined symbol: __gxx_personality_v0" ImportError at runtime.
 if IMPLEMENTATION == "PyPy":
     os.environ["LDCXXSHARED"] = "c++ -shared"
+elif not WINDOWS and not MACOS:
+    os.environ.setdefault("LDSHARED", "c++ -shared")
+    os.environ.setdefault("LDCXXSHARED", "c++ -shared")
 
 # Use the Python stable ABI (abi3) for CPython, allowing a single wheel
 # to work across multiple Python versions (3.9+). PyPy doesn't support abi3.
