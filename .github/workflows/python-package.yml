@@ -2,9 +2,10 @@ name: tests
 
 on:
   push:
-    branches: [ "*" ]
+    # Note: "**" is required to match branch names containing '/'
+    branches: [ "**" ]
   pull_request:
-    branches: [ "*" ]
+    branches: [ "**" ]
 
 jobs:
   build:
