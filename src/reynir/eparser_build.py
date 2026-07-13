@@ -130,7 +130,7 @@ if WINDOWS:
 elif MACOS:
     os.environ["CFLAGS"] = "-stdlib=libc++"  # Fixes PyPy build on macOS 10.15.6+
     os.environ["MACOSX_DEPLOYMENT_TARGET"] = "10.9"
-    extra_compile_args = ["-mmacosx-version-min=10.9", "-stdlib=libc++"]
+    extra_compile_args = ["-mmacosx-version-min=10.9", "-stdlib=libc++", "-std=c++11"]
 else:
     extra_compile_args = ["-std=c++11"]
 

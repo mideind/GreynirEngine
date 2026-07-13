@@ -388,7 +388,8 @@ static void freeStates(StateChunk*& pChunkHead)
 }
 
 // Counter of states that are allocated and then immediately discarded
-static UINT nDiscardedStates = 0;
+// (atomic for the same reason as the AllocCounter members)
+static std::atomic<UINT> nDiscardedStates(0);
 
 AllocCounter State::ac;
 
@@ -733,18 +734,26 @@ BOOL Grammar::readBinary(const CHAR* pszFilename)
       return false;
    if (!f.read_UINT(nNonterminals))
       return false;
-#ifdef DEBUG   
+#ifdef DEBUG
    printf("Reading %u terminals and %u nonterminals\n", nTerminals, nNonterminals);
 #endif
+   // Sanity check on the counts, to fail cleanly on a corrupt file
+   // rather than attempting a huge allocation
+   const UINT MAX_SYMBOLS = 1u << 24;
+   if (nTerminals > MAX_SYMBOLS || nNonterminals > MAX_SYMBOLS)
+      return false;
    if (!nNonterminals)
       // No nonterminals to read: we're done
       return true;
    INT iRoot;
    if (!f.read_INT(iRoot))
       return false;
-#ifdef DEBUG   
+#ifdef DEBUG
    printf("Root nonterminal index is %d\n", iRoot);
 #endif
+   // The root must be a valid nonterminal index (negative, within range)
+   if (iRoot >= 0 || ~((UINT)iRoot) >= nNonterminals)
+      return false;
    // Initialize the nonterminals array
    Nonterminal** ppnts = new Nonterminal*[nNonterminals];
    memset(ppnts, 0, nNonterminals * sizeof(Nonterminal*));
@@ -764,25 +773,52 @@ BOOL Grammar::readBinary(const CHAR* pszFilename)
       // Loop through the productions
       for (UINT j = 0; j < nLenPlist; j++) {
          UINT nId;
-         if (!f.read_UINT(nId))
+         if (!f.read_UINT(nId)) {
+            delete pnt;
             return false;
+         }
          UINT nPriority;
-         if (!f.read_UINT(nPriority))
+         if (!f.read_UINT(nPriority)) {
+            delete pnt;
             return false;
+         }
          UINT nLenProd;
-         if (!f.read_UINT(nLenProd))
+         if (!f.read_UINT(nLenProd)) {
+            delete pnt;
             return false;
+         }
          const UINT MAX_LEN_PROD = 256;
          if (nLenProd > MAX_LEN_PROD) {
             // Production too long
-#ifdef DEBUG            
+#ifdef DEBUG
             printf("Production too long\n");
-#endif            
+#endif
+            delete pnt;
             return false;
          }
          // Read the production
          INT aiProd[MAX_LEN_PROD];
-         f.read(aiProd, nLenProd * sizeof(INT));
+         if (f.read(aiProd, nLenProd * sizeof(INT)) != nLenProd * sizeof(INT)) {
+            // Truncated file
+            delete pnt;
+            return false;
+         }
+         // Validate the production items: a negative item must be a
+         // valid nonterminal index and a positive item a valid terminal
+         // index (terminals are 1-based); zero items are not allowed
+         for (UINT k = 0; k < nLenProd; k++) {
+            INT iItem = aiProd[k];
+            BOOL bValid = (iItem < 0)
+               ? ~((UINT)iItem) < nNonterminals
+               : (iItem > 0 && (UINT)iItem <= nTerminals);
+            if (!bValid) {
+#ifdef DEBUG
+               printf("Invalid item %d in production %u\n", iItem, nId);
+#endif
+               delete pnt;
+               return false;
+            }
+         }
          // Create a fresh production object
          Production* pprod = new Production(nId, nPriority, nLenProd, aiProd);
          // Add it to the nonterminal
@@ -1083,7 +1119,7 @@ void Parser::push(UINT nHandle, State* pState, Column* pE, State*& pQ, StateChun
       // The state is the most recently allocated one in the chunk
       // (a very common case): go back one location in the chunk
       pChunkHead->m_nIndex -= sizeof(State);
-      nDiscardedStates++;
+      nDiscardedStates.fetch_add(1, std::memory_order_relaxed);
    }
 }
 
@@ -1349,7 +1385,7 @@ void AllocReporter::report(void) const
    printf("Grammars        : %6d %8d\n", Grammar::ac.getBalance(), Grammar::ac.numAllocs());
    printf("Nodes           : %6d %8d\n", Node::ac.getBalance(), Node::ac.numAllocs());
    printf("States          : %6d %8d\n", State::ac.getBalance(), State::ac.numAllocs());
-   printf("...discarded    : %6s %8d\n", "", nDiscardedStates);
+   printf("...discarded    : %6s %8d\n", "", nDiscardedStates.load(std::memory_order_relaxed));
    printf("StateChunks     : %6d %8d\n", acChunks.getBalance(), acChunks.numAllocs());
    printf("Columns         : %6d %8d\n", Column::ac.getBalance(), Column::ac.numAllocs());
    printf("HNodes          : %6d %8d\n", HNode::ac.getBalance(), HNode::ac.numAllocs());
@@ -1371,18 +1407,28 @@ BOOL defaultMatcher(UINT nHandle, UINT nToken, UINT nTerminal)
 
 Grammar* newGrammar(const CHAR* pszGrammarFile)
 {
+   // Note: the extern "C" entry points that allocate memory catch
+   // all C++ exceptions (out-of-memory in particular) and return NULL
+   // instead, since an exception must never propagate through the
+   // C ABI boundary into the CFFI caller (that would be undefined
+   // behavior)
    if (!pszGrammarFile)
       return NULL;
-   // Read grammar from binary file
-   Grammar* pGrammar = new Grammar();
-   if (!pGrammar->readBinary(pszGrammarFile)) {
-#ifdef DEBUG      
-      printf("Unable to read binary grammar file %s\n", pszGrammarFile);
-#endif      
-      delete pGrammar;
+   try {
+      // Read grammar from binary file
+      Grammar* pGrammar = new Grammar();
+      if (!pGrammar->readBinary(pszGrammarFile)) {
+#ifdef DEBUG
+         printf("Unable to read binary grammar file %s\n", pszGrammarFile);
+#endif
+         delete pGrammar;
+         return NULL;
+      }
+      return pGrammar;
+   }
+   catch (...) {
       return NULL;
    }
-   return pGrammar;
 }
 
 void deleteGrammar(Grammar* pGrammar)
@@ -1395,7 +1441,13 @@ Parser* newParser(Grammar* pGrammar, MatchingFunc fpMatcher, AllocFunc fpAlloc)
 {
    if (!pGrammar || !fpMatcher)
       return NULL;
-   return new Parser(pGrammar, fpMatcher, fpAlloc);
+   try {
+      return new Parser(pGrammar, fpMatcher, fpAlloc);
+   }
+   catch (...) {
+      // See note in newGrammar()
+      return NULL;
+   }
 }
 
 void deleteParser(Parser* pParser)
@@ -1442,7 +1494,17 @@ Node* earleyParse(Parser* pParser, UINT nTokens, INT iRoot, UINT nHandle, UINT* 
 #ifdef DEBUG
    printf("Calling pParser->parse()\n"); fflush(stdout);
 #endif
-   Node* pNode = pParser->parse(nHandle, iRoot, pnErrorToken, nTokens);
+   Node* pNode;
+   try {
+      pNode = pParser->parse(nHandle, iRoot, pnErrorToken, nTokens);
+   }
+   catch (...) {
+      // See note in newGrammar(). If an exception (most likely
+      // out-of-memory) is thrown mid-parse, the working memory of the
+      // parse is not reclaimed, but that is preferable to undefined
+      // behavior at the C ABI boundary.
+      return NULL;
+   }
 #ifdef DEBUG
    printf("Back from pParser->parse()\n"); fflush(stdout);
 #endif

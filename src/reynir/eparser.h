@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
+#include <atomic>
 
 
 // Assert macro
@@ -80,10 +81,14 @@ class AllocCounter {
    // and call ac++ and ac-- in the constructor and destructor,
    // respectively.
 
+   // The counters are atomic (with relaxed ordering, which is
+   // sufficient for statistics) so that concurrent parses in
+   // multiple threads do not cause data races.
+
 private:
 
-   UINT m_nAllocs;
-   UINT m_nFrees;
+   std::atomic<UINT> m_nAllocs;
+   std::atomic<UINT> m_nFrees;
 
 public:
 
@@ -94,18 +99,18 @@ public:
       { }
 
    void operator++(int)
-      { this->m_nAllocs++; }
+      { this->m_nAllocs.fetch_add(1, std::memory_order_relaxed); }
    void operator--(int)
       {
-         ASSERT(this->m_nAllocs > this->m_nFrees);
-         this->m_nFrees++;
+         ASSERT(this->numAllocs() > this->numFrees());
+         this->m_nFrees.fetch_add(1, std::memory_order_relaxed);
       }
    UINT numAllocs(void) const
-      { return this->m_nAllocs; }
+      { return this->m_nAllocs.load(std::memory_order_relaxed); }
    UINT numFrees(void) const
-      { return this->m_nFrees; }
+      { return this->m_nFrees.load(std::memory_order_relaxed); }
    INT getBalance(void) const
-      { return (INT)(this->m_nAllocs - this->m_nFrees); }
+      { return (INT)(this->numAllocs() - this->numFrees()); }
 
 };
 
@@ -253,8 +258,16 @@ public:
       : m_iNt(iNt), m_nDot(nDot), m_pProd(pProd), m_nI(nI), m_nJ(nJ)
       { }
 
+   // Note: member-wise comparison, rather than memcmp() of the
+   // whole struct, which would depend on the absence of padding
    BOOL operator==(const Label& other) const
-      { return ::memcmp((void*)this, (void*)&other, sizeof(Label)) == 0; }
+      {
+         return this->m_iNt == other.m_iNt &&
+            this->m_nDot == other.m_nDot &&
+            this->m_pProd == other.m_pProd &&
+            this->m_nI == other.m_nI &&
+            this->m_nJ == other.m_nJ;
+      }
 
 };
 

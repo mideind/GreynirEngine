@@ -339,45 +339,50 @@ class Node:
             # refer to the same nonterminal, are interior,
             # and not ambiguous.
             ch: List[Any] = []
+            # Pending child nodes, processed iteratively via an explicit
+            # stack rather than by recursion, so that long coalescible
+            # interior node chains cannot hit the Python recursion limit.
+            # Nodes are pushed in reverse order so that they are popped -
+            # and appended to ch - in left-to-right order.
+            stack: List[Any] = []
 
             def push_pair(p1: Any, p2: Any) -> None:
-                """Push a pair of child nodes onto the child list"""
-
-                def push_child(p: Any) -> None:
-                    """Push a single child node onto the child list"""
-                    if p.label.iNt == nt and p.label.pProd != ffi_NULL:
-                        # Interior node for the same nonterminal
-                        if p.pHead.pNext == ffi_NULL:
-                            # Unambiguous: recurse
-                            push_pair(p.pHead.p1, p.pHead.p2)
-                        else:
-                            # Ambiguous node, i.e. more than one family of children.
-                            # In this case we don't know which (p1,p2) pair
-                            # to add as a child of the parent, so we must
-                            # retain the original node with its family of children
-                            # and end the recursion. We also need to add
-                            # placeholder (dummy) nodes to keep the child
-                            # list in sync with the nonterminal's production.
-                            if p.label.nDot > 2:
-                                # Add placeholders for the part of the production
-                                # that is missing from the front since we abandon
-                                # the recursion here
-                                ch.extend([ffi_NULL] * (p.label.nDot - 2))
-                            ch.append(p)
-                            ch.append(ffi_NULL)  # Placeholder
-                    else:
-                        # Terminal, epsilon or unrelated nonterminal
-                        ch.append(p)
-
+                """Push a pair of child nodes onto the pending stack"""
                 if p1 != ffi_NULL and p2 != ffi_NULL:
-                    push_child(p1)
-                    push_child(p2)
+                    stack.append(p2)
+                    stack.append(p1)
                 elif p2 != ffi_NULL:
-                    push_child(p2)
+                    stack.append(p2)
                 else:
-                    push_child(p1)
+                    stack.append(p1)
 
             push_pair(fe.p1, fe.p2)
+            while stack:
+                p = stack.pop()
+                if p.label.iNt == nt and p.label.pProd != ffi_NULL:
+                    # Interior node for the same nonterminal
+                    if p.pHead.pNext == ffi_NULL:
+                        # Unambiguous: coalesce, i.e. expand in place
+                        push_pair(p.pHead.p1, p.pHead.p2)
+                    else:
+                        # Ambiguous node, i.e. more than one family of children.
+                        # In this case we don't know which (p1,p2) pair
+                        # to add as a child of the parent, so we must
+                        # retain the original node with its family of children
+                        # and end the coalescing. We also need to add
+                        # placeholder (dummy) nodes to keep the child
+                        # list in sync with the nonterminal's production.
+                        if p.label.nDot > 2:
+                            # Add placeholders for the part of the production
+                            # that is missing from the front since we abandon
+                            # the coalescing here
+                            ch.extend([ffi_NULL] * (p.label.nDot - 2))
+                        ch.append(p)
+                        ch.append(ffi_NULL)  # Placeholder
+                else:
+                    # Terminal, epsilon or unrelated nonterminal
+                    ch.append(p)
+
             node._add_family(job, fe.pProd, ch)
             fe = fe.pNext
 
@@ -681,6 +686,12 @@ class Fast_Parser(BIN_Parser):
 
     # Maximum time to wait for the grammar lock, in seconds
     _GRAMMAR_LOCK_TIMEOUT = 180.0
+    # Maximum number of entries in the token/terminal matching cache.
+    # Each entry occupies roughly one byte per grammar terminal (~5 KB
+    # for Greynir.grammar), so this cap corresponds to on the order of
+    # 125 MB. Without a cap, the cache would grow without limit in
+    # long-running processes.
+    _MAX_MATCHING_CACHE_SIZE = 25_000
     # Serializes parser initialization between threads of this process,
     # protecting the class-level grammar caches (both the Python grammar
     # singleton in BIN_Parser and the C++ grammar blob above)
@@ -779,6 +790,12 @@ class Fast_Parser(BIN_Parser):
         lw = len(wrapped_tokens)
         err: Sequence[int] = ffi_new("unsigned int*")
         result: Optional[Node] = None
+
+        if len(self._matching_cache) > self._MAX_MATCHING_CACHE_SIZE:
+            # The matching cache has grown too large: clear it.
+            # The cost is only that subsequent parses need to re-match
+            # tokens against terminals as they are encountered again.
+            self._matching_cache.clear()
 
         # Use the context manager protocol to guarantee that the parse job
         # handle will be properly deleted even if an exception is thrown
