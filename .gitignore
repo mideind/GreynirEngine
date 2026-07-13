@@ -95,7 +95,6 @@ p37/
 pypy*
 
 # uv stuff
-uv.lock
 .python-version
 
 # Installer logs
