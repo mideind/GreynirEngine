@@ -81,6 +81,7 @@ from typing import (
 
 import os
 import struct
+import time
 
 from datetime import datetime
 from collections import defaultdict
@@ -680,31 +681,55 @@ class Grammar:
 
     def _write_binary(self, fname: str) -> None:
         """Write grammar to binary file. Called after reading a grammar text file
-        that is newer than the corresponding binary file."""
-        with open(fname, "wb") as f:
-            if Settings.DEBUG:
-                print("Writing binary grammar file {0}".format(fname))
-            # Version header
-            f.write("Greynir00.00.01\n".encode("ascii"))  # 16 bytes total
-            num_nt = self.num_nonterminals
-            # Number of terminals and nonterminals in grammar
-            f.write(struct.pack("<II", self.num_terminals, num_nt))
-            # Root nonterminal
-            assert self.root is not None
-            if Settings.DEBUG:
-                print("Root index is {0}".format(self.root.index))
-            f.write(struct.pack("<i", self.root.index))
-            # Write nonterminals in numeric order, -1 first downto -N
-            for ix in range(num_nt):
-                nt = self.lookup_nonterminal(-1 - ix)
-                plist = self[nt] if nt else []
-                f.write(struct.pack("<I", len(plist)))
-                # Write productions along with their indices and priorities
-                for prio, p in plist:
-                    lenp = len(p)
-                    f.write(struct.pack("<III", p.index, prio, lenp))
-                    if lenp:
-                        f.write(struct.pack("<" + str(lenp) + "i", *p.prod))
+        that is newer than the corresponding binary file. The data is written
+        to a temporary file which is then atomically renamed to the target
+        file name, so that a process that is killed during the write can
+        never leave a truncated binary grammar behind."""
+        tmp_fname = "{0}.tmp.{1}".format(fname, os.getpid())
+        try:
+            with open(tmp_fname, "wb") as f:
+                if Settings.DEBUG:
+                    print("Writing binary grammar file {0}".format(fname))
+                # Version header
+                f.write("Greynir00.00.01\n".encode("ascii"))  # 16 bytes total
+                num_nt = self.num_nonterminals
+                # Number of terminals and nonterminals in grammar
+                f.write(struct.pack("<II", self.num_terminals, num_nt))
+                # Root nonterminal
+                assert self.root is not None
+                if Settings.DEBUG:
+                    print("Root index is {0}".format(self.root.index))
+                f.write(struct.pack("<i", self.root.index))
+                # Write nonterminals in numeric order, -1 first downto -N
+                for ix in range(num_nt):
+                    nt = self.lookup_nonterminal(-1 - ix)
+                    plist = self[nt] if nt else []
+                    f.write(struct.pack("<I", len(plist)))
+                    # Write productions along with their indices and priorities
+                    for prio, p in plist:
+                        lenp = len(p)
+                        f.write(struct.pack("<III", p.index, prio, lenp))
+                        if lenp:
+                            f.write(struct.pack("<" + str(lenp) + "i", *p.prod))
+            # Atomic on both POSIX and Windows. On Windows, the replace
+            # can fail transiently with a PermissionError if another
+            # process happens to have the target file open for reading
+            # at this moment; retry a few times before giving up.
+            for retries_left in reversed(range(10)):
+                try:
+                    os.replace(tmp_fname, fname)
+                    break
+                except PermissionError:
+                    if not retries_left:
+                        raise
+                    time.sleep(0.1)
+        except BaseException:
+            # Clean up the temporary file if anything went wrong
+            try:
+                os.remove(tmp_fname)
+            except OSError:
+                pass
+            raise
         if Settings.DEBUG:
             print("Writing of binary grammar file completed")
             print(

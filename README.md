@@ -219,22 +219,13 @@ as well as important information about
 
 ## Troubleshooting
 
-If parsing seems to hang, it is possible that a lock file that GreynirEngine
-uses has been left locked. This can happen if a Python process that uses
-GreynirEngine is killed abruptly. The solution is to delete the lock file
-and try again:
-
-On Linux and macOS:
-
-````sh
-rm /tmp/greynir-grammar  # May require sudo privileges
-````
-
-On Windows:
-
-````cmd
-del %TEMP%\greynir-grammar
-````
+GreynirEngine uses a lock file, located alongside the binary grammar file
+within the package directory (`reynir/Greynir.grammar.bin.lock`), to
+serialize the (re)generation of the binary grammar between processes.
+If a process gets stuck holding the lock, parser initialization fails
+after a timeout with an error message identifying the lock file.
+Terminate the process holding the lock, or - if no such process exists -
+delete the lock file named in the error message, and try again.
 
 ## Copyright and licensing
 

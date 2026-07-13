@@ -86,9 +86,10 @@ from .binparser import (
     Tok,
     TokenDict,
 )
+from filelock import FileLock, Timeout
+
 from .grammar import Grammar, GrammarError, Nonterminal, Terminal, Production
 from .settings import Settings
-from .glock import GlobalLock
 
 # Import the CFFI wrapper module for the _eparser.*.so library
 # which is compiled from eparser.cpp (see eparser_build.py)
@@ -678,31 +679,86 @@ class Fast_Parser(BIN_Parser):
                 )
         return cls._c_grammar
 
+    # Maximum time to wait for the grammar lock, in seconds
+    _GRAMMAR_LOCK_TIMEOUT = 180.0
+    # Serializes parser initialization between threads of this process,
+    # protecting the class-level grammar caches (both the Python grammar
+    # singleton in BIN_Parser and the C++ grammar blob above)
+    _init_lock = Lock()
+
+    @classmethod
+    def _regeneration_needed(cls) -> bool:
+        """Return True if the binary grammar file is missing or older than
+        the grammar text file, i.e. if initialization may write to it"""
+        try:
+            binary_ts = os.path.getmtime(cls._GRAMMAR_BINARY_FILE)
+        except OSError:
+            return True
+        try:
+            source_ts = os.path.getmtime(cls._GRAMMAR_FILE)
+        except OSError:
+            # No grammar text file present: use the binary as-is
+            return False
+        return binary_ts < source_ts
+
     def __init__(self, verbose: bool = False, root: Optional[str] = None) -> None:
 
-        # Only one initialization at a time, since we don't want a race
-        # condition between threads with regards to reading and parsing the grammar file
-        # vs. writing the binary grammar
-        with GlobalLock("grammar"):
-            # Read and parse the grammar text file
-            super().__init__(verbose)
-            # Create instances of the C++ Grammar and Parser classes
-            c_grammar = self._load_binary_grammar()
-            # Create a C++ parser object for the grammar, passing the proxies for the
-            # two Python callback functions into it
-            self._c_parser: Any = eparser.newParser(  # type: ignore
-                c_grammar, eparser.matching_func, eparser.alloc_func  # type: ignore
-            )
-            # Find the index of the default root nonterminal for this parser instance
-            self._root_index = (
-                0 if root is None else self.grammar.nonterminals[root].index
-            )
-            # Maintain a token/terminal matching cache for the duration
-            # of this parser instance. Note that this cache will grow with use,
-            # as it includes an entry (consisting of one byte per terminal in the
-            # grammar, or currently about 5K bytes for Greynir.grammar) for every
-            # distinct token that the parser encounters.
-            self._matching_cache: Dict[Tuple[Hashable, ...], Any] = dict()
+        # Only one initialization at a time within this process, since we
+        # don't want a race condition between threads with regards to the
+        # class-level grammar caches
+        with Fast_Parser._init_lock:
+            if self._regeneration_needed():
+                # The binary grammar file is missing or stale, so this
+                # initialization may (re)generate it: serialize with other
+                # processes via a lock file, which lives next to the binary
+                # grammar file, scoping the lock to this particular
+                # installation of the package.
+                grammar_lock = FileLock(
+                    self._GRAMMAR_BINARY_FILE + ".lock",
+                    timeout=self._GRAMMAR_LOCK_TIMEOUT,
+                )
+                try:
+                    grammar_lock.acquire()
+                except Timeout:
+                    raise GrammarError(
+                        "Timed out waiting for the grammar lock; another process "
+                        "may be stuck holding it. If this persists, delete the "
+                        "lock file {0} and retry.".format(grammar_lock.lock_file)
+                    )
+                try:
+                    self._initialize(verbose, root)
+                finally:
+                    grammar_lock.release()
+            else:
+                # Warm path: the binary grammar is up to date, so no lock
+                # file is needed. Even if another process concurrently
+                # decides to regenerate the binary (e.g. if the grammar text
+                # file is modified right now), it will only ever replace it
+                # atomically with another complete version.
+                self._initialize(verbose, root)
+
+    def _initialize(self, verbose: bool, root: Optional[str]) -> None:
+        """Read the grammar and create the C++ parser instance;
+        must be called with _init_lock held"""
+        # Read and parse the grammar text file
+        super().__init__(verbose)
+        # Create instances of the C++ Grammar and Parser classes
+        c_grammar = self._load_binary_grammar()
+        # Create a C++ parser object for the grammar, passing the proxies for the
+        # two Python callback functions into it
+        self._c_parser: Any = eparser.newParser(  # type: ignore
+            c_grammar, eparser.matching_func, eparser.alloc_func  # type: ignore
+        )
+        # Find the index of the default root nonterminal for this parser instance
+        self._root_index = (
+            0 if root is None else self.grammar.nonterminals[root].index
+        )
+        # Maintain a token/terminal matching cache for the duration
+        # of this parser instance. Note that this cache will grow with use,
+        # as it includes an entry (consisting of one byte per terminal in the
+        # grammar, or currently about 5K bytes for Greynir.grammar) for every
+        # distinct token that the parser encounters.
+        self._matching_cache: Dict[Tuple[Hashable, ...], Any] = dict()
 
     def __enter__(self):
         """Python context manager protocol"""

@@ -52,6 +52,8 @@ test/test_corpus/handpsd/annotaldLog.txt
 src/reynir/_eparser.cpp
 *.bin
 !ordalisti-*.dawg.bin
+*.bin.lock
+*.bin.tmp.*
 
 *.sublime-project
 *.sublime-workspace
