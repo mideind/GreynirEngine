@@ -32,6 +32,10 @@ jobs:
       run: uv sync --locked
     - name: Lint with ruff
       run: uv run ruff check src/reynir
+    - name: Type check with mypy
+      # mypy is not installed on PyPy (see [dependency-groups] in pyproject.toml)
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
+      run: uv run mypy src/reynir
     - name: Test with pytest
       run: uv run pytest
     - name: Slack notification

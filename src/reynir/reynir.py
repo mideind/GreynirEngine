@@ -131,7 +131,7 @@ class _Sentence:
         self._err_index: Optional[int] = None
         self._error: Optional[ParseError] = None
         self._simplified_tree: Optional[SimpleTree] = None
-        self._tree = None
+        self._tree: Optional[Node] = None
         # Number of possible combinations
         self._num: Optional[int] = None
         # Score of best parse tree
@@ -154,7 +154,7 @@ class _Sentence:
         job = self._job
         num = 0
         score = 0
-        tree = None
+        tree: Optional[Node] = None
         try:
             # Invoke the parser on the sentence tokens
             tree, num, score = job.parse(self._s)

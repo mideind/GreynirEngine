@@ -58,6 +58,7 @@ dev = [
     "pytest",
     "ruff",
     "mypy; implementation_name != 'pypy'",
+    "types-cffi",
     "setuptools",
 ]
 
