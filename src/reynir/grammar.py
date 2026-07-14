@@ -178,12 +178,15 @@ class Nonterminal(GrammarItem):
         # Give all nonterminals a unique, negative sequence number for hashing purposes
         self._index = Nonterminal._index
         Nonterminal._index -= 1
-        self._hash = id(self).__hash__()
+        # Use the creation-order sequence number as the hash. It is
+        # deterministic between runs (unlike id()), so that iteration
+        # order over sets and dicts of nonterminals is stable, and it
+        # never changes during the object's lifetime (unlike self._index,
+        # which may be renumbered after the grammar has been processed).
+        self._hash = self._index
 
     def __hash__(self) -> int:
-        """Use the id of this nonterminal as a basis for the hash"""
-        # The index may change after the entire grammar has been
-        # read and processed; therefore it is not suitable for hashing
+        """Return the cached, deterministic hash of this nonterminal"""
         return self._hash
 
     def __eq__(self, o: Any) -> bool:
@@ -274,8 +277,13 @@ class Terminal(GrammarItem):
         self._name = name
         self._index = Terminal._index
         Terminal._index += 1
-        # The hash is used quite often so it is worth caching
-        self._hash = id(self).__hash__()
+        # The hash is used quite often so it is worth caching.
+        # Use the creation-order sequence number: it is deterministic
+        # between runs (unlike id()), so that iteration order over sets
+        # and dicts of terminals is stable, and it never changes during
+        # the object's lifetime (unlike self._index, which may be
+        # renumbered after the grammar has been processed).
+        self._hash = self._index
 
     def __hash__(self) -> int:
         return self._hash

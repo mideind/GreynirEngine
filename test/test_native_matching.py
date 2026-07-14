@@ -131,10 +131,11 @@ REQUIRED_TOKEN_KINDS = frozenset(
 def _parse_results(disable_native: bool):
     """Parse the corpus with a fresh parser, native matching on or off.
     Returns, per sentence, the number of parse tree combinations in the
-    forest (or None if the sentence did not parse). Note that we compare
-    forest sizes rather than reduced trees, since the reducer may break
-    exact score ties differently between runs; the forest itself is
-    fully determined by the token/terminal match results."""
+    forest (or None if the sentence did not parse). We compare forest
+    sizes since they are fully determined by the token/terminal match
+    results, which is exactly what this module tests. (Reduced trees
+    are nowadays deterministic as well; see test_parse.py::
+    test_deterministic_reduction.)"""
     key = "GREYNIR_DISABLE_CPP_MATCHING"
     old = os.environ.get(key)
     try:

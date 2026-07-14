@@ -115,10 +115,18 @@ public:
 
    UINT getHash(void) const
       {
-         return ((UINT)this->m_iNt) ^
-            ((UINT)((uintptr_t)this->m_pProd) & 0xFFFFFFFF) ^
-            (this->m_nDot << 7) ^ (this->m_nStart << 9) ^
-            (((UINT)((uintptr_t)this->m_pw) & 0xFFFFFFFF) << 1);
+         // Content-based hash: this must not depend on memory
+         // addresses, since the hash determines the order in which
+         // states are enumerated from a Column's hash bins, which
+         // in turn determines the order of families of children
+         // in the resulting parse forest. Using pointer values here
+         // would make parse results nondeterministic between runs
+         // whenever the reducer encounters exact score ties.
+         UINT h = ((UINT)this->m_iNt) ^
+            (this->m_nDot << 7) ^ (this->m_nStart << 9);
+         h = h * 31 + (this->m_pProd ? this->m_pProd->getId() : (UINT)-1);
+         h = h * 31 + (this->m_pw ? this->m_pw->getHash() : 0);
+         return h;
       }
    BOOL operator==(const State& other) const
       {
