@@ -180,6 +180,7 @@ private:
 
    static AllocCounter ac;
    static AllocCounter acMatches;
+   static AllocCounter acNativeMatches;
 
 protected:
 
@@ -457,6 +458,10 @@ Node* State::getResult(INT iStartNt) const
 
 AllocCounter Column::ac;
 AllocCounter Column::acMatches;
+AllocCounter Column::acNativeMatches;
+
+// Counter of native matching tables allocated by setMatchingTable()
+static AllocCounter acMatchingTables;
 
 Column::Column(Parser* pParser, UINT nToken)
    : m_pParser(pParser),
@@ -626,6 +631,7 @@ BOOL Column::matches(UINT nHandle, UINT nTerminal) const
          (((const TokenRec*)pRec)->nCountFlags & (TKF_FAST | TKF_EMPTY_WORD)) != 0);
    if (bNative) {
       b = Parser::evalMatch(pSpec, pRec, this->m_pParser->getMasks());
+      Column::acNativeMatches++; // Count native match evaluations
       if (this->m_pParser->parityMode()) {
          // Parity mode: also obtain the Python result; count any
          // discrepancy and return the Python (canonical) answer
@@ -1076,8 +1082,10 @@ Parser::Parser(Grammar* p, MatchingFunc pMatchingFunc, AllocFunc pAllocFunc)
 
 Parser::~Parser(void)
 {
-   if (this->m_pSpecs)
+   if (this->m_pSpecs) {
       delete [] this->m_pSpecs;
+      acMatchingTables--;
+   }
 }
 
 void Parser::setMatchingTable(const BYTE* pSpecs, UINT nSpecs,
@@ -1089,6 +1097,7 @@ void Parser::setMatchingTable(const BYTE* pSpecs, UINT nSpecs,
    if (this->m_pSpecs) {
       delete [] this->m_pSpecs;
       this->m_pSpecs = NULL;
+      acMatchingTables--;
    }
    this->m_nSpecs = 0;
    this->m_pMeaningsFunc = NULL;
@@ -1098,6 +1107,7 @@ void Parser::setMatchingTable(const BYTE* pSpecs, UINT nSpecs,
    if (!pSpecs || !nSpecs || !fpMeanings || !pMasks)
       return;
    this->m_pSpecs = new TerminalSpec[nSpecs];
+   acMatchingTables++;
    memcpy(this->m_pSpecs, pSpecs, nSpecs * sizeof(TerminalSpec));
    this->m_nSpecs = nSpecs;
    memcpy(&this->m_masks, pMasks, sizeof(MatchMasks));
@@ -1571,6 +1581,8 @@ void AllocReporter::report(void) const
    printf("HNodes          : %6d %8d\n", HNode::ac.getBalance(), HNode::ac.numAllocs());
    printf("NodeDict lookups: %6s %8d\n", "", NodeDict::acLookups.numAllocs());
    printf("Matching calls  : %6s %8d\n", "", Column::acMatches.numAllocs());
+   printf("...thereof native: %5s %8d\n", "", Column::acNativeMatches.numAllocs());
+   printf("MatchingTables  : %6d %8d\n", acMatchingTables.getBalance(), acMatchingTables.numAllocs());
    fflush(stdout); // !!! Debugging
 }
 
