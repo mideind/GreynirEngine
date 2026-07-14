@@ -152,7 +152,11 @@ elif not WINDOWS and not MACOS:
 
 # Use the Python stable ABI (abi3) for CPython, allowing a single wheel
 # to work across multiple Python versions (3.9+). PyPy doesn't support abi3.
-py_limited_api = "cp39" if IMPLEMENTATION == "CPython" else False
+# Compile the extension against the stable ABI (Py_LIMITED_API) on
+# CPython, producing an _eparser.abi3.so module usable on any CPython
+# version >= 3.10. The matching cp310-abi3 wheel tag is set via the
+# bdist_wheel py_limited_api option in setup.py.
+py_limited_api = "cp310" if IMPLEMENTATION == "CPython" else False
 
 ffibuilder.cdef(declarations + callbacks)
 
