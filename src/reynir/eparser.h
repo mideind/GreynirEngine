@@ -270,6 +270,20 @@ public:
             this->m_nJ == other.m_nJ;
       }
 
+   // Content-based hash, deliberately independent of memory
+   // addresses (the production is represented by its id, not
+   // its pointer), so that hash-derived orderings are stable
+   // between runs
+   UINT getHash(void) const
+      {
+         UINT h = (UINT)this->m_iNt;
+         h = h * 31 + this->m_nDot;
+         h = h * 31 + (this->m_pProd ? this->m_pProd->getId() : (UINT)-1);
+         h = h * 31 + this->m_nI;
+         h = h * 31 + this->m_nJ;
+         return h;
+      }
+
 };
 
 
@@ -309,6 +323,10 @@ public:
 
    BOOL hasLabel(const Label& label) const
       { return this->m_label == label; }
+
+   // Deterministic content-based hash of this node's label
+   UINT getHash(void) const
+      { return this->m_label.getHash(); }
 
    void dump(Grammar*);
 

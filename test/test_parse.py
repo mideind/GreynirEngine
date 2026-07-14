@@ -2209,6 +2209,29 @@ def test_þau(r):
     # assert s.tree.S.IP.NP_SUBJ.PP.NP.tidy_text == "þeim Gunnlaugi"
 
 
+def test_deterministic_reduction(r):
+    """Repeated parses of the same sentence must yield the same tree,
+    even when the parse forest contains subtrees with exactly equal
+    scores. The ambiguous sentences below used to come out differently
+    between runs when the C++ parser's Earley state hash included
+    memory addresses, making the family order in the forest - and
+    thereby the reducer's tie-breaking - nondeterministic."""
+    sentences = [
+        "Ása sá sól.",
+        "Konan sem kom í heimsókn í gær ætlar að kaupa nýja íbúð í miðbænum.",
+        "Hr. Jón Jónsson býr á Laugavegi 26 og á 3,4 milljónir króna í banka.",
+        "Það rignir sjaldan í Reykjavík í júlí en þó gerist það stundum.",
+        "Tuttugu og þrír hestar, fimm kýr og tólf kindur voru á bænum.",
+    ]
+    for sent in sentences:
+        flats = set()
+        for _ in range(5):
+            s = r.parse_single(sent)
+            assert s is not None and s.tree is not None
+            flats.add(s.tree.flat)
+        assert len(flats) == 1, f"Nondeterministic parse of '{sent}': {flats}"
+
+
 def test_aukafall(r):
     s = r.parse_single("Mér blöskrar framkoma Páls.")
     assert s and s.tree
