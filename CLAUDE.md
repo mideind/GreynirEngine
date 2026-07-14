@@ -29,8 +29,8 @@ uv run pytest test/test_parse.py::test_long_parse
 # Lint (CI runs this)
 uv run ruff check src/reynir
 
-# Type check (config in pyproject.toml [tool.mypy]; carries a handful of
-# known pre-existing errors, so it is not a CI gate)
+# Type check (config in pyproject.toml [tool.mypy]; runs as a CI gate
+# on non-PyPy jobs, so it must stay clean)
 uv run mypy src/reynir
 ```
 

@@ -422,7 +422,9 @@ private:
    MeaningsFunc m_pMeaningsFunc;
    MatchMasks m_masks;
    BOOL m_bParity;             // Parity checking mode
-   UINT m_nParityMismatches;
+   // Atomic (like the diagnostic allocation counters), since it is
+   // incremented from within concurrent parses
+   std::atomic<UINT> m_nParityMismatches;
 
    void push(UINT nHandle, State*, Column*, State*&, StateChunk*);
 
@@ -466,9 +468,9 @@ public:
    BOOL parityMode(void) const
       { return this->m_bParity; }
    void countParityMismatch(void)
-      { this->m_nParityMismatches++; }
+      { this->m_nParityMismatches.fetch_add(1, std::memory_order_relaxed); }
    UINT getParityMismatches(void) const
-      { return this->m_nParityMismatches; }
+      { return this->m_nParityMismatches.load(std::memory_order_relaxed); }
 
    // Evaluate a native token/terminal match
    static BOOL evalMatch(const TerminalSpec*, const BYTE* pTokenRec, const MatchMasks&);

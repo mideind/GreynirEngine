@@ -881,11 +881,15 @@ class Fast_Parser(BIN_Parser):
         result: Optional[Node] = None
 
         if len(self._matching_cache) > self._MAX_MATCHING_CACHE_SIZE:
-            # The matching cache has grown too large: clear it.
+            # The matching cache has grown too large: discard it.
             # The cost is only that subsequent parses need to re-match
             # tokens against terminals as they are encountered again.
-            self._matching_cache.clear()
-            self._meanings_cache.clear()
+            # Note: the dicts are replaced, not cleared in place. Parse
+            # jobs that may be in flight in other threads hold references
+            # to the current dicts, which keeps the CFFI buffers that the
+            # C++ core points into alive until those jobs complete.
+            self._matching_cache = dict()
+            self._meanings_cache = dict()
 
         # Use the context manager protocol to guarantee that the parse job
         # handle will be properly deleted even if an exception is thrown

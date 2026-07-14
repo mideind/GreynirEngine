@@ -1102,7 +1102,7 @@ void Parser::setMatchingTable(const BYTE* pSpecs, UINT nSpecs,
    this->m_nSpecs = 0;
    this->m_pMeaningsFunc = NULL;
    this->m_bParity = bParity;
-   this->m_nParityMismatches = 0;
+   this->m_nParityMismatches.store(0, std::memory_order_relaxed);
    memset(&this->m_masks, 0, sizeof(MatchMasks));
    if (!pSpecs || !nSpecs || !fpMeanings || !pMasks)
       return;
