@@ -174,6 +174,7 @@ private:
    MatchingFunc m_pMatchingFunc; // Pointer to the token/terminal matching function
    BYTE* m_abCache; // Matching cache, a true/false flag for every terminal in the grammar
    BOOL m_bNeedsRelease; // Does the matching cache need to be explicitly released?
+   const BYTE* m_pTokenRec; // Packed matching data for this column's token, or NULL
    HashBin m_aHash[HASH_BINS]; // The hash bin array
    UINT m_nEnumBin; // Round robin used during enumeration of states
 
@@ -463,6 +464,7 @@ Column::Column(Parser* pParser, UINT nToken)
       m_pNtStates(NULL),
       m_pMatchingFunc(pParser->getMatchingFunc()),
       m_abCache(NULL), m_bNeedsRelease(false),
+      m_pTokenRec(NULL),
       m_nEnumBin(0)
 {
    Column::ac++;
@@ -506,8 +508,12 @@ void Column::startParse(UINT nHandle)
    ASSERT(this->m_abCache == NULL);
    // Ask the parser to create a matching cache for us
    // (or eventually re-use a previous one)
-   if (this->m_nToken != (UINT)-1)
+   if (this->m_nToken != (UINT)-1) {
       this->m_abCache = this->m_pParser->allocCache(nHandle, this->m_nToken, &this->m_bNeedsRelease);
+      // Fetch the packed matching data for this column's token,
+      // if a native matching table has been installed
+      this->m_pTokenRec = this->m_pParser->fetchTokenRec(nHandle, this->m_nToken);
+   }
 }
 
 void Column::stopParse(void)
@@ -517,6 +523,7 @@ void Column::stopParse(void)
       // The matching cache needs to be released
       this->m_pParser->releaseCache(this->m_abCache);
    this->m_abCache = NULL;
+   this->m_pTokenRec = NULL;
 }
 
 BOOL Column::addState(State* p)
@@ -607,7 +614,30 @@ BOOL Column::matches(UINT nHandle, UINT nTerminal) const
       // We already have a cached result for this terminal
       return (BOOL)(this->m_abCache[nTerminal] & 0x01);
    // Not cached: obtain a result and store it in the cache
-   BOOL b = this->m_pMatchingFunc(nHandle, this->m_nToken, nTerminal) != 0;
+   BOOL b;
+   const TerminalSpec* pSpec = this->m_pParser->getSpec(nTerminal);
+   const UINT nKind = pSpec ? (pSpec->nKindFlags & 0xFFu) : T_PYTHON;
+   const BYTE* pRec = this->m_pTokenRec;
+   // The native fast path can decide T_TEXT terminals for any token,
+   // and all non-T_PYTHON terminals for word tokens (TKF_FAST for
+   // tokens with BÍN meanings, TKF_EMPTY_WORD for unknown words)
+   const BOOL bNative = nKind != T_PYTHON && pRec != NULL &&
+      (nKind == T_TEXT ||
+         (((const TokenRec*)pRec)->nCountFlags & (TKF_FAST | TKF_EMPTY_WORD)) != 0);
+   if (bNative) {
+      b = Parser::evalMatch(pSpec, pRec, this->m_pParser->getMasks());
+      if (this->m_pParser->parityMode()) {
+         // Parity mode: also obtain the Python result; count any
+         // discrepancy and return the Python (canonical) answer
+         BOOL bPy = this->m_pMatchingFunc(nHandle, this->m_nToken, nTerminal) != 0;
+         if ((bPy != 0) != (b != 0))
+            this->m_pParser->countParityMismatch();
+         b = bPy;
+      }
+   }
+   else {
+      b = this->m_pMatchingFunc(nHandle, this->m_nToken, nTerminal) != 0;
+   }
    Column::acMatches++; // Count calls to the matching function
    // Mark our cache
    this->m_abCache[nTerminal] = b ? (BYTE)0x81 : (BYTE)0x80;
@@ -1035,14 +1065,164 @@ void NodeDict::reset(void)
 
 
 Parser::Parser(Grammar* p, MatchingFunc pMatchingFunc, AllocFunc pAllocFunc)
-   : m_pGrammar(p), m_pMatchingFunc(pMatchingFunc), m_pAllocFunc(pAllocFunc)
+   : m_pGrammar(p), m_pMatchingFunc(pMatchingFunc), m_pAllocFunc(pAllocFunc),
+      m_pSpecs(NULL), m_nSpecs(0), m_pMeaningsFunc(NULL),
+      m_bParity(false), m_nParityMismatches(0)
 {
    ASSERT(this->m_pGrammar != NULL);
    ASSERT(this->m_pMatchingFunc != NULL);
+   memset(&this->m_masks, 0, sizeof(MatchMasks));
 }
 
 Parser::~Parser(void)
 {
+   if (this->m_pSpecs)
+      delete [] this->m_pSpecs;
+}
+
+void Parser::setMatchingTable(const BYTE* pSpecs, UINT nSpecs,
+   MeaningsFunc fpMeanings, const BYTE* pMasks, BOOL bParity)
+{
+   // Install (or remove, if pSpecs is NULL) a native matching table.
+   // The spec table and mask structure are copied, so the caller's
+   // buffers need not outlive this call.
+   if (this->m_pSpecs) {
+      delete [] this->m_pSpecs;
+      this->m_pSpecs = NULL;
+   }
+   this->m_nSpecs = 0;
+   this->m_pMeaningsFunc = NULL;
+   this->m_bParity = bParity;
+   this->m_nParityMismatches = 0;
+   memset(&this->m_masks, 0, sizeof(MatchMasks));
+   if (!pSpecs || !nSpecs || !fpMeanings || !pMasks)
+      return;
+   this->m_pSpecs = new TerminalSpec[nSpecs];
+   memcpy(this->m_pSpecs, pSpecs, nSpecs * sizeof(TerminalSpec));
+   this->m_nSpecs = nSpecs;
+   memcpy(&this->m_masks, pMasks, sizeof(MatchMasks));
+   this->m_pMeaningsFunc = fpMeanings;
+}
+
+static inline BOOL defaultMatchMeaning(const TerminalSpec* pSpec,
+   const MeaningRec& m, const MatchMasks& mk)
+{
+   // Mirrors the feature bit logic of WordMatchers.matcher_default()
+   // in binparser.py
+   if (m.nFlags & MF_NO_BEYGING) {
+      if (m.nFlags & MF_IS_LO_SO)
+         // Adjective or verb abbreviation: matches irrespective of variants
+         return true;
+      if (m.nFlags & MF_IS_NOUN)
+         // Noun abbreviation: check gender, permit singular forms only
+         return (pSpec->nFbits & (mk.genders | mk.number) & ~(m.nFbits | mk.et)) == 0;
+      return pSpec->nFbits == 0;
+   }
+   return (pSpec->nFbits & ~m.nFbits) == 0;
+}
+
+BOOL Parser::evalMatch(const TerminalSpec* pSpec, const BYTE* pTokenRec,
+   const MatchMasks& mk)
+{
+   // Native token/terminal matching. This function mirrors, exactly,
+   // the semantics of the corresponding Python matchers in binparser.py
+   // for the terminal kinds that are encoded natively; parity between
+   // the two implementations is asserted by tests (and can be verified
+   // at run-time via the parity mode).
+   const TokenRec* pHdr = (const TokenRec*)pTokenRec;
+   const UINT nKind = pSpec->nKindFlags & 0xFFu;
+   if (nKind == T_TEXT)
+      // Strong literal without category: pure token text identity,
+      // valid for all token kinds (mirrors shortcut_match)
+      return pHdr->nFormId != 0 && pHdr->nFormId == pSpec->nLitId;
+   if (pHdr->nCountFlags & TKF_EMPTY_WORD)
+      // Unknown word without BÍN meanings: per BIN_Token.matches_WORD(),
+      // only a no_..._et_hk terminal without 'gr' can match natively
+      // (sérnafn terminals are T_PYTHON and don't reach this point)
+      return nKind == T_CAT_NOUN && (pSpec->nKindFlags & TF_MATCHES_EMPTY) != 0;
+   if (nKind == T_TEXT_CAT && pHdr->nFormId != pSpec->nLitId)
+      // Strong literal with category: the token text must be identical
+      return false;
+   const UINT n = pHdr->nCountFlags & 0xFFFFu;
+   const MeaningRec* pm = (const MeaningRec*)(pTokenRec + sizeof(TokenRec));
+   for (UINT i = 0; i < n; i++) {
+      const MeaningRec& m = pm[i];
+      switch (nKind) {
+         case T_TEXT_CAT:
+            // Token text already matched: require the specified category
+            if (m.nCatId == pSpec->nCatId)
+               return true;
+            break;
+         case T_LEMMA:
+            // Lemma literal: interned lemma identity, optional category,
+            // then default matcher logic, then the middle voice exclusion
+            // for verb lemma literals (matcher_lemma_literal)
+            if (m.nLemmaId != 0 && m.nLemmaId == pSpec->nLitId
+               && (pSpec->nCatId == 0 || m.nCatId == pSpec->nCatId)
+               && defaultMatchMeaning(pSpec, m, mk)
+               && (!(pSpec->nKindFlags & TF_MM_EXCLUDE) || !(m.nFbits & mk.mm)))
+               return true;
+            break;
+         case T_CAT_DEFAULT:
+            if (m.nMappedCatId == pSpec->nCatId
+               && defaultMatchMeaning(pSpec, m, mk))
+               return true;
+            break;
+         case T_CAT_MASK:
+            // abfn/pfn: masked feature bit test (matcher_abfn/matcher_pfn)
+            if (m.nCatId == pSpec->nCatId
+               && (pSpec->nFbits & pSpec->nMask & ~m.nFbits) == 0)
+               return true;
+            break;
+         case T_CAT_FIRST:
+            // töl: category only, variants don't disqualify (matcher_töl)
+            if (m.nMappedCatId == pSpec->nCatId)
+               return true;
+            break;
+         case T_CAT_NOUN:
+            // no_...: mirrors matcher_no()
+            if (!(m.nFlags & MF_IS_NOUN))
+               break;
+            if (pSpec->nKindFlags & TF_ABBREV) {
+               // no_abbrev: only match meanings without inflection info
+               if (m.nFlags & MF_NO_BEYGING)
+                  return true;
+               break;
+            }
+            if (m.nFlags & MF_NAME_FL)
+               // Person/family names are only matched by person terminals
+               break;
+            if (m.nFlags & MF_NO_BEYGING) {
+               // No case/number info (probably a foreign word):
+               // check gender only, and don't match a demand for
+               // the definite article ('gr')
+               if ((pSpec->nFbits & mk.genders & ~m.nFbits) == 0
+                  && (pSpec->nFbits & mk.gr) == 0)
+                  return true;
+            }
+            else {
+               if ((pSpec->nFbits & ~m.nFbits) == 0)
+                  return true;
+            }
+            break;
+         case T_CAT_LO:
+            // lo_... without subject cases or ending constraints
+            // (matcher_lo): abbreviations match regardless of variants
+            if (m.nCatId == pSpec->nCatId
+               && ((m.nFlags & MF_NO_BEYGING) || (pSpec->nFbits & ~m.nFbits) == 0))
+               return true;
+            break;
+         case T_CAT_AO:
+            // ao_... without ending constraints (matcher_ao)
+            if (m.nCatId == pSpec->nCatId
+               && (pSpec->nFbits & ~m.nFbits) == 0)
+               return true;
+            break;
+         default:
+            break;
+      }
+   }
+   return false;
 }
 
 BYTE* Parser::allocCache(UINT nHandle, UINT nToken, BOOL* pbNeedRelease)
@@ -1454,6 +1634,26 @@ void deleteParser(Parser* pParser)
 {
    if (pParser)
       delete pParser;
+}
+
+void setMatchingTable(Parser* pParser, const BYTE* pSpecs, UINT nSpecs,
+   MeaningsFunc fpMeanings, const BYTE* pMasks, BOOL bParity)
+{
+   if (!pParser)
+      return;
+   try {
+      pParser->setMatchingTable(pSpecs, nSpecs, fpMeanings, pMasks, bParity);
+   }
+   catch (...) {
+      // See note in newGrammar(); out of memory here simply means
+      // no native matching table, i.e. Python matching throughout
+      pParser->setMatchingTable(NULL, 0, NULL, NULL, false);
+   }
+}
+
+UINT getParityMismatches(Parser* pParser)
+{
+   return pParser ? pParser->getParityMismatches() : 0;
 }
 
 void deleteForest(Node* pNode)

@@ -1,6 +1,38 @@
 # Design sketch: moving token/terminal matching into the C++ core
 
-Status: DRAFT for discussion — 2026-07-13
+Status: IMPLEMENTED (Phases 0-2) — 2026-07-14
+
+## 0. Results (added after implementation)
+
+Phase 0 instrumentation over a 242-sentence corpus: 1.74M match queries,
+of which 69.1% classify as natively answerable (55.9% lemma literals).
+
+Implemented as designed, with one delivery difference: token matching
+data is fetched via a `MeaningsFunc` callback once per Earley column
+(mirroring the existing `alloc_func` handshake) and cached per token key.
+Additionally, unknown-word tokens (no BÍN meanings) are handled natively
+via a per-terminal constant flag (`TF_MATCHES_EMPTY`).
+
+Measured (CPython 3.13, typical 10-25 token sentences, cold matching
+cache): **2.2x faster** overall parse time (1.40s -> 0.65s for the
+8-sentence benchmark set); ~89% of Python matching callbacks eliminated.
+The full test suite runs ~20% faster. PyPy 3.11: ~20% faster cold.
+Warm-cache and long-sentence workloads: unchanged, as predicted.
+
+Verification: query-level parity mode (`GREYNIR_MATCHING_PARITY=1`,
+where every native decision is compared against the Python matcher)
+reports zero discrepancies over the test corpus; the full test suite
+passes with the fast path enabled by default. The fast path can be
+disabled with `GREYNIR_DISABLE_CPP_MATCHING=1`, via the
+`Fast_Parser._USE_CPP_MATCHING` class attribute, and is automatically
+disabled for parser subclasses that override token wrapping
+(the GreynirCorrect compatibility gate).
+
+Incidental finding during verification: reduction of exact score ties
+is not stable across repeated parses of the same sentence (independent
+of this work - it reproduces with pure Python matching); see
+test_native_matching.py for why forests, not reduced trees, are
+compared there.
 
 ## 1. Motivation and measured cost
 

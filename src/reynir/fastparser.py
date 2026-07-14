@@ -81,6 +81,9 @@ from functools import reduce
 from .binparser import (
     BIN_Parser,
     BIN_Token,
+    MatchingTable,
+    build_matching_table,
+    encode_token_matching_data,
     simplify_terminal,
     augment_terminal,
     Tok,
@@ -122,6 +125,8 @@ class ParseJob:
         tokens: List[BIN_Token],
         terminals: Dict[int, Terminal],
         matching_cache: Dict[Tuple[Hashable, ...], Any],
+        matching_table: Optional[MatchingTable] = None,
+        meanings_cache: Optional[Dict[Tuple[Hashable, ...], Any]] = None,
     ) -> None:
         self._handle = handle
         self.tokens = tokens
@@ -129,6 +134,12 @@ class ParseJob:
         self.grammar = grammar
         self.c_dict: Dict[Any, "Node"] = dict()  # Node pointer conversion dictionary
         self.matching_cache = matching_cache  # Token/terminal matching buffers
+        # Native matching support: interned lexicon/categories, and a
+        # cache of packed per-token matching records
+        self.matching_table = matching_table
+        self.meanings_cache: Dict[Tuple[Hashable, ...], Any] = (
+            meanings_cache if meanings_cache is not None else dict()
+        )
 
     def matches(self, token_index: int, terminal_index: int) -> bool:
         """Convert the token reference from a 0-based token index
@@ -148,6 +159,20 @@ class ParseJob:
                 b = self.matching_cache[key] = ffi_new("BYTE[]", size)
         except TypeError:
             assert False, "alloc_cache() unable to hash key: {0}".format(repr(key))
+        return b
+
+    def token_matching_data(self, token: int) -> Any:
+        """Return packed native matching data (a TokenRec header followed
+        by MeaningRec entries, see eparser.h) for the given token"""
+        table = self.matching_table
+        if table is None:
+            return ffi_NULL
+        tok = self.tokens[token]
+        key = tok.key
+        b: Any = self.meanings_cache.get(key)
+        if b is None:
+            data = encode_token_matching_data(tok, table)
+            b = self.meanings_cache[key] = ffi_new("BYTE[]", data)
         return b
 
     def reset(self) -> None:
@@ -176,6 +201,8 @@ class ParseJob:
         tokens: List[BIN_Token],
         terminals: Dict[int, Terminal],
         matching_cache: Dict[Tuple[Hashable, ...], Any],
+        matching_table: Optional[MatchingTable] = None,
+        meanings_cache: Optional[Dict[Tuple[Hashable, ...], Any]] = None,
     ) -> "ParseJob":
         """Create a new parse job with for a given token sequence and set of terminals"""
         with cls._lock:
@@ -183,7 +210,15 @@ class ParseJob:
             cls._seq += 1
             if cls._seq >= cls._MAX_JOBS:
                 cls._seq = 0
-            j = cls._jobs[h] = ParseJob(h, grammar, tokens, terminals, matching_cache)
+            j = cls._jobs[h] = ParseJob(
+                h,
+                grammar,
+                tokens,
+                terminals,
+                matching_cache,
+                matching_table,
+                meanings_cache,
+            )
         return j
 
     @classmethod
@@ -201,6 +236,11 @@ class ParseJob:
     def alloc(cls, handle: int, token_index: int, size: int):
         """Dispatch a cache buffer allocation request to the correct parse job"""
         return cls._jobs[handle].alloc_cache(token_index, size)
+
+    @classmethod
+    def meanings(cls, handle: int, token_index: int) -> Any:
+        """Dispatch a token matching data request to the correct parse job"""
+        return cls._jobs[handle].token_matching_data(token_index)
 
 
 # Declare CFFI callback functions to be called from the C++ code
@@ -225,6 +265,15 @@ def alloc_func(handle: int, token_index: int, size: int):
     The point of this callback is to allow re-using buffers for identical tokens,
     so we avoid making unnecessary matching calls."""
     return ParseJob.alloc(handle, token_index, size)
+
+
+@ffi.def_extern()  # type: ignore
+def meanings_func(handle: int, token_index: int):
+    """Called from the C++ parser, once per Earley column, to obtain
+    packed matching data for a token. This enables the C++ core to
+    decide most token/terminal matches natively, without calling
+    matching_func() for each terminal."""
+    return ParseJob.meanings(handle, token_index)
 
 
 class Node:
@@ -692,6 +741,29 @@ class Fast_Parser(BIN_Parser):
     # 125 MB. Without a cap, the cache would grow without limit in
     # long-running processes.
     _MAX_MATCHING_CACHE_SIZE = 25_000
+    # Set to False in derived classes to disable the native (C++)
+    # token/terminal matching fast path and match everything in Python
+    _USE_CPP_MATCHING = True
+
+    def _cpp_matching_allowed(self) -> bool:
+        """Return True if the native (C++) matching fast path may be
+        used by this parser instance"""
+        cls = type(self)
+        if not cls._USE_CPP_MATCHING:
+            return False
+        if os.environ.get("GREYNIR_DISABLE_CPP_MATCHING"):
+            return False
+        # Auto-gate: the native fast path replicates the matching
+        # semantics of BIN_Token/BIN_Terminal exactly. Derived classes
+        # (e.g. GreynirCorrect) that override token wrapping have
+        # different matching semantics and automatically fall back to
+        # Python matching here. (Terminals of derived types likewise
+        # fall back individually, via the exact type checks in
+        # binparser.build_matching_table().)
+        return (
+            cls.wrap_token is BIN_Parser.wrap_token
+            and cls._wrap is BIN_Parser._wrap
+        )
     # Serializes parser initialization between threads of this process,
     # protecting the class-level grammar caches (both the Python grammar
     # singleton in BIN_Parser and the C++ grammar blob above)
@@ -770,6 +842,23 @@ class Fast_Parser(BIN_Parser):
         # grammar, or currently about 5K bytes for Greynir.grammar) for every
         # distinct token that the parser encounters.
         self._matching_cache: Dict[Tuple[Hashable, ...], Any] = dict()
+        # Cache of packed per-token records for native matching
+        self._meanings_cache: Dict[Tuple[Hashable, ...], Any] = dict()
+        # Install the native matching table, enabling the C++ core to
+        # decide most token/terminal matches without Python callbacks
+        self._matching_table: Optional[MatchingTable] = None
+        if self._cpp_matching_allowed():
+            table = build_matching_table(self.grammar)
+            parity = 1 if os.environ.get("GREYNIR_MATCHING_PARITY") else 0
+            eparser.setMatchingTable(  # type: ignore
+                self._c_parser,
+                table.specs,
+                table.num_specs,
+                eparser.meanings_func,  # type: ignore
+                table.masks,
+                parity,
+            )
+            self._matching_table = table
 
     def __enter__(self):
         """Python context manager protocol"""
@@ -796,12 +885,18 @@ class Fast_Parser(BIN_Parser):
             # The cost is only that subsequent parses need to re-match
             # tokens against terminals as they are encountered again.
             self._matching_cache.clear()
+            self._meanings_cache.clear()
 
         # Use the context manager protocol to guarantee that the parse job
         # handle will be properly deleted even if an exception is thrown
 
         with ParseJob.make(
-            self.grammar, wrapped_tokens, self._terminals, self._matching_cache
+            self.grammar,
+            wrapped_tokens,
+            self._terminals,
+            self._matching_cache,
+            self._matching_table,
+            self._meanings_cache,
         ) as job:
 
             # Determine the root nonterminal to be used for this parse
@@ -849,6 +944,21 @@ class Fast_Parser(BIN_Parser):
             return self.go(tokens, **kwargs)
         except ParseError:
             return None
+
+    @property
+    def uses_native_matching(self) -> bool:
+        """Return True if this parser decides most token/terminal
+        matches natively in the C++ core"""
+        return self._matching_table is not None
+
+    @property
+    def parity_mismatches(self) -> int:
+        """Return the number of native/Python matching discrepancies
+        detected so far (only counted in parity mode, i.e. with the
+        environment variable GREYNIR_MATCHING_PARITY set)"""
+        if self._c_parser == ffi_NULL:
+            return 0
+        return cast(int, eparser.getParityMismatches(self._c_parser))  # type: ignore
 
     def cleanup(self) -> None:
         """Delete C++ objects. Must call after last use of Fast_Parser

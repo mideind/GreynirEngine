@@ -97,6 +97,7 @@ declarations = """
 
     typedef BOOL (*MatchingFunc)(UINT nHandle, UINT nToken, UINT nTerminal);
     typedef BYTE* (*AllocFunc)(UINT nHandle, UINT nToken, UINT nSize);
+    typedef const BYTE* (*MeaningsFunc)(UINT nHandle, UINT nToken);
 
     struct Node* earleyParse(struct Parser*, UINT nTokens, INT iRoot, UINT nHandle, UINT* pnErrorToken);
     struct Grammar* newGrammar(const CHAR* pszGrammarFile);
@@ -106,6 +107,10 @@ declarations = """
     void deleteForest(struct Node*);
     void dumpForest(struct Node*, struct Grammar*);
     UINT numCombinations(struct Node*);
+
+    void setMatchingTable(struct Parser*, const BYTE* pSpecs, UINT nSpecs,
+        MeaningsFunc fpMeanings, const BYTE* pMasks, BOOL bParity);
+    UINT getParityMismatches(struct Parser*);
 
     void printAllocationReport(void);
 
@@ -118,6 +123,7 @@ callbacks = """
 
     extern "Python" BOOL matching_func(UINT, UINT, UINT);
     extern "Python" BYTE* alloc_func(UINT, UINT, UINT);
+    extern "Python" const BYTE* meanings_func(UINT, UINT);
 
 """
 

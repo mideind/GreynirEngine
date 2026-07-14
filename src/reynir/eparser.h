@@ -62,6 +62,7 @@ typedef wchar_t WCHAR;
 typedef char CHAR;
 typedef unsigned char BYTE;
 typedef bool BOOL;
+typedef unsigned long long UINT64;
 
 
 class Production;
@@ -322,9 +323,83 @@ typedef BOOL (*MatchingFunc)(UINT nHandle, UINT nToken, UINT nTerminal);
 // Allocator for token/terminal matching cache
 typedef BYTE* (*AllocFunc)(UINT nHandle, UINT nToken, UINT nTerminals);
 
+// Provider of packed token matching data (TokenRec header
+// followed by MeaningRec entries) for native matching
+typedef const BYTE* (*MeaningsFunc)(UINT nHandle, UINT nToken);
+
 // Default matching function that simply
 // compares the token value with the terminal number
 BOOL defaultMatcher(UINT nHandle, UINT nToken, UINT nTerminal);
+
+
+// Native token/terminal matching support.
+// A table of TerminalSpec entries, built on the Python side by
+// build_matching_table() in binparser.py, describes for each terminal
+// how the C++ core can decide token/terminal matches natively,
+// without calling back into Python. Terminals whose matching semantics
+// are not natively encodable are marked T_PYTHON and continue to be
+// matched via the MatchingFunc callback. The structure layouts below
+// are mirrored byte-for-byte by the Python encoder (little-endian).
+
+// Terminal spec kinds (low byte of TerminalSpec::nKindFlags)
+#define T_PYTHON        0  // Always match via the Python callback
+#define T_TEXT          1  // Strong literal without category: token text identity
+#define T_TEXT_CAT      2  // Strong literal with category
+#define T_LEMMA         3  // Lemma literal, with optional category
+#define T_CAT_DEFAULT   4  // Category terminal, default matcher semantics
+#define T_CAT_MASK      5  // Category terminal, masked fbits test (abfn/pfn)
+#define T_CAT_FIRST     6  // Category terminal, category test only (töl)
+#define T_CAT_NOUN      7  // Noun terminal (no_...)
+#define T_CAT_LO        8  // Adjective terminal (lo_...)
+#define T_CAT_AO        9  // Adverb terminal (ao_...)
+
+// Terminal spec flags (higher bits of TerminalSpec::nKindFlags)
+#define TF_ABBREV        0x0100u  // no_abbrev: matches only meanings without inflection info
+#define TF_MM_EXCLUDE    0x0200u  // Verb lemma literal: don't match middle voice (MM)
+#define TF_MATCHES_EMPTY 0x0400u  // Terminal matches unknown words (no_..._et_hk without gr)
+
+// Token header flags (high 16 bits of TokenRec::nCountFlags)
+#define TKF_FAST        0x00010000u  // Word token with BÍN meanings: fully matchable natively
+#define TKF_EMPTY_WORD  0x00020000u  // Word token without BÍN meanings
+
+// Meaning record flags
+#define MF_NO_BEYGING   1u  // Meaning has no inflection info (beyging == "-")
+#define MF_NAME_FL      2u  // Meaning fl is 'nafn' or 'ætt' (person names)
+#define MF_IS_NOUN      4u  // Meaning ordfl is kk, kvk or hk
+#define MF_IS_LO_SO     8u  // Meaning ordfl is lo or so
+
+struct TerminalSpec {
+   UINT nKindFlags;    // Kind in low byte, TF_* flags above
+   UINT nCatId;        // Category id to compare, or 0
+   UINT nLitId;        // Interned literal (lemma/form) id, or 0
+   UINT nReserved;
+   UINT64 nFbits;      // Required feature bits
+   UINT64 nMask;       // Comparison mask (T_CAT_MASK)
+};
+
+struct MeaningRec {
+   UINT nLemmaId;      // Interned lemma id, or 0
+   UINT nCatId;        // Raw category (ordfl) id
+   UINT nMappedCatId;  // Terminal-name-mapped category id (kk/kvk/hk -> no)
+   UINT nFlags;        // MF_* flags
+   UINT64 nFbits;      // Feature bits of this meaning (gender-augmented)
+};
+
+struct TokenRec {
+   UINT nFormId;       // Interned id of the (lower-cased) token text, or 0
+   UINT nCountFlags;   // Meaning count in low 16 bits, TKF_* flags above
+   // Followed by (nCountFlags & 0xFFFF) MeaningRec entries
+};
+
+struct MatchMasks {
+   // Bit masks for the feature bit space, passed from Python
+   // (the bit layout is defined by BIN_Token.VBIT)
+   UINT64 genders;
+   UINT64 number;
+   UINT64 et;
+   UINT64 gr;
+   UINT64 mm;
+};
 
 
 class Parser {
@@ -340,6 +415,14 @@ private:
    Grammar* m_pGrammar;
    MatchingFunc m_pMatchingFunc;
    AllocFunc m_pAllocFunc;
+
+   // Native matching support (may be absent)
+   TerminalSpec* m_pSpecs;     // Owned copy of the terminal spec table, or NULL
+   UINT m_nSpecs;              // Number of entries in m_pSpecs
+   MeaningsFunc m_pMeaningsFunc;
+   MatchMasks m_masks;
+   BOOL m_bParity;             // Parity checking mode
+   UINT m_nParityMismatches;
 
    void push(UINT nHandle, State*, Column*, State*&, StateChunk*);
 
@@ -365,6 +448,31 @@ public:
    Grammar* getGrammar(void) const
       { return this->m_pGrammar; }
 
+   // Native matching support
+   void setMatchingTable(const BYTE* pSpecs, UINT nSpecs,
+      MeaningsFunc fpMeanings, const BYTE* pMasks, BOOL bParity);
+   const TerminalSpec* getSpec(UINT nTerminal) const
+      {
+         return (this->m_pSpecs && nTerminal < this->m_nSpecs)
+            ? &this->m_pSpecs[nTerminal] : NULL;
+      }
+   const BYTE* fetchTokenRec(UINT nHandle, UINT nToken) const
+      {
+         return this->m_pMeaningsFunc
+            ? this->m_pMeaningsFunc(nHandle, nToken) : NULL;
+      }
+   const MatchMasks& getMasks(void) const
+      { return this->m_masks; }
+   BOOL parityMode(void) const
+      { return this->m_bParity; }
+   void countParityMismatch(void)
+      { this->m_nParityMismatches++; }
+   UINT getParityMismatches(void) const
+      { return this->m_nParityMismatches; }
+
+   // Evaluate a native token/terminal match
+   static BOOL evalMatch(const TerminalSpec*, const BYTE* pTokenRec, const MatchMasks&);
+
    // If pnToklist is NULL, a sequence of integers 0..nTokens-1 will be used
    Node* parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
       UINT nTokens, const UINT pnToklist[] = NULL);
@@ -384,6 +492,15 @@ extern "C" void deleteGrammar(Grammar*);
 extern "C" Parser* newParser(Grammar*, MatchingFunc fpMatcher = defaultMatcher, AllocFunc fpAlloc = NULL);
 
 extern "C" void deleteParser(Parser*);
+
+// Install a native matching table (see TerminalSpec above);
+// pMasks points to a MatchMasks structure
+extern "C" void setMatchingTable(Parser*, const BYTE* pSpecs, UINT nSpecs,
+   MeaningsFunc fpMeanings, const BYTE* pMasks, BOOL bParity);
+
+// Return the number of native/Python matching discrepancies
+// detected while running in parity mode
+extern "C" UINT getParityMismatches(Parser*);
 
 extern "C" void deleteForest(Node*);
 
