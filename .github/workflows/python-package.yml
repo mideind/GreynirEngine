@@ -1,10 +1,13 @@
 name: tests
 
 on:
+  # Run push CI on master only; branch work is covered by pull_request.
+  # (Running push CI on all branches would duplicate every run - both
+  # events fire for each push to a branch with an open PR.)
   push:
-    # Note: "**" is required to match branch names containing '/'
-    branches: [ "**" ]
+    branches: [ master ]
   pull_request:
+    # Note: "**" is required to match branch names containing '/'
     branches: [ "**" ]
 
 jobs:
