@@ -131,8 +131,8 @@ class GreynirBin(GBin):
 
         # The first name was not found: check whether the full name is
         # in the static phrases
-        m = StaticPhrases.lookup(name)
-        if m is not None:
-            if m.fl in PERSON_NAME_FL:
-                return m.ordfl
+        sp = StaticPhrases.lookup(name)
+        if sp is not None:
+            if sp.fl in PERSON_NAME_FL:
+                return sp.ordfl
         return "hk"  # Unknown gender

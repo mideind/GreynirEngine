@@ -81,14 +81,18 @@ from functools import reduce
 from .binparser import (
     BIN_Parser,
     BIN_Token,
+    MatchingTable,
+    build_matching_table,
+    encode_token_matching_data,
     simplify_terminal,
     augment_terminal,
     Tok,
     TokenDict,
 )
+from filelock import FileLock, Timeout
+
 from .grammar import Grammar, GrammarError, Nonterminal, Terminal, Production
 from .settings import Settings
-from .glock import GlobalLock
 
 # Import the CFFI wrapper module for the _eparser.*.so library
 # which is compiled from eparser.cpp (see eparser_build.py)
@@ -121,6 +125,8 @@ class ParseJob:
         tokens: List[BIN_Token],
         terminals: Dict[int, Terminal],
         matching_cache: Dict[Tuple[Hashable, ...], Any],
+        matching_table: Optional[MatchingTable] = None,
+        meanings_cache: Optional[Dict[Tuple[Hashable, ...], Any]] = None,
     ) -> None:
         self._handle = handle
         self.tokens = tokens
@@ -128,6 +134,12 @@ class ParseJob:
         self.grammar = grammar
         self.c_dict: Dict[Any, "Node"] = dict()  # Node pointer conversion dictionary
         self.matching_cache = matching_cache  # Token/terminal matching buffers
+        # Native matching support: interned lexicon/categories, and a
+        # cache of packed per-token matching records
+        self.matching_table = matching_table
+        self.meanings_cache: Dict[Tuple[Hashable, ...], Any] = (
+            meanings_cache if meanings_cache is not None else dict()
+        )
 
     def matches(self, token_index: int, terminal_index: int) -> bool:
         """Convert the token reference from a 0-based token index
@@ -147,6 +159,20 @@ class ParseJob:
                 b = self.matching_cache[key] = ffi_new("BYTE[]", size)
         except TypeError:
             assert False, "alloc_cache() unable to hash key: {0}".format(repr(key))
+        return b
+
+    def token_matching_data(self, token: int) -> Any:
+        """Return packed native matching data (a TokenRec header followed
+        by MeaningRec entries, see eparser.h) for the given token"""
+        table = self.matching_table
+        if table is None:
+            return ffi_NULL
+        tok = self.tokens[token]
+        key = tok.key
+        b: Any = self.meanings_cache.get(key)
+        if b is None:
+            data = encode_token_matching_data(tok, table)
+            b = self.meanings_cache[key] = ffi_new("BYTE[]", data)
         return b
 
     def reset(self) -> None:
@@ -175,6 +201,8 @@ class ParseJob:
         tokens: List[BIN_Token],
         terminals: Dict[int, Terminal],
         matching_cache: Dict[Tuple[Hashable, ...], Any],
+        matching_table: Optional[MatchingTable] = None,
+        meanings_cache: Optional[Dict[Tuple[Hashable, ...], Any]] = None,
     ) -> "ParseJob":
         """Create a new parse job with for a given token sequence and set of terminals"""
         with cls._lock:
@@ -182,7 +210,15 @@ class ParseJob:
             cls._seq += 1
             if cls._seq >= cls._MAX_JOBS:
                 cls._seq = 0
-            j = cls._jobs[h] = ParseJob(h, grammar, tokens, terminals, matching_cache)
+            j = cls._jobs[h] = ParseJob(
+                h,
+                grammar,
+                tokens,
+                terminals,
+                matching_cache,
+                matching_table,
+                meanings_cache,
+            )
         return j
 
     @classmethod
@@ -200,6 +236,11 @@ class ParseJob:
     def alloc(cls, handle: int, token_index: int, size: int):
         """Dispatch a cache buffer allocation request to the correct parse job"""
         return cls._jobs[handle].alloc_cache(token_index, size)
+
+    @classmethod
+    def meanings(cls, handle: int, token_index: int) -> Any:
+        """Dispatch a token matching data request to the correct parse job"""
+        return cls._jobs[handle].token_matching_data(token_index)
 
 
 # Declare CFFI callback functions to be called from the C++ code
@@ -224,6 +265,15 @@ def alloc_func(handle: int, token_index: int, size: int):
     The point of this callback is to allow re-using buffers for identical tokens,
     so we avoid making unnecessary matching calls."""
     return ParseJob.alloc(handle, token_index, size)
+
+
+@ffi.def_extern()  # type: ignore
+def meanings_func(handle: int, token_index: int):
+    """Called from the C++ parser, once per Earley column, to obtain
+    packed matching data for a token. This enables the C++ core to
+    decide most token/terminal matches natively, without calling
+    matching_func() for each terminal."""
+    return ParseJob.meanings(handle, token_index)
 
 
 class Node:
@@ -338,45 +388,50 @@ class Node:
             # refer to the same nonterminal, are interior,
             # and not ambiguous.
             ch: List[Any] = []
+            # Pending child nodes, processed iteratively via an explicit
+            # stack rather than by recursion, so that long coalescible
+            # interior node chains cannot hit the Python recursion limit.
+            # Nodes are pushed in reverse order so that they are popped -
+            # and appended to ch - in left-to-right order.
+            stack: List[Any] = []
 
             def push_pair(p1: Any, p2: Any) -> None:
-                """Push a pair of child nodes onto the child list"""
-
-                def push_child(p: Any) -> None:
-                    """Push a single child node onto the child list"""
-                    if p.label.iNt == nt and p.label.pProd != ffi_NULL:
-                        # Interior node for the same nonterminal
-                        if p.pHead.pNext == ffi_NULL:
-                            # Unambiguous: recurse
-                            push_pair(p.pHead.p1, p.pHead.p2)
-                        else:
-                            # Ambiguous node, i.e. more than one family of children.
-                            # In this case we don't know which (p1,p2) pair
-                            # to add as a child of the parent, so we must
-                            # retain the original node with its family of children
-                            # and end the recursion. We also need to add
-                            # placeholder (dummy) nodes to keep the child
-                            # list in sync with the nonterminal's production.
-                            if p.label.nDot > 2:
-                                # Add placeholders for the part of the production
-                                # that is missing from the front since we abandon
-                                # the recursion here
-                                ch.extend([ffi_NULL] * (p.label.nDot - 2))
-                            ch.append(p)
-                            ch.append(ffi_NULL)  # Placeholder
-                    else:
-                        # Terminal, epsilon or unrelated nonterminal
-                        ch.append(p)
-
+                """Push a pair of child nodes onto the pending stack"""
                 if p1 != ffi_NULL and p2 != ffi_NULL:
-                    push_child(p1)
-                    push_child(p2)
+                    stack.append(p2)
+                    stack.append(p1)
                 elif p2 != ffi_NULL:
-                    push_child(p2)
+                    stack.append(p2)
                 else:
-                    push_child(p1)
+                    stack.append(p1)
 
             push_pair(fe.p1, fe.p2)
+            while stack:
+                p = stack.pop()
+                if p.label.iNt == nt and p.label.pProd != ffi_NULL:
+                    # Interior node for the same nonterminal
+                    if p.pHead.pNext == ffi_NULL:
+                        # Unambiguous: coalesce, i.e. expand in place
+                        push_pair(p.pHead.p1, p.pHead.p2)
+                    else:
+                        # Ambiguous node, i.e. more than one family of children.
+                        # In this case we don't know which (p1,p2) pair
+                        # to add as a child of the parent, so we must
+                        # retain the original node with its family of children
+                        # and end the coalescing. We also need to add
+                        # placeholder (dummy) nodes to keep the child
+                        # list in sync with the nonterminal's production.
+                        if p.label.nDot > 2:
+                            # Add placeholders for the part of the production
+                            # that is missing from the front since we abandon
+                            # the coalescing here
+                            ch.extend([ffi_NULL] * (p.label.nDot - 2))
+                        ch.append(p)
+                        ch.append(ffi_NULL)  # Placeholder
+                else:
+                    # Terminal, epsilon or unrelated nonterminal
+                    ch.append(p)
+
             node._add_family(job, fe.pProd, ch)
             fe = fe.pNext
 
@@ -678,31 +733,132 @@ class Fast_Parser(BIN_Parser):
                 )
         return cls._c_grammar
 
+    # Maximum time to wait for the grammar lock, in seconds
+    _GRAMMAR_LOCK_TIMEOUT = 180.0
+    # Maximum number of entries in the token/terminal matching cache.
+    # Each entry occupies roughly one byte per grammar terminal (~5 KB
+    # for Greynir.grammar), so this cap corresponds to on the order of
+    # 125 MB. Without a cap, the cache would grow without limit in
+    # long-running processes.
+    _MAX_MATCHING_CACHE_SIZE = 25_000
+    # Set to False in derived classes to disable the native (C++)
+    # token/terminal matching fast path and match everything in Python
+    _USE_CPP_MATCHING = True
+
+    def _cpp_matching_allowed(self) -> bool:
+        """Return True if the native (C++) matching fast path may be
+        used by this parser instance"""
+        cls = type(self)
+        if not cls._USE_CPP_MATCHING:
+            return False
+        if os.environ.get("GREYNIR_DISABLE_CPP_MATCHING"):
+            return False
+        # Auto-gate: the native fast path replicates the matching
+        # semantics of BIN_Token/BIN_Terminal exactly. Derived classes
+        # (e.g. GreynirCorrect) that override token wrapping have
+        # different matching semantics and automatically fall back to
+        # Python matching here. (Terminals of derived types likewise
+        # fall back individually, via the exact type checks in
+        # binparser.build_matching_table().)
+        return (
+            cls.wrap_token is BIN_Parser.wrap_token
+            and cls._wrap is BIN_Parser._wrap
+        )
+    # Serializes parser initialization between threads of this process,
+    # protecting the class-level grammar caches (both the Python grammar
+    # singleton in BIN_Parser and the C++ grammar blob above)
+    _init_lock = Lock()
+
+    @classmethod
+    def _regeneration_needed(cls) -> bool:
+        """Return True if the binary grammar file is missing or older than
+        the grammar text file, i.e. if initialization may write to it"""
+        try:
+            binary_ts = os.path.getmtime(cls._GRAMMAR_BINARY_FILE)
+        except OSError:
+            return True
+        try:
+            source_ts = os.path.getmtime(cls._GRAMMAR_FILE)
+        except OSError:
+            # No grammar text file present: use the binary as-is
+            return False
+        return binary_ts < source_ts
+
     def __init__(self, verbose: bool = False, root: Optional[str] = None) -> None:
 
-        # Only one initialization at a time, since we don't want a race
-        # condition between threads with regards to reading and parsing the grammar file
-        # vs. writing the binary grammar
-        with GlobalLock("grammar"):
-            # Read and parse the grammar text file
-            super().__init__(verbose)
-            # Create instances of the C++ Grammar and Parser classes
-            c_grammar = self._load_binary_grammar()
-            # Create a C++ parser object for the grammar, passing the proxies for the
-            # two Python callback functions into it
-            self._c_parser: Any = eparser.newParser(  # type: ignore
-                c_grammar, eparser.matching_func, eparser.alloc_func  # type: ignore
+        # Only one initialization at a time within this process, since we
+        # don't want a race condition between threads with regards to the
+        # class-level grammar caches
+        with Fast_Parser._init_lock:
+            if self._regeneration_needed():
+                # The binary grammar file is missing or stale, so this
+                # initialization may (re)generate it: serialize with other
+                # processes via a lock file, which lives next to the binary
+                # grammar file, scoping the lock to this particular
+                # installation of the package.
+                grammar_lock = FileLock(
+                    self._GRAMMAR_BINARY_FILE + ".lock",
+                    timeout=self._GRAMMAR_LOCK_TIMEOUT,
+                )
+                try:
+                    grammar_lock.acquire()
+                except Timeout:
+                    raise GrammarError(
+                        "Timed out waiting for the grammar lock; another process "
+                        "may be stuck holding it. If this persists, delete the "
+                        "lock file {0} and retry.".format(grammar_lock.lock_file)
+                    )
+                try:
+                    self._initialize(verbose, root)
+                finally:
+                    grammar_lock.release()
+            else:
+                # Warm path: the binary grammar is up to date, so no lock
+                # file is needed. Even if another process concurrently
+                # decides to regenerate the binary (e.g. if the grammar text
+                # file is modified right now), it will only ever replace it
+                # atomically with another complete version.
+                self._initialize(verbose, root)
+
+    def _initialize(self, verbose: bool, root: Optional[str]) -> None:
+        """Read the grammar and create the C++ parser instance;
+        must be called with _init_lock held"""
+        # Read and parse the grammar text file
+        super().__init__(verbose)
+        # Create instances of the C++ Grammar and Parser classes
+        c_grammar = self._load_binary_grammar()
+        # Create a C++ parser object for the grammar, passing the proxies for the
+        # two Python callback functions into it
+        self._c_parser: Any = eparser.newParser(  # type: ignore
+            c_grammar, eparser.matching_func, eparser.alloc_func  # type: ignore
+        )
+        # Find the index of the default root nonterminal for this parser instance
+        self._root_index = (
+            0 if root is None else self.grammar.nonterminals[root].index
+        )
+        # Maintain a token/terminal matching cache for the duration
+        # of this parser instance. Note that this cache will grow with use,
+        # as it includes an entry (consisting of one byte per terminal in the
+        # grammar, or currently about 5K bytes for Greynir.grammar) for every
+        # distinct token that the parser encounters.
+        self._matching_cache: Dict[Tuple[Hashable, ...], Any] = dict()
+        # Cache of packed per-token records for native matching
+        self._meanings_cache: Dict[Tuple[Hashable, ...], Any] = dict()
+        # Install the native matching table, enabling the C++ core to
+        # decide most token/terminal matches without Python callbacks
+        self._matching_table: Optional[MatchingTable] = None
+        if self._cpp_matching_allowed():
+            table = build_matching_table(self.grammar)
+            parity = 1 if os.environ.get("GREYNIR_MATCHING_PARITY") else 0
+            eparser.setMatchingTable(  # type: ignore
+                self._c_parser,
+                table.specs,
+                table.num_specs,
+                eparser.meanings_func,  # type: ignore
+                table.masks,
+                parity,
             )
-            # Find the index of the default root nonterminal for this parser instance
-            self._root_index = (
-                0 if root is None else self.grammar.nonterminals[root].index
-            )
-            # Maintain a token/terminal matching cache for the duration
-            # of this parser instance. Note that this cache will grow with use,
-            # as it includes an entry (consisting of one byte per terminal in the
-            # grammar, or currently about 5K bytes for Greynir.grammar) for every
-            # distinct token that the parser encounters.
-            self._matching_cache: Dict[Tuple[Hashable, ...], Any] = dict()
+            self._matching_table = table
 
     def __enter__(self):
         """Python context manager protocol"""
@@ -724,11 +880,27 @@ class Fast_Parser(BIN_Parser):
         err: Sequence[int] = ffi_new("unsigned int*")
         result: Optional[Node] = None
 
+        if len(self._matching_cache) > self._MAX_MATCHING_CACHE_SIZE:
+            # The matching cache has grown too large: discard it.
+            # The cost is only that subsequent parses need to re-match
+            # tokens against terminals as they are encountered again.
+            # Note: the dicts are replaced, not cleared in place. Parse
+            # jobs that may be in flight in other threads hold references
+            # to the current dicts, which keeps the CFFI buffers that the
+            # C++ core points into alive until those jobs complete.
+            self._matching_cache = dict()
+            self._meanings_cache = dict()
+
         # Use the context manager protocol to guarantee that the parse job
         # handle will be properly deleted even if an exception is thrown
 
         with ParseJob.make(
-            self.grammar, wrapped_tokens, self._terminals, self._matching_cache
+            self.grammar,
+            wrapped_tokens,
+            self._terminals,
+            self._matching_cache,
+            self._matching_table,
+            self._meanings_cache,
         ) as job:
 
             # Determine the root nonterminal to be used for this parse
@@ -776,6 +948,21 @@ class Fast_Parser(BIN_Parser):
             return self.go(tokens, **kwargs)
         except ParseError:
             return None
+
+    @property
+    def uses_native_matching(self) -> bool:
+        """Return True if this parser decides most token/terminal
+        matches natively in the C++ core"""
+        return self._matching_table is not None
+
+    @property
+    def parity_mismatches(self) -> int:
+        """Return the number of native/Python matching discrepancies
+        detected so far (only counted in parity mode, i.e. with the
+        environment variable GREYNIR_MATCHING_PARITY set)"""
+        if self._c_parser == ffi_NULL:
+            return 0
+        return cast(int, eparser.getParityMismatches(self._c_parser))  # type: ignore
 
     def cleanup(self) -> None:
         """Delete C++ objects. Must call after last use of Fast_Parser

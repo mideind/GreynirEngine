@@ -62,6 +62,7 @@ from typing import (
 import os
 import time
 import re
+import struct
 
 from datetime import datetime
 from functools import reduce, lru_cache
@@ -2537,3 +2538,254 @@ def describe_token(
         else:
             d["v"] = t.val
     return d
+
+
+# ----------------------------------------------------------------------
+# Native (C++) token/terminal matching support
+#
+# The functions below build a matching table that enables the C++
+# Earley parser core (eparser.cpp) to decide most token/terminal match
+# queries natively, without calling back into Python. Terminals whose
+# matching semantics are not natively encodable (verbs, prepositions,
+# proper names, ending constraints, etc.) are marked T_PYTHON and
+# continue to be matched through the regular Python callback.
+# The binary record layouts here mirror, byte for byte, the TerminalSpec,
+# MeaningRec and TokenRec structures declared in eparser.h.
+
+# Terminal spec kinds (see eparser.h)
+_T_PYTHON = 0
+_T_TEXT = 1
+_T_TEXT_CAT = 2
+_T_LEMMA = 3
+_T_CAT_DEFAULT = 4
+_T_CAT_MASK = 5
+_T_CAT_FIRST = 6
+_T_CAT_NOUN = 7
+_T_CAT_LO = 8
+_T_CAT_AO = 9
+
+# Terminal spec flags
+_TF_ABBREV = 0x0100
+_TF_MM_EXCLUDE = 0x0200
+_TF_MATCHES_EMPTY = 0x0400
+
+# Token header flags
+_TKF_FAST = 0x00010000
+_TKF_EMPTY_WORD = 0x00020000
+
+# Meaning record flags
+_MF_NO_BEYGING = 1
+_MF_NAME_FL = 2
+_MF_IS_NOUN = 4
+_MF_IS_LO_SO = 8
+
+# Terminal categories whose matchers cannot be encoded natively
+_PYTHON_FIRSTS = frozenset(("so", "eo", "fs", "person", "gata", "sérnafn", "stt"))
+
+_STRUCT_SPEC = struct.Struct("<IIIIQQ")  # TerminalSpec
+_STRUCT_HDR = struct.Struct("<II")  # TokenRec
+_STRUCT_REC = struct.Struct("<IIIIQ")  # MeaningRec
+_STRUCT_MASKS = struct.Struct("<QQQQQ")  # MatchMasks
+
+
+class MatchingTable:
+
+    """Precomputed data enabling the C++ parser core to decide most
+    token/terminal matches natively; built once per loaded grammar"""
+
+    __slots__ = ("specs", "num_specs", "masks", "lexicon", "catmap")
+
+    def __init__(
+        self,
+        specs: bytes,
+        num_specs: int,
+        masks: bytes,
+        lexicon: Dict[str, int],
+        catmap: Dict[str, int],
+    ) -> None:
+        self.specs = specs
+        self.num_specs = num_specs
+        self.masks = masks
+        # Interned literal lemma/form strings from the grammar
+        self.lexicon = lexicon
+        # Interned word category (ordfl/terminal first part) strings
+        self.catmap = catmap
+
+
+def _make_terminal_spec(
+    t: Terminal, lexicon: Dict[str, int], catmap: Dict[str, int]
+) -> bytes:
+    """Classify a terminal and encode its native matching spec.
+    Any terminal that is not fully understood is conservatively
+    classified as T_PYTHON."""
+
+    def intern_str(s: str) -> int:
+        ix = lexicon.get(s)
+        if ix is None:
+            ix = lexicon[s] = len(lexicon) + 1
+        return ix
+
+    def intern_cat(s: str) -> int:
+        ix = catmap.get(s)
+        if ix is None:
+            ix = catmap[s] = len(catmap) + 1
+        return ix
+
+    kind = _T_PYTHON
+    flags = 0
+    cat = 0
+    lit = 0
+    fbits = 0
+    mask = 0
+    # Note: exact type checks, not isinstance(); terminal subclasses
+    # (such as SequenceTerminal, or terminals from derived packages)
+    # may have different matching semantics and stay on the Python path
+    if type(t) is BIN_LiteralTerminal:
+        first = t._first
+        if t._strong:
+            if t._cat is None:
+                # "form": pure token text identity (shortcut_match)
+                kind = _T_TEXT
+                lit = intern_str(first)
+            elif t._match_cat != "punctuation":
+                # "form:cat": token text identity plus meaning category
+                kind = _T_TEXT_CAT
+                lit = intern_str(first)
+                cat = intern_cat(t._match_cat or "")
+        else:
+            if t._match_cat != "punctuation" and not t.has_any_vbits(
+                BIN_Token.VBIT_ENDING | BIN_Token.VBIT_SCASES
+            ):
+                # 'lemma:cat'_variants: lemma identity, optional category,
+                # default matcher feature logic
+                kind = _T_LEMMA
+                lit = intern_str(first)
+                cat = intern_cat(t._match_cat) if t._match_cat else 0
+                fbits = t._fbits
+                if (
+                    t._match_cat == "so"
+                    and not first[:1].isupper()
+                    and not t.is_mm
+                ):
+                    # matcher_lemma_literal(): verb lemma literals don't
+                    # match middle voice meanings unless _mm is specified
+                    flags |= _TF_MM_EXCLUDE
+    elif type(t) is BIN_Terminal:
+        first = t.first
+        if first not in _PYTHON_FIRSTS and not t.has_any_vbits(
+            BIN_Token.VBIT_ENDING | BIN_Token.VBIT_SCASES
+        ):
+            fbits = t._fbits
+            if first == "no":
+                kind = _T_CAT_NOUN
+                if t.is_abbrev:
+                    flags |= _TF_ABBREV
+                if t.has_vbits(
+                    BIN_Token.VBIT_ET | BIN_Token.VBIT_HK
+                ) and not t.has_vbits(BIN_Token.VBIT_GR):
+                    # This terminal matches unknown words,
+                    # cf. the fallback in BIN_Token.matches_WORD()
+                    flags |= _TF_MATCHES_EMPTY
+            elif first == "lo":
+                kind = _T_CAT_LO
+                cat = intern_cat("lo")
+            elif first == "ao":
+                kind = _T_CAT_AO
+                cat = intern_cat("ao")
+            elif first == "abfn":
+                # Check the case only (matcher_abfn)
+                kind = _T_CAT_MASK
+                cat = intern_cat("abfn")
+                mask = BIN_Token.VBIT_CASES
+            elif first == "pfn":
+                # Check the case and number only (matcher_pfn)
+                kind = _T_CAT_MASK
+                cat = intern_cat("pfn")
+                mask = BIN_Token.VBIT_CASES | BIN_Token.VBIT_NUMBER
+            elif first == "töl":
+                # Category check only (matcher_töl)
+                kind = _T_CAT_FIRST
+                cat = intern_cat("töl")
+            else:
+                # All remaining categories use matcher_default()
+                kind = _T_CAT_DEFAULT
+                cat = intern_cat(first)
+    return _STRUCT_SPEC.pack(kind | flags, cat, lit, 0, fbits, mask)
+
+
+def build_matching_table(grammar: "BIN_Grammar") -> MatchingTable:
+    """Build (and cache on the grammar object) the native matching table"""
+    table: Optional[MatchingTable] = getattr(grammar, "_matching_table", None)
+    if table is not None:
+        return table
+    lexicon: Dict[str, int] = {}
+    catmap: Dict[str, int] = {}
+    # Pre-intern all known BÍN categories and their mapped forms, so that
+    # common meaning categories receive ids regardless of terminal order
+    for c in BIN_Token.KIND:
+        catmap.setdefault(c, len(catmap) + 1)
+    for c in BIN_Token.KIND.values():
+        catmap.setdefault(c, len(catmap) + 1)
+    num = grammar.num_terminals
+    empty = _STRUCT_SPEC.pack(_T_PYTHON, 0, 0, 0, 0, 0)
+    specs: List[bytes] = [empty] * (num + 1)
+    for t in grammar.terminals.values():
+        if 1 <= t.index <= num:
+            specs[t.index] = _make_terminal_spec(t, lexicon, catmap)
+    masks = _STRUCT_MASKS.pack(
+        BIN_Token.VBIT_GENDERS,
+        BIN_Token.VBIT_NUMBER,
+        BIN_Token.VBIT_ET,
+        BIN_Token.VBIT_GR,
+        BIN_Token.VBIT_MM,
+    )
+    table = MatchingTable(b"".join(specs), num + 1, masks, lexicon, catmap)
+    setattr(grammar, "_matching_table", table)
+    return table
+
+
+def encode_token_matching_data(token: BIN_Token, table: MatchingTable) -> bytes:
+    """Encode a token, along with its BÍN meanings, into the packed
+    native matching format (a TokenRec header followed by MeaningRec
+    entries; see eparser.h)"""
+    lexicon = table.lexicon
+    catmap = table.catmap
+    form_id = lexicon.get(token.t1_lower, 0)
+    count_flags = 0
+    parts: List[bytes] = []
+    if token.t0 == TOK.WORD:
+        if token.t2:
+            genders_map = BIN_Token.GENDERS_MAP
+            genders_set = BIN_Token.GENDERS_SET
+            kind_map = BIN_Token.KIND
+            get_fbits = BIN_Token.get_fbits
+            pack = _STRUCT_REC.pack
+            for m in token.meanings:
+                ordfl = m.ordfl
+                mf = 0
+                if m.beyging == "-":
+                    mf |= _MF_NO_BEYGING
+                if m.fl == "nafn" or m.fl == "ætt":
+                    mf |= _MF_NAME_FL
+                if ordfl in genders_set:
+                    mf |= _MF_IS_NOUN
+                elif ordfl == "lo" or ordfl == "so":
+                    mf |= _MF_IS_LO_SO
+                # For nouns, the gender is coded in ordfl; append it to
+                # the beyging field so that the corresponding feature bit
+                # is included (mirrors matcher_default/matcher_no)
+                fb = get_fbits(m.beyging + genders_map.get(ordfl, ""))
+                parts.append(
+                    pack(
+                        lexicon.get(m.stofn, 0),
+                        catmap.get(ordfl, 0),
+                        catmap.get(kind_map.get(ordfl, ordfl), 0),
+                        mf,
+                        fb,
+                    )
+                )
+            count_flags = _TKF_FAST | len(parts)
+        else:
+            # Word token with no BÍN meanings (unknown word)
+            count_flags = _TKF_EMPTY_WORD
+    return _STRUCT_HDR.pack(form_id, count_flags) + b"".join(parts)

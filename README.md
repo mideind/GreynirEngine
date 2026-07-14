@@ -1,5 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.9](https://img.shields.io/badge/python-3.9-blue.svg)](https://www.python.org/downloads/release/python-3817/)
+[![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/)
 ![Release](https://shields.io/github/v/release/mideind/GreynirEngine?display_name=tag)
 ![PyPI](https://img.shields.io/pypi/v/reynir)
 [![Build](https://github.com/mideind/GreynirEngine/actions/workflows/python-package.yml/badge.svg)]()
@@ -12,7 +12,7 @@
 
 ## Overview
 
-Greynir is a Python 3 (>=3.9) package,
+Greynir is a Python 3 (>=3.10) package,
 published by [Miðeind ehf.](https://mideind.is), for
 **working with Icelandic natural language text**.
 Greynir can parse text into **sentence trees**, find **lemmas**,
@@ -147,7 +147,7 @@ and each token annotated with its lemma and POS tag (`no`=noun, `so`=verb):
 
 ## Prerequisites
 
-This package runs on CPython 3.9 or newer, and on PyPy 3.11 or newer.
+This package runs on CPython 3.10 or newer, and on PyPy 3.11 or newer.
 
 To find out which version of Python you have, enter:
 
@@ -195,13 +195,16 @@ The package source code is in `GreynirEngine/src/reynir`.
 
 ## Tests
 
-To run the built-in tests, install [pytest](https://docs.pytest.org/en/latest),
-`cd` to your `GreynirEngine` subdirectory (and optionally activate your
-virtualenv), then run:
+To run the built-in tests, `cd` to your `GreynirEngine` subdirectory and,
+using [uv](https://docs.astral.sh/uv/), run:
 
 ````sh
-python -m pytest
+uv sync
+uv run pytest
 ````
+
+Alternatively, install [pytest](https://docs.pytest.org/en/latest) into
+your virtualenv and run `python -m pytest`.
 
 ## Evaluation
 
@@ -219,22 +222,13 @@ as well as important information about
 
 ## Troubleshooting
 
-If parsing seems to hang, it is possible that a lock file that GreynirEngine
-uses has been left locked. This can happen if a Python process that uses
-GreynirEngine is killed abruptly. The solution is to delete the lock file
-and try again:
-
-On Linux and macOS:
-
-````sh
-rm /tmp/greynir-grammar  # May require sudo privileges
-````
-
-On Windows:
-
-````cmd
-del %TEMP%\greynir-grammar
-````
+GreynirEngine uses a lock file, located alongside the binary grammar file
+within the package directory (`reynir/Greynir.grammar.bin.lock`), to
+serialize the (re)generation of the binary grammar between processes.
+If a process gets stuck holding the lock, parser initialization fails
+after a timeout with an error message identifying the lock file.
+Terminate the process holding the lock, or - if no such process exists -
+delete the lock file named in the error message, and try again.
 
 ## Copyright and licensing
 

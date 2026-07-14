@@ -36,6 +36,7 @@
 
 from typing import (
     Any,
+    FrozenSet,
     Iterable,
     Iterator,
     Optional,
@@ -131,7 +132,7 @@ class _Sentence:
         self._err_index: Optional[int] = None
         self._error: Optional[ParseError] = None
         self._simplified_tree: Optional[SimpleTree] = None
-        self._tree = None
+        self._tree: Optional[Node] = None
         # Number of possible combinations
         self._num: Optional[int] = None
         # Score of best parse tree
@@ -154,7 +155,7 @@ class _Sentence:
         job = self._job
         num = 0
         score = 0
-        tree = None
+        tree: Optional[Node] = None
         try:
             # Invoke the parser on the sentence tokens
             tree, num, score = job.parse(self._s)
@@ -736,9 +737,44 @@ class Greynir:
     _reducer: Optional[Reducer] = None
     _lock = Lock()
 
+    # The set of keyword options recognized by the Greynir constructor.
+    # Apart from parse_foreign_sentences, these are tokenization options,
+    # passed through to the tokenize() call - see bintokenizer.py and the
+    # tokenizer package. Derived classes that accept additional options
+    # can extend this set.
+    _KNOWN_OPTIONS: FrozenSet[str] = frozenset(
+        (
+            "parse_foreign_sentences",
+            # Options consumed by bintokenizer.py
+            "auto_uppercase",
+            "no_sentence_start",
+            "no_multiply_numbers",
+            # Options consumed by the tokenizer package
+            "coalesce_percent",
+            "convert_measurements",
+            "convert_numbers",
+            "normalize",
+            "one_sent_per_line",
+            "original",
+            "replace_composite_glyphs",
+            "replace_html_escapes",
+            "with_annotation",
+        )
+    )
+
     def __init__(self, **options: Any) -> None:
         """Tokenization options can be passed as keyword arguments to the
         Greynir constructor"""
+        # Check for unknown options, which would otherwise be
+        # silently ignored; note that e.g. max_sent_tokens is a
+        # parameter of the parse methods, not of the constructor
+        unknown = set(options) - self._KNOWN_OPTIONS
+        if unknown:
+            raise TypeError(
+                "Greynir() got unexpected keyword argument(s): {0}".format(
+                    ", ".join(sorted(unknown))
+                )
+            )
         # Set parse_foreign_sentences to True to attempt to parse
         # all sentences, even if probably foreign
         self._parse_foreign_sentences: bool = options.pop(

@@ -540,6 +540,21 @@ def test_compounds():
     assert m[0].ordmynd == "Félags- og barnamála-ráðherra"
 
 
+def test_unknown_options():
+    import pytest
+
+    # Unknown options passed to the Greynir constructor should raise,
+    # not be silently ignored
+    with pytest.raises(TypeError):
+        Greynir(no_such_option=True)
+    with pytest.raises(TypeError):
+        # Valid for the parse methods, but not for the constructor
+        Greynir(max_sent_tokens=100)
+    # Known options should be accepted
+    g = Greynir(parse_foreign_sentences=True, no_multiply_numbers=True)
+    assert g is not None
+
+
 if __name__ == "__main__":
 
     test_augment_terminal()

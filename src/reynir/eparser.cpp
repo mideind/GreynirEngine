@@ -174,11 +174,13 @@ private:
    MatchingFunc m_pMatchingFunc; // Pointer to the token/terminal matching function
    BYTE* m_abCache; // Matching cache, a true/false flag for every terminal in the grammar
    BOOL m_bNeedsRelease; // Does the matching cache need to be explicitly released?
+   const BYTE* m_pTokenRec; // Packed matching data for this column's token, or NULL
    HashBin m_aHash[HASH_BINS]; // The hash bin array
    UINT m_nEnumBin; // Round robin used during enumeration of states
 
    static AllocCounter ac;
    static AllocCounter acMatches;
+   static AllocCounter acNativeMatches;
 
 protected:
 
@@ -388,7 +390,8 @@ static void freeStates(StateChunk*& pChunkHead)
 }
 
 // Counter of states that are allocated and then immediately discarded
-static UINT nDiscardedStates = 0;
+// (atomic for the same reason as the AllocCounter members)
+static std::atomic<UINT> nDiscardedStates(0);
 
 AllocCounter State::ac;
 
@@ -455,6 +458,10 @@ Node* State::getResult(INT iStartNt) const
 
 AllocCounter Column::ac;
 AllocCounter Column::acMatches;
+AllocCounter Column::acNativeMatches;
+
+// Counter of native matching tables allocated by setMatchingTable()
+static AllocCounter acMatchingTables;
 
 Column::Column(Parser* pParser, UINT nToken)
    : m_pParser(pParser),
@@ -462,6 +469,7 @@ Column::Column(Parser* pParser, UINT nToken)
       m_pNtStates(NULL),
       m_pMatchingFunc(pParser->getMatchingFunc()),
       m_abCache(NULL), m_bNeedsRelease(false),
+      m_pTokenRec(NULL),
       m_nEnumBin(0)
 {
    Column::ac++;
@@ -505,8 +513,12 @@ void Column::startParse(UINT nHandle)
    ASSERT(this->m_abCache == NULL);
    // Ask the parser to create a matching cache for us
    // (or eventually re-use a previous one)
-   if (this->m_nToken != (UINT)-1)
+   if (this->m_nToken != (UINT)-1) {
       this->m_abCache = this->m_pParser->allocCache(nHandle, this->m_nToken, &this->m_bNeedsRelease);
+      // Fetch the packed matching data for this column's token,
+      // if a native matching table has been installed
+      this->m_pTokenRec = this->m_pParser->fetchTokenRec(nHandle, this->m_nToken);
+   }
 }
 
 void Column::stopParse(void)
@@ -516,6 +528,7 @@ void Column::stopParse(void)
       // The matching cache needs to be released
       this->m_pParser->releaseCache(this->m_abCache);
    this->m_abCache = NULL;
+   this->m_pTokenRec = NULL;
 }
 
 BOOL Column::addState(State* p)
@@ -606,7 +619,31 @@ BOOL Column::matches(UINT nHandle, UINT nTerminal) const
       // We already have a cached result for this terminal
       return (BOOL)(this->m_abCache[nTerminal] & 0x01);
    // Not cached: obtain a result and store it in the cache
-   BOOL b = this->m_pMatchingFunc(nHandle, this->m_nToken, nTerminal) != 0;
+   BOOL b;
+   const TerminalSpec* pSpec = this->m_pParser->getSpec(nTerminal);
+   const UINT nKind = pSpec ? (pSpec->nKindFlags & 0xFFu) : T_PYTHON;
+   const BYTE* pRec = this->m_pTokenRec;
+   // The native fast path can decide T_TEXT terminals for any token,
+   // and all non-T_PYTHON terminals for word tokens (TKF_FAST for
+   // tokens with BÍN meanings, TKF_EMPTY_WORD for unknown words)
+   const BOOL bNative = nKind != T_PYTHON && pRec != NULL &&
+      (nKind == T_TEXT ||
+         (((const TokenRec*)pRec)->nCountFlags & (TKF_FAST | TKF_EMPTY_WORD)) != 0);
+   if (bNative) {
+      b = Parser::evalMatch(pSpec, pRec, this->m_pParser->getMasks());
+      Column::acNativeMatches++; // Count native match evaluations
+      if (this->m_pParser->parityMode()) {
+         // Parity mode: also obtain the Python result; count any
+         // discrepancy and return the Python (canonical) answer
+         BOOL bPy = this->m_pMatchingFunc(nHandle, this->m_nToken, nTerminal) != 0;
+         if ((bPy != 0) != (b != 0))
+            this->m_pParser->countParityMismatch();
+         b = bPy;
+      }
+   }
+   else {
+      b = this->m_pMatchingFunc(nHandle, this->m_nToken, nTerminal) != 0;
+   }
    Column::acMatches++; // Count calls to the matching function
    // Mark our cache
    this->m_abCache[nTerminal] = b ? (BYTE)0x81 : (BYTE)0x80;
@@ -733,18 +770,26 @@ BOOL Grammar::readBinary(const CHAR* pszFilename)
       return false;
    if (!f.read_UINT(nNonterminals))
       return false;
-#ifdef DEBUG   
+#ifdef DEBUG
    printf("Reading %u terminals and %u nonterminals\n", nTerminals, nNonterminals);
 #endif
+   // Sanity check on the counts, to fail cleanly on a corrupt file
+   // rather than attempting a huge allocation
+   const UINT MAX_SYMBOLS = 1u << 24;
+   if (nTerminals > MAX_SYMBOLS || nNonterminals > MAX_SYMBOLS)
+      return false;
    if (!nNonterminals)
       // No nonterminals to read: we're done
       return true;
    INT iRoot;
    if (!f.read_INT(iRoot))
       return false;
-#ifdef DEBUG   
+#ifdef DEBUG
    printf("Root nonterminal index is %d\n", iRoot);
 #endif
+   // The root must be a valid nonterminal index (negative, within range)
+   if (iRoot >= 0 || ~((UINT)iRoot) >= nNonterminals)
+      return false;
    // Initialize the nonterminals array
    Nonterminal** ppnts = new Nonterminal*[nNonterminals];
    memset(ppnts, 0, nNonterminals * sizeof(Nonterminal*));
@@ -764,25 +809,52 @@ BOOL Grammar::readBinary(const CHAR* pszFilename)
       // Loop through the productions
       for (UINT j = 0; j < nLenPlist; j++) {
          UINT nId;
-         if (!f.read_UINT(nId))
+         if (!f.read_UINT(nId)) {
+            delete pnt;
             return false;
+         }
          UINT nPriority;
-         if (!f.read_UINT(nPriority))
+         if (!f.read_UINT(nPriority)) {
+            delete pnt;
             return false;
+         }
          UINT nLenProd;
-         if (!f.read_UINT(nLenProd))
+         if (!f.read_UINT(nLenProd)) {
+            delete pnt;
             return false;
+         }
          const UINT MAX_LEN_PROD = 256;
          if (nLenProd > MAX_LEN_PROD) {
             // Production too long
-#ifdef DEBUG            
+#ifdef DEBUG
             printf("Production too long\n");
-#endif            
+#endif
+            delete pnt;
             return false;
          }
          // Read the production
          INT aiProd[MAX_LEN_PROD];
-         f.read(aiProd, nLenProd * sizeof(INT));
+         if (f.read(aiProd, nLenProd * sizeof(INT)) != nLenProd * sizeof(INT)) {
+            // Truncated file
+            delete pnt;
+            return false;
+         }
+         // Validate the production items: a negative item must be a
+         // valid nonterminal index and a positive item a valid terminal
+         // index (terminals are 1-based); zero items are not allowed
+         for (UINT k = 0; k < nLenProd; k++) {
+            INT iItem = aiProd[k];
+            BOOL bValid = (iItem < 0)
+               ? ~((UINT)iItem) < nNonterminals
+               : (iItem > 0 && (UINT)iItem <= nTerminals);
+            if (!bValid) {
+#ifdef DEBUG
+               printf("Invalid item %d in production %u\n", iItem, nId);
+#endif
+               delete pnt;
+               return false;
+            }
+         }
          // Create a fresh production object
          Production* pprod = new Production(nId, nPriority, nLenProd, aiProd);
          // Add it to the nonterminal
@@ -999,14 +1071,168 @@ void NodeDict::reset(void)
 
 
 Parser::Parser(Grammar* p, MatchingFunc pMatchingFunc, AllocFunc pAllocFunc)
-   : m_pGrammar(p), m_pMatchingFunc(pMatchingFunc), m_pAllocFunc(pAllocFunc)
+   : m_pGrammar(p), m_pMatchingFunc(pMatchingFunc), m_pAllocFunc(pAllocFunc),
+      m_pSpecs(NULL), m_nSpecs(0), m_pMeaningsFunc(NULL),
+      m_bParity(false), m_nParityMismatches(0)
 {
    ASSERT(this->m_pGrammar != NULL);
    ASSERT(this->m_pMatchingFunc != NULL);
+   memset(&this->m_masks, 0, sizeof(MatchMasks));
 }
 
 Parser::~Parser(void)
 {
+   if (this->m_pSpecs) {
+      delete [] this->m_pSpecs;
+      acMatchingTables--;
+   }
+}
+
+void Parser::setMatchingTable(const BYTE* pSpecs, UINT nSpecs,
+   MeaningsFunc fpMeanings, const BYTE* pMasks, BOOL bParity)
+{
+   // Install (or remove, if pSpecs is NULL) a native matching table.
+   // The spec table and mask structure are copied, so the caller's
+   // buffers need not outlive this call.
+   if (this->m_pSpecs) {
+      delete [] this->m_pSpecs;
+      this->m_pSpecs = NULL;
+      acMatchingTables--;
+   }
+   this->m_nSpecs = 0;
+   this->m_pMeaningsFunc = NULL;
+   this->m_bParity = bParity;
+   this->m_nParityMismatches.store(0, std::memory_order_relaxed);
+   memset(&this->m_masks, 0, sizeof(MatchMasks));
+   if (!pSpecs || !nSpecs || !fpMeanings || !pMasks)
+      return;
+   this->m_pSpecs = new TerminalSpec[nSpecs];
+   acMatchingTables++;
+   memcpy(this->m_pSpecs, pSpecs, nSpecs * sizeof(TerminalSpec));
+   this->m_nSpecs = nSpecs;
+   memcpy(&this->m_masks, pMasks, sizeof(MatchMasks));
+   this->m_pMeaningsFunc = fpMeanings;
+}
+
+static inline BOOL defaultMatchMeaning(const TerminalSpec* pSpec,
+   const MeaningRec& m, const MatchMasks& mk)
+{
+   // Mirrors the feature bit logic of WordMatchers.matcher_default()
+   // in binparser.py
+   if (m.nFlags & MF_NO_BEYGING) {
+      if (m.nFlags & MF_IS_LO_SO)
+         // Adjective or verb abbreviation: matches irrespective of variants
+         return true;
+      if (m.nFlags & MF_IS_NOUN)
+         // Noun abbreviation: check gender, permit singular forms only
+         return (pSpec->nFbits & (mk.genders | mk.number) & ~(m.nFbits | mk.et)) == 0;
+      return pSpec->nFbits == 0;
+   }
+   return (pSpec->nFbits & ~m.nFbits) == 0;
+}
+
+BOOL Parser::evalMatch(const TerminalSpec* pSpec, const BYTE* pTokenRec,
+   const MatchMasks& mk)
+{
+   // Native token/terminal matching. This function mirrors, exactly,
+   // the semantics of the corresponding Python matchers in binparser.py
+   // for the terminal kinds that are encoded natively; parity between
+   // the two implementations is asserted by tests (and can be verified
+   // at run-time via the parity mode).
+   const TokenRec* pHdr = (const TokenRec*)pTokenRec;
+   const UINT nKind = pSpec->nKindFlags & 0xFFu;
+   if (nKind == T_TEXT)
+      // Strong literal without category: pure token text identity,
+      // valid for all token kinds (mirrors shortcut_match)
+      return pHdr->nFormId != 0 && pHdr->nFormId == pSpec->nLitId;
+   if (pHdr->nCountFlags & TKF_EMPTY_WORD)
+      // Unknown word without BÍN meanings: per BIN_Token.matches_WORD(),
+      // only a no_..._et_hk terminal without 'gr' can match natively
+      // (sérnafn terminals are T_PYTHON and don't reach this point)
+      return nKind == T_CAT_NOUN && (pSpec->nKindFlags & TF_MATCHES_EMPTY) != 0;
+   if (nKind == T_TEXT_CAT && pHdr->nFormId != pSpec->nLitId)
+      // Strong literal with category: the token text must be identical
+      return false;
+   const UINT n = pHdr->nCountFlags & 0xFFFFu;
+   const MeaningRec* pm = (const MeaningRec*)(pTokenRec + sizeof(TokenRec));
+   for (UINT i = 0; i < n; i++) {
+      const MeaningRec& m = pm[i];
+      switch (nKind) {
+         case T_TEXT_CAT:
+            // Token text already matched: require the specified category
+            if (m.nCatId == pSpec->nCatId)
+               return true;
+            break;
+         case T_LEMMA:
+            // Lemma literal: interned lemma identity, optional category,
+            // then default matcher logic, then the middle voice exclusion
+            // for verb lemma literals (matcher_lemma_literal)
+            if (m.nLemmaId != 0 && m.nLemmaId == pSpec->nLitId
+               && (pSpec->nCatId == 0 || m.nCatId == pSpec->nCatId)
+               && defaultMatchMeaning(pSpec, m, mk)
+               && (!(pSpec->nKindFlags & TF_MM_EXCLUDE) || !(m.nFbits & mk.mm)))
+               return true;
+            break;
+         case T_CAT_DEFAULT:
+            if (m.nMappedCatId == pSpec->nCatId
+               && defaultMatchMeaning(pSpec, m, mk))
+               return true;
+            break;
+         case T_CAT_MASK:
+            // abfn/pfn: masked feature bit test (matcher_abfn/matcher_pfn)
+            if (m.nCatId == pSpec->nCatId
+               && (pSpec->nFbits & pSpec->nMask & ~m.nFbits) == 0)
+               return true;
+            break;
+         case T_CAT_FIRST:
+            // töl: category only, variants don't disqualify (matcher_töl)
+            if (m.nMappedCatId == pSpec->nCatId)
+               return true;
+            break;
+         case T_CAT_NOUN:
+            // no_...: mirrors matcher_no()
+            if (!(m.nFlags & MF_IS_NOUN))
+               break;
+            if (pSpec->nKindFlags & TF_ABBREV) {
+               // no_abbrev: only match meanings without inflection info
+               if (m.nFlags & MF_NO_BEYGING)
+                  return true;
+               break;
+            }
+            if (m.nFlags & MF_NAME_FL)
+               // Person/family names are only matched by person terminals
+               break;
+            if (m.nFlags & MF_NO_BEYGING) {
+               // No case/number info (probably a foreign word):
+               // check gender only, and don't match a demand for
+               // the definite article ('gr')
+               if ((pSpec->nFbits & mk.genders & ~m.nFbits) == 0
+                  && (pSpec->nFbits & mk.gr) == 0)
+                  return true;
+            }
+            else {
+               if ((pSpec->nFbits & ~m.nFbits) == 0)
+                  return true;
+            }
+            break;
+         case T_CAT_LO:
+            // lo_... without subject cases or ending constraints
+            // (matcher_lo): abbreviations match regardless of variants
+            if (m.nCatId == pSpec->nCatId
+               && ((m.nFlags & MF_NO_BEYGING) || (pSpec->nFbits & ~m.nFbits) == 0))
+               return true;
+            break;
+         case T_CAT_AO:
+            // ao_... without ending constraints (matcher_ao)
+            if (m.nCatId == pSpec->nCatId
+               && (pSpec->nFbits & ~m.nFbits) == 0)
+               return true;
+            break;
+         default:
+            break;
+      }
+   }
+   return false;
 }
 
 BYTE* Parser::allocCache(UINT nHandle, UINT nToken, BOOL* pbNeedRelease)
@@ -1083,7 +1309,7 @@ void Parser::push(UINT nHandle, State* pState, Column* pE, State*& pQ, StateChun
       // The state is the most recently allocated one in the chunk
       // (a very common case): go back one location in the chunk
       pChunkHead->m_nIndex -= sizeof(State);
-      nDiscardedStates++;
+      nDiscardedStates.fetch_add(1, std::memory_order_relaxed);
    }
 }
 
@@ -1349,12 +1575,14 @@ void AllocReporter::report(void) const
    printf("Grammars        : %6d %8d\n", Grammar::ac.getBalance(), Grammar::ac.numAllocs());
    printf("Nodes           : %6d %8d\n", Node::ac.getBalance(), Node::ac.numAllocs());
    printf("States          : %6d %8d\n", State::ac.getBalance(), State::ac.numAllocs());
-   printf("...discarded    : %6s %8d\n", "", nDiscardedStates);
+   printf("...discarded    : %6s %8d\n", "", nDiscardedStates.load(std::memory_order_relaxed));
    printf("StateChunks     : %6d %8d\n", acChunks.getBalance(), acChunks.numAllocs());
    printf("Columns         : %6d %8d\n", Column::ac.getBalance(), Column::ac.numAllocs());
    printf("HNodes          : %6d %8d\n", HNode::ac.getBalance(), HNode::ac.numAllocs());
    printf("NodeDict lookups: %6s %8d\n", "", NodeDict::acLookups.numAllocs());
    printf("Matching calls  : %6s %8d\n", "", Column::acMatches.numAllocs());
+   printf("...thereof native: %5s %8d\n", "", Column::acNativeMatches.numAllocs());
+   printf("MatchingTables  : %6d %8d\n", acMatchingTables.getBalance(), acMatchingTables.numAllocs());
    fflush(stdout); // !!! Debugging
 }
 
@@ -1371,18 +1599,28 @@ BOOL defaultMatcher(UINT nHandle, UINT nToken, UINT nTerminal)
 
 Grammar* newGrammar(const CHAR* pszGrammarFile)
 {
+   // Note: the extern "C" entry points that allocate memory catch
+   // all C++ exceptions (out-of-memory in particular) and return NULL
+   // instead, since an exception must never propagate through the
+   // C ABI boundary into the CFFI caller (that would be undefined
+   // behavior)
    if (!pszGrammarFile)
       return NULL;
-   // Read grammar from binary file
-   Grammar* pGrammar = new Grammar();
-   if (!pGrammar->readBinary(pszGrammarFile)) {
-#ifdef DEBUG      
-      printf("Unable to read binary grammar file %s\n", pszGrammarFile);
-#endif      
-      delete pGrammar;
+   try {
+      // Read grammar from binary file
+      Grammar* pGrammar = new Grammar();
+      if (!pGrammar->readBinary(pszGrammarFile)) {
+#ifdef DEBUG
+         printf("Unable to read binary grammar file %s\n", pszGrammarFile);
+#endif
+         delete pGrammar;
+         return NULL;
+      }
+      return pGrammar;
+   }
+   catch (...) {
       return NULL;
    }
-   return pGrammar;
 }
 
 void deleteGrammar(Grammar* pGrammar)
@@ -1395,13 +1633,39 @@ Parser* newParser(Grammar* pGrammar, MatchingFunc fpMatcher, AllocFunc fpAlloc)
 {
    if (!pGrammar || !fpMatcher)
       return NULL;
-   return new Parser(pGrammar, fpMatcher, fpAlloc);
+   try {
+      return new Parser(pGrammar, fpMatcher, fpAlloc);
+   }
+   catch (...) {
+      // See note in newGrammar()
+      return NULL;
+   }
 }
 
 void deleteParser(Parser* pParser)
 {
    if (pParser)
       delete pParser;
+}
+
+void setMatchingTable(Parser* pParser, const BYTE* pSpecs, UINT nSpecs,
+   MeaningsFunc fpMeanings, const BYTE* pMasks, BOOL bParity)
+{
+   if (!pParser)
+      return;
+   try {
+      pParser->setMatchingTable(pSpecs, nSpecs, fpMeanings, pMasks, bParity);
+   }
+   catch (...) {
+      // See note in newGrammar(); out of memory here simply means
+      // no native matching table, i.e. Python matching throughout
+      pParser->setMatchingTable(NULL, 0, NULL, NULL, false);
+   }
+}
+
+UINT getParityMismatches(Parser* pParser)
+{
+   return pParser ? pParser->getParityMismatches() : 0;
 }
 
 void deleteForest(Node* pNode)
@@ -1442,7 +1706,17 @@ Node* earleyParse(Parser* pParser, UINT nTokens, INT iRoot, UINT nHandle, UINT* 
 #ifdef DEBUG
    printf("Calling pParser->parse()\n"); fflush(stdout);
 #endif
-   Node* pNode = pParser->parse(nHandle, iRoot, pnErrorToken, nTokens);
+   Node* pNode;
+   try {
+      pNode = pParser->parse(nHandle, iRoot, pnErrorToken, nTokens);
+   }
+   catch (...) {
+      // See note in newGrammar(). If an exception (most likely
+      // out-of-memory) is thrown mid-parse, the working memory of the
+      // parse is not reclaimed, but that is preferable to undefined
+      // behavior at the C ABI boundary.
+      return NULL;
+   }
 #ifdef DEBUG
    printf("Back from pParser->parse()\n"); fflush(stdout);
 #endif
