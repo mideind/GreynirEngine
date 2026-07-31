@@ -2245,6 +2245,154 @@ def test_aukafall(r):
     assert s and s.tree
 
 
+def test_impersonal_passive_prep(r):
+    """The 'vera* bent á' ambiguous phrase must retain the preposition
+    meaning of 'á', so that 'er bent á' + Nl parses"""
+    s = r.parse_single("Í skýrslunni er bent á kostina.")
+    assert s and s.tree
+    assert (
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP PP P fs_þgf /P NP no_et_gr_kvk_þgf /NP /PP "
+        "VP VP-AUX so_et_fh_gm_nt_p3 /VP-AUX VP so_gm_sagnb /VP "
+        "PP P fs_þf /P NP no_ft_gr_kk_þf /NP /PP /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Í skýrslunni er bent á kosti og galla upptöku evru.")
+    assert s and s.tree
+    # 'bent á' followed by a subordinate clause must still work
+    s = r.parse_single("Í skýrslunni er bent á að vandinn sé mikill.")
+    assert s and s.tree
+    s = r.parse_single(
+        "Í nýrri ársskýrslu sjóðsins um Ísland er bent á kosti og galla "
+        "upptöku evru og varað við því að verðtrygging í íslensku "
+        "efnahagslífi geti viðhaldið verðbólgu."
+    )
+    assert s and s.tree
+
+
+def test_uninflected_genitive_names(r):
+    """Non-inflecting (foreign) person names, i.e. names having identical
+    forms in nf/þf/þgf, should also be accepted in genitive contexts"""
+    s = r.parse_single("Samtök Paul Watson mótmæltu hvalveiðum.")
+    assert s and s.tree
+    assert (
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ no_ft_hk_nf NP-POSS person_ef_kk person_ef_kk "
+        "/NP-POSS /NP-SUBJ VP VP so_1_þgf_fh_ft_gm_p3_þt /VP "
+        "NP-OBJ no_ft_kvk_þgf /NP-OBJ /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Ég las bók John Lennon.")
+    assert s and s.tree
+    s = r.parse_single(
+        "Samtök Paul Watson leiða líkur að því að þau hafi með aðgerðum "
+        "sínum frá því að hvalveiðitímabilið hófst bjargað lífi "
+        "allt að þrjátíu langreyða."
+    )
+    assert s and s.tree
+    # Inflecting Icelandic names must not gain a genitive interpretation
+    s = r.parse_single("Samtök Guðmundur Jónsson eru góð.")
+    assert s.tree is None
+    # Token-level check of person name cases
+    from reynir.bintokenizer import tokenize
+
+    toks = [t for t in tokenize("Samtök Paul Watson mótmæltu hvalveiðum.")]
+    pw = next(t for t in toks if t.txt == "Paul Watson")
+    assert set(pn.case for pn in pw.person_names) == {"nf", "þf", "þgf", "ef"}
+    toks = [t for t in tokenize("Þarna gengur Jón.")]
+    jon = next(t for t in toks if t.txt == "Jón")
+    assert "ef" not in set(pn.case for pn in jon.person_names)
+
+
+def test_sem_role_relative_clause(r):
+    """A 'sem' + Nl_nf role complement ('starfar sem sérfræðingur')
+    must be allowed inside a subject-gap relative clause"""
+    s = r.parse_single("Konan, sem starfar sem sérfræðingur hjá bankanum, er glöð.")
+    assert s and s.tree
+    assert (
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ no_et_gr_kvk_nf p CP-REL C stt /C "
+        "IP VP so_0_et_fh_gm_nt_p3 /VP CP-ADV-CMP C st /C NP no_et_kk_nf "
+        "PP P fs_þgf /P NP no_et_gr_kk_þgf /NP /PP /NP /CP-ADV-CMP /IP "
+        "/CP-REL p /NP-SUBJ VP VP-AUX so_et_fh_gm_nt_p3 /VP-AUX "
+        "NP-PRD lo_et_kvk_nf_sb /NP-PRD /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single(
+        "Doktor Stefán Ólafsson, sem starfar sem sérfræðingur hjá Eflingu, "
+        "gefur ekki mikið fyrir myljandi hagnað bankanna."
+    )
+    assert s and s.tree
+
+
+def test_oblique_subject_infinitive(r):
+    """Oblique subject + perfect infinitive ('hafa' + supine) in the
+    complement of segja/telja: 'segir Spáni hafa mistekist'"""
+    s = r.parse_single("Hún segir Spáni hafa mistekist að vernda landamærin.")
+    assert s and s.tree
+    assert (
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ pfn_et_kvk_nf_p3 /NP-SUBJ VP VP "
+        "so_1_þf_et_fh_gm_nt_p3 /VP IP NP no_et_kk_þgf /NP VP so_0_gm_nh /VP "
+        "VP so_mm_sagnb /VP IP-INF TO nhm /TO VP VP so_1_þf_gm_nh /VP "
+        "NP-OBJ no_ft_gr_hk_þf /NP-OBJ /VP /IP-INF /IP /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Hún segir mig hafa dreymt vel.")
+    assert s and s.tree
+    s = r.parse_single("Hún telur Spáni hafa mistekist.")
+    assert s and s.tree
+    s = r.parse_single(
+        "Hún segir Spáni hafa mistekist að vernda ytri landamæri "
+        "Schengen-svæðisins gegn innrás."
+    )
+    assert s and s.tree
+
+
+def test_postposed_vegna(r):
+    """A genitive Nl preceding 'vegna' ('sýningarinnar vegna')
+    should parse as a prepositional phrase"""
+    s = r.parse_single("Sýningarinnar vegna ákvað hann þetta.")
+    assert s and s.tree
+    assert (
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP PP NP no_ef_et_gr_kvk /NP P fs_ef /P /PP "
+        "VP VP so_1_þf_et_fh_gm_p3_þt /VP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ "
+        "NP-OBJ fn_et_hk_þf /NP-OBJ /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Hann gerði þetta mín vegna.")
+    assert s and s.tree
+    s = r.parse_single("Hann gerði þetta veðursins vegna.")
+    assert s and s.tree
+    # Normal (preposed) order must be unaffected
+    s = r.parse_single("Hann gerði þetta vegna veðursins.")
+    assert s and s.tree
+    s = r.parse_single("Trén standa beggja vegna vegarins.")
+    assert s and s.tree
+    s = r.parse_single(
+        "Umboðsmaður Boy George sagði að sýningarinnar vegna hefði hann "
+        "ákveðið að söngvarinn yrði ekki með í henni."
+    )
+    assert s and s.tree
+
+
+def test_pronoun_postposed_adjective(r):
+    """A personal pronoun followed by an agreeing adjective phrase
+    should form a noun phrase: '(með) hann fremstan (í fararbroddi)'"""
+    s = r.parse_single("Með hann fremstan í fararbroddi vann liðið leikinn.")
+    assert s and s.tree
+    assert (
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP PP P fs_þf /P NP pfn_et_kk_p3_þf lo_esb_et_kk_þf "
+        "PP P fs_þgf /P NP no_et_kk_þgf /NP /PP /NP /PP "
+        "VP VP so_1_þf_et_fh_gm_p3_þt /VP NP-SUBJ no_et_gr_hk_nf /NP-SUBJ "
+        "NP-OBJ no_et_gr_kk_þf /NP-OBJ /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Ég hitti hana glaða.")
+    assert s and s.tree
+    s = r.parse_single(
+        "Með hann fremstan í fararbroddi tókst liði Levante "
+        "að bjarga sér frá falli."
+    )
+    assert s and s.tree
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
@@ -2296,4 +2444,10 @@ if __name__ == "__main__":
         print(e)
     test_foreign(g)
     test_aukafall(g)
+    test_impersonal_passive_prep(g)
+    test_uninflected_genitive_names(g)
+    test_sem_role_relative_clause(g)
+    test_oblique_subject_infinitive(g)
+    test_postposed_vegna(g)
+    test_pronoun_postposed_adjective(g)
     g.__class__.cleanup()

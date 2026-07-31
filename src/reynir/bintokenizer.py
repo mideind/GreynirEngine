@@ -1259,6 +1259,24 @@ def _compatible(pn: PersonNameTuple, npn: PersonNameTuple) -> bool:
     return True
 
 
+def _add_uninflected_genitive(gn: List[PersonNameTuple]) -> List[PersonNameTuple]:
+    """If a name appears in the same form in the nominative, accusative
+    and dative cases, it is a non-inflecting (foreign) name. Such names
+    are also used unmodified in genitive position ('Samtök Paul Watson',
+    'bók Mary Robinson'), so we add the genitive case to the list of
+    possible interpretations."""
+    seen: Dict[Tuple[str, Optional[str]], Set[str]] = defaultdict(set)
+    for pn in gn:
+        if pn.case:
+            seen[(pn.name, pn.gender)].add(pn.case)
+    additions = [
+        PersonNameTuple(name=name, gender=gender, case="ef")
+        for (name, gender), cases in seen.items()
+        if "ef" not in cases and cases >= {"nf", "þf", "þgf"}
+    ]
+    return gn + additions if additions else gn
+
+
 def parse_phrases_2(
     token_stream: TokenIterator, token_ctor: TokenConstructor, auto_uppercase: bool
 ) -> TokenIterator:
@@ -1604,7 +1622,7 @@ def parse_phrases_2(
                 if not weak:
                     # Return a person token with the accumulated name
                     # and the intersected set of possible cases
-                    token = token_ctor.Person(w, gn)
+                    token = token_ctor.Person(w, _add_uninflected_genitive(gn))
                     token.original = namespan
 
             # Yield the current token and advance to the lookahead
