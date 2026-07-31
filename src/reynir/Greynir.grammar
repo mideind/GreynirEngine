@@ -1662,7 +1662,7 @@ SetningÁnF_et_p3_hk →
 
 EinSetningÁnF/tala/pers/kyn →
     Atviksliður? ÖfugurSagnliður/tala/pers/kyn
-        LoTengtSögn_nf/tala/kyn? ÖfugtFramhald/tala/pers/kyn*
+        LoTengtSögn_nf/tala/kyn? SamanburðurNl? ÖfugtFramhald/tala/pers/kyn*
     # Lýsingarorð á undan sögn:
     # (Ráðherrar taka þær ákvarðanir sem) nauðsynlegar eru/þykja/teljast til rækslu starfa þeirra
     | LoTengtSögn_nf/tala/kyn Sögn_0/tala/pers/kyn SagnInnskotAtv?
@@ -2796,6 +2796,12 @@ SagnarBotn →
     | Nl_ef AtvFs? so_subj_nh_ef
     # (Anna telur) fólki fækka í landinu
     | Nl_þgf AtvFs? so_subj_nh_þgf
+    # (Hún segir) mig hafa dreymt (vel)
+    | Nl/aukafall AtvFs? 'hafa:so'_0_nh so_subj_sagnb/aukafall ÓpSagnarBotn?
+    # (Hún segir) Spáni hafa mistekist (að vernda landamærin)
+    # (miðmyndarsögn með frumlagi í þágufalli, sbr. finítu regluna
+    # 'NlFrumlag_þgf ... HjSögnMM so_mm_sagnb MiðmyndarBotn?')
+    | Nl_þgf AtvFs? 'hafa:so'_0_nh so_mm_sagnb MiðmyndarBotn?
     # (Már segir) [í grundvallaratriðum] gæta misskilnings (hjá Hannesi)
     | FsAtv? so_subj_nh_ef Nl_ef
     # !!! Ekki virðist þörf fyrir öfuga orðaröð í þgf eða þf
@@ -3743,8 +3749,17 @@ Fyrirbæri_ft/fall/kyn →
 
 Númer →
    'númer:hk' Tala_hk_nf
+   | NúmerTala
+
+# Óbeygð tala í hvorugkyni nefnifalls sem auðkenni á eftir nafnorði:
+# '(lögreglu)stöð tvö', 'stofa fimm', 'hlið átta', 'rás eitt'
+NúmerTala →
+    Töluorð_et_nf_hk
+    | Töluorð_ft_nf_hk
 
 $score(+8) Númer
+# Velja frekar sambeygða tölu (Fjöldi) en auðkennistölu, ef báðar koma til greina
+$score(-4) NúmerTala
 
 Fjöldi_ft/fall/kyn → to_ft/fall/kyn | töl_ft/fall/kyn
 
@@ -3893,6 +3908,7 @@ NlStak_p3/tala/fall/kyn →
     NlKjarni/tala/fall/kyn NlStakTagl/tala/fall/kyn?
     | NlFornafn/tala/fall/kyn
     | Pfn/kyn/tala/fall to/tala/fall/kyn? 'persónulega:ao'? # 'þið tvær', 'hann einn', 'hán eitt'
+    | Pfn/kyn/tala/fall LoEftirNl/tala/fall/kyn # '(með) hann fremstan (í fararbroddi)', '(ég hitti) hana glaða'
     | LoTöluorð_ef 'konar:kk'_ef_et NlKjarni/tala/fall/kyn  # 'tvenns/þrenns/ferns konar innstungur'
     | Raðnr/fall/kyn NlKjarni/tala/fall/kyn Fornafn/tala/fall/kyn*   # 1. verðlaunin öll, 1.-3. sætið, 10. og 12. árið
     | NlStakNema/tala/fall/kyn
@@ -5954,6 +5970,7 @@ FsMeðFallstjórn →
     # Fleiryrtar forsetningar sem eru ekki dregnar saman í Phrases.conf
     | 'nær:fs'_þgf 'draga:so'_op_gm_et_p3 Nl_þgf    # 'þegar nær dró/dregur jólum'
     | 'beggja:fn'_hk_ef_ft 'vegna:fs'_ef Nl_ef      # 'beggja vegna vegarins'
+    | FsVegnaEftirNl                                # 'sýningarinnar vegna', 'mín vegna'
     | 'bera:so'_lhþt_sb_hk_nf_et "saman:ao" 'við:fs'_þf Nl_þf  # borið saman við (fyrra ár)
     | "fyrir:ao" "nú:ao"? 'utan:fs'_þf Nl_þf
     | "innan:ao" "sem:st" 'utan:fs'_ef Nl_ef
@@ -5992,6 +6009,14 @@ FsMeðFallstjórn →
     | "(" FsMeðFallstjórn ")"
 
 $score(+1) FsMeðFallstjórn
+
+# Eignarfallsliður á undan 'vegna': 'sýningarinnar vegna',
+# 'veðursins vegna', 'mín vegna'
+FsVegnaEftirNl →
+    Nl_ef 'vegna:fs'_ef
+
+# Þarf að vinna gegn rangri greiningu á 'vegna' sem lýsingarorði
+$score(+4) FsVegnaEftirNl
 
 MiðaðVið →
     "miðað:so" 'við:fs'_þf
@@ -7670,6 +7695,30 @@ VillaEndingIR →
 
 $tag(error) VillaEndingIR
 $score(-999) VillaEndingIR
+
+# Regla fyrir villu þar sem lýsingarorð (oft lýsingarháttur þátíðar)
+# með fallstýrðu andlagi stendur á eftir nafnlið en sambeygist honum
+# ekki í falli, t.d. 'móðurfélag fleiri félaga tengdum rekstri
+# Morgunblaðsins' (rétt: 'tengdra'); villan stafar oft af aðlöðun
+# að falli andlagsins ('félögum tengdum rekstri')
+
+LoEftirNl/tala/fall/kyn →
+    > VillaLoEftirNlMeðAndlagi/fall/tala/kyn
+
+VillaLoEftirNlMeðAndlagi_nf/tala/kyn →
+    LoEftirNlMeðAndlagi/fallxnf/tala/kyn
+
+VillaLoEftirNlMeðAndlagi_þf/tala/kyn →
+    LoEftirNlMeðAndlagi/fallxþf/tala/kyn
+
+VillaLoEftirNlMeðAndlagi_þgf/tala/kyn →
+    LoEftirNlMeðAndlagi/fallxþgf/tala/kyn
+
+VillaLoEftirNlMeðAndlagi_ef/tala/kyn →
+    LoEftirNlMeðAndlagi/fallxef/tala/kyn
+
+$tag(error) VillaLoEftirNlMeðAndlagi/fall/tala/kyn
+$score(-999) VillaLoEftirNlMeðAndlagi/fall/tala/kyn
 
 # Orð sem endar á -ana í þolfalli notað í stað eignarfalls:
 # 'niðurstaða þingflokkana', 'hattar karlana'
