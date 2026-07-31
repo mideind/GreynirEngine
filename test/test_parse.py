@@ -2393,6 +2393,30 @@ def test_pronoun_postposed_adjective(r):
     assert s and s.tree
 
 
+def test_designation_numeral(r) -> None:
+    """An uninflected neuter nominative numeral used as a designation
+    after a noun: '(lögreglu)stöð tvö', 'stofa fimm'"""
+    s = r.parse_single("Hann býr í umdæmi lögreglustöðvar tvö.")
+    assert s and s.tree
+    assert (
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ pfn_et_kk_nf_p3 /NP-SUBJ VP VP so_0_et_fh_gm_nt_p3 /VP "
+        "PP P fs_þgf /P NP no_et_hk_þgf NP-POSS no_ef_et_kvk to_ft_hk_nf "
+        "/NP-POSS /NP /PP /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Hann býr í stofu fimm.")
+    assert s and s.tree
+    s = r.parse_single(
+        "Það átti sér stað í umdæmi lögreglustöðvar tvö, "
+        "sem sér um Hafnarfjörð og Garðabæ."
+    )
+    assert s and s.tree
+    # An agreeing numeral must still be preferred where possible
+    s = r.parse_single("Ég sá mennina þrjá.")
+    assert s and s.tree
+    assert "to_ft_kk_þf" in s.tree.flat_with_all_variants
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
@@ -2450,4 +2474,5 @@ if __name__ == "__main__":
     test_oblique_subject_infinitive(g)
     test_postposed_vegna(g)
     test_pronoun_postposed_adjective(g)
+    test_designation_numeral(g)
     g.__class__.cleanup()
