@@ -7687,6 +7687,30 @@ VillaEndingIR →
 $tag(error) VillaEndingIR
 $score(-999) VillaEndingIR
 
+# Regla fyrir villu þar sem lýsingarorð (oft lýsingarháttur þátíðar)
+# með fallstýrðu andlagi stendur á eftir nafnlið en sambeygist honum
+# ekki í falli, t.d. 'móðurfélag fleiri félaga tengdum rekstri
+# Morgunblaðsins' (rétt: 'tengdra'); villan stafar oft af aðlöðun
+# að falli andlagsins ('félögum tengdum rekstri')
+
+LoEftirNl/tala/fall/kyn →
+    > VillaLoEftirNlMeðAndlagi/fall/tala/kyn
+
+VillaLoEftirNlMeðAndlagi_nf/tala/kyn →
+    LoEftirNlMeðAndlagi/fallxnf/tala/kyn
+
+VillaLoEftirNlMeðAndlagi_þf/tala/kyn →
+    LoEftirNlMeðAndlagi/fallxþf/tala/kyn
+
+VillaLoEftirNlMeðAndlagi_þgf/tala/kyn →
+    LoEftirNlMeðAndlagi/fallxþgf/tala/kyn
+
+VillaLoEftirNlMeðAndlagi_ef/tala/kyn →
+    LoEftirNlMeðAndlagi/fallxef/tala/kyn
+
+$tag(error) VillaLoEftirNlMeðAndlagi/fall/tala/kyn
+$score(-999) VillaLoEftirNlMeðAndlagi/fall/tala/kyn
+
 # Orð sem endar á -ana í þolfalli notað í stað eignarfalls:
 # 'niðurstaða þingflokkana', 'hattar karlana'
 
