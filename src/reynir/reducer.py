@@ -127,8 +127,9 @@ ScoreDict = Dict[int, Dict[BIN_Terminal, int]]
 BonusCache = Dict[Tuple[BIN_Terminal, str, BIN_Terminal, BIN_Token], int]
 FinalsDict = Dict[int, Set[BIN_Terminal]]
 TokensDict = Dict[int, BIN_Token]
-# Winning family index and per-family lists of (child, context signature)
-DecisionTuple = Tuple[int, List[List[Tuple[Node, Any]]]]
+# Winning family index and the (child, context signature) pairs
+# that the reduction pass should descend into
+DecisionTuple = Tuple[int, List[Tuple[Node, Any]]]
 
 # Reducer result dictionary with a null score, shared between
 # empty nodes; wrapped in a read-only proxy so that it cannot
@@ -467,7 +468,26 @@ class ParseForestReducer:
                 # (derivation), including an "sc" field for its score,
                 # along with the winning family index
                 v, chosen_ix = scope.process(w)
-                decisions[(w, sig)] = (chosen_ix, fam_children)
+                nt = w.nonterminal if w.is_completed else None
+                if nt is not None and nt.no_reduce:
+                    # This node will not be reduced: the reduction pass
+                    # descends into the children of every family
+                    decisions[(w, sig)] = (
+                        chosen_ix,
+                        [pair for fam in fam_children for pair in fam],
+                    )
+                elif len(fam_children) > 1 or any(
+                    chsig is not None and chsig != NEUTRAL
+                    for _, chsig in fam_children[0]
+                ):
+                    # Only record what the reduction pass can't infer:
+                    # an actual choice between families, or children
+                    # scored in a context-sensitive signature. For a
+                    # single-family node whose children are all
+                    # context-free, the walk derives the same
+                    # information from the node itself, saving the
+                    # memory of recording it here.
+                    decisions[(w, sig)] = (chosen_ix, fam_children[chosen_ix])
             else:
                 v = NULL_SC
             # Memoize the result for this (node, context) combination
@@ -489,22 +509,31 @@ class ParseForestReducer:
             reduced.add(w)
             entry = decisions.get((w, sig))
             if entry is None:
-                # Token or empty node: nothing to reduce
+                if w._token is not None or not w.is_span or not w._families:
+                    # Token or empty node: nothing to reduce
+                    return
+                # Single-family node with context-free children, not
+                # recorded by the scoring pass: nothing to reduce, and
+                # each child's signature can be derived from its kind
+                # (None for tokens, NEUTRAL for everything else - see
+                # the storage condition in calc_score)
+                _, children0 = w._families[0]
+                for ch0 in children0:
+                    if ch0 is not None:
+                        apply_reduction(
+                            ch0, None if ch0._token is not None else NEUTRAL
+                        )
                 return
-            chosen_ix, fam_children = entry
+            chosen_ix, children = entry
             nt = w.nonterminal if w.is_completed else None
-            if nt is not None and nt.no_reduce:
-                # Leave the child families of this nonterminal in place;
-                # this feature is used in query processing
-                for fam in fam_children:
-                    for ch, chsig in fam:
-                        apply_reduction(ch, chsig)
-            else:
+            if nt is None or not nt.no_reduce:
                 # The key action of the reducer:
-                # eliminate all families except the winning one
+                # eliminate all families except the winning one.
+                # (Nonterminals tagged no_reduce keep all their child
+                # families; this feature is used in query processing.)
                 w.reduce_to(chosen_ix)
-                for ch, chsig in fam_children[chosen_ix]:
-                    apply_reduction(ch, chsig)
+            for ch, chsig in children:
+                apply_reduction(ch, chsig)
 
         # First pass: score the forest without modifying it
         root_sig = context_sig(root_node)
