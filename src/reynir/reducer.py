@@ -96,6 +96,7 @@ from typing import Dict, DefaultDict, List, Set, Tuple, Optional, Any, cast
 from typing_extensions import TypedDict, Required
 
 from collections import defaultdict
+from types import MappingProxyType
 
 from tokenizer.definitions import BIN_Tuple
 
@@ -126,9 +127,13 @@ ScoreDict = Dict[int, Dict[BIN_Terminal, int]]
 BonusCache = Dict[Tuple[BIN_Terminal, str, BIN_Terminal, BIN_Token], int]
 FinalsDict = Dict[int, Set[BIN_Terminal]]
 TokensDict = Dict[int, BIN_Token]
+# Winning family index and per-family lists of (child, context signature)
+DecisionTuple = Tuple[int, List[List[Tuple[Node, Any]]]]
 
-# Reducer result dictionary with a null score
-NULL_SC: ResultDict = {"sc": 0}
+# Reducer result dictionary with a null score, shared between
+# empty nodes; wrapped in a read-only proxy so that it cannot
+# be corrupted by accidental modification
+NULL_SC: ResultDict = cast(ResultDict, MappingProxyType({"sc": 0}))
 
 _VERB_PREP_BONUS = 7  # Give 7 extra points for a verb/preposition match
 _VERB_PREP_PENALTY = -2  # Subtract 2 points for a non-match
@@ -196,43 +201,35 @@ class _ReductionScope:
                 if key == "sl":
                     self.reducer.set_current_verb(rd["sl"])
 
-    def process(self, node: Node) -> ResultDict:
+    def process(self, node: Node) -> Tuple[ResultDict, int]:
         """After accumulating scores for all possible productions
         of this nonterminal (families of children), find the
-        highest scoring one and reduce the tree to that child only"""
+        highest scoring one and return its result dict along with
+        its family index. The actual reduction of the tree is
+        deferred to a separate pass, once all contexts in which
+        this node occurs have been scored."""
         try:
 
             csc = self.sc
             if not csc:
                 # Empty node
-                return NULL_SC
+                return NULL_SC, 0
 
             nt = node.nonterminal if node.is_completed else None
 
             if len(csc) == 1:
                 # Not ambiguous: only one result, do a shortcut
-                # Will raise an exception if not exactly one value
-                [sc] = csc.values()
+                # Will raise an exception if not exactly one item
+                [(ix, sc)] = csc.items()
             else:
-                # Eliminate all families except the best scoring one
-                # Sort in decreasing order by score, using the family index
-                # as a tie-breaker for determinism
-                s = sorted(csc.items(), key=lambda x: (x[1]["sc"], -x[0]), reverse=True)
-                # This is the best scoring family
-                # (and the one with the lowest index
-                # if there are many with the same score)
-                ix, sc = s[0]
-                # If the node nonterminal is marked as "no_reduce",
-                # we leave the child families in place. This feature
-                # is used in query processing.
-                if nt is None or not nt.no_reduce:
-                    # And now for the key action of the reducer:
-                    # Eliminate all other families
-                    node.reduce_to(ix)
+                # Find the best scoring family, using the lowest
+                # family index as a tie-breaker for determinism
+                ix, sc = max(csc.items(), key=lambda x: (x[1]["sc"], -x[0]))
 
             if nt is not None:
-                # We will be adjusting the result: make sure we do so on
-                # a separate dict copy (we don't want to clobber the child's dict)
+                # Adjust the winning family's score. Note that sc is this
+                # node's own accumulator dict (created in add_child()),
+                # not a child's memoized dict, so we can modify it freely.
                 # Get score adjustment for this nonterminal, if any
                 # (This is the $score(+/-N) pragma from Greynir.grammar)
                 sc["sc"] += self.reducer._score_adj.get(nt, 0)
@@ -264,7 +261,7 @@ class _ReductionScope:
                     sc.pop("so", None)  # Simpler than if "so" in sc: del sc["so"]
                     sc.pop("sl", None)
 
-            return sc
+            return sc, ix
 
         finally:
             # Make sure we pop everything that was pushed in __init__()
@@ -430,10 +427,18 @@ class ParseForestReducer:
             # an enclosed enable_prep_bonus node would capture)
             return (vsig(self.get_prep_bonus()), vsig(self.get_current_verb()))
 
-        def calc_score(w: Node) -> ResultDict:
+        # Winning family index and per-family child lists (with the
+        # context signatures they were scored under), keyed like visited.
+        # This records the scoring pass's decisions so that the actual
+        # reduction can be deferred until all contexts have been scored.
+        decisions: Dict[Tuple[Node, Any], DecisionTuple] = dict()
+
+        def calc_score(w: Node, sig: Any) -> ResultDict:
             """Calculate the score of the subtree rooted at w within
-            the current verb context, memoized on (node, context)"""
-            sig = context_sig(w)
+            the current verb context, memoized on (node, context).
+            The sig parameter is context_sig(w), computed by the caller.
+            This pass does not modify the forest; it only scores it
+            and records the winning family of each (node, context)."""
             # Has this (node, context) combination been memoized?
             v = visited.get((w, sig))
             if v is not None:
@@ -447,22 +452,22 @@ class ParseForestReducer:
                 # of children, i.e. multiple possible derivations:
                 # Init container for family results
                 scope = _ReductionScope(self, w)
+                fam_children: List[List[Tuple[Node, Any]]] = []
                 # Go through each family and calculate its score
                 for family_ix, (prod, children) in enumerate(w._families):
                     scope.start_family(family_ix, prod)
+                    this_fam: List[Tuple[Node, Any]] = []
                     for ch in children:
                         if ch is not None:
-                            scope.add_child(family_ix, calc_score(ch))
-                # Return a dict describing the winning family of children
-                # (derivation) including an "sc" field for its score.
-                # !!! TODO: We might be pruning the parse forest too
-                # !!! early here - a node shared between contexts is
-                # !!! culled by whichever context scores it first, even
-                # !!! though a later context might prefer a different
-                # !!! child family.
-                v = scope.process(w)
-                # The winning family is now the only remaining family
-                # of children of this node; the others have been culled.
+                            chsig = context_sig(ch)
+                            this_fam.append((ch, chsig))
+                            scope.add_child(family_ix, calc_score(ch, chsig))
+                    fam_children.append(this_fam)
+                # Obtain a dict describing the winning family of children
+                # (derivation), including an "sc" field for its score,
+                # along with the winning family index
+                v, chosen_ix = scope.process(w)
+                decisions[(w, sig)] = (chosen_ix, fam_children)
             else:
                 v = NULL_SC
             # Memoize the result for this (node, context) combination
@@ -470,8 +475,43 @@ class ParseForestReducer:
             w.score = v["sc"]
             return v
 
-        # Start the scoring and reduction process at the root
-        return calc_score(root_node)
+        # Nodes already reduced in the reduction pass. A node shared
+        # between contexts can only be physically reduced one way; the
+        # first context to reach it in the winning tree decides.
+        reduced: Set[Node] = set()
+
+        def apply_reduction(w: Node, sig: Any) -> None:
+            """Second pass: walk the winning tree, reducing each node
+            to the family that won in the context the node is actually
+            used in, as recorded by the scoring pass"""
+            if w in reduced:
+                return
+            reduced.add(w)
+            entry = decisions.get((w, sig))
+            if entry is None:
+                # Token or empty node: nothing to reduce
+                return
+            chosen_ix, fam_children = entry
+            nt = w.nonterminal if w.is_completed else None
+            if nt is not None and nt.no_reduce:
+                # Leave the child families of this nonterminal in place;
+                # this feature is used in query processing
+                for fam in fam_children:
+                    for ch, chsig in fam:
+                        apply_reduction(ch, chsig)
+            else:
+                # The key action of the reducer:
+                # eliminate all families except the winning one
+                w.reduce_to(chosen_ix)
+                for ch, chsig in fam_children[chosen_ix]:
+                    apply_reduction(ch, chsig)
+
+        # First pass: score the forest without modifying it
+        root_sig = context_sig(root_node)
+        result = calc_score(root_node, root_sig)
+        # Second pass: reduce the forest to the winning tree
+        apply_reduction(root_node, root_sig)
+        return result
 
 
 class OptionFinder(ParseForestNavigator):
