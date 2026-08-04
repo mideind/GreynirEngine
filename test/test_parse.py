@@ -2450,6 +2450,55 @@ def test_skommu_eftir_ad(r) -> None:
     assert s and s.tree
 
 
+def _rel_clause_pp(r, sentence: str) -> str:
+    """Parse and return the contents of the first CP-REL in flat form"""
+    s = r.parse_single(sentence)
+    assert s and s.tree
+    flat = s.tree.flat
+    assert "CP-REL" in flat
+    return flat[flat.index("CP-REL") : flat.index("/CP-REL")]
+
+
+def test_rel_clause_pp_attachment(r) -> None:
+    """A PP that matches the relative clause verb ('sjá um X') must stay
+    inside the relative clause instead of escaping to the main clause.
+    This used to fail when a shared preposition subtree was scored in
+    one verb context and the memoized score reused in another."""
+    for sentence in (
+        "Það átti sér stað í umdæmi lögreglustöðvar tvö, "
+        "sem sér um Hafnarfjörð og Garðabæ.",
+        "Slysið varð í umdæmi stöðvarinnar, sem sér um Hafnarfjörð og Garðabæ.",
+        "Hún las bókina um konuna, sem sér um Hafnarfjörð.",
+    ):
+        assert "fs_þf" in _rel_clause_pp(r, sentence), sentence
+    # Exact tree for the sentence from greynir.is that exposed the bug
+    s = r.parse_single(
+        "Það átti sér stað í umdæmi lögreglustöðvar tvö, "
+        "sem sér um Hafnarfjörð og Garðabæ."
+    )
+    assert s and s.tree
+    assert (
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ VP VP "
+        "so_2_þgf_þf_et_fh_gm_p3_þt /VP NP-IOBJ abfn_þgf /NP-IOBJ "
+        "NP-OBJ no_et_kk_þf PP P fs_þf /P NP no_et_hk_þf "
+        "NP-POSS no_ef_et_kvk to_ft_hk_nf /NP-POSS /NP /PP p "
+        "CP-REL C stt /C IP VP VP so_0_et_fh_gm_nt_p3 /VP "
+        "PP P fs_þf /P NP no_et_kk_þf C st /C no_et_kk_þf /NP /PP "
+        "/VP /IP /CP-REL /NP-OBJ /VP /IP /S-MAIN p /S0"
+    )
+    # A preposition that matches the main verb (fresta e-u vegna e-s)
+    # must still attach to the verb phrase, not the object noun phrase
+    s = r.parse_single("Dómarinn frestaði mótinu vegna veðurs.")
+    assert s and s.tree
+    assert (
+        s.tree.flat
+        == "S0 S-MAIN IP NP-SUBJ no_et_nf_kk /NP-SUBJ VP VP so_1_þgf_et_p3 /VP "
+        "NP-OBJ no_et_þgf_hk /NP-OBJ PP P fs_ef /P NP no_et_ef_kk /NP /PP "
+        "/VP /IP /S-MAIN p /S0"
+    )
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
@@ -2509,4 +2558,5 @@ if __name__ == "__main__":
     test_pronoun_postposed_adjective(g)
     test_designation_numeral(g)
     test_skommu_eftir_ad(g)
+    test_rel_clause_pp_attachment(g)
     g.__class__.cleanup()

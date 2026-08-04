@@ -78,12 +78,17 @@
     memoize the score of these nodes by context, so that the scores
     between contexts can be different.
 
-    Verb contexts span from tree nodes tagged with "enable_prep_bonus"
-    (typically the SagnInnskot nonterminal), through their descendant nodes down
-    to those tagged with "begin_prep_scope" or "purge_prep", or noun phrase
-    nonterminal nodes ("Nl_*"). The preposition nodes that actually receive
-    different scores depending on the context are terminal nodes whose names
-    have the form fs_*.
+    This is done by memoizing subtree scores on the tuple (node, context
+    signature), where the context signature captures the two pieces of
+    reducer state that a subtree score can depend on: the preposition
+    bonus verbs in effect (established by nodes tagged "enable_prep_bonus",
+    typically SagnInnskot) and the current verb (which an enclosed
+    "enable_prep_bonus" node would capture). Nodes that reset both on
+    entry - those tagged "begin_prep_scope", and noun phrase nonterminals
+    ("Nl_*") - are context-independent and get a neutral signature,
+    preserving full sharing of their memoized scores. The preposition
+    nodes that actually receive different scores depending on the context
+    are terminal nodes whose names have the form fs_*.
 
 """
 
@@ -121,7 +126,6 @@ ScoreDict = Dict[int, Dict[BIN_Terminal, int]]
 BonusCache = Dict[Tuple[BIN_Terminal, str, BIN_Terminal, BIN_Token], int]
 FinalsDict = Dict[int, Set[BIN_Terminal]]
 TokensDict = Dict[int, BIN_Token]
-KeyTuple = Tuple[Node, int]
 
 # Reducer result dictionary with a null score
 NULL_SC: ResultDict = {"sc": 0}
@@ -132,11 +136,6 @@ _LENGTH_BONUS_FACTOR = 10  # For length bonus, multiply number of tokens by this
 
 _CASES_SET = BIN_Token.CASES_SET
 
-# Tags of nonterminals that allow us to stop copying nodes
-# in the preposition unpacker
-_PREP_SCOPE_SET = frozenset(
-    ("begin_prep_scope", "purge_prep", "no_prep", "enable_prep_bonus")
-)
 _CONTAINED_VERBS_SET = frozenset(("begin_prep_scope", "purge_verb"))
 
 # BÍN categories ('fl') of person and entity names
@@ -386,61 +385,60 @@ class ParseForestReducer:
         return d
 
     def go(self, root_node: Node) -> ResultDict:
-        """Perform the reduction, but first split the tree underneath
-        nodes that have the enable_prep_bonus tag"""
+        """Perform the reduction, scoring shared packed subtrees
+        separately for each distinct verb context they occur in"""
 
-        # Memoization/caching dict, keyed by node and memoization key
-        visited: Dict[KeyTuple, ResultDict] = dict()
-        # Current memoization key
-        current_key = 0
-        # Next memoization key to use
-        next_key = 0
+        # Memoization/caching dict, keyed by node and context signature
+        visited: Dict[Tuple[Node, Any], ResultDict] = dict()
+        # Signature of a context-independent subtree
+        NEUTRAL: Tuple[Any, Any] = (None, None)
 
-        def enter_key_scope(node: Node) -> bool:
-            """Return True for a node whose score should not be
-            memoized within the shared packed parse forest"""
-            if not node.is_completed or node.nonterminal is None:
-                return False
-            return node.nonterminal.has_tag("enable_prep_bonus")
+        def vsig(vl: Optional[VerbList]) -> Any:
+            """Hashable identity signature of a verb list"""
+            return (
+                None
+                if vl is None
+                else tuple((id(t), id(tok)) for t, tok in vl)
+            )
 
-        def exit_key_scope(node: Node) -> bool:
-            """Return True if it is safe to resume memoization
-            of subtree scores from this node onwards"""
-            if not node.is_completed:
-                return False
-            nt = node.nonterminal
-            if nt is not None:
-                if nt.has_any_tag(_PREP_SCOPE_SET):
-                    # Entering a subtree that has its own scope:
-                    # resume memoization until further notice
-                    return True
-                if nt.is_noun_phrase:
-                    # Once we've gone through a preposition node,
-                    # it is safe to memoize the enclosed noun phrase subtree
-                    return True
-                if node.is_empty:
-                    # Explicitly nullable nonterminal with no child:
-                    # always OK to memoize
-                    return True
-            return False
+        def context_sig(w: Node) -> Any:
+            """Return the part of the reducer state that the score of
+            the subtree rooted at w can depend on. Subtrees that are
+            shared between different verb contexts must be scored
+            separately for each context, since preposition terminals
+            within them receive different verb/preposition bonuses."""
+            if w._token is not None:
+                # A token score depends only on the active
+                # preposition bonus verbs (and only for fs terminals,
+                # but the signature is cheap enough to include always)
+                pb = self.get_prep_bonus()
+                return None if pb is None else vsig(pb)
+            if w.is_completed:
+                nt = w.nonterminal
+                if nt is not None and (
+                    nt.has_tag("begin_prep_scope") or nt.is_noun_phrase
+                ):
+                    # This node resets both the prep bonus zone and the
+                    # current verb on entry, so its score is the same
+                    # in all contexts
+                    return NEUTRAL
+                if w.is_empty:
+                    # Explicitly nullable nonterminal with no child
+                    return NEUTRAL
+            # The score may depend both on the enclosing prep bonus zone
+            # (for enclosed fs terminals) and on the current verb (which
+            # an enclosed enable_prep_bonus node would capture)
+            return (vsig(self.get_prep_bonus()), vsig(self.get_current_verb()))
 
         def calc_score(w: Node) -> ResultDict:
-            """Navigate from (w, current_key) where w is a node and current_key
-            is an integer navigation key, carefully controlling the memoization
-            of already visited nodes. When navigating into
-            nodes marked enable_prep_bonus, we create a new unique
-            navigation key, since such nodes - although stored in shared
-            packed form - may have different scores depending on the
-            enclosing (verb) context and thus should not share memoized results.
-            """
-            nonlocal current_key, next_key
-            # Has this (node, current_key) tuple been memoized?
-            v = visited.get((w, current_key))
+            """Calculate the score of the subtree rooted at w within
+            the current verb context, memoized on (node, context)"""
+            sig = context_sig(w)
+            # Has this (node, context) combination been memoized?
+            v = visited.get((w, sig))
             if v is not None:
                 # Yes: return the previously calculated result
                 return v
-            # We have not seen this (node, current_key) combination before:
-            # reduce it, calculate its score and memoize it
             if w._token is not None:
                 # Return the score of this terminal option
                 v = self.visit_token(w)
@@ -454,36 +452,21 @@ class ParseForestReducer:
                     scope.start_family(family_ix, prod)
                     for ch in children:
                         if ch is not None:
-                            prev_key = current_key
-                            if enter_key_scope(ch):
-                                # This child subtree has an enable_prep_bonus flag:
-                                # make sure we navigate separately through it
-                                # sincle enclosed prepositions may have different
-                                # scores in other subtrees.
-                                # Generate a new unique memoization key to use
-                                # when navigating through this child subtree.
-                                next_key += 1
-                                current_key = next_key
-                            elif current_key != 0 and exit_key_scope(ch):
-                                # We no longer need a separate memoization key
-                                # for this child subtree
-                                current_key = 0
                             scope.add_child(family_ix, calc_score(ch))
-                            current_key = prev_key
                 # Return a dict describing the winning family of children
                 # (derivation) including an "sc" field for its score.
                 # !!! TODO: We might be pruning the parse forest too
-                # !!! early here - there could be a different verb scope
-                # !!! above this node that would cause a different child
-                # !!! to be culled. However a test case to demonstrate this
-                # !!! has yet to be identified/created.
+                # !!! early here - a node shared between contexts is
+                # !!! culled by whichever context scores it first, even
+                # !!! though a later context might prefer a different
+                # !!! child family.
                 v = scope.process(w)
                 # The winning family is now the only remaining family
                 # of children of this node; the others have been culled.
             else:
                 v = NULL_SC
-            # Memoize the result for this (node, current_key) combination
-            visited[(w, current_key)] = v
+            # Memoize the result for this (node, context) combination
+            visited[(w, sig)] = v
             w.score = v["sc"]
             return v
 
