@@ -2417,6 +2417,39 @@ def test_designation_numeral(r) -> None:
     assert "to_ft_kk_þf" in s.tree.flat_with_all_variants
 
 
+def test_skommu_eftir_ad(r) -> None:
+    """'skömmu eftir' is merged into a single preposition token in
+    Phrases.conf; it must also work as a temporal conjunction head:
+    '(svona) skömmu eftir að X gerðist'"""
+    s = r.parse_single("Við hittumst skömmu eftir að atburðirnir áttu sér stað.")
+    assert s and s.tree
+    assert (
+        s.tree.flat_with_all_variants
+        == "S0 S-MAIN IP NP-SUBJ pfn_ft_nf_p1 /NP-SUBJ VP VP "
+        "so_0_fh_ft_mm_nt_p1 /VP CP-ADV-TEMP C P ao fs /P st /C "
+        "IP NP-SUBJ no_ft_gr_kk_nf /NP-SUBJ VP VP so_2_þgf_þf_fh_ft_gm_p3_þt /VP "
+        "NP-IOBJ abfn_þgf /NP-IOBJ NP-OBJ no_et_kk_þf /NP-OBJ /VP /IP "
+        "/CP-ADV-TEMP /VP /IP /S-MAIN p /S0"
+    )
+    # With a preceding degree adverb
+    s = r.parse_single("Við hittumst svona skömmu eftir að atburðirnir áttu sér stað.")
+    assert s and s.tree
+    s = r.parse_single("Við hittumst örskömmu eftir að atburðirnir áttu sér stað.")
+    assert s and s.tree
+    # The plain prepositional use must still work
+    s = r.parse_single("Við hittumst skömmu eftir fundinn.")
+    assert s and s.tree
+    # The original full sentence
+    s = r.parse_single(
+        "„Það var mikilvægt að koma saman svona skömmu eftir að þessir "
+        "atburðir áttu sér stað, og fara yfir staðreyndir málsins og hvað "
+        "við getum lært af þessu,“ segir Þorbjörg Sigríður Gunnlaugsdóttir "
+        "dómsmálaráðherra, um fjarfund ráðherra Schengen ríkjanna sem "
+        "haldinn var í morgun."
+    )
+    assert s and s.tree
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
@@ -2475,4 +2508,5 @@ if __name__ == "__main__":
     test_postposed_vegna(g)
     test_pronoun_postposed_adjective(g)
     test_designation_numeral(g)
+    test_skommu_eftir_ad(g)
     g.__class__.cleanup()

@@ -672,6 +672,11 @@ Tíðartenging →
     "nema:st"? "þegar:st" AðvörunAð?
     | "löngu:ao"? "áður:ao" "en:st" AðvörunAð?
     | "löngu:ao"? "eftir:ao" "að:st"
+    # 'skömmu eftir' er sameinað í einn forsetningartóka í Phrases.conf,
+    # þannig að 'eftir:ao' "að:st" mynstrið að ofan nær ekki yfir
+    # '(svona/alveg) skömmu eftir að X gerðist'
+    | ao? 'skömmu_eftir:fs' "að:st"
+    | ao? 'örskömmu_eftir:fs' "að:st"
     | Allt? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "að:st"
     | VillaFráÞvíAð # frá því X
     | Allt? 'frá:fs'_þgf 'það:pfn'_hk_þgf_et "er:st"?
