@@ -2499,6 +2499,35 @@ def test_rel_clause_pp_attachment(r) -> None:
     )
 
 
+def test_reflexive_verb_frames(r) -> None:
+    """Verb frames in Verbs.conf whose object is a reflexive pronoun
+    ('átta |sig /á þgf', 'tryggja sér |þf') used to be dropped entirely,
+    leaving verbs such as 'átta' unknown to the parser. They are now
+    registered under the pronoun's case, so that 1st and 2nd person
+    objects ('áttaði mig') as well as non-reflexive objects in the same
+    frame ('tryggði gestunum sigur') parse."""
+    for sentence, verb in (
+        ("Ég áttaði mig á þessu.", "átta"),
+        ("Hann áttaði sig á villu síns vegar.", "átta"),
+        ("Við áttuðum okkur ekki á því hvað þetta var erfitt.", "átta"),
+        ("Liðið tryggði gestunum sigur.", "tryggja"),
+        ("Hún ímyndaði sér þetta.", "ímynda"),
+        ("Hún furðaði sig á þessu.", "furða"),
+        ("Hann notfærði sér aðstöðuna.", "notfæra"),
+        ("Hann faðmaði hana.", "faðma"),
+        ("Þau minnka losun.", "minnka"),
+        ("Þau trúlofuðu sig árið 2011 og gengu í hjónaband árið 2013.", "trúlofa"),
+    ):
+        s = r.parse_single(sentence)
+        assert s is not None and s.tree is not None, sentence
+        assert verb in s.tree.verbs, sentence
+    # A verb reading that is only licensed by a reflexive frame
+    # ('eiga sér |þf') must not displace a preposition reading
+    s = r.parse_single("Eðlisfræðingurinn lést í dag, á pí-deginum.")
+    assert s is not None and s.tree is not None
+    assert s.tree.verbs == ["láta"]
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
@@ -2559,4 +2588,5 @@ if __name__ == "__main__":
     test_designation_numeral(g)
     test_skommu_eftir_ad(g)
     test_rel_clause_pp_attachment(g)
+    test_reflexive_verb_frames(g)
     g.__class__.cleanup()

@@ -138,6 +138,10 @@ NULL_SC: ResultDict = cast(ResultDict, MappingProxyType({"sc": 0}))
 
 _VERB_PREP_BONUS = 7  # Give 7 extra points for a verb/preposition match
 _VERB_PREP_PENALTY = -2  # Subtract 2 points for a non-match
+# Penalty for a verb terminal whose argument cases are only licensed by
+# frames with a reflexive pronoun ('eiga sér |þf' -> eiga_þgf_þf), so that
+# a reading with arbitrary objects in those cases is discouraged
+_VERB_WEAK_ONLY_PENALTY = -6
 _LENGTH_BONUS_FACTOR = 10  # For length bonus, multiply number of tokens by this factor
 
 _CASES_SET = BIN_Token.CASES_SET
@@ -721,6 +725,8 @@ class Reducer:
                         # In the (rare) cases where there are conflicting scores,
                         # apply the most positive adjustment
                         adjmax: Optional[int] = None
+                        # Is the terminal only licensed by weak frames?
+                        weak_only: Optional[bool] = None
                         for m in token.meanings:
                             if m.ordfl == "so":
                                 key = m.stofn + t.verb_cases
@@ -730,7 +736,12 @@ class Reducer:
                                         adjmax = score
                                     else:
                                         adjmax = max(adjmax, score)
+                                if numcases > 0 and VerbFrame.matches_arguments(key):
+                                    wo = VerbFrame.weak_only(key)
+                                    weak_only = wo if weak_only is None else (weak_only and wo)
                         sc[t] += adj + (adjmax or 0)
+                        if weak_only:
+                            sc[t] += _VERB_WEAK_ONLY_PENALTY
                     if t.is_bh:
                         # Discourage 'boðháttur'
                         sc[t] -= 4

@@ -235,8 +235,14 @@ class VerbFrame:
         preps: Iterable[Tuple[str, str]],
         particle: Optional[str],
         score: Optional[int],
+        weak: bool = False,
     ) -> None:
         self.verb = verb
+        # True if the frame contains a reflexive pronoun (sig, sér, sín)
+        # as an object or within a prepositional phrase ('átta |sig /á þgf',
+        # 'tryggja sér |þf'); such a frame is registered under its object
+        # cases but is only a weak license for arbitrary objects in those cases
+        self.weak = weak
         # All arguments
         self.args = args
         self.obj = obj
@@ -277,6 +283,7 @@ class VerbFrame:
         # Format: verb [arg1] [arg2] [/preposition arg]... [*particle] [$pragma(txt)]
 
         complex = False
+        weak = False
 
         def get_score(s: str) -> Tuple[str, Optional[int]]:
             """Handle the $score() pragma, if present"""
@@ -364,7 +371,7 @@ class VerbFrame:
                 raise ConfigError("Verb '{0}' is not a valid word".format(verb))
             case = ""
             if len(a) > 1:
-                case = get_case_and_kind((" ".join(a[1:])))
+                case = get_case_and_kind(" ".join(a[1:]))
             return verb, case
 
         def get_case_and_kind(w: str) -> str:
@@ -384,16 +391,17 @@ class VerbFrame:
             case = ""
             # kind: int = 1    # Default value
             refl = REFLPRN_CASE.get(w, "")
-            nonlocal complex
+            nonlocal complex, weak
             if w in ALL_CASES:
                 # Case 1
                 case = w
                 # kind = 1
             elif refl and refl in ALL_CASES:
-                # Case 2
+                # Case 2: a reflexive pronoun is registered under its case,
+                # so that e.g. 'átta |sig /á þgf' yields the frame 'átta_þf'
                 case = refl
                 # kind = 2
-                complex = True
+                weak = True
             elif w in SUBCLAUSES:
                 # Cases 5-8
                 case = w
@@ -432,7 +440,10 @@ class VerbFrame:
             args.append(iobj)
         if obj:
             args.append(obj)
-        # Add frame to verb database, if this construct is supported (not 'complex')
+        # Add frame to verb database, if this construct is supported.
+        # Frames with subclause arguments (nh, nhx, falls, spurns, ...)
+        # or fixed phrases are not yet supported; frames with reflexive
+        # pronouns are registered under the pronoun's case, marked as weak.
         if complex:
             return
         vf = cls(
@@ -443,6 +454,7 @@ class VerbFrame:
             score=score,
             obj=obj,
             iobj=iobj,
+            weak=weak,
         )
         case_key = vf.case_key
         if error:
@@ -503,6 +515,16 @@ class VerbFrame:
 
     @classmethod
     @lru_cache(maxsize=1024)
+    def weak_only(cls, verb_with_cases: str) -> bool:
+        """Return True if the given key, e.g. 'tryggja_þgf_þf', is only
+        licensed by frames containing a reflexive pronoun ('tryggja sér |þf')"""
+        verb_frames = cls.CASE_FRAMES.get(verb_with_cases)
+        if not verb_frames:
+            return False
+        return all(vf.weak for vf in verb_frames)
+
+    @classmethod
+    @lru_cache(maxsize=1024)
     def verb_score(cls, verb_with_cases: str) -> Optional[int]:
         """Return the score of a verb frame with particular argument cases"""
         verb_frames = cls.CASE_FRAMES.get(verb_with_cases)
@@ -510,7 +532,11 @@ class VerbFrame:
             # No such verb frame, hence no score
             return None
         # Return the highest score associated with a verb frame with the
-        # given arguments, or None if no score was given
+        # given arguments, or None if no score was given. Weak (reflexive)
+        # frames only contribute if no strong frame exists for the key,
+        # so that an idiom's $score() does not apply to arbitrary objects
+        if any(not vf.weak for vf in verb_frames):
+            verb_frames = [vf for vf in verb_frames if not vf.weak]
         score = None
         for vf in verb_frames:
             if vf.score is not None:
