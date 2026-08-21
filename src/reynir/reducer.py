@@ -119,6 +119,10 @@ class ResultDict(TypedDict, total=False):
     # Verb scope information
     so: VerbList
     sl: VerbList
+    # Text of an adverb matched by a literal terminal (only at token nodes)
+    ao: str
+    # Text of a verb particle (SagnÖgn), passed to the enclosing verb phrase
+    pcl: str
 
 
 VerbStack = List[Optional[VerbList]]
@@ -138,6 +142,12 @@ NULL_SC: ResultDict = cast(ResultDict, MappingProxyType({"sc": 0}))
 
 _VERB_PREP_BONUS = 7  # Give 7 extra points for a verb/preposition match
 _VERB_PREP_PENALTY = -2  # Subtract 2 points for a non-match
+# Bonus for a verb particle (SagnÖgn) preceding the object, e.g. 'bjó til hús',
+# if the particle is listed for the verb in Verbs.conf (*til); otherwise
+# a penalty, which must outweigh _VERB_PREP_PENALTY so that a preposition
+# reading is preferred for verbs that do not take the particle
+_VERB_PARTICLE_BONUS = 7
+_VERB_PARTICLE_PENALTY = -6
 # Penalty for a verb terminal whose argument cases are only licensed by
 # frames with a reflexive pronoun ('eiga sér |þf' -> eiga_þgf_þf), so that
 # a reading with arbitrary objects in those cases is discouraged
@@ -159,7 +169,7 @@ class _ReductionScope:
     """Class to accumulate information about a nonterminal and its
     child productions during reduction"""
 
-    __slots__ = ("reducer", "sc", "pushed_prep_bonus", "start_verb")
+    __slots__ = ("reducer", "sc", "pushed_prep_bonus", "start_verb", "nt")
 
     def __init__(self, reducer: "ParseForestReducer", node: Node) -> None:
         self.reducer = reducer
@@ -167,6 +177,7 @@ class _ReductionScope:
         self.sc: ChildDict = defaultdict(lambda: {"sc": 0})
         # We are only interested in completed nonterminals
         nt = node.nonterminal if node.is_completed else None
+        self.nt = nt
         # Verb/preposition matching stuff
         self.pushed_prep_bonus = False
         verb = reducer.get_current_verb()
@@ -196,6 +207,13 @@ class _ReductionScope:
         where the parent family has index ix (0..n)"""
         d = self.sc[ix]
         d["sc"] += rd.get("sc", 0)
+        if "ao" in rd and self.nt is not None and self.nt.has_tag("verb_particle"):
+            # A verb particle (SagnÖgn): note its text so that the enclosing
+            # verb phrase can check it against the verb's frames
+            d["pcl"] = rd["ao"]
+        elif "pcl" in rd:
+            # Carry the particle up to the enclosing verb phrase
+            d["pcl"] = rd["pcl"]
         # Carry information about contained verbs ("so") up the tree
         for key in ("so", "sl"):
             if key in rd:
@@ -221,6 +239,14 @@ class _ReductionScope:
                 return NULL_SC, 0
 
             nt = node.nonterminal if node.is_completed else None
+
+            if nt is not None and nt.has_tag("apply_particle_bonus"):
+                # Sögn_1 & co.: adjust the score of each family containing
+                # a verb particle (SagnÖgn) by whether the verb(s) take it
+                for d in csc.values():
+                    pcl = d.pop("pcl", None)
+                    if pcl is not None:
+                        d["sc"] += self.reducer.verb_particle_bonus(pcl, d.get("so"))
 
             if len(csc) == 1:
                 # Not ambiguous: only one result, do a shortcut
@@ -265,6 +291,7 @@ class _ReductionScope:
                     # and Setning have this tag
                     sc.pop("so", None)  # Simpler than if "so" in sc: del sc["so"]
                     sc.pop("sl", None)
+                    sc.pop("pcl", None)
 
             return sc, ix
 
@@ -349,12 +376,31 @@ class ParseForestReducer:
         # If no match, discourage
         return _VERB_PREP_PENALTY
 
+    def verb_particle_bonus(self, particle: str, verbs: Optional[VerbList]) -> int:
+        """Return a bonus if any of the given verbs takes the particle
+        according to its frames in Verbs.conf, otherwise a penalty"""
+        if verbs:
+            for verb_terminal, verb_token in verbs:
+                m = verb_token.match_with_meaning(verb_terminal)
+                assert isinstance(m, BIN_Tuple)
+                verb = m.stofn
+                if "MM" in m.beyging:
+                    verb = BIN_Token.mm_verb_stem(verb)
+                verb_with_cases = verb + verb_terminal.verb_cases
+                if VerbFrame.matches_particle(verb_with_cases, "*" + particle):
+                    return _VERB_PARTICLE_BONUS
+        return _VERB_PARTICLE_PENALTY
+
     def visit_token(self, node: Node) -> ResultDict:
         """At token node"""
         # Return the score of this token/terminal match
         d: ResultDict = {"sc": 0}
         nt = cast(BIN_Terminal, node.terminal)
         sc = self._scores[node.start][nt]
+        if nt.matches_category("ao") and nt.is_literal:
+            # Adverb matched by a literal terminal such as "upp:ao":
+            # note its text, in case it is a verb particle (SagnÖgn)
+            d["ao"] = cast(BIN_Token, node.token).lower
         if nt.matches_category("fs"):
             # Preposition terminal - this is either a normal fs_case terminal
             # or a literal terminal such as "á:fs"

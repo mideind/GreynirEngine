@@ -2481,7 +2481,7 @@ def test_rel_clause_pp_attachment(r) -> None:
         s.tree.flat_with_all_variants
         == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ VP VP "
         "so_2_þgf_þf_et_fh_gm_p3_þt /VP NP-IOBJ abfn_þgf /NP-IOBJ "
-        "NP-OBJ no_et_kk_þf PP P fs_þf /P NP no_et_hk_þf "
+        "NP-OBJ no_et_kk_þf PP P fs_þgf /P NP no_et_hk_þgf "
         "NP-POSS no_ef_et_kvk to_ft_hk_nf /NP-POSS /NP /PP p "
         "CP-REL C stt /C IP VP VP so_0_et_fh_gm_nt_p3 /VP "
         "PP P fs_þf /P NP no_et_kk_þf C st /C no_et_kk_þf /NP /PP "
@@ -2526,6 +2526,37 @@ def test_reflexive_verb_frames(r) -> None:
     s = r.parse_single("Eðlisfræðingurinn lést í dag, á pí-deginum.")
     assert s is not None and s.tree is not None
     assert s.tree.verbs == ["láta"]
+
+
+def test_verb_particle_before_object(r) -> None:
+    """A verb particle may precede the object ('bjó til hús',
+    'kastaði upp boltanum'); the particle is accepted if Verbs.conf lists
+    it for the verb (*til, *upp), and the object is parsed as a direct
+    object rather than as the object of a preposition."""
+    for sentence, pattern in (
+        ("Hann bjó til hús.", "VP so_1_þf_et_p3 /VP ao NP-OBJ no_et_þf_hk /NP-OBJ"),
+        ("Hann tók upp bókina.", "VP so_1_þf_et_p3 /VP ao NP-OBJ no_et_þf_kvk /NP-OBJ"),
+        ("Hann kastaði upp boltanum.", "VP so_1_þgf_et_p3 /VP ao NP-OBJ no_et_þgf_kk /NP-OBJ"),
+        ("Hann skilaði inn skýrslunni.", "VP so_1_þgf_et_p3 /VP ao NP-OBJ no_et_þgf_kvk /NP-OBJ"),
+        ("Hann sagði upp störfum.", "VP so_1_þgf_et_p3 /VP ao NP-OBJ no_ft_þgf_hk /NP-OBJ"),
+        ("Hún hefur búið til mat.", "VP so_1_þf_sagnb /VP ao NP-OBJ no_et_þf_kk /NP-OBJ"),
+        ("Hún ætlar að búa til mat.", "VP so_1_þf_nh /VP ao NP-OBJ no_et_þf_kk /NP-OBJ"),
+        ("Hann ætlar að skila inn skýrslunni.", "VP so_1_þgf_nh /VP ao NP-OBJ no_et_þgf_kvk /NP-OBJ"),
+        ("Búðu til mat!", "VP so_1_þf_bh /VP ao NP-OBJ no_et_þf_kk /NP-OBJ"),
+    ):
+        s = r.parse_single(sentence)
+        assert s is not None and s.tree is not None, sentence
+        assert pattern in s.tree.flat, (sentence, s.tree.flat)
+    # Prepositional phrases are still preferred where the verb
+    # does not take the particle
+    for sentence in (
+        "Hann bjó í húsinu.",
+        "Hann kastaði upp á þakið.",
+        "Hann ætlar að kasta upp á þakið.",
+    ):
+        s = r.parse_single(sentence)
+        assert s is not None and s.tree is not None, sentence
+        assert " PP " in s.tree.flat and "NP-OBJ" not in s.tree.flat, (sentence, s.tree.flat)
 
 
 if __name__ == "__main__":
@@ -2589,4 +2620,5 @@ if __name__ == "__main__":
     test_skommu_eftir_ad(g)
     test_rel_clause_pp_attachment(g)
     test_reflexive_verb_frames(g)
+    test_verb_particle_before_object(g)
     g.__class__.cleanup()
