@@ -899,6 +899,9 @@ SagnHluti_et_p2/kyn →
 SagnliðurSníkill/kyn →
     Sagnliður_et_sp/kyn
 
+# Kjósum fremur venjulega greiningu ef hún er tæk
+$score(-8) SagnliðurSníkill/kyn
+
 $tag(begin_prep_scope) SagnHluti/tala/pers/kyn # Nýtt undirtré fyrir tengingu sagnar og forsetningar
 
 FrumlagsInnskot/tala/pers/kyn →

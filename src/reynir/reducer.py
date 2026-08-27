@@ -166,6 +166,11 @@ _LENGTH_BONUS_FACTOR = 10  # For length bonus, multiply number of tokens by this
 
 _CASES_SET = BIN_Token.CASES_SET
 
+# Penalties for verb forms with a cliticized subject ('ertu', 'viltu')
+# when the token also has an adjective reading ('næstu', 'mestu') or
+# a regular verb reading ('áttu', 'yrðu')
+_CLITIC_ADJECTIVE_PENALTY = -40
+_CLITIC_VERB_PENALTY = -6
 _CONTAINED_VERBS_SET = frozenset(("begin_prep_scope", "purge_verb"))
 
 # BÍN categories ('fl') of person and entity names
@@ -822,6 +827,20 @@ class Reducer:
                         sc[t] += adj + (adjmax or 0)
                         if weak_only:
                             sc[t] += _VERB_WEAK_ONLY_PENALTY
+                    if t.has_variant("sp"):
+                        # Interrogative form with a cliticized subject
+                        # ('ertu', 'viltu'). BÍN lists such forms for many
+                        # verbs whose clitic form coincides with a common
+                        # adjective ('næstu', 'mestu', 'elstu') or with a
+                        # regular verb form ('áttu', 'yrðu', 'máttu'): in
+                        # those cases, discourage the clitic reading
+                        if any(m.ordfl == "lo" for m in token.meanings):
+                            sc[t] += _CLITIC_ADJECTIVE_PENALTY
+                        elif any(
+                            m.ordfl == "so" and "SP" not in m.beyging
+                            for m in token.meanings
+                        ):
+                            sc[t] += _CLITIC_VERB_PENALTY
                     if t.is_bh:
                         # Discourage 'boðháttur'
                         sc[t] -= 4
