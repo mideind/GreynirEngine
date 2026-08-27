@@ -2693,6 +2693,31 @@ def test_verb_with_clitic_subject(r) -> None:
     assert "NP-SUBJ pfn_et_nf /NP-SUBJ" in s.tree.flat
 
 
+def test_article_with_nominalized_adjective(r) -> None:
+    """The free article 'hinn/hin/hið' followed by an adjective forms
+    a noun phrase on its own ('hið sama', 'hið opinbera', 'hið versta'),
+    or an adverbial phrase with certain superlatives ('hið fyrsta')"""
+    for sentence, phrase in (
+        ("Hið sama á við um starfsfólk deildarinnar.", "NP-SUBJ gr_et_nf_hk lo_nf_et_hk /NP-SUBJ"),
+        ("Hið rétta er að það kviknaði í bátnum.", "NP-SUBJ gr_et_nf_hk lo_nf_et_hk /NP-SUBJ"),
+        # 'sama gildir' is disambiguated in Phrases.conf; the adjective
+        # reading must survive so that the article can attach to it
+        ("Hið sama gildir um fleiri tegundir.", "NP-SUBJ gr_et_nf_hk lo_nf_et_hk /NP-SUBJ"),
+        ("Hið opinbera greiðir kostnaðinn.", "NP-SUBJ gr_et_nf_hk lo_nf_et_hk /NP-SUBJ"),
+        ("Björgunarsveitir óttast hið versta.", "NP-OBJ gr_et_þf_hk lo_þf_et_hk /NP-OBJ"),
+        ("Eftir útskýringar kom hið sanna í ljós.", "NP-SUBJ gr_et_nf_hk lo_nf_et_hk /NP-SUBJ"),
+        ("Hann sá hið góða og hið illa.", "gr_et_þf_hk lo_þf_et_hk C st /C gr_et_þf_hk lo_þf_et_hk"),
+        ("Verkefnið þarf að leysa hið fyrsta.", "ADVP gr_et_þf_hk lo_vb_et_þf_hk /ADVP"),
+        ("Íbúum var gert að yfirgefa heimili sín hið snarasta.", "ADVP gr_et_þf_hk lo_vb_et_þf_hk /ADVP"),
+        # The article still attaches to a following noun
+        ("Hið nýja hús er stórt.", "NP-SUBJ gr_et_nf_hk lo_nf_et_hk no_et_nf_hk /NP-SUBJ"),
+        ("Hann fékk hið fyrsta verkefni.", "NP-OBJ gr_et_þf_hk lo_þf_et_hk no_et_þf_hk /NP-OBJ"),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert phrase in s.tree.flat, (sentence, s.tree.flat)
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
@@ -2758,4 +2783,5 @@ if __name__ == "__main__":
     test_deterministic_tie_break()
     test_locative_i_prefers_dative(g)
     test_verb_with_clitic_subject(g)
+    test_article_with_nominalized_adjective(g)
     g.__class__.cleanup()

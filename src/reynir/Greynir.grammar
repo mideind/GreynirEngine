@@ -4170,6 +4170,15 @@ $score(+24) GreinirMeðLo/tala/fall/kyn
 NlStak_p3/tala/fall/kyn →
     AtviksliðurEinkunn* LoSemNafnliður/tala/fall/kyn
 
+# Lýsingarorð með lausum greini sem stendur sem nafnliður:
+# 'Hið sama á við um starfsfólkið', 'Hið rétta er að ...',
+# 'hið opinbera greiðir', 'björgunarsveitir óttast hið versta'
+NlStak_p3/tala/fall/kyn →
+    NlGreinirLo/tala/fall/kyn
+
+NlGreinirLo/tala/fall/kyn →
+    Greinir/tala/fall/kyn LoLiður/tala/fall/kyn
+
 # 'Fleiri/færri komu í veisluna en ég bjóst við'
 # 'Fleirum fannst kvikmyndin leiðinleg'
 NlStak_p3_ft/fall/kyn →
@@ -6392,6 +6401,22 @@ FsUndirÁÍ/fall →
 
 # Atviksliður
 
+# Atviksliður úr lausum greini og efsta stigi lýsingarorðs:
+# (leysa) hið fyrsta / (yfirgefa) hið snarasta / (koma) hið allra fyrsta
+HiðFyrsta →
+    'hinn:gr'_et_þf_hk "allra:ao"? HiðFyrstaLo
+
+HiðFyrstaLo →
+    'fyrstur:lo'_vb_et_þf_hk      # hið fyrsta
+    | 'snar:lo'_vb_et_þf_hk      # hið snarasta
+    | 'bráður:lo'_vb_et_þf_hk    # hið bráðasta
+    | 'fljótur:lo'_vb_et_þf_hk   # hið fljótasta
+    | 'skjótur:lo'_vb_et_þf_hk   # hið skjótasta
+    | 'lítill:lo'_vb_et_þf_hk    # hið minnsta
+    | 'mikill:lo'_vb_et_þf_hk    # hið mesta
+
+$score(+16) HiðFyrsta
+
 Al → EinnAl+
 
 EinnAl →
@@ -6407,6 +6432,7 @@ EinnAl →
     | AlHvortSemUmErAðRæða  # Hvort sem um er að ræða X eða Y
     | AðNýju
     | FjöldiSaman           # Tugþúsundum saman
+    | HiðFyrsta             # hið fyrsta, hið snarasta, hið allra bráðasta
 
     # Fjölyrtir atviksliðir sem ekki er unnt að búa til fasta frasa úr
 
