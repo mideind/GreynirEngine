@@ -112,7 +112,7 @@
 /tala = et ft
 
 # Person (1st, 2nd, 3rd) variant
-/pers = p1 p2 p3
+/pers = p1 p2 p3 sp   # sp = spurnarmynd með viðskeyttu frumlagi (ertu, viltu)
 
 # Hacks to generate single variants only
 /hk = hk
@@ -401,8 +401,7 @@ Spurnarsetning →
     | SpurnarForsetningarliður BeygingarliðurSögnFremst? Spurningarmerki       # Í hvaða fötum er barnið?
     | SpurnarAtviksorð BeygingarliðurSögnFremst? Spurningarmerki               # Hvernig missti tröllið lífið?
     | SpurnarFrumlag/tala/kyn BlTagl/tala/p3/kyn? Spurningarmerki              # Hvað er í pokanum?
-    | BeygingarliðurSögnFremst Spurningarmerki                                 # Getur þú hlaupið hratt?
-    #| BeygingarliðurSpurnarsníkill Spurningarmerki                            # Ferðu á ballið?
+    | BeygingarliðurSögnFremst Spurningarmerki                                 # Getur þú hlaupið hratt? / Ferðu á ballið?
 
 # Spurnarorðið er frumlag setningarinnar, stendur utan beygingarliðar
 BlTagl/tala/pers/kyn →
@@ -890,6 +889,15 @@ SagnHluti_et_p3_hk →
 SagnHlutiMegiSkuli →
     # [Ætíð] skal fara með skjölin sem trúnaðarmál
     HjSögnMegiSkuli_et_p3 FsAtv? EinSögn_nh_et_hk SagnInnskot?
+
+# Sögn með viðskeyttu frumlagi ('spurnarmynd'): Ertu búinn? Viltu koma?
+# (Hvernig) komstu í kynni við hana? (Þá) viltu það ekki
+# Sagnmyndin sjálf inniheldur frumlagið 'þú', sem því vantar í setninguna
+SagnHluti_et_p2/kyn →
+    SagnliðurSníkill/kyn SagnInnskot? SagnViðhengi_et_p2/kyn?
+
+SagnliðurSníkill/kyn →
+    Sagnliður_et_sp/kyn
 
 $tag(begin_prep_scope) SagnHluti/tala/pers/kyn # Nýtt undirtré fyrir tengingu sagnar og forsetningar
 
@@ -3925,6 +3933,11 @@ NlStak_p2_ft/fall/kyn →
     | 'þú:pfn'_et/fall KommaOgEða NlEind/fall   # Þú og Jón fóruð, þú og stelpurnar fóruð
 
 NlStak_ft_p2/fall/kyn → NlStak_p2_ft/fall/kyn FsRunaEftirNl?
+
+# Persónan 'sp' (spurnarmynd sagnar með viðskeyttu frumlagi, 'ertu')
+# er í raun 2. persóna eintölu; nafnliðir hennar eru þeir sömu
+NlStak_et_sp/fall/kyn → NlStak_et_p2/fall/kyn
+NlStak_ft_sp/fall/kyn → NlStak_ft_p2/fall/kyn
 
 # !!! ATH: reglurnar hér fyrir ofan leyfa 'ég og þú fóruð til Frakklands'
 

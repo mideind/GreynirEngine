@@ -244,6 +244,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     # "NhSögn": "VP",
     "NhEinfaldur": "VP",
     "SagnliðurÁnF": "VP",
+    "SagnliðurSníkill": "VP",
     "ÖfugurSagnliður": "VP",
     "SagnliðurVh": "VP",
     "HjSögnLhÞt": "VP",  # Auxiliary verb, hjálparsögn

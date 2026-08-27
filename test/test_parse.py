@@ -2656,6 +2656,43 @@ def test_locative_i_prefers_dative(r) -> None:
         assert "P fs_þgf /P" not in s.tree.flat, sentence
 
 
+def test_verb_with_clitic_subject(r) -> None:
+    """Interrogative verb forms with a cliticized second person subject
+    ('ertu', 'viltu', 'geturðu') parse as verbs with an included subject"""
+    for sentence, lemma in (
+        ("Ertu búinn?", "vera"),
+        ("Viltu koma út að leika?", "vilja"),
+        ("Geturðu hjálpað mér?", "geta"),
+        ("Veistu hvað klukkan er?", "vita"),
+        ("Hefurðu heyrt eitthvað frá íbúunum?", "hafa"),
+        ("Ertu duglegur að hreyfa þig?", "vera"),
+        ("Hvernig komstu í kynni við vinnuna?", "koma"),
+        ("Ferðu á ballið?", "fara"),
+        ("Áttu einhverja sögu af vandræðalegu stefnumóti?", "eiga"),
+        ("Þá viltu það ekki.", "vilja"),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        flat = s.tree.flat
+        assert "NP-SUBJ" not in flat, sentence
+        assert "_sp" in flat, sentence
+        assert lemma in s.tree.verbs, sentence
+    # The clitic form is not an imperative of 'erta'
+    s = r.parse_single("Ertu búinn?")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-QUE IP VP VP-AUX so_et_sp /VP-AUX VP so_lhþt_sb_nf_et_kk /VP "
+        "/VP /IP p /S-QUE /S0"
+    )
+    # A regular second person form does not get an implied subject
+    s = r.parse_single("Ert búinn?")
+    assert s and s.tree is None
+    # An explicit subject still parses normally
+    s = r.parse_single("Ert þú búinn?")
+    assert s and s.tree
+    assert "NP-SUBJ pfn_et_nf /NP-SUBJ" in s.tree.flat
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
@@ -2720,4 +2757,5 @@ if __name__ == "__main__":
     test_verb_particle_before_object(g)
     test_deterministic_tie_break()
     test_locative_i_prefers_dative(g)
+    test_verb_with_clitic_subject(g)
     g.__class__.cleanup()
