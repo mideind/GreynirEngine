@@ -2482,11 +2482,12 @@ def test_rel_clause_pp_attachment(r) -> None:
         == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ VP VP "
         "so_2_þgf_þf_et_fh_gm_p3_þt /VP NP-IOBJ abfn_þgf /NP-IOBJ "
         "NP-OBJ no_et_kk_þf PP P fs_þgf /P NP no_et_hk_þgf "
-        "NP-POSS no_ef_et_kvk to_ft_hk_nf /NP-POSS /NP /PP p "
+        "NP-POSS no_ef_et_kvk to_ft_hk_nf p "
         "CP-REL C stt /C IP VP VP so_0_et_fh_gm_nt_p3 /VP "
         "PP P fs_þf /P NP no_et_kk_þf C st /C no_et_kk_þf /NP /PP "
-        "/VP /IP /CP-REL /NP-OBJ /VP /IP /S-MAIN p /S0"
+        "/VP /IP /CP-REL /NP-POSS /NP /PP /NP-OBJ /VP /IP /S-MAIN p /S0"
     )
+    # The relative clause attaches to the nearest noun (lögreglustöðvar)
     # A preposition that matches the main verb (fresta e-u vegna e-s)
     # must still attach to the verb phrase, not the object noun phrase
     s = r.parse_single("Dómarinn frestaði mótinu vegna veðurs.")
@@ -2559,6 +2560,102 @@ def test_verb_particle_before_object(r) -> None:
         assert " PP " in s.tree.flat and "NP-OBJ" not in s.tree.flat, (sentence, s.tree.flat)
 
 
+def test_deterministic_tie_break() -> None:
+    """Equally scored families of children are resolved by the position
+    of the production in the grammar (first alternative wins) and then
+    by the spans of the child nodes, never by the order in which the
+    parser happened to complete the derivations."""
+    from reynir.reducer import _ReductionScope
+
+    class FakeReducer:
+        """Stand-in for ParseForestReducer with no verb context"""
+
+        def get_current_verb(self):
+            return None
+
+        def set_current_verb(self, verb):
+            pass
+
+        def push_current_verb(self, verb):
+            pass
+
+        def pop_current_verb(self):
+            pass
+
+    class FakeNode:
+        is_completed = False
+        nonterminal = None
+        start = 0
+        end = 3
+
+        def __init__(self, start=0, end=3):
+            self.start = start
+            self.end = end
+
+    class FakeProd:
+        priority = 0
+
+        def __init__(self, index):
+            self.index = index
+
+    def choose(families):
+        """families: list of (prod, children); all scored equally.
+        Returns the index of the winning family."""
+        reducer = FakeReducer()
+        scope = _ReductionScope(reducer, FakeNode())  # type: ignore
+        for ix, (prod, children) in enumerate(families):
+            scope.start_family(ix, prod, children)  # type: ignore
+            for _ in children:
+                scope.add_child(ix, {"sc": 1})  # type: ignore
+        _, chosen = scope.process(FakeNode())  # type: ignore
+        return chosen
+
+    a, b = FakeNode(0, 1), FakeNode(1, 3)
+    # The production appearing first in the grammar wins,
+    # regardless of family order
+    assert choose([(FakeProd(10), [a, b]), (FakeProd(5), [a, b])]) == 1
+    assert choose([(FakeProd(5), [a, b]), (FakeProd(10), [a, b])]) == 0
+    # Same production: the derivation whose first child spans more wins
+    p = FakeProd(7)
+    left_heavy = [FakeNode(0, 2), FakeNode(2, 3)]
+    right_heavy = [FakeNode(0, 1), FakeNode(1, 3)]
+    assert choose([(p, right_heavy), (p, left_heavy)]) == 1
+    assert choose([(p, left_heavy), (p, right_heavy)]) == 0
+    # A better score still beats a better key
+    reducer = FakeReducer()
+    scope = _ReductionScope(reducer, FakeNode())  # type: ignore
+    scope.start_family(0, FakeProd(5), [a, b])  # type: ignore
+    scope.add_child(0, {"sc": 1})  # type: ignore
+    scope.start_family(1, FakeProd(10), [a, b])  # type: ignore
+    scope.add_child(1, {"sc": 2})  # type: ignore
+    assert scope.process(FakeNode())[1] == 1  # type: ignore
+
+
+def test_locative_i_prefers_dative(r) -> None:
+    """When the noun form is the same in accusative and dative, 'í' is
+    read as locative (dative) unless a verb frame says otherwise"""
+    for sentence in (
+        "Áfram óvissa meðan ástandið er svona í Úkraínu.",
+        "Regína er sviðsstjóri velferðarsviðs í Reykjavík.",
+        "Samkomulagið er í höfn.",
+        "Slysið varð í umdæmi lögreglunnar.",
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert "P fs_þgf /P" in s.tree.flat, sentence
+        assert "P fs_þf /P" not in s.tree.flat, sentence
+    # Directional readings governed by the verb frame stay accusative
+    for sentence in (
+        "Chelsea kom í heimsókn.",
+        "Hann fór í bæinn.",
+        "Hún setti bókina í hillu.",
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert "P fs_þf /P" in s.tree.flat, sentence
+        assert "P fs_þgf /P" not in s.tree.flat, sentence
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
@@ -2621,4 +2718,6 @@ if __name__ == "__main__":
     test_rel_clause_pp_attachment(g)
     test_reflexive_verb_frames(g)
     test_verb_particle_before_object(g)
+    test_deterministic_tie_break()
+    test_locative_i_prefers_dative(g)
     g.__class__.cleanup()
