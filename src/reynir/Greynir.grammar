@@ -5459,12 +5459,15 @@ SvigaInnihald/tala/fall/kyn →
     > Nl/fall               # Sama fall en ekki sama tala
     > SvigaInnihaldFsRuna
     > HreinYfirsetning
+    # Ef ekki finnst sama fall og tala, prófa nafnlið í öðru falli (villa).
+    # Þetta verður að vera aftast í forgangsröðinni hér, þar sem sérstök
+    # skilgreining (SvigaInnihald_nf/tala/kyn → ...) fengi hæsta forgang.
+    > SvigaInnihaldAnnaðFall/fall
 
-# Ef ekki finnst sama fall og tala, prófa almennan nafnlið
-Svigainnihald_nf/tala/pers/kyn → AðvörunSvigaInnihaldNl/fallxnf
-Svigainnihald_þf/tala/pers/kyn → AðvörunSvigaInnihaldNl/fallxþf
-Svigainnihald_þgf/tala/pers/kyn → AðvörunSvigaInnihaldNl/fallxþgf
-Svigainnihald_ef/tala/pers/kyn → AðvörunSvigaInnihaldNl/fallxef
+SvigaInnihaldAnnaðFall_nf → AðvörunSvigaInnihaldNl/fallxnf
+SvigaInnihaldAnnaðFall_þf → AðvörunSvigaInnihaldNl/fallxþf
+SvigaInnihaldAnnaðFall_þgf → AðvörunSvigaInnihaldNl/fallxþgf
+SvigaInnihaldAnnaðFall_ef → AðvörunSvigaInnihaldNl/fallxef
 
 # Árabil nota en-dash
 
