@@ -157,19 +157,15 @@ Staðhæfing →
     Sagt Segjandi ÁframSagt? Lokatákn?
     # Spurning eða upphrópun í beinni ræðu, án kommu á undan segjanda:
     # "Komst hann ekki í hópinn?" sagði hann. / "Við erum að falla á tíma!" skrifar Limbourg.
-    | SagtSpurning SegirÁnKommu SegirÁframSagt? Lokatákn?
+    | Forskeyti? SagtSpurning ","? SegirKjarni SegirÁframSagt? Lokatákn?
 
 # og bætti við: "Þetta er mjög gott."
 SegirÁframSagt →
     SegirÁfram ":"? Sagt?
 
 SagtSpurning →
-    Forskeyti? Upphrópun* Spurnarsetning
-    | Forskeyti? Yfirsetning StLiður* "!"
-
-SegirÁnKommu →
-    ","? SögnSegja/tala/pers Heimild_nf/tala/pers AtvFsAuka?
-    | ","? SögnBætaVið/tala/pers
+    Upphrópun* Spurnarsetning
+    | Yfirsetning StLiður* "!"
 
 ÁframSagt →
     Segir SegirÁfram Sagt
@@ -231,10 +227,13 @@ $tag(keep) Heimild_ef/tala/pers
 Sagt → Forskeyti? Yfirsetning StLiður* 
 
 Segir →
-    # , segir/fullyrðir Jón Ásmundsson, fulltrúi samtakanna, í dag í útvarpinu
-    "," SögnSegja/tala/pers Heimild_nf/tala/pers AtvFsAuka?
-    # , bætir Jón við
-    | "," SögnBætaVið/tala/pers
+    "," SegirKjarni
+
+SegirKjarni →
+    # segir/fullyrðir Jón Ásmundsson, fulltrúi samtakanna, í dag í útvarpinu
+    SögnSegja/tala/pers Heimild_nf/tala/pers AtvFsAuka?
+    # bætir Jón við
+    | SögnBætaVið/tala/pers
 
 # bætir Jón við / bætir hún við í færslu sinni
 SögnBætaVið/tala/pers →
