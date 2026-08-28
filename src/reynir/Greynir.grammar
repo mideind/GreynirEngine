@@ -155,6 +155,21 @@ MgrInnihald →
 # "Allt er klárt," segir Jón og bætir við: "Komum þessu í gang."
 Staðhæfing →
     Sagt Segjandi ÁframSagt? Lokatákn?
+    # Spurning eða upphrópun í beinni ræðu, án kommu á undan segjanda:
+    # "Komst hann ekki í hópinn?" sagði hann. / "Við erum að falla á tíma!" skrifar Limbourg.
+    | SagtSpurning SegirÁnKommu SegirÁframSagt? Lokatákn?
+
+# og bætti við: "Þetta er mjög gott."
+SegirÁframSagt →
+    SegirÁfram ":"? Sagt?
+
+SagtSpurning →
+    Forskeyti? Upphrópun* Spurnarsetning
+    | Forskeyti? Yfirsetning StLiður* "!"
+
+SegirÁnKommu →
+    ","? SögnSegja/tala/pers Heimild_nf/tala/pers AtvFsAuka?
+    | ","? SögnBætaVið/tala/pers
 
 ÁframSagt →
     Segir SegirÁfram Sagt
@@ -197,11 +212,16 @@ StrikEðaKomma → "-:em" | ","
 $score(-6) Forskeyti # Ekki freistast í forskeyti ef annað er í boði
 
 Heimild_nf/tala/pers →
-    Nl_nf/tala/pers | Sérnafn
+    Nl_nf/tala/pers
 Heimild_þgf/tala/pers →
-    Nl_þgf/tala/pers | Sérnafn
+    Nl_þgf/tala/pers
 Heimild_ef/tala/pers →
-    Nl_ef/tala/pers | Sérnafn
+    Nl_ef/tala/pers
+
+# Sérnafn sem heimild er alltaf 3. persóna eintölu: segir Limbourg
+Heimild_nf_et_p3 → Sérnafn
+Heimild_þgf_et_p3 → Sérnafn
+Heimild_ef_et_p3 → Sérnafn
 
 # Koma í veg fyrir að þessir hnútar séu bestaðir burt
 $tag(keep) Heimild_nf/tala/pers
@@ -213,10 +233,25 @@ Sagt → Forskeyti? Yfirsetning StLiður*
 Segir →
     # , segir/fullyrðir Jón Ásmundsson, fulltrúi samtakanna, í dag í útvarpinu
     "," SögnSegja/tala/pers Heimild_nf/tala/pers AtvFsAuka?
+    # , bætir Jón við
+    | "," SögnBætaVið/tala/pers
+
+# bætir Jón við / bætir hún við í færslu sinni
+SögnBætaVið/tala/pers →
+    'bæta:so'_0_gm_fh/tala/pers Heimild_nf/tala/pers "við:ao" AtvFsAuka?
 
 SegirÁfram →
     "og:st" SögnSegja/tala/pers SegirLíka?
     | "og:st" SögnSegjaÁfram/tala/pers
+    | "og:st" SögnSegjaLátbragð/tala/pers   # spurði Þorgerður og hló
+
+# Látbragð sem fylgir tilvitnun: segir KK og hlær / brosir / andvarpar
+SögnSegjaLátbragð/tala/pers →
+    'hlæja:so'_0_gm_fh/tala/pers
+    | 'brosa:so'_0_gm_fh/tala/pers
+    | 'andvarpa:so'_0_gm_fh/tala/pers
+    | 'kinka:so'_0_gm_fh/tala/pers 'kollur:kk'_þgf_et
+    | 'hrista:so'_0_gm_fh/tala/pers 'höfuð:hk'_þf_et_gr
 
 $score(+999) SegirÁfram
 
@@ -232,6 +267,13 @@ SögnSegja/tala/pers →
     | 'ítreka:so'_0_gm_fh/tala/pers
     | 'viðurkenna:so'_0_gm_fh/tala/pers
     | 'álíta:so'_0_gm_fh/tala/pers
+    | 'spyrja:so'_0_gm_fh/tala/pers      # "Er þetta satt?" spyr Jón
+    | 'svara:so'_0_gm_fh/tala/pers
+    | 'hrópa:so'_0_gm_fh/tala/pers
+    | 'kalla:so'_0_gm_fh/tala/pers
+    | 'tísta:so'_0_gm_fh/tala/pers
+    | 'hugsa:so'_0_gm_fh/tala/pers
+    | 'útskýra:so'_0_gm_fh/tala/pers
 
 SögnSegjaÁfram/tala/pers →
     'bæta:so'_0_gm_fh/tala/pers "við:ao"

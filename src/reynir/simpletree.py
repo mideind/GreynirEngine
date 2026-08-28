@@ -138,6 +138,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "Afleiðing": "S-CONS",
     "Spurnarsetning": "S-QUE",
     "Sagt": "CP-QUOTE",
+    "SagtSpurning": "CP-QUOTE",
     # "Segjandi": "CP-SOURCE",
     "Forskeyti": "S-PREFIX",
     "Tíðarsetning": "CP-ADV-TEMP",

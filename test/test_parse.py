@@ -2718,6 +2718,34 @@ def test_article_with_nominalized_adjective(r) -> None:
         assert phrase in s.tree.flat, (sentence, s.tree.flat)
 
 
+def test_quoted_question_attribution(r) -> None:
+    """A quoted question or exclamation followed directly by an
+    attribution ('spyr hann', 'sagði hún', 'bætir hún við') without
+    an intervening comma"""
+    for sentence, attr in (
+        ("„Komst hann ekki í hópinn?“ sagði hann.", "segja"),
+        ("„Við erum að falla á tíma!“ skrifar Limbourg.", "skrifa"),
+        ("„Áttu mynd?“ spyr sá þriðji.", "spyrja"),
+        ("„Er þetta verk dagskrárstjórans?“ spyr hann.", "spyrja"),
+        ("„Er það ekki bara flott fyrirsögn?“ svarar Ottó hlæjandi.", "svara"),
+        ("„Hvað er það sem Miðflokkurinn er að gera?“ bætir hún við.", "bæta"),
+        ("„Er þetta gott?“ sagði Sindri og bætti við: „Þetta er mjög gott.“", "segja"),
+        ("„Er þátturinn ekki að verða búinn?“ spurði Þorgerður og hló.", "hlæja"),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        flat = s.tree.flat
+        assert flat.startswith("S0 S-QUOTE IP CP-QUOTE "), (sentence, flat)
+        assert attr in s.tree.verbs, sentence
+    # A proper noun as the attributed source is third person singular
+    s = r.parse_single("„Við erum að falla á tíma!“ skrifar Limbourg.")
+    assert s and s.tree
+    assert "VP so_0_gm_fh_et_p3 /VP sérnafn" in s.tree.flat
+    s = r.parse_single("„Þetta er gott,“ segir Limbourg.")
+    assert s and s.tree
+    assert "VP so_0_gm_fh_et_p3 /VP sérnafn" in s.tree.flat
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
@@ -2784,4 +2812,5 @@ if __name__ == "__main__":
     test_locative_i_prefers_dative(g)
     test_verb_with_clitic_subject(g)
     test_article_with_nominalized_adjective(g)
+    test_quoted_question_attribution(g)
     g.__class__.cleanup()
