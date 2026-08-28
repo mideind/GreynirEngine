@@ -2746,6 +2746,23 @@ def test_quoted_question_attribution(r) -> None:
     assert "VP so_0_gm_fh_et_p3 /VP sérnafn" in s.tree.flat
 
 
+def test_thess_i_stad(r) -> None:
+    """'þess í stað' is a fixed adverbial phrase"""
+    for sentence in (
+        "Þess í stað fór hann heim.",
+        "Hann fór þess í stað í bæinn.",
+        "Þess í stað hafi flugfélagið fengið leiguvélar.",
+        "Það er ekki rétt, þess í stað er loftinu hleypt úr dekkjunum.",
+        "Hann gaf upp ferilinn og fór þess í stað að læra.",
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert any(
+            t.text.lower() == "þess í stað" and t.terminal == "ao"
+            for t in s.tree.leaves
+        ), sentence
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
@@ -2813,4 +2830,5 @@ if __name__ == "__main__":
     test_verb_with_clitic_subject(g)
     test_article_with_nominalized_adjective(g)
     test_quoted_question_attribution(g)
+    test_thess_i_stad(g)
     g.__class__.cleanup()
