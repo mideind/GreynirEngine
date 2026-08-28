@@ -2031,6 +2031,12 @@ SögnErLoBotn/tala/kyn →
     | SögnErLoMM
     # (Hún er/var/hefur verið) talin/álitin/sögð vera lykillinn [að því að málið leystist]
     | SögnLhÞtVera_nf/tala/kyn HjSögnVera NlSagnfylling_nf
+    # (Maðurinn er/var) sagður/talinn [ekki] hafa stolið bílnum / hafa verið vopnaður
+    | SögnLhÞtVera_nf/tala/kyn FsAtv? 'hafa:so'_nh HreinSögn_sagnb/tala/kyn
+    # (Maðurinn er) sagður/talinn [ekki] vera í haldi lögreglu / búa í Reykjavík
+    | SögnLhÞtVera_nf/tala/kyn FsAtv? HreinSögn_nh/tala/kyn
+    # (Maðurinn er) sagður/talinn [ekki] vera/hafa verið vopnaður
+    | SögnLhÞtVera_nf/tala/kyn FsAtv? HjSögnEkkiVera so_lhþt_sb_nf/tala/kyn
 
 SögnErLoMM →
     FsAtv? so_0_mm_sagnb

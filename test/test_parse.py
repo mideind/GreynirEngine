@@ -249,9 +249,8 @@ def test_parse(r: Greynir, verbose: bool = False) -> None:
         "borða",
     ]
     assert results[12].tree.verbs == ["horfa", "borða"]
-    assert (results[32].tree.verbs == ["finna", "segja", "gefa", "hafa", "deyja"]) or (
-        results[32].tree.verbs == ["finna", "gefa", "hafa", "deyja"]
-    )
+    # 'er sögð gefa í skyn' is a raising construction: vera + sögð + gefa
+    assert results[32].tree.verbs == ["finna", "vera", "segja", "gefa", "hafa", "deyja"]
     # Test that the parser finds the correct word lemmas
     assert results[0].tree.lemmas == [
         "hér",
@@ -2763,6 +2762,24 @@ def test_thess_i_stad(r) -> None:
         ), sentence
 
 
+def test_sagdur_hafa(r) -> None:
+    """Raising construction: X er sagður/talinn (ekki) hafa gert Y / vera Z"""
+    for sentence, verbs in (
+        ("Maðurinn er sagður hafa stolið bílnum.", ["vera", "segja", "hafa", "stela"]),
+        ("Konan er sögð hafa stolið bílnum.", ["vera", "segja", "hafa", "stela"]),
+        ("Mennirnir eru sagðir hafa stolið bílnum.", ["vera", "segja", "hafa", "stela"]),
+        ("Maðurinn er talinn hafa stolið bílnum.", ["vera", "telja", "hafa", "stela"]),
+        ("Því var hann ekki talinn hafa misnotað aðstöðu sína.", ["vera", "telja", "hafa", "misnota"]),
+        ("Hann er sagður vera í haldi lögreglu.", ["vera", "segja", "vera"]),
+        ("Hún er sögð hafa verið í haldi lögreglu.", ["vera", "segja", "hafa", "vera"]),
+        ("Hann er sagður búa í Reykjavík.", ["vera", "segja", "búa"]),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert s.tree.verbs == verbs, (sentence, s.tree.verbs)
+        assert "lhþt" in s.tree.flat, sentence
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
@@ -2831,4 +2848,5 @@ if __name__ == "__main__":
     test_article_with_nominalized_adjective(g)
     test_quoted_question_attribution(g)
     test_thess_i_stad(g)
+    test_sagdur_hafa(g)
     g.__class__.cleanup()
