@@ -3375,7 +3375,7 @@ HjSögnLhNt →
 # [Nú] fer hælisleitendum fækkandi
 # [Nú] hefur hælisleitendum farið fækkandi
 HjSögnLhNtFrumlag → 
-    'fara:so'_gm_p3_et
+    'fara:so'_gm_p3_et NlFrumlag_þgf_ft FsAtv?                                        # fer/fór/færi þeim [ekki] (fækkandi)
     | 'hafa:so'_gm_p3_et NlFrumlag_þgf_ft FsAtv? 'geta:so'_sagnb? 'fara:so'_sagnb    # hefur/hafði/hefði þeim [ekki] [getað] farið (fækkandi)
     | 'geta:so'_gm_p3_et NlFrumlag_þgf_ft FsAtv? 'hafa:so'_nh? 'fara:so'_sagnb       # getur/gat/gæti þeim [hafa] farið (fækkandi)
     | 'munu:so'_gm_p3_et NlFrumlag_þgf_ft FsAtv? 'fara:so'_nh                        # mun/myndi þeim [ekki] fara (fækkandi)
@@ -3425,6 +3425,9 @@ HjSögnFinnst/tala/pers →
 HjSögnVantaSkorta →
     'vanta:so'_nh           # Okkur þykir/þótti vanta mýkt í rödd Pálínu
     | 'skorta:so'_nh        # Páli þykir/þótti skorta samkvæmni í málflutningi Jóns
+
+# Kjósum þessa greiningu fremur en að lesa 'vanta' sem nafnorð
+$score(+8) HjSögnVantaSkorta
 
 HjSögnFá/tala/pers →
     'fá:so'_1_þf_gm/tala/pers                   # Páll fékk bílinn endurgreiddan
@@ -5750,7 +5753,7 @@ LoMun/fall/tala/kyn →
 $score(+10) LoMun/fall/tala/kyn
 
 LoSem/fall/tala/kyn →
-    "sem:ao" lo_esb/fall/tala/kyn # (hvernig skuli stuðla að) sem jöfnustu hlutfalli
+    "sem:st" lo_esb/fall/tala/kyn # (hvernig skuli stuðla að) sem jöfnustu hlutfalli
 
 $score(+4) LoSem/fall/tala/kyn
 
@@ -6491,9 +6494,9 @@ EinnAl →
     | 'einn:fn'_kvk_et_þf 'ferð:kvk'_þf_et_gr "enn:ao"  # eina ferðina enn
     | "heima:ao" "fyrir:ao"
     | "hingað:ao" "til:ao"
-    | "sem:ao" 'segja:so'_lhþt_sb_hk_nf_et  # sem sagt
-    | "svo:ao" "sem:ao"
-    | "sem:ao" "fyrst:ao"
+    | "sem:st" 'segja:so'_lhþt_sb_hk_nf_et  # sem sagt
+    | "svo:ao" "sem:st"
+    | "sem:st" "fyrst:ao"
     | 'vinsamlegur:lo'_esb_nf_et_hk     # (Þátttakendur eru) vinsamlegast (beðnir að fylla út eyðublað)
     | 'náðarsamlegur:lo'_esb_nf_et_hk   # (Þátttakendur eru) náðarsamlegast (beðnir að fylla út eyðublað)
     | "mest:ao" Allra     # (Ferðamönnum hefur fjölgað) mest allra
@@ -6545,12 +6548,12 @@ $score(+8) FyrirLöngu
 
 # Sem stendur er hann ekki viðlátinn
 SemStendur →
-    "sem:ao" 'standa:so'_0_gm_fh_et_p3
+    "sem:st" 'standa:so'_0_gm_fh_et_p3
 
 $score(-6) SemStendur
 
 UndirEins →
-    "undir:ao" "eins:ao"    # 'Ég fór undir eins og kannaði málið'
+    'undir_eins:ao'         # 'Ég fór undir eins og kannaði málið' (fasti frasinn 'undir eins' í Phrases.conf)
 
 $score(+4) UndirEins
 
@@ -6626,7 +6629,7 @@ AtviksliðurEinkunn →
     eo                              # Einkunnarorð = atviksorð sem geta ekki jafnframt verið forsetningar
     | Aldur                         # Hin 29 ára gamla fyrirsæta
     | Allt "að:ao"                  # 'fjárfesta fyrir allt að 100 milljónir króna'
-    | "svo:ao" "sem:ao"             # 'enda kemur kynlíf þeirra svo sem engum við'
+    | "svo:ao" "sem:st"             # 'enda kemur kynlíf þeirra svo sem engum við'
     | "innan_við:fs"
     | "líkast:ao" "til:ao"
     | UmEðaYfir
