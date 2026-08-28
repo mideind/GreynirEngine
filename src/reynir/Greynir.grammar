@@ -5356,7 +5356,7 @@ NlEind_p3/fall/kyn →
 
 NlEind/tala/pers/fall/kyn →
     NlStak/tala/pers/fall/kyn StakViðhengi/tala/fall/kyn? TilvísunarsetningMeðKommu/tala/pers/kyn?
-        Þó/tala/pers/kyn? NlSkýring/tala/pers/fall/kyn?
+        Þó/tala/pers/kyn? NlSkýring/tala/fall/kyn?
 
 NlEind_et_p3/fall/kyn → NlEkkiHeldur_et/fall/kyn
 NlEind_ft_p3/fall/kyn → NlEkkiHeldur_ft/fall/kyn
@@ -5431,28 +5431,30 @@ $tag(begin_prep_scope) ÞaðTenging
 ÞóBotn/tala/pers/kyn →
     FsRuna? LoLiður_nf/tala/kyn VeraVerða_vh/tala/pers
 
-NlSkýring/tala/pers/fall/kyn →
-    "(" SvigaForskeyti? SvigaInnihald/tala/pers/fall/kyn ")"
-    | "[" SvigaForskeyti? SvigaInnihald/tala/pers/fall/kyn "]"
-    | "-:em" SvigaForskeyti? SvigaInnihald/tala/pers/fall/kyn "-:em"
+# Skýringar (innskot) með nafnlið eru alltaf í 3. persónu;
+# persóna nafnliðarins skiptir aðeins máli í tilvísunarsetningu innskotsins
+NlSkýring/tala/fall/kyn →
+    "(" SvigaForskeyti? SvigaInnihald/tala/fall/kyn ")"
+    | "[" SvigaForskeyti? SvigaInnihald/tala/fall/kyn "]"
+    | "-:em" SvigaForskeyti? SvigaInnihald/tala/fall/kyn "-:em"
     | "," Skýring Skýringarliður LokatáknEðaKomma
     # (Verslunin þjónar fjölbreyttum markhópi), allt frá börnum til aldraðra, (og er vinsæl í hverfinu)
     | Samanburðarmerki Allt 'frá:fs'_þgf Nl_þgf
         'til:fs'_ef Nl_ef LokatáknEðaKomma
-    | NlSkýringKomma/tala/pers/fall/kyn
+    | NlSkýringKomma/tala/fall/kyn
 
-NlSkýringKomma/tala/pers/fall/kyn →
-    "," SvigaInnihald/tala/pers/fall/kyn LokatáknEðaKomma
+NlSkýringKomma/tala/fall/kyn →
+    "," SvigaInnihald/tala/fall/kyn LokatáknEðaKomma
 
 # Draga úr skýringum sem eru ekki auðkenndar betur en með einfaldri kommu
-$score(-10) NlSkýringKomma/tala/pers/fall/kyn
+$score(-10) NlSkýringKomma/tala/fall/kyn
 
 # Gefa aukastig fyrir skýringar á nafnliðum
-$score(+6) NlSkýring/tala/pers/fall/kyn
+$score(+6) NlSkýring/tala/fall/kyn
 
-SvigaInnihald/tala/pers/fall/kyn →
+SvigaInnihald/tala/fall/kyn →
     Árabil
-    > Tilvísunarsetning/tala/pers/kyn # (og sem ég er almennt fylgjandi)
+    > Tilvísunarsetning/tala/p3/kyn # (og sem er almennt fylgjandi)
     > Nl/fall/tala          # 'Ég spurði forsætisráðherra, Sigmund Davíð, um málið'
     > Nl/fall               # Sama fall en ekki sama tala
     > SvigaInnihaldFsRuna
