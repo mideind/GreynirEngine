@@ -249,9 +249,8 @@ def test_parse(r: Greynir, verbose: bool = False) -> None:
         "borða",
     ]
     assert results[12].tree.verbs == ["horfa", "borða"]
-    assert (results[32].tree.verbs == ["finna", "segja", "gefa", "hafa", "deyja"]) or (
-        results[32].tree.verbs == ["finna", "gefa", "hafa", "deyja"]
-    )
+    # 'er sögð gefa í skyn' is a raising construction: vera + sögð + gefa
+    assert results[32].tree.verbs == ["finna", "vera", "segja", "gefa", "hafa", "deyja"]
     # Test that the parser finds the correct word lemmas
     assert results[0].tree.lemmas == [
         "hér",
@@ -2481,12 +2480,13 @@ def test_rel_clause_pp_attachment(r) -> None:
         s.tree.flat_with_all_variants
         == "S0 S-MAIN IP NP-SUBJ pfn_et_hk_nf_p3 /NP-SUBJ VP VP "
         "so_2_þgf_þf_et_fh_gm_p3_þt /VP NP-IOBJ abfn_þgf /NP-IOBJ "
-        "NP-OBJ no_et_kk_þf PP P fs_þf /P NP no_et_hk_þf "
-        "NP-POSS no_ef_et_kvk to_ft_hk_nf /NP-POSS /NP /PP p "
+        "NP-OBJ no_et_kk_þf PP P fs_þgf /P NP no_et_hk_þgf "
+        "NP-POSS no_ef_et_kvk to_ft_hk_nf p "
         "CP-REL C stt /C IP VP VP so_0_et_fh_gm_nt_p3 /VP "
         "PP P fs_þf /P NP no_et_kk_þf C st /C no_et_kk_þf /NP /PP "
-        "/VP /IP /CP-REL /NP-OBJ /VP /IP /S-MAIN p /S0"
+        "/VP /IP /CP-REL /NP-POSS /NP /PP /NP-OBJ /VP /IP /S-MAIN p /S0"
     )
+    # The relative clause attaches to the nearest noun (lögreglustöðvar)
     # A preposition that matches the main verb (fresta e-u vegna e-s)
     # must still attach to the verb phrase, not the object noun phrase
     s = r.parse_single("Dómarinn frestaði mótinu vegna veðurs.")
@@ -2497,6 +2497,287 @@ def test_rel_clause_pp_attachment(r) -> None:
         "NP-OBJ no_et_þgf_hk /NP-OBJ PP P fs_ef /P NP no_et_ef_kk /NP /PP "
         "/VP /IP /S-MAIN p /S0"
     )
+
+
+def test_reflexive_verb_frames(r) -> None:
+    """Verb frames in Verbs.conf whose object is a reflexive pronoun
+    ('átta |sig /á þgf', 'tryggja sér |þf') used to be dropped entirely,
+    leaving verbs such as 'átta' unknown to the parser. They are now
+    registered under the pronoun's case, so that 1st and 2nd person
+    objects ('áttaði mig') as well as non-reflexive objects in the same
+    frame ('tryggði gestunum sigur') parse."""
+    for sentence, verb in (
+        ("Ég áttaði mig á þessu.", "átta"),
+        ("Hann áttaði sig á villu síns vegar.", "átta"),
+        ("Við áttuðum okkur ekki á því hvað þetta var erfitt.", "átta"),
+        ("Liðið tryggði gestunum sigur.", "tryggja"),
+        ("Hún ímyndaði sér þetta.", "ímynda"),
+        ("Hún furðaði sig á þessu.", "furða"),
+        ("Hann notfærði sér aðstöðuna.", "notfæra"),
+        ("Hann faðmaði hana.", "faðma"),
+        ("Þau minnka losun.", "minnka"),
+        ("Þau trúlofuðu sig árið 2011 og gengu í hjónaband árið 2013.", "trúlofa"),
+    ):
+        s = r.parse_single(sentence)
+        assert s is not None and s.tree is not None, sentence
+        assert verb in s.tree.verbs, sentence
+    # A verb reading that is only licensed by a reflexive frame
+    # ('eiga sér |þf') must not displace a preposition reading
+    s = r.parse_single("Eðlisfræðingurinn lést í dag, á pí-deginum.")
+    assert s is not None and s.tree is not None
+    assert s.tree.verbs == ["láta"]
+
+
+def test_verb_particle_before_object(r) -> None:
+    """A verb particle may precede the object ('bjó til hús',
+    'kastaði upp boltanum'); the particle is accepted if Verbs.conf lists
+    it for the verb (*til, *upp), and the object is parsed as a direct
+    object rather than as the object of a preposition."""
+    for sentence, pattern in (
+        ("Hann bjó til hús.", "VP so_1_þf_et_p3 /VP ao NP-OBJ no_et_þf_hk /NP-OBJ"),
+        ("Hann tók upp bókina.", "VP so_1_þf_et_p3 /VP ao NP-OBJ no_et_þf_kvk /NP-OBJ"),
+        ("Hann kastaði upp boltanum.", "VP so_1_þgf_et_p3 /VP ao NP-OBJ no_et_þgf_kk /NP-OBJ"),
+        ("Hann skilaði inn skýrslunni.", "VP so_1_þgf_et_p3 /VP ao NP-OBJ no_et_þgf_kvk /NP-OBJ"),
+        ("Hann sagði upp störfum.", "VP so_1_þgf_et_p3 /VP ao NP-OBJ no_ft_þgf_hk /NP-OBJ"),
+        ("Hún hefur búið til mat.", "VP so_1_þf_sagnb /VP ao NP-OBJ no_et_þf_kk /NP-OBJ"),
+        ("Hún ætlar að búa til mat.", "VP so_1_þf_nh /VP ao NP-OBJ no_et_þf_kk /NP-OBJ"),
+        ("Hann ætlar að skila inn skýrslunni.", "VP so_1_þgf_nh /VP ao NP-OBJ no_et_þgf_kvk /NP-OBJ"),
+        ("Búðu til mat!", "VP so_1_þf_bh /VP ao NP-OBJ no_et_þf_kk /NP-OBJ"),
+    ):
+        s = r.parse_single(sentence)
+        assert s is not None and s.tree is not None, sentence
+        assert pattern in s.tree.flat, (sentence, s.tree.flat)
+    # Prepositional phrases are still preferred where the verb
+    # does not take the particle
+    for sentence in (
+        "Hann bjó í húsinu.",
+        "Hann kastaði upp á þakið.",
+        "Hann ætlar að kasta upp á þakið.",
+    ):
+        s = r.parse_single(sentence)
+        assert s is not None and s.tree is not None, sentence
+        assert " PP " in s.tree.flat and "NP-OBJ" not in s.tree.flat, (sentence, s.tree.flat)
+
+
+def test_deterministic_tie_break() -> None:
+    """Equally scored families of children are resolved by the position
+    of the production in the grammar (first alternative wins) and then
+    by the spans of the child nodes, never by the order in which the
+    parser happened to complete the derivations."""
+    from reynir.reducer import _ReductionScope
+
+    class FakeReducer:
+        """Stand-in for ParseForestReducer with no verb context"""
+
+        def get_current_verb(self):
+            return None
+
+        def set_current_verb(self, verb):
+            pass
+
+        def push_current_verb(self, verb):
+            pass
+
+        def pop_current_verb(self):
+            pass
+
+    class FakeNode:
+        is_completed = False
+        nonterminal = None
+        start = 0
+        end = 3
+
+        def __init__(self, start=0, end=3):
+            self.start = start
+            self.end = end
+
+    class FakeProd:
+        priority = 0
+
+        def __init__(self, index):
+            self.index = index
+
+    def choose(families):
+        """families: list of (prod, children); all scored equally.
+        Returns the index of the winning family."""
+        reducer = FakeReducer()
+        scope = _ReductionScope(reducer, FakeNode())  # type: ignore
+        for ix, (prod, children) in enumerate(families):
+            scope.start_family(ix, prod, children)  # type: ignore
+            for _ in children:
+                scope.add_child(ix, {"sc": 1})  # type: ignore
+        _, chosen = scope.process(FakeNode())  # type: ignore
+        return chosen
+
+    a, b = FakeNode(0, 1), FakeNode(1, 3)
+    # The production appearing first in the grammar wins,
+    # regardless of family order
+    assert choose([(FakeProd(10), [a, b]), (FakeProd(5), [a, b])]) == 1
+    assert choose([(FakeProd(5), [a, b]), (FakeProd(10), [a, b])]) == 0
+    # Same production: the derivation whose first child spans more wins
+    p = FakeProd(7)
+    left_heavy = [FakeNode(0, 2), FakeNode(2, 3)]
+    right_heavy = [FakeNode(0, 1), FakeNode(1, 3)]
+    assert choose([(p, right_heavy), (p, left_heavy)]) == 1
+    assert choose([(p, left_heavy), (p, right_heavy)]) == 0
+    # A better score still beats a better key
+    reducer = FakeReducer()
+    scope = _ReductionScope(reducer, FakeNode())  # type: ignore
+    scope.start_family(0, FakeProd(5), [a, b])  # type: ignore
+    scope.add_child(0, {"sc": 1})  # type: ignore
+    scope.start_family(1, FakeProd(10), [a, b])  # type: ignore
+    scope.add_child(1, {"sc": 2})  # type: ignore
+    assert scope.process(FakeNode())[1] == 1  # type: ignore
+
+
+def test_locative_i_prefers_dative(r) -> None:
+    """When the noun form is the same in accusative and dative, 'í' is
+    read as locative (dative) unless a verb frame says otherwise"""
+    for sentence in (
+        "Áfram óvissa meðan ástandið er svona í Úkraínu.",
+        "Regína er sviðsstjóri velferðarsviðs í Reykjavík.",
+        "Samkomulagið er í höfn.",
+        "Slysið varð í umdæmi lögreglunnar.",
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert "P fs_þgf /P" in s.tree.flat, sentence
+        assert "P fs_þf /P" not in s.tree.flat, sentence
+    # Directional readings governed by the verb frame stay accusative
+    for sentence in (
+        "Chelsea kom í heimsókn.",
+        "Hann fór í bæinn.",
+        "Hún setti bókina í hillu.",
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert "P fs_þf /P" in s.tree.flat, sentence
+        assert "P fs_þgf /P" not in s.tree.flat, sentence
+
+
+def test_verb_with_clitic_subject(r) -> None:
+    """Interrogative verb forms with a cliticized second person subject
+    ('ertu', 'viltu', 'geturðu') parse as verbs with an included subject"""
+    for sentence, lemma in (
+        ("Ertu búinn?", "vera"),
+        ("Viltu koma út að leika?", "vilja"),
+        ("Geturðu hjálpað mér?", "geta"),
+        ("Veistu hvað klukkan er?", "vita"),
+        ("Hefurðu heyrt eitthvað frá íbúunum?", "hafa"),
+        ("Ertu duglegur að hreyfa þig?", "vera"),
+        ("Hvernig komstu í kynni við vinnuna?", "koma"),
+        ("Ferðu á ballið?", "fara"),
+        ("Áttu einhverja sögu af vandræðalegu stefnumóti?", "eiga"),
+        ("Þá viltu það ekki.", "vilja"),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        flat = s.tree.flat
+        assert "NP-SUBJ" not in flat, sentence
+        assert "_sp" in flat, sentence
+        assert lemma in s.tree.verbs, sentence
+    # The clitic form is not an imperative of 'erta'
+    s = r.parse_single("Ertu búinn?")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-QUE IP VP VP-AUX so_et_sp /VP-AUX VP so_lhþt_sb_nf_et_kk /VP "
+        "/VP /IP p /S-QUE /S0"
+    )
+    # A regular second person form does not get an implied subject
+    s = r.parse_single("Ert búinn?")
+    assert s and s.tree is None
+    # An explicit subject still parses normally
+    s = r.parse_single("Ert þú búinn?")
+    assert s and s.tree
+    assert "NP-SUBJ pfn_et_nf /NP-SUBJ" in s.tree.flat
+
+
+def test_article_with_nominalized_adjective(r) -> None:
+    """The free article 'hinn/hin/hið' followed by an adjective forms
+    a noun phrase on its own ('hið sama', 'hið opinbera', 'hið versta'),
+    or an adverbial phrase with certain superlatives ('hið fyrsta')"""
+    for sentence, phrase in (
+        ("Hið sama á við um starfsfólk deildarinnar.", "NP-SUBJ gr_et_nf_hk lo_nf_et_hk /NP-SUBJ"),
+        ("Hið rétta er að það kviknaði í bátnum.", "NP-SUBJ gr_et_nf_hk lo_nf_et_hk /NP-SUBJ"),
+        # 'sama gildir' is disambiguated in Phrases.conf; the adjective
+        # reading must survive so that the article can attach to it
+        ("Hið sama gildir um fleiri tegundir.", "NP-SUBJ gr_et_nf_hk lo_nf_et_hk /NP-SUBJ"),
+        ("Hið opinbera greiðir kostnaðinn.", "NP-SUBJ gr_et_nf_hk lo_nf_et_hk /NP-SUBJ"),
+        ("Björgunarsveitir óttast hið versta.", "NP-OBJ gr_et_þf_hk lo_þf_et_hk /NP-OBJ"),
+        ("Eftir útskýringar kom hið sanna í ljós.", "NP-SUBJ gr_et_nf_hk lo_nf_et_hk /NP-SUBJ"),
+        ("Hann sá hið góða og hið illa.", "gr_et_þf_hk lo_þf_et_hk C st /C gr_et_þf_hk lo_þf_et_hk"),
+        ("Verkefnið þarf að leysa hið fyrsta.", "ADVP gr_et_þf_hk lo_vb_et_þf_hk /ADVP"),
+        ("Íbúum var gert að yfirgefa heimili sín hið snarasta.", "ADVP gr_et_þf_hk lo_vb_et_þf_hk /ADVP"),
+        # The article still attaches to a following noun
+        ("Hið nýja hús er stórt.", "NP-SUBJ gr_et_nf_hk lo_nf_et_hk no_et_nf_hk /NP-SUBJ"),
+        ("Hann fékk hið fyrsta verkefni.", "NP-OBJ gr_et_þf_hk lo_þf_et_hk no_et_þf_hk /NP-OBJ"),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert phrase in s.tree.flat, (sentence, s.tree.flat)
+
+
+def test_quoted_question_attribution(r) -> None:
+    """A quoted question or exclamation followed directly by an
+    attribution ('spyr hann', 'sagði hún', 'bætir hún við') without
+    an intervening comma"""
+    for sentence, attr in (
+        ("„Komst hann ekki í hópinn?“ sagði hann.", "segja"),
+        ("„Við erum að falla á tíma!“ skrifar Limbourg.", "skrifa"),
+        ("„Áttu mynd?“ spyr sá þriðji.", "spyrja"),
+        ("„Er þetta verk dagskrárstjórans?“ spyr hann.", "spyrja"),
+        ("„Er það ekki bara flott fyrirsögn?“ svarar Ottó hlæjandi.", "svara"),
+        ("„Hvað er það sem Miðflokkurinn er að gera?“ bætir hún við.", "bæta"),
+        ("„Er þetta gott?“ sagði Sindri og bætti við: „Þetta er mjög gott.“", "segja"),
+        ("„Er þátturinn ekki að verða búinn?“ spurði Þorgerður og hló.", "hlæja"),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        flat = s.tree.flat
+        assert flat.startswith("S0 S-QUOTE IP CP-QUOTE "), (sentence, flat)
+        assert attr in s.tree.verbs, sentence
+    # A proper noun as the attributed source is third person singular
+    s = r.parse_single("„Við erum að falla á tíma!“ skrifar Limbourg.")
+    assert s and s.tree
+    assert "VP so_0_gm_fh_et_p3 /VP sérnafn" in s.tree.flat
+    s = r.parse_single("„Þetta er gott,“ segir Limbourg.")
+    assert s and s.tree
+    assert "VP so_0_gm_fh_et_p3 /VP sérnafn" in s.tree.flat
+
+
+def test_thess_i_stad(r) -> None:
+    """'þess í stað' is a fixed adverbial phrase"""
+    for sentence in (
+        "Þess í stað fór hann heim.",
+        "Hann fór þess í stað í bæinn.",
+        "Þess í stað hafi flugfélagið fengið leiguvélar.",
+        "Það er ekki rétt, þess í stað er loftinu hleypt úr dekkjunum.",
+        "Hann gaf upp ferilinn og fór þess í stað að læra.",
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert any(
+            t.text.lower() == "þess í stað" and t.terminal == "ao"
+            for t in s.tree.leaves
+        ), sentence
+
+
+def test_sagdur_hafa(r) -> None:
+    """Raising construction: X er sagður/talinn (ekki) hafa gert Y / vera Z"""
+    for sentence, verbs in (
+        ("Maðurinn er sagður hafa stolið bílnum.", ["vera", "segja", "hafa", "stela"]),
+        ("Konan er sögð hafa stolið bílnum.", ["vera", "segja", "hafa", "stela"]),
+        ("Mennirnir eru sagðir hafa stolið bílnum.", ["vera", "segja", "hafa", "stela"]),
+        ("Maðurinn er talinn hafa stolið bílnum.", ["vera", "telja", "hafa", "stela"]),
+        ("Því var hann ekki talinn hafa misnotað aðstöðu sína.", ["vera", "telja", "hafa", "misnota"]),
+        ("Hann er sagður vera í haldi lögreglu.", ["vera", "segja", "vera"]),
+        ("Hún er sögð hafa verið í haldi lögreglu.", ["vera", "segja", "hafa", "vera"]),
+        ("Hann er sagður búa í Reykjavík.", ["vera", "segja", "búa"]),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert s.tree.verbs == verbs, (sentence, s.tree.verbs)
+        assert "lhþt" in s.tree.flat, sentence
 
 
 if __name__ == "__main__":
@@ -2559,4 +2840,13 @@ if __name__ == "__main__":
     test_designation_numeral(g)
     test_skommu_eftir_ad(g)
     test_rel_clause_pp_attachment(g)
+    test_reflexive_verb_frames(g)
+    test_verb_particle_before_object(g)
+    test_deterministic_tie_break()
+    test_locative_i_prefers_dative(g)
+    test_verb_with_clitic_subject(g)
+    test_article_with_nominalized_adjective(g)
+    test_quoted_question_attribution(g)
+    test_thess_i_stad(g)
+    test_sagdur_hafa(g)
     g.__class__.cleanup()

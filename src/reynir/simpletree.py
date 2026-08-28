@@ -138,6 +138,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "Afleiðing": "S-CONS",
     "Spurnarsetning": "S-QUE",
     "Sagt": "CP-QUOTE",
+    "SagtSpurning": "CP-QUOTE",
     # "Segjandi": "CP-SOURCE",
     "Forskeyti": "S-PREFIX",
     "Tíðarsetning": "CP-ADV-TEMP",
@@ -244,6 +245,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     # "NhSögn": "VP",
     "NhEinfaldur": "VP",
     "SagnliðurÁnF": "VP",
+    "SagnliðurSníkill": "VP",
     "ÖfugurSagnliður": "VP",
     "SagnliðurVh": "VP",
     "HjSögnLhÞt": "VP",  # Auxiliary verb, hjálparsögn

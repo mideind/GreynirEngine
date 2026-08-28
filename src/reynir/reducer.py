@@ -92,7 +92,17 @@
 
 """
 
-from typing import Dict, DefaultDict, List, Set, Tuple, Optional, Any, cast
+from typing import (
+    Dict,
+    DefaultDict,
+    Iterable,
+    List,
+    Set,
+    Tuple,
+    Optional,
+    Any,
+    cast,
+)
 from typing_extensions import TypedDict, Required
 
 from collections import defaultdict
@@ -119,6 +129,10 @@ class ResultDict(TypedDict, total=False):
     # Verb scope information
     so: VerbList
     sl: VerbList
+    # Text of an adverb matched by a literal terminal (only at token nodes)
+    ao: str
+    # Text of a verb particle (SagnÖgn), passed to the enclosing verb phrase
+    pcl: str
 
 
 VerbStack = List[Optional[VerbList]]
@@ -138,10 +152,25 @@ NULL_SC: ResultDict = cast(ResultDict, MappingProxyType({"sc": 0}))
 
 _VERB_PREP_BONUS = 7  # Give 7 extra points for a verb/preposition match
 _VERB_PREP_PENALTY = -2  # Subtract 2 points for a non-match
+# Bonus for a verb particle (SagnÖgn) preceding the object, e.g. 'bjó til hús',
+# if the particle is listed for the verb in Verbs.conf (*til); otherwise
+# a penalty, which must outweigh _VERB_PREP_PENALTY so that a preposition
+# reading is preferred for verbs that do not take the particle
+_VERB_PARTICLE_BONUS = 7
+_VERB_PARTICLE_PENALTY = -6
+# Penalty for a verb terminal whose argument cases are only licensed by
+# frames with a reflexive pronoun ('eiga sér |þf' -> eiga_þgf_þf), so that
+# a reading with arbitrary objects in those cases is discouraged
+_VERB_WEAK_ONLY_PENALTY = -6
 _LENGTH_BONUS_FACTOR = 10  # For length bonus, multiply number of tokens by this factor
 
 _CASES_SET = BIN_Token.CASES_SET
 
+# Penalties for verb forms with a cliticized subject ('ertu', 'viltu')
+# when the token also has an adjective reading ('næstu', 'mestu') or
+# a regular verb reading ('áttu', 'yrðu')
+_CLITIC_ADJECTIVE_PENALTY = -40
+_CLITIC_VERB_PENALTY = -6
 _CONTAINED_VERBS_SET = frozenset(("begin_prep_scope", "purge_verb"))
 
 # BÍN categories ('fl') of person and entity names
@@ -155,14 +184,17 @@ class _ReductionScope:
     """Class to accumulate information about a nonterminal and its
     child productions during reduction"""
 
-    __slots__ = ("reducer", "sc", "pushed_prep_bonus", "start_verb")
+    __slots__ = ("reducer", "sc", "keys", "pushed_prep_bonus", "start_verb", "nt")
 
     def __init__(self, reducer: "ParseForestReducer", node: Node) -> None:
         self.reducer = reducer
         # Child tree scores
         self.sc: ChildDict = defaultdict(lambda: {"sc": 0})
+        # Content-based tie-break keys, by family index
+        self.keys: Dict[int, Any] = {}
         # We are only interested in completed nonterminals
         nt = node.nonterminal if node.is_completed else None
+        self.nt = nt
         # Verb/preposition matching stuff
         self.pushed_prep_bonus = False
         verb = reducer.get_current_verb()
@@ -180,11 +212,24 @@ class _ReductionScope:
         reducer.push_current_verb(verb)
         self.start_verb = verb
 
-    def start_family(self, ix: int, prod: Production) -> None:
+    def start_family(
+        self, ix: int, prod: Production, children: Iterable[Optional[Node]]
+    ) -> None:
         """Start the processing of a production (numbered ix) of a nonterminal"""
         # Initialize the score of this family of children, so that productions
         # with higher priorities (more negative prio values) get a starting bonus
         self.sc[ix]["sc"] = -10 * prod.priority
+        # Remember a content-based key for this family, used to break
+        # ties between equally scored families deterministically.
+        # The family index itself reflects the order in which the Earley
+        # parser completed the derivations, which shifts with unrelated
+        # grammar edits. Instead, the production that appears first in
+        # the grammar wins, and between derivations of the same
+        # production, the one with the longest leading children wins.
+        self.keys[ix] = (
+            -prod.index,
+            tuple((ch.start, ch.end) for ch in children if ch is not None),
+        )
         self.reducer.set_current_verb(self.start_verb)
 
     def add_child(self, ix: int, rd: ResultDict) -> None:
@@ -192,6 +237,13 @@ class _ReductionScope:
         where the parent family has index ix (0..n)"""
         d = self.sc[ix]
         d["sc"] += rd.get("sc", 0)
+        if "ao" in rd and self.nt is not None and self.nt.has_tag("verb_particle"):
+            # A verb particle (SagnÖgn): note its text so that the enclosing
+            # verb phrase can check it against the verb's frames
+            d["pcl"] = rd["ao"]
+        elif "pcl" in rd:
+            # Carry the particle up to the enclosing verb phrase
+            d["pcl"] = rd["pcl"]
         # Carry information about contained verbs ("so") up the tree
         for key in ("so", "sl"):
             if key in rd:
@@ -218,14 +270,26 @@ class _ReductionScope:
 
             nt = node.nonterminal if node.is_completed else None
 
+            if nt is not None and nt.has_tag("apply_particle_bonus"):
+                # Sögn_1 & co.: adjust the score of each family containing
+                # a verb particle (SagnÖgn) by whether the verb(s) take it
+                for d in csc.values():
+                    pcl = d.pop("pcl", None)
+                    if pcl is not None:
+                        d["sc"] += self.reducer.verb_particle_bonus(pcl, d.get("so"))
+
             if len(csc) == 1:
                 # Not ambiguous: only one result, do a shortcut
                 # Will raise an exception if not exactly one item
                 [(ix, sc)] = csc.items()
             else:
-                # Find the best scoring family, using the lowest
-                # family index as a tie-breaker for determinism
-                ix, sc = max(csc.items(), key=lambda x: (x[1]["sc"], -x[0]))
+                # Find the best scoring family, breaking ties by the
+                # content-based family key (see start_family()) and
+                # only as a last resort by the family index
+                keys = self.keys
+                ix, sc = max(
+                    csc.items(), key=lambda x: (x[1]["sc"], keys[x[0]], -x[0])
+                )
 
             if nt is not None:
                 # Adjust the winning family's score. Note that sc is this
@@ -261,6 +325,7 @@ class _ReductionScope:
                     # and Setning have this tag
                     sc.pop("so", None)  # Simpler than if "so" in sc: del sc["so"]
                     sc.pop("sl", None)
+                    sc.pop("pcl", None)
 
             return sc, ix
 
@@ -345,12 +410,31 @@ class ParseForestReducer:
         # If no match, discourage
         return _VERB_PREP_PENALTY
 
+    def verb_particle_bonus(self, particle: str, verbs: Optional[VerbList]) -> int:
+        """Return a bonus if any of the given verbs takes the particle
+        according to its frames in Verbs.conf, otherwise a penalty"""
+        if verbs:
+            for verb_terminal, verb_token in verbs:
+                m = verb_token.match_with_meaning(verb_terminal)
+                assert isinstance(m, BIN_Tuple)
+                verb = m.stofn
+                if "MM" in m.beyging:
+                    verb = BIN_Token.mm_verb_stem(verb)
+                verb_with_cases = verb + verb_terminal.verb_cases
+                if VerbFrame.matches_particle(verb_with_cases, "*" + particle):
+                    return _VERB_PARTICLE_BONUS
+        return _VERB_PARTICLE_PENALTY
+
     def visit_token(self, node: Node) -> ResultDict:
         """At token node"""
         # Return the score of this token/terminal match
         d: ResultDict = {"sc": 0}
         nt = cast(BIN_Terminal, node.terminal)
         sc = self._scores[node.start][nt]
+        if nt.matches_category("ao") and nt.is_literal:
+            # Adverb matched by a literal terminal such as "upp:ao":
+            # note its text, in case it is a verb particle (SagnÖgn)
+            d["ao"] = cast(BIN_Token, node.token).lower
         if nt.matches_category("fs"):
             # Preposition terminal - this is either a normal fs_case terminal
             # or a literal terminal such as "á:fs"
@@ -456,7 +540,7 @@ class ParseForestReducer:
                 fam_children: List[List[Tuple[Node, Any]]] = []
                 # Go through each family and calculate its score
                 for family_ix, (prod, children) in enumerate(w._families):
-                    scope.start_family(family_ix, prod)
+                    scope.start_family(family_ix, prod, children)
                     this_fam: List[Tuple[Node, Any]] = []
                     for ch in children:
                         if ch is not None:
@@ -694,6 +778,11 @@ class Reducer:
                     elif txt == "á" and t.has_variant("þgf"):
                         # Larger bonus for á + þgf to resolve conflict with verb 'eiga'
                         sc[t] += 4
+                    elif txt == "í" and t.has_variant("þgf"):
+                        # Slightly larger bonus for í + þgf (location) than
+                        # í + þf (direction), to resolve ties where the noun
+                        # form is the same in both cases ("í umdæmi")
+                        sc[t] += 3
                     else:
                         # Else, give a bonus for each matched preposition
                         sc[t] += 2
@@ -721,6 +810,8 @@ class Reducer:
                         # In the (rare) cases where there are conflicting scores,
                         # apply the most positive adjustment
                         adjmax: Optional[int] = None
+                        # Is the terminal only licensed by weak frames?
+                        weak_only: Optional[bool] = None
                         for m in token.meanings:
                             if m.ordfl == "so":
                                 key = m.stofn + t.verb_cases
@@ -730,7 +821,26 @@ class Reducer:
                                         adjmax = score
                                     else:
                                         adjmax = max(adjmax, score)
+                                if numcases > 0 and VerbFrame.matches_arguments(key):
+                                    wo = VerbFrame.weak_only(key)
+                                    weak_only = wo if weak_only is None else (weak_only and wo)
                         sc[t] += adj + (adjmax or 0)
+                        if weak_only:
+                            sc[t] += _VERB_WEAK_ONLY_PENALTY
+                    if t.has_variant("sp"):
+                        # Interrogative form with a cliticized subject
+                        # ('ertu', 'viltu'). BÍN lists such forms for many
+                        # verbs whose clitic form coincides with a common
+                        # adjective ('næstu', 'mestu', 'elstu') or with a
+                        # regular verb form ('áttu', 'yrðu', 'máttu'): in
+                        # those cases, discourage the clitic reading
+                        if any(m.ordfl == "lo" for m in token.meanings):
+                            sc[t] += _CLITIC_ADJECTIVE_PENALTY
+                        elif any(
+                            m.ordfl == "so" and "SP" not in m.beyging
+                            for m in token.meanings
+                        ):
+                            sc[t] += _CLITIC_VERB_PENALTY
                     if t.is_bh:
                         # Discourage 'boðháttur'
                         sc[t] -= 4
