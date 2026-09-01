@@ -855,7 +855,7 @@ SagnRunaKnöpp/tala/pers/kyn →
     Sagnliður/tala/pers/kyn LoTengtSögn_nf/tala/kyn? SagnInnskotAtv?
 
 SagnFramhald/tala/pers/kyn →
-    SagnKomma/tala/pers/kyn* KommaOgEðaEn FsAtv? SagnRunaKnöpp/tala/pers/kyn
+    KommaOgEðaEn FsAtv? SagnRunaKnöpp/tala/pers/kyn
 
 SagnKomma/tala/pers/kyn →
     "," SagnRunaKnöpp/tala/pers/kyn
