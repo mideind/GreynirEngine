@@ -1045,11 +1045,9 @@ Setning/tala/pers/kyn →
     | NlFrumlagLeppur SagnHluti/tala/pers/kyn Upptalning/tala?
 
 Setning_et_p3_hk →
-    # 'Að raða frímerkjum er góð skemmtun'
-    SetningAð
-    # Um er/var að ræða þriggja ára stelpu
+        # Um er/var að ræða þriggja ára stelpu
     # (-> Það er um að ræða þriggja ára stelpu)
-    | SetningUmAðRæða
+    SetningUmAðRæða
     # 'Nú/þá/alltaf er/var/væri verið að reka fólk burt af jörðum sínum'
     # ('verið' er ekki til sem LHÞT, en það er hins vegar 'búið' o.fl.)    # ERROR -- bæta við í bín? og/eða er þetta villa?
     | SetningForskeyti 'vera:so'_0_gm_p3_et 'vera:so'_sagnb NhFylling
@@ -1084,22 +1082,9 @@ SögnÞaðLeppur →
 # Nýtt undirtré fyrir tengingu sagnar og forsetningar
 $tag(begin_prep_scope) Setning/tala/pers/kyn
 
-SetningAð →
-    # 'Að reyna að raða frímerkjum [í ró og næði] er góð skemmtun'
-    NhLiðir SagnRuna_et_p3_hk
-    | SetningAðHugsaSér
-
-$score(-4) SetningAð # Óalgengt form
-
-$tag(begin_prep_scope) SetningAð
-
-SetningAðHugsaSér →
-    Nhm 'hugsa:so'_1_þgf_gm_nh abfn_þgf # 'Að hugsa sér [, sagði Anna]'
-
 # Nafnháttarmerki, 'að'
 Nhm → nhm
 
-$score(+2) SetningAðHugsaSér
 
 # !!! ATH: Við lítum á nafnliðinn í "um að ræða" sem andlag (viðfang)
 # !!! forsetningarinnar 'um', ekki sagnarinnar 'ræða'
