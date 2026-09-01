@@ -2806,6 +2806,12 @@ def test_never_winning_constructions(r) -> None:
     # Apposition in the wrong case parses via the error fallback
     s = r.parse_single("Ég ræddi við forsætisráðherra (Sigmundur Davíð) um málið.")
     assert s and s.tree and "person_nf_kk person_nf_kk" in s.tree.flat
+    # Constitution, article 68: topicalized object of the infinitive
+    # in the 'gera e-m að gera e-ð' construction
+    s = r.parse_single("Nauðungarvinnu skal engum gert að leysa af hendi.")
+    assert s and s.tree, "constitutional sentence must parse"
+    assert "NP-IOBJ fn_et_þgf_kk /NP-IOBJ VP so_gm_sagnb" in s.tree.flat, s.tree.flat
+    assert "leysa" in s.tree.verbs
 
 
 if __name__ == "__main__":

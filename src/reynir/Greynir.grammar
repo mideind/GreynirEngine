@@ -1435,6 +1435,11 @@ SetningAukafall →
     # Miklu má veðja að Guðný snúi aftur í pólitík
     | NlFrumlag/aukafall AðvörunKomma? HjSögnMegiSkuli_et_p3 FsAtv? So_1_nh/aukafall AðLiður?
 
+    # Nauðungarvinnu skal engum gert að leysa af hendi
+    # (andlag nafnháttarsagnarinnar er fremst; 'gera e-m að gera e-ð')
+    | NlFrumlag/aukafall AðvörunKomma? HjSögnMegiSkuli_et_p3 FsAtv?
+        NlÓbeintAndlag_þgf 'gera:so'_gm_sagnb Nhm So_1_nh/aukafall FsAtv?
+
     # Engan þarf/ætti að undra (að mig langi í ís)
     # Greinarmun verður [ekki] að gera (á Jóni og séra Jóni)
     | NlFrumlag/aukafall HjSögnÞurfaEiga_et_p3 FsAtv? Nhm So_1_nh/aukafall AðLiður?
