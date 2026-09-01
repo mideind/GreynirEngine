@@ -1673,7 +1673,7 @@ AukafallsBotn →
     FsAtv                             # (Mér líkaði) vel við Jón
     | NhFylling                       # (Okkur langaði) gríðarlega að fara til útlanda strax
     | FsAtv? HjSögnVantaSkorta NlBeintAndlag_þf AtvFsAuka? # (Okkur þótti) [algjörlega] vanta broddinn í ræðuna
-    | Nl_nf AtvFs? VeraInnskot? NhRuna FsAtv? # (Okkur þótti) hún teygja lopann gríðarlega
+    | Nl_nf AtvFs? NhRuna FsAtv?              # (Okkur þótti) hún teygja lopann gríðarlega
     | MiðmyndarBotnLo                  # (Okkur þótti) kettirnir [ekk] [vera] fallegir
 
 MiðmyndarBotn →
@@ -1682,8 +1682,8 @@ MiðmyndarBotn →
     | FsAtv
 
 MiðmyndarBotnFlókinn →
-    # (Mér sýndist) kötturinn [ekki] [vera [skyndilega] að] lepja mjólkina og borða matinn í gær
-    Nl_nf AtvFs? VeraInnskot? NhRuna FsAtv?
+    # (Mér sýndist) kötturinn [ekki] lepja mjólkina og borða matinn í gær
+    Nl_nf AtvFs? NhRuna FsAtv?
 
     # (Mér leyfist) vonandi að fara út
     | NhFylling
@@ -1707,9 +1707,6 @@ MiðmyndarBotnLo →
     Nl_nf/tala/pers/kyn AtvFs? HjSögnVera? LoTengtSögn_nf/tala/kyn FsAtv?
 
 $score(+24) MiðmyndarBotnLo # Gefa plús fyrir heildstætt samhengi lýsingarorðs
-
-VeraInnskot →
-    HjSögnVera FsAtv? Nhm  # vera [stöðugt] að / geta hafa verið [alltaf] að / verðir [í snatri] að / hafa orðið að...
 
 # Setningar án frumlags (notaðar t.d. í tengisetningum eftir 'sem').
 # Í setningum án frumlags getur sagnliðurinn verið "öfugur",
