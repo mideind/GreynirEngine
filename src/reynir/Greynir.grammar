@@ -5784,8 +5784,6 @@ Lo_sb_nf/tala/kyn →
     # (Hann vann keppnina) fyrstur [karla/allra]
     # (Jóna var) glöðust [allra gesta] (í partíinu)
     LoAtviksliðir? lo_sb_nf/tala/kyn EfLiður_ft?
-    # (Bréfið var) dagsett 10. júlí
-    | LoAtviksliðir? 'dagsetja:so'_lhþt_sb_nf/tala/kyn Dagsetningarliður
     # Jón hefur verið hlynntur málinu
     | LoAtviksliðir? lo_sb_nf/sfall/tala/kyn LoViðhengi/sfall
     # Hann er málinu [efnislega] hlynntur
@@ -6701,13 +6699,6 @@ LoðinnTímaNafnliður →
     
 $score(-999) LoðinnTímaNafnliður
 
-Dagsetningarliður →
-    FöstDagsetning | AfstæðDagsetning
-
-$score(+12) Dagsetningarliður
-$tag(apply_prep_bonus) Dagsetningarliður    # Gefa bónus þegar dagsetning fylgir sögn frekar en nafnlið
-$tag(apply_length_bonus) Dagsetningarliður  # Gefa bónus eftir því hversu margar eindir (tokens) falla undir dagsetninguna
-
 # Aðalliður: Föst dagsetning
 FöstDagsetning → 
     Vikudagur_gr_þf_et? dagsföst
@@ -6752,7 +6743,6 @@ OgÁratugum →
     | ártal
     | Árstíð_þf_et/kyn ártal_þf_et                          # haustið 2016, veturinn 1998
     | HinnSá_þf raðnr SáÞessi_ef_et_kk 'mánuður:kk'_ef_et   # þann/hinn 23. þess/þessa mánaðar
-    | Mánaðamót                                             # mánaðamótin mars-apríl
     | DaganaAfs NæstSíðast_þf_et_kk?                        # dagana 14. og 15. október
     | ÁrinAfs                                               # árin 1938 og 1967
     | TímaÁkvæðisliður_þf_et_kk Vikudagur_et_þf OgVikudagur_et_þf? # næsta fimmtudag [[, föstudag] og/eða laugardag]
@@ -6823,9 +6813,6 @@ FyrirEftir →
 ÁrinAfs →
     ártal ÁraRuna* Til tala                        # 2016-2017, 2016 til 17
     | 'ár:hk'_ft_gr_þf tala ÁraRuna* Til tala      # árin 670-80, árin 2016 til 2017
-
-Mánaðamót →
-    'mánaðamót:hk'_ft_þf dagsafs '-:en' dagsafs
 
 Árstíð_þf_et_hk →
     'vor:hk'_þf_et | 'sumar:hk'_þf_et | 'haust:hk'_þf_et
@@ -7288,7 +7275,10 @@ DaganaTímabilAfstætt →
 DaganaTímabilFast →
     Dagana? dagsafs Til dagsföst                # (dagana/helgina) 13. október til 14. nóvember 2017; 13. október-14. nóvember 2017
     | Dagana? raðnr Til dagsföst                # (dagana/helgina) 13.-14. nóvember 2017, 13. til 14. nóvember 2017
+    | Dagana? raðnr Til dagsafs                 # (dagana/helgina) 5. til 7. ágúst
     | Vikudagur_et_þf tímapunkturfast Til tími  # miðvikudaginn 13. desember 2017 kl 14:00 - 15:00
+
+$score(+8) DaganaTímabilFast
 
 FráTilTími → 
     'frá:fs'_þgf? tími Til tími DaganaTímabilAfstætt?
