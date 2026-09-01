@@ -1223,10 +1223,6 @@ SetningSoSagnliður →
     # Þarf til þess lagafyrirmæli að svipta mann réttindum
     | 'þurfa:so'_1_þf_gm_et_p3 FsAtv? NlBeintAndlag_þf AðLiður?
 
-    # (Því) hafi þurft að senda alla farþegana (á hótel)
-    # (Í dag) gæti hafa rignt
-    | FsAtv? HjSögnVh so_sagnb NhFylling?
-
     # Þykir/finnst þeim vera slagsíða [í umfjölluninni] / þeim [það] ósanngjarnt
     | HjSögnFinnst NlFrumlag_þgf SögnFinnstBotn
 
@@ -3090,17 +3086,6 @@ HjSögn_mm_nh →
     | 'fá:so'_nh                    # þykist fá notið
 
 $tag(purge_verb) HjSögn_mm_nh
-
-HjSögnVh →
-    'hafa:so'_et_p3_vh                          # hafi þurft
-    | 'geta:so'_et_p3_vh                        # gæti þurft
-    | 'geta:so'_et_p3_vh FsAtv? 'hafa:so'_nh    # gæti [ekki] hafa þurft
-    | 'mega:so'_et_p3_vh FsAtv? 'hafa:so'_nh    # mætti [ekki] hafa þurft
-    | 'þykja:so'_et_p3_vh FsAtv? 'hafa:so'_nh   # þætti [ekki] hafa þurft
-    | 'skulu:so'_et_p3_vh FsAtv? 'hafa:so'_nh   # skyldi [ekki] hafa þurft
-    | 'munu:so'_et_p3_vh FsAtv? 'hafa:so'_nh    # myndi [ekki] hafa þurft
-
-$tag(purge_verb) HjSögnVh
 
 HjSögnHafaNh/tala/pers →
     'hafa:so'_gm/tala/pers 'hafa:so'_sagnb?     # hef/hefur/hafði [haft] sögu að segja
