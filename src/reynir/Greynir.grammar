@@ -154,7 +154,7 @@ MgrInnihald →
 
 # "Allt er klárt," segir Jón og bætir við: "Komum þessu í gang."
 Staðhæfing →
-    Sagt Segjandi ÁframSagt? Lokatákn?
+    Sagt Segjandi SegirÁframSagt? Lokatákn?
     # Spurning eða upphrópun í beinni ræðu, án kommu á undan segjanda:
     # "Komst hann ekki í hópinn?" sagði hann. / "Við erum að falla á tíma!" skrifar Limbourg.
     | Forskeyti? SagtSpurning ","? SegirKjarni SegirÁframSagt? Lokatákn?
@@ -166,9 +166,6 @@ SegirÁframSagt →
 SagtSpurning →
     Upphrópun* Spurnarsetning
     | Yfirsetning StLiður* "!"
-
-ÁframSagt →
-    Segir SegirÁfram Sagt
 
 
 Segjandi →
