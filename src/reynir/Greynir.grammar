@@ -1435,9 +1435,6 @@ SetningAukafall →
     # Miklu má veðja að Guðný snúi aftur í pólitík
     | NlFrumlag/aukafall AðvörunKomma? HjSögnMegiSkuli_et_p3 FsAtv? So_1_nh/aukafall AðLiður?
 
-    # Nauðungarvinnu skal engum gert að leysa af hendi
-    | NlFrumlag/aukafall AðvörunKomma? HjSögnMegiSkuli_et_p3 FsAtv? AukafallÖfugSögn Nhm So_1_nh/aukafall FsAtv?
-
     # Engan þarf/ætti að undra (að mig langi í ís)
     # Greinarmun verður [ekki] að gera (á Jóni og séra Jóni)
     | NlFrumlag/aukafall HjSögnÞurfaEiga_et_p3 FsAtv? Nhm So_1_nh/aukafall AðLiður?
@@ -1633,10 +1630,6 @@ SögnAukafallEfBotn →
 
 $score(+3) SögnAukafallEfBotn
 
-AukafallÖfugSögn →
-    NlBeintAndlag/fall AtvFs? So_1_nh/fall         # (skal) engum gera
-    | NlBeintAndlag/fall AtvFs? So_1_sagnb/fall    # (skal) engum gert
-
 # Tilvik þar sem sögn í lhþt eintölu fylgir andlag í fleirtölu:
 # 'Öllum skal tryggð mannhelgi og vernd gegn hvers kyns ofbeldi'
 
@@ -1718,13 +1711,7 @@ $tag(begin_prep_scope) EinSetningÁnF/tala/pers/kyn # Nýtt undirtré fyrir teng
 $score(-3) ÖfugtFramhald/tala/pers/kyn
 
 FramhaldÁnF/tala/pers/kyn →
-    FramhaldÁnFMeðKommu/tala/pers/kyn
-    | FramhaldÁnFÁnKommu/tala/pers/kyn
-
-FramhaldÁnFMeðKommu/tala/pers/kyn →
-    "," FramhaldÁnFÁnKommu/tala/pers/kyn LokatáknEðaKomma
-
-$score(+8) FramhaldÁnFMeðKommu/tala/pers/kyn    # Framhald innan kommu er mjög líklega rétt
+    FramhaldÁnFÁnKommu/tala/pers/kyn
 
 FramhaldÁnFÁnKommu/tala/pers/kyn →
     Samtenging HreinYfirsetning                 # (sem borðað höfðu matinn) þegar hann var framreiddur fyrr um kvöldið
@@ -1770,7 +1757,7 @@ SagnliðurÁnF →
     | HjSögnLhÞtSM_p3_et FsAtv? so_mm_sagnb NhFyllingEðaAtv # (Í dag) verður/skal/mun [líklega] ráðist (í verkið)
 
     | HjSögnMegiSkuli_et_p3 HreinSögn_nh_et_hk SagnInnskot? # [Í dag] má sækja tölvuna (og byrja að vinna)
-    | so_0_nh HjSögnNhMeðSo_et_p3 HreinSögnAtv_nh?          # [hvort] leggja skuli/eigi/þarf/verður [á skatt, breyta honum eða afnema hann]
+    | so_0_nh HjSögnNhMeðSo_et_p3          # [hvort] leggja skuli/eigi/þarf/verður [á skatt, breyta honum eða afnema hann]
 
     | HjSögnNh_p3/tala FsAtv? so_mm_nh FsRunaEftirSögn? NlFrumlag_nf/tala # [Í kröfunum] skulu felast [í snatri] tillögur (um nýtt fyrirkomulag)
 
@@ -1792,9 +1779,6 @@ StökSögn_et_p3_gm →
 
 # Óalgengt að sagnorð standi ein og sér án frumlags
 $score(-16) StökSögn_et_p3_gm
-
-HreinSögnAtv_nh →
-    FsAtv? HreinSögn_nh_et_hk
 
 # Sagnliður sem hefst á viðtengingarhætti:
 # 'Haldi þessi þróun áfram er voðinn vís / þarf að grípa til aðgerða'
@@ -1888,10 +1872,6 @@ OgSögn_mm/tala/pers →
 OgSögn_mm_nh →
     FsAtv? Aðaltenging FsAtv? so_mm_nh
     | FsAtv? "," Aðaltenging FsAtv? so_mm_nh FsAtvKomma?
-
-OgSögn_mm_sagnb →
-    FsAtv? Aðaltenging FsAtv? so_mm_sagnb
-    | FsAtv? "," Aðaltenging FsAtv? so_mm_sagnb FsAtvKomma?
 
 OgSögn_sagnb/tala/kyn →
     # (hefur staðið) keikur í brúnni og mótmælt yfirgangi Rússa
@@ -2198,16 +2178,12 @@ BhBotn →
 $score(-3) BhBotn
 
 SögnFrh_bh →
-    KommuSögn_bh* OgSögn_bh+
-
-KommuSögn_bh →
-    "," FsAtv? Sögn_bh
+    OgSögn_bh+
 
 OgSögn_bh →
     ","? Aðaltenging FsAtv? Sögn_bh
 
 # ...en þegar eru komnar tvær eða fleiri sagnir í röð þá er það líklegri lausn
-$score(+10) KommuSögn_bh
 $score(+10) OgSögn_bh
 
 # Sögn með engu viðfangi ('lenti')
@@ -2738,7 +2714,7 @@ Sögn_1/tala/pers/kyn →
     | So_1_þf_nh/tala/pers OgSögn_1_þf_nh/tala/pers* SagnarBotn
 
     # (Bankar) hafa reynst og gagnast mér (vel)
-    | HjSögn/tala/pers FsAtv? so_mm_sagnb OgSögn_mm_sagnb* NlBeintAndlag_þgf
+    | HjSögn/tala/pers FsAtv? so_mm_sagnb NlBeintAndlag_þgf
 
     # Konan hefur verið/skal/mun gefin Páli
     | HjSögnLhÞtSM/tala/pers FsAtv? so_2_þgf_þf_lhþt/tala/kyn NlBeintAndlag_þgf
@@ -3530,11 +3506,11 @@ NhSögn →
     | so_2_þgf_þgf_nh so_0_gm_vh_p3_et? OgNhSögn_þgf_þgf* FsRunaEftirSögn? NlÓbeintAndlag_þgf NlBeintAndlag_þgf # að taka Páli opnum örmum
     | so_2_þgf_ef_nh so_0_gm_vh_p3_et? OgNhSögn_þgf_ef* FsRunaEftirSögn? NlÓbeintAndlag_þgf NlBeintAndlag_ef # að óska [eigi] og óska Páli góðs bata
     | 'gera:so'_1_þgf_nh so_0_gm_vh_p3_et? NlÓbeintAndlag_þgf LoTengtSögn_nf_et_hk NhFylling # að gera [eigi] Páli kleift að matast með reisn
-    | so_expl_op_p3_et OgNhSögn_expl_op*                     # að rigna gífurlega
+    | so_expl_op_p3_et                     # að rigna gífurlega
     # að reistar yrðu og byggðar íbúðir / að barinn skyldi fiskurinn og flakaður
     # !!! Ath: sennilega geta aðeins hjálparsagnir staðið í viðtengingarhætti hér,
     # !!! ekki allar sagnir
-    | so_0_lhþt/tala/kyn so_0_gm_vh/tala OgNhSögn_lhþt/tala/kyn* NlFrumlag_nf/tala/kyn OgNhSögn_lhþt/tala/kyn*
+    | so_0_lhþt/tala/kyn so_0_gm_vh/tala NlFrumlag_nf/tala/kyn
 
     # (Páll fór inn eftir að) hafa fært bílinn / (fyrir að) geta lyft grettistaki
     | NhSögnHafaGetaFá
@@ -3592,10 +3568,6 @@ OgNhSögn_þgf_þgf →
     OgEðaHeldur so_2_þgf_þgf_nh so_0_gm_vh_p3_et?
 OgNhSögn_þgf_ef →
     OgEðaHeldur so_2_þgf_ef_nh so_0_gm_vh_p3_et?
-OgNhSögn_lhþt/tala/kyn →
-    OgEðaHeldur so_0_lhþt/tala/kyn
-OgNhSögn_expl_op →
-    OgEðaHeldur so_expl_op_p3_et
 
 # Gefa til kynna hvar lesa á upp sagnir til að nota í
 # tengingu sagna og forsetninga
