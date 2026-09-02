@@ -2780,6 +2780,40 @@ def test_sagdur_hafa(r) -> None:
         assert "lhþt" in s.tree.flat, sentence
 
 
+def test_never_winning_constructions(r) -> None:
+    """Constructions that a grammar usage census showed never won a parse,
+    because of a dead terminal ('sem:ao' does not exist in BÍN), a missing
+    subject in a production, or losing on score"""
+    # sem stendur / sem jöfnustu: 'sem' is a conjunction in BÍN, not an adverb
+    s = r.parse_single("Sem stendur er hann ekki viðlátinn.")
+    assert s and s.tree and "ADVP st VP so_0" in s.tree.flat, s.tree.flat if s.tree else None
+    s = r.parse_single("Stuðla skal að sem jöfnustu hlutfalli.")
+    assert s and s.tree and "st lo_" in s.tree.flat, s.tree.flat if s.tree else None
+    # undir eins: a fixed phrase, not 'undir' + a comparison
+    s = r.parse_single("Ég fór undir eins og kannaði málið.")
+    assert s and s.tree and "CP-ADV-CMP" not in s.tree.flat, s.tree.flat if s.tree else None
+    assert any(t.text.lower() == "undir eins" for t in s.tree.leaves)
+    # Nú fer hælisleitendum fækkandi: dative subject after the auxiliary
+    s = r.parse_single("Nú fer hælisleitendum fækkandi.")
+    assert s and s.tree and "NP-SUBJ no_ft_þgf_kk /NP-SUBJ" in s.tree.flat, (
+        s.tree.flat if s.tree else None
+    )
+    assert "subj_op" not in s.tree.flat
+    # Okkur þótti vanta mýkt: 'vanta' is the infinitive, 'mýkt' its object
+    s = r.parse_single("Okkur þótti vanta mýkt í rödd hennar.")
+    assert s and s.tree and "vanta" in s.tree.verbs, s.tree.flat if s.tree else None
+    assert "NP-OBJ no_et_þf_kvk" in s.tree.flat
+    # Apposition in the wrong case parses via the error fallback
+    s = r.parse_single("Ég ræddi við forsætisráðherra (Sigmundur Davíð) um málið.")
+    assert s and s.tree and "person_nf_kk person_nf_kk" in s.tree.flat
+    # Constitution, article 68: topicalized object of the infinitive
+    # in the 'gera e-m að gera e-ð' construction
+    s = r.parse_single("Nauðungarvinnu skal engum gert að leysa af hendi.")
+    assert s and s.tree, "constitutional sentence must parse"
+    assert "NP-IOBJ fn_et_þgf_kk /NP-IOBJ VP so_gm_sagnb" in s.tree.flat, s.tree.flat
+    assert "leysa" in s.tree.verbs
+
+
 if __name__ == "__main__":
     # When invoked as a main module, do a verbose test
     from reynir import Greynir
@@ -2849,4 +2883,5 @@ if __name__ == "__main__":
     test_quoted_question_attribution(g)
     test_thess_i_stad(g)
     test_sagdur_hafa(g)
+    test_never_winning_constructions(g)
     g.__class__.cleanup()

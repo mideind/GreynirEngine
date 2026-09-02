@@ -97,6 +97,11 @@ The public API is defined by the exports in `src/reynir/__init__.py`.
 - Grammar terminal and category names are Icelandic abbreviations (`no`=noun,
   `so`=verb, `nf`/`þf`/`þgf`/`ef`=cases, `et`/`ft`=number, `kk`/`kvk`/`hk`=gender);
   these appear throughout the code, tests and grammar files.
+- In the grammar, single-value variants ("eins gildis tilbrigði", e.g.
+  `/p3 = p3`, `/et = et`) pin a nonterminal reference to one fixed variant
+  value: `Tilvísunarsetning/tala/p3/kyn` unifies with the `p3` slice of a
+  `/tala/pers/kyn` definition, since variant expansion is purely textual
+  name generation. The value must be declared as a variant first.
 - Ruff line length is 88; `E731` (lambda assignment) is ignored.
 - CI (`.github/workflows/python-package.yml`) runs ruff + pytest via
   `uv sync --locked` on Python 3.10–3.14 and PyPy 3.11 on Linux, plus one
