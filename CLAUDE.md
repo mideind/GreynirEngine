@@ -109,3 +109,25 @@ The public API is defined by the exports in `src/reynir/__init__.py`.
   cibuildwheel (`cp310` abi3 wheel for CPython, version-specific for PyPy).
 - The `old/` and `build/` directories contain legacy/build artifacts — do not
   edit code there.
+
+## Backlog (post-3.9.0 candidates)
+
+Potential next steps from the 2026 grammar-coverage study (see release
+notes for 3.9.0); none started:
+
+- **Coverage clusters**: auxiliary/copula gapping in a second conjunct
+  ("höfðu dáið og 23 særst"); smaller items — "var lýst sem" passives,
+  "hann/hún" + name, repeated "sem", þykja-subject-first; the pronoun
+  "hinn" cluster ("allir hinir", "okkur hinum"); "Ætli …?" questions.
+- **Tokenizer**: amount ranges ("200 til 460 milljónir króna" strands
+  "200 til"). Also: Tokenizer PR #63 (fused month ranges → DATEREL) is
+  merged upstream but unreleased; when a Tokenizer release ships,
+  refresh uv.lock here so CI exercises it (no engine code change needed).
+- **Grammar hygiene, round 2**: inline ~60 thin single-production
+  wrappers; consider a /kyn variant diet like the /pers one; score or
+  drop sentence-initial SamkvæmtHeimild; run a second usage census over
+  headings/non-news text before touching rules that only win in other
+  text types.
+- **Method note**: a "never wins in N sentences" census verdict is not
+  proof of dead grammar — always re-probe a rule with the construction
+  it actually targets before deleting (news-corpus frequency ≠ reachability).
