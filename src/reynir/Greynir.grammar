@@ -114,7 +114,9 @@
 # Person (1st, 2nd, 3rd) variant
 /pers = p1 p2 p3 sp   # sp = spurnarmynd með viðskeyttu frumlagi (ertu, viltu)
 
-# Hacks to generate single variants only
+# Eins gildis tilbrigði: hvert þeirra vísar í eitt fast gildi og er notað
+# til að njörva tilvísun við það gildi, sbr. Tilvísunarsetning/tala/p3/kyn
+# (tilvísunarsetning sem er alltaf í 3. persónu)
 /hk = hk
 /kvk = kvk
 /nf = nf
