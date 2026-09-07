@@ -2885,3 +2885,102 @@ if __name__ == "__main__":
     test_sagdur_hafa(g)
     test_never_winning_constructions(g)
     g.__class__.cleanup()
+
+
+def test_genitive_subject_kenna(r):
+    """'kenna' as an impersonal verb with a genitive subject:
+    'Þar kennir ýmissa grasa'"""
+    s = r.parse_single("Í Paradísarskjölunum kennir ýmissa grasa.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP PP P fs_þgf /P NP no_ft_þgf_kvk /NP /PP "
+        "VP VP so_subj_op_ef /VP NP-SUBJ lo_ef_ft_hk no_ft_ef_hk /NP-SUBJ /VP "
+        "/IP /S-MAIN p /S0"
+    )
+    assert s.tree.verbs == ["kenna"]
+    s = r.parse_single("Þar kennir margra grasa.")
+    assert s and s.tree
+    assert s.tree.verbs == ["kenna"]
+    assert s.tree.S.IP.VP.NP_SUBJ.text == "margra grasa"
+    # A genitive subject must not combine with the verb's object frames
+    # ('kenna e-ð', 'gæta e-s')
+    s = r.parse_single("Í bókinni kennir Páls grös.")
+    assert s.tree is None
+    s = r.parse_single("Í bókinni gætir Páls misskilning.")
+    assert s.tree is None
+    s = r.parse_single("Misskilnings gætir í bókinni.")
+    assert s and s.tree
+    assert s.tree.verbs == ["gæta"]
+    # Wrong case or number on the subject
+    s = r.parse_single("Í bókinni kennir ýmsum grösum.")
+    assert s.tree is None
+    s = r.parse_single("Í bókinni kenna ýmissa grasa.")
+    assert s.tree is None
+    # Ordinary transitive uses of 'kenna' must be unaffected
+    s = r.parse_single("Hann kenndi mér íslensku.")
+    assert s and s.tree
+    assert s.tree.verbs == ["kenna"]
+    assert s.tree.S.IP.NP_SUBJ.text == "Hann"
+
+
+def test_er_að_finna(r):
+    """The 'X_þf er að finna' construction with a fronted adverbial,
+    prepositional phrase or expletive subject instead of the object"""
+    s = r.parse_single(
+        "Þar af leiðandi er tiltölulega fáa Íslendinga að finna í skjölunum."
+    )
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP ADVP ao ao ao /ADVP VP so_0_gm_fh_p3_et /VP "
+        "NP-OBJ eo lo_þf_ft_kk no_ft_þf_kk /NP-OBJ TO nhm /TO "
+        "VP so_0_gm_nh /VP PP P fs_þgf /P NP no_ft_þgf_kvk /NP /PP "
+        "/IP /S-MAIN p /S0"
+    )
+    assert s.tree.S.IP.NP_OBJ.text == "tiltölulega fáa Íslendinga"
+    s = r.parse_single("Í skjölunum er marga Íslendinga að finna.")
+    assert s and s.tree
+    assert s.tree.S.IP.NP_OBJ.text == "marga Íslendinga"
+    s = r.parse_single("Það er fáa Íslendinga að finna í skjölunum.")
+    assert s and s.tree
+    assert s.tree.S.IP.NP_ES is not None
+    assert s.tree.S.IP.NP_OBJ.text == "fáa Íslendinga"
+    # The original object-first order must still work
+    s = r.parse_single("Nöfn ráðherra var ekki að finna í Panamaskjölunum.")
+    assert s and s.tree
+    assert s.tree.S.IP.NP_OBJ.text == "Nöfn ráðherra"
+
+
+def test_infinitive_list_shared_object(r):
+    """Comma-separated lists of infinitives sharing a single object,
+    both after 'til að'/'að' and directly after a modal verb"""
+    s = r.parse_single(
+        "Lesskilningur er skilgreindur sem hæfni til að skilja, nota, meta, "
+        "ígrunda og ástunda lestur texta í þeim tilgangi að ná markmiðum, "
+        "þroska þekkingu og hæfileika og taka þátt í samfélaginu."
+    )
+    assert s and s.tree
+    inf = s.tree.S.IP.CP_ADV_CMP.NP.PP.IP_INF
+    assert inf.VP.NP_OBJ.text == "lestur texta"
+    assert [c.text for c in inf.VP.children if c.tag == "VP"] == [
+        "skilja",
+        "nota",
+        "meta",
+        "ígrunda",
+        "ástunda",
+    ]
+    s = r.parse_single("Hann ætlar að skilja, nota og meta texta.")
+    assert s and s.tree
+    assert s.tree.S.IP.VP.IP_INF.VP.NP_OBJ.text == "texta"
+    # Directly after a modal verb
+    s = r.parse_single("Hann vill lesa, skrifa og reikna.")
+    assert s and s.tree
+    assert s.tree.verbs == ["vilja", "lesa", "skrifa", "reikna"]
+    s = r.parse_single("Hann vill skilja, nota, meta, ígrunda og ástunda lestur texta.")
+    assert s and s.tree
+    assert s.tree.S.IP.VP.NP_OBJ.text == "lestur texta"
+    assert s.tree.verbs == ["vilja", "skilja", "nota", "meta", "ígrunda", "ástunda"]
+    # A comma list must be closed by a conjunction
+    s = r.parse_single("Hann ætlar að skilja, nota, meta texta.")
+    assert s.tree is None
+    s = r.parse_single("Hann vill lesa, skrifa.")
+    assert s.tree is None

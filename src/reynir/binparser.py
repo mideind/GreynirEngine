@@ -1041,6 +1041,13 @@ class BIN_Token(Token):
                 assert nargs == 1
                 if nargs != 1:
                     return False
+                if terminal.variant(-1) == "ef":
+                    # Verbs with a genitive subject ('misskilnings gætir',
+                    # 'þar kennir ýmissa grasa') are intransitive idioms;
+                    # don't combine the genitive subject with the verb's
+                    # ordinary object frames ('gæta e-s', 'kenna e-ð'), which
+                    # would admit e.g. '*Í bókinni gætir ýmis misskilnings'
+                    return False
                 # Check whether the verb allows a single argument
                 # in the case indicated in the terminal (second variant,
                 # immediately following the nargs)

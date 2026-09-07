@@ -1474,6 +1474,10 @@ SetningAukafall →
     # Nöfn ráðherra var [ekki] að finna [í Panamaskjölunum]
     | NlBeintAndlag_þf 'vera:so'_0_gm_fh_p3_et FsAtv? Nhm 'finna:so'_0_gm_nh FsAtv?
 
+    # Þar af leiðandi/Í skjölunum er [ekki] tiltölulega fáa Íslendinga að finna [í skjölunum]
+    # Það er [ekki] marga Íslendinga að finna í skjölunum
+    | FsAtvEðaLeppur 'vera:so'_0_gm_fh_p3_et FsAtv? NlBeintAndlag_þf Nhm 'finna:so'_0_gm_nh FsAtv?
+
 # Aukafallssetningar sem eru mjög líklega rétt greindar og fá þar
 # af leiðandi plús-skor í stað mínuss
 SetningAukafallForgangur →
@@ -1895,6 +1899,9 @@ OgSögn_nh/tala/kyn →
     | SagnInnskot? ViðurkenningarNh 
     | SagnInnskot? "," Aðaltenging FsAtv? EinSögn_nh/tala/kyn FsAtvKomma?
     | SagnInnskot? KommaViðurkenningarNh
+    # Upptalning: (Hann vill) lesa, skrifa og reikna
+    # Komma er aðeins leyfð ef sögn með aðaltengingu lokar upptalningunni
+    | "," EinSögn_nh/tala/kyn OgSögn_nh/tala/kyn
 
 # Þá segist hún styðja trúfrelsi, þrátt fyrir að vera andsnúin moskubyggingum
 
@@ -2604,6 +2611,8 @@ NlEnginnAndlag/fall →
 
 Sögn_1_nh →
     So_1_nh/fall SagnÖgn? FsRunaInnskot? NlBeintAndlag/fall
+    # (Hann vill) skilja, nota og meta textann (sagnirnar deila andlagi)
+    | So_1_nh/fall OgNhSögn/fall+ SagnÖgn? FsRunaInnskot? NlBeintAndlag/fall
     # sjá/láta/'horfa á' Pál breyta [í snarheitum] sér (í kött)
     | So_1_þf_nh Nl_þf So_1_nh/fall FsRunaInnskot? Nl/fall
 
@@ -3551,30 +3560,44 @@ $score(+8) NhSögnHafaGetaFá
 
 # Samtengingar sagna
 
+# Sagnir í nafnhætti sem deila andlagi: 'að skilja og nota texta'.
+# Kommuaðskildar sagnir eru leyfðar í upptalningu, en aðeins ef sögn með
+# 'og'/'eða' lokar upptalningunni: 'að skilja, nota, meta og ígrunda texta'
 OgNhSögn →
     OgEðaHeldur so_0_nh so_0_gm_vh_p3_et?
 OgNhSögn_þf →
     OgEðaHeldur so_1_þf_nh so_0_gm_vh_p3_et?
+    | "," so_1_þf_nh so_0_gm_vh_p3_et? OgNhSögn_þf
 OgNhSögn_þgf →
     OgEðaHeldur so_1_þgf_nh so_0_gm_vh_p3_et?
+    | "," so_1_þgf_nh so_0_gm_vh_p3_et? OgNhSögn_þgf
 OgNhSögn_ef →
     OgEðaHeldur so_1_ef_nh so_0_gm_vh_p3_et?
+    | "," so_1_ef_nh so_0_gm_vh_p3_et? OgNhSögn_ef
 OgNhSögn_nf →
     OgEðaHeldur so_1_nf_nh so_0_gm_vh_p3_et?
+    | "," so_1_nf_nh so_0_gm_vh_p3_et? OgNhSögn_nf
 OgNhSögn_þf_þf →
     OgEðaHeldur so_2_þf_þf_nh so_0_gm_vh_p3_et?
+    | "," so_2_þf_þf_nh so_0_gm_vh_p3_et? OgNhSögn_þf_þf
 OgNhSögn_þf_þgf →
     OgEðaHeldur so_2_þf_þgf_nh so_0_gm_vh_p3_et?
+    | "," so_2_þf_þgf_nh so_0_gm_vh_p3_et? OgNhSögn_þf_þgf
 OgNhSögn_þf_ef →
     OgEðaHeldur so_2_þf_ef_nh so_0_gm_vh_p3_et?
+    | "," so_2_þf_ef_nh so_0_gm_vh_p3_et? OgNhSögn_þf_ef
 OgNhSögn_þgf_nf →
     OgEðaHeldur so_2_þgf_nf_nh so_0_gm_vh_p3_et?
+    | "," so_2_þgf_nf_nh so_0_gm_vh_p3_et? OgNhSögn_þgf_nf
 OgNhSögn_þgf_þf →
     OgEðaHeldur so_2_þgf_þf_nh so_0_gm_vh_p3_et?
+    | "," so_2_þgf_þf_nh so_0_gm_vh_p3_et? OgNhSögn_þgf_þf
 OgNhSögn_þgf_þgf →
     OgEðaHeldur so_2_þgf_þgf_nh so_0_gm_vh_p3_et?
+    | "," so_2_þgf_þgf_nh so_0_gm_vh_p3_et? OgNhSögn_þgf_þgf
 OgNhSögn_þgf_ef →
     OgEðaHeldur so_2_þgf_ef_nh so_0_gm_vh_p3_et?
+    | "," so_2_þgf_ef_nh so_0_gm_vh_p3_et? OgNhSögn_þgf_ef
 
 # Gefa til kynna hvar lesa á upp sagnir til að nota í
 # tengingu sagna og forsetninga
@@ -3603,6 +3626,10 @@ NlFrumlagÞað → 'það:pfn'_hk_nf_et
 
 # Hafa sérstakan hnút fyrir frumlagslepp (NP-ES)
 NlFrumlagLeppur → 'það:pfn'_hk_nf_et
+
+# Setningarfremsti liður sem er annaðhvort atviksliður/forsetningarliður
+# eða frumlagsleppur: 'Í skjölunum er ...' / 'Það er ...'
+FsAtvEðaLeppur → FsAtv | NlFrumlagLeppur
 
 NlAndlagÞað/fall → 'það:pfn'_hk_et/fall
 
