@@ -6,12 +6,57 @@ on:
   # events fire for each push to a branch with an open PR.)
   push:
     branches: [ master ]
+    paths-ignore: [ "**.md" ]
   pull_request:
     # Note: "**" is required to match branch names containing '/'
     branches: [ "**" ]
+    paths-ignore: [ "**.md" ]
+
+# A new push to a PR cancels its run in progress; master runs are never cancelled
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  gate:
+    # Skip the push run on master for a PR merge commit whose tree was
+    # already tested by a successful pull_request run. That holds when
+    # master's previous head (first parent) is an ancestor of the PR head
+    # (second parent): the PR run then tested a merge with an even older
+    # master commit, which also yields the PR head's tree, and so does
+    # the merge commit. Direct pushes, squash merges and PRs that were
+    # behind master get the full run.
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      skip: ${{ steps.check.outputs.skip }}
+    steps:
+    - id: check
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        SHA: ${{ github.sha }}
+        EVENT: ${{ github.event_name }}
+      run: |
+        skip=false
+        if [ "$EVENT" = push ]; then
+          set -- $(gh api "repos/$REPO/commits/$SHA" --jq '[.parents[].sha] | join(" ")')
+          if [ $# -eq 2 ]; then
+            status=$(gh api "repos/$REPO/compare/$1...$2" --jq .status)
+            passed=$(gh api "repos/$REPO/actions/workflows/python-package.yml/runs?event=pull_request&head_sha=$2&status=success" --jq .total_count)
+            echo "parents: $1 $2; compare: $status; successful PR runs: $passed"
+            if { [ "$status" = ahead ] || [ "$status" = identical ]; } && [ "$passed" -gt 0 ]; then
+              skip=true
+            fi
+          fi
+        fi
+        echo "skip=$skip" | tee -a "$GITHUB_OUTPUT"
+
   build:
+    needs: gate
+    if: needs.gate.outputs.skip != 'true'
 
     runs-on: ${{ matrix.os }}
     strategy:
