@@ -2091,19 +2091,14 @@ def test_ambig_phrases(r):
 
 def test_relative_clause(r):
     s = r.parse_single("Þetta eru lausnirnar sem kallað hefur verið eftir.")
+    # Impersonal passive with a stranded preposition: 'kallað' is the
+    # participle, not a subject or a predicative adjective
     assert (
         s.tree.flat_with_all_variants
         == "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP VP "
         "so_1_nf_fh_ft_gm_nt_p3 /VP NP-PRD no_ft_gr_kvk_nf CP-REL C stt /C "
-        "IP NP-PRD lo_et_hk_nf_sb /NP-PRD VP-AUX VP so_et_fh_gm_nt_p3 /VP "
-        "VP so_gm_sagnb /VP /VP-AUX ADVP ao /ADVP /IP /CP-REL /NP-PRD /VP /IP "
-        "/S-MAIN p /S0"
-    ) or (
-        s.tree.flat_with_all_variants
-        == "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP VP "
-        "so_1_nf_fh_ft_gm_nt_p3 /VP NP-PRD no_ft_gr_kvk_nf CP-REL C stt /C "
-        "IP NP-PRD lo_et_hk_nf_sb /NP-PRD VP-AUX VP so_et_fh_gm_nt_p3 /VP "
-        "VP so_gm_sagnb /VP /VP-AUX /IP /CP-REL /NP-PRD ADVP ao /ADVP /VP /IP "
+        "IP VP so_0_gm_sagnb /VP VP-AUX so_et_fh_gm_nt_p3 /VP-AUX "
+        "VP so_gm_sagnb /VP ADVP ao /ADVP /IP /CP-REL /NP-PRD /VP /IP "
         "/S-MAIN p /S0"
     )
 
@@ -2984,3 +2979,271 @@ def test_infinitive_list_shared_object(r):
     assert s.tree is None
     s = r.parse_single("Hann vill lesa, skrifa.")
     assert s.tree is None
+
+
+def test_til_stendur_relative(r):
+    """Relative clauses with the object of an infinitive gapped after
+    impersonal 'til stendur'/'stendur til': 'kerfi sem til stendur að innleiða'"""
+    s = r.parse_single(
+        "Menntamálaráðuneytið hyggst ekki fresta innleiðingu nýs einkunnakerfis "
+        "sem til stendur að innleiða á næsta ári."
+    )
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ no_et_nf_hk /NP-SUBJ VP VP so_mm_et_p3 /VP "
+        "ADVP ao /ADVP VP so_1_þgf_nh /VP NP-OBJ no_et_þgf_kvk "
+        "NP-POSS lo_ef_et_hk no_et_ef_hk CP-REL C stt /C ao "
+        "VP so_0_gm_p3_et /VP TO nhm /TO VP so_1_þf_nh /VP "
+        "ADVP-DATE-REL P fs_þgf /P lo_evb_þgf_et_hk no_hk_þgf_et /ADVP-DATE-REL "
+        "/CP-REL /NP-POSS /NP-OBJ /VP /IP /S-MAIN p /S0"
+    )
+    rel = s.tree.S.IP.VP.NP_OBJ.NP_POSS.CP_REL
+    assert rel.text == "sem til stendur að innleiða á næsta ári"
+    assert s.tree.verbs == ["hyggja", "fresta", "standa", "innleiða"]
+    # 'stendur til', with and without expletive 'það'
+    s = r.parse_single(
+        "Ráðuneytið frestar innleiðingu kerfis sem stendur til að innleiða í haust."
+    )
+    assert s and s.tree
+    assert s.tree.S.IP.VP.NP_OBJ.NP_POSS.CP_REL.text == (
+        "sem stendur til að innleiða í haust"
+    )
+    # With 'það', as in main clauses, 'það' is the subject of 'standa'
+    s = r.parse_single("Ráðuneytið kynnir kerfið sem það stendur til að innleiða.")
+    assert s and s.tree
+    assert s.tree.S.IP.VP.NP_OBJ.CP_REL.IP.NP_SUBJ.text == "það"
+    s = r.parse_single("Kerfið sem til stóð ekki að innleiða er gott.")
+    assert s and s.tree
+    assert s.tree.S.IP.NP_SUBJ.CP_REL.text == "sem til stóð ekki að innleiða"
+    # Main-clause 'til stendur' with an overt object is unaffected
+    s = r.parse_single("Til stendur að innleiða kerfið á næsta ári.")
+    assert s and s.tree
+    assert s.tree.S.IP.IP_INF.VP.NP_OBJ.text == "kerfið"
+
+
+def test_gapped_infinitive_object_relative(r):
+    """Relative clauses with a subject, a verb taking an infinitive and the
+    infinitive's object gapped: 'kerfið sem við ætlum að innleiða'"""
+    s = r.parse_single("Ráðuneytið frestar kerfinu sem við ætlum að innleiða.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ no_et_nf_hk /NP-SUBJ VP VP so_1_þgf_et_p3 /VP "
+        "NP-OBJ no_et_þgf_hk CP-REL C stt /C IP NP-SUBJ pfn_ft_nf /NP-SUBJ "
+        "VP VP so_0_ft_p1 /VP TO nhm /TO VP so_1_þf_nh /VP /VP /IP /CP-REL "
+        "/NP-OBJ /VP /IP /S-MAIN p /S0"
+    )
+    # The gap's case (þgf for 'hjálpa') is independent of the antecedent's (nf)
+    s = r.parse_single("Mennirnir sem við reyndum að hjálpa eru farnir.")
+    assert s and s.tree
+    rel = s.tree.S.IP.NP_SUBJ.CP_REL
+    assert rel.IP.NP_SUBJ.text == "við"
+    assert s.tree.verbs == ["reyna", "hjálpa", "vera", "fara"]
+    # 'þurfa/eiga/verða að', bare-infinitive modals and perfect tense
+    for sent, subj in (
+        ("Kerfið sem við þurfum að innleiða er dýrt.", "við"),
+        ("Hún las bókina sem kennarinn átti að lesa.", "kennarinn"),
+        ("Ráðuneytið kynnir kerfið sem ráðherrann vill ekki innleiða.", "ráðherrann"),
+        ("Ráðuneytið kynnir kerfið sem við munum innleiða í haust.", "við"),
+        ("Hún las bókina sem kennarinn hafði ákveðið að lesa.", "kennarinn"),
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        assert s.tree.first_match("CP-REL").IP.NP_SUBJ.text == subj, sent
+    # A noun phrase that can be nf or þf is read as the subject of the
+    # relative clause, not as a fronted object with a gapped subject
+    s = r.parse_single(
+        "Ráðuneytið frestar innleiðingu kerfis sem ráðherrann hyggst innleiða."
+    )
+    assert s and s.tree
+    rel = s.tree.S.IP.VP.NP_OBJ.NP_POSS.CP_REL
+    assert rel.IP.NP_SUBJ.text == "ráðherrann"
+    # Subject gaps and fronted objects are unaffected
+    s = r.parse_single("Maðurinn sem ætlar að innleiða kerfið er ráðherra.")
+    assert s and s.tree
+    assert s.tree.S.IP.NP_SUBJ.CP_REL.IP.VP.IP_INF.VP.NP_OBJ.text == "kerfið"
+    s = r.parse_single("Þann auð munum við ekki nýta.")
+    assert s and s.tree
+    assert s.tree.S.IP.NP_OBJ.text == "Þann auð"
+
+
+def test_inverted_dative_subject_adjective(r):
+    """A dative subject with an adjective and an infinitive or 'að' clause,
+    after the verb when something else is fronted:
+    '[Þar sem ...] var nefndinni óheimilt að taka málið fyrir'"""
+    s = r.parse_single(
+        "Þar sem kvartandi hefði ekki haft aðild var úrskurðarnefndinni "
+        "óheimilt að taka málið til efnismeðferðar."
+    )
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP CP-ADV-CAUSE C ao st /C IP NP-SUBJ no_et_nf_kk /NP-SUBJ "
+        "VP VP-AUX so_et_p3 /VP-AUX ADVP ao /ADVP VP so_1_þf_sagnb /VP "
+        "NP-OBJ no_et_þf_kvk /NP-OBJ /VP /IP /CP-ADV-CAUSE "
+        "VP VP so_et_p3 /VP NP-SUBJ no_et_þgf_kvk /NP-SUBJ "
+        "NP-PRD lo_nf_et_hk_sb /NP-PRD IP-INF TO nhm /TO VP VP so_1_þf_nh /VP "
+        "NP-OBJ no_et_þf_hk /NP-OBJ PP P fs_ef /P NP no_et_ef_kvk /NP /PP "
+        "/VP /IP-INF /VP /IP /S-MAIN p /S0"
+    )
+    assert s.tree.S.IP.VP.NP_SUBJ.text == "úrskurðarnefndinni"
+    # Fronted adverb or prepositional phrase
+    for sent, subj in (
+        ("Vegna þessa var nefndinni óheimilt að taka málið til meðferðar.", "nefndinni"),
+        ("Þá var Jóni frjálst að fara.", "Jóni"),
+        ("Samkvæmt lögunum er forseta óheimilt að hafa önnur störf.", "forseta"),
+        ("Í gær var mér ljóst að málið var tapað.", "mér"),
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        assert s.tree.S.IP.VP.NP_SUBJ.text == subj, sent
+        assert s.tree.S.IP.VP.NP_PRD.tag == "NP-PRD", sent
+    # The dative-first order and nominative inversion are unaffected
+    s = r.parse_single("Nefndinni var óheimilt að taka málið til meðferðar.")
+    assert s and s.tree
+    assert s.tree.S.IP.IP.NP_SUBJ.text == "Nefndinni"
+    s = r.parse_single("Þar sem hann fór var veðrið gott.")
+    assert s and s.tree
+    assert s.tree.S.IP.VP.NP_SUBJ.text == "veðrið"
+
+
+def test_andi_agent_nouns(r):
+    """Agent nouns in -andi ('kvartandi', 'kærandi') whose nominative singular
+    coincides with a present participle: the noun reading should win as subject,
+    while genuine participle uses keep the verb reading"""
+    s = r.parse_single("Kvartandi hefði ekki haft aðild.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ no_et_nf_kk /NP-SUBJ VP VP-AUX so_et_p3 /VP-AUX "
+        "ADVP ao /ADVP VP so_1_þf_sagnb /VP NP-OBJ no_et_þf_kvk /NP-OBJ /VP "
+        "/IP /S-MAIN p /S0"
+    )
+    for w in (
+        "Kærandi", "Ákærandi", "Kaupandi", "Seljandi", "Stefnandi", "Áfrýjandi",
+        "Beiðandi", "Greiðandi", "Framleiðandi", "Umbjóðandi",
+    ):
+        s = r.parse_single(f"{w} kvartaði yfir niðurstöðunni.")
+        assert s and s.tree, w
+        assert s.tree.S.IP.NP_SUBJ.text == w, w
+    s = r.parse_single("Nefndin taldi að kærandi hefði ekki aðild.")
+    assert s and s.tree
+    assert s.tree.S.IP.VP.CP_THT_OBJ.IP.NP_SUBJ.text == "kærandi"
+    # 'hafði' is the verb 'hafa', not the weak form of the adjective 'hafður'
+    s = r.parse_single(
+        "Þar sem kvartandinn hafði ekki aðild var nefndinni óheimilt "
+        "að taka málið til meðferðar."
+    )
+    assert s and s.tree
+    assert s.tree.S.IP.CP_ADV_CAUSE.IP.NP_SUBJ.text == "kvartandinn"
+    assert s.tree.S.IP.VP.NP_SUBJ.text == "nefndinni"
+    # Genuine present participles
+    s = r.parse_single("Hann sat þar kvartandi yfir veðrinu.")
+    assert s and s.tree
+    assert "so_0_lh_nt" in s.tree.flat
+    s = r.parse_single("Greiðandi farþegar fá afslátt.")
+    assert s and s.tree
+    assert s.tree.S.IP.NP_SUBJ.text == "Greiðandi farþegar"
+    # The participle reading of a lone sentence-initial -andi noun must lose
+    # also when 'hafa' can be read intransitively with a following subject
+    for w in ("Eigandi", "Nemandi", "Lesandi", "Gerandi", "Þolandi", "Notandi"):
+        s = r.parse_single(f"{w} hefur samband við blaðið.")
+        assert s and s.tree, w
+        assert s.tree.S.IP.NP_SUBJ.text == w, w
+    # 'gerandi' and 'þolandi' are far more common as nouns than adjectives
+    s = r.parse_single("Hann var þolandi í málinu.")
+    assert s and s.tree
+    assert "NP-PRD no_et_nf_kk" in s.tree.flat
+    s = r.parse_single("Maðurinn var gerandi.")
+    assert s and s.tree
+    assert "NP-PRD no_et_nf_kk" in s.tree.flat
+    # ... and 'þolandi' is masculine, not the rare feminine noun
+    s = r.parse_single("Nefndin taldi að þolandi hefði ekki aðild.")
+    assert s and s.tree
+    assert s.tree.S.IP.VP.CP_THT_OBJ.IP.NP_SUBJ.text == "þolandi"
+    # Other -andi nouns keep their predicative adjective reading
+    s = r.parse_single("Þetta er ekki lesandi.")
+    assert s and s.tree
+    assert "lo_sb_nf_et_hk" in s.tree.flat
+    s = r.parse_single("Hann var varla mælandi.")
+    assert s and s.tree
+    assert "NP-PRD no_et_nf_kk" not in s.tree.flat
+
+
+def test_gapped_object_relative(r):
+    """Relative clauses with a subject and a gapped verb object:
+    'bókin sem hann skrifaði', not 'hann' as a fronted object"""
+    s = r.parse_single("Hún las bókina sem hann skrifaði.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ pfn_kvk_et_nf /NP-SUBJ VP VP so_1_þf_et_p3 /VP "
+        "NP-OBJ no_et_þf_kvk CP-REL C stt /C IP NP-SUBJ pfn_kk_et_nf /NP-SUBJ "
+        "VP so_1_þf_et_p3 /VP /IP /CP-REL /NP-OBJ /VP /IP /S-MAIN p /S0"
+    )
+    for sent, subj, verb in (
+        ("Ráðuneytið kynnir kerfið sem við innleiðum.", "við", "so_1_þf"),
+        ("Ráðuneytið frestar kerfinu sem ráðuneytið innleiddi í fyrra.",
+         "ráðuneytið", "so_1_þf"),
+        ("Hún las bókina sem hann hafði skrifað í fyrra.", "hann", "so_1_þf_sagnb"),
+        ("Konan hjálpaði manninum sem lögreglan leitaði.", "lögreglan", "so_1_ef"),
+        ("Bókin sem ég keypti í gær er góð.", "ég", "so_1_þf"),
+        ("Bókin sem hann gaf út í fyrra er góð.", "hann", "so_1_þf"),
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        rel = s.tree.first_match("CP-REL")
+        assert rel.IP.NP_SUBJ.text == subj, sent
+        assert verb in rel.flat, sent
+    # The infinitive stays inside the relative clause
+    s = r.parse_single("Ég gleymdi bókinni sem ég ætlaði að lesa.")
+    assert s and s.tree
+    assert s.tree.first_match("CP-REL").text == "sem ég ætlaði að lesa"
+    s = r.parse_single("Ég gleymdi bókinni sem ég var að lesa.")
+    assert s and s.tree
+    assert s.tree.first_match("CP-REL").text == "sem ég var að lesa"
+    # Subject gaps are unaffected
+    s = r.parse_single("Maðurinn sem sá konuna kom heim.")
+    assert s and s.tree
+    assert s.tree.S.IP.NP_SUBJ.CP_REL.IP.VP.NP_OBJ.text == "konuna"
+
+
+def test_stranded_preposition_relative(r):
+    """Relative clauses where the gap is the object of a preposition,
+    which is left stranded as an adverb: 'málið sem nefndin fjallaði um'"""
+    s = r.parse_single("Maðurinn sem hún talaði við er læknir.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ no_et_nf_kk CP-REL C stt /C IP NP-SUBJ "
+        "pfn_kvk_et_nf /NP-SUBJ VP VP so_0_et_p3 /VP ADVP ao /ADVP /VP /IP "
+        "/CP-REL /NP-SUBJ VP VP so_1_nf_et_p3 /VP NP-PRD no_et_nf_kk /NP-PRD "
+        "/VP /IP /S-MAIN p /S0"
+    )
+    for sent, subj, prep in (
+        ("Húsið sem hann bjó í var gamalt.", "hann", "í"),
+        ("Málið sem nefndin fjallaði um er flókið.", "nefndin", "um"),
+        ("Málið sem nefndin hefur fjallað um er flókið.", "nefndin", "um"),
+        ("Málið sem nefndin mun fjalla um er flókið.", "nefndin", "um"),
+        ("Málið sem við ætlum að fjalla um er flókið.", "við", "um"),
+        ("Málið sem nefndin þarf að fjalla um er flókið.", "nefndin", "um"),
+        ("Markmiðið sem við stefnum að er skýrt.", "við", "að"),
+        ("Myndin sem við horfðum á var löng.", "við", "á"),
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        rel = s.tree.first_match("CP-REL")
+        assert rel.IP.NP_SUBJ.text == subj, sent
+        assert rel.flat.endswith(" ADVP ao /ADVP /VP /IP /CP-REL"), sent
+        assert rel.text.endswith(" " + prep), sent
+    # With an object before the stranded preposition
+    s = r.parse_single("Þetta er staðurinn sem ég sagði þér frá.")
+    assert s and s.tree
+    rel = s.tree.first_match("CP-REL")
+    assert rel.IP.VP.NP_OBJ.text == "þér"
+    # Impersonal passive, in both word orders
+    for sent in (
+        "Lausnin sem kallað var eftir kom ekki.",
+        "Lausnin sem var kallað eftir kom ekki.",
+        "Þetta eru lausnirnar sem hefur verið kallað eftir.",
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        rel = s.tree.first_match("CP-REL")
+        assert rel.flat.endswith(" ADVP ao /ADVP /IP /CP-REL"), sent
+        assert "NP-SUBJ" not in rel.flat, sent
