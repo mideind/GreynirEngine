@@ -110,19 +110,26 @@ The public API is defined by the exports in `src/reynir/__init__.py`.
 - The `old/` and `build/` directories contain legacy/build artifacts — do not
   edit code there.
 
-## Backlog (post-3.9.0 candidates)
+## Backlog (post-3.10.0 candidates)
 
 Potential next steps from the 2026 grammar-coverage study (see release
-notes for 3.9.0); none started:
+notes for 3.9.0) and from the 3.10.0 work; none started:
 
 - **Coverage clusters**: auxiliary/copula gapping in a second conjunct
   ("höfðu dáið og 23 særst"); smaller items — "var lýst sem" passives,
   "hann/hún" + name, repeated "sem", þykja-subject-first; the pronoun
   "hinn" cluster ("allir hinir", "okkur hinum"); "Ætli …?" questions.
 - **Tokenizer**: amount ranges ("200 til 460 milljónir króna" strands
-  "200 til"). Also: Tokenizer PR #63 (fused month ranges → DATEREL) is
-  merged upstream but unreleased; when a Tokenizer release ships,
-  refresh uv.lock here so CI exercises it (no engine code change needed).
+  "200 til").
+- **Relative clauses** (left over from 3.10.0): stranded preposition
+  after "vera" ("húsið sem hann hefur verið í"); multi-word stranded
+  prepositions ("sem hún tók á móti"); "fundurinn sem halda á í dag";
+  locative "þar sem" clauses ("Þar sem hann fór var mér kalt"); "kerfið
+  sem til stendur að hjálpa/breyta" (dative/genitive object: the
+  subject-gap reading still wins).
+- **Scoring**: the reducer's flat +12 for present participles
+  (`reducer.py`) is why -andi nouns needed per-word Prefs.conf entries;
+  a generic fix would cover the rest of the class.
 - **Grammar hygiene, round 2**: inline ~60 thin single-production
   wrappers; consider a /kyn variant diet like the /pers one; score or
   drop sentence-initial SamkvæmtHeimild; run a second usage census over
