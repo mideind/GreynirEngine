@@ -1584,6 +1584,13 @@ SetningAukafallÁnF →
     # ... verður [ekki] að gera (á Jóni og séra Jóni)
     | NlFrumlagLeppur? HjSögnÞurfaEiga_et_p3 FsAtv? Nhm So_1_nh/aukafall AðLiður?
 
+    # (kerfi sem) til stendur/stóð [ekki] að innleiða [á næsta ári]
+    | "til:ao" 'standa:so'_0_gm_p3_et FsAtv? Nhm So_1_nh/aukafall AðLiður?
+
+    # (kerfi sem) stendur/stóð [ekki] til að innleiða [á næsta ári]
+    # ('sem það stendur til að innleiða' fer um SagnRunaStýfðNh)
+    | 'standa:so'_0_gm_p3_et "til:ao" FsAtv? Nhm So_1_nh/aukafall AðLiður?
+
 Andlagssagnliður/tala/pers → NlBeintAndlag/aukafall So_1/aukafall/tala/pers
 
 ÓpSagnliður/aukafall → so_subj_op/aukafall ÓpSagnarBotn?
@@ -2374,6 +2381,10 @@ SögnMeðF_0/tala/pers/kyn →
     # (Frá því í gær) hefur stjórnvöldum verið ljóst að greiða þyrfti atkvæði um málið
     | 'hafa:so'_0_et_p3 NlFrumlag_þgf/tala/pers/kyn AtvFs?
         HjSögn_sagnb FsAtv? SögnMeðFSagnbBotn
+    # [Þar sem kvartandi hafði ekki aðild] var nefndinni [ekki] óheimilt að taka málið fyrir
+    # (Í gær) var mér [það] ljóst að Jón væri farinn
+    # (sbr. BeygingarliðurLoÞgf, sama smíð með þágufallsfrumlagi fremst)
+    | HjSögnLhÞt_et_p3 NlFrumlag_þgf/tala/pers/kyn 'það:pfn'_hk_et_nf? FsAtv? LoÞgfNh AðLiður?
     # (Í dag) hefur konunnar getað verið gætt
     | 'hafa:so'_0_et_p3 NlFrumlag_ef/tala/pers/kyn AtvFs?
         HjSögn_sagnb FsAtv? so_1_ef_sagnb NhFylling/tala/kyn?
@@ -5256,6 +5267,24 @@ SagnRunaStýfð/tala/pers →
     # Í nöfnunum sem konurnar kölluðu Pál
     # (konurnar kölluðu Pál nöfnum)
     | so_2_þf_þgf/tala/pers NlBeintAndlag_þf
+    | SagnRunaStýfðNh/tala/pers
+
+# Andlag nafnháttarsagnar er stýft:
+# 'kerfið sem ráðuneytið ætlar að innleiða'
+# (ráðuneytið ætlar að innleiða kerfið)
+SagnRunaStýfðNh/tala/pers →
+    # Kerfið sem ráðuneytið ætlar/reynir [ekki] að innleiða
+    so_0/tala/pers FsAtv? Nhm So_1_nh/aukafall
+    # Kerfið sem ráðuneytið þarf/á/verður [ekki] að innleiða
+    | HjSögnNhMeðSagnb/tala/pers FsAtv? Nhm So_1_nh/aukafall
+    # Kerfið sem ráðuneytið hyggst/vill/mun [ekki] innleiða
+    | HjSögnNh/tala/pers FsAtv? So_1_nh/aukafall
+    # Kerfið sem ráðuneytið hefur [ekki] ákveðið að innleiða
+    | HjSögn/tala/pers FsAtv? so_0_sagnb Nhm So_1_nh/aukafall
+
+# Frumlag á undan sögn er mun líklegra en stýft frumlag og
+# andlag á undan sögn: 'kerfið sem ráðherrann vill [ekki] innleiða'
+$score(+10) SagnRunaStýfðNh/tala/pers
 
 # (Nokkurra ára niðursveiflur) sem þessar (eru óþekktar)
 Tengisetning_et_p3/kyn →
