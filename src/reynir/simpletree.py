@@ -182,6 +182,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "SkýringarBotn": "IP",
     # "SegirÍ": "IP",
     "BeygingarliðurStýftAndlag": "IP",
+    "TengisetningÞolStrönduðFs": "IP",  # (lausnirnar sem) kallað hefur verið eftir
     "BeygingarliðurVh": "IP",
     "BlTagl": "IP",
     "SetningSo": "IP",  # Removed "VP" from here - it creates duplicate IP>VP chains
@@ -222,6 +223,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "NlEnginnAndlag": "NP-OBJ",  # 'hann getur enga samninga gert'
     "NlAnnar": "NP-OBJ",  # '[Jón hefur] aðra sögu [að segja]'
     "NlAndlagÞað": "NP-OBJ",  # (Jón lét) þess (getið að Guðrún væri falleg)
+    "NlAndlagStrönduðFs": "NP-OBJ",  # (staðurinn sem ég sagði) þér (frá)
     "NlNema": "NP-EXCEPT",  # '(söknuðu einskis) nema hestsins'
     "NlÓbeintAndlag": "NP-IOBJ",
     "NlSagnfylling": "NP-PRD",
@@ -299,6 +301,7 @@ _DEFAULT_NT_MAP: NonterminalMap = {
     "AlTilv": "ADVP",
     "AtviksliðurHliðstæður": "ADVP",
     "UmAo": "ADVP",
+    "StrönduðFs": "ADVP",  # (málið sem nefndin fjallaði) um
     "StefnuAtv": "ADVP-DIR",
     "SpurnarAtviksorð": "ADVP",
     "AtvTímaliður": "ADVP",

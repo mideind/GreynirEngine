@@ -2091,19 +2091,14 @@ def test_ambig_phrases(r):
 
 def test_relative_clause(r):
     s = r.parse_single("Þetta eru lausnirnar sem kallað hefur verið eftir.")
+    # Impersonal passive with a stranded preposition: 'kallað' is the
+    # participle, not a subject or a predicative adjective
     assert (
         s.tree.flat_with_all_variants
         == "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP VP "
         "so_1_nf_fh_ft_gm_nt_p3 /VP NP-PRD no_ft_gr_kvk_nf CP-REL C stt /C "
-        "IP NP-PRD lo_et_hk_nf_sb /NP-PRD VP-AUX VP so_et_fh_gm_nt_p3 /VP "
-        "VP so_gm_sagnb /VP /VP-AUX ADVP ao /ADVP /IP /CP-REL /NP-PRD /VP /IP "
-        "/S-MAIN p /S0"
-    ) or (
-        s.tree.flat_with_all_variants
-        == "S0 S-MAIN IP NP-SUBJ fn_et_hk_nf /NP-SUBJ VP VP "
-        "so_1_nf_fh_ft_gm_nt_p3 /VP NP-PRD no_ft_gr_kvk_nf CP-REL C stt /C "
-        "IP NP-PRD lo_et_hk_nf_sb /NP-PRD VP-AUX VP so_et_fh_gm_nt_p3 /VP "
-        "VP so_gm_sagnb /VP /VP-AUX /IP /CP-REL /NP-PRD ADVP ao /ADVP /VP /IP "
+        "IP VP so_0_gm_sagnb /VP VP-AUX so_et_fh_gm_nt_p3 /VP-AUX "
+        "VP so_gm_sagnb /VP ADVP ao /ADVP /IP /CP-REL /NP-PRD /VP /IP "
         "/S-MAIN p /S0"
     )
 
@@ -3170,3 +3165,85 @@ def test_andi_agent_nouns(r):
     s = r.parse_single("Hann var varla mælandi.")
     assert s and s.tree
     assert "NP-PRD no_et_nf_kk" not in s.tree.flat
+
+
+def test_gapped_object_relative(r):
+    """Relative clauses with a subject and a gapped verb object:
+    'bókin sem hann skrifaði', not 'hann' as a fronted object"""
+    s = r.parse_single("Hún las bókina sem hann skrifaði.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ pfn_kvk_et_nf /NP-SUBJ VP VP so_1_þf_et_p3 /VP "
+        "NP-OBJ no_et_þf_kvk CP-REL C stt /C IP NP-SUBJ pfn_kk_et_nf /NP-SUBJ "
+        "VP so_1_þf_et_p3 /VP /IP /CP-REL /NP-OBJ /VP /IP /S-MAIN p /S0"
+    )
+    for sent, subj, verb in (
+        ("Ráðuneytið kynnir kerfið sem við innleiðum.", "við", "so_1_þf"),
+        ("Ráðuneytið frestar kerfinu sem ráðuneytið innleiddi í fyrra.",
+         "ráðuneytið", "so_1_þf"),
+        ("Hún las bókina sem hann hafði skrifað í fyrra.", "hann", "so_1_þf_sagnb"),
+        ("Konan hjálpaði manninum sem lögreglan leitaði.", "lögreglan", "so_1_ef"),
+        ("Bókin sem ég keypti í gær er góð.", "ég", "so_1_þf"),
+        ("Bókin sem hann gaf út í fyrra er góð.", "hann", "so_1_þf"),
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        rel = s.tree.first_match("CP-REL")
+        assert rel.IP.NP_SUBJ.text == subj, sent
+        assert verb in rel.flat, sent
+    # The infinitive stays inside the relative clause
+    s = r.parse_single("Ég gleymdi bókinni sem ég ætlaði að lesa.")
+    assert s and s.tree
+    assert s.tree.first_match("CP-REL").text == "sem ég ætlaði að lesa"
+    s = r.parse_single("Ég gleymdi bókinni sem ég var að lesa.")
+    assert s and s.tree
+    assert s.tree.first_match("CP-REL").text == "sem ég var að lesa"
+    # Subject gaps are unaffected
+    s = r.parse_single("Maðurinn sem sá konuna kom heim.")
+    assert s and s.tree
+    assert s.tree.S.IP.NP_SUBJ.CP_REL.IP.VP.NP_OBJ.text == "konuna"
+
+
+def test_stranded_preposition_relative(r):
+    """Relative clauses where the gap is the object of a preposition,
+    which is left stranded as an adverb: 'málið sem nefndin fjallaði um'"""
+    s = r.parse_single("Maðurinn sem hún talaði við er læknir.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ no_et_nf_kk CP-REL C stt /C IP NP-SUBJ "
+        "pfn_kvk_et_nf /NP-SUBJ VP VP so_0_et_p3 /VP ADVP ao /ADVP /VP /IP "
+        "/CP-REL /NP-SUBJ VP VP so_1_nf_et_p3 /VP NP-PRD no_et_nf_kk /NP-PRD "
+        "/VP /IP /S-MAIN p /S0"
+    )
+    for sent, subj, prep in (
+        ("Húsið sem hann bjó í var gamalt.", "hann", "í"),
+        ("Málið sem nefndin fjallaði um er flókið.", "nefndin", "um"),
+        ("Málið sem nefndin hefur fjallað um er flókið.", "nefndin", "um"),
+        ("Málið sem nefndin mun fjalla um er flókið.", "nefndin", "um"),
+        ("Málið sem við ætlum að fjalla um er flókið.", "við", "um"),
+        ("Málið sem nefndin þarf að fjalla um er flókið.", "nefndin", "um"),
+        ("Markmiðið sem við stefnum að er skýrt.", "við", "að"),
+        ("Myndin sem við horfðum á var löng.", "við", "á"),
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        rel = s.tree.first_match("CP-REL")
+        assert rel.IP.NP_SUBJ.text == subj, sent
+        assert rel.flat.endswith(" ADVP ao /ADVP /VP /IP /CP-REL"), sent
+        assert rel.text.endswith(" " + prep), sent
+    # With an object before the stranded preposition
+    s = r.parse_single("Þetta er staðurinn sem ég sagði þér frá.")
+    assert s and s.tree
+    rel = s.tree.first_match("CP-REL")
+    assert rel.IP.VP.NP_OBJ.text == "þér"
+    # Impersonal passive, in both word orders
+    for sent in (
+        "Lausnin sem kallað var eftir kom ekki.",
+        "Lausnin sem var kallað eftir kom ekki.",
+        "Þetta eru lausnirnar sem hefur verið kallað eftir.",
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        rel = s.tree.first_match("CP-REL")
+        assert rel.flat.endswith(" ADVP ao /ADVP /IP /CP-REL"), sent
+        assert "NP-SUBJ" not in rel.flat, sent

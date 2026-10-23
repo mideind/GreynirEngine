@@ -5230,6 +5230,7 @@ Tengisetning/tala/pers/kyn →
     # (Maðurinn sem) kyssti konuna í gær [fyrstur allra]/ (Maðurinn sem) var fallegur
     | BeygingarliðurÁnF/tala/pers/kyn LoTengtSögn_nf/tala/kyn?
     | TengisetningSoÞað # (Lausnirnar sem) kallað var eftir
+    | TengisetningÞolStrönduðFs # (Lausnirnar sem) kallað hefur verið eftir
     | BeygingarliðurStýftAndlag
     | SetningAukafallÁnF            # Hann nýtur lukkunnar sem skorti í fyrra
 
@@ -5238,6 +5239,22 @@ TengisetningSoÞað →
     SetningSoÞað # (Lausnirnar sem) kallað var eftir
 
 $score(-4) TengisetningSoÞað
+
+# Ópersónuleg þolmynd þar sem andlag forsetningar er stýft:
+# '(lausnirnar sem) kallað hefur verið eftir'
+TengisetningÞolStrönduðFs →
+    # (Lausnirnar sem) kallað var/verður [ekki] eftir
+    so_0_sagnb HjSögnSagnb FsAtv? StrönduðFs
+    # (Lausnirnar sem) var/verður [ekki] kallað eftir
+    | HjSögnSagnb FsAtv? so_0_sagnb StrönduðFs
+    # (Lausnirnar sem) kallað hefur [ekki] verið eftir
+    | so_0_sagnb HjSögn_et_p3 FsAtv? 'vera:so'_sagnb StrönduðFs
+    # (Lausnirnar sem) hefur [ekki] verið kallað eftir
+    | HjSögn_et_p3 FsAtv? 'vera:so'_sagnb so_0_sagnb StrönduðFs
+
+# Taka fram yfir greiningu með lýsingarorði sem frumlagi
+# ('kallað' + 'hefur verið eftir')
+$score(+16) TengisetningÞolStrönduðFs
 
 # Beygingarliður þar sem eitt andlag er stýft af sögn
 # vegna þess að það er komið fram í nafnliðnum sem vísað er til:
@@ -5267,7 +5284,53 @@ SagnRunaStýfð/tala/pers →
     # Í nöfnunum sem konurnar kölluðu Pál
     # (konurnar kölluðu Pál nöfnum)
     | so_2_þf_þgf/tala/pers NlBeintAndlag_þf
+    | SagnRunaStýfðAndlag/tala/pers
     | SagnRunaStýfðNh/tala/pers
+    | SagnRunaStýfðFs/tala/pers
+
+# Andlag sagnar er stýft:
+# 'bókin sem hann skrifaði' (hann skrifaði bókina)
+SagnRunaStýfðAndlag/tala/pers →
+    # Bókin sem hann skrifaði [ekki] [í fyrra]
+    So_1/aukafall/tala/pers
+    # Bókin sem hann hafði [ekki] skrifað [í fyrra]
+    | HjSögn/tala/pers FsAtv? So_1_sagnb/aukafall
+
+# Frumlag á undan sögn er mun líklegra en stýft frumlag og
+# andlag á undan sögn: 'bókin sem hann skrifaði'
+$score(+10) SagnRunaStýfðAndlag/tala/pers
+
+# Andlag forsetningar er stýft og forsetningin stendur ein eftir
+# sem atviksorð, líkt og í 'lausnin sem kallað var eftir':
+# 'málið sem nefndin fjallaði um' (nefndin fjallaði um málið)
+SagnRunaStýfðFs/tala/pers →
+    # Málið sem nefndin fjallaði [ekki] um
+    so_0/tala/pers FsAtv? StrönduðFs
+    # Málið sem nefndin hefur [ekki] fjallað um
+    | HjSögn/tala/pers FsAtv? so_0_sagnb StrönduðFs
+    # Málið sem nefndin ætlar/þarf [ekki] að fjalla um
+    | so_0/tala/pers FsAtv? Nhm so_0_nh StrönduðFs
+    | HjSögnNhMeðSagnb/tala/pers FsAtv? Nhm so_0_nh StrönduðFs
+    # Málið sem nefndin mun/vill [ekki] fjalla um
+    | HjSögnNh/tala/pers FsAtv? so_0_nh StrönduðFs
+    # Staðurinn sem ég sagði þér [ekki] frá
+    | So_1/aukafall/tala/pers NlAndlagStrönduðFs/aukafall FsAtv? StrönduðFs
+    # Málið sem nefndin var [ekki] að fjalla um
+    | 'vera:so'/tala/pers FsAtv? Nhm so_0_nh StrönduðFs
+
+# Ögn í lok tilvísunarsetningar er líklegri stýfð forsetning en
+# atviksorð á eftir sögn með stýfðu andlagi:
+# 'markmiðið sem við stefnum að', 'myndin sem við horfðum á'
+$score(+14) SagnRunaStýfðFs/tala/pers
+
+# Aðeins nafnliður, ekki nafnháttarsetning eða skýringarsetning
+NlAndlagStrönduðFs/fall → Nl/fall
+
+$tag(keep) NlAndlagStrönduðFs/fall
+
+StrönduðFs →
+    "um:ao" | "við:ao" | "í:ao" | "á:ao" | "frá:ao" | "eftir:ao" | "með:ao"
+    | "að:ao" | "fyrir:ao" | "til:ao" | "af:ao" | "yfir:ao" | "úr:ao" | "undir:ao"
 
 # Andlag nafnháttarsagnar er stýft:
 # 'kerfið sem ráðuneytið ætlar að innleiða'
@@ -5281,10 +5344,14 @@ SagnRunaStýfðNh/tala/pers →
     | HjSögnNh/tala/pers FsAtv? So_1_nh/aukafall
     # Kerfið sem ráðuneytið hefur [ekki] ákveðið að innleiða
     | HjSögn/tala/pers FsAtv? so_0_sagnb Nhm So_1_nh/aukafall
+    # Bókin sem ég var [ekki] að lesa
+    | 'vera:so'/tala/pers FsAtv? Nhm So_1_nh/aukafall
 
 # Frumlag á undan sögn er mun líklegra en stýft frumlag og
-# andlag á undan sögn: 'kerfið sem ráðherrann vill [ekki] innleiða'
-$score(+10) SagnRunaStýfðNh/tala/pers
+# andlag á undan sögn: 'kerfið sem ráðherrann vill [ekki] innleiða'.
+# Hærra en SagnRunaStýfðAndlag svo nafnhátturinn haldist inni í
+# tilvísunarsetningunni: '(ég gleymdi bókinni) sem ég ætlaði að lesa'
+$score(+14) SagnRunaStýfðNh/tala/pers
 
 # (Nokkurra ára niðursveiflur) sem þessar (eru óþekktar)
 Tengisetning_et_p3/kyn →
