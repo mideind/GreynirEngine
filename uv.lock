@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -409,7 +409,7 @@ wheels = [
 
 [[package]]
 name = "reynir"
-version = "3.9.0"
+version = "3.10.0"
 source = { editable = "." }
 dependencies = [
     { name = "cffi" },
@@ -482,11 +482,11 @@ wheels = [
 
 [[package]]
 name = "tokenizer"
-version = "3.6.4"
+version = "3.7.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d0/f9/a8df10145499d06b097886dc771a27d7a0c189a186c91f821761ad45a97f/tokenizer-3.6.4.tar.gz", hash = "sha256:1bc7423853e0d2e1430ffdff2c1a4048db3aedd480480c7542ecd2ff8d5fcf58", size = 135242, upload-time = "2026-07-10T12:09:14.933Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b5/78/1facb019c3244f748094aee0f8a6e2d4ef6636d812123f5926e4d2ad2b7f/tokenizer-3.7.0.tar.gz", hash = "sha256:f4a6e054f573e60d6dae5a144c3e7f057ef14abc797a399efd03b3d78cfcd11b", size = 140917, upload-time = "2026-10-15T16:02:36.751Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/29/4e/67d552dd2536b25d7d51776e27c6ccb5ea7112e17bdcd20e8f5a118399d9/tokenizer-3.6.4-py3-none-any.whl", hash = "sha256:ed99ff113688506f16b754341d9569da194d5926a065a7c0555fb024e0c0d9a1", size = 84251, upload-time = "2026-07-10T12:09:13.701Z" },
+    { url = "https://files.pythonhosted.org/packages/01/d8/a4eb39d2563787b30fde77d7defd15a886de008652c3bdc5cefeb5b13e35/tokenizer-3.7.0-py3-none-any.whl", hash = "sha256:f0383b553d6cde4be2402d8f11b83e0c9557f9613052b33d0e4d341bc7889caf", size = 86390, upload-time = "2026-10-15T16:02:35.253Z" },
 ]
 
 [[package]]
