@@ -1,4 +1,3 @@
-# type: ignore
 """
 
     test_no_multiply_numbers.py
@@ -30,30 +29,11 @@
 
 """
 
+from typing import List
+
 import pytest
 
-from reynir import Greynir
-
-# Import tests from other files directly into namespace
-# (they get run again with the new Greynir instance from the r function below)
-# in order to see if flag affects other functionality than just written numbers
-from test_cases import test_addresses, test_cases, test_noun_phrases
-from test_matcher import test_matcher
-from test_original import test_original
-
-# Too many to comfortably write, instead we
-# overwrite the only affected tests and the function r
-from test_parse import *
-from test_reynir import (
-    test_augment_terminal,
-    test_auto_uppercase,
-    test_compounds,
-    test_compounds_with_numbers,
-    test_lemmas,
-    test_names,
-    test_sentence_split,
-)
-from test_serializers import test_annotree, test_serializers
+from reynir import Greynir, Terminal
 
 
 @pytest.fixture(scope="module")
@@ -63,6 +43,12 @@ def r():
     yield r
     # Do teardown here
     r.__class__.cleanup()
+
+
+@pytest.fixture(scope="module")
+def r_default():
+    """Provide a module-scoped Greynir instance with default settings, for comparison"""
+    return Greynir()
 
 
 def check_terminal(t, text, lemma, category, variants):
@@ -81,10 +67,6 @@ def check_terminal(t, text, lemma, category, variants):
     else:
         assert t.category == category
         assert set(t.variants) == set(variants)
-
-
-# Overwrite tests from test_parse which use numbers and assume flag is not set
-test_amounts = test_terminals = test_single = lambda r: None
 
 
 def test_no_multiply_numbers(r: Greynir):
@@ -415,3 +397,52 @@ def test_no_multiply_numbers(r: Greynir):
         category="no",
         variants=["ft", "kvk", "nf"],
     )
+
+
+# The flag only changes how adjacent number words, or a number followed by a
+# number word, are tokenized. These tests check that contrast with the default,
+# and that sentences without such pairs parse exactly as they do by default.
+
+
+@pytest.mark.parametrize(
+    "sentence, joined, separate",
+    [
+        ("Tjónið nam tólf hundruðum punda.", "tólf hundruðum punda", ["tólf", "hundruðum"]),
+        ("Sjötíu þúsund manns söfnuðust fyrir á torginu.", "Sjötíu þúsund", ["Sjötíu", "þúsund"]),
+        ("Tjónið nam 10 milljörðum króna.", "10 milljörðum króna", ["10", "milljörðum"]),
+    ],
+)
+def test_default_multiplies_numbers(
+    r: Greynir, r_default: Greynir, sentence: str, joined: str, separate: List[str]
+):
+    """Without the flag, the numbers are joined into one token; with it, they are not"""
+    s = r_default.parse_single(sentence)
+    assert s is not None
+    assert joined in [t.text for t in s.terminals or []]
+
+    s = r.parse_single(sentence)
+    assert s is not None
+    texts = [t.text for t in s.terminals or []]
+    assert joined not in texts
+    for word in separate:
+        assert word in texts
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Hundurinn elti köttinn upp í tré.",
+        "Fundurinn verður haldinn 22. maí klukkan 14.",
+        "Ég keypti 3 epli og tvær perur.",
+        "Jón Jónsson býr á Laugavegi 15 í Reykjavík.",
+    ],
+)
+def test_other_sentences_unaffected(r: Greynir, r_default: Greynir, sentence: str):
+    """The flag changes nothing in sentences without consecutive number words"""
+    a = r_default.parse_single(sentence)
+    b = r.parse_single(sentence)
+    assert a is not None and b is not None
+    assert a.tree is not None and b.tree is not None
+    assert b.tree.flat == a.tree.flat
+    assert b.lemmas == a.lemmas
+    assert [t.text for t in b.terminals or []] == [t.text for t in a.terminals or []]
