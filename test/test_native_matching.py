@@ -12,6 +12,8 @@
 """
 
 import os
+from contextlib import contextmanager
+from typing import Iterator, List, Optional
 
 from tokenizer import TOK
 
@@ -128,37 +130,52 @@ REQUIRED_TOKEN_KINDS = frozenset(
 )
 
 
-def _parse_results(disable_native: bool):
-    """Parse the corpus with a fresh parser, native matching on or off.
-    Returns, per sentence, the number of parse tree combinations in the
-    forest (or None if the sentence did not parse). We compare forest
-    sizes since they are fully determined by the token/terminal match
-    results, which is exactly what this module tests. (Reduced trees
-    are nowadays deterministic as well; see test_parse.py::
-    test_deterministic_reduction.)"""
-    key = "GREYNIR_DISABLE_CPP_MATCHING"
-    old = os.environ.get(key)
+_MODES = {
+    # Native matching, the default
+    "native": {},
+    # Native matching checked against Python matching for every evaluation;
+    # the Python result is the one used, so the forest is that of Python matching
+    "parity": {"GREYNIR_MATCHING_PARITY": "1"},
+    # Python matching only
+    "python": {"GREYNIR_DISABLE_CPP_MATCHING": "1"},
+}
+
+
+@contextmanager
+def _matching_mode(mode: str) -> Iterator[Greynir]:
+    """Yield a fresh Greynir instance whose parser uses the given matching mode"""
+    env = _MODES[mode]
+    keys = {k for m in _MODES.values() for k in m}
+    old = {k: os.environ.get(k) for k in keys}
     try:
-        if disable_native:
-            os.environ[key] = "1"
-        else:
-            os.environ.pop(key, None)
+        for k in keys:
+            os.environ.pop(k, None)
+        os.environ.update(env)
         # Discard the cached parser so that a fresh one is constructed
         # under the current environment settings
         Greynir.cleanup()
-        g = Greynir()
-        results = []
-        for s in SENTENCES:
-            r = g.parse_single(s)
-            results.append(None if r.tree is None else r.combinations)
-        assert g.parser.uses_native_matching == (not disable_native)
-        return results
+        yield Greynir()
     finally:
-        if old is None:
-            os.environ.pop(key, None)
-        else:
-            os.environ[key] = old
+        for k, v in old.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
         Greynir.cleanup()
+
+
+def _parse_results(g: Greynir) -> List[Optional[int]]:
+    """Parse the corpus. Returns, per sentence, the number of parse tree
+    combinations in the forest (or None if the sentence did not parse).
+    We compare forest sizes since they are fully determined by the
+    token/terminal match results, which is exactly what this module tests.
+    (Reduced trees are nowadays deterministic as well; see test_parse.py::
+    test_deterministic_reduction.)"""
+    results: List[Optional[int]] = []
+    for s in SENTENCES:
+        r = g.parse_single(s)
+        results.append(None if r is None or r.tree is None else r.combinations)
+    return results
 
 
 def test_native_matching_enabled_by_default():
@@ -184,35 +201,33 @@ def test_corpus_token_coverage():
 
 
 def test_native_python_equivalence():
-    """The native fast path must produce exactly the same parse forests
-    as Python matching"""
-    native = _parse_results(disable_native=False)
-    python = _parse_results(disable_native=True)
+    """The native fast path must produce exactly the same parse forests as
+    Python matching, with no discrepancy in any single match evaluation.
+    The parity mode run supplies the Python matching forests, since it uses
+    the Python result for every evaluation, so this doesn't need a separate
+    Python-only pass over the corpus."""
+    with _matching_mode("native") as g:
+        native = _parse_results(g)
+        assert g.parser.uses_native_matching
+    with _matching_mode("parity") as g:
+        python = _parse_results(g)
+        fp = g.parser
+        assert fp.uses_native_matching
+        assert fp.parity_mismatches == 0
     assert native == python
     # Sanity check: nearly all of the corpus should actually parse
     assert sum(1 for r in native if r is not None) >= len(SENTENCES) - 2
 
 
-def test_parity_mode():
-    """In parity mode, every native match evaluation is compared with
-    the Python matcher; there must be no discrepancies"""
-    key = "GREYNIR_MATCHING_PARITY"
-    old = os.environ.get(key)
-    try:
-        os.environ[key] = "1"
-        Greynir.cleanup()
-        g = Greynir()
-        for s in SENTENCES:
-            g.parse_single(s)
-        fp = g.parser
-        assert fp.uses_native_matching
-        assert fp.parity_mismatches == 0
-    finally:
-        if old is None:
-            os.environ.pop(key, None)
-        else:
-            os.environ[key] = old
-        Greynir.cleanup()
+def test_python_matching_switch():
+    """GREYNIR_DISABLE_CPP_MATCHING must switch the parser to Python matching,
+    which must give the same forest as native matching"""
+    sentence = SENTENCES[2]
+    with _matching_mode("native") as g:
+        native = g.parse_single(sentence).combinations
+    with _matching_mode("python") as g:
+        assert not g.parser.uses_native_matching
+        assert g.parse_single(sentence).combinations == native
 
 
 def test_gate_subclass_wrap_token():
