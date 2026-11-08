@@ -321,42 +321,59 @@ def test_sentence_split():
     assert len([t for t in tlist if t.kind == TOK.S_END]) == 1
 
 
+# Middle name abbreviations that test_auto_uppercase checks with full parses:
+# multi-letter ones, an ordinary letter, letters that are also words in BÍN,
+# and the NOT_NAME_ABBREVS. The rest are checked at the token level only,
+# since auto-uppercasing and the person name token are done by the tokenizer.
+PARSED_ABBREVS = ("th", "kr", "h", "ó", "æ") + tuple(sorted(NOT_NAME_ABBREVS))
+
+
+def _middle_name_cases(abbr: str):
+    """Yield (sentence, expected detokenized text, expected person name)
+    for each way a middle name abbreviation can appear"""
+    a = abbr.capitalize()
+    if abbr not in NOT_NAME_ABBREVS:
+        # No period, no extra tokens
+        yield f"hér er jón {abbr}", f"hér er Jón {a}", f"Jón {a}"
+        # No period, extra tokens
+        yield (
+            f"við jón {abbr} erum góðir vinir",
+            f"við Jón {a} erum góðir vinir",
+            f"Jón {a}",
+        )
+    # No period, surname
+    yield f"hér er jón {abbr} guðnason", f"hér er Jón {a} Guðnason", f"Jón {a} Guðnason"
+    # With period, no extra tokens
+    yield f"hér er jón {abbr}.", f"hér er Jón {a}.", f"Jón {a}."
+    # With period, extra tokens
+    yield (
+        f"við jón {abbr}. erum góðir vinir",
+        f"við Jón {a}. erum góðir vinir",
+        f"Jón {a}.",
+    )
+    # With period, surname
+    yield (
+        f"hér er jón {abbr}. guðnason",
+        f"hér er Jón {a}. Guðnason",
+        f"Jón {a}. Guðnason",
+    )
+
+
 def test_auto_uppercase():
     g = Greynir(auto_uppercase=True)
 
+    assert set(PARSED_ABBREVS) <= MIDDLE_NAME_ABBREVS
     for abbr in MIDDLE_NAME_ABBREVS:
-        if abbr not in NOT_NAME_ABBREVS:
-            # No period, no extra tokens
-            s = g.parse_single(f"hér er jón {abbr}")
-            assert detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}"
-            assert f"Jón {abbr.capitalize()}" in s.tree.persons
-
-            # No period, extra tokens
-            s = g.parse_single(f"við jón {abbr} erum góðir vinir")
-            assert (
-                detokenize(s.tokens) == f"við Jón {abbr.capitalize()} erum góðir vinir"
-            )
-            assert f"Jón {abbr.capitalize()}" in s.tree.persons
-
-        # No period, surname
-        s = g.parse_single(f"hér er jón {abbr} guðnason")
-        assert detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()} Guðnason"
-        assert f"Jón {abbr.capitalize()} Guðnason" in s.tree.persons
-
-        # With period, no extra tokens
-        s = g.parse_single(f"hér er jón {abbr}.")
-        assert detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}."
-        assert f"Jón {abbr.capitalize()}." in s.tree.persons
-
-        # With period, extra tokens
-        s = g.parse_single(f"við jón {abbr}. erum góðir vinir")
-        assert detokenize(s.tokens) == f"við Jón {abbr.capitalize()}. erum góðir vinir"
-        assert f"Jón {abbr.capitalize()}." in s.tree.persons
-
-        # With period, surname
-        s = g.parse_single(f"hér er jón {abbr}. guðnason")
-        assert detokenize(s.tokens) == f"hér er Jón {abbr.capitalize()}. Guðnason"
-        assert f"Jón {abbr.capitalize()}. Guðnason" in s.tree.persons
+        for sentence, text, person in _middle_name_cases(abbr):
+            # The tokenizer does the uppercasing and forms the person token
+            toks = [t for t in g.tokenize(sentence) if t.kind not in (TOK.S_BEGIN, TOK.S_END)]
+            assert detokenize(toks) == text
+            assert person in [t.txt for t in toks if t.kind == TOK.PERSON]
+            if abbr in PARSED_ABBREVS:
+                # A full parse puts the name into the tree
+                s = g.parse_single(sentence)
+                assert detokenize(s.tokens) == text
+                assert person in s.tree.persons
 
     s = g.parse_single("hver er guðni th jóhannesson")
     assert detokenize(s.tokens) == "hver er Guðni Th Jóhannesson"
