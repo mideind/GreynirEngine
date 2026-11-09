@@ -48,6 +48,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <time.h>
+#include <new>
 
 #include "eparser.h"
 
@@ -103,6 +104,11 @@ public:
    State(State*, Node* pw);
    ~State(void);
 
+   // Account for a batch of state allocations and frees
+   // (states are not counted individually, for performance reasons)
+   static void count(UINT nAllocs, UINT nFrees)
+      { State::ac.add(nAllocs, nFrees); }
+
    void increment(Node* pwNew);
 
    void setNext(State*);
@@ -157,6 +163,78 @@ public:
 };
 
 
+template<class T> class Pool {
+
+   // A simple pool allocator for small objects of a single type that
+   // are created and destroyed at a high rate within a parse. Storage
+   // for released objects is kept in a free list and handed out again;
+   // all memory is returned to the heap when the pool is destroyed.
+   // The pool hands out raw storage: use placement new to construct
+   // objects in it and call their destructors explicitly, if needed.
+   // A pool is owned and used by a single parse, i.e. a single thread.
+
+private:
+
+   static const UINT SLAB_SIZE = 256; // Number of objects in each slab
+
+   union Slot {
+      Slot* pNext;            // Next free slot
+      void* pAlign;           // Ensure pointer alignment
+      BYTE ab[sizeof(T)];     // Storage for an object
+   };
+
+   struct Slab {
+      Slab* pNext;
+      Slot aSlots[SLAB_SIZE];
+   };
+
+   Slab* m_pSlabs;   // List of all slabs
+   Slot* m_pFree;    // List of free slots
+   UINT m_nUsed;     // Number of slots handed out from the newest slab
+
+public:
+
+   Pool(void)
+      : m_pSlabs(NULL), m_pFree(NULL), m_nUsed(SLAB_SIZE)
+      { }
+   ~Pool(void)
+      {
+         Slab* p = this->m_pSlabs;
+         while (p) {
+            Slab* pNext = p->pNext;
+            delete p;
+            p = pNext;
+         }
+      }
+
+   void* alloc(void)
+      {
+         Slot* p = this->m_pFree;
+         if (p) {
+            // Re-use a previously released slot
+            this->m_pFree = p->pNext;
+            return (void*)p;
+         }
+         if (this->m_nUsed >= SLAB_SIZE) {
+            // The newest slab is exhausted (or there is none): add a slab
+            Slab* pSlab = new Slab;
+            pSlab->pNext = this->m_pSlabs;
+            this->m_pSlabs = pSlab;
+            this->m_nUsed = 0;
+         }
+         return (void*)&this->m_pSlabs->aSlots[this->m_nUsed++];
+      }
+
+   void release(void* pv)
+      {
+         Slot* p = (Slot*)pv;
+         p->pNext = this->m_pFree;
+         this->m_pFree = p;
+      }
+
+};
+
+
 class Column {
 
    // An Earley column
@@ -169,6 +247,8 @@ private:
    // The contained States are stored an array of hash bins
 
    static const UINT HASH_BINS = 997; /* 499; */ // Prime number
+   // Number of 64-bit words in the bitmap of hash bins with pending states
+   static const UINT PENDING_WORDS = (HASH_BINS + 63) / 64;
 
    struct HashBin {
       State* m_pHead; // The first state in this hash bin
@@ -185,6 +265,15 @@ private:
    const BYTE* m_pTokenRec; // Packed matching data for this column's token, or NULL
    HashBin m_aHash[HASH_BINS]; // The hash bin array
    UINT m_nEnumBin; // Round robin used during enumeration of states
+   // Bitmap of the hash bins that contain states not yet returned
+   // by nextState(), i.e. bins whose enumeration is not exhausted.
+   // This allows nextState() to find the next bin to enumerate from
+   // with a few word operations, instead of visiting the bins one by one.
+   UINT64 m_aPending[PENDING_WORDS];
+   // Statistics, accumulated locally and added to the (atomic)
+   // global counters when the column is done
+   mutable UINT m_nMatches; // Calls to the matching function
+   mutable UINT m_nNativeMatches; // Native match evaluations
 
    static AllocCounter ac;
    static AllocCounter acMatches;
@@ -227,7 +316,8 @@ private:
 
    INT m_iNt;
    Node* m_pv;
-   HNode* m_pNext;
+   HNode* m_pNext;         // Next element in the H set
+   HNode* m_pNtNext;       // Next element in the H set with the same nonterminal
 
    static AllocCounter ac;
 
@@ -236,7 +326,7 @@ protected:
 public:
 
    HNode(INT iNt, Node* pv)
-      : m_iNt(iNt), m_pv(pv)
+      : m_iNt(iNt), m_pv(pv), m_pNext(NULL), m_pNtNext(NULL)
       { HNode::ac++; }
 
    ~HNode()
@@ -250,6 +340,10 @@ public:
       { return this->m_pNext; }
    void setNext(HNode* ph)
       { this->m_pNext = ph; }
+   HNode* getNtNext(void) const
+      { return this->m_pNtNext; }
+   void setNtNext(HNode* ph)
+      { this->m_pNtNext = ph; }
 
 };
 
@@ -258,18 +352,37 @@ AllocCounter HNode::ac;
 
 class NodeDict {
 
-   // Dictionary to map labels to node pointers
+   // Dictionary to map labels to node pointers.
+   // This is a hash table, with the entries in each hash bin chained
+   // together. In addition, all entries are linked in a single list,
+   // allowing the dictionary to be reset (which happens once for every
+   // Earley column) in time proportional to the number of entries,
+   // not to the number of hash bins.
 
 friend class AllocReporter;
 
 private:
 
+   static const UINT HASH_BITS = 12;
+   static const UINT HASH_BINS = 1u << HASH_BITS;
+
    struct NdEntry {
       Node* pNode;
-      NdEntry* pNext;
+      NdEntry* pNext;   // Next entry in the list of all entries
+      NdEntry* pChain;  // Next entry in the same hash bin
    };
 
-   NdEntry* m_pHead;
+   NdEntry* m_pHead;    // Head of the list of all entries
+   NdEntry** m_ppBins;  // The hash bins
+   Pool<NdEntry> m_pool; // Storage for the entries
+   UINT m_nLookups;     // Lookups since last reset (statistics)
+
+   static UINT binOf(UINT nHash)
+      {
+         // Multiplicative (Fibonacci) hashing: spread the label hash
+         // and use the most significant bits as a bin index
+         return (UINT)((nHash * 2654435761u) & 0xFFFFFFFFu) >> (32 - HASH_BITS);
+      }
 
    static AllocCounter acLookups;
 
@@ -359,11 +472,21 @@ struct StateChunk {
 
    StateChunk* m_pNext;
    UINT m_nIndex;
+   // Statistics, accumulated here (in whichever chunk is at the head
+   // of the chunk list at the time) and added to the global counters
+   // when the chunks are freed at the end of the parse
+   UINT m_nAllocs;      // States allocated
+   UINT m_nFrees;       // States destroyed by being discarded in push()
+   UINT m_nDiscarded;   // States discarded and their space reclaimed
    BYTE m_ast[CHUNK_SIZE];
 
    StateChunk(StateChunk* pNext)
-      : m_pNext(pNext), m_nIndex(0)
-      { memset(this->m_ast, 0, CHUNK_SIZE); }
+      : m_pNext(pNext), m_nIndex(0), m_nAllocs(0), m_nFrees(0), m_nDiscarded(0)
+      {
+         // Note: the state storage is deliberately left uninitialized.
+         // States are constructed in place, and the State constructors
+         // initialize all member variables.
+      }
 
 };
 
@@ -381,20 +504,9 @@ void* operator new(size_t nBytes, StateChunk*& pChunkHead)
    }
    void* pPlace = (void*)(p->m_ast + p->m_nIndex);
    p->m_nIndex += (UINT)nBytes;
+   p->m_nAllocs++;
    ASSERT(p->m_nIndex <= CHUNK_SIZE);
    return pPlace;
-}
-
-static void freeStates(StateChunk*& pChunkHead)
-{
-   StateChunk* pChunk = pChunkHead;
-   while (pChunk) {
-      StateChunk* pNext = pChunk->m_pNext;
-      delete pChunk;
-      acChunks--;
-      pChunk = pNext;
-   }
-   pChunkHead = NULL;
 }
 
 // Counter of states that are allocated and then immediately discarded
@@ -403,11 +515,33 @@ static std::atomic<UINT> nDiscardedStates(0);
 
 AllocCounter State::ac;
 
+static void freeStates(StateChunk*& pChunkHead)
+{
+   // Free the state chunks, and add the state statistics
+   // accumulated in them to the global counters
+   UINT nAllocs = 0, nFrees = 0, nDiscarded = 0;
+   StateChunk* pChunk = pChunkHead;
+   while (pChunk) {
+      StateChunk* pNext = pChunk->m_pNext;
+      nAllocs += pChunk->m_nAllocs;
+      nFrees += pChunk->m_nFrees;
+      nDiscarded += pChunk->m_nDiscarded;
+      delete pChunk;
+      acChunks--;
+      pChunk = pNext;
+   }
+   pChunkHead = NULL;
+   State::count(nAllocs, nFrees);
+   if (nDiscarded)
+      nDiscardedStates.fetch_add(nDiscarded, std::memory_order_relaxed);
+}
+
 State::State(INT iNt, UINT nDot, Production* pProd, UINT nStart, Node* pw)
    : m_iNt(iNt), m_pProd(pProd), m_nDot(nDot), m_nStart(nStart), m_pw(pw),
       m_pNext(NULL), m_pNtNext(NULL)
 {
-   State::ac++;
+   // Note: State allocations and frees are not counted here, one by one,
+   // but in batches; see StateChunk, freeStates() and Column::~Column()
    if (pw)
       pw->addRef();
 }
@@ -417,7 +551,6 @@ State::State(State* ps, Node* pw)
       m_nStart(ps->m_nStart), m_pw(pw), m_pNext(NULL), m_pNtNext(NULL)
 {
    // Create a new state by advancing one item forward from an existing state
-   State::ac++;
    if (pw)
       pw->addRef();
 }
@@ -428,7 +561,6 @@ State::~State(void)
       this->m_pw->delRef();
       this->m_pw = NULL;
    }
-   State::ac--;
 }
 
 void State::increment(Node* pwNew)
@@ -478,7 +610,8 @@ Column::Column(Parser* pParser, UINT nToken)
       m_pMatchingFunc(pParser->getMatchingFunc()),
       m_abCache(NULL), m_bNeedsRelease(false),
       m_pTokenRec(NULL),
-      m_nEnumBin(0)
+      m_nEnumBin(0),
+      m_nMatches(0), m_nNativeMatches(0)
 {
    Column::ac++;
    ASSERT(this->m_pMatchingFunc != NULL);
@@ -488,11 +621,13 @@ Column::Column(Parser* pParser, UINT nToken)
    memset(this->m_pNtStates, 0, nNonterminals * sizeof(State*));
    // Initialize the hash bins to zero
    memset(this->m_aHash, 0, sizeof(HashBin) * HASH_BINS);
+   memset(this->m_aPending, 0, sizeof(this->m_aPending));
 }
 
 Column::~Column(void)
 {
    // Destroy the states still owned by the column
+   UINT nFreed = 0;
    for (UINT i = 0; i < HASH_BINS; i++) {
       // Clean up each hash bin in turn
       HashBin* ph = &this->m_aHash[i];
@@ -503,11 +638,14 @@ Column::~Column(void)
          // The states are allocated via placement new, so
          // they are not deleted ordinarily - we just run their destructor
          q->~State();
+         nFreed++;
          q = pNext;
       }
       ph->m_pHead = NULL;
       ph->m_pTail = NULL;
    }
+   // Account for the destroyed states in one go
+   State::count(0, nFreed);
    // Delete array of linked lists by nonterminal at prod[dot]
    delete [] this->m_pNtStates;
    // Delete matching cache and seen array, if still allocated
@@ -537,6 +675,15 @@ void Column::stopParse(void)
       this->m_pParser->releaseCache(this->m_abCache);
    this->m_abCache = NULL;
    this->m_pTokenRec = NULL;
+   // Flush the locally accumulated matching statistics
+   if (this->m_nMatches) {
+      Column::acMatches.add(this->m_nMatches, 0);
+      this->m_nMatches = 0;
+   }
+   if (this->m_nNativeMatches) {
+      Column::acNativeMatches.add(this->m_nNativeMatches, 0);
+      this->m_nNativeMatches = 0;
+   }
 }
 
 BOOL Column::addState(State* p)
@@ -563,6 +710,8 @@ BOOL Column::addState(State* p)
       ph->m_pTail->setNext(p);
       ph->m_pTail = p;
    }
+   // The bin now has (at least) one state that has not been enumerated
+   this->m_aPending[nBin >> 6] |= ((UINT64)1) << (nBin & 63);
    // Get the item at prod[dot]
    INT iItem = p->prodDot();
    if (iItem < 0) {
@@ -575,39 +724,82 @@ BOOL Column::addState(State* p)
    return true;
 }
 
+static inline UINT lowestBit(UINT64 w)
+{
+   // Return the index of the lowest set bit in w, which must be nonzero
+#if defined(__GNUC__) || defined(__clang__)
+   return (UINT)__builtin_ctzll(w);
+#else
+   // Portable fallback (MSVC etc.): binary search for the lowest set bit
+   UINT n = 0;
+   if (!(w & 0xFFFFFFFFull)) { n += 32; w >>= 32; }
+   if (!(w & 0xFFFFull)) { n += 16; w >>= 16; }
+   if (!(w & 0xFFull)) { n += 8; w >>= 8; }
+   if (!(w & 0xFull)) { n += 4; w >>= 4; }
+   if (!(w & 0x3ull)) { n += 2; w >>= 2; }
+   if (!(w & 0x1ull)) { n += 1; }
+   return n;
+#endif
+}
+
 State* Column::nextState(void)
 {
-   // Start our enumeration attempt from the last bin we looked at
+   // Enumerate the states in the column, round robin by hash bin:
+   // we keep returning states from the bin we last returned a state
+   // from, until it is exhausted; then we move to the next bin (in
+   // cyclic order) that has a state we have not yet returned. Note that
+   // states can be (and are) added to the column during the enumeration.
+
+   // The enumeration order is significant: it determines the order of
+   // families of children in the parse forest, and thereby which tree
+   // is selected by the reducer when scores are exactly tied. The
+   // bitmap of pending bins is purely an accelerator for locating the
+   // next bin to enumerate from; the resulting order is identical to
+   // the one obtained by visiting all the bins one by one.
+
+   // Look for the first pending bin at or after the current one
    UINT n = this->m_nEnumBin;
-   do {
-      HashBin* ph = &this->m_aHash[n];
-      if (!ph->m_pEnum && ph->m_pHead) {
-         // Haven't enumerated from this one before,
-         // but it has an entry: return it
-         ph->m_pEnum = ph->m_pHead;
-         this->m_nEnumBin = n;
-         return ph->m_pEnum;
-      }
-      // Try the next item after the one we last returned
-      State* pNext = ph->m_pEnum ? ph->m_pEnum->getNext() : NULL;
-      if (pNext) {
-         // There is such an item: return it
-         ph->m_pEnum = pNext;
-         this->m_nEnumBin = n;
-         return pNext;
-      }
-      // Can't enumerate any more from this bin: go to the next one
-      n = (n + 1) % HASH_BINS;
-   } while (n != this->m_nEnumBin);
-   // Gone full circle: Nothing more to enumerate
-   return NULL;
+   UINT nWord = n >> 6;
+   UINT64 w = this->m_aPending[nWord] & (~(UINT64)0 << (n & 63));
+   if (!w) {
+      // Nothing in the remainder of the current word:
+      // look through the following words, wrapping around. The last
+      // iteration revisits the starting word in its entirety, thereby
+      // covering the bins before the current one within that word.
+      UINT i = 0;
+      do {
+         nWord = (nWord + 1 == PENDING_WORDS) ? 0 : nWord + 1;
+         w = this->m_aPending[nWord];
+      } while (!w && ++i < PENDING_WORDS);
+      if (!w)
+         // Gone full circle: Nothing more to enumerate
+         return NULL;
+   }
+   n = (nWord << 6) + lowestBit(w);
+   ASSERT(n < HASH_BINS);
+   HashBin* ph = &this->m_aHash[n];
+   // Return the first state in the bin if we haven't enumerated from it
+   // before, or else the state after the one we last returned
+   State* p = ph->m_pEnum ? ph->m_pEnum->getNext() : ph->m_pHead;
+   ASSERT(p != NULL);
+   ph->m_pEnum = p;
+   this->m_nEnumBin = n;
+   if (!p->getNext())
+      // No more states to enumerate from this bin, for the time being
+      this->m_aPending[n >> 6] &= ~(((UINT64)1) << (n & 63));
+   return p;
 }
 
 void Column::resetEnum(void)
 {
    // Start a fresh enumeration
-   for (UINT i = 0; i < HASH_BINS; i++)
+   memset(this->m_aPending, 0, sizeof(this->m_aPending));
+   for (UINT i = 0; i < HASH_BINS; i++) {
       this->m_aHash[i].m_pEnum = NULL;
+      if (this->m_aHash[i].m_pHead)
+         // All states in the bin are pending again
+         this->m_aPending[i >> 6] |= ((UINT64)1) << (i & 63);
+   }
    this->m_nEnumBin = 0;
 }
 
@@ -639,7 +831,7 @@ BOOL Column::matches(UINT nHandle, UINT nTerminal) const
          (((const TokenRec*)pRec)->nCountFlags & (TKF_FAST | TKF_EMPTY_WORD)) != 0);
    if (bNative) {
       b = Parser::evalMatch(pSpec, pRec, this->m_pParser->getMasks());
-      Column::acNativeMatches++; // Count native match evaluations
+      this->m_nNativeMatches++; // Count native match evaluations
       if (this->m_pParser->parityMode()) {
          // Parity mode: also obtain the Python result; count any
          // discrepancy and return the Python (canonical) answer
@@ -652,7 +844,7 @@ BOOL Column::matches(UINT nHandle, UINT nTerminal) const
    else {
       b = this->m_pMatchingFunc(nHandle, this->m_nToken, nTerminal) != 0;
    }
-   Column::acMatches++; // Count calls to the matching function
+   this->m_nMatches++; // Count calls to the matching function
    // Mark our cache
    this->m_abCache[nTerminal] = b ? (BYTE)0x81 : (BYTE)0x80;
    return b;
@@ -1035,13 +1227,16 @@ UINT Node::numCombinations(Node* pNode)
 
 
 NodeDict::NodeDict(void)
-   : m_pHead(NULL)
+   : m_pHead(NULL), m_ppBins(NULL), m_nLookups(0)
 {
+   this->m_ppBins = new NdEntry* [HASH_BINS];
+   memset(this->m_ppBins, 0, HASH_BINS * sizeof(NdEntry*));
 }
 
 NodeDict::~NodeDict(void)
 {
    this->reset();
+   delete [] this->m_ppBins;
 }
 
 Node* NodeDict::lookupOrAdd(const Label& label)
@@ -1050,18 +1245,21 @@ Node* NodeDict::lookupOrAdd(const Label& label)
    // return the corresponding node.
    // Otherwise, create a new node, add it to the dict
    // under the label, and return it.
-   NodeDict::acLookups++;
-   NdEntry* p = this->m_pHead;
+   this->m_nLookups++;
+   NdEntry*& pBin = this->m_ppBins[NodeDict::binOf(label.getHash())];
+   NdEntry* p = pBin;
    while (p) {
       if (p->pNode->hasLabel(label))
          return p->pNode;
-      p = p->pNext;
+      p = p->pChain;
    }
    // Not found: add to the dict
-   p = new NdEntry();
+   p = (NdEntry*)this->m_pool.alloc();
    p->pNode = new Node(label);
    p->pNext = this->m_pHead;
    this->m_pHead = p;
+   p->pChain = pBin;
+   pBin = p;
    return p->pNode;
 }
 
@@ -1070,11 +1268,19 @@ void NodeDict::reset(void)
    NdEntry* p = this->m_pHead;
    while (p) {
       NdEntry* pNext = p->pNext;
+      // Clear the hash bin of the entry (this may happen more than
+      // once for the same bin, which is harmless)
+      this->m_ppBins[NodeDict::binOf(p->pNode->getHash())] = NULL;
       p->pNode->delRef();
-      delete p;
+      this->m_pool.release(p);
       p = pNext;
    }
    this->m_pHead = NULL;
+   // Flush the locally accumulated lookup statistics
+   if (this->m_nLookups) {
+      NodeDict::acLookups.add(this->m_nLookups, 0);
+      this->m_nLookups = 0;
+   }
 }
 
 
@@ -1269,6 +1475,31 @@ void Parser::releaseCache(BYTE* abCache)
    delete [] abCache;
 }
 
+BOOL Parser::canPush(INT iItem, Column* pE, UINT nHandle)
+{
+   // Return true if a state having the given item at the dot can be pushed
+   // to the column pE, i.e. unless the item is a terminal that does not
+   // match the token associated with the column
+   return iItem <= 0 || pE->matches(nHandle, (UINT)iItem);
+}
+
+BOOL Parser::canAdvance(State* pState, Column* pE, UINT nHandle)
+{
+   // Return true if the state that results from moving the dot of pState
+   // one step to the right can be pushed to the column pE. If not, we can
+   // save the effort of creating the advanced state and its tree node -
+   // which is a significant saving, since in a large grammar a majority
+   // of candidate states are immediately rejected by the current token.
+
+   // Note that skipping the node creation (cf. makeNode()) is safe, i.e.
+   // it never alters the resulting parse forest: a terminal can only be
+   // at the dot of the advanced state if its production is not completed.
+   // The node in question would thus be an intermediate one, whose label
+   // contains the production and the dot, and it could only be referenced
+   // from states identical to the one we are rejecting here.
+   return this->canPush((*pState->getProd())[pState->getDot() + 1], pE, nHandle);
+}
+
 Node* Parser::makeNode(State* pState, UINT nEnd, Node* pV, NodeDict& ndV)
 {
    UINT nDot = pState->getDot() + 1;
@@ -1312,12 +1543,13 @@ void Parser::push(UINT nHandle, State* pState, Column* pE, State*& pQ, StateChun
    // We did not actually push the state; discard it
    pState->~State();
    ASSERT(pChunkHead != NULL);
+   pChunkHead->m_nFrees++;
    ASSERT(pChunkHead->m_nIndex >= sizeof(State));
    if ((BYTE*)pState + sizeof(State) == pChunkHead->m_ast + pChunkHead->m_nIndex) {
       // The state is the most recently allocated one in the chunk
       // (a very common case): go back one location in the chunk
       pChunkHead->m_nIndex -= sizeof(State);
-      nDiscardedStates.fetch_add(1, std::memory_order_relaxed);
+      pChunkHead->m_nDiscarded++;
    }
 }
 
@@ -1370,6 +1602,16 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
    NodeDict ndV; // Node dictionary
    UINT nNumNonterminals = this->getNumNonterminals();
    BYTE* pbSeen = new BYTE[nNumNonterminals];
+   Pool<HNode> poolH; // Storage for the elements of the H sets
+   // The H set of the current column, indexed by nonterminal: for each
+   // nonterminal, the head of a list of the H set elements that refer to
+   // it, linked via HNode::getNtNext(), most recently added first.
+   // This saves the predictor from looking through the entire H set
+   // (which can have hundreds of elements in a column) for every
+   // state that has a nonterminal at the dot. The array is all NULLs
+   // between columns; only the entries used are reset after each column.
+   HNode** ppHByNt = new HNode* [nNumNonterminals];
+   memset(ppHByNt, 0, nNumNonterminals * sizeof(HNode*));
 
 #ifdef DEBUG
    clock_t clockStart = clock();
@@ -1412,22 +1654,30 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
                pbSeen[~((UINT)iItem)] = 1;
                p = (*this->m_pGrammar)[iItem]->getHead();
                while (p) {
-                  State* psNew = new (pChunkHead) State(iItem, 0, p, i, NULL);
-                  this->push(nHandle, psNew, pEi, pQ, pChunkHead);
+                  // Only create a state for the production if it can be
+                  // pushed, i.e. unless it starts with a terminal that
+                  // does not match the current token
+                  if (this->canPush((*p)[0], pEi, nHandle)) {
+                     State* psNew = new (pChunkHead) State(iItem, 0, p, i, NULL);
+                     this->push(nHandle, psNew, pEi, pQ, pChunkHead);
+                  }
                   p = p->getNext();
                }
             }
             // Add elements from the H set that refer to the
             // nonterminal iItem (nt_C)
             // NOTE: this code should NOT be within the above if(!pbSeen[...])
-            HNode* ph = pH;
+            // (visited in the same order as they occur in the H set itself,
+            // i.e. the most recently added first)
+            HNode* ph = ppHByNt[~((UINT)iItem)];
             while (ph) {
-               if (ph->getNt() == iItem) {
+               ASSERT(ph->getNt() == iItem);
+               if (this->canAdvance(pState, pEi, nHandle)) {
                   Node* pY = this->makeNode(pState, i, ph->getV(), ndV);
                   State* psNew = new (pChunkHead) State(pState, pY);
                   this->push(nHandle, psNew, pEi, pQ, pChunkHead);
                }
-               ph = ph->getNext();
+               ph = ph->getNtNext();
             }
          }
          else
@@ -1442,15 +1692,21 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
                pW->addFamily(pState->getProd(), NULL, NULL); // Epsilon production
             }
             if (nStart == i) {
-               HNode* ph = new HNode(iNtB, pW);
+               HNode* ph = new (poolH.alloc()) HNode(iNtB, pW);
                ph->setNext(pH);
                pH = ph;
+               // Also link it at the head of the list for its nonterminal
+               HNode*& phNtHead = ppHByNt[~((UINT)iNtB)];
+               ph->setNtNext(phNtHead);
+               phNtHead = ph;
             }
             State* psNt = pCol[nStart]->getNtHead(iNtB);
             while (psNt) {
-               Node* pY = this->makeNode(psNt, i, pW, ndV);
-               State* psNew = new (pChunkHead) State(psNt, pY);
-               this->push(nHandle, psNew, pEi, pQ, pChunkHead);
+               if (this->canAdvance(psNt, pEi, nHandle)) {
+                  Node* pY = this->makeNode(psNt, i, pW, ndV);
+                  State* psNew = new (pChunkHead) State(psNt, pY);
+                  this->push(nHandle, psNew, pEi, pQ, pChunkHead);
+               }
                psNt = psNt->getNtNext();
             }
          }
@@ -1464,7 +1720,9 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
       // Clean up the H set
       while (pH) {
          HNode* ph = pH->getNext();
-         delete pH;
+         ppHByNt[~((UINT)pH->getNt())] = NULL;
+         pH->~HNode();
+         poolH.release(pH);
          pH = ph;
       }
 
@@ -1485,13 +1743,20 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
       while (pQ) {
          // Earley scanner
          State* psNext = pQ->getNext();
-         Node* pY = this->makeNode(pQ, i + 1, pV, ndV);
-         // Instead of throwing away the old state and creating
-         // a new almost identical one, re-use the old after
-         // 'incrementing' it by moving the dot one step to the right
-         pQ->increment(pY);
          ASSERT(i + 1 <= nTokens);
-         this->push(nHandle, pQ, pCol[i + 1], pQ0, pChunkHead);
+         if (this->canAdvance(pQ, pCol[i + 1], nHandle)) {
+            Node* pY = this->makeNode(pQ, i + 1, pV, ndV);
+            // Instead of throwing away the old state and creating
+            // a new almost identical one, re-use the old after
+            // 'incrementing' it by moving the dot one step to the right
+            pQ->increment(pY);
+            this->push(nHandle, pQ, pCol[i + 1], pQ0, pChunkHead);
+         }
+         else {
+            // The state can't be moved to the next column: discard it
+            pQ->~State();
+            pChunkHead->m_nFrees++;
+         }
          pQ = psNext;
       }
 
@@ -1548,6 +1813,7 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
 
    // Cleanup
    delete[] pbSeen;
+   delete[] ppHByNt;
    for (i = 0; i < nTokens + 1; i++)
       delete pCol[i];
    delete [] pCol;

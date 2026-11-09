@@ -32,6 +32,14 @@ uv run ruff check src/reynir
 # Type check (config in pyproject.toml [tool.mypy]; runs as a CI gate
 # on non-PyPy jobs, so it must stay clean)
 uv run mypy src/reynir
+
+# Benchmark parsing speed (total and C++ core time, cold and warm)
+uv run python benchmarks/bench_parse.py
+
+# Digest of the parse forest of each sentence, for verifying that a
+# change to the C++ core leaves its output unchanged (run before and
+# after, with the same Greynir.grammar.bin, and diff the outputs)
+uv run python benchmarks/bench_parse.py --digest
 ```
 
 Note: after changing the C++ sources (`eparser.cpp`, `eparser.h`) or
@@ -69,6 +77,12 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    singular, nominative, feminine); terminal matching logic lives here.
    `baseparser.py` holds a pure-Python reference parser. `incparser.py`
    handles incremental parsing of token streams by paragraph/sentence.
+   The order in which the core enumerates the states of an Earley column
+   (`Column::nextState()`) determines the order of families in the forest
+   and thereby the outcome of exact score ties in the reducer: changes to
+   the core must preserve it or be treated as output-changing. See
+   `doc/earley-core-performance.md`; `test/test_earley_core.py` tests the
+   core in isolation with synthetic grammars.
 
 4. **Reduction** — `reducer.py` scores the parse forest and reduces it to the
    single most likely tree, using preferences from `config/Prefs.conf`,

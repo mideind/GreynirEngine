@@ -106,6 +106,18 @@ public:
          ASSERT(this->numAllocs() > this->numFrees());
          this->m_nFrees.fetch_add(1, std::memory_order_relaxed);
       }
+   // Add a batch of allocations and frees in one go. This is used
+   // for objects that are created and destroyed at a high rate within
+   // a single parse (States in particular): they are counted in plain
+   // parse-local counters and added here once per chunk or column, since
+   // an atomic increment per object is a measurable cost on the hot path.
+   void add(UINT nAllocs, UINT nFrees)
+      {
+         if (nAllocs)
+            this->m_nAllocs.fetch_add(nAllocs, std::memory_order_relaxed);
+         if (nFrees)
+            this->m_nFrees.fetch_add(nFrees, std::memory_order_relaxed);
+      }
    UINT numAllocs(void) const
       { return this->m_nAllocs.load(std::memory_order_relaxed); }
    UINT numFrees(void) const
@@ -445,6 +457,9 @@ private:
    std::atomic<UINT> m_nParityMismatches;
 
    void push(UINT nHandle, State*, Column*, State*&, StateChunk*);
+
+   BOOL canPush(INT iItem, Column*, UINT nHandle);
+   BOOL canAdvance(State*, Column*, UINT nHandle);
 
    Node* makeNode(State* pState, UINT nEnd, Node* pV, NodeDict& ndV);
 
