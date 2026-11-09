@@ -5,7 +5,7 @@
 
     Tests for JSON serialization of sentences
 
-    Copyright © 2023 by Miðeind ehf.
+    Copyright © 2026 by Miðeind ehf.
 
     This software is licensed under the MIT License:
 

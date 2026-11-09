@@ -4,7 +4,7 @@
 
     Reducer module
 
-    Copyright © 2023 Miðeind ehf.
+    Copyright © 2026 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:

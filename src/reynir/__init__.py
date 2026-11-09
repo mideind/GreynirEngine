@@ -2,7 +2,7 @@
 
     Greynir: Natural language processing for Icelandic
 
-    Copyright © 2023 Miðeind ehf.
+    Copyright © 2026 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -77,7 +77,7 @@ from tokenizer import (
 from tokenizer.abbrev import Abbreviations
 
 __author__ = "Miðeind ehf."
-__copyright__ = "© 2023 Miðeind ehf."
+__copyright__ = "© 2026 Miðeind ehf."
 __version__ = importlib.metadata.version("reynir")
 
 __all__ = (

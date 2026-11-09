@@ -4,7 +4,7 @@
 
     CFFI builder for _eparser module
 
-    Copyright © 2023 Miðeind ehf.
+    Copyright © 2026 Miðeind ehf.
     Author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
