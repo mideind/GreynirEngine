@@ -1,6 +1,6 @@
 # Performance of the C++ Earley-Scott core
 
-Status: IMPLEMENTED (stages 1 and 2) — 2026-11-10
+Status: IMPLEMENTED (stages 1 and 2) — 2026-11-10; section 8: findings only
 
 ## 0. Summary
 
@@ -8,9 +8,11 @@ This document describes two rounds of work on the speed of the parser
 core. Sections 0 to 5 are about the first one (stage 1), which left the
 output of the core unchanged in every detail. Section 7 is about the
 second one (stage 2), which changes the order of the families of children
-in the parse forest but not their content, and also cuts down on the
-calls from the core into Python. Taken together, on the machine where
-stage 2 was done:
+in the parse forest but not their content, and also cuts down on the calls
+from the core into Python. Section 8 records an investigation of further
+algorithmic changes (lookahead in the predictor, Leo's optimization, GLR),
+none of which is implemented. Taken together, on the machine where stage 2
+was done:
 
 | `benchmarks/corpus.txt` | Before | After stage 2 | Speedup |
 |---|---|---|---|
@@ -396,4 +398,201 @@ The core is now 28% of the time of a warm parse and 58% of a cold one.
    predicted whether or not that nonterminal can begin with the current
    token. Filtering out the ones that cannot, or not representing
    predictions as states at all, would reduce the work of the core
-   further, but is a redesign of its main loop.
+   further, but is a redesign of its main loop. Section 8 has
+   measurements and a prototype of such a filter.
+
+## 8. Algorithmic options after stage 2 (investigated, not implemented)
+
+Status: FINDINGS ONLY — 2026-11-10. Nothing in this section is in the
+code. It records what was measured, so that the work can be picked up
+later.
+
+The question was whether a change of algorithm - Joop Leo's optimization
+for right recursion, or a generalized LR parser (GLR) in place of Earley
+- would cut parsing time further, given that the freedom that Earley
+gives the grammar (left, middle and right recursion, ambiguity, empty
+productions) is to be kept.
+
+### Conclusions
+
+1. **Leo's optimization would do nothing for this grammar**: it applies
+   to about half a percent of the states.
+2. **GLR is not worth a rewrite.** What it would bring is available
+   within Earley, and several properties of this grammar count against
+   it. (This is a judgment; no GLR parser was built.)
+3. **One token of lookahead in the Earley predictor is worth having.** A
+   crude prototype reduced the number of states to a fifth and made the
+   core 1.5x faster on a warm pass, with the content of the forests
+   unchanged. It needs a solution for the cold pass, though (see below).
+4. **Precomputing nullability** is the natural step after that; it was
+   not prototyped.
+5. **All of this is bounded by the share of the core**, which is about
+   30% of a warm parse. No change to the core can make a warm parse more
+   than about 1.4x faster. The reducer and the conversion of the forest
+   (item 1 at the end of section 7) are the larger target.
+
+### What the core does, in numbers
+
+Measured with a build of the stage 2 core that counts events in
+`Parser::parse()`, over a cold and a warm pass of `benchmarks/corpus.txt`
+(1,202 tokens in all). The grammar at the time had 7,315 nonterminals, of
+which 1,453 are nullable, 27,573 productions and 6,264 terminals.
+
+| Per token | |
+|---|---|
+| States processed in a column | 5,600 |
+| Productions visited by the predictor | 9,630 |
+| Predicted states created | 4,670 (83% of the states) |
+| ... of which start with a nonterminal | 94% |
+| ... of which are empty productions | 5.6% (260) |
+| Nonterminals predicted | 2,265 |
+| Completed states processed | 365 |
+| ... of which span no tokens (nullable) | 71% (260) |
+| States created by the completer | 800 |
+| States created from the H set | 277 |
+| States moved by the scanner | 19 |
+
+* **84% of the predicted states are for productions that cannot begin
+  with the current token** and cannot derive nothing either, going by
+  the FIRST sets of the grammar and the set of terminals that the token
+  matches.
+* Looking back from the end of each parse, only 16% of the predicted
+  states belong to a nonterminal that was ever completed from the
+  position where it was predicted (13% of the predicted nonterminals).
+  A filter on the next token thus removes nearly everything that a
+  perfect oracle would.
+* **3.9% of the states created by the completer are eligible for Leo's
+  optimization**, i.e. come from a completion where a single state is
+  waiting for the nonterminal, with the dot in front of its last item.
+* The number of states processed per column does not grow with the
+  position in the sentence: it is about 5,000 from the second token to
+  the 25th. There is no quadratic behavior to remove at these sentence
+  lengths.
+* 13% of the states that go through the detection of duplicates are
+  duplicates.
+
+### Leo's optimization
+
+Leo's optimization makes right-recursive rules linear rather than
+quadratic, by not creating the chain of completions that follows when a
+right-recursive rule is completed, in the cases where that chain is
+deterministic. With 3.9% of the completer's states eligible, and the
+completer creating a seventh of all states, it would remove at most half
+a percent of the states. The grammar is too ambiguous for the condition
+to hold often. It is also awkward to combine with returning the whole
+forest, as the states that are skipped must then be reconstructed.
+
+### GLR and related algorithms
+
+The advantages of a GLR parser (or RNGLR, BRNGLR, GLL) over the present
+core would be that it only pursues items that are consistent with the
+next token, and that the closure of predictions is computed in advance,
+in the states of the LR automaton. The first of these is the lookahead
+filter below. Against GLR for this grammar:
+
+* **Terminals are matched dynamically.** A token matches a set of
+  terminals, some of them decided in Python. Looking up the actions of
+  an LR state requires that whole set for every token, whereas Earley
+  only asks about the terminals that it has predicted (77 calls into
+  Python per token on a cold pass, after stage 2).
+* **A fifth of the nonterminals are nullable.** Plain GLR handles empty
+  productions badly; RNGLR is needed, and BRNGLR to keep the cubic bound.
+* **The ambiguity is high** (a median of about 12,000 trees per
+  sentence), so many stacks are alive at once and the main strength of
+  LR parsing - a single stack that moves fast - rarely applies.
+* The size of an LR automaton for 27,000 productions is not known; it
+  was not built.
+* The core, the construction of the forest and their verification would
+  have to be redone.
+
+### Lookahead in the predictor: the prototype
+
+The prototype changes the predictor so that a production that starts
+with a nonterminal is skipped if it can neither begin with the current
+token nor derive nothing:
+
+```cpp
+// Once per grammar: for each nonterminal, its FIRST set as a bitmap of
+// terminals (ntFirst) and whether it is nullable (ntNull), computed by
+// the usual fixpoint iteration over the productions.
+// Once per column: xM, a bitmap of the terminals that match the token
+// (Column::matches() called for every terminal), and xV, a byte per
+// nonterminal: 0 = not known, 1 = can begin with the token, 2 = cannot.
+
+// In the predictor, for each production pp of the predicted nonterminal
+// whose first item is a nonterminal:
+bool alive = true;
+for (UINT m = 0; ; m++) {
+   INT it = (*pp)[m];
+   if (it == 0) break;                 // All items nullable: keep
+   if (it > 0) {                       // Terminal after nullable items
+      alive = pEi->matches(nHandle, (UINT)it);
+      break;
+   }
+   UINT b = ~((UINT)it);
+   if (!xV[b])                         // FIRST(b) and xM intersect?
+      xV[b] = intersects(ntFirst[b], xM) ? 1 : 2;
+   if (xV[b] == 1) break;              // Can begin with the token: keep
+   if (!ntNull[b]) { alive = false; break; }
+   // Nullable, but cannot begin with the token: look at the next item
+}
+if (!alive) continue;                  // Skip the production
+```
+
+Results on `benchmarks/corpus.txt`, same machine and session as the
+figures for the stage 2 core:
+
+| | Stage 2 core | With the prototype |
+|---|---|---|
+| States created per token | 5,600 | 1,056 |
+| Core, warm | 0.107-0.116 s | 0.072 s |
+| Whole parse, warm | 0.36-0.39 s | 0.32 s |
+| Core, cold | 0.35-0.41 s | 0.56 s |
+| Whole parse, cold | 0.63-0.72 s | 0.83 s |
+
+The digests of `bench_parse.py --digest --unordered` are identical with
+and without the filter for all 51 sentences. With the filter, 657
+nonterminals per token are tested for whether they can begin with the
+token (32% can), and 683 productions per token are skipped directly; the
+rest of the reduction comes from the nonterminals that are then never
+predicted.
+
+**The warm figure is a lower bound on the gain.** The prototype calls
+`matches()` for all 6,264 terminals in every column, clears a byte per
+nonterminal in every column, and tests a nonterminal by intersecting two
+bitmaps of 98 words. A proper implementation would keep, for each token
+(by the same key as the matching cache), a bitmap of the nonterminals
+that can begin with it, and test one bit per production. That bitmap is
+the union, over the terminals that the token matches, of a table that
+gives the nonterminals with each terminal in their FIRST set.
+
+**The cold pass is the problem to solve.** It became slower in the
+prototype because all terminals are matched against every new token,
+including those that are decided in Python. Possible ways out: evaluate
+only the terminals that the word categories of the token make possible
+(an index of terminals by category); treat a terminal whose answer is
+not known natively as possibly matching, at the cost of a weaker filter;
+or decide more terminals natively (item 2 at the end of section 7).
+
+### Nullable nonterminals
+
+After the filter, empty derivations would be a large part of what is
+left: per token, 260 empty productions are predicted, 260 states that
+span no tokens are completed, and 277 states are created from the H set
+- out of about 1,000 states. All of this is the same in every column,
+as it depends on the grammar alone. Precomputing which nonterminals are
+nullable (as in Aycock and Horspool, "Practical Earley Parsing", 2002)
+lets the predictor move the dot over a nullable nonterminal at once, and
+the H set goes away. `Node.from_c_node()` in `fastparser.py` already
+discards the nodes that span no tokens, so nothing that the reducer uses
+would be lost; what the forest should contain in their place has to be
+worked out. This was not prototyped, and the gain is an estimate.
+
+### Suggested order of work
+
+1. The reducer and the conversion of the forest: moving the walk of the
+   forest, or at least the scoring pass, out of Python.
+2. The lookahead filter, with a bitmap per token and a solution for the
+   cold pass.
+3. Precomputed nullability.
+4. Not Leo's optimization, and not GLR.
