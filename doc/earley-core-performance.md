@@ -205,7 +205,8 @@ order and that two processes with different hash seeds produce the same
 binary.
 
 Ties of this kind remain a matter of grammar order, not of linguistic
-judgment. One example that the fixed order gets wrong is "stöðu mála",
-where a reading as an adjective and a masculine plural noun ties with
-the intended noun and genitive; such cases call for a score or a
-preference of their own.
+judgment; where the order gets a common case wrong, the case calls for
+a score or a preference of its own. One such case was "stöðu mála",
+where a reading as the adjective "staður" with a masculine plural noun
+tied with the intended noun and genitive. `Prefs.conf` now prefers the
+noun "staða" over the adjective for the forms "staða" and "stöðu".

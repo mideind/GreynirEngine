@@ -3247,3 +3247,31 @@ def test_stranded_preposition_relative(r):
         rel = s.tree.first_match("CP-REL")
         assert rel.flat.endswith(" ADVP ao /ADVP /IP /CP-REL"), sent
         assert "NP-SUBJ" not in rel.flat, sent
+
+
+def test_stada_noun_not_adjective(r):
+    """The forms 'staða' and 'stöðu' are the noun 'staða' (position, state),
+    not the rare adjective 'staður' (said of a horse that refuses to move),
+    also when followed by a noun that could agree with the adjective:
+    'stöðu mála' is a noun with a genitive, not an adjective with the
+    accusative plural of 'máli'"""
+    for sent, genitive in (
+        ("Ég mun upplýsa hann um stöðu mála í viðræðunum.", "no_ft_ef_hk"),
+        ("Hann spurði um stöðu mála.", "no_ft_ef_hk"),
+        ("Þeir ræddu stöðu mála á fundinum.", "no_ft_ef_hk"),
+        ("Staða mála er góð.", "no_ft_ef_hk"),
+        ("Hann sótti um stöðu forstjóra.", "no_et_ef_kk"),
+        ("Ríkið þarf að styrkja stöðu bandarískra framleiðenda.", "lo_ef_ft_kk"),
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        leaves = list(s.tree.leaves)
+        ix = next(i for i, leaf in enumerate(leaves) if leaf.lemma == "staða")
+        # The noun 'staða' in the singular, followed by a genitive
+        assert leaves[ix].terminal.startswith("no_et_"), sent
+        assert leaves[ix].terminal.endswith("_kvk"), sent
+        assert leaves[ix + 1].terminal == genitive, sent
+    # The adjective is still available where the noun does not fit
+    s = r.parse_single("Hesturinn er staður.")
+    assert s and s.tree
+    assert [leaf.terminal for leaf in s.tree.leaves][2] == "lo_sb_nf_et_kk"
