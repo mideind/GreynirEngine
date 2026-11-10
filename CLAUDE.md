@@ -38,15 +38,20 @@ uv run python benchmarks/bench_parse.py
 
 # Digest of the parse forest of each sentence, for verifying that a
 # change to the C++ core leaves its output unchanged (run before and
-# after, and diff the outputs)
+# after, and diff the outputs). With --unordered, the digests don't
+# depend on the order of the families of children of each node.
 uv run python benchmarks/bench_parse.py --digest
+uv run python benchmarks/bench_parse.py --digest --unordered
 ```
 
 Note: after changing the C++ sources (`eparser.cpp`, `eparser.h`) or
 `eparser_build.py`, force a rebuild of the `_eparser` CFFI extension with
 `uv sync --reinstall-package reynir` (the extension is compiled at install
 time; see `setup.py`, which exists only for the `cffi_modules` hook — all
-other metadata is in `pyproject.toml`).
+other metadata is in `pyproject.toml`). Extra compiler flags for
+such a build (sanitizers, `-DEPARSER_ASSERT -UNDEBUG` to enable the
+assertions of the core) go in `CXXFLAGS`, not `CFLAGS`, and need
+`--no-cache`.
 
 ## Architecture
 
@@ -83,12 +88,16 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    singular, nominative, feminine); terminal matching logic lives here.
    `baseparser.py` holds a pure-Python reference parser. `incparser.py`
    handles incremental parsing of token streams by paragraph/sentence.
-   The order in which the core enumerates the states of an Earley column
-   (`Column::nextState()`) determines the order of families in the forest
-   and thereby the outcome of those exact score ties in the reducer that
-   its content-based family key (production index and child spans; see
-   `start_family()` in `reducer.py`) does not settle: changes to
-   the core must preserve it or be treated as output-changing. See
+   The core processes the states of an Earley column in the order in
+   which they are added (`Column::nextState()`), which determines the
+   order of families in the forest and thereby the outcome of those exact
+   score ties in the reducer that its content-based family key
+   (production index and child spans; see `start_family()` in
+   `reducer.py`) does not settle. A change to the core may alter that
+   order, but must leave the content of the forest intact: check with
+   `bench_parse.py --digest --unordered` before and after, and compare
+   the final trees of a larger sample. Forest nodes live in a per-parse
+   arena (`Forest`) that is freed as a whole by `deleteForest()`. See
    `doc/earley-core-performance.md`; `test/test_earley_core.py` tests the
    core in isolation with synthetic grammars.
 

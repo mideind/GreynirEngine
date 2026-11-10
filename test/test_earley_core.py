@@ -47,8 +47,9 @@
     * consistency of the internal allocation counters.
 
     These tests guard the data structures on the hot path of the core
-    (the state enumeration order within a column, the H set index,
-    the node dictionary and the batched allocation counters).
+    (the state lists of the columns, the set of states for detecting
+    duplicates, the prediction tables, the H set index, the node
+    dictionary, the forest storage and the batched allocation counters).
 
 """
 
@@ -479,6 +480,52 @@ def test_many_states(core) -> None:
     assert c.num_trees([B, A]) == N
     assert c.parse([B]) is None
     assert c.parse([A, B, B]) is None
+
+
+def test_many_advanced_states(core) -> None:
+    """A column with thousands of states that are not predictions, and
+    thus go through the detection of duplicate states: enough of them
+    to make the table of states grow several times"""
+    N = 5000
+    A = 1
+    # S -> X1 | X2 | ... | XN;  Xi -> a
+    spec: GrammarSpec = [[[nt(i)] for i in range(1, N + 1)]]
+    for i in range(1, N + 1):
+        spec.append([[A]])
+    c = core(spec)
+    assert c.num_trees([A]) == N
+    assert c.parse([A, A]) is None
+    assert c.error_token == 2
+    # The same, where each Xi has two (identical) productions: Xi -> a | a
+    # Both complete Xi, and each completion advances the state S -> . Xi
+    # to the same state S -> Xi . with the same tree node; the second
+    # one is a duplicate, which must be detected and dropped.
+    for i in range(1, N + 1):
+        spec[i] = [[A], [A]]
+    c = core(spec)
+    # Each Xi has two derivations
+    assert c.num_trees([A]) == 2 * N
+
+
+def test_recursive_root(core) -> None:
+    """The root nonterminal occurs within its own productions, so it is
+    at the dot of states in the first column. Its productions are in that
+    column from the start and must not be predicted again."""
+    A, B = 1, 2
+    # S -> S a | a
+    c = core([[[nt(0), A], [A]]])
+    for n in range(1, 8):
+        assert c.num_trees([A] * n) == 1
+    # S -> a S | b
+    c = core([[[A, nt(0)], [B]]])
+    for n in range(0, 8):
+        assert c.num_trees([A] * n + [B]) == 1
+    assert c.parse([A, A]) is None
+    # S -> S S | a | b S
+    c = core([[[nt(0), nt(0)], [A], [B, nt(0)]]])
+    spec: GrammarSpec = [[[nt(0), nt(0)], [A], [B, nt(0)]]]
+    for tokens in ([A], [B, A], [A, A, A], [B, A, A], [A, B, A, A], [B, B, A, A, A]):
+        assert c.num_trees(tokens) == count_trees(spec, tokens), tokens
 
 
 def random_grammar(rnd: random.Random) -> GrammarSpec:

@@ -1,8 +1,25 @@
 # Performance of the C++ Earley-Scott core
 
-Status: IMPLEMENTED (stage 1) — 2026-11-09
+Status: IMPLEMENTED (stages 1 and 2) — 2026-11-10
 
 ## 0. Summary
+
+This document describes two rounds of work on the speed of the parser
+core. Sections 0 to 5 are about the first one (stage 1), which left the
+output of the core unchanged in every detail. Section 7 is about the
+second one (stage 2), which changes the order of the families of children
+in the parse forest but not their content, and also cuts down on the
+calls from the core into Python. Taken together, on the machine where
+stage 2 was done:
+
+| `benchmarks/corpus.txt` | Before | After stage 2 | Speedup |
+|---|---|---|---|
+| Core, warm | 2.76 s | 0.125 s | 22x |
+| Whole parse, warm | 3.08 s | 0.44 s | 7.0x |
+| Core, cold | 3.23 s | 0.45 s | 7.1x |
+| Whole parse, cold | 3.56 s | 0.78 s | 4.6x |
+
+### Stage 1
 
 Profiling of the parser core (`eparser.cpp`) on Icelandic text showed that
 most of its time was not spent on the Earley-Scott algorithm as such, but
@@ -143,7 +160,9 @@ as one that alters output.
 
 ## 5. Possible next stages
 
-In rough order of expected benefit for Icelandic text:
+This is the list as it stood after stage 1. Items 2 and 3 were done in
+stage 2, along with other things that a new profile brought up; see
+section 7, which ends with a list of what remains.
 
 1. **The Python side.** With the core 4-5x faster, the work outside it
    (mainly the reducer and the conversion of the forest to Python
@@ -152,9 +171,9 @@ In rough order of expected benefit for Icelandic text:
 2. **Forest memory.** About 85% of the forest nodes created during a
    parse are released before it ends, and nodes and their family entries
    are allocated from the heap one by one: `malloc`/`free` is 15-20% of
-   the instructions that the core now executes. Allocating them from an arena owned by the
-   forest would remove most of that, but changes how forests are released
-   (they are reference counted, node by node, today).
+   the instructions that the core now executes. Allocating them from an
+   arena owned by the forest would remove most of that, but changes how
+   forests are released (they are reference counted, node by node, today).
 3. **Decoupling enumeration order from hashing.** Processing the states
    of a column in insertion order instead of round robin by hash bin is
    simpler, and would allow the hash table of a column to be sized by
@@ -165,7 +184,10 @@ In rough order of expected benefit for Icelandic text:
 4. **Fewer states.** Precomputing, for each nonterminal, the closure of
    productions that the predictor adds, with the terminals that each can
    start with, would avoid creating prediction states one by one. Joop
-   Leo's optimization for right recursio## 6. A reproducible binary grammar
+   Leo's optimization for right recursion would make right-recursive
+   rules linear.
+
+## 6. A reproducible binary grammar
 
 An observation made along the way, unrelated to performance: generating
 `Greynir.grammar.bin` twice from the same grammar gave files that
@@ -251,3 +273,127 @@ different optional items - occurs in six other rules in the news sample
 `NlSkýring?`),
 `BeygingarliðurMeðUmröðun` (`Upptalning?` or `KommaAtvikssetning?`) and
 `SögnMeðF_0`. The outcome of those still depends on the family order.
+
+## 7. Stage 2
+
+Stage 1 kept the order of the families of children in the forest intact,
+because the reducer falls back on that order when everything else is
+equal. Section 6 shows that this order was never stable to begin with: it
+shifts whenever a nonterminal is added to the grammar. Stage 2 therefore
+no longer treats it as an invariant. What it does preserve is the content
+of the forest: the same nodes, each with the same set of families.
+
+### What the profile showed
+
+Measured with callgrind on the warm pass over `benchmarks/corpus.txt`
+(599 tokens; 3.35 million states, or 5,600 per token):
+
+1. **Nothing on the hot path was inlined.** The extension is a shared
+   library, and GCC must assume that any function with external linkage
+   in a shared library can be replaced at load time. It thus neither
+   inlined the small functions of the core (`push()`, the `State`
+   constructor, `Production::operator[]`...) nor called them directly.
+2. **83% of all states are predictions**, i.e. states with the dot at
+   the start of a production, created by the Earley predictor. Such a
+   state cannot already be in the column - each nonterminal is predicted
+   once per column - but all of them went through the search for an
+   identical state, in hash chains of five to six states on average.
+   `Column::addState()` was 20% of the instructions executed.
+3. **Forest nodes** were reference counted and allocated from the heap
+   one by one (item 2 in section 5): about 15%.
+4. **Setting up a column** cleared 24 KB of hash bins and an array with
+   a pointer for every nonterminal of the grammar (58 KB).
+5. **The predictor visited every production** of a predicted nonterminal
+   to look at its first item, although nearly half are rejected on that
+   item alone. Productions are separate heap objects, each with a
+   separately allocated list of items.
+6. On a **cold pass**, i.e. for words that the parser has not seen
+   before, the core made 366 calls per token to the Python matching
+   function. Half of them asked whether a literal terminal for a word
+   (`'margur:lo'`) matches a token that is not a word at all - a number,
+   a person name, a punctuation mark - and another fifth whether a verb
+   or adjective terminal matches a word that has no verb or adjective
+   among its meanings.
+
+### The changes
+
+1. **`-fno-semantic-interposition`** is added to the compiler flags on
+   Linux (`eparser_build.py`). This alone made the core 19% faster.
+2. **States are processed in the order in which they are added** to a
+   column, which is kept as a simple list. Duplicate states are detected
+   in a single open addressing hash table for the whole parse
+   (`StateSet`), which is emptied between columns by incrementing a
+   generation number. The hash bins and the bitmap of stage 1 are gone.
+3. **Predicted states skip the search for duplicates** and are not
+   entered into the table at all. (In the first column, the productions
+   of the root nonterminal are there from the start, so the root is
+   marked as already predicted.)
+4. **The forest is an arena** (`Forest`). Nodes and family entries are
+   allocated sequentially from 64 KB slabs and are never freed one by
+   one; `deleteForest()` frees the slabs. There is no reference counting,
+   and states have no destructor. The nodes that do not end up in the
+   result (about 85%) now live until the forest is deleted, which
+   `fastparser.py` does right after converting it to Python objects. The
+   third member of `struct Node`, formerly the reference count, is now a
+   pointer to the forest.
+5. **Prediction tables.** Each nonterminal has a contiguous array of
+   its productions with the first item of each, so the predictor only
+   visits the productions that it creates states for. A state holds the
+   item at its dot, and the item lists of productions are terminated by
+   a zero item, so that the bounds check is not needed.
+6. **The array of state lists by nonterminal** in a column is no longer
+   cleared; a bitmap tells which of its elements are in use. One byte of
+   flags per nonterminal tells the predictor both whether the nonterminal
+   has been predicted and whether it has elements in the H set.
+7. **Fewer calls into Python.** Two new flags in the native matching
+   table (`TF_NO_NONWORD`, `TF_NEEDS_CAT`) let the core answer "no match"
+   by itself for a terminal that can only match a word, when the token is
+   not a word, and for a verb terminal - or an adjective terminal with an
+   ending or subject case constraint - when no meaning of the word has
+   that word category. Such terminals are still matched in Python when
+   the answer could be yes. The conditions, and the reasoning for each,
+   are in `_make_terminal_spec()` in `binparser.py`. The calls on a cold
+   pass went from 366 to 77 per token.
+
+### Verification
+
+* **Forest content.** `benchmarks/bench_parse.py --digest --unordered`
+  writes a digest of each forest that does not depend on the order of
+  the families. These digests are identical before and after stage 2 for
+  `benchmarks/corpus.txt` and for 677 sentences from the test suite.
+* **Output.** The final trees of 3,041 sentences of news text are
+  identical before and after, scores included. (Ties that fall to the
+  family order - see section 6 - could have come out differently; in
+  this sample, none did.)
+* **Matching.** In parity mode (`GREYNIR_MATCHING_PARITY=1`), where every
+  answer that the core gives by itself is compared with that of the
+  Python matching function, there were no discrepancies in 3,816
+  sentences.
+* **Sanitizers.** The tests of the core, of the binary grammar and of
+  native matching, and both sets of sentences above, run clean under
+  AddressSanitizer and UndefinedBehaviorSanitizer with the assertions of
+  the core enabled (`-DEPARSER_ASSERT -UNDEBUG`; note that the flags must
+  be in `CXXFLAGS`, as `CFLAGS` are not used for C++ sources). This found
+  one bug during the work: removing a member of `StateChunk` had left the
+  storage for the states misaligned.
+* **Tests.** `test/test_earley_core.py` has two new tests, for a column
+  with thousands of states that go through the detection of duplicates,
+  and for a root nonterminal that occurs in its own productions.
+
+### What remains
+
+The core is now 28% of the time of a warm parse and 58% of a cold one.
+
+1. **The reducer and the conversion of the forest to Python objects**
+   are now the largest part of a warm parse: about 55% and 18% of its
+   time, respectively, when run under cProfile (which inflates the share
+   of Python code). Both walk the whole forest in Python.
+2. **The remaining calls into Python** on a cold pass (77 per token) are
+   mostly verb terminals matched against verbs, which involves the verb
+   frames of `Verbs.conf`, and terminals for numbers, names and the like.
+3. **Fewer states** (item 4 in section 5). Predictions are still 83% of
+   the states, and a production that starts with a nonterminal is
+   predicted whether or not that nonterminal can begin with the current
+   token. Filtering out the ones that cannot, or not representing
+   predictions as states at all, would reduce the work of the core
+   further, but is a redesign of its main loop.

@@ -60,6 +60,11 @@
         uv run python benchmarks/bench_parse.py --digest > after.txt
         diff before.txt after.txt
 
+    A change to the core may legitimately alter the order of the families
+    (it follows from the order in which the core processes its states),
+    as long as the forests are otherwise the same. Add the --unordered
+    option to get digests that do not depend on that order.
+
 """
 
 from typing import Any, Dict, List, Optional
@@ -120,6 +125,46 @@ def forest_digest(root: Any) -> str:
     return "{0} nodes, {1}".format(num_nodes, h.hexdigest())
 
 
+def forest_digest_unordered(root: Any) -> str:
+    """Return a digest of a parse forest that does not depend on the order
+    of the families of children within each node, nor on the order in
+    which the nodes are visited: two forests have the same digest if they
+    consist of the same nodes, each with the same set of families.
+    A node is identified by its label, which is unique within a forest."""
+
+    def label(node: Any) -> Any:
+        if node == NULL:
+            return None
+        lb = node.label
+        prod = -1 if lb.pProd == NULL else lb.pProd.nId
+        return (lb.iNt, lb.nDot, prod, lb.nI, lb.nJ)
+
+    records: List[Any] = []
+    seen: Dict[Any, bool] = {NULL: True}
+    stack: List[Any] = [root]
+    num_families = 0
+    while stack:
+        node = stack.pop()
+        if node in seen:
+            continue
+        seen[node] = True
+        families: List[Any] = []
+        fe = node.pHead
+        while fe != NULL:
+            families.append(repr((fe.pProd.nId, label(fe.p1), label(fe.p2))))
+            stack.append(fe.p1)
+            stack.append(fe.p2)
+            fe = fe.pNext
+        families.sort()
+        num_families += len(families)
+        records.append(repr((label(node), families)))
+    records.sort()
+    h = hashlib.sha1("\n".join(records).encode("ascii"))
+    return "{0} nodes, {1} families, {2}".format(
+        len(records), num_families, h.hexdigest()
+    )
+
+
 class CoreProbe:
 
     """A stand-in for the CFFI library object of the C++ core, which
@@ -127,9 +172,12 @@ class CoreProbe:
     digests of the returned parse forests. All other attributes are
     delegated to the real library object."""
 
-    def __init__(self, lib: Any, digest: bool = False) -> None:
+    def __init__(
+        self, lib: Any, digest: bool = False, unordered: bool = False
+    ) -> None:
         self._lib = lib
         self._digest = digest
+        self._digest_func = forest_digest_unordered if unordered else forest_digest
         self.seconds = 0.0
         self.tokens = 0
         self.parses = 0
@@ -156,7 +204,7 @@ class CoreProbe:
             if node == NULL:
                 self.digests.append("no parse, error at {0}".format(err[0]))
             else:
-                self.digests.append(forest_digest(node))
+                self.digests.append(self._digest_func(node))
         return node
 
 
@@ -221,13 +269,19 @@ def main() -> None:
         action="store_true",
         help="write a digest of the parse forest of each sentence, and no timings",
     )
+    ap.add_argument(
+        "--unordered",
+        action="store_true",
+        help="with --digest: write digests that do not depend on the order "
+        "of the families of children of each node",
+    )
     ap.add_argument("--json", action="store_true", help="write the results as JSON")
     args = ap.parse_args()
 
     sentences = read_corpus(args.corpus)
 
     # Route the calls from fastparser.py into the C++ core through our probe
-    probe = CoreProbe(fastparser.eparser, digest=args.digest)
+    probe = CoreProbe(fastparser.eparser, digest=args.digest, unordered=args.unordered)
     fastparser.eparser = probe  # type: ignore
 
     g = Greynir()

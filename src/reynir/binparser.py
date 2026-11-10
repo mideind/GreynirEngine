@@ -2575,10 +2575,13 @@ _T_CAT_AO = 9
 _TF_ABBREV = 0x0100
 _TF_MM_EXCLUDE = 0x0200
 _TF_MATCHES_EMPTY = 0x0400
+_TF_NO_NONWORD = 0x0800
+_TF_NEEDS_CAT = 0x1000
 
 # Token header flags
 _TKF_FAST = 0x00010000
 _TKF_EMPTY_WORD = 0x00020000
+_TKF_NONWORD = 0x00040000
 
 # Meaning record flags
 _MF_NO_BEYGING = 1
@@ -2588,6 +2591,18 @@ _MF_IS_LO_SO = 8
 
 # Terminal categories whose matchers cannot be encoded natively
 _PYTHON_FIRSTS = frozenset(("so", "eo", "fs", "person", "gata", "sérnafn", "stt"))
+
+# Terminal categories whose matchers (WordMatchers.matcher_so() and
+# matcher_lo()) only match a word meaning of that same category, and which
+# none of the BIN_Token.matches_XXX() functions for tokens other than
+# words accept
+_WORD_ONLY_FIRSTS = frozenset(("so", "lo"))
+
+# First parts of terminal names that BIN_Token.matches_NUMBER() and
+# matches_YEAR() compare directly with terminal.first. A literal terminal
+# having one of these as its literal would match number and year tokens,
+# so such literals are not marked as matching words only.
+_NUMBER_FIRSTS = frozenset(("tala", "ártal", "töl", "to"))
 
 _STRUCT_SPEC = struct.Struct("<IIIIQQ")  # TerminalSpec
 _STRUCT_HDR = struct.Struct("<II")  # TokenRec
@@ -2677,8 +2692,28 @@ def _make_terminal_spec(
                     # matcher_lemma_literal(): verb lemma literals don't
                     # match middle voice meanings unless _mm is specified
                     flags |= _TF_MM_EXCLUDE
+        if (
+            t._match_cat is not None
+            and t._match_cat != "punctuation"
+            and first not in _NUMBER_FIRSTS
+            and (t._strong or not first[:1].isupper())
+        ):
+            # A literal terminal with a word category can only match a word
+            # token. Of the BIN_Token.matches_XXX() functions for other
+            # token kinds, only these can return True for a literal
+            # terminal (whose startswith() is always False):
+            # matches_PUNCTUATION(), for a literal without a category or
+            # of the punctuation categories; matches_NUMBER() and
+            # matches_YEAR(), for the literals in _NUMBER_FIRSTS; and
+            # matches_PERSON(), for lemma literals in upper case.
+            # This holds for all literals, also those that are
+            # otherwise matched in Python (kind T_PYTHON).
+            flags |= _TF_NO_NONWORD
     elif type(t) is BIN_Terminal:
         first = t.first
+        if first in _WORD_ONLY_FIRSTS:
+            # See the comment on _WORD_ONLY_FIRSTS
+            flags |= _TF_NO_NONWORD
         if first not in _PYTHON_FIRSTS and not t.has_any_vbits(
             BIN_Token.VBIT_ENDING | BIN_Token.VBIT_SCASES
         ):
@@ -2717,6 +2752,13 @@ def _make_terminal_spec(
                 # All remaining categories use matcher_default()
                 kind = _T_CAT_DEFAULT
                 cat = intern_cat(first)
+        elif first in _WORD_ONLY_FIRSTS:
+            # Matched in Python (a verb terminal, or an adjective terminal
+            # with an ending or subject case constraint), but only against
+            # word meanings of the terminal's own category: the core
+            # doesn't need to ask if the token has no such meaning
+            flags |= _TF_NEEDS_CAT
+            cat = intern_cat(first)
     return _STRUCT_SPEC.pack(kind | flags, cat, lit, 0, fbits, mask)
 
 
@@ -2795,4 +2837,7 @@ def encode_token_matching_data(token: BIN_Token, table: MatchingTable) -> bytes:
         else:
             # Word token with no BÍN meanings (unknown word)
             count_flags = _TKF_EMPTY_WORD
+    else:
+        # Not a word: a number, a person name, punctuation, etc.
+        count_flags = _TKF_NONWORD
     return _STRUCT_HDR.pack(form_id, count_flags) + b"".join(parts)

@@ -48,8 +48,11 @@
 #include <atomic>
 
 
-// Assert macro
-#ifdef DEBUG
+// Assert macro. The assertions are enabled in DEBUG builds (which also
+// write a trace of the parse to stdout), or - without the trace - by
+// defining EPARSER_ASSERT. Note that NDEBUG must not be defined in
+// either case; Python's default compiler flags do define it.
+#if defined(DEBUG) || defined(EPARSER_ASSERT)
    #define ASSERT(x) assert(x)
 #else
    #define ASSERT(x)
@@ -71,6 +74,8 @@ class State;
 class Column;
 class NodeDict;
 class Label;
+class Forest;
+class StateSet;
 struct StateChunk;
 
 
@@ -128,6 +133,19 @@ public:
 };
 
 
+struct Prediction {
+
+   // An entry in the prediction table of a nonterminal:
+   // one of its productions, along with the first item of the production
+   // (a negative nonterminal index, a positive terminal index,
+   // or 0 if the production is empty)
+
+   Production* pProd;
+   INT iFirst;
+
+};
+
+
 class Nonterminal {
 
    // A Nonterminal has an associated list of owned Productions
@@ -138,6 +156,16 @@ private:
 
    WCHAR* m_pwzName;
    Production* m_pProd;
+   // The prediction table: the productions of the nonterminal in a
+   // contiguous array, in the same order as in the list of productions,
+   // for the Earley predictor to go through. Most predicted productions
+   // are rejected on their first item alone, and the table allows that
+   // without visiting the productions themselves, which are scattered
+   // around in memory.
+   Prediction* m_pPredictions;
+   UINT m_nPredictions;
+
+   void buildPredictions(void);
 
    static AllocCounter ac;
 
@@ -155,6 +183,13 @@ public:
    Production* getHead(void) const
       { return this->m_pProd; }
 
+   // Get the prediction table of this nonterminal
+   const Prediction* getPredictions(UINT& n) const
+      {
+         n = this->m_nPredictions;
+         return this->m_pPredictions;
+      }
+
    WCHAR* getName(void) const
       { return this->m_pwzName; }
 
@@ -165,8 +200,8 @@ class Production {
 
    // A Production owns a local copy of an array of items,
    // where each item is a negative nonterminal index, or
-   // positive terminal index. Attempts to index past the
-   // end of the production yield a 0 item.
+   // positive terminal index. The array is terminated by a 0 item,
+   // so indexing just past the end of the production yields 0.
 
    friend class AllocReporter;
 
@@ -201,8 +236,13 @@ public:
    UINT getPriority(void) const
       { return this->m_nPriority; }
 
-   // Get the item at the dot position within the production
-   INT operator[] (UINT nDot) const;
+   // Get the item at the dot position within the production,
+   // or 0 if the dot is at the end of the production
+   INT operator[] (UINT nDot) const
+      {
+         ASSERT(nDot <= this->m_n);
+         return this->m_pList[nDot];
+      }
 
 };
 
@@ -301,6 +341,10 @@ public:
 
 class Node {
 
+   // A node in the parse forest (SPPF). Nodes are created within
+   // a Forest, which owns their storage: they are not deleted
+   // individually, but all at once when the Forest is deleted.
+
    friend class AllocReporter;
 
 private:
@@ -312,9 +356,11 @@ private:
       FamilyEntry* pNext;
    };
 
+   // Note: the layout of the following three members is known to
+   // the Python side (see struct Node in eparser_build.py)
    Label m_label;
    FamilyEntry* m_pHead;
-   UINT m_nRefCount;
+   Forest* m_pForest;      // The forest that owns this node
 
    static AllocCounter ac;
 
@@ -324,12 +370,12 @@ protected:
 
 public:
 
-   Node(const Label&);
-   ~Node(void);
+   Node(const Label&, Forest*);
 
-   void addRef(void)
-      { this->m_nRefCount++; }
-   void delRef(void);
+   // Account for a batch of node allocations and frees
+   // (nodes are not counted individually, for performance reasons)
+   static void count(UINT nAllocs, UINT nFrees)
+      { Node::ac.add(nAllocs, nFrees); }
 
    void addFamily(Production*, Node* pW, Node* pV);
 
@@ -343,6 +389,9 @@ public:
    void dump(Grammar*);
 
    static UINT numCombinations(Node*);
+
+   // Delete the forest that a node belongs to
+   static void destroyForest(Node*);
 
 };
 
@@ -387,10 +436,16 @@ BOOL defaultMatcher(UINT nHandle, UINT nToken, UINT nTerminal);
 #define TF_ABBREV        0x0100u  // no_abbrev: matches only meanings without inflection info
 #define TF_MM_EXCLUDE    0x0200u  // Verb lemma literal: don't match middle voice (MM)
 #define TF_MATCHES_EMPTY 0x0400u  // Terminal matches unknown words (no_..._et_hk without gr)
+// The following two flags allow the core to decide that a terminal does
+// not match a token, without calling the Python matching function, also
+// for terminals that are otherwise matched in Python (T_PYTHON)
+#define TF_NO_NONWORD    0x0800u  // Terminal never matches a token that is not a word
+#define TF_NEEDS_CAT     0x1000u  // Terminal only matches word meanings of category nCatId
 
 // Token header flags (high 16 bits of TokenRec::nCountFlags)
 #define TKF_FAST        0x00010000u  // Word token with BÍN meanings: fully matchable natively
 #define TKF_EMPTY_WORD  0x00020000u  // Word token without BÍN meanings
+#define TKF_NONWORD     0x00040000u  // Not a word token (number, person name, punctuation...)
 
 // Meaning record flags
 #define MF_NO_BEYGING   1u  // Meaning has no inflection info (beyging == "-")
@@ -456,10 +511,12 @@ private:
    // incremented from within concurrent parses
    std::atomic<UINT> m_nParityMismatches;
 
-   void push(UINT nHandle, State*, Column*, State*&, StateChunk*);
+   // Add a state to a column, or to the list of states to be scanned
+   void pushNew(State*, Column*, State*& pQ);
+   void push(UINT nHandle, State*, Column*, State*& pQ, StateChunk*, StateSet&);
 
    BOOL canPush(INT iItem, Column*, UINT nHandle);
-   BOOL canAdvance(State*, Column*, UINT nHandle);
+   BOOL canAdvance(State*, Column*, UINT nHandle, INT& iNext);
 
    Node* makeNode(State* pState, UINT nEnd, Node* pV, NodeDict& ndV);
 
