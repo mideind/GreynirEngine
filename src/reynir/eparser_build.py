@@ -4,7 +4,7 @@
 
     CFFI builder for _eparser module
 
-    Copyright © 2023 Miðeind ehf.
+    Copyright © 2026 Miðeind ehf.
     Author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -92,7 +92,7 @@ declarations = """
     struct Node {
         struct Label label;
         struct FamilyEntry* pHead;
-        UINT nRefCount;
+        void* pForest;
     };
 
     typedef BOOL (*MatchingFunc)(UINT nHandle, UINT nToken, UINT nTerminal);
@@ -138,7 +138,13 @@ elif MACOS:
     os.environ["MACOSX_DEPLOYMENT_TARGET"] = "10.9"
     extra_compile_args = ["-mmacosx-version-min=10.9", "-stdlib=libc++", "-std=c++11"]
 else:
-    extra_compile_args = ["-std=c++11"]
+    # -fno-semantic-interposition: in a shared library, GCC must otherwise
+    # assume that any function with external linkage can be replaced at
+    # load time (ELF symbol interposition), which keeps it from inlining
+    # the small functions on the hot path of the parser core, or even
+    # calling them directly. This flag alone makes the core about a fifth
+    # faster; see doc/earley-core-performance.md.
+    extra_compile_args = ["-std=c++11", "-fno-semantic-interposition"]
 
 # On some systems, the linker needs to be told to use the C++ compiler
 # due to changes in the default behaviour of distutils/setuptools, which

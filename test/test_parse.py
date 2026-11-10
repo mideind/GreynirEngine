@@ -5,7 +5,7 @@
 
     Tests for Greynir module
 
-    Copyright © 2023 by Miðeind ehf.
+    Copyright © 2026 by Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:
@@ -2226,6 +2226,24 @@ def test_deterministic_reduction(r):
         assert len(flats) == 1, f"Nondeterministic parse of '{sent}': {flats}"
 
 
+def test_abbreviated_adjective_before_number(r):
+    """An abbreviated adjective has no inflection info and thus matches
+    every adjective terminal: in 'f. 1985', 'f.' fits both as a prefix of
+    the number (TöluorðForskeyti) and as its adjective (TöluorðLo), with
+    exactly equal scores. The grammar has those as two rules of NlTöluorð,
+    so that the first one wins. They used to be two optional items of one
+    rule; then the choice fell to the order of the families in the parse
+    forest, which changes when nonterminals are added to the grammar."""
+    s = r.parse_single("Diana Burkot, f. 1985 í Rússlandi.")
+    assert s and s.tree
+    terminals = [leaf.terminal for leaf in s.tree.leaves if leaf.text == "f."]
+    assert terminals == ["lo_sb_et_nf_hk"]
+    # The adjective slot proper still works
+    s = r.parse_single("Hann valdi efstu tvo.")
+    assert s and s.tree
+    assert "lo_evb_nf_hk_ft" in [leaf.terminal for leaf in s.tree.leaves]
+
+
 def test_aukafall(r):
     s = r.parse_single("Mér blöskrar framkoma Páls.")
     assert s and s.tree
@@ -3247,3 +3265,90 @@ def test_stranded_preposition_relative(r):
         rel = s.tree.first_match("CP-REL")
         assert rel.flat.endswith(" ADVP ao /ADVP /IP /CP-REL"), sent
         assert "NP-SUBJ" not in rel.flat, sent
+
+
+def test_stada_noun_not_adjective(r):
+    """The forms 'staða' and 'stöðu' are the noun 'staða' (position, state),
+    not the rare adjective 'staður' (said of a horse that refuses to move),
+    also when followed by a noun that could agree with the adjective:
+    'stöðu mála' is a noun with a genitive, not an adjective with the
+    accusative plural of 'máli'"""
+    for sent, genitive in (
+        ("Ég mun upplýsa hann um stöðu mála í viðræðunum.", "no_ft_ef_hk"),
+        ("Hann spurði um stöðu mála.", "no_ft_ef_hk"),
+        ("Þeir ræddu stöðu mála á fundinum.", "no_ft_ef_hk"),
+        ("Staða mála er góð.", "no_ft_ef_hk"),
+        ("Hann sótti um stöðu forstjóra.", "no_et_ef_kk"),
+        ("Ríkið þarf að styrkja stöðu bandarískra framleiðenda.", "lo_ef_ft_kk"),
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        leaves = list(s.tree.leaves)
+        ix = next(i for i, leaf in enumerate(leaves) if leaf.lemma == "staða")
+        # The noun 'staða' in the singular, followed by a genitive
+        assert leaves[ix].terminal.startswith("no_et_"), sent
+        assert leaves[ix].terminal.endswith("_kvk"), sent
+        assert leaves[ix + 1].terminal == genitive, sent
+    # The adjective is still available where the noun does not fit
+    s = r.parse_single("Hesturinn er staður.")
+    assert s and s.tree
+    assert [leaf.terminal for leaf in s.tree.leaves][2] == "lo_sb_nf_et_kk"
+
+
+def test_reflexive_agreement(r):
+    """'sjálfur' with a reflexive pronoun ('sjálfa sig', 'sjálfum sér') agrees
+    in number and gender with the subject of its verb. Several forms of
+    'sjálfur' are ambiguous ('sjálfa' is both feminine singular and
+    masculine plural), so the subject has to decide"""
+    for sent, variants in (
+        # Direct object
+        ("Hún skammaði sjálfa sig.", "et_þf_kvk"),
+        ("Þeir skömmuðu sjálfa sig.", "ft_þf_kk"),
+        ("Hann treystir sjálfum sér.", "et_þgf_kk"),
+        ("Þær treysta sjálfum sér.", "ft_þgf_kvk"),
+        ("Þau treysta sjálfum sér.", "ft_þgf_hk"),
+        ("Þær nutu sjálfra sín.", "ft_ef_kvk"),
+        # Perfect and infinitive
+        ("Hún hefur skammað sjálfa sig.", "et_þf_kvk"),
+        ("Þeir hafa skammað sjálfa sig.", "ft_þf_kk"),
+        ("Hún vill ekki skamma sjálfa sig.", "et_þf_kvk"),
+        # Subject after the verb, and in a relative clause
+        ("Í gær skammaði hún sjálfa sig.", "et_þf_kvk"),
+        ("Skammaði hún sjálfa sig?", "et_þf_kvk"),
+        ("Konan sem skammaði sjálfa sig fór heim.", "et_þf_kvk"),
+        ("Mennirnir sem skömmuðu sjálfa sig fóru heim.", "ft_þf_kk"),
+        # Indirect object
+        ("Þeir gáfu sjálfum sér gjöf.", "ft_þgf_kk"),
+        ("Börnin gáfu sjálfum sér gjöf.", "ft_þgf_hk"),
+        # Prepositional phrase following the verb
+        ("Hún talaði við sjálfa sig.", "et_þf_kvk"),
+        ("Þeir töluðu við sjálfa sig.", "ft_þf_kk"),
+        ("Hún hugsar bara um sjálfa sig.", "et_þf_kvk"),
+        ("Þeir hlógu að sjálfum sér.", "ft_þgf_kk"),
+        ("Hún er ánægð með sjálfa sig.", "et_þf_kvk"),
+        # Second clause of a sentence, with a subject of its own
+        (
+            "Hann meiddi sig illa og hún skammaði sjálfa sig fyrir það.",
+            "et_þf_kvk",
+        ),
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        leaves = list(s.tree.leaves)
+        ix = next(i for i, leaf in enumerate(leaves) if leaf.lemma == "sjálfur")
+        assert leaves[ix].terminal == "fn_" + variants, sent
+        assert leaves[ix + 1].tcat == "abfn", sent
+    # The agreeing reading has the same shape as any other object
+    # or prepositional phrase
+    s = r.parse_single("Hún skammaði sjálfa sig.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ pfn_kvk_et_nf /NP-SUBJ VP VP so_1_þf_et_p3 /VP "
+        "NP-OBJ fn_et_þf_kvk abfn_þf_et_kvk /NP-OBJ /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Hún talaði við sjálfa sig.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ pfn_kvk_et_nf /NP-SUBJ VP VP so_0_et_p3 /VP "
+        "PP P fs_þf /P NP fn_et_þf_kvk abfn_þf_et_kvk /NP /PP /VP /IP /S-MAIN p /S0"
+    )

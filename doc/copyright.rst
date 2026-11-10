@@ -7,7 +7,7 @@ Copyright and licensing
     :align: left
     :alt: Miðeind ehf.
 
-GreynirEngine is *copyright © 2023 Miðeind ehf.*, Reykjavík, Iceland.
+GreynirEngine is *copyright © 2026 Miðeind ehf.*, Reykjavík, Iceland.
 
 The project's original author is *Vilhjálmur Þorsteinsson*.
 

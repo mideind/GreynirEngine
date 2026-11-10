@@ -4,7 +4,7 @@
 
     High-level wrapper for the Greynir tokenizer, parser and reducer
 
-    Copyright © 2023 Miðeind ehf.
+    Copyright © 2026 Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:

@@ -5,7 +5,7 @@
 
     Tests for the SimpleTree matching functionality in matcher.py
 
-    Copyright © 2023 by Miðeind ehf.
+    Copyright © 2026 by Miðeind ehf.
     Original author: Vilhjálmur Þorsteinsson
 
     This software is licensed under the MIT License:

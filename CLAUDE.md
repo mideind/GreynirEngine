@@ -32,13 +32,26 @@ uv run ruff check src/reynir
 # Type check (config in pyproject.toml [tool.mypy]; runs as a CI gate
 # on non-PyPy jobs, so it must stay clean)
 uv run mypy src/reynir
+
+# Benchmark parsing speed (total and C++ core time, cold and warm)
+uv run python benchmarks/bench_parse.py
+
+# Digest of the parse forest of each sentence, for verifying that a
+# change to the C++ core leaves its output unchanged (run before and
+# after, and diff the outputs). With --unordered, the digests don't
+# depend on the order of the families of children of each node.
+uv run python benchmarks/bench_parse.py --digest
+uv run python benchmarks/bench_parse.py --digest --unordered
 ```
 
 Note: after changing the C++ sources (`eparser.cpp`, `eparser.h`) or
 `eparser_build.py`, force a rebuild of the `_eparser` CFFI extension with
 `uv sync --reinstall-package reynir` (the extension is compiled at install
 time; see `setup.py`, which exists only for the `cffi_modules` hook — all
-other metadata is in `pyproject.toml`).
+other metadata is in `pyproject.toml`). Extra compiler flags for
+such a build (sanitizers, `-DEPARSER_ASSERT -UNDEBUG` to enable the
+assertions of the core) go in `CXXFLAGS`, not `CFLAGS`, and need
+`--no-cache`.
 
 ## Architecture
 
@@ -60,7 +73,13 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    is only taken when the binary is missing or stale — the warm path is
    lock-free, guarded only by an in-process `threading.Lock` protecting the
    class-level grammar caches. `glock.py` is a deprecated compatibility shim
-   over `filelock`, no longer used internally.
+   over `filelock`, no longer used internally. The binary is a pure function
+   of the grammar text (`test/test_binary_grammar.py` compiles it under two
+   hash seeds): nothing in `grammar.py` that decides the order or numbering
+   of productions may iterate over a set. A rule's free variants (those not
+   in its nonterminal) expand to productions in order of first appearance,
+   the first one varying fastest; the lowest production index wins exact
+   score ties in the reducer.
 
 3. **Parsing** — `fastparser.py` (`Fast_Parser`) wraps the C++ Earley-Scott
    parser (`eparser.cpp`) through the `_eparser` CFFI extension, producing a
@@ -69,6 +88,18 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    singular, nominative, feminine); terminal matching logic lives here.
    `baseparser.py` holds a pure-Python reference parser. `incparser.py`
    handles incremental parsing of token streams by paragraph/sentence.
+   The core processes the states of an Earley column in the order in
+   which they are added (`Column::nextState()`), which determines the
+   order of families in the forest and thereby the outcome of those exact
+   score ties in the reducer that its content-based family key
+   (production index and child spans; see `start_family()` in
+   `reducer.py`) does not settle. A change to the core may alter that
+   order, but must leave the content of the forest intact: check with
+   `bench_parse.py --digest --unordered` before and after, and compare
+   the final trees of a larger sample. Forest nodes live in a per-parse
+   arena (`Forest`) that is freed as a whole by `deleteForest()`. See
+   `doc/earley-core-performance.md`; `test/test_earley_core.py` tests the
+   core in isolation with synthetic grammars.
 
 4. **Reduction** — `reducer.py` scores the parse forest and reduces it to the
    single most likely tree, using preferences from `config/Prefs.conf`,
@@ -127,6 +158,20 @@ notes for 3.9.0) and from the 3.10.0 work; none started:
   locative "þar sem" clauses ("Þar sem hann fór var mér kalt"); "kerfið
   sem til stendur að hjálpa/breyta" (dative/genitive object: the
   subject-gap reading still wins).
+- **Reflexive agreement** (left over from the `_sjálfur` rules, which
+  make "sjálfa sig"/"sjálfum sér" agree with the subject where the verb
+  phrase nonterminals carry /tala/kyn): infinitive clauses with "að"
+  ("hún er að skaða sjálfa sig", NhLiður has no variants); PPs attached
+  to a noun ("þeir birtu myndir af sjálfum sér") or to an adjective
+  inside such a clause ("að vera ósamkvæmir sjálfum sér"). Also seen:
+  "sjálft sig" with "sig" read as a noun, "sjálfu sér" as noun + verb.
+- **Ties left to the family order**: when two derivations of one
+  production have the same score and spans but fill different optional
+  items, the reducer falls back on the family order, which shifts when
+  nonterminals are added. Fix in the grammar (as done for NlTöluorð,
+  "f. 1985"). Seen in news text: EfLiðurForskeyti ("eins árs"), NlKjarni
+  (NlViðbót?/Númer?), NlEind (relative clause/NlSkýring?),
+  BeygingarliðurMeðUmröðun (Upptalning?/KommaAtvikssetning?), SögnMeðF_0.
 - **Scoring**: the reducer's flat +12 for present participles
   (`reducer.py`) is why -andi nouns needed per-word Prefs.conf entries;
   a generic fix would cover the rest of the class.
