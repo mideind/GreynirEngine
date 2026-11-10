@@ -8,14 +8,21 @@
     return NULL (surfacing as a GrammarError in Python), never
     to crash.
 
+    Also tests that the binary grammar file is reproducible, i.e.
+    that compiling the same grammar always yields the same binary.
+
 """
 
+import os
 import struct
+import subprocess
+import sys
 
 import pytest
 
 from reynir._eparser import lib as eparser, ffi  # type: ignore
 from reynir.fastparser import Fast_Parser
+from reynir.grammar import Grammar
 
 BIN_FILE: str = Fast_Parser._GRAMMAR_BINARY_FILE
 
@@ -124,3 +131,85 @@ def test_out_of_range_production_items_fail(tmp_path) -> None:
     # Nonterminal index -2 is out of range (there is only one nonterminal)
     p.write_bytes(_minimal_grammar(-2))
     assert not load_grammar(str(p))
+
+
+# A small grammar where the right hand sides have 'free variants',
+# i.e. variants that do not occur in the nonterminal being defined
+FREE_VARIANT_GRAMMAR = """
+/tala = et ft
+/fall = nf þf
+/kyn = kk kvk hk
+/pers = p1 p2 p3
+
+S0 → Liður/fall so/pers/tala/kyn
+
+Liður/fall →
+    lo/tala/fall/kyn no/tala/fall/kyn
+    | fn/kyn/tala/fall
+"""
+
+
+def test_free_variant_production_order(tmp_path) -> None:
+    """A rule with free variants is expanded into one production for each
+    combination of their values. The order of those productions is part
+    of the grammar: the lowest numbered production wins exact score ties
+    in the reducer. It must thus be well defined, with the free variant
+    that is mentioned first in the rule varying fastest, and not depend
+    on the iteration order of a set."""
+    fname = tmp_path / "free.grammar"
+    fname.write_text(FREE_VARIANT_GRAMMAR, encoding="utf-8")
+    g = Grammar()
+    g.read(str(fname))
+
+    def productions(nt_name: str) -> list:
+        """Return the productions of a nonterminal, in index order"""
+        plist = sorted((p.index, p) for _, p in g.nt_dict[g.nonterminals[nt_name]])
+        return [" ".join(str(item) for item in p) for _, p in plist]
+
+    tala, fall, kyn, pers = ("et", "ft"), ("nf", "þf"), ("kk", "kvk", "hk"), "123"
+    # Free variants in order of first appearance: fall, pers, tala, kyn
+    assert productions("S0") == [
+        f"Liður_{f} so_p{p}_{t}_{k}"
+        for k in kyn
+        for t in tala
+        for p in pers
+        for f in fall
+    ]
+    # First alternative: tala, kyn; second alternative: kyn, tala
+    # (the variant /fall is not free here, as it belongs to the nonterminal)
+    assert productions("Liður_þf") == [
+        f"lo_{t}_þf_{k} no_{t}_þf_{k}" for k in kyn for t in tala
+    ] + [f"fn_{k}_{t}_þf" for t in tala for k in kyn]
+
+
+# Program that compiles Greynir.grammar to the binary file given as
+# an argument, without touching the binary grammar of the installation
+COMPILE_GRAMMAR = """
+import sys
+from reynir.binparser import BIN_Parser
+
+fname = BIN_Parser._GRAMMAR_FILE
+g = BIN_Parser._grammar_class()
+with open(fname, "r", encoding="utf-8") as f:
+    g.read_from_generator(fname, f, binary_fname=sys.argv[1], force_new_binary=True)
+"""
+
+
+def test_binary_grammar_is_reproducible(tmp_path) -> None:
+    """Compiling Greynir.grammar in two Python processes with different
+    string hash seeds must give identical binary grammar files. Otherwise,
+    the outcome of exact score ties in the reducer - and thereby the parse
+    trees of some sentences - would vary between installations."""
+    paths = [tmp_path / "seed{0}.bin".format(seed) for seed in (1, 2)]
+    procs = [
+        subprocess.Popen(
+            [sys.executable, "-c", COMPILE_GRAMMAR, str(path)],
+            env=dict(os.environ, PYTHONHASHSEED=str(seed)),
+        )
+        for seed, path in zip((1, 2), paths)
+    ]
+    for proc in procs:
+        assert proc.wait(timeout=300) == 0
+    binaries = [path.read_bytes() for path in paths]
+    assert binaries[0].startswith(SIGNATURE)
+    assert binaries[0] == binaries[1]

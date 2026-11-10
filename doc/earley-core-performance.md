@@ -125,9 +125,10 @@ as one that alters output.
   both gcc and clang builds) by replaying the token/terminal matches of
   real parses through the old and new core.
 
-  Note that digests are only comparable between runs that use the same
-  `Greynir.grammar.bin` file: the binary grammar is not byte-for-byte
-  reproducible between generations (see section 5).
+  Note that at the time of this work, digests were only comparable
+  between runs that used the same `Greynir.grammar.bin` file, as the
+  binary grammar was not reproducible between generations. That has
+  since been fixed (see section 6).
 * **Sanitizers.** The replay runs clean under AddressSanitizer and
   UndefinedBehaviorSanitizer, with the assertions in the core enabled.
 * **Tests.** `test/test_earley_core.py` tests the core in isolation, with
@@ -164,13 +165,47 @@ In rough order of expected benefit for Icelandic text:
 4. **Fewer states.** Precomputing, for each nonterminal, the closure of
    productions that the predictor adds, with the terminals that each can
    start with, would avoid creating prediction states one by one. Joop
-   Leo's optimization for right recursion would make right-recursive
-   rules linear.
+   Leo's optimization for right recursio## 6. A reproducible binary grammar
 
 An observation made along the way, unrelated to performance: generating
-`Greynir.grammar.bin` twice from the same grammar gives files that differ
-(the reason was not investigated). Nonterminal indices and production
-ids feed into the state hash, so if these are what differs, the family
-order - and thus the outcome of exact score ties - may differ between
-two installations. This is worth a look; a reproducible binary grammar
-would rule it out.
+`Greynir.grammar.bin` twice from the same grammar gave files that
+differed. The cause was in the grammar compiler (`grammar.py`), not in
+the core.
+
+A rule may use variants on its right hand side that do not occur in the
+nonterminal being defined ("free variants"), and is expanded into one
+production for each combination of their values. The free variants of a
+rule were collected in a Python `set` of strings, and the order in which
+such a set is iterated changes from one Python process to the next
+(string hashes are randomized). For the 68 rules of the grammar that
+have two or more free variants, the productions for the variant
+combinations were thus generated in a different order - and given
+different ids - each time the grammar was compiled; this applied to
+2,556 of the 27,193 productions.
+
+This was visible in the output of the parser. The reducer breaks exact
+score ties between the families of a node in favor of the production
+with the lowest id, so the winner of a tie between two variant
+combinations of the same rule depended on which process had compiled the
+binary grammar. In a sample of 3,041 sentences of news text, 27 got a
+different tree under two of the possible orders. Most of them contain a
+form such as "alla", "aðra" or "sjúka" standing without a noun, which is
+both feminine singular and masculine plural in the accusative.
+
+The free variants are now kept in the order in which they first appear
+in the rule, with the first one varying fastest. The binary grammar is
+thereby a pure function of the grammar text, and the order of the
+variants in a rule has a defined meaning: in a rule that mentions
+`/tala` before `/kyn`, all masculine combinations come before the
+feminine ones, so an exact tie between a feminine singular and a
+masculine plural reading goes to the masculine plural. (In the news
+sample, that order gives the right reading for 15 of the disputed words;
+the opposite order for 4.) `test/test_binary_grammar.py` checks both the
+order and that two processes with different hash seeds produce the same
+binary.
+
+Ties of this kind remain a matter of grammar order, not of linguistic
+judgment. One example that the fixed order gets wrong is "stöðu mála",
+where a reading as an adjective and a masculine plural noun ties with
+the intended noun and genitive; such cases call for a score or a
+preference of their own.

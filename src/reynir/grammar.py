@@ -837,10 +837,18 @@ class Grammar:
                 # (id, repeat, variants)
                 rhs: List[Tuple[Optional[str], Optional[str], Optional[List[str]]]] = []
 
-                # vfree is a set of 'free variants', i.e. variants that
+                # vfree is a list of 'free variants', i.e. variants that
                 # occur in the right hand side of the production but not in
-                # the nonterminal (those are in vts)
-                vfree: Set[str] = set()
+                # the nonterminal (those are in vts), in order of first
+                # appearance. Note that this must not be a set: the order
+                # of the free variants decides the order in which the
+                # productions for the variant combinations are generated
+                # below, and thereby their indices. A set of strings is
+                # iterated in an order that changes between Python
+                # processes (hash randomization), which would make both
+                # the binary grammar and the outcome of ties in the
+                # reducer vary from one process to the next.
+                vfree: List[str] = []
 
                 for r in tokens:
 
@@ -881,9 +889,9 @@ class Grammar:
                                 raise GrammarError(
                                     "Unknown variant '{0}'".format(vspec), fname, line
                                 )
-                            if vspec not in vts:
-                                # Free variant: add to set
-                                vfree.add(vspec)
+                            if vspec not in vts and vspec not in vfree:
+                                # Free variant, not seen before: add to list
+                                vfree.append(vspec)
 
                     if r[0] in "\"'":
                         # Literal terminal symbol
@@ -922,7 +930,7 @@ class Grammar:
 
                 # Make a list of all variants that occur in the
                 # nonterminal or on the right hand side
-                vall = vts + list(vfree)
+                vall = vts + vfree
 
                 for vval in variant_values(vall):
                     # Generate a production for every variant combination

@@ -38,7 +38,7 @@ uv run python benchmarks/bench_parse.py
 
 # Digest of the parse forest of each sentence, for verifying that a
 # change to the C++ core leaves its output unchanged (run before and
-# after, with the same Greynir.grammar.bin, and diff the outputs)
+# after, and diff the outputs)
 uv run python benchmarks/bench_parse.py --digest
 ```
 
@@ -68,7 +68,13 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    is only taken when the binary is missing or stale — the warm path is
    lock-free, guarded only by an in-process `threading.Lock` protecting the
    class-level grammar caches. `glock.py` is a deprecated compatibility shim
-   over `filelock`, no longer used internally.
+   over `filelock`, no longer used internally. The binary is a pure function
+   of the grammar text (`test/test_binary_grammar.py` compiles it under two
+   hash seeds): nothing in `grammar.py` that decides the order or numbering
+   of productions may iterate over a set. A rule's free variants (those not
+   in its nonterminal) expand to productions in order of first appearance,
+   the first one varying fastest; the lowest production index wins exact
+   score ties in the reducer.
 
 3. **Parsing** — `fastparser.py` (`Fast_Parser`) wraps the C++ Earley-Scott
    parser (`eparser.cpp`) through the `_eparser` CFFI extension, producing a
