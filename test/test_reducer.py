@@ -561,7 +561,7 @@ def test_huge_number_of_trees(fake_parser) -> None:
     """S -> S S | a has Catalan(n-1) parse trees for n tokens, which
     is much more than fits in 64 bits for the lengths tested here"""
     parser = fake_parser(simple_grammar([[-1, -1], [1]]))
-    for n in (2, 3, 10, 34, 35, 36, 60, 75):
+    for n in (2, 3, 10, 34, 35, 36, 37, 38, 39, 60, 75):
         native, python = parser.reduce_both_ways([FakeToken(i, {1}) for i in range(n)])
         assert native is not None and python is not None
         assert native[1] == python[1] == catalan(n - 1)

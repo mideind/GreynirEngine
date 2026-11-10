@@ -1,6 +1,6 @@
 # Performance of the C++ Earley-Scott core
 
-Status: IMPLEMENTED (stages 1 to 4) — 2026-11-10; section 8: findings
+Status: IMPLEMENTED (stages 1 to 5) — 2026-11-10; section 8: findings
 only (its lookahead filter is implemented in stage 3)
 
 ## 0. Summary
@@ -20,6 +20,8 @@ of news text about 8x faster again (3.7x for text that has not been seen
 before); its results are in section 9. Section 10 is about a fourth round
 (stage 4), which deals with the work that is done the first time that a
 token is seen, and makes a first pass over news text twice as fast again.
+Section 11 (stage 5) is about tokenization and other work outside the
+core, and makes a warm parse a quarter faster.
 
 Stages 1 and 2 taken together, on the machine where stage 2 was done:
 
@@ -1018,3 +1020,126 @@ spread over: the lookups of new words in BÍN by the tokenizer; the
 creation of the token records (some tens of microseconds per new token);
 the calls into Python for tokens that are not words (8 per token overall);
 and the 600 native evaluations per new token.
+
+## 11. Stage 5: tokenization, and the work around the core
+
+Status: IMPLEMENTED — 2026-11-10
+
+After stage 4, a warm parse of news text divided into: the core 33%, the
+reduction 32%, tokenization 22% and simplification of the tree 13%.
+
+### 11.1 Tokenization: a cache of word lookups
+
+Tokenization took 41 microseconds per token. The Tokenizer package itself
+(seven stages, from splitting the text to recognizing dates) was a quarter
+of that, about 5% of a warm parse, with no stage standing out; it was left
+alone. Nearly half was a single stage of `bintokenizer.py`: `annotate()`,
+which looks every word up in BÍN through `GreynirBin.lookup_g()`.
+
+BinPackage caches the raw entries of a word form (4,096 word forms), but
+a lookup does much more than fetch them, every time:
+
+* It tries the word in other letter cases, depending on where it is in
+  the sentence.
+* A word that is not in BÍN is analyzed as a compound word, which takes
+  many more lookups and is not cached at all.
+* A named tuple is created for every entry found, and then another one
+  from it (`BinEntry`, then `BIN_Tuple`).
+* The cache of raw entries is too small for running text: a fifth of the
+  lookups missed it on a repeated pass over 1,000 sentences.
+
+The result depends on the word and two flags only, so `lookup_g()` now
+keeps it (`GreynirBin._lookup_cache`): up to 20,000 results, with the
+lemmas, categories and inflection strings interned, since the same ones
+occur in entry after entry. The cache is emptied when it is full, like
+the matching cache of the parser. An entry takes about 0.9 KB, so the
+cache can grow to about 18 MB. Callers get a new list each time, as
+before, but the tuples in it are shared.
+
+Tokenization went from 41 to 23 microseconds per token.
+
+The rest of the tokenization time is spread thinly over a dozen stages
+that each handle every token. Two changes to the phrase matching at the
+end of the pipeline were tried and dropped: they would have saved half a
+percent of a parse.
+
+### 11.2 The reducer
+
+A profile of the C++ reducer (stage 3) showed a quarter of its work in
+the allocation and release of memory, and more in its hash tables:
+
+* The result of scoring a node in a context was kept in a hash table.
+  Nearly all nodes are only ever scored in one context, so the first
+  result is now kept in the node itself, and the hash table is only used
+  for the others.
+* The number of trees below each node was a vector of limbs. A number
+  that fits in 64 bits (nearly all of them) is now kept without
+  allocating anything.
+* The token/terminal matches were collected through a hash table; they
+  are now in a short linked list per token.
+
+The reducer executes 37% fewer instructions, and takes 0.46 s for 1,000
+news sentences instead of 0.80 s.
+
+### 11.3 Simplification of the tree
+
+`Simplifier` (in `simpletree.py`) walked the tree through the general
+`ParseForestNavigator`, whose flexibility (memoization, results passed up
+the tree, hooks for families) cost more time than the work done at the
+nodes. It now walks the tree directly, unless a class derived from it is
+in use. `simplify_terminal()` and `augment_terminal()`, two pure string
+functions called for every token, are cached. Simplification takes 0.38 s
+instead of 0.52 s.
+
+### Results
+
+| 1,000 news sentences | Stage 4 | Stage 5 | Speedup |
+|---|---|---|---|
+| Whole parse, warm | 4.3 s | 3.4 s | 1.27x |
+| Whole parse, first pass | 5.6 s | 5.1 s | 1.10x |
+| Tokenization, warm | 0.88 s | 0.50 s | 1.76x |
+
+Against the commit before stage 3, a warm parse of the news sentences is
+now 10.7x faster (36.5 s to 3.4 s) and a first pass 8.3x faster (41.9 s
+to 5.1 s). Memory use is as before, the lookup cache included (it is
+offset by the tuples that are no longer created for every word).
+
+### Verification
+
+* The tokens of 3,764 sentences (70,639 tokens, with their meanings) are
+  identical with and without the lookup cache.
+* Everything that a parse produces is identical to the output before this
+  stage for the 3,764 sentences: trees, scores, numbers of trees, error
+  positions, the full simplified tree (compared by digest), lemmas and
+  categories.
+* The C++ and Python reducers agree on 3,709 sentences in parity mode. Of
+  34 bugs deliberately introduced into the reducer, the new code included,
+  the tests catch 32; the other two do not change its output (one is
+  described in section 9, the other creates duplicate entries in a list
+  that is turned into a set).
+* GreynirCorrect: its tests pass, and its trees and annotations for 300
+  sentences are identical.
+* Sanitizers, PyPy 3.11, the full test suite, ruff and mypy as before.
+
+Note for comparisons like these: some values in tokens come from sets of
+strings (the possible cases of an amount, the order of the variants of a
+person name), so their order differs between processes unless
+`PYTHONHASHSEED` is fixed. This is not new, and has not been seen to
+affect a parse, but it has to be fixed to compare token dumps.
+
+### What remains
+
+A warm parse of news text now divides into: the core 40%, the reduction
+28% (the C++ code 14 points, the scoring of terminals in Python 7, the
+creation of the Python nodes 5), tokenization 17%, and simplification 11%.
+
+1. **The core** is the largest part again. The lookahead filter left
+   about a thousand states per token, a good part of them for nullable
+   nonterminals (section 8). Two calls into Python per token per sentence
+   remain in a warm parse (for the matching cache and the token record),
+   which are about 4% of the core.
+2. **The scoring of terminals** (`Reducer._score_options()`) is Python
+   code that works on dicts keyed by terminals, whose hash function is
+   also Python code.
+3. **Tokenization** would need restructuring to get much faster: fewer
+   passes over the tokens, rather than faster ones.

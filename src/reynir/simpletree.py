@@ -2302,6 +2302,39 @@ class Simplifier(ParseForestNavigator):
         """Exiting a nonterminal node"""
         self._builder.pop_nonterminal()
 
+    def go(self, root_node: Node) -> Any:
+        """Navigate the tree from the root node"""
+        if type(self) is not Simplifier:
+            # A derived class may have its own ideas about
+            # what happens at the nodes: use the general navigator
+            return super().go(root_node)
+        # This does what ParseForestNavigator.go() does for this class,
+        # i.e. calls visit_token() for tokens, and visit_nonterminal() and
+        # process_results() around the children of nonterminals, visiting
+        # everything in order - but without the generality of that method,
+        # which costs more time than the work that is done here
+        builder = self._builder
+        push_nonterminal = builder.push_nonterminal
+        pop_nonterminal = builder.pop_nonterminal
+        visit_token = self.visit_token
+
+        def navigate(w: Optional[Node]) -> None:
+            if w is None:
+                return
+            if w._token is not None:
+                visit_token(0, w)
+                return
+            nt = cast(BIN_Nonterminal, w._nonterminal)
+            push_nonterminal("" if not w._completed or nt.is_optional else nt.first)
+            if w._families:
+                for _, children in w._families:
+                    for ch in children:
+                        navigate(ch)
+            pop_nonterminal()
+
+        navigate(root_node)
+        return None
+
     @property
     def tree(self) -> SimpleTree:
         """Return a SimpleTree object"""

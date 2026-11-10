@@ -3352,3 +3352,77 @@ def test_reflexive_agreement(r):
         "S0 S-MAIN IP NP-SUBJ pfn_kvk_et_nf /NP-SUBJ VP VP so_0_et_p3 /VP "
         "PP P fs_þf /P NP fn_et_þf_kvk abfn_þf_et_kvk /NP /PP /VP /IP /S-MAIN p /S0"
     )
+
+
+def test_lookup_cache(r: Greynir, monkeypatch) -> None:
+    """GreynirBin.lookup_g() caches its results; callers get lists of
+    their own, and the cache is emptied when it is full"""
+    from reynir import bindb
+    from reynir.bindb import GreynirBin
+
+    db = GreynirBin.get_db()
+    words = ["hestur", "Hestur", "borðaði", "síamskattarkjóll", "xyzzyqq", "á"]
+    first = [
+        db.lookup_g(w, at_sentence_start=start, auto_uppercase=upper)
+        for w in words
+        for start in (False, True)
+        for upper in (False, True)
+    ]
+    assert any(m for _, m in first)
+    assert not db.lookup_g("xyzzyqq")[1]
+    # A caller can do what it likes with the list that it gets
+    w, m = db.lookup_g("á")
+    assert w == "á" and len(m) > 1
+    saved = list(m)
+    m.clear()
+    w, m2 = db.lookup_g("á")
+    assert m2 is not m and m2 == saved
+    assert any(mm.ordfl == "fs" for mm in m2)
+    # The same results again, now from the cache
+    again = [
+        db.lookup_g(w, at_sentence_start=start, auto_uppercase=upper)
+        for w in words
+        for start in (False, True)
+        for upper in (False, True)
+    ]
+    assert again == first
+    # The flags are part of the key
+    assert ("Hestur", True, False) in db._lookup_cache
+    assert ("Hestur", False, False) in db._lookup_cache
+    # When the cache is full, it is emptied
+    monkeypatch.setattr(bindb, "_LOOKUP_CACHE_SIZE", len(db._lookup_cache))
+    db.lookup_g("fjall")
+    assert list(db._lookup_cache) == [("fjall", False, False)]
+    assert db.lookup_g("á")[1] == m2
+    # Parsing is not affected by the state of the cache
+    s = r.parse_single("Hesturinn borðaði grasið á fjallinu.")
+    assert s is not None and s.tree is not None
+    flat = s.tree.flat
+    db._lookup_cache = dict()
+    s = r.parse_single("Hesturinn borðaði grasið á fjallinu.")
+    assert s is not None and s.tree is not None and s.tree.flat == flat
+
+
+def test_simplifier_navigation(r: Greynir) -> None:
+    """The Simplifier class walks the tree by itself, instead of through
+    the general ParseForestNavigator. The result must be the same."""
+    from reynir.simpletree import Simplifier
+
+    class GeneralSimplifier(Simplifier):
+        """A derived class is navigated in the general way"""
+
+    sentences = [
+        "Konan sem kom í heimsókn í gær ætlar að kaupa nýja íbúð í miðbænum.",
+        "Jón Jónsson, sem býr á Laugavegi 26, á 3,4 milljónir króna í banka.",
+        "Hún sagði að þau hefðu ekki tekið eftir neinu óvenjulegu 17. júní 2019.",
+        "Hvað kostar miðinn?",
+    ]
+    for text in sentences:
+        s = r.parse_single(text)
+        assert s is not None and s.tree is not None
+        fast = Simplifier(s.tokens)
+        fast.go(s.deep_tree)
+        general = GeneralSimplifier(s.tokens)
+        general.go(s.deep_tree)
+        assert fast.result == general.result
+        assert fast.tree.flat == s.tree.flat

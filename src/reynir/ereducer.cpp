@@ -84,6 +84,24 @@ static const UINT MAX_DEPTH = 1000;
 static const UINT TOKEN_SIG = 0xFFFFFFFFu;
 
 
+// What the reducer learns about a subtree by scoring it
+// (the ResultDict of reducer.py)
+struct RResult {
+   INT nSc;       // The score
+   UINT nSo;      // The verbs contained in the subtree (a list id, or 0)
+   UINT nSl;      // The verbs that are in effect after the subtree
+   UINT nPcl;     // A verb particle: the index of its token + 1, or 0
+   UINT nAo;      // A token matched by a literal adverb terminal, likewise
+};
+
+// A memoized result for a node in a given context
+struct RMemo {
+   RResult r;
+   INT iChosen;         // The winning family
+   size_t nSigOffset;   // The contexts of its children (see Reducer::m_sigs)
+};
+
+
 // The logical forest. Its storage comes from the Forest of the parse,
 // and is freed with it.
 
@@ -100,6 +118,13 @@ struct RChild {
    UINT nEnd;
    UINT nOption;        // The index of the token/terminal match
    INT nScore;          // The score of the token, as last calculated
+   // The result for the token in the first context that it was scored
+   // in. Few tokens are scored in more than one; the results for other
+   // contexts are in a hash table (see Reducer::m_memo).
+   BOOL bMemo;          // Is there a first result?
+   BOOL bMemoMore;      // Are there results for other contexts?
+   UINT nMemoSig;
+   RResult memo;
 
    BOOL isNone(void) const
       { return this->pR == NULL && this->iTerminal == 0; }
@@ -135,6 +160,13 @@ struct RNode {
    BOOL bReduced;       // Has the node been reduced?
    INT iChosen;         // The surviving family, or -1 if they all survive
    UINT nOutId;         // The number of the node when serialized; 0 if not yet
+   // The result for the node in the first context that it was scored in
+   // (cf. RChild above)
+   BOOL bMemo;
+   BOOL bMemoMore;
+   UINT nMemoA;
+   UINT nMemoB;
+   RMemo memo;
 
 };
 
@@ -143,70 +175,130 @@ class BigNum {
 
    // An unsigned integer of arbitrary size: enough of one to count the
    // trees in a forest, of which there can be many more than fit in
-   // 64 bits. Little-endian limbs of 32 bits; no limbs means zero.
+   // 64 bits. Nearly all the numbers that occur are small, though, so a
+   // value that fits in 64 bits is kept in m_lo, without any allocation
+   // of memory. Larger values are in m_v: little-endian limbs of 32 bits,
+   // at least three of them.
 
 private:
 
+   UINT64 m_lo;
    std::vector<UINT> m_v;
+
+   BOOL isBig(void) const
+      { return !this->m_v.empty(); }
+
+   // Get the value as limbs
+   void getLimbs(std::vector<UINT>& v) const
+      {
+         if (this->isBig()) {
+            v = this->m_v;
+            return;
+         }
+         v.clear();
+         if (this->m_lo) {
+            v.push_back((UINT)this->m_lo);
+            if (this->m_lo >> 32)
+               v.push_back((UINT)(this->m_lo >> 32));
+         }
+      }
+
+   // Set the value from limbs (which are taken over)
+   void setLimbs(std::vector<UINT>& v)
+      {
+         while (!v.empty() && v.back() == 0)
+            v.pop_back();
+         if (v.size() > 2) {
+            this->m_v.swap(v);
+            this->m_lo = 0;
+            return;
+         }
+         this->m_lo = v.empty() ? 0 :
+            ((UINT64)v[0] | (v.size() > 1 ? ((UINT64)v[1] << 32) : 0));
+         this->m_v.clear();
+      }
 
 public:
 
    BigNum(void)
+      : m_lo(0)
       { }
 
    BOOL isZero(void) const
-      { return this->m_v.empty(); }
+      { return this->m_lo == 0 && !this->isBig(); }
    BOOL isOne(void) const
-      { return this->m_v.size() == 1 && this->m_v[0] == 1; }
+      { return this->m_lo == 1 && !this->isBig(); }
 
    void set(UINT n)
       {
+         this->m_lo = n;
          this->m_v.clear();
-         if (n)
-            this->m_v.push_back(n);
       }
 
    void swap(BigNum& other)
-      { this->m_v.swap(other.m_v); }
-
-   void add(const BigNum& other)
       {
-         const std::vector<UINT>& o = other.m_v;
-         if (this->m_v.size() < o.size())
-            this->m_v.resize(o.size(), 0);
+         UINT64 n = this->m_lo;
+         this->m_lo = other.m_lo;
+         other.m_lo = n;
+         this->m_v.swap(other.m_v);
+      }
+
+   // Add another number; scratch is working storage
+   void add(const BigNum& other, BigNum& scratch)
+      {
+         if (!this->isBig() && !other.isBig()) {
+            UINT64 n = this->m_lo + other.m_lo;
+            if (n >= this->m_lo) {
+               // No overflow
+               this->m_lo = n;
+               return;
+            }
+         }
+         std::vector<UINT> a;
+         std::vector<UINT>& o = scratch.m_v;
+         this->getLimbs(a);
+         other.getLimbs(o);
+         if (a.size() < o.size())
+            a.resize(o.size(), 0);
          UINT64 nCarry = 0;
-         for (size_t i = 0; i < this->m_v.size(); i++) {
-            UINT64 n = (UINT64)this->m_v[i] + (i < o.size() ? o[i] : 0) + nCarry;
-            this->m_v[i] = (UINT)n;
+         for (size_t i = 0; i < a.size(); i++) {
+            UINT64 n = (UINT64)a[i] + (i < o.size() ? o[i] : 0) + nCarry;
+            a[i] = (UINT)n;
             nCarry = n >> 32;
-            if (!nCarry && i + 1 >= o.size())
-               // The remaining limbs are unchanged
-               break;
          }
          if (nCarry)
-            this->m_v.push_back((UINT)nCarry);
+            a.push_back((UINT)nCarry);
+         o.clear();
+         this->setLimbs(a);
       }
 
    // Multiply by another number, which must be a different object;
-   // scratch is working storage, kept between calls to save allocations
+   // scratch is working storage
    void mul(const BigNum& other, BigNum& scratch)
       {
-         const std::vector<UINT>& o = other.m_v;
          if (other.isOne())
             return;
          if (this->isZero() || other.isZero()) {
-            this->m_v.clear();
+            this->set(0);
             return;
          }
-         if (this->isOne()) {
-            this->m_v = o;
-            return;
+         if (!this->isBig() && !other.isBig()) {
+            UINT64 a = this->m_lo;
+            UINT64 b = other.m_lo;
+            if (((a | b) >> 32) == 0 || a <= ~((UINT64)0) / b) {
+               // The product fits in 64 bits
+               this->m_lo = a * b;
+               return;
+            }
          }
-         std::vector<UINT>& r = scratch.m_v;
-         r.assign(this->m_v.size() + o.size(), 0);
-         for (size_t i = 0; i < this->m_v.size(); i++) {
+         std::vector<UINT> a;
+         std::vector<UINT>& o = scratch.m_v;
+         this->getLimbs(a);
+         other.getLimbs(o);
+         std::vector<UINT> r(a.size() + o.size(), 0);
+         for (size_t i = 0; i < a.size(); i++) {
             UINT64 nCarry = 0;
-            UINT64 n1 = this->m_v[i];
+            UINT64 n1 = a[i];
             for (size_t j = 0; j < o.size(); j++) {
                UINT64 n = n1 * o[j] + r[i + j] + nCarry;
                r[i + j] = (UINT)n;
@@ -214,16 +306,20 @@ public:
             }
             r[i + o.size()] = (UINT)nCarry;
          }
-         while (!r.empty() && r.back() == 0)
-            r.pop_back();
-         this->m_v.swap(r);
+         o.clear();
+         this->setLimbs(r);
       }
 
    // The number as little-endian bytes
    size_t numBytes(void) const
-      { return this->m_v.size() * 4; }
+      { return this->isBig() ? this->m_v.size() * 4 : 8; }
    void getBytes(BYTE* pb) const
       {
+         if (!this->isBig()) {
+            for (UINT i = 0; i < 8; i++)
+               *pb++ = (BYTE)(this->m_lo >> (8 * i));
+            return;
+         }
          for (size_t i = 0; i < this->m_v.size(); i++) {
             UINT n = this->m_v[i];
             *pb++ = (BYTE)n;
@@ -243,16 +339,6 @@ class Reducer {
    // Reducer::start() or Reducer::finish(), on the stack.
 
 private:
-
-   // What the reducer learns about a subtree by scoring it
-   // (the ResultDict of reducer.py)
-   struct Result {
-      INT nSc;       // The score
-      UINT nSo;      // The verbs contained in the subtree (a list id, or 0)
-      UINT nSl;      // The verbs that are in effect after the subtree
-      UINT nPcl;     // A verb particle: the index of its token + 1, or 0
-      UINT nAo;      // A token matched by a literal adverb terminal, likewise
-   };
 
    // A family while its node is being built
    struct TmpFamily {
@@ -298,12 +384,6 @@ private:
             return (size_t)(h ^ (h >> 32));
          }
    };
-   struct MemoEntry {
-      Result r;
-      INT iChosen;         // The winning family
-      size_t nSigOffset;   // The contexts of its children, within m_sigs
-   };
-
    struct BonusKey {
       UINT64 nPrep;
       UINT64 nVerb;
@@ -319,7 +399,7 @@ private:
          }
    };
 
-   typedef std::unordered_map<MemoKey, MemoEntry, MemoHash> Memo;
+   typedef std::unordered_map<MemoKey, RMemo, MemoHash> Memo;
 
    Parser* m_pParser;
    Forest* m_pForest;
@@ -344,7 +424,7 @@ private:
    std::unordered_multimap<UINT64, UINT> m_listIndex;
    std::vector<UINT64> m_tmpList;
    Memo m_memo;
-   std::vector<Result> m_accs;         // Results of the families being scored
+   std::vector<RResult> m_accs;         // Results of the families being scored
    std::vector<UINT> m_tmpSigs;        // Contexts of their children
    std::vector<size_t> m_tmpOffsets;
    std::vector<UINT> m_sigs;           // Contexts of the children of winners
@@ -374,9 +454,11 @@ private:
    void contextSig(const RNode*, UINT& a, UINT& b) const;
    INT prepBonus(const RChild&, UINT64 nVerb);
    INT particleBonus(UINT nParticleToken, UINT nVerbs);
-   void addChild(Result& acc, const Result& r, UINT nFlags);
-   Result calcToken(RChild&, UINT nPrepBonus);
-   Result calc(RNode*, UINT a, UINT b);
+   void addChild(RResult& acc, const RResult& r, UINT nFlags);
+   RResult calcToken(RChild&, UINT nPrepBonus);
+   RResult calc(RNode*, UINT a, UINT b);
+   const RMemo* findMemo(const RNode*, UINT a, UINT b) const;
+   void addMemo(RNode*, UINT a, UINT b, const RMemo&);
    void apply(RNode*, UINT a, UINT b);
 
    INT emitToken(const RChild&);
@@ -553,7 +635,11 @@ BOOL Reducer::walk(Reduction* pRed)
    std::vector<Frame> stack;
    std::vector<BigNum> comb(this->m_nNodes);
    std::vector<INT> options;
-   std::unordered_map<UINT64, UINT> optionIndex;
+   // The options of each token are in a linked list: the first option
+   // of the token with a given index, and the next option of each option
+   const UINT NONE = (UINT)-1;
+   std::vector<UINT> firstOption(pRed->nEnd, NONE);
+   std::vector<UINT> nextOption;
    BigNum scratch;
 
    RNode* pRoot = pRed->pRoot;
@@ -578,7 +664,7 @@ BOOL Reducer::walk(Reduction* pRed)
       const RFamily& family = p->pFamilies[f.iFamily];
       if (f.iChild >= family.nChildren) {
          // The family is done
-         f.sum.add(f.prod);
+         f.sum.add(f.prod, scratch);
          f.prod.set(1);
          f.iFamily++;
          f.iChild = 0;
@@ -586,17 +672,21 @@ BOOL Reducer::walk(Reduction* pRed)
       }
       RChild& c = family.pChildren[f.iChild++];
       if (c.iTerminal) {
-         // A token: note its terminal
-         UINT64 nKey = ((UINT64)c.nStart << 32) | (UINT)c.iTerminal;
-         std::unordered_map<UINT64, UINT>::iterator it = optionIndex.find(nKey);
-         if (it != optionIndex.end())
-            c.nOption = it->second;
-         else {
-            c.nOption = (UINT)(options.size() / 2);
-            optionIndex[nKey] = c.nOption;
+         // A token: note its terminal, if it has not been seen before
+         // (a token only matches a handful of terminals in a forest)
+         if (c.nStart >= firstOption.size())
+            firstOption.resize(c.nStart + 1, NONE);
+         UINT nOption = firstOption[c.nStart];
+         while (nOption != NONE && options[2 * nOption + 1] != c.iTerminal)
+            nOption = nextOption[nOption];
+         if (nOption == NONE) {
+            nOption = (UINT)(options.size() / 2);
             options.push_back((INT)c.nStart);
             options.push_back(c.iTerminal);
+            nextOption.push_back(firstOption[c.nStart]);
+            firstOption[c.nStart] = nOption;
          }
+         c.nOption = nOption;
       }
       else
       if (c.pR) {
@@ -765,7 +855,7 @@ INT Reducer::particleBonus(UINT nParticleToken, UINT nVerbs)
       tmp.empty() ? NULL : &tmp[0], rec.nLen);
 }
 
-void Reducer::addChild(Result& acc, const Result& r, UINT nFlags)
+void Reducer::addChild(RResult& acc, const RResult& r, UINT nFlags)
 {
    // Add the result of a child to the result of its family
    // (_ReductionScope.add_child() in reducer.py)
@@ -786,16 +876,53 @@ void Reducer::addChild(Result& acc, const Result& r, UINT nFlags)
    }
 }
 
-Reducer::Result Reducer::calcToken(RChild& c, UINT nPrepBonus)
+const RMemo* Reducer::findMemo(const RNode* pR, UINT a, UINT b) const
+{
+   // Find the memoized result for a node in a context, if there is one
+   if (!pR->bMemo)
+      return NULL;
+   if (pR->nMemoA == a && pR->nMemoB == b)
+      return &pR->memo;
+   if (!pR->bMemoMore)
+      return NULL;
+   MemoKey key = { (const void*)pR, a, b };
+   Memo::const_iterator it = this->m_memo.find(key);
+   return it == this->m_memo.end() ? NULL : &it->second;
+}
+
+void Reducer::addMemo(RNode* pR, UINT a, UINT b, const RMemo& memo)
+{
+   // Memoize the result for a node in a context: in the node itself, if
+   // this is the first context that it is scored in; otherwise in the
+   // hash table
+   if (!pR->bMemo) {
+      pR->bMemo = true;
+      pR->nMemoA = a;
+      pR->nMemoB = b;
+      pR->memo = memo;
+      return;
+   }
+   pR->bMemoMore = true;
+   MemoKey key = { (const void*)pR, a, b };
+   this->m_memo.insert(std::make_pair(key, memo));
+}
+
+RResult Reducer::calcToken(RChild& c, UINT nPrepBonus)
 {
    // The result for a token matched by a terminal, in the context
    // of the given preposition bonus verbs
    // (ParseForestReducer.visit_token() in reducer.py)
    MemoKey key = { (const void*)&c, nPrepBonus, TOKEN_SIG };
-   Memo::iterator it = this->m_memo.find(key);
-   if (it != this->m_memo.end())
-      return it->second.r;
-   MemoEntry e;
+   if (c.bMemo) {
+      if (c.nMemoSig == nPrepBonus)
+         return c.memo;
+      if (c.bMemoMore) {
+         Memo::iterator it = this->m_memo.find(key);
+         if (it != this->m_memo.end())
+            return it->second.r;
+      }
+   }
+   RMemo e;
    memset(&e, 0, sizeof(e));
    UINT nFlags = this->m_prt->pbTermFlags[c.iTerminal];
    INT nSc = this->m_pnScores[c.nOption];
@@ -828,20 +955,27 @@ Reducer::Result Reducer::calcToken(RChild& c, UINT nPrepBonus)
    // The score of a node is the one from the context that was
    // first seen last, as in the Python implementation
    c.nScore = nSc;
-   this->m_memo.insert(std::make_pair(key, e));
+   if (!c.bMemo) {
+      c.bMemo = true;
+      c.nMemoSig = nPrepBonus;
+      c.memo = e.r;
+   }
+   else {
+      c.bMemoMore = true;
+      this->m_memo.insert(std::make_pair(key, e));
+   }
    return e.r;
 }
 
-Reducer::Result Reducer::calc(RNode* pR, UINT a, UINT b)
+RResult Reducer::calc(RNode* pR, UINT a, UINT b)
 {
    // The result for the subtree below a node, in a given context:
    // score all families of the node, and note which one wins.
    // The forest is not changed.
-   MemoKey key = { (const void*)pR, a, b };
-   Memo::iterator it = this->m_memo.find(key);
-   if (it != this->m_memo.end())
-      return it->second.r;
-   MemoEntry e;
+   const RMemo* pMemo = this->findMemo(pR, a, b);
+   if (pMemo)
+      return pMemo->r;
+   RMemo e;
    memset(&e, 0, sizeof(e));
    if (this->m_bFail)
       return e.r;
@@ -883,7 +1017,7 @@ Reducer::Result Reducer::calc(RNode* pR, UINT a, UINT b)
          const RFamily& family = pR->pFamilies[i];
          // Productions with higher priorities (lower
          // priority numbers) get a starting bonus
-         Result acc = { -10 * (INT)family.pProd->getPriority(), 0, 0, 0, 0 };
+         RResult acc = { -10 * (INT)family.pProd->getPriority(), 0, 0, 0, 0 };
          this->m_currentVerb.back() = nVerb;
          this->m_tmpOffsets.push_back(this->m_tmpSigs.size());
          for (UINT j = 0; j < family.nChildren; j++) {
@@ -927,8 +1061,8 @@ Reducer::Result Reducer::calc(RNode* pR, UINT a, UINT b)
          // then the family whose children have the higher spans (taken in
          // order, as a sequence of start and end positions); only then
          // does the order of the families decide, the first one winning.
-         const Result& r = this->m_accs[nAccBase + i];
-         const Result& rBest = this->m_accs[nAccBase + iBest];
+         const RResult& r = this->m_accs[nAccBase + i];
+         const RResult& rBest = this->m_accs[nAccBase + iBest];
          if (r.nSc != rBest.nSc) {
             if (r.nSc > rBest.nSc)
                iBest = i;
@@ -968,7 +1102,7 @@ Reducer::Result Reducer::calc(RNode* pR, UINT a, UINT b)
          }
       }
 
-      Result r = this->m_accs[nAccBase + iBest];
+      RResult r = this->m_accs[nAccBase + iBest];
       if (pR->bCompleted) {
          // The score adjustment of the nonterminal ($score() in the grammar)
          r.nSc += this->m_prt->pnNtScores[~((UINT)pR->iNt)];
@@ -1012,7 +1146,7 @@ Reducer::Result Reducer::calc(RNode* pR, UINT a, UINT b)
       this->m_nDepth--;
    }
 
-   this->m_memo.insert(std::make_pair(key, e));
+   this->addMemo(pR, a, b, e);
    // As for tokens, the score of a node that is scored in more than one
    // context is the one from the context that was first seen last
    pR->nScore = e.r.nSc;
@@ -1031,13 +1165,12 @@ void Reducer::apply(RNode* pR, UINT a, UINT b)
    UINT nFamilies = pR->nFamilies;
    if (!nFamilies)
       return;
-   MemoKey key = { (const void*)pR, a, b };
-   Memo::const_iterator it = this->m_memo.find(key);
-   if (it == this->m_memo.end() || ++this->m_nDepth > MAX_DEPTH) {
+   const RMemo* pMemo = this->findMemo(pR, a, b);
+   if (pMemo == NULL || ++this->m_nDepth > MAX_DEPTH) {
       this->m_bFail = true;
       return;
    }
-   const MemoEntry& e = it->second;
+   const RMemo& e = *pMemo;
    UINT iFirst = 0;
    UINT iLast = nFamilies;
    if (!(this->ntFlags(pR) & RN_NO_REDUCE)) {
@@ -1054,8 +1187,8 @@ void Reducer::apply(RNode* pR, UINT a, UINT b)
          if (c.isNone())
             continue;
          if (c.pR)
-            // Note: no entries are added to m_memo or m_sigs
-            // during this pass, so e stays valid
+            // Note: no results are memoized, and nothing is added
+            // to m_sigs, during this pass, so e stays valid
             this->apply(c.pR, this->m_sigs[nSig], this->m_sigs[nSig + 1]);
          nSig += 2;
       }
@@ -1161,7 +1294,7 @@ BOOL Reducer::run(Reduction* pRed, const INT* pnScores, UINT nHandle)
       UINT a, b;
       this->contextSig(pRoot, a, b);
       // First pass: score the forest without changing it
-      Result r = this->calc(pRoot, a, b);
+      RResult r = this->calc(pRoot, a, b);
       if (this->m_bFail)
          return false;
       // Second pass: reduce the forest to the winning tree
