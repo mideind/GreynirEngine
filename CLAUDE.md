@@ -75,6 +75,9 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    `bintokenizer.py` is a dictionary-aware layer that annotates each token with
    its possible meanings from BÍN (the Database of Icelandic Morphology), via
    `bindb.py`, which wraps the external `islenska`/BinPackage vocabulary database.
+   `GreynirBin.lookup_g()` caches its results (up to 20,000 words), as the
+   lookup of a word is much more work than fetching its entries; the
+   cached tuples are shared between callers.
 
 2. **Grammar** — `Greynir.grammar` is a ~7,500-line CFG for Icelandic in extended
    BNF, read by `grammar.py`. It is compiled to a binary form
@@ -233,11 +236,12 @@ notes for 3.9.0) and from the 3.10.0 work; none started:
   drop sentence-initial SamkvæmtHeimild; run a second usage census over
   headings/non-news text before touching rules that only win in other
   text types.
-- **Performance** (see "What remains" in sections 9 and 10 of
-  `doc/earley-core-performance.md`): tokenization, now a fifth of a warm
-  parse; the reducer's hash tables and the scoring of terminals in Python;
-  precomputed nullability in the core; matching of tokens that are not
-  words. GreynirServer's query module still calls
+- **Performance** (see "What remains" in sections 9 to 11 of
+  `doc/earley-core-performance.md`): the core is the largest part of a
+  warm parse again (precomputed nullability; the two per-token callbacks);
+  the scoring of terminals in Python; tokenization would need fewer
+  passes over the tokens; matching of tokens that are not words.
+  GreynirServer's query module still calls
   `go()` + `num_combinations()` + `Reducer.go()`, and could use
   `Reducer.parse_and_reduce()` (which handles `no_reduce`).
 - **Method note**: a "never wins in N sentences" census verdict is not

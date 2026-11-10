@@ -2281,6 +2281,7 @@ def wrap_tokens(
     return wrapped_tokens
 
 
+@lru_cache(maxsize=4096)
 def simplify_terminal(terminal: str, cat: Optional[str] = None) -> str:
     """Return a simplified terminal name where literal specifications of
     the form 'literal:cat'_var1 and "literal:cat" have been converted
@@ -2353,6 +2354,7 @@ _PFN_VARIANTS = {
 }
 
 
+@lru_cache(maxsize=8192)
 def augment_terminal(terminal: str, text_lower: str, beyging: str) -> str:
     """Augment a terminal name string with additional variants from BÍN,
     extracted from the 'beyging' string"""
