@@ -210,3 +210,44 @@ a score or a preference of its own. One such case was "stöðu mála",
 where a reading as the adjective "staður" with a masculine plural noun
 tied with the intended noun and genitive. `Prefs.conf` now prefers the
 noun "staða" over the adjective for the forms "staða" and "stöðu".
+
+Another was "hún skammaði sjálfa sig", where "sjálfa" is feminine
+singular but came out as masculine plural. No order of the variants is
+right here, as "þeir skömmuðu sjálfa sig" needs the opposite answer: it
+is the subject that decides. The grammar now has rules for "sjálfur"
+with a reflexive pronoun that agrees in number and gender with the
+subject of its verb, as a direct or indirect object and in a
+prepositional phrase that follows the verb phrase. They cover the places
+where the verb phrase nonterminals carry the number and gender of the
+subject; a reflexive inside an infinitive clause with "að" ("hún er að
+skaða sjálfa sig") or in a prepositional phrase attached to a noun
+("þeir birtu myndir af sjálfum sér") still gets the grammar order.
+
+### Ties that the family order still decides
+
+Adding those rules changed the trees of 13 unrelated sentences in the
+news sample, all of the form "f. 1985". The reducer breaks exact ties
+between two families of a node by the production id and the spans of
+the children, and only then by the index of the family in the forest.
+That index follows from the state hashing in the core (section 3), and
+shifts whenever nonterminals are added to the grammar, as their indices
+are assigned in alphabetical order.
+
+The cause was an ambiguity in the grammar. A rule of `NlTöluorð` had two
+adjacent optional items for adjectives, `TöluorðForskeyti*` ("tæpar")
+and `TöluorðLo?` ("efstu"). Inflected adjectives fit only one of them,
+but an abbreviated adjective has no inflection info and matches every
+adjective terminal, so "f." gave two derivations of the same rule, with
+the same score and the same spans. The rule is now two rules, one
+without and one with `TöluorðLo`; the two readings are then different
+productions and the first one wins. With that, the new grammar rules
+change no trees in the news sample.
+
+The same kind of tie - one production, the same spans, assigned to
+different optional items - occurs in six other rules in the news sample
+(12 reductions in 3,041 sentences, against 29 for `NlTöluorð`):
+`EfLiðurForskeyti` ("eins" as a pronoun or as a number), two rules of
+`NlKjarni` (`NlViðbót?` or `Númer?`), `NlEind` (a relative clause or
+`NlSkýring?`),
+`BeygingarliðurMeðUmröðun` (`Upptalning?` or `KommaAtvikssetning?`) and
+`SögnMeðF_0`. The outcome of those still depends on the family order.

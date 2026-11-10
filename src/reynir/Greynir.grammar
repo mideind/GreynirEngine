@@ -852,6 +852,8 @@ Né → "né:st"
 
 SagnRunaKnöpp/tala/pers/kyn →
     Sagnliður/tala/pers/kyn LoTengtSögn_nf/tala/kyn? SagnInnskotAtv?
+    # (Hún talaði) við sjálfa sig: afturbeygða fornafnið samræmist frumlaginu
+    | Sagnliður/tala/pers/kyn LoTengtSögn_nf/tala/kyn? SagnInnskotAtv_sjálfur/tala/kyn
 
 SagnFramhald/tala/pers/kyn →
     KommaOgEðaEn FsAtv? SagnRunaKnöpp/tala/pers/kyn
@@ -898,6 +900,26 @@ SagnInnskotAtv →
 # frekar en að þeir séu t.d. forskeyti á næstu setningu
 $score(+2) SagnInnskotAtv
 
+# Forsetningarliðir á eftir sagnlið þar sem einn þeirra inniheldur 'sjálfur'
+# og afturbeygt fornafn sem samræmist frumlagi sagnarinnar í tölu og kyni:
+# (Hún talaði) við sjálfa sig / (Þeir hugsa) bara um sjálfa sig
+
+SagnInnskotAtv_sjálfur/tala/kyn →
+    SagnInnskot_sjálfur/tala/kyn KommaAtvikssetning?
+
+$score(+2) SagnInnskotAtv_sjálfur/tala/kyn
+
+SagnInnskot_sjálfur/tala/kyn →
+    EinFsAtv* FsMeðFallstjórn_sjálfur/tala/kyn EinFsAtv*
+
+$tag(enable_prep_bonus) SagnInnskot_sjálfur/tala/kyn
+
+FsMeðFallstjórn_sjálfur/tala/kyn →
+    fs/aukafall Nl_sjálfur/aukafall/tala/kyn
+
+# Einu stigi meira en almenni forsetningarliðurinn, FsMeðFallstjórn
+$score(+2) FsMeðFallstjórn_sjálfur/tala/kyn
+
 EkkiNeitt →
     "ekki:ao" 'neinn:fn'_et_hk_nf # (Hann þekkti þá) ekki neitt
 
@@ -918,6 +940,8 @@ $score(+32) SagnViðhengi/tala/pers/kyn
 
 SagnHluti/tala/pers/kyn →
     SagnliðurMeðF/tala/pers/kyn SagnInnskot? SagnViðhengi/tala/pers/kyn?
+    # (Í gær) talaði hún við sjálfa sig
+    | SagnliðurMeðF/tala/pers/kyn SagnInnskot_sjálfur/tala/kyn SagnViðhengi/tala/pers/kyn?
 
 # Hér er falið frumlag 'það'
 SagnHluti_et_p3_hk →
@@ -2090,6 +2114,7 @@ EinSögn_sagnb/tala/kyn →
     # !!! Á að höndla Sögn_1_sagnb + NhFylling fremur eins og sögn með tveimur viðföngum,
     # !!! sbr. Konurnar hafa lofað Páli ([því] að fara út): þarna er í raun 'lofa:so'_2_þgf_þgf_sagnb
     | Sögn_1_sagnb NhFylling/tala/kyn?  # Konurnar hafa [ekki] lofað Páli [að fara út]
+    | Sögn_1_sagnb_sjálfur/tala/kyn NhFylling/tala/kyn? # Konurnar hafa [ekki] skammað sjálfar sig
     | Sögn_2_sagnb
     | so_mm_sagnb LhÞtBotn/tala/kyn     # Konurnar hafa reynst vera bíræfnir þjófar / þóst ritfærar / sagst fara að drífa sig
     # Ég hef látið þess getið að Jón er frábær
@@ -2162,6 +2187,7 @@ HreinSögn_nh/tala/kyn →
 EinSögn_nh/tala/kyn →
     so_0_nh NhFylling/tala/kyn?                    # Konurnar munu fara að grilla
     | Sögn_1_nh NhFylling/tala/kyn?                # Konurnar munu [ekki] lofa Páli [að fara út]
+    | Sögn_1_nh_sjálfur/tala/kyn NhFylling/tala/kyn? # Konurnar munu [ekki] skamma sjálfar sig
     | Sögn_2_nh
     # (Stjórnsýsla skal) vera [í öllum tilvikum] gegnsæ
     | HjSögnVeraVerða FsRunaInnskot? LoTengtSögn_nf/tala/kyn
@@ -2615,6 +2641,12 @@ Sögn_1_sagnb →
 
 $tag(apply_particle_bonus) Sögn_1_sagnb
 
+# (Hún hefur) skammað sjálfa sig: andlagið samræmist frumlaginu
+Sögn_1_sagnb_sjálfur/tala/kyn →
+    So_1_sagnb/aukafall SagnÖgn? FsRunaEftirSögn? NlBeintAndlag_sjálfur/aukafall/tala/kyn
+
+$tag(apply_particle_bonus) Sögn_1_sagnb_sjálfur/tala/kyn
+
 NlEnginnAndlag/fall →
     'enginn:fn'/fall/tala/kyn Nl/fall/tala/kyn
 
@@ -2628,6 +2660,12 @@ Sögn_1_nh →
     | So_1_þf_nh Nl_þf So_1_nh/fall FsRunaInnskot? Nl/fall
 
 $tag(apply_particle_bonus) Sögn_1_nh
+
+# (Hún vill) skamma sjálfa sig: andlagið samræmist frumlaginu
+Sögn_1_nh_sjálfur/tala/kyn →
+    So_1_nh/aukafall SagnÖgn? FsRunaInnskot? NlBeintAndlag_sjálfur/aukafall/tala/kyn
+
+$tag(apply_particle_bonus) Sögn_1_nh_sjálfur/tala/kyn
 
 # Gefa forsetningarliðum milli sagnar og andlags mínus
 # enda eru þær klasturslegt mál ('Hann mun sjá í snatri fílinn')
@@ -2680,6 +2718,10 @@ Andlög/fall/afall →
 Andlög/fall/afall/tala/kyn →
     NlÓbeintAndlag/fall LoTengtSögn_nf/tala/kyn? AndlögBotn/fall/afall
     | UmsnúinAndlög/fall/afall
+
+# (Þeir gáfu) sjálfum sér gjöf: óbeina andlagið samræmist frumlaginu
+Andlög/aukafall/afall/tala/kyn →
+    NlÓbeintAndlag_sjálfur/aukafall/tala/kyn LoTengtSögn_nf/tala/kyn? AndlögBotn/aukafall/afall
 
 UmsnúinAndlög/fall/afall →
     NlBeintAndlag/afall UmsnúinAndlögBotn/fall
@@ -2736,6 +2778,10 @@ Sögn_1/tala/pers/kyn →
     # (Hann) bjó til hús / (Hann) kastaði upp boltanum
     | so_1/aukafall/tala/pers OgSögn_1/aukafall/tala/pers*
         SagnÖgn? FsRunaEftirSögn? LoTengtSögn_nf/tala/kyn? NlBeintAndlag/aukafall NhFylling?
+    # (Hún) skammaði sjálfa sig / (Þeir) skömmuðu sjálfa sig
+    | so_1/aukafall/tala/pers OgSögn_1/aukafall/tala/pers*
+        SagnÖgn? FsRunaEftirSögn? LoTengtSögn_nf/tala/kyn?
+        NlBeintAndlag_sjálfur/aukafall/tala/kyn NhFylling?
 
     # (Ég tel/segi/álít) Pál vera dagfarsprúðan mann
     | So_1_þf_nh/tala/pers OgSögn_1_þf_nh/tala/pers* SagnarBotn
@@ -2898,6 +2944,10 @@ SögnMeðF_1/tala/pers/kyn →
         LoTengtSögn_nf/tala/kyn? NhFylling?
     | so_1/aukafall/tala/pers OgSögn_1/aukafall/tala/pers*
         NlFrumlag_nf/tala/pers/kyn NlBeintAndlag/aukafall
+        LoTengtSögn_nf/tala/kyn? NhFylling?
+    # (Í gær) skammaði hún sjálfa sig
+    | so_1/aukafall/tala/pers OgSögn_1/aukafall/tala/pers*
+        NlFrumlag_nf/tala/pers/kyn NlBeintAndlag_sjálfur/aukafall/tala/kyn
         LoTengtSögn_nf/tala/kyn? NhFylling?
 
     # (Eftir hálftíma) skal gjöfin gefin Páli
@@ -3850,6 +3900,29 @@ NlKjarni/tala/aukafall/kyn →
     'sjálfur:fn'/tala/aukafall/kyn abfn/aukafall/tala/kyn # Hér vitum við tölu og kyn
     | abfn/aukafall # Hér vitum við hvorki tölu né kyn
 
+# 'sjálfur' + afturbeygt fornafn sem andlag sagnar, þar sem tala og kyn
+# samræmast frumlagi sagnarinnar:
+# (Hún skammaði) sjálfa sig / (Þeir skömmuðu) sjálfa sig
+# (Hann treystir) sjálfum sér / (Þær treysta) sjálfum sér
+# Orðmyndir 'sjálfur' eru margræðar um tölu og kyn (sjálfa: kvk et / kk ft;
+# sjálfum: kk et / öll kyn ft), og almenni nafnliðurinn hér að ofan sker
+# ekki úr um hvor greiningin á við. Það gerir samræmið við frumlagið.
+
+NlBeintAndlag_sjálfur/aukafall/tala/kyn →
+    'sjálfur:fn'/tala/aukafall/kyn abfn/aukafall/tala/kyn
+
+NlÓbeintAndlag_sjálfur/aukafall/tala/kyn →
+    'sjálfur:fn'/tala/aukafall/kyn abfn/aukafall/tala/kyn
+
+# Innan forsetningarliðar: (hún talaði við) sjálfa sig
+Nl_sjálfur/aukafall/tala/kyn →
+    'sjálfur:fn'/tala/aukafall/kyn abfn/aukafall/tala/kyn
+
+# Samræmda greiningin fær einu stigi meira en sú almenna
+# (sbr. $score(+1) á NlBeintAndlag, NlÓbeintAndlag og FsMeðFallstjórn)
+$score(+2) NlBeintAndlag_sjálfur/aukafall/tala/kyn
+$score(+2) NlÓbeintAndlag_sjálfur/aukafall/tala/kyn
+
 # Fornöfn sem tákna fleirtölu og standa með eignarfallslið:
 # Mörg/flest þessara mála, sum þeirra sem lentu í slysinu
 NlKjarni_ft/fall/kyn →
@@ -4399,7 +4472,13 @@ NlTöluorð/tala/fall/kyn →
     # '(Ég talaði við) tvær þeirra', 'fjórum þeirra (var kalt)'
     # 'Að minnsta kosti fjórir létust'
     # 'Um þrír af hverjum fjórum landsmönnum telja...'
-    TöluorðForskeyti/tala/fall/kyn* TöluorðLo/tala? Töluorð/tala/fall/kyn 'sá:fn'_ft_ef/kyn?
+    TöluorðForskeyti/tala/fall/kyn* Töluorð/tala/fall/kyn 'sá:fn'_ft_ef/kyn?
+    # 'efstu tvo', 'lægri tvær'. Þetta er sérstök regla, en ekki valfrjáls
+    # TöluorðLo? liður í reglunni að ofan, vegna þess að skammstafað
+    # lýsingarorð ('f. 1985') passar bæði sem TöluorðForskeyti og TöluorðLo.
+    # Í einni reglu væru þær tvær greiningar jafngildar afleiðslur sömu reglu;
+    # hér ræður röð reglnanna því að forskeytið verður fyrir valinu.
+    | TöluorðForskeyti/tala/fall/kyn* TöluorðLo/tala Töluorð/tala/fall/kyn 'sá:fn'_ft_ef/kyn?
     | TöluorðForskeyti/tala/fall/kyn* Töluorð/tala/fall/kyn TöluorðLo/tala  # (önnur af) þremur hröðustu (sem eftir standa)
     | 'sá:fn'_ft/fall/kyn? Töluorð/tala/fall/kyn EfLiður_ft/kyn?            # (ein af) þeim fjórum stúlknanna (sem stóðu sig best)
     | TöluorðForskeyti/tala/fall/kyn* Töluorð/tala/fall/kyn EfLiður_ft/kyn? # Ríflega 1,6 milljónir íbúa Danmerkur (stóðu sig best)

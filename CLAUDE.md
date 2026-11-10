@@ -85,7 +85,9 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    handles incremental parsing of token streams by paragraph/sentence.
    The order in which the core enumerates the states of an Earley column
    (`Column::nextState()`) determines the order of families in the forest
-   and thereby the outcome of exact score ties in the reducer: changes to
+   and thereby the outcome of those exact score ties in the reducer that
+   its content-based family key (production index and child spans; see
+   `start_family()` in `reducer.py`) does not settle: changes to
    the core must preserve it or be treated as output-changing. See
    `doc/earley-core-performance.md`; `test/test_earley_core.py` tests the
    core in isolation with synthetic grammars.
@@ -147,6 +149,20 @@ notes for 3.9.0) and from the 3.10.0 work; none started:
   locative "þar sem" clauses ("Þar sem hann fór var mér kalt"); "kerfið
   sem til stendur að hjálpa/breyta" (dative/genitive object: the
   subject-gap reading still wins).
+- **Reflexive agreement** (left over from the `_sjálfur` rules, which
+  make "sjálfa sig"/"sjálfum sér" agree with the subject where the verb
+  phrase nonterminals carry /tala/kyn): infinitive clauses with "að"
+  ("hún er að skaða sjálfa sig", NhLiður has no variants); PPs attached
+  to a noun ("þeir birtu myndir af sjálfum sér") or to an adjective
+  inside such a clause ("að vera ósamkvæmir sjálfum sér"). Also seen:
+  "sjálft sig" with "sig" read as a noun, "sjálfu sér" as noun + verb.
+- **Ties left to the family order**: when two derivations of one
+  production have the same score and spans but fill different optional
+  items, the reducer falls back on the family order, which shifts when
+  nonterminals are added. Fix in the grammar (as done for NlTöluorð,
+  "f. 1985"). Seen in news text: EfLiðurForskeyti ("eins árs"), NlKjarni
+  (NlViðbót?/Númer?), NlEind (relative clause/NlSkýring?),
+  BeygingarliðurMeðUmröðun (Upptalning?/KommaAtvikssetning?), SögnMeðF_0.
 - **Scoring**: the reducer's flat +12 for present participles
   (`reducer.py`) is why -andi nouns needed per-word Prefs.conf entries;
   a generic fix would cover the rest of the class.
