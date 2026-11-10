@@ -48,8 +48,9 @@
 
     These tests guard the data structures on the hot path of the core
     (the state lists of the columns, the set of states for detecting
-    duplicates, the prediction tables, the H set index, the node
-    dictionary, the forest storage and the batched allocation counters).
+    duplicates, the prediction tables, the lookahead filter, the H set
+    index, the node dictionary, the forest storage and the batched
+    allocation counters).
 
 """
 
@@ -189,6 +190,33 @@ class Forest:
             )
         return result
 
+    def content(self) -> Any:
+        """Return a description of the content of the forest that does
+        not depend on the order of the families of children of each node,
+        nor on anything else than the nodes that are in the forest"""
+
+        def label(node: Any) -> Any:
+            if node == ffi.NULL:
+                return None
+            lb = node.label
+            return (
+                lb.iNt,
+                lb.nDot,
+                -1 if lb.pProd == ffi.NULL else lb.pProd.nId,
+                lb.nI,
+                lb.nJ,
+            )
+
+        result = set()
+        for node in self._postorder():
+            families = set()
+            fe = node.pHead
+            while fe != ffi.NULL:
+                families.add((fe.pProd.nId, label(fe.p1), label(fe.p2)))
+                fe = fe.pNext
+            result.add((label(node), frozenset(families)))
+        return (label(self._root), frozenset(result))
+
     @property
     def span(self) -> Tuple[int, int]:
         return (self._root.label.nI, self._root.label.nJ)
@@ -225,6 +253,10 @@ class Core:
             return None
         self._forests.append(node)
         return Forest(node)
+
+    def set_lookahead(self, lookahead: bool) -> None:
+        """Turn the lookahead filter of the parser on or off"""
+        eparser.setLookahead(self._parser, 1 if lookahead else 0)
 
     def num_trees(self, tokens: Sequence[int]) -> int:
         """Return the number of parse trees for the tokens, or 0 if no parse"""
@@ -437,6 +469,26 @@ def test_error_token(core) -> None:
     ):
         assert c.parse(tokens) is None
         assert c.error_token == err, tokens
+    # S -> a b c | a b L: here, a state can be stopped by a terminal
+    # that does not match the next token
+    spec = [[[A, B, C], [A, B, nt(1)]], [[nt(1), B], [B]]]
+    c = core(spec)
+    assert c.num_trees([A, B, C]) == 1
+    assert c.num_trees([A, B, B]) == 1
+    for lookahead in (True, False):
+        # The lookahead filter does not change where errors are reported
+        c.set_lookahead(lookahead)
+        for tokens, err in (
+            ([A, C], 1),
+            ([A, A, B], 1),
+            ([A], 1),
+            ([A, B], 2),
+            ([A, B, A], 3),
+            ([A, B, C, A], 4),
+            ([A, B, B, C], 4),
+        ):
+            assert c.parse(tokens) is None
+            assert c.error_token == err, (lookahead, tokens)
 
 
 @pytest.mark.parametrize("left", [True, False])
@@ -581,6 +633,102 @@ def test_random_grammars(core) -> None:
     # Make sure that the test is not vacuous
     assert num_parsed > 500
     assert num_ambiguous > 200
+
+
+def random_nullable_grammar(rnd: random.Random) -> GrammarSpec:
+    """Create a pseudo-random grammar with empty productions, where
+    nonterminals can also derive themselves in various ways"""
+    num_nt = rnd.randint(2, 7)
+    num_t = rnd.randint(1, 4)
+    spec: GrammarSpec = []
+    for n in range(num_nt):
+        prods: List[Production] = []
+        for _ in range(rnd.randint(1, 4)):
+            length = rnd.choice((0, 0, 1, 1, 2, 2, 3, 4))
+            p = [
+                nt(rnd.randrange(num_nt))
+                if rnd.random() < 0.6
+                else rnd.randint(1, num_t)
+                for _ in range(length)
+            ]
+            if p not in prods:
+                prods.append(p)
+        spec.append(prods)
+    spec[-1].extend([t] for t in range(1, num_t + 1) if [t] not in spec[-1])
+    return spec
+
+
+def test_lookahead(core) -> None:
+    """The lookahead filter of the parser, which keeps states that can't
+    advance on the current token out of the Earley columns, must not
+    change anything that can be seen from the outside: neither the
+    content of the forest, nor whether there is a parse, nor the token
+    at which a failed parse is reported to fail"""
+    rnd = random.Random(20261110)
+    num_parsed = num_failed = 0
+    error_tokens = set()
+    for count in range(300):
+        nullable = count % 2 == 1
+        spec = random_nullable_grammar(rnd) if nullable else random_grammar(rnd)
+        num_t = num_terminals(spec)
+        c = core(spec)
+        for _ in range(25):
+            tokens = [rnd.randint(1, num_t) for _ in range(rnd.randint(1, 8))]
+            c.set_lookahead(True)
+            forest = c.parse(tokens)
+            error = c.error_token
+            c.set_lookahead(False)
+            other = c.parse(tokens)
+            assert c.error_token == error, (spec, tokens)
+            if forest is None:
+                assert other is None, (spec, tokens)
+                num_failed += 1
+                error_tokens.add((len(tokens), error))
+            else:
+                assert other is not None, (spec, tokens)
+                assert forest.content() == other.content(), (spec, tokens)
+                if not nullable:
+                    assert forest.num_trees == count_trees(spec, tokens)
+                num_parsed += 1
+        c.close()
+    # Make sure that the test is not vacuous
+    assert num_parsed > 1500
+    assert num_failed > 1500
+    # Failures at the first token, in the middle and at the end
+    assert any(error == 0 for _, error in error_tokens)
+    assert any(error == n for n, error in error_tokens)
+    assert any(0 < error < n for n, error in error_tokens)
+
+
+def test_lookahead_saves_work(tmp_path, capfd) -> None:
+    """With the lookahead filter, the parser creates fewer states"""
+    with allocation_report(capfd) as before:
+        pass
+    if "States" not in before:
+        pytest.skip("Unable to capture the allocation report")
+    # S -> X S | X;  X -> A1 | ... | AN;  Ai -> ti Bi | ti;  Bi -> ti ti
+    # Each X is predicted in N ways, of which only one fits the token
+    N = 40
+    spec: GrammarSpec = [[[nt(1), nt(0)], [nt(1)]], [[nt(1 + i)] for i in range(1, N + 1)]]
+    for i in range(1, N + 1):
+        spec.append([[i, nt(1 + N + i)], [i]])
+    for i in range(1, N + 1):
+        spec.append([[i, i]])
+    tokens = [3, 3, 3, 7, 11, 11, 11, 40, 1]
+    c = Core(spec, tmp_path / "grammar.bin")
+    c.set_lookahead(False)
+    num = c.num_trees(tokens)
+    assert num == count_trees(spec, tokens) > 0
+    with allocation_report(capfd) as without:
+        pass
+    c.set_lookahead(True)
+    assert c.num_trees(tokens) == num
+    with allocation_report(capfd) as with_lookahead:
+        pass
+    c.close()
+    states_without = without["States"][1] - before["States"][1]
+    states_with = with_lookahead["States"][1] - without["States"][1]
+    assert 0 < states_with < states_without // 3
 
 
 def test_determinism(core) -> None:

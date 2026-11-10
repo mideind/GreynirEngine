@@ -44,14 +44,27 @@ uv run python benchmarks/bench_parse.py --digest
 uv run python benchmarks/bench_parse.py --digest --unordered
 ```
 
-Note: after changing the C++ sources (`eparser.cpp`, `eparser.h`) or
-`eparser_build.py`, force a rebuild of the `_eparser` CFFI extension with
+Note: after changing the C++ sources (`eparser.cpp`, `ereducer.cpp`,
+`eparser.h`) or `eparser_build.py`, force a rebuild of the `_eparser` CFFI
+extension with
 `uv sync --reinstall-package reynir` (the extension is compiled at install
 time; see `setup.py`, which exists only for the `cffi_modules` hook — all
 other metadata is in `pyproject.toml`). Extra compiler flags for
 such a build (sanitizers, `-DEPARSER_ASSERT -UNDEBUG` to enable the
 assertions of the core) go in `CXXFLAGS`, not `CFLAGS`, and need
 `--no-cache`.
+
+Environment variables that switch the C++ fast paths off or check them
+against the Python implementations (all results must be the same either
+way; only the speed differs):
+
+| Variable | Effect |
+|---|---|
+| `GREYNIR_DISABLE_CPP_MATCHING` | Match tokens with terminals in Python only |
+| `GREYNIR_MATCHING_PARITY` | Match both ways; count differences in `Fast_Parser.parity_mismatches` |
+| `GREYNIR_DISABLE_CPP_REDUCER` | Convert and reduce the parse forest in Python |
+| `GREYNIR_REDUCER_PARITY` | Reduce both ways; count differences in `Reducer.parity_mismatches` |
+| `GREYNIR_DISABLE_LOOKAHEAD` | Turn off the lookahead filter of the parser core |
 
 ## Architecture
 
@@ -100,11 +113,41 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    arena (`Forest`) that is freed as a whole by `deleteForest()`. See
    `doc/earley-core-performance.md`; `test/test_earley_core.py` tests the
    core in isolation with synthetic grammars.
+   The core has a lookahead filter: a state is only created if what
+   follows its dot can begin with the current token or derive nothing
+   (`Parser::viable()`; the filters and the classes of nonterminals that
+   it uses are calculated in `Grammar::analyze()` when a grammar is
+   loaded). It must not change the content of the forest, nor the token
+   index that a failed parse reports. Token/terminal matches and
+   "can this class of nonterminals begin with this token" are cached per
+   distinct token (by `BIN_Token.key`), two bits each, in
+   `Fast_Parser._matching_cache`. Most matches are decided natively in
+   the core (`doc/cpp-matching-design.md`); this also applies to parsers
+   whose tokens are of a class derived from `BIN_Token` that only
+   overrides the hooks of `BIN_Token.verb_matches()`, as in GreynirCorrect
+   (`Fast_Parser._native_token_class()`).
 
 4. **Reduction** — `reducer.py` scores the parse forest and reduces it to the
    single most likely tree, using preferences from `config/Prefs.conf`,
    production priorities and `$score()` pragmas in the grammar, and
    verb-preposition matching driven by `config/Verbs.conf`.
+   `Reducer.parse_and_reduce()` is what `Greynir` and `IncrementalParser`
+   call: it parses and reduces in one go, with the forest staying in C++
+   (`ereducer.cpp`) and Python objects only created for the nodes of the
+   winning tree (`Node.from_serialized()`). The scores of token/terminal
+   matches are still calculated in Python (`Reducer._score_options()`), as
+   are the verb/preposition and verb/particle bonuses, through callbacks.
+   The older route - `Fast_Parser.go()`, `Fast_Parser.num_combinations()`,
+   `Reducer.go_with_score()` - does the same in Python on a forest of
+   `Node` objects; it remains as public API, as the reference
+   implementation and as the fallback (for forests with cycles or deeper
+   than 1,000 levels, and when a derived class overrides what the C++
+   code replicates). **The two must give identical results, down to the
+   score of each node: a change to the scoring or reduction logic in
+   `reducer.py`, or to `Node.from_c_node()`, must be made in
+   `ereducer.cpp` as well.** `test/test_reducer.py` compares them on
+   pseudo-random grammars; run a larger sample of real text with
+   `GREYNIR_REDUCER_PARITY=1` after such a change.
 
 5. **Output/API** — `simpletree.py` provides `SimpleTree`, the simplified tree
    API users interact with (`.tree.S.IP.NP_SUBJ`, `.lemmas`, `.nouns`, `.flat`,
@@ -180,6 +223,13 @@ notes for 3.9.0) and from the 3.10.0 work; none started:
   drop sentence-initial SamkvæmtHeimild; run a second usage census over
   headings/non-news text before touching rules that only win in other
   text types.
+- **Performance** (see "What remains" in section 9 of
+  `doc/earley-core-performance.md`): native matching of verb terminals
+  (the bulk of the Python matching calls for tokens that have not been
+  seen before); tokenization, now a fifth of a warm parse; precomputed
+  nullability in the core. GreynirServer's query module still calls
+  `go()` + `num_combinations()` + `Reducer.go()`, and could use
+  `Reducer.parse_and_reduce()` (which handles `no_reduce`).
 - **Method note**: a "never wins in N sentences" census verdict is not
   proof of dead grammar — always re-probe a rule with the construction
   it actually targets before deleting (news-corpus frequency ≠ reachability).

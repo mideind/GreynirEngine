@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
+#include <new>
 #include <atomic>
 
 
@@ -75,8 +76,10 @@ class Column;
 class NodeDict;
 class Label;
 class Forest;
+class Reducer;
 class StateSet;
 struct StateChunk;
+struct RNode;
 
 
 class AllocCounter {
@@ -133,15 +136,31 @@ public:
 };
 
 
+// Lookahead filters. A state can only ever advance if what follows its
+// dot can either begin with the current token, or derive nothing at all.
+// For each position of the dot in each production, a filter tells how to
+// find that out; it is calculated when the grammar is loaded (see
+// Grammar::analyze()). The kind of the filter is in its two lowest bits
+// and its argument in the bits above them.
+#define LF_ALWAYS    0u  // What follows the dot can derive nothing: always viable
+#define LF_TERMINAL  1u  // A terminal follows: does it match? (arg: the terminal)
+#define LF_START     2u  // A nonterminal that can't derive nothing follows:
+                         // can it begin with the token? (arg: its class)
+#define LF_MULTI     3u  // One or more nonterminals that can derive nothing
+                         // follow, and then an item that can't: can any of
+                         // them begin with the token? (arg: their number)
+
 struct Prediction {
 
    // An entry in the prediction table of a nonterminal:
    // one of its productions, along with the first item of the production
    // (a negative nonterminal index, a positive terminal index,
-   // or 0 if the production is empty)
+   // or 0 if the production is empty) and the lookahead filter
+   // for the dot at the start of the production
 
    Production* pProd;
    INT iFirst;
+   UINT nFilter;
 
 };
 
@@ -165,8 +184,6 @@ private:
    Prediction* m_pPredictions;
    UINT m_nPredictions;
 
-   void buildPredictions(void);
-
    static AllocCounter ac;
 
 protected:
@@ -174,6 +191,8 @@ protected:
 public:
 
    Nonterminal(const WCHAR* pwzName);
+
+   void buildPredictions(void);
 
    ~Nonterminal(void);
 
@@ -202,11 +221,16 @@ class Production {
    // where each item is a negative nonterminal index, or
    // positive terminal index. The array is terminated by a 0 item,
    // so indexing just past the end of the production yields 0.
+   // The items are followed, in the same block of memory, by the
+   // lookahead filters of the production: one for each position
+   // of the dot, including the one at the end.
 
    friend class AllocReporter;
 
 private:
 
+   // Note: the layout of the following four members is known to
+   // the Python side (see struct Production in eparser_build.py)
    UINT m_nId;             // Unique integer id (0-based) of this production
    UINT m_nPriority;       // Relative priority of this production
    UINT m_n;               // Number of items in production
@@ -244,6 +268,18 @@ public:
          return this->m_pList[nDot];
       }
 
+   // Get or set the lookahead filter for the given dot position
+   UINT getFilter(UINT nDot) const
+      {
+         ASSERT(nDot <= this->m_n);
+         return (UINT)this->m_pList[this->m_n + 1 + nDot];
+      }
+   void setFilter(UINT nDot, UINT nFilter)
+      {
+         ASSERT(nDot <= this->m_n);
+         this->m_pList[this->m_n + 1 + nDot] = (INT)nFilter;
+      }
+
 };
 
 
@@ -256,10 +292,26 @@ class Grammar {
 
 private:
 
+   // Note: the layout of the following three members is known to
+   // the Python side (see struct Grammar in eparser_build.py)
    UINT m_nNonterminals;   // Number of nonterminals
    UINT m_nTerminals;      // Number of terminals (indexed from 1)
    INT m_iRoot;            // Index of root nonterminal (negative)
    Nonterminal** m_nts;    // Array of Nonterminal pointers, owned by the Grammar class
+
+   // Lookahead support, calculated by analyze(). The nonterminals are
+   // divided into classes, such that the nonterminals of a class can all
+   // begin with exactly the same tokens (each of them can occur at the
+   // start of something derived from any other). A class is described by
+   // the terminals that its nonterminals can begin with directly, and by
+   // the other classes whose nonterminals they can begin with.
+   UINT m_nClasses;        // Number of classes
+   UINT* m_pnClass;        // The class of each nonterminal
+   UINT* m_pnClassOffset;  // For each class, the index of its data in m_pnClassData
+   UINT* m_pnClassData;    // For each class: the number of terminals, the
+                           // terminals, the number of classes, the classes
+
+   void analyze(void);
 
    static AllocCounter ac;
 
@@ -274,6 +326,14 @@ public:
    void reset(void);
 
    BOOL readBinary(const CHAR* pszFilename);
+
+   // Lookahead support
+   UINT getNumClasses(void) const
+      { return this->m_nClasses; }
+   UINT getClass(INT iNt) const
+      { return this->m_pnClass[~((UINT)iNt)]; }
+   const UINT* getClassData(UINT nClass) const
+      { return this->m_pnClassData + this->m_pnClassOffset[nClass]; }
 
    UINT getNumNonterminals(void) const
       { return this->m_nNonterminals; }
@@ -296,6 +356,7 @@ class Label {
    // A Label is associated with a Node.
 
    friend class Node;
+   friend class Reducer;
 
 private:
 
@@ -346,6 +407,7 @@ class Node {
    // individually, but all at once when the Forest is deleted.
 
    friend class AllocReporter;
+   friend class Reducer;
 
 private:
 
@@ -361,6 +423,9 @@ private:
    Label m_label;
    FamilyEntry* m_pHead;
    Forest* m_pForest;      // The forest that owns this node
+   // The node of the reducer (see ereducer.cpp) that corresponds
+   // to this node, if any
+   struct RNode* m_pR;
 
    static AllocCounter ac;
 
@@ -392,6 +457,114 @@ public:
 
    // Delete the forest that a node belongs to
    static void destroyForest(Node*);
+
+};
+
+
+class Forest {
+
+   // A Forest owns the storage of all tree nodes, and of their families
+   // of children, that are created during a parse. Storage is handed
+   // out sequentially from large slabs and is never released piecemeal:
+   // it is all freed in one go when the Forest is deleted, which happens
+   // in deleteForest() - or at the end of the parse, if it fails.
+
+   // Most nodes created during a parse do not end up in the resulting
+   // tree. They used to be reference counted and released as soon as
+   // possible, at a considerable cost on the hot path of the parser.
+   // Now, they simply stay in the Forest until it is deleted, which is
+   // typically a few milliseconds after the parse completes.
+
+private:
+
+   static const UINT SLAB_ITEMS = 8 * 1024; // 64 KB on a 64-bit platform
+
+   struct Slab {
+      Slab* pNext;
+      void* aStorage[SLAB_ITEMS];   // Pointer-aligned storage
+   };
+
+   // A block of storage that is too large for a slab
+   struct Large {
+      Large* pNext;
+   };
+
+   Slab* m_pSlabs;      // List of all slabs, the newest one first
+   Large* m_pLarge;     // List of large blocks
+   BYTE* m_pFree;       // The first free byte in the newest slab
+   BYTE* m_pEnd;        // The end of the newest slab
+   UINT m_nNodes;       // The number of nodes allocated
+   UINT m_nCounted;     // The number of nodes added to the global counter
+
+   void addSlab(void)
+      {
+         Slab* pSlab = new Slab;
+         pSlab->pNext = this->m_pSlabs;
+         this->m_pSlabs = pSlab;
+         this->m_pFree = (BYTE*)pSlab->aStorage;
+         this->m_pEnd = this->m_pFree + sizeof(pSlab->aStorage);
+      }
+
+public:
+
+   Forest(void)
+      : m_pSlabs(NULL), m_pLarge(NULL), m_pFree(NULL), m_pEnd(NULL),
+         m_nNodes(0), m_nCounted(0)
+      { }
+
+   ~Forest(void)
+      {
+         Slab* p = this->m_pSlabs;
+         while (p) {
+            Slab* pNext = p->pNext;
+            delete p;
+            p = pNext;
+         }
+         Large* pl = this->m_pLarge;
+         while (pl) {
+            Large* pNext = pl->pNext;
+            ::operator delete((void*)pl);
+            pl = pNext;
+         }
+         // All nodes are hereby freed
+         Node::count(this->m_nNodes - this->m_nCounted, this->m_nNodes);
+      }
+
+   // Allocate storage; the size is rounded up to a multiple of the pointer size
+   void* alloc(size_t nBytes)
+      {
+         nBytes = (nBytes + sizeof(void*) - 1) & ~(sizeof(void*) - 1);
+         if ((size_t)(this->m_pEnd - this->m_pFree) < nBytes) {
+            if (nBytes > sizeof(void*) * SLAB_ITEMS / 4) {
+               // A large request: give it a block of its own, instead
+               // of abandoning what is left of the current slab
+               // (or overflowing a new one)
+               const size_t nHeader = 2 * sizeof(void*);
+               Large* pl = (Large*)::operator new(nHeader + nBytes);
+               pl->pNext = this->m_pLarge;
+               this->m_pLarge = pl;
+               return (void*)((BYTE*)pl + nHeader);
+            }
+            this->addSlab();
+         }
+         void* pv = (void*)this->m_pFree;
+         this->m_pFree += nBytes;
+         return pv;
+      }
+
+   // Create a node within the forest
+   Node* newNode(const Label& label)
+      {
+         this->m_nNodes++;
+         return new (this->alloc(sizeof(Node))) Node(label, this);
+      }
+
+   // Account for the nodes allocated so far in the global counter
+   void countNodes(void)
+      {
+         Node::count(this->m_nNodes - this->m_nCounted, 0);
+         this->m_nCounted = this->m_nNodes;
+      }
 
 };
 
@@ -487,6 +660,81 @@ struct MatchMasks {
 };
 
 
+// Support for reducing a parse forest to its highest-scoring tree
+// within the C++ module (see ereducer.cpp). The reduction follows the
+// algorithm of the ParseForestReducer class in reducer.py to the letter;
+// the two tables below, and the two callbacks, give it the parts of the
+// grammar and of the vocabulary that the algorithm consults.
+
+// Nonterminal flags for the reducer (one UINT per nonterminal)
+#define RN_ENABLE_PREP_BONUS     0x0001u  // Tag enable_prep_bonus
+#define RN_BEGIN_PREP_SCOPE      0x0002u  // Tag begin_prep_scope
+#define RN_NOUN_PHRASE           0x0004u  // The nonterminal is a noun phrase (Nl*)
+#define RN_VERB_PARTICLE         0x0008u  // Tag verb_particle
+#define RN_APPLY_PARTICLE_BONUS  0x0010u  // Tag apply_particle_bonus
+#define RN_APPLY_LENGTH_BONUS    0x0020u  // Tag apply_length_bonus
+#define RN_APPLY_PREP_BONUS      0x0040u  // Tag apply_prep_bonus
+#define RN_PICK_UP_VERB          0x0080u  // Tag pick_up_verb
+#define RN_PURGE_VERB            0x0100u  // Tag purge_verb
+#define RN_NO_REDUCE             0x0200u  // Tag no_reduce
+
+// Terminal flags for the reducer (one BYTE per terminal, 1-based)
+#define RT_AO_LITERAL   0x01u  // Literal terminal of the adverb category
+#define RT_FS           0x02u  // Preposition terminal
+#define RT_SO           0x04u  // Verb terminal
+
+// Return the bonus (or penalty) for a preposition terminal, matching
+// a token, in the context of a verb terminal matching another token
+typedef INT (*PrepBonusFunc)(UINT nHandle, UINT nPrepTerminal, UINT nPrepToken,
+   UINT nVerbTerminal, UINT nVerbToken);
+
+// Return the bonus (or penalty) for a verb particle, i.e. the token
+// with the given index, in the context of a list of verbs. The list
+// consists of nVerbs pairs of (terminal index, token index).
+typedef INT (*ParticleBonusFunc)(UINT nHandle, UINT nParticleToken,
+   const UINT* pnVerbs, UINT nVerbs);
+
+struct ReducerTables {
+   UINT nNonterminals;
+   UINT* pnNtFlags;        // RN_* flags of each nonterminal
+   INT* pnNtScores;        // Score adjustment of each nonterminal
+   UINT nTerminals;        // Number of terminals + 1, as they are 1-based
+   BYTE* pbTermFlags;      // RT_* flags of each terminal
+   PrepBonusFunc fpPrepBonus;
+   ParticleBonusFunc fpParticleBonus;
+   INT nPrepBonus;         // Bonus for nonterminals tagged apply_prep_bonus
+   INT nLengthFactor;      // Factor for nonterminals tagged apply_length_bonus
+};
+
+struct Reduction {
+
+   // The state of the reduction of a parse forest, which is done
+   // in two steps: reduceStart() and reduceFinish(). The object
+   // lives in the Forest that it describes, and is deleted with it.
+
+   // Note: the layout of the first part of this structure is known
+   // to the Python side (see struct Reduction in eparser_build.py)
+
+   // Available after reduceStart():
+   UINT nStart;            // The span of the root node
+   UINT nEnd;
+   UINT nOptions;          // The number of distinct token/terminal matches
+   const INT* pnOptions;   // nOptions pairs of (token index, terminal index)
+   UINT nCombBytes;        // The number of trees in the forest, as an
+   const BYTE* pbComb;     // unsigned little-endian integer of nCombBytes bytes
+   // Available after reduceFinish():
+   INT nScore;             // The score of the root node
+   UINT nOut;              // The resulting tree (or forest), serialized as
+   const INT* pnOut;       // nOut integers; see Reducer::emit()
+
+   // The following members are private to the C++ side
+   Parser* pParser;
+   Forest* pForest;
+   struct RNode* pRoot;
+
+};
+
+
 class Parser {
 
    // Earley-Scott parser for a given Grammar
@@ -511,11 +759,18 @@ private:
    // incremented from within concurrent parses
    std::atomic<UINT> m_nParityMismatches;
 
+   // Tables for the reducer (may be absent)
+   ReducerTables m_rt;
+
+   // Is the lookahead filter in use?
+   BOOL m_bLookahead;
+
    // Add a state to a column, or to the list of states to be scanned
    void pushNew(State*, Column*, State*& pQ);
    void push(UINT nHandle, State*, Column*, State*& pQ, StateChunk*, StateSet&);
 
-   BOOL canPush(INT iItem, Column*, UINT nHandle);
+   BOOL viableMulti(const Production*, UINT nDot, UINT nCount, Column*, UINT nHandle);
+   BOOL viable(UINT nFilter, const Production*, UINT nDot, Column*, UINT nHandle);
    BOOL canAdvance(State*, Column*, UINT nHandle, INT& iNext);
 
    Node* makeNode(State* pState, UINT nEnd, Node* pV, NodeDict& ndV);
@@ -523,6 +778,9 @@ private:
    // Internal token/terminal matching cache management
    BYTE* allocCache(UINT nHandle, UINT nToken, BOOL* pbNeedsRelease);
    void releaseCache(BYTE* abCache);
+   // The number of bytes that the matching results of a token occupy
+   static UINT matchCacheSize(UINT nTerminals)
+      { return (nTerminals + 1 + 3) / 4; }
 
 protected:
 
@@ -562,6 +820,19 @@ public:
    UINT getParityMismatches(void) const
       { return this->m_nParityMismatches.load(std::memory_order_relaxed); }
 
+   // Turn the lookahead filter on (the default) or off. It has no
+   // effect on the content of the parse forest, only on the amount of
+   // work that it takes to create it.
+   void setLookahead(BOOL b)
+      { this->m_bLookahead = b; }
+   BOOL getLookahead(void) const
+      { return this->m_bLookahead; }
+
+   // Reducer support: the tables are copied
+   void setReducerTables(const ReducerTables*);
+   const ReducerTables* getReducerTables(void) const
+      { return this->m_rt.pnNtFlags ? &this->m_rt : NULL; }
+
    // Evaluate a native token/terminal match
    static BOOL evalMatch(const TerminalSpec*, const BYTE* pTokenRec, const MatchMasks&);
 
@@ -593,6 +864,31 @@ extern "C" void setMatchingTable(Parser*, const BYTE* pSpecs, UINT nSpecs,
 // Return the number of native/Python matching discrepancies
 // detected while running in parity mode
 extern "C" UINT getParityMismatches(Parser*);
+
+// Turn the lookahead filter of the parser on (the default) or off
+extern "C" void setLookahead(Parser*, BOOL);
+
+// Install the tables and callbacks that the reducer needs. The tables
+// have one entry per nonterminal, and one per terminal (1-based, so
+// nTerminals is the number of terminals in the grammar plus one).
+extern "C" void setReducerTables(Parser*,
+   const UINT* pnNtFlags, const INT* pnNtScores, UINT nNonterminals,
+   const BYTE* pbTermFlags, UINT nTerminals,
+   PrepBonusFunc fpPrepBonus, ParticleBonusFunc fpParticleBonus,
+   INT nPrepBonus, INT nLengthFactor);
+
+// Begin the reduction of a parse forest: analyze it, count its trees
+// and list its token/terminal matches. Returns NULL if the forest
+// can't be handled here; the caller then falls back on doing things
+// by itself. The returned object is deleted by deleteForest().
+extern "C" Reduction* reduceStart(Parser*, Node* pRoot);
+
+// Complete the reduction, given the scores of the token/terminal
+// matches (in the order of Reduction::pnOptions), and serialize the
+// resulting tree. If pnScores is NULL, the forest is not reduced, but
+// serialized as it is. Returns false if the reduction could not
+// be completed.
+extern "C" BOOL reduceFinish(Reduction*, const INT* pnScores, UINT nHandle);
 
 extern "C" void deleteForest(Node*);
 

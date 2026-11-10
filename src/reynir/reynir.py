@@ -583,14 +583,17 @@ class _Job:
             ):
                 # Sentence is foreign: don't attempt to parse it
                 raise ParseError("Sentence is probably not in Icelandic", token_index=0)
-            forest = self.parser.go(tokens, root=self._root)
-            t1 = time.time()
-            num = Fast_Parser.num_combinations(forest)
-            if num > 1:
-                # Reduce the parse forest to a single
-                # "best" (highest-scoring) parse tree
-                forest, score = self.reducer.go_with_score(forest)
-                assert forest is not None
+
+            def parsed() -> None:
+                """Note the time when the parser is done"""
+                nonlocal t1
+                t1 = time.time()
+
+            # Parse the tokens, and reduce the resulting parse forest
+            # to a single "best" (highest-scoring) parse tree
+            forest, num, score = self.reducer.parse_and_reduce(
+                self.parser, tokens, root=self._root, on_parsed=parsed
+            )
             return forest, num, score
         finally:
             # Accumulate statistics in the job object

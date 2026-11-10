@@ -95,9 +95,26 @@ declarations = """
         void* pForest;
     };
 
+    struct Reduction {
+        UINT nStart;
+        UINT nEnd;
+        UINT nOptions;
+        const INT* pnOptions;
+        UINT nCombBytes;
+        const BYTE* pbComb;
+        INT nScore;
+        UINT nOut;
+        const INT* pnOut;
+        // (Further members are private to the C++ side)
+    };
+
     typedef BOOL (*MatchingFunc)(UINT nHandle, UINT nToken, UINT nTerminal);
     typedef BYTE* (*AllocFunc)(UINT nHandle, UINT nToken, UINT nSize);
     typedef const BYTE* (*MeaningsFunc)(UINT nHandle, UINT nToken);
+    typedef INT (*PrepBonusFunc)(UINT nHandle, UINT nPrepTerminal, UINT nPrepToken,
+        UINT nVerbTerminal, UINT nVerbToken);
+    typedef INT (*ParticleBonusFunc)(UINT nHandle, UINT nParticleToken,
+        const UINT* pnVerbs, UINT nVerbs);
 
     struct Node* earleyParse(struct Parser*, UINT nTokens, INT iRoot, UINT nHandle, UINT* pnErrorToken);
     struct Grammar* newGrammar(const CHAR* pszGrammarFile);
@@ -111,6 +128,15 @@ declarations = """
     void setMatchingTable(struct Parser*, const BYTE* pSpecs, UINT nSpecs,
         MeaningsFunc fpMeanings, const BYTE* pMasks, BOOL bParity);
     UINT getParityMismatches(struct Parser*);
+    void setLookahead(struct Parser*, BOOL);
+
+    void setReducerTables(struct Parser*,
+        const UINT* pnNtFlags, const INT* pnNtScores, UINT nNonterminals,
+        const BYTE* pbTermFlags, UINT nTerminals,
+        PrepBonusFunc fpPrepBonus, ParticleBonusFunc fpParticleBonus,
+        INT nPrepBonus, INT nLengthFactor);
+    struct Reduction* reduceStart(struct Parser*, struct Node* pRoot);
+    BOOL reduceFinish(struct Reduction*, const INT* pnScores, UINT nHandle);
 
     void printAllocationReport(void);
 
@@ -124,6 +150,8 @@ callbacks = """
     extern "Python" BOOL matching_func(UINT, UINT, UINT);
     extern "Python" BYTE* alloc_func(UINT, UINT, UINT);
     extern "Python" const BYTE* meanings_func(UINT, UINT);
+    extern "Python" INT prep_bonus_func(UINT, UINT, UINT, UINT, UINT);
+    extern "Python" INT particle_bonus_func(UINT, UINT, const UINT*, UINT);
 
 """
 
@@ -172,7 +200,7 @@ ffibuilder.set_source(
     # This is the reason for the "extern 'C' { ... }" wrapper.
     'extern "C" {\n' + declarations + "\n}\n",
     source_extension=".cpp",
-    sources=["src/reynir/eparser.cpp"],
+    sources=["src/reynir/eparser.cpp", "src/reynir/ereducer.cpp"],
     extra_compile_args=extra_compile_args,
     py_limited_api=py_limited_api,
 )

@@ -7,7 +7,8 @@
     and evalMatch() in eparser.cpp). Verifies that the fast path is
     enabled by default, produces results identical to Python matching,
     reports zero discrepancies in parity mode, and is automatically
-    disabled for parser subclasses that override token wrapping.
+    disabled for parser subclasses whose tokens may match terminals
+    in ways that the fast path does not replicate.
 
 """
 
@@ -230,20 +231,145 @@ def test_python_matching_switch():
         assert g.parse_single(sentence).combinations == native
 
 
-def test_gate_subclass_wrap_token():
-    """A parser subclass that overrides token wrapping (as e.g.
-    GreynirCorrect does) must automatically fall back to Python matching"""
+def _combinations(fp: Fast_Parser) -> List[Optional[int]]:
+    """Parse the corpus with the given parser. Returns, per sentence, the
+    number of parse trees in the forest, or None if there is no parse."""
+    g = Greynir()
+    results: List[Optional[int]] = []
+    for s in SENTENCES:
+        forest = fp.go_no_exc(list(g.tokenize(s)))
+        results.append(
+            None if forest is None else Fast_Parser.num_combinations(forest)
+        )
+    return results
 
-    class TokenWrappingParser(Fast_Parser):
+
+def test_gate_token_subclass_with_verb_hooks():
+    """A parser whose tokens are of a class derived from BIN_Token, which
+    only overrides the hooks that BIN_Token.verb_matches() calls (as the
+    tokens of GreynirCorrect do), uses native matching. Verb terminals are
+    matched with verbs in Python, so the overrides are in effect."""
+
+    class StrictToken(BIN_Token):
+        def __init__(self, t, original_index):
+            super().__init__(t, original_index)
+            self.extra = 1
+
+        @classmethod
+        def verb_matches_arguments(cls, key):
+            # Don't allow verbs to have two arguments
+            return key.count("_") < 2 and super().verb_matches_arguments(key)
+
+    class StrictParser(Fast_Parser):
         @staticmethod
         def wrap_token(t, ix):
-            return BIN_Token(t, ix)
+            return StrictToken(t, ix)
 
-    fp = TokenWrappingParser()
+    class PythonStrictParser(StrictParser):
+        _USE_CPP_MATCHING = False
+
+    assert StrictParser._native_token_class() is StrictToken
+    fp = Fast_Parser()
+    sfp = StrictParser()
+    pfp = PythonStrictParser()
+    try:
+        assert sfp.uses_native_matching
+        assert not pfp.uses_native_matching
+        strict = _combinations(sfp)
+        # The same results as with Python matching throughout
+        assert strict == _combinations(pfp)
+        # ...and not the same as with normal tokens
+        assert strict != _combinations(fp)
+    finally:
+        fp.cleanup()
+        sfp.cleanup()
+        pfp.cleanup()
+
+
+def test_gate_token_subclass_parity(monkeypatch):
+    """Native matching of tokens of a derived class agrees with
+    Python matching in every single evaluation"""
+
+    class MyToken(BIN_Token):
+        @classmethod
+        def verb_is_strictly_impersonal(cls, verb, form):
+            return False
+
+    class MyParser(Fast_Parser):
+        @staticmethod
+        def wrap_token(t, ix):
+            return MyToken(t, ix)
+
+    monkeypatch.setenv("GREYNIR_MATCHING_PARITY", "1")
+    fp = MyParser()
+    try:
+        assert fp.uses_native_matching
+        results = _combinations(fp)
+        assert fp.parity_mismatches == 0
+        assert sum(1 for r in results if r is not None) >= len(SENTENCES) - 2
+    finally:
+        fp.cleanup()
+
+
+def test_gate_token_subclass_with_other_overrides():
+    """A parser whose tokens may match terminals differently from
+    BIN_Token in ways that the native fast path does not know about
+    automatically falls back to Python matching"""
+
+    class WordToken(BIN_Token):
+        def matches_WORD(self, terminal):
+            return super().matches_WORD(terminal)
+
+    class KeyToken(BIN_Token):
+        @property
+        def key(self):
+            return super().key
+
+    class HashToken(BIN_Token):
+        def __hash__(self):
+            return 1
+
+    class GrandchildToken(WordToken):
+        pass
+
+    class NotAToken:
+        def __init__(self, t, ix):
+            pass
+
+    for token_class in (WordToken, KeyToken, HashToken, GrandchildToken, NotAToken):
+
+        class MyParser(Fast_Parser):
+            @staticmethod
+            def wrap_token(t, ix, token_class=token_class):
+                return token_class(t, ix)
+
+        assert MyParser._native_token_class() is None, token_class.__name__
+
+    class WordParser(Fast_Parser):
+        @staticmethod
+        def wrap_token(t, ix):
+            return WordToken(t, ix)
+
+    fp = WordParser()
     try:
         assert not fp.uses_native_matching
     finally:
         fp.cleanup()
+
+    class WrappingParser(Fast_Parser):
+        def _wrap(self, tokens):
+            return super()._wrap(tokens)
+
+    assert WrappingParser._native_token_class() is None
+
+    # A parser that wraps its tokens in plain BIN_Token objects, in
+    # its own way, does use native matching
+    class PlainParser(Fast_Parser):
+        @staticmethod
+        def wrap_token(t, ix):
+            return BIN_Token(t, ix)
+
+    assert PlainParser._native_token_class() is BIN_Token
 
 
 def test_gate_class_flag():
