@@ -1,18 +1,25 @@
 # Performance of the C++ Earley-Scott core
 
-Status: IMPLEMENTED (stages 1 and 2) — 2026-11-10; section 8: findings only
+Status: IMPLEMENTED (stages 1, 2 and 3) — 2026-11-10; section 8: findings
+only (its lookahead filter is implemented in stage 3)
 
 ## 0. Summary
 
-This document describes two rounds of work on the speed of the parser
-core. Sections 0 to 5 are about the first one (stage 1), which left the
-output of the core unchanged in every detail. Section 7 is about the
-second one (stage 2), which changes the order of the families of children
-in the parse forest but not their content, and also cuts down on the calls
-from the core into Python. Section 8 records an investigation of further
-algorithmic changes (lookahead in the predictor, Leo's optimization, GLR),
-none of which is implemented. Taken together, on the machine where stage 2
-was done:
+This document describes three rounds of work on the speed of parsing.
+Sections 0 to 5 are about the first one (stage 1), which left the
+output of the parser core unchanged in every detail. Section 7 is about
+the second one (stage 2), which changes the order of the families of
+children in the parse forest but not their content, and also cuts down on
+the calls from the core into Python. Section 8 records an investigation of
+further algorithmic changes (lookahead in the predictor, Leo's
+optimization, GLR). Section 9 is about the third round (stage 3), which
+goes beyond the core: the parse forest is now reduced in C++ rather than
+in Python, the core has a lookahead filter, and the native matching of
+tokens with terminals also serves GreynirCorrect. Stage 3 made parsing
+of news text about 8x faster again (3.7x for text that has not been seen
+before); its results are in section 9.
+
+Stages 1 and 2 taken together, on the machine where stage 2 was done:
 
 | `benchmarks/corpus.txt` | Before | After stage 2 | Speedup |
 |---|---|---|---|
@@ -401,11 +408,14 @@ The core is now 28% of the time of a warm parse and 58% of a cold one.
    further, but is a redesign of its main loop. Section 8 has
    measurements and a prototype of such a filter.
 
-## 8. Algorithmic options after stage 2 (investigated, not implemented)
+## 8. Algorithmic options after stage 2 (investigated)
 
-Status: FINDINGS ONLY — 2026-11-10. Nothing in this section is in the
-code. It records what was measured, so that the work can be picked up
-later.
+Status: FINDINGS ONLY — 2026-11-10. This section records what was
+measured after stage 2, before stage 3 was done. Of what it suggests, the
+reduction of the forest outside Python and the lookahead filter are now
+implemented (section 9); the filter was done differently from the
+prototype described here, in a way that has no cost on a cold pass.
+Precomputed nullability is not implemented.
 
 The question was whether a change of algorithm - Joop Leo's optimization
 for right recursion, or a generalized LR parser (GLR) in place of Earley
@@ -596,3 +606,272 @@ worked out. This was not prototyped, and the gain is an estimate.
    cold pass.
 3. Precomputed nullability.
 4. Not Leo's optimization, and not GLR.
+
+## 9. Stage 3: reduction in C++, lookahead, and native matching for derived tokens
+
+Status: IMPLEMENTED — 2026-11-10
+
+After stage 2, the core was 28% of a warm parse of `benchmarks/corpus.txt`.
+Timing the phases of a warm parse showed where the rest went (51 short
+sentences; 1,000 sentences of news text, 19 tokens on average):
+
+| Phase | `corpus.txt` | News text |
+|---|---|---|
+| Core (`earleyParse()`) | 28% | 14% |
+| The forest in Python: conversion to Python objects, counting the trees, finding the terminals of each token, scoring and reduction | 59% | 82% |
+| Tokenization | 6% | 3% |
+| Simplification of the tree | 4% | 1.5% |
+
+The forest that the core returns has about 700 nodes for a sentence of 12
+tokens, and grows much faster than the sentence. Python walked all of it
+four times (the conversion, which created an object for each node, and
+three passes over those objects) to arrive at a tree of about 80 nodes.
+For news text, this was six times the work of the core.
+
+### 9.1 The reducer in C++
+
+`ereducer.cpp` (new) does all of the above on the forest as the core left
+it, and hands Python a serialized form of the resulting tree only:
+
+1. It derives the logical forest from the binarized one, as
+   `Node.from_c_node()` does: the interior nodes of a production are
+   folded into the list of children of the completed nonterminal, nodes
+   that span no tokens are dropped, and only the families with the highest
+   priority are kept.
+2. It counts the trees in the forest, with integers of arbitrary size
+   (the longest sentences in a sample of news text have up to 8 x 10^24
+   trees, which does not fit in 64 bits).
+3. It lists the terminals that each token is matched with. Python scores
+   those matches, with the same heuristics as before
+   (`Reducer._score_options()`), and passes the scores back.
+4. It scores the forest and picks the winning family of each node,
+   following `ParseForestReducer.go()` to the letter: the same scopes for
+   verbs and prepositions, the same memoization by context, the same
+   tie-breaks.
+5. It serializes the winning tree. `Node.from_serialized()` creates the
+   Python nodes: about a tenth of what was created before.
+
+What the reducer needs to know about the grammar (the tags of the
+nonterminals, their score adjustments, the categories of the terminals)
+arrives as tables when a parser is first used (`ReducerTables` in
+`eparser.h`). What depends on the vocabulary is asked of Python through
+two callbacks: does this verb take that preposition, or that particle?
+They are few (about eight per sentence of news text) and are answered
+by the same methods as before (`verb_prep_bonus()`,
+`verb_particle_bonus()`).
+
+**The Python implementation remains**, as the reference and as the
+fallback. `Reducer.parse_and_reduce()` is the new entry point, used by
+`Greynir` and `IncrementalParser`; it gives the same result as calling
+`Fast_Parser.go()`, `Fast_Parser.num_combinations()` and
+`Reducer.go_with_score()` in turn, which still work as before, in Python.
+The C++ reducer stands aside, and the work is done in Python, if:
+
+* the environment variable `GREYNIR_DISABLE_CPP_REDUCER` is set, or a
+  class derived from `Reducer` sets `_USE_CPP_REDUCER = False`;
+* a derived class overrides any of the methods that the C++ code
+  replicates (`Reducer.go_with_score()`, `_reduce()`,
+  `_calc_terminal_scores()`, `_find_options()`, the class of the forest
+  reducer; `Fast_Parser.go()`, `num_combinations()`);
+* the forest has a cycle, or is more than 1,000 levels deep (the limit
+  bounds the use of the native stack; the Python implementation is bound
+  by the recursion limit of the interpreter in the same way).
+
+**The two must give identical results**: the same tree, the same score of
+every node, the same number of trees. Some details that this required:
+
+* The score that ends up on a node which is scored in several verb
+  contexts is the one from the context that was first seen last.
+* A node that is shared between two contexts in the resulting forest
+  (possible below a nonterminal tagged `no_reduce`) is reduced the way
+  that the first context to reach it wants.
+* Lists of verbs are compared by content in the context signatures, so
+  the C++ code interns them.
+
+With the environment variable `GREYNIR_REDUCER_PARITY` set, every sentence
+is reduced both ways and the results are compared, node by node
+(`same_forest()` in `reducer.py`); differences are counted in
+`Reducer.parity_mismatches`, and the Python result is returned. **A change
+to `reducer.py` or to `Node.from_c_node()` must be mirrored in
+`ereducer.cpp`**; `test/test_reducer.py` and the parity mode are there to
+catch it if it is not.
+
+### 9.2 The lookahead filter
+
+A state of the parser can only ever advance if what follows its dot can
+begin with the current token, or can derive nothing at all. States for
+which neither holds are dead weight, and they were five out of six (section
+8). They are no longer created. This applies to all states, not only to
+the predictions: also to those that the completer and the scanner create.
+
+When a grammar is loaded, `Grammar::analyze()` calculates:
+
+* which nonterminals are nullable;
+* a division of the nonterminals into classes, such that the
+  nonterminals of a class can begin with exactly the same tokens. A class
+  is a strongly connected component of the graph of "something derived
+  from A can begin with B". The grammar has 7,315 nonterminals in about
+  7,100 classes, so nearly all classes have one member, but those that
+  have more make the graph of classes free of cycles;
+* for each class, the terminals that its nonterminals can begin with
+  directly, and the other classes that they can begin with;
+* for each position of the dot in each production, a filter: what to look
+  at to tell whether a state with that dot is viable (`LF_*` in
+  `eparser.h`). For most positions this is a single terminal or a single
+  class.
+
+Whether a class can begin with a token is found out by a depth-first
+search through the classes, asking whether the token matches their
+terminals. The answer is kept in two bits per class, in the same buffer as
+the matching cache of the token, so it is only calculated the first time
+that a token (by its key) is seen in a process; after that, the test of a
+state is a lookup. The search asks about a subset of the terminals that
+the core asked about before, in a different order, so **a cold pass has no
+more calls into Python than before**. This was the weakness of the
+prototype in section 8, which matched all terminals with every token.
+
+**The error position is unchanged.** With the filter, the core can find out
+that a parse is going to fail one column earlier than it did. It then
+stops, and reports the token where the failure would have been found
+without the filter (`bStopped` in `Parser::parse()`), so `ParseError`
+carries the same token index as before.
+
+The filter can be turned off with the environment variable
+`GREYNIR_DISABLE_LOOKAHEAD` (`setLookahead()` in the C interface). This
+changes nothing but the time that a parse takes.
+
+Results for the core, per token of `benchmarks/corpus.txt`: the warm
+pass went from 0.21 ms to 0.055 ms.
+
+### 9.3 Memory
+
+The matching cache has an entry for every distinct token seen (up to
+25,000 of them). An entry was a byte per terminal, 6,265 bytes. It is now
+two bits per terminal and two bits per class of nonterminals, 3,340 bytes
+in all, so the cache takes about half the memory that it did, lookahead
+included. The entries of a token can be written by more than one thread;
+bits are only ever set, and to the same values by all, so the worst that
+can happen is that an answer is calculated twice.
+
+Measured over 1,000 sentences of news text (5,957 distinct tokens):
+
+| | Before | After |
+|---|---|---|
+| Growth of resident memory | 108 MB | 70 MB |
+| Peak resident memory | 415 MB | 336 MB |
+| Matching cache | 37.3 MB | 19.9 MB |
+
+The peak is lower because far fewer states and tree nodes are created
+during a parse, and because the forest no longer exists as Python objects.
+A tree node of the core is 8 bytes larger than before (a pointer to its
+counterpart in the reducer); the grammar takes about a megabyte more (the
+filters and the classes).
+
+### 9.4 Native matching for derived token classes
+
+Native matching (stage 2 and before) was turned off for any parser that
+overrides `wrap_token()`, since its tokens might match terminals
+differently. That was the case for GreynirCorrect, which therefore matched
+everything in Python, which was most of the time of a first pass over
+new text.
+
+The token class of GreynirCorrect only overrides what
+`BIN_Token.verb_matches()` consults (`verb_matches_arguments()` and the
+like), and that method is only used when a verb terminal is matched with a
+verb, which is done in Python in any case. The gate now looks at the class
+of the tokens that a parser creates (`Fast_Parser._native_token_class()`):
+native matching is used if the class is `BIN_Token`, or is derived from it
+without overriding anything but those hooks. No change is needed in
+GreynirCorrect.
+
+### Results
+
+`benchmarks/bench_parse.py`, the commit before stage 3 against stage 3, on
+the same machine; the fastest pass of several:
+
+| `benchmarks/corpus.txt` (51 sentences, 599 tokens) | Before | After | Speedup |
+|---|---|---|---|
+| Whole parse, warm | 0.44 s | 0.105 s | 4.2x |
+| Core, warm | 0.137 s | 0.033 s | 4.2x |
+| Whole parse, cold | 0.79 s | 0.48 s | 1.6x |
+| Core, cold | 0.46 s | 0.38 s | 1.2x |
+
+| 1,000 sentences of news text (19,213 tokens) | Before | After | Speedup |
+|---|---|---|---|
+| Whole parse, warm | 36.5 s | 4.7 s | 7.8x |
+| Core, warm | 5.0 s | 1.5 s | 3.3x |
+| Whole parse, first pass | 41.9 s | 11.3 s | 3.7x |
+| Core, first pass | 11.3 s | 7.9 s | 1.4x |
+
+The first pass over the news text is 'cold' to the extent that its tokens
+are new: this is what a process sees when it parses text that it has not
+parsed before.
+
+GreynirCorrect, checking 300 sentences of news text (its own work, such as
+spelling correction, included):
+
+| | Before | After | Speedup |
+|---|---|---|---|
+| First pass | 40.0 s | 6.8 s | 5.8x |
+| Second pass | 15.4 s | 3.9 s | 3.9x |
+
+### Verification
+
+* **The reducer**: the C++ and Python implementations agree, node for
+  node and score for score, on 3,709 sentences in parity mode (and on
+  GreynirCorrect's error grammar). `test/test_reducer.py` compares the two
+  on thousands of sentences of pseudo-random grammars, with random tags,
+  priorities, scores and bonuses, which exercises what real text rarely
+  does (`no_reduce`, nodes scored in several contexts, exact ties). Of 26
+  bugs deliberately introduced into `ereducer.cpp`, one at a time, the
+  tests catch 25; the remaining one is in a comparison that can't decide
+  anything (the starting positions of children in a tie-break, which
+  follow from the ending positions of the children before them).
+* **The lookahead filter**: order-independent forest digests are identical
+  with and without it for 728 sentences. `test/test_earley_core.py`
+  compares forests and error positions with and without the filter over
+  pseudo-random grammars, half of them with empty productions. Of 17 bugs
+  deliberately introduced into the filter and the code around it, the
+  tests catch 15; the other two make the filter let more states through
+  than it should, which only costs time.
+* **End to end**: trees, scores, numbers of trees and error positions are
+  identical to those of the previous commit for 3,764 sentences (389 of
+  which do not parse).
+* **GreynirCorrect**: its test suite passes; trees and annotations for 300
+  sentences are identical to those from the previous commit; no
+  discrepancies in matching or reducer parity mode.
+* **Sanitizers**: the core, reducer, matching and binary grammar tests,
+  and 2,160 sentences in parity mode, run clean under AddressSanitizer and
+  UBSan with the assertions of the core enabled. (This turned up an
+  assertion in `Parser::push()` that was stricter than the code it guards;
+  it has been removed.)
+* The full test suite, ruff and mypy pass; the core, reducer and matching
+  tests pass on PyPy 3.11; both C++ files compile with clang (libstdc++
+  and libc++).
+
+### What remains
+
+A warm parse of news text now divides into: the core 33%, the reduction
+30% (of which the C++ code is 17 points, the scoring of terminals in
+Python 5 and the creation of the Python nodes 5), tokenization 22%, and
+simplification of the tree 12%.
+
+1. **Verb terminals on a cold pass.** A first pass over news text takes
+   more than twice as long as a warm one, and about 40% of its time is
+   spent in Python deciding whether tokens match terminals (43 calls per
+   token): 77% of that for verb terminals (`BIN_Token.verb_matches()`: the
+   argument frames of `Verbs.conf`, impersonal verbs, subject cases) and
+   13% for adjective terminals. Verb terminals can be matched natively
+   if each verb meaning of a token carries a summary
+   of what the hooks say about its lemma (allowed argument cases, subject
+   cases, impersonal or not), computed through the hooks of the token
+   class so that GreynirCorrect is served as well. This is the largest
+   remaining item for text that has not been seen before.
+2. **Tokenization** is now a fifth of a warm parse. It has not been looked
+   at in this work.
+3. **Nullable nonterminals** (section 8) are still handled through the H
+   set of the core.
+4. **The reducer** creates a hash table entry per node and context; flat
+   tables indexed by node would be faster. Its Python part could move to
+   C++ as well, if the heuristics of `_score_options()` are expressed as
+   data.

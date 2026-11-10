@@ -49,6 +49,7 @@
 #include <assert.h>
 #include <time.h>
 #include <new>
+#include <vector>
 
 #include "eparser.h"
 
@@ -270,7 +271,15 @@ private:
    State** m_pNtStates;
    UINT64* m_pNtUsed; // Bitmap of the elements of m_pNtStates that are in use
    MatchingFunc m_pMatchingFunc; // Pointer to the token/terminal matching function
-   BYTE* m_abCache; // Matching cache, a true/false flag for every terminal in the grammar
+   // Matching cache: for every terminal in the grammar, two bits that
+   // tell whether the terminal matches the token of the column
+   // (0: not known yet; 2: no; 3: yes)
+   BYTE* m_abCache;
+   // Lookahead cache: for every class of nonterminals in the grammar, two
+   // bits that tell whether its nonterminals can begin with the token of
+   // the column (0: not known yet; 1: yes; 2: no). It follows the matching
+   // cache in the same buffer, and is thus kept with it between parses.
+   BYTE* m_abStart;
    BOOL m_bNeedsRelease; // Does the matching cache need to be explicitly released?
    const BYTE* m_pTokenRec; // Packed matching data for this column's token, or NULL
    State* m_pHead; // The first state in the column
@@ -287,6 +296,19 @@ private:
 
    // Obtain a matching result that is not in the cache
    BOOL matchUncached(UINT nHandle, UINT nTerminal) const;
+
+   // Find out whether a class of nonterminals can begin with
+   // the token of the column, and note it in the lookahead cache
+   BOOL computeStart(UINT nHandle, UINT nClass);
+
+   UINT getStart(UINT nClass) const
+      { return (this->m_abStart[nClass >> 2] >> ((nClass & 3) << 1)) & 3; }
+   // Note: the cache can be shared with parses of the same token in
+   // other threads, and this is not an atomic update. An update can
+   // therefore be lost, in which case the entry stays 'not known' and
+   // is simply calculated again; an entry never gets a wrong value.
+   void setStart(UINT nClass, UINT nValue)
+      { this->m_abStart[nClass >> 2] |= (BYTE)(nValue << ((nClass & 3) << 1)); }
 
 protected:
 
@@ -328,6 +350,10 @@ public:
          }
       }
 
+   // Is the column without states?
+   BOOL isEmpty(void) const
+      { return this->m_pHead == NULL; }
+
    // Start a fresh enumeration of the states
    void resetEnum(void)
       { this->m_pEnum = NULL; }
@@ -358,11 +384,24 @@ public:
             // Sentinel token in last column never matches
             return false;
          ASSERT(this->m_abCache != NULL);
-         BYTE b = this->m_abCache[nTerminal];
-         if (b & 0x80)
+         UINT b = this->m_abCache[nTerminal >> 2] >> ((nTerminal & 3) << 1);
+         if (b & 2)
             // We already have a cached result for this terminal
-            return (BOOL)(b & 0x01);
+            return (BOOL)(b & 1);
          return this->matchUncached(nHandle, nTerminal);
+      }
+
+   // Can the nonterminals of the given class begin with the token
+   // of this column, i.e. derive something that starts with it?
+   BOOL canStart(UINT nHandle, UINT nClass)
+      {
+         if (this->m_nToken == (UINT)-1)
+            // Nothing begins with the sentinel token in the last column
+            return false;
+         UINT nValue = this->getStart(nClass);
+         if (nValue)
+            return nValue == 1;
+         return this->computeStart(nHandle, nClass);
       }
 
 };
@@ -611,6 +650,7 @@ void Nonterminal::buildPredictions(void)
    for (Production* p = this->m_pProd; p; p = p->getNext(), i++) {
       pNew[i].pProd = p;
       pNew[i].iFirst = (*p)[0];
+      pNew[i].nFilter = p->getFilter(0);
    }
    if (this->m_pPredictions)
       delete [] this->m_pPredictions;
@@ -625,11 +665,18 @@ Production::Production(UINT nId, UINT nPriority, UINT n, const INT* pList)
    : m_nId(nId), m_nPriority(nPriority), m_n(n), m_pList(NULL), m_pNext(NULL)
 {
    Production::ac++;
-   // The list of items is terminated by a 0 item
-   this->m_pList = new INT[n + 1];
+   // The list of items is terminated by a 0 item, and
+   // followed by a lookahead filter for each dot position
+   this->m_pList = new INT[2 * (n + 1)];
    if (n > 0)
       ::memcpy((void*)this->m_pList, (void*)pList, n * sizeof(INT));
    this->m_pList[n] = 0;
+   // Until the grammar has been analyzed (see Grammar::analyze()),
+   // the filters only look at a terminal at the dot
+   for (UINT i = 0; i <= n; i++) {
+      INT iItem = this->m_pList[i];
+      this->setFilter(i, iItem > 0 ? (LF_TERMINAL | ((UINT)iItem << 2)) : LF_ALWAYS);
+   }
 }
 
 Production::~Production(void) {
@@ -781,7 +828,7 @@ Column::Column(Parser* pParser, UINT nToken)
       m_nToken(nToken),
       m_pNtStates(NULL), m_pNtUsed(NULL),
       m_pMatchingFunc(pParser->getMatchingFunc()),
-      m_abCache(NULL), m_bNeedsRelease(false),
+      m_abCache(NULL), m_abStart(NULL), m_bNeedsRelease(false),
       m_pTokenRec(NULL),
       m_pHead(NULL), m_pTail(NULL), m_pEnum(NULL),
       m_nMatches(0), m_nNativeMatches(0)
@@ -817,6 +864,8 @@ void Column::startParse(UINT nHandle)
    // (or eventually re-use a previous one)
    if (this->m_nToken != (UINT)-1) {
       this->m_abCache = this->m_pParser->allocCache(nHandle, this->m_nToken, &this->m_bNeedsRelease);
+      // The lookahead cache follows the matching cache
+      this->m_abStart = this->m_abCache + Parser::matchCacheSize(this->m_pParser->getNumTerminals());
       // Fetch the packed matching data for this column's token,
       // if a native matching table has been installed
       this->m_pTokenRec = this->m_pParser->fetchTokenRec(nHandle, this->m_nToken);
@@ -830,6 +879,7 @@ void Column::stopParse(void)
       // The matching cache needs to be released
       this->m_pParser->releaseCache(this->m_abCache);
    this->m_abCache = NULL;
+   this->m_abStart = NULL;
    this->m_pTokenRec = NULL;
    // Flush the locally accumulated matching statistics
    if (this->m_nMatches) {
@@ -851,6 +901,69 @@ static inline BOOL hasCategory(const BYTE* pTokenRec, UINT nCatId)
    for (UINT i = 0; i < n; i++)
       if (pm[i].nCatId == nCatId)
          return true;
+   return false;
+}
+
+BOOL Column::computeStart(UINT nHandle, UINT nClass)
+{
+   // Find out whether the nonterminals of a class can begin with the
+   // token of this column: they can if the token matches one of the
+   // terminals that they can begin with directly, or if the nonterminals
+   // of another class that they can begin with can. The classes form a
+   // directed graph without cycles (see Grammar::analyze()), which is
+   // searched depth-first here. The answers found on the way are noted in
+   // the lookahead cache; a class is never looked into more than once
+   // for a given token.
+   struct Frame {
+      UINT nClass;
+      UINT iTerminal;   // The next terminal to look at
+      UINT iNext;       // The next class to look at
+   };
+   std::vector<Frame> stack;
+   const Grammar* pGrammar = this->m_pParser->getGrammar();
+   Frame first = { nClass, 0, 0 };
+   stack.push_back(first);
+   while (!stack.empty()) {
+      Frame& f = stack.back();
+      const UINT* pData = pGrammar->getClassData(f.nClass);
+      UINT nTerminals = *pData++;
+      const UINT* pTerminals = pData;
+      pData += nTerminals;
+      UINT nNext = *pData++;
+      BOOL bFound = false;
+      BOOL bDescend = false;
+      while (f.iTerminal < nTerminals)
+         if (this->matches(nHandle, pTerminals[f.iTerminal++])) {
+            bFound = true;
+            break;
+         }
+      while (!bFound && f.iNext < nNext) {
+         UINT nNextClass = pData[f.iNext++];
+         UINT nValue = this->getStart(nNextClass);
+         if (nValue == 1)
+            bFound = true;
+         else
+         if (nValue == 0) {
+            // Not known: look into that class
+            bDescend = true;
+            Frame next = { nNextClass, 0, 0 };
+            stack.push_back(next); // Note: this invalidates f
+            break;
+         }
+      }
+      if (bFound) {
+         // The classes on the stack lead to each other, so the
+         // nonterminals of all of them can begin with the token
+         for (size_t i = 0; i < stack.size(); i++)
+            this->setStart(stack[i].nClass, 1);
+         return true;
+      }
+      if (bDescend)
+         continue;
+      // Neither the terminals of the class nor its other classes
+      this->setStart(f.nClass, 2);
+      stack.pop_back();
+   }
    return false;
 }
 
@@ -904,7 +1017,12 @@ BOOL Column::matchUncached(UINT nHandle, UINT nTerminal) const
    }
    this->m_nMatches++; // Count calls to the matching function
    // Mark our cache
-   this->m_abCache[nTerminal] = b ? (BYTE)0x81 : (BYTE)0x80;
+   // Note: as for the lookahead cache (see setStart()), this update is
+   // not atomic, and the cache can be shared with other threads. Bits are
+   // only ever set, and to the same values by all threads, so an entry
+   // can't get a wrong value; if an update is lost, the entry stays
+   // 'not known' and the match is simply evaluated again.
+   this->m_abCache[nTerminal >> 2] |= (BYTE)((b ? 3u : 2u) << ((nTerminal & 3) << 1));
    return b;
 }
 
@@ -945,7 +1063,8 @@ public:
 AllocCounter Grammar::ac;
 
 Grammar::Grammar(UINT nNonterminals, UINT nTerminals, INT iRoot)
-   : m_nNonterminals(nNonterminals), m_nTerminals(nTerminals), m_iRoot(iRoot), m_nts(NULL)
+   : m_nNonterminals(nNonterminals), m_nTerminals(nTerminals), m_iRoot(iRoot), m_nts(NULL),
+      m_nClasses(0), m_pnClass(NULL), m_pnClassOffset(NULL), m_pnClassData(NULL)
 {
    Grammar::ac++;
    this->m_nts = new Nonterminal*[nNonterminals];
@@ -953,7 +1072,8 @@ Grammar::Grammar(UINT nNonterminals, UINT nTerminals, INT iRoot)
 }
 
 Grammar::Grammar(void)
-   : m_nNonterminals(0), m_nTerminals(0), m_iRoot(0), m_nts(NULL)
+   : m_nNonterminals(0), m_nTerminals(0), m_iRoot(0), m_nts(NULL),
+      m_nClasses(0), m_pnClass(NULL), m_pnClassOffset(NULL), m_pnClassData(NULL)
 {
    Grammar::ac++;
 }
@@ -976,6 +1096,249 @@ void Grammar::reset(void)
    this->m_nNonterminals = 0;
    this->m_nTerminals = 0;
    this->m_iRoot = 0;
+   delete [] this->m_pnClass;
+   delete [] this->m_pnClassOffset;
+   delete [] this->m_pnClassData;
+   this->m_nClasses = 0;
+   this->m_pnClass = NULL;
+   this->m_pnClassOffset = NULL;
+   this->m_pnClassData = NULL;
+}
+
+void Grammar::analyze(void)
+{
+   // Calculate what the lookahead filter of the parser needs to know
+   // about the grammar: the filters of the productions (see the LF_*
+   // constants in eparser.h) and the classes of nonterminals.
+   UINT nNt = this->m_nNonterminals;
+   if (!nNt || this->m_pnClass)
+      return;
+
+   // Step 1: find the nullable nonterminals, i.e. those that can derive
+   // nothing, by iterating until nothing changes
+   std::vector<BYTE> nullable(nNt, 0);
+   for (BOOL bChanged = true; bChanged; ) {
+      bChanged = false;
+      for (UINT i = 0; i < nNt; i++) {
+         if (nullable[i] || !this->m_nts[i])
+            continue;
+         for (Production* p = this->m_nts[i]->getHead(); p; p = p->getNext()) {
+            UINT n = p->getLength();
+            UINT k = 0;
+            while (k < n && (*p)[k] < 0 && nullable[~((UINT)(*p)[k])])
+               k++;
+            if (k == n) {
+               // All items are nullable (or there are none)
+               nullable[i] = 1;
+               bChanged = true;
+               break;
+            }
+         }
+      }
+   }
+
+   // Step 2: for each nonterminal A, list the nonterminals B that
+   // something derived from A can begin with in one step: those that
+   // are first in a production of A, or are only preceded there by
+   // nullable nonterminals
+   std::vector<UINT> edgeStart(nNt + 1, 0);
+   std::vector<UINT> edges;
+   for (UINT i = 0; i < nNt; i++) {
+      edgeStart[i] = (UINT)edges.size();
+      if (!this->m_nts[i])
+         continue;
+      for (Production* p = this->m_nts[i]->getHead(); p; p = p->getNext())
+         for (UINT k = 0; (*p)[k] < 0; k++) {
+            UINT nB = ~((UINT)(*p)[k]);
+            edges.push_back(nB);
+            if (!nullable[nB])
+               break;
+         }
+   }
+   edgeStart[nNt] = (UINT)edges.size();
+
+   // Step 3: divide the nonterminals into classes, where two nonterminals
+   // are in the same class if each can occur at the start of something
+   // derived from the other. Such nonterminals can begin with exactly the
+   // same tokens. The classes are the strongly connected components of
+   // the graph from step 2 (Tarjan's algorithm, without recursion, since
+   // the chains in the graph can be long).
+   const UINT NONE = (UINT)-1;
+   std::vector<UINT> index(nNt, NONE);
+   std::vector<UINT> low(nNt, 0);
+   std::vector<UINT> cls(nNt, NONE);
+   std::vector<BYTE> onStack(nNt, 0);
+   std::vector<UINT> stack;
+   struct Frame {
+      UINT nNt;
+      UINT nEdge;
+   };
+   std::vector<Frame> calls;
+   UINT nIndex = 0;
+   UINT nClasses = 0;
+   for (UINT nRoot = 0; nRoot < nNt; nRoot++) {
+      if (index[nRoot] != NONE)
+         continue;
+      Frame root = { nRoot, edgeStart[nRoot] };
+      calls.push_back(root);
+      index[nRoot] = low[nRoot] = nIndex++;
+      stack.push_back(nRoot);
+      onStack[nRoot] = 1;
+      while (!calls.empty()) {
+         Frame& f = calls.back();
+         UINT v = f.nNt;
+         if (f.nEdge < edgeStart[v + 1]) {
+            UINT w = edges[f.nEdge++];
+            if (index[w] == NONE) {
+               index[w] = low[w] = nIndex++;
+               stack.push_back(w);
+               onStack[w] = 1;
+               Frame next = { w, edgeStart[w] };
+               calls.push_back(next); // Note: this invalidates f
+            }
+            else
+            if (onStack[w] && index[w] < low[v])
+               low[v] = index[w];
+         }
+         else {
+            if (low[v] == index[v]) {
+               // v is the root of a component
+               UINT w;
+               do {
+                  w = stack.back();
+                  stack.pop_back();
+                  onStack[w] = 0;
+                  cls[w] = nClasses;
+               } while (w != v);
+               nClasses++;
+            }
+            calls.pop_back();
+            if (!calls.empty()) {
+               UINT u = calls.back().nNt;
+               if (low[v] < low[u])
+                  low[u] = low[v];
+            }
+         }
+      }
+   }
+
+   // Step 4: describe each class by the terminals that its nonterminals
+   // can begin with directly, and by the other classes that their
+   // nonterminals can begin with. This is a graph without cycles.
+   std::vector<UINT> memberStart(nClasses + 1, 0);
+   std::vector<UINT> members(nNt);
+   for (UINT i = 0; i < nNt; i++)
+      memberStart[cls[i] + 1]++;
+   for (UINT c = 0; c < nClasses; c++)
+      memberStart[c + 1] += memberStart[c];
+   std::vector<UINT> fill(memberStart.begin(), memberStart.end() - 1);
+   for (UINT i = 0; i < nNt; i++)
+      members[fill[cls[i]]++] = i;
+   std::vector<UINT> seenTerminal(this->m_nTerminals + 1, NONE);
+   std::vector<UINT> seenClass(nClasses, NONE);
+   std::vector<UINT> offsets(nClasses, 0);
+   std::vector<UINT> data;
+   std::vector<UINT> terminals;
+   std::vector<UINT> classes;
+   for (UINT c = 0; c < nClasses; c++) {
+      terminals.clear();
+      classes.clear();
+      for (UINT m = memberStart[c]; m < memberStart[c + 1]; m++) {
+         Nonterminal* pnt = this->m_nts[members[m]];
+         if (!pnt)
+            continue;
+         for (Production* p = pnt->getHead(); p; p = p->getNext())
+            for (UINT k = 0; ; k++) {
+               INT iItem = (*p)[k];
+               if (iItem == 0)
+                  break;
+               if (iItem > 0) {
+                  if (seenTerminal[iItem] != c) {
+                     seenTerminal[iItem] = c;
+                     terminals.push_back((UINT)iItem);
+                  }
+                  break;
+               }
+               UINT nB = ~((UINT)iItem);
+               UINT nClassB = cls[nB];
+               if (nClassB != c && seenClass[nClassB] != c) {
+                  seenClass[nClassB] = c;
+                  classes.push_back(nClassB);
+               }
+               if (!nullable[nB])
+                  break;
+            }
+      }
+      offsets[c] = (UINT)data.size();
+      data.push_back((UINT)terminals.size());
+      data.insert(data.end(), terminals.begin(), terminals.end());
+      data.push_back((UINT)classes.size());
+      data.insert(data.end(), classes.begin(), classes.end());
+   }
+
+   // Step 5: set the lookahead filter for each dot position of each
+   // production, working from the end of the production
+   for (UINT i = 0; i < nNt; i++) {
+      if (!this->m_nts[i])
+         continue;
+      for (Production* p = this->m_nts[i]->getHead(); p; p = p->getNext()) {
+         UINT n = p->getLength();
+         // Can everything from the dot to the end derive nothing?
+         BOOL bNullable = true;
+         UINT nNext = LF_ALWAYS; // The filter for the dot one step further
+         p->setFilter(n, LF_ALWAYS);
+         for (UINT d = n; d-- > 0; ) {
+            INT iItem = (*p)[d];
+            UINT nFilter;
+            if (iItem > 0) {
+               nFilter = LF_TERMINAL | ((UINT)iItem << 2);
+               bNullable = false;
+            }
+            else
+            if (!nullable[~((UINT)iItem)]) {
+               nFilter = LF_START | (cls[~((UINT)iItem)] << 2);
+               bNullable = false;
+            }
+            else
+            if (bNullable)
+               nFilter = LF_ALWAYS;
+            else {
+               // A nullable nonterminal, followed by something that
+               // is not nullable as a whole: the nonterminal counts,
+               // along with the items that count for the next position
+               UINT nCount = 1 + ((nNext & 3) == LF_MULTI ? (nNext >> 2) : 1);
+               nFilter = LF_MULTI | (nCount << 2);
+            }
+            p->setFilter(d, nFilter);
+            nNext = nFilter;
+         }
+      }
+      // The prediction table has a copy of the filters for the first position
+      this->m_nts[i]->buildPredictions();
+   }
+
+   // Keep the description of the classes
+   UINT* pnClass = NULL;
+   UINT* pnClassOffset = NULL;
+   UINT* pnClassData = NULL;
+   try {
+      pnClass = new UINT[nNt];
+      pnClassOffset = new UINT[nClasses];
+      pnClassData = new UINT[data.size()];
+   }
+   catch (...) {
+      delete [] pnClass;
+      delete [] pnClassOffset;
+      delete [] pnClassData;
+      throw;
+   }
+   memcpy(pnClass, &cls[0], nNt * sizeof(UINT));
+   memcpy(pnClassOffset, &offsets[0], nClasses * sizeof(UINT));
+   memcpy(pnClassData, &data[0], data.size() * sizeof(UINT));
+   this->m_nClasses = nClasses;
+   this->m_pnClass = pnClass;
+   this->m_pnClassOffset = pnClassOffset;
+   this->m_pnClassData = pnClassData;
 }
 
 class GrammarResetter {
@@ -1125,6 +1488,8 @@ BOOL Grammar::readBinary(const CHAR* pszFilename)
    printf("Reading completed\n");
    fflush(stdout);
 #endif
+   // Calculate the lookahead filters
+   this->analyze();
    // No error: we disarm the resetter
    resetter.disarm();
    return true;
@@ -1158,92 +1523,8 @@ const WCHAR* Grammar::nameOfNt(INT iNt) const
 AllocCounter Node::ac;
 
 
-class Forest {
-
-   // A Forest owns the storage of all tree nodes, and of their families
-   // of children, that are created during a parse. Storage is handed
-   // out sequentially from large slabs and is never released piecemeal:
-   // it is all freed in one go when the Forest is deleted, which happens
-   // in deleteForest() - or at the end of the parse, if it fails.
-
-   // Most nodes created during a parse do not end up in the resulting
-   // tree. They used to be reference counted and released as soon as
-   // possible, at a considerable cost on the hot path of the parser.
-   // Now, they simply stay in the Forest until it is deleted, which is
-   // typically a few milliseconds after the parse completes.
-
-private:
-
-   static const UINT SLAB_ITEMS = 8 * 1024; // 64 KB on a 64-bit platform
-
-   struct Slab {
-      Slab* pNext;
-      void* aStorage[SLAB_ITEMS];   // Pointer-aligned storage
-   };
-
-   Slab* m_pSlabs;      // List of all slabs, the newest one first
-   BYTE* m_pFree;       // The first free byte in the newest slab
-   BYTE* m_pEnd;        // The end of the newest slab
-   UINT m_nNodes;       // The number of nodes allocated
-   UINT m_nCounted;     // The number of nodes added to the global counter
-
-   void addSlab(void)
-      {
-         Slab* pSlab = new Slab;
-         pSlab->pNext = this->m_pSlabs;
-         this->m_pSlabs = pSlab;
-         this->m_pFree = (BYTE*)pSlab->aStorage;
-         this->m_pEnd = this->m_pFree + sizeof(pSlab->aStorage);
-      }
-
-public:
-
-   Forest(void)
-      : m_pSlabs(NULL), m_pFree(NULL), m_pEnd(NULL), m_nNodes(0), m_nCounted(0)
-      { }
-
-   ~Forest(void)
-      {
-         Slab* p = this->m_pSlabs;
-         while (p) {
-            Slab* pNext = p->pNext;
-            delete p;
-            p = pNext;
-         }
-         // All nodes are hereby freed
-         Node::count(this->m_nNodes - this->m_nCounted, this->m_nNodes);
-      }
-
-   // Allocate storage; the size is rounded up to a multiple of the pointer size
-   void* alloc(size_t nBytes)
-      {
-         nBytes = (nBytes + sizeof(void*) - 1) & ~(sizeof(void*) - 1);
-         if ((size_t)(this->m_pEnd - this->m_pFree) < nBytes)
-            this->addSlab();
-         void* pv = (void*)this->m_pFree;
-         this->m_pFree += nBytes;
-         return pv;
-      }
-
-   // Create a node within the forest
-   Node* newNode(const Label& label)
-      {
-         this->m_nNodes++;
-         return new (this->alloc(sizeof(Node))) Node(label, this);
-      }
-
-   // Account for the nodes allocated so far in the global counter
-   void countNodes(void)
-      {
-         Node::count(this->m_nNodes - this->m_nCounted, 0);
-         this->m_nCounted = this->m_nNodes;
-      }
-
-};
-
-
 Node::Node(const Label& label, Forest* pForest)
-   : m_label(label), m_pHead(NULL), m_pForest(pForest)
+   : m_label(label), m_pHead(NULL), m_pForest(pForest), m_pR(NULL)
 {
    // Note: nodes are counted in batches, by the Forest
 }
@@ -1409,15 +1690,17 @@ void NodeDict::reset(void)
 Parser::Parser(Grammar* p, MatchingFunc pMatchingFunc, AllocFunc pAllocFunc)
    : m_pGrammar(p), m_pMatchingFunc(pMatchingFunc), m_pAllocFunc(pAllocFunc),
       m_pSpecs(NULL), m_nSpecs(0), m_pMeaningsFunc(NULL),
-      m_bParity(false), m_nParityMismatches(0)
+      m_bParity(false), m_nParityMismatches(0), m_bLookahead(true)
 {
    ASSERT(this->m_pGrammar != NULL);
    ASSERT(this->m_pMatchingFunc != NULL);
    memset(&this->m_masks, 0, sizeof(MatchMasks));
+   memset(&this->m_rt, 0, sizeof(ReducerTables));
 }
 
 Parser::~Parser(void)
 {
+   this->setReducerTables(NULL);
    if (this->m_pSpecs) {
       delete [] this->m_pSpecs;
       acMatchingTables--;
@@ -1573,18 +1856,22 @@ BOOL Parser::evalMatch(const TerminalSpec* pSpec, const BYTE* pTokenRec,
 
 BYTE* Parser::allocCache(UINT nHandle, UINT nToken, BOOL* pbNeedRelease)
 {
-   // Create a fresh token/terminal matching cache
-   UINT nTerminals = this->getNumTerminals();
+   // Create a fresh token/terminal matching cache: two bits for each
+   // terminal (which are numbered from 1), followed by the lookahead
+   // cache, which has two bits for each class of nonterminals
+   // (see Column::matches() and Column::canStart())
+   UINT nSize = Parser::matchCacheSize(this->getNumTerminals()) +
+      (this->m_pGrammar->getNumClasses() + 3) / 4;
    BYTE* abCache = NULL;
    *pbNeedRelease = false;
    if (this->m_pAllocFunc)
       // There is a cache allocation function: call it
-      abCache = this->m_pAllocFunc(nHandle, nToken, nTerminals + 1);
+      abCache = this->m_pAllocFunc(nHandle, nToken, nSize);
    if (!abCache) {
       // Either no cache allocation function, or it returned NULL
       // Allocate our own buffer and initialize it to zero
-      abCache = new BYTE[nTerminals + 1];
-      memset(abCache, 0, (nTerminals + 1) * sizeof(BYTE));
+      abCache = new BYTE[nSize];
+      memset(abCache, 0, nSize * sizeof(BYTE));
       *pbNeedRelease = true;
    }
    return abCache;
@@ -1597,15 +1884,55 @@ void Parser::releaseCache(BYTE* abCache)
    delete [] abCache;
 }
 
-BOOL Parser::canPush(INT iItem, Column* pE, UINT nHandle)
+BOOL Parser::viableMulti(const Production* pProd, UINT nDot, UINT nCount,
+   Column* pE, UINT nHandle)
 {
-   // Return true if a state having the given item at the dot can be pushed
-   // to the column pE, i.e. unless the item is a terminal that does not
-   // match the token associated with the column
-   return iItem <= 0 || pE->matches(nHandle, (UINT)iItem);
+   // The dot is followed by nCount items, all of them nullable
+   // nonterminals except the last one: can any of them begin with
+   // the token of the column?
+   for (UINT k = 0; k < nCount; k++) {
+      INT iItem = (*pProd)[nDot + k];
+      if (iItem > 0) {
+         if (pE->matches(nHandle, (UINT)iItem))
+            return true;
+      }
+      else
+      if (pE->canStart(nHandle, this->m_pGrammar->getClass(iItem)))
+         return true;
+   }
+   return false;
 }
 
-BOOL Parser::canAdvance(State* pState, Column* pE, UINT nHandle, INT& iNext)
+inline BOOL Parser::viable(UINT nFilter, const Production* pProd, UINT nDot,
+   Column* pE, UINT nHandle)
+{
+   // Return true if a state of the given production, with the dot at
+   // the given position, can be of any use in the column pE. It can be
+   // if what follows the dot can begin with the token of the column, or
+   // can derive nothing; otherwise the dot can never move, and the state
+   // would be dead weight. The filter (see the LF_* constants in
+   // eparser.h) says what needs to be looked at to find that out.
+
+   // Leaving such states out does not alter the resulting parse forest.
+   // A state that can't advance is never completed, and the tree nodes
+   // that it would refer to (cf. makeNode()) are interior ones, labeled
+   // with the production and the dot, that could only be reached from
+   // states identical to it.
+
+   // Without the lookahead filter, only a terminal at the dot is looked at.
+   UINT nKind = nFilter & 3;
+   if (nKind == LF_ALWAYS)
+      return true;
+   if (nKind == LF_TERMINAL)
+      return pE->matches(nHandle, nFilter >> 2);
+   if (!this->m_bLookahead)
+      return true;
+   if (nKind == LF_START)
+      return pE->canStart(nHandle, nFilter >> 2);
+   return this->viableMulti(pProd, nDot, nFilter >> 2, pE, nHandle);
+}
+
+inline BOOL Parser::canAdvance(State* pState, Column* pE, UINT nHandle, INT& iNext)
 {
    // Return true if the state that results from moving the dot of pState
    // one step to the right can be pushed to the column pE. If not, we can
@@ -1613,16 +1940,11 @@ BOOL Parser::canAdvance(State* pState, Column* pE, UINT nHandle, INT& iNext)
    // which is a significant saving, since in a large grammar a majority
    // of candidate states are immediately rejected by the current token.
 
-   // Note that skipping the node creation (cf. makeNode()) is safe, i.e.
-   // it never alters the resulting parse forest: a terminal can only be
-   // at the dot of the advanced state if its production is not completed.
-   // The node in question would thus be an intermediate one, whose label
-   // contains the production and the dot, and it could only be referenced
-   // from states identical to the one we are rejecting here.
-
    // iNext receives the item that will be at the dot of the advanced state.
-   iNext = pState->nextItem();
-   return this->canPush(iNext, pE, nHandle);
+   const Production* pProd = pState->getProd();
+   UINT nDot = pState->getDot() + 1;
+   iNext = (*pProd)[nDot];
+   return this->viable(pProd->getFilter(nDot), pProd, nDot, pE, nHandle);
 }
 
 Node* Parser::makeNode(State* pState, UINT nEnd, Node* pV, NodeDict& ndV)
@@ -1684,9 +2006,10 @@ void Parser::push(UINT nHandle, State* pState, Column* pE, State*& pQ,
       pQ = pState;
       return;
    }
-   // We did not actually push the state; discard it
+   // We did not actually push the state; discard it. Note that the
+   // state is not necessarily a newly allocated one: the scanner re-uses
+   // states, and the newest chunk can even be empty at this point.
    ASSERT(pChunkHead != NULL);
-   ASSERT(pChunkHead->m_nIndex >= sizeof(State));
    if ((BYTE*)pState + sizeof(State) == pChunkHead->m_ast + pChunkHead->m_nIndex) {
       // The state is the most recently allocated one in the chunk
       // (a very common case): go back one location in the chunk
@@ -1733,15 +2056,35 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
    // Prepare the the first column
    pCol[0]->startParse(nHandle);
 
+   // The lookahead filter can find out that the parse is going to fail
+   // one column earlier than is found out without it. In that case, the
+   // parse is stopped, and the error is reported at the token where it
+   // would have been found without the filter.
+   BOOL bStopped = false;
+   // Would any state have been pushed without the lookahead filter?
+   BOOL bOther = false;
+
    // Prepare the initial states: the productions of the root nonterminal
    UINT nPred;
    const Prediction* pPred = pRootNt->getPredictions(nPred);
    for (UINT k = 0; k < nPred; k++) {
+      if (!this->viable(pPred[k].nFilter, pPred[k].pProd, 0, pCol[0], nHandle)) {
+         if (pPred[k].iFirst < 0)
+            bOther = true;
+         continue;
+      }
       State* ps = new (pChunkHead) State(iStartNt, pPred[k].pProd, pPred[k].iFirst, 0);
 #ifdef DEBUG
       printf("For initial state, pushing production starting with item %d\n", pPred[k].iFirst);
 #endif
       this->push(nHandle, ps, pCol[0], pQ0, pChunkHead, states);
+   }
+   if (bOther && !pQ0 && pCol[0]->isEmpty()) {
+      // Nothing that the root nonterminal derives begins with the first
+      // token. Without the filter, this is found out in the second column.
+      bStopped = true;
+      if (pnErrorToken)
+         *pnErrorToken = 1;
    }
 
    // Main parse loop
@@ -1768,7 +2111,7 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
    clock_t clockLast = clockStart;
 #endif
 
-   for (i = 0; i < nTokens + 1; i++) {
+   for (i = 0; !bStopped && i < nTokens + 1; i++) {
 
       Column* pEi = pCol[i];
       State* pState = pEi->nextState();
@@ -1815,12 +2158,12 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
                pbNtFlags[nNt] |= NT_PREDICTED;
                pPred = (*this->m_pGrammar)[iItem]->getPredictions(nPred);
                for (UINT k = 0; k < nPred; k++) {
-                  // Only create a state for the production if it can be
-                  // pushed, i.e. unless it starts with a terminal that
-                  // does not match the current token
-                  INT iFirst = pPred[k].iFirst;
-                  if (this->canPush(iFirst, pEi, nHandle)) {
-                     State* psNew = new (pChunkHead) State(iItem, pPred[k].pProd, iFirst, i);
+                  // Only create a state for the production if it is of
+                  // any use, i.e. if the production can begin with the
+                  // current token or derive nothing
+                  if (this->viable(pPred[k].nFilter, pPred[k].pProd, 0, pEi, nHandle)) {
+                     State* psNew = new (pChunkHead) State(iItem, pPred[k].pProd,
+                        pPred[k].iFirst, i);
                      this->pushNew(psNew, pEi, pQ);
                   }
                }
@@ -1909,6 +2252,9 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
          pCol[i + 1]->startParse(nHandle);
       }
 
+      bOther = false;
+      BOOL bScanned = pQ != NULL;
+
       while (pQ) {
          // Earley scanner
          State* psNext = pQ->getNext();
@@ -1922,9 +2268,28 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
             pQ->increment(pY, iNext);
             this->push(nHandle, pQ, pCol[i + 1], pQ0, pChunkHead, states);
          }
+         else
+         if (iNext < 0)
+            // The state can't be moved to the next column, and is left
+            // behind; without the lookahead filter, it would have been
+            // moved, as it does not have a terminal at the dot
+            bOther = true;
          // Otherwise, the state can't be moved to the next column,
          // and is simply left behind
          pQ = psNext;
+      }
+
+      if (bScanned && bOther && !pQ0 && pCol[i + 1]->isEmpty()) {
+         // No state made it to the next column, so the parse fails.
+         // Without the lookahead filter, the next column would not be
+         // empty, and the failure would be found out one column later
+         // (or at the end of the parse, if the next column is the last
+         // one): report it accordingly.
+         pCol[i + 1]->stopParse();
+         bStopped = true;
+         if (pnErrorToken)
+            *pnErrorToken = (i + 1 >= nTokens) ? nTokens : i + 2;
+         break;
       }
 
 #ifdef DEBUG
@@ -1995,6 +2360,44 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
 #endif
 
    return pResult; // The caller should call Node::destroyForest() on this after using it
+}
+
+void Parser::setReducerTables(const ReducerTables* prt)
+{
+   // Install (or remove, if prt is NULL) the tables of the reducer.
+   // The tables are copied, so the caller's buffers need not outlive
+   // this call. The tables are only installed if they fit the grammar.
+   delete [] this->m_rt.pnNtFlags;
+   delete [] this->m_rt.pnNtScores;
+   delete [] this->m_rt.pbTermFlags;
+   memset(&this->m_rt, 0, sizeof(ReducerTables));
+   if (!prt || !prt->pnNtFlags || !prt->pnNtScores || !prt->pbTermFlags ||
+      !prt->fpPrepBonus || !prt->fpParticleBonus)
+      return;
+   if (prt->nNonterminals != this->m_pGrammar->getNumNonterminals() ||
+      prt->nTerminals != this->m_pGrammar->getNumTerminals() + 1)
+      return;
+   UINT* pnNtFlags = NULL;
+   INT* pnNtScores = NULL;
+   BYTE* pbTermFlags = NULL;
+   try {
+      pnNtFlags = new UINT[prt->nNonterminals];
+      pnNtScores = new INT[prt->nNonterminals];
+      pbTermFlags = new BYTE[prt->nTerminals];
+   }
+   catch (...) {
+      delete [] pnNtFlags;
+      delete [] pnNtScores;
+      delete [] pbTermFlags;
+      throw;
+   }
+   memcpy(pnNtFlags, prt->pnNtFlags, prt->nNonterminals * sizeof(UINT));
+   memcpy(pnNtScores, prt->pnNtScores, prt->nNonterminals * sizeof(INT));
+   memcpy(pbTermFlags, prt->pbTermFlags, prt->nTerminals * sizeof(BYTE));
+   this->m_rt = *prt;
+   this->m_rt.pnNtFlags = pnNtFlags;
+   this->m_rt.pnNtScores = pnNtScores;
+   this->m_rt.pbTermFlags = pbTermFlags;
 }
 
 
@@ -2103,9 +2506,42 @@ void setMatchingTable(Parser* pParser, const BYTE* pSpecs, UINT nSpecs,
    }
 }
 
+void setReducerTables(Parser* pParser,
+   const UINT* pnNtFlags, const INT* pnNtScores, UINT nNonterminals,
+   const BYTE* pbTermFlags, UINT nTerminals,
+   PrepBonusFunc fpPrepBonus, ParticleBonusFunc fpParticleBonus,
+   INT nPrepBonus, INT nLengthFactor)
+{
+   if (!pParser)
+      return;
+   ReducerTables rt;
+   rt.nNonterminals = nNonterminals;
+   rt.pnNtFlags = const_cast<UINT*>(pnNtFlags);
+   rt.pnNtScores = const_cast<INT*>(pnNtScores);
+   rt.nTerminals = nTerminals;
+   rt.pbTermFlags = const_cast<BYTE*>(pbTermFlags);
+   rt.fpPrepBonus = fpPrepBonus;
+   rt.fpParticleBonus = fpParticleBonus;
+   rt.nPrepBonus = nPrepBonus;
+   rt.nLengthFactor = nLengthFactor;
+   try {
+      pParser->setReducerTables(&rt);
+   }
+   catch (...) {
+      // See note in newGrammar(); out of memory here simply means
+      // that the reducer has no tables, and reduction is left to Python
+   }
+}
+
 UINT getParityMismatches(Parser* pParser)
 {
    return pParser ? pParser->getParityMismatches() : 0;
+}
+
+void setLookahead(Parser* pParser, BOOL bLookahead)
+{
+   if (pParser)
+      pParser->setLookahead(bLookahead);
 }
 
 void deleteForest(Node* pNode)

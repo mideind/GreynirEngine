@@ -28,6 +28,14 @@ disabled with `GREYNIR_DISABLE_CPP_MATCHING=1`, via the
 disabled for parser subclasses that override token wrapping
 (the GreynirCorrect compatibility gate).
 
+Update, 2026-11-10: the gate now looks at the class of the tokens that a
+parser creates (`Fast_Parser._native_token_class()`). The fast path stays
+enabled if that class is derived from `BIN_Token` and only overrides the
+hooks that `BIN_Token.verb_matches()` calls, since verb terminals are
+matched with verbs in Python in any case. This is how GreynirCorrect's
+tokens are made, so it uses the fast path as well. See section 9.4 of
+`earley-core-performance.md`.
+
 Incidental finding during verification: reduction of exact score ties
 is not stable across repeated parses of the same sentence (independent
 of this work - it reproduces with pure Python matching); see

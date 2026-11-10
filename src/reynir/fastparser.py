@@ -75,6 +75,7 @@ from typing import (
 
 import os
 import operator
+from contextlib import contextmanager
 from threading import Lock
 from functools import reduce
 
@@ -89,6 +90,7 @@ from .binparser import (
     Tok,
     TokenDict,
 )
+from tokenizer import TOK
 from filelock import FileLock, Timeout
 
 from .grammar import Grammar, GrammarError, Nonterminal, Terminal, Production
@@ -140,6 +142,19 @@ class ParseJob:
         self.meanings_cache: Dict[Tuple[Hashable, ...], Any] = (
             meanings_cache if meanings_cache is not None else dict()
         )
+        # The C++ parser object that the job runs in
+        self.c_parser: Any = ffi_NULL
+        # The class of the tokens that may be matched natively
+        self.token_class: Optional[type] = BIN_Token
+        # Support for reduction of the parse forest within the C++ module:
+        # the object that answers the questions that the C++ reducer has
+        # about verbs, prepositions and particles while it works (an
+        # instance of ParseForestReducer, see reducer.py)
+        self.reducer: Any = None
+        # An exception raised within a callback from the C++ reducer.
+        # It can't propagate through the C++ code, so it is kept here
+        # for the caller of the reducer to raise.
+        self.exc: Optional[BaseException] = None
 
     def matches(self, token_index: int, terminal_index: int) -> bool:
         """Convert the token reference from a 0-based token index
@@ -168,6 +183,10 @@ class ParseJob:
         if table is None:
             return ffi_NULL
         tok = self.tokens[token]
+        if type(tok) is not self.token_class:
+            # Not a token of the class that native matching was
+            # enabled for: have it matched in Python
+            return ffi_NULL
         key = tok.key
         b: Any = self.meanings_cache.get(key)
         if b is None:
@@ -242,6 +261,43 @@ class ParseJob:
         """Dispatch a token matching data request to the correct parse job"""
         return cls._jobs[handle].token_matching_data(token_index)
 
+    @classmethod
+    def prep_bonus(
+        cls,
+        handle: int,
+        prep_terminal: int,
+        prep_token: int,
+        verb_terminal: int,
+        verb_token: int,
+    ) -> int:
+        """Dispatch a verb/preposition bonus request from the C++ reducer
+        to the reducer object of the correct parse job"""
+        job = cls._jobs[handle]
+        try:
+            return job.reducer.native_prep_bonus(
+                job, prep_terminal, prep_token, verb_terminal, verb_token
+            )
+        except BaseException as e:
+            if job.exc is None:
+                job.exc = e
+            return 0
+
+    @classmethod
+    def particle_bonus(
+        cls, handle: int, particle_token: int, c_verbs: Any, num_verbs: int
+    ) -> int:
+        """Dispatch a verb particle bonus request from the C++ reducer
+        to the reducer object of the correct parse job"""
+        job = cls._jobs[handle]
+        try:
+            v: List[int] = ffi.unpack(c_verbs, 2 * num_verbs) if num_verbs else []
+            verbs = [(v[i], v[i + 1]) for i in range(0, len(v), 2)]
+            return job.reducer.native_particle_bonus(job, particle_token, verbs)
+        except BaseException as e:
+            if job.exc is None:
+                job.exc = e
+            return 0
+
 
 # Declare CFFI callback functions to be called from the C++ code
 # See: https://cffi.readthedocs.io/en/latest/using.html#extern-python-new-style-callbacks
@@ -274,6 +330,29 @@ def meanings_func(handle: int, token_index: int):
     decide most token/terminal matches natively, without calling
     matching_func() for each terminal."""
     return ParseJob.meanings(handle, token_index)
+
+
+@ffi.def_extern()  # type: ignore
+def prep_bonus_func(
+    handle: int, prep_terminal: int, prep_token: int, verb_terminal: int, verb_token: int
+) -> int:
+    """Called from the C++ reducer to obtain the bonus (or penalty) for
+    a preposition terminal matching a token, in the context of a verb
+    terminal matching another token. Terminals are referenced by
+    1-based indices and tokens by 0-based indices."""
+    return ParseJob.prep_bonus(
+        handle, prep_terminal, prep_token, verb_terminal, verb_token
+    )
+
+
+@ffi.def_extern()  # type: ignore
+def particle_bonus_func(
+    handle: int, particle_token: int, c_verbs: Any, num_verbs: int
+) -> int:
+    """Called from the C++ reducer to obtain the bonus (or penalty) for a
+    verb particle, i.e. the token with the given index, in the context of
+    num_verbs verbs: pairs of (terminal index, token index) in c_verbs."""
+    return ParseJob.particle_bonus(handle, particle_token, c_verbs, num_verbs)
 
 
 class Node:
@@ -436,6 +515,63 @@ class Node:
             fe = fe.pNext
 
         return node
+
+    @classmethod
+    def from_serialized(cls, job: ParseJob, data: List[int]) -> Optional["Node"]:
+        """Create a tree (or forest) of Python nodes from the serialized
+        form that the C++ reducer produces (see Reducer::emit() in
+        ereducer.cpp), and return its root. The result is the same as if
+        the forest had been converted by Node.from_c_node() and then
+        reduced by the ParseForestReducer class in reducer.py."""
+        grammar = job.grammar
+        nonterminals = grammar.nonterminals_by_ix
+        terminals = grammar.terminals_by_ix
+        productions = grammar.productions_by_ix
+        tokens = job.tokens
+        new = cls.__new__
+        # Nodes are numbered from 1, in the order in which they
+        # appear; 0 stands for no node at all
+        nodes: List[Optional[Node]] = [None]
+        add = nodes.append
+        n = len(data)
+        i = 0
+        while i < n:
+            node = new(cls)
+            node._highest_prio = 0
+            node._families = None
+            if data[i]:
+                # Token node
+                node._terminal = terminals[data[i + 1]]
+                node._token = tokens[data[i + 2]]
+                node._start = data[i + 3]
+                node._end = data[i + 4]
+                node.score = data[i + 5]
+                node._nonterminal = None
+                node._completed = True
+                i += 6
+            else:
+                # Nonterminal node
+                node._nonterminal = nonterminals[data[i + 1]]
+                node._start = data[i + 2]
+                node._end = data[i + 3]
+                node._completed = data[i + 4] != 0
+                node.score = data[i + 5]
+                node._terminal = None
+                node._token = None
+                num_families = data[i + 6]
+                i += 7
+                if num_families:
+                    families: List[ProductionTuple] = []
+                    for _ in range(num_families):
+                        prod = productions[data[i]]
+                        j = i + 2
+                        i = j + data[i + 1]
+                        families.append((prod, [nodes[ix] for ix in data[j:i]]))
+                    node._families = families
+                    node._highest_prio = families[0][0].priority
+            add(node)
+        # The root is the node that comes last
+        return nodes[-1]
 
     @classmethod
     def copy(cls, other: "Node") -> "Node":
@@ -736,14 +872,86 @@ class Fast_Parser(BIN_Parser):
     # Maximum time to wait for the grammar lock, in seconds
     _GRAMMAR_LOCK_TIMEOUT = 180.0
     # Maximum number of entries in the token/terminal matching cache.
-    # Each entry occupies roughly one byte per grammar terminal (~5 KB
-    # for Greynir.grammar), so this cap corresponds to on the order of
-    # 125 MB. Without a cap, the cache would grow without limit in
-    # long-running processes.
+    # Each entry occupies two bits per grammar terminal and two bits
+    # per class of nonterminals (about 3.3 KB for Greynir.grammar; see
+    # Parser::allocCache() in eparser.cpp), so this cap corresponds to
+    # on the order of 85 MB. Without a cap, the cache would grow
+    # without limit in long-running processes.
     _MAX_MATCHING_CACHE_SIZE = 25_000
     # Set to False in derived classes to disable the native (C++)
     # token/terminal matching fast path and match everything in Python
     _USE_CPP_MATCHING = True
+
+    # The members of BIN_Token that a derived token class can override
+    # without affecting any token/terminal match that the C++ core decides
+    # natively. They are only used by BIN_Token.verb_matches(), i.e. when
+    # a verb terminal (so_...) is matched with a verb, and that is always
+    # done in Python. (GreynirCorrect overrides several of them.)
+    _NATIVE_SAFE_TOKEN_OVERRIDES = frozenset(
+        (
+            "verb_matches",
+            "verb_is_strictly_impersonal",
+            "verb_cannot_be_impersonal",
+            "verb_subject_matches",
+            "verb_matches_arguments",
+            "_RESTRICTIVE_VARIANTS",
+            "_VERB_SUBJECTS",
+        )
+    )
+    # Special members that a derived token class must not override,
+    # as they could change how the members of BIN_Token behave
+    _NATIVE_UNSAFE_TOKEN_OVERRIDES = frozenset(
+        (
+            "__getattribute__",
+            "__getattr__",
+            "__setattr__",
+            "__eq__",
+            "__ne__",
+            "__hash__",
+            "__new__",
+            "__slots__",
+        )
+    )
+
+    @classmethod
+    def _native_token_class(cls) -> Optional[type]:
+        """Return the class of the tokens that this parser class wraps
+        its input in, if the tokens of that class match terminals in the
+        way that the native (C++) matching fast path replicates;
+        otherwise None"""
+        if cls._wrap is not BIN_Parser._wrap:
+            # The whole wrapping process has been replaced
+            return None
+        if cls.wrap_token is BIN_Parser.wrap_token:
+            return BIN_Token
+        # The parser has its own way of wrapping tokens, typically in
+        # objects of a class derived from BIN_Token: find out which one
+        try:
+            token_class = type(cls.wrap_token(TOK.Word("x"), 0))
+        except Exception:
+            return None
+        if token_class is BIN_Token:
+            return token_class
+        if not issubclass(token_class, BIN_Token):
+            return None
+        # A derived class is only acceptable if it leaves everything
+        # that it inherits from BIN_Token alone, apart from what is
+        # known not to affect native matching
+        for c in token_class.__mro__:
+            if c is BIN_Token:
+                break
+            for name in vars(c):
+                if name in cls._NATIVE_SAFE_TOKEN_OVERRIDES:
+                    continue
+                if name.startswith("__") and name.endswith("__"):
+                    if name in cls._NATIVE_UNSAFE_TOKEN_OVERRIDES:
+                        return None
+                    # Other special members (__init__, __doc__, etc.)
+                    continue
+                if hasattr(BIN_Token, name):
+                    # Overrides a member of BIN_Token
+                    return None
+        return token_class
 
     def _cpp_matching_allowed(self) -> bool:
         """Return True if the native (C++) matching fast path may be
@@ -754,16 +962,12 @@ class Fast_Parser(BIN_Parser):
         if os.environ.get("GREYNIR_DISABLE_CPP_MATCHING"):
             return False
         # Auto-gate: the native fast path replicates the matching
-        # semantics of BIN_Token/BIN_Terminal exactly. Derived classes
-        # (e.g. GreynirCorrect) that override token wrapping have
-        # different matching semantics and automatically fall back to
-        # Python matching here. (Terminals of derived types likewise
-        # fall back individually, via the exact type checks in
-        # binparser.build_matching_table().)
-        return (
-            cls.wrap_token is BIN_Parser.wrap_token
-            and cls._wrap is BIN_Parser._wrap
-        )
+        # semantics of BIN_Token/BIN_Terminal exactly. Derived parser
+        # classes whose tokens may have different matching semantics
+        # automatically fall back to Python matching here. (Terminals of
+        # derived types likewise fall back individually, via the exact
+        # type checks in binparser.build_matching_table().)
+        return cls._native_token_class() is not None
     # Serializes parser initialization between threads of this process,
     # protecting the class-level grammar caches (both the Python grammar
     # singleton in BIN_Parser and the C++ grammar blob above)
@@ -832,22 +1036,30 @@ class Fast_Parser(BIN_Parser):
         self._c_parser: Any = eparser.newParser(  # type: ignore
             c_grammar, eparser.matching_func, eparser.alloc_func  # type: ignore
         )
+        if os.environ.get("GREYNIR_DISABLE_LOOKAHEAD"):
+            # Turn off the lookahead filter of the C++ parser. This does not
+            # change the content of the parse forests, only the amount of
+            # work (and time) that it takes to create them.
+            eparser.setLookahead(self._c_parser, 0)  # type: ignore
         # Find the index of the default root nonterminal for this parser instance
         self._root_index = (
             0 if root is None else self.grammar.nonterminals[root].index
         )
         # Maintain a token/terminal matching cache for the duration
         # of this parser instance. Note that this cache will grow with use,
-        # as it includes an entry (consisting of one byte per terminal in the
-        # grammar, or currently about 5K bytes for Greynir.grammar) for every
-        # distinct token that the parser encounters.
+        # as it includes an entry (of about 3.3K bytes for Greynir.grammar)
+        # for every distinct token that the parser encounters, up to
+        # _MAX_MATCHING_CACHE_SIZE entries.
         self._matching_cache: Dict[Tuple[Hashable, ...], Any] = dict()
         # Cache of packed per-token records for native matching
         self._meanings_cache: Dict[Tuple[Hashable, ...], Any] = dict()
         # Install the native matching table, enabling the C++ core to
         # decide most token/terminal matches without Python callbacks
         self._matching_table: Optional[MatchingTable] = None
+        # The class of the tokens that can be matched natively
+        self._matching_token_class: Optional[type] = None
         if self._cpp_matching_allowed():
+            self._matching_token_class = self._native_token_class()
             table = build_matching_table(self.grammar)
             parity = 1 if os.environ.get("GREYNIR_MATCHING_PARITY") else 0
             eparser.setMatchingTable(  # type: ignore
@@ -870,15 +1082,19 @@ class Fast_Parser(BIN_Parser):
         self.cleanup()
         return False
 
-    def go(self, tokens: Iterable[Tok], *, root: Optional[str] = None) -> Node:
-        """Call the C++ parser module to parse the tokens. The parser's
-        default root nonterminal can be overridden by passing its
-        name in the root parameter."""
+    @contextmanager
+    def parse_forest(
+        self, tokens: Iterable[Tok], *, root: Optional[str] = None
+    ) -> Iterator[Tuple[ParseJob, Any]]:
+        """Call the C++ parser module to parse the tokens. This is a
+        context manager that yields the parse job and the root node of
+        the parse forest in its C++ form, which only exists within the
+        context. The parser's default root nonterminal can be overridden
+        by passing its name in the root parameter."""
 
         wrapped_tokens = self._wrap(tokens)  # Inherited from BIN_Parser
         lw = len(wrapped_tokens)
         err: Sequence[int] = ffi_new("unsigned int*")
-        result: Optional[Node] = None
 
         if len(self._matching_cache) > self._MAX_MATCHING_CACHE_SIZE:
             # The matching cache has grown too large: discard it.
@@ -903,6 +1119,8 @@ class Fast_Parser(BIN_Parser):
             self._meanings_cache,
         ) as job:
 
+            job.c_parser = self._c_parser
+            job.token_class = self._matching_token_class
             # Determine the root nonterminal to be used for this parse
             if root is None:
                 # Use the parser's default root
@@ -933,12 +1151,20 @@ class Fast_Parser(BIN_Parser):
                         0,
                     )
 
-            # eparser.dumpForest(node, Fast_Parser._c_grammar) # !!! DEBUG
+            try:
+                # eparser.dumpForest(node, Fast_Parser._c_grammar) # !!! DEBUG
+                yield job, node
+            finally:
+                # Delete the C++ nodes
+                eparser.deleteForest(node)  # type: ignore
+
+    def go(self, tokens: Iterable[Tok], *, root: Optional[str] = None) -> Node:
+        """Call the C++ parser module to parse the tokens, and return
+        the parse forest. The parser's default root nonterminal can be
+        overridden by passing its name in the root parameter."""
+        with self.parse_forest(tokens, root=root) as (job, node):
             # Create a new Python-side node forest corresponding to the C++ one
             result = Node.from_c_node(job, node)
-
-        # Delete the C++ nodes
-        eparser.deleteForest(node)  # type: ignore
         assert result is not None
         return result
 

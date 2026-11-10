@@ -90,9 +90,19 @@
     nodes that actually receive different scores depending on the context
     are terminal nodes whose names have the form fs_*.
 
+    The scoring and reduction described above is normally not done by the
+    Python code in this module, but by C++ code that replicates it exactly
+    (ereducer.cpp), working on the parse forest before any Python objects
+    are created for it; see Reducer.parse_and_reduce(). The Python code is
+    the reference for the C++ code, and is used when the C++ code can't
+    be (see Reducer._native_allowed()). The two must be kept in step: a
+    change to the logic here must be made in ereducer.cpp as well, and
+    verified with the environment variable GREYNIR_REDUCER_PARITY set.
+
 """
 
 from typing import (
+    Callable,
     Dict,
     DefaultDict,
     Iterable,
@@ -105,13 +115,24 @@ from typing import (
 )
 from typing_extensions import TypedDict, Required
 
+import os
 from collections import defaultdict
+from threading import Lock
 from types import MappingProxyType
 
+from tokenizer import Tok
 from tokenizer.definitions import BIN_Tuple
 
 from .grammar import Grammar, Production
-from .fastparser import Node, ParseForestNavigator
+from .fastparser import (
+    Fast_Parser,
+    Node,
+    ParseForestNavigator,
+    ParseJob,
+    eparser,
+    ffi,
+    ffi_NULL,
+)
 from .settings import Preferences, NounPreferences
 from .verbframe import VerbFrame
 from .binparser import BIN_Token, BIN_Terminal
@@ -177,6 +198,25 @@ _CONTAINED_VERBS_SET = frozenset(("begin_prep_scope", "purge_verb"))
 _NAMED_ENTITY_FL = frozenset(
     ("ism", "erm", "gæl", "nafn", "föð", "móð", "ætt", "entity")
 )
+
+
+# Flags that describe nonterminals and terminals to the C++ reducer
+# (see the RN_* and RT_* constants in eparser.h)
+_NT_TAG_FLAGS = (
+    ("enable_prep_bonus", 0x0001),
+    ("begin_prep_scope", 0x0002),
+    ("verb_particle", 0x0008),
+    ("apply_particle_bonus", 0x0010),
+    ("apply_length_bonus", 0x0020),
+    ("apply_prep_bonus", 0x0040),
+    ("pick_up_verb", 0x0080),
+    ("purge_verb", 0x0100),
+    ("no_reduce", 0x0200),
+)
+_NT_FLAG_NOUN_PHRASE = 0x0004
+_T_FLAG_AO_LITERAL = 0x01
+_T_FLAG_FS = 0x02
+_T_FLAG_SO = 0x04
 
 
 class _ReductionScope:
@@ -425,6 +465,45 @@ class ParseForestReducer:
                     return _VERB_PARTICLE_BONUS
         return _VERB_PARTICLE_PENALTY
 
+    def native_prep_bonus(
+        self,
+        job: ParseJob,
+        prep_terminal: int,
+        prep_token: int,
+        verb_terminal: int,
+        verb_token: int,
+    ) -> int:
+        """Called from the C++ reducer (via fastparser.prep_bonus_func())
+        to obtain a verb/preposition match bonus, where the terminals and
+        the tokens are referenced by their indices"""
+        terminals = job.terminals
+        tokens = job.tokens
+        # The same lookup, with the same cache, as in visit_token()
+        key = (
+            cast(BIN_Terminal, terminals[prep_terminal]),
+            tokens[prep_token].lower,
+            cast(BIN_Terminal, terminals[verb_terminal]),
+            tokens[verb_token],
+        )
+        bonus = self._bonus_cache.get(key)
+        if bonus is None:
+            bonus = self._bonus_cache[key] = self.verb_prep_bonus(*key)
+        return bonus
+
+    def native_particle_bonus(
+        self, job: ParseJob, particle_token: int, verbs: List[Tuple[int, int]]
+    ) -> int:
+        """Called from the C++ reducer (via fastparser.particle_bonus_func())
+        to obtain a verb particle bonus, where the particle is referenced
+        by the index of its token, and the verbs by pairs of
+        (terminal index, token index)"""
+        terminals = job.terminals
+        tokens = job.tokens
+        return self.verb_particle_bonus(
+            tokens[particle_token].lower,
+            [(cast(BIN_Terminal, terminals[t]), tokens[k]) for t, k in verbs],
+        )
+
     def visit_token(self, node: Node) -> ResultDict:
         """At token node"""
         # Return the score of this token/terminal match
@@ -645,9 +724,76 @@ class OptionFinder(ParseForestNavigator):
         return None
 
 
+def same_forest(a: Optional[Node], b: Optional[Node]) -> bool:
+    """Return True if two trees (or forests) of nodes are the same in
+    every respect: shape, sharing of nodes, grammar items, tokens and
+    scores. Used to verify the C++ reducer against the Python one."""
+    a_to_b: Dict[int, int] = dict()
+    b_to_a: Dict[int, int] = dict()
+    stack: List[Tuple[Optional[Node], Optional[Node]]] = [(a, b)]
+    while stack:
+        x, y = stack.pop()
+        if x is None or y is None:
+            if x is not y:
+                return False
+            continue
+        ix, iy = id(x), id(y)
+        if ix in a_to_b or iy in b_to_a:
+            # Seen before: must have been seen together
+            if a_to_b.get(ix) != iy or b_to_a.get(iy) != ix:
+                return False
+            continue
+        a_to_b[ix] = iy
+        b_to_a[iy] = ix
+        if (
+            x._start != y._start
+            or x._end != y._end
+            or x._nonterminal is not y._nonterminal
+            or x._terminal is not y._terminal
+            or x._token is not y._token
+            or x._completed != y._completed
+            or x._highest_prio != y._highest_prio
+            or x.score != y.score
+        ):
+            return False
+        fx, fy = x._families, y._families
+        if fx is None or fy is None:
+            if fx is not fy:
+                return False
+            continue
+        if len(fx) != len(fy):
+            return False
+        for (px, cx), (py, cy) in zip(fx, fy):
+            if px is not py or len(cx) != len(cy):
+                return False
+            stack.extend(zip(cx, cy))
+    return True
+
+
 class Reducer:
 
     """Reduces parse forests to a single most likely parse tree"""
+
+    # Set to False in a derived class to make parse_and_reduce() do all
+    # of its work in Python, as do the environment variable
+    # GREYNIR_DISABLE_CPP_REDUCER and overriding the methods that the
+    # C++ reducer stands in for. If the environment variable
+    # GREYNIR_REDUCER_PARITY is set, the work is done both in C++ and in
+    # Python, the results are compared, and the Python one is returned.
+    _USE_CPP_REDUCER = True
+
+    # The number of sentences where the C++ reducer and the Python one
+    # disagreed (only counted in parity mode)
+    parity_mismatches = 0
+
+    # Protects the installation of the tables of the C++ reducer in a
+    # parser, and the parity mismatch counter
+    _native_lock = Lock()
+
+    # The class that scores and reduces a forest in Python, and that
+    # answers the questions of the C++ reducer about verbs, prepositions
+    # and particles
+    _forest_reducer_class = ParseForestReducer
 
     def __init__(self, grammar: Grammar) -> None:
         self._grammar = grammar
@@ -666,14 +812,23 @@ class Reducer:
         finals: FinalsDict = defaultdict(set)
         tokens: TokensDict = dict()
         self._find_options(w, finals, tokens)
+        # Second pass: score the terminals
+        return self._score_options(finals, tokens, w.start, w.end)
 
-        # Second pass: find a (partial) ordering by scoring
+    def _score_options(
+        self, finals: FinalsDict, tokens: TokensDict, start: int, end: int
+    ) -> ScoreDict:
+        """Calculate the score for each possible terminal/token match,
+        given the terminals that each token can correspond to in a forest
+        that spans the tokens from start to end"""
+
+        # Find a (partial) ordering by scoring
         # the terminal alternatives for each token
         scores: ScoreDict = dict()
         noun_prefs = NounPreferences.DICT
 
         # Loop through the indices of the tokens spanned by this tree
-        for i in range(w.start, w.end):
+        for i in range(start, end):
 
             s = finals[i]
             # Initially, each alternative has a score of 0
@@ -911,7 +1066,7 @@ class Reducer:
                         # print(f"Discouraging sérnafn {txt}, "
                         #     "BÍN meanings are {tokens[i].t2}")
                         sc[t] -= 10
-                        if i == w.start:
+                        if i == start:
                             # First token in sentence, and we have BÍN meanings:
                             # further discourage this
                             sc[t] -= 6
@@ -941,7 +1096,7 @@ class Reducer:
 
     def _reduce(self, w: Node, scores: ScoreDict) -> ResultDict:
         """Reduce a forest with a root in w based on subtree scores"""
-        return ParseForestReducer(self._grammar, scores).go(w)
+        return self._forest_reducer_class(self._grammar, scores).go(w)
 
     def go_with_score(self, forest: Optional[Node]) -> Tuple[Optional[Node], int]:
         """Returns the argument forest after pruning it down to a single tree"""
@@ -957,3 +1112,205 @@ class Reducer:
         """Return only the reduced forest, without its score"""
         w, _ = self.go_with_score(forest)
         return w
+
+    @staticmethod
+    def _install_native_tables(parser: Fast_Parser) -> bool:
+        """Give the C++ parser object of the given parser the tables
+        that the C++ reducer needs: what it has to know about each
+        nonterminal and terminal of the grammar. Returns False if the
+        grammar is not one that the C++ reducer can work with."""
+        grammar = parser.grammar
+        num_nt = grammar.num_nonterminals
+        num_t = grammar.num_terminals
+        nt_flags = [0] * num_nt
+        nt_scores = [0] * num_nt
+        nt_score_adj = grammar._nt_scores
+        for ix, nt in grammar.nonterminals_by_ix.items():
+            # Nonterminal indices are negative: -1 is the first one
+            i = -1 - ix
+            if not 0 <= i < num_nt:
+                return False
+            flags = 0
+            for tag, flag in _NT_TAG_FLAGS:
+                if nt.has_tag(tag):
+                    flags |= flag
+            if nt.is_noun_phrase:
+                flags |= _NT_FLAG_NOUN_PHRASE
+            nt_flags[i] = flags
+            nt_scores[i] = nt_score_adj.get(nt, 0)
+        # Terminal indices are positive, starting with 1
+        t_flags = bytearray(num_t + 1)
+        for ix, t in grammar.terminals_by_ix.items():
+            if not 0 < ix <= num_t:
+                return False
+            matches_category = getattr(t, "matches_category", None)
+            if matches_category is None:
+                # Not a terminal that the reducer knows how to handle
+                return False
+            flags = 0
+            if matches_category("ao") and t.is_literal:
+                flags |= _T_FLAG_AO_LITERAL
+            if matches_category("fs"):
+                flags |= _T_FLAG_FS
+            if matches_category("so"):
+                flags |= _T_FLAG_SO
+            t_flags[ix] = flags
+        eparser.setReducerTables(  # type: ignore
+            parser._c_parser,
+            ffi.new("UINT[]", nt_flags),
+            ffi.new("INT[]", nt_scores),
+            num_nt,
+            ffi.new("BYTE[]", bytes(t_flags)),
+            num_t + 1,
+            eparser.prep_bonus_func,  # type: ignore
+            eparser.particle_bonus_func,  # type: ignore
+            _VERB_PREP_BONUS,
+            _LENGTH_BONUS_FACTOR,
+        )
+        return True
+
+    def _native_allowed(self, parser: Fast_Parser) -> bool:
+        """Return True if the C++ reducer can be used with the given
+        parser: it replicates what the methods of Fast_Parser, Node and
+        this class do, so it must stand aside if any of them has been
+        overridden - or if it has been turned off."""
+        cls = type(self)
+        if not cls._USE_CPP_REDUCER or os.environ.get("GREYNIR_DISABLE_CPP_REDUCER"):
+            return False
+        if (
+            cls.go_with_score is not Reducer.go_with_score
+            or cls._reduce is not Reducer._reduce
+            or cls._calc_terminal_scores is not Reducer._calc_terminal_scores
+            or cls._find_options is not Reducer._find_options
+            or cls._forest_reducer_class is not ParseForestReducer
+        ):
+            return False
+        pcls = type(parser)
+        if (
+            not isinstance(parser, Fast_Parser)
+            or pcls.go is not Fast_Parser.go
+            or pcls.num_combinations.__func__  # type: ignore
+            is not Fast_Parser.num_combinations.__func__  # type: ignore
+            or parser.grammar is not self._grammar
+        ):
+            return False
+        # Install the tables of the C++ reducer in the parser, on first use
+        installed: Optional[bool] = getattr(parser, "_reducer_tables", None)
+        if installed is None:
+            with Reducer._native_lock:
+                installed = getattr(parser, "_reducer_tables", None)
+                if installed is None:
+                    installed = self._install_native_tables(parser)
+                    setattr(parser, "_reducer_tables", installed)
+        return installed
+
+    def _native_reduce(
+        self, job: ParseJob, c_forest: Any
+    ) -> Optional[Tuple[Node, int, int]]:
+        """Count the trees in a parse forest that is still in its C++
+        form, reduce it to its highest-scoring tree, and create Python
+        objects for the nodes of that tree only. Returns None if the C++
+        reducer declines to handle the forest."""
+        red: Any = eparser.reduceStart(job.c_parser, c_forest)  # type: ignore
+        if red == ffi_NULL:
+            return None
+        # The number of trees in the forest, which can be huge
+        num = int.from_bytes(ffi.buffer(red.pbComb, red.nCombBytes), "little")
+        score = 0
+        if num > 1:
+            # The forest is ambiguous. Collect the terminals that each
+            # token is matched with in the forest, in the order in which
+            # OptionFinder would find them, and score those matches.
+            options: List[int] = ffi.unpack(red.pnOptions, 2 * red.nOptions)
+            terminals = job.terminals
+            tokens = job.tokens
+            finals: FinalsDict = defaultdict(set)
+            token_dict: TokensDict = dict()
+            for i in range(0, len(options), 2):
+                token_ix = options[i]
+                finals[token_ix].add(cast(BIN_Terminal, terminals[options[i + 1]]))
+                token_dict[token_ix] = tokens[token_ix]
+            scores = self._score_options(finals, token_dict, red.nStart, red.nEnd)
+            c_scores: Any = ffi.new(
+                "INT[]",
+                [
+                    scores[options[i]][cast(BIN_Terminal, terminals[options[i + 1]])]
+                    for i in range(0, len(options), 2)
+                ],
+            )
+            # The C++ reducer calls back into this object when it needs
+            # to know whether a verb takes a preposition or a particle
+            job.reducer = self._forest_reducer_class(self._grammar, scores)
+            ok = eparser.reduceFinish(red, c_scores, job.handle)  # type: ignore
+            if job.exc is not None:
+                # An exception was raised in a callback: re-raise it
+                raise job.exc
+            score = red.nScore
+        else:
+            # Unambiguous: there is nothing to reduce
+            ok = eparser.reduceFinish(red, ffi_NULL, job.handle)  # type: ignore
+        if not ok:
+            return None
+        tree = Node.from_serialized(job, ffi.unpack(red.pnOut, red.nOut))
+        assert tree is not None
+        return tree, num, score
+
+    def _python_reduce(self, forest: Node) -> Tuple[Node, int, int]:
+        """Count the trees in a parse forest and reduce it to its
+        highest-scoring tree, working in Python on Python objects"""
+        num = Fast_Parser.num_combinations(forest)
+        score = 0
+        if num > 1:
+            # Reduce the parse forest to a single
+            # "best" (highest-scoring) parse tree
+            w, score = self.go_with_score(forest)
+            assert w is not None
+            forest = w
+        return forest, num, score
+
+    def parse_and_reduce(
+        self,
+        parser: Fast_Parser,
+        tokens: Iterable[Tok],
+        *,
+        root: Optional[str] = None,
+        on_parsed: Optional[Callable[[], None]] = None,
+    ) -> Tuple[Node, int, int]:
+        """Parse the tokens with the given parser, and reduce the
+        resulting parse forest to its highest-scoring tree. Returns the
+        tree, the number of trees that were in the forest, and the score
+        of the tree. If there was only one tree in the forest, it is
+        returned as it is, with a score of 0.
+
+        This gives the same result as calling parser.go(),
+        Fast_Parser.num_combinations() and Reducer.go_with_score() in turn,
+        but is much faster, since the forest is processed in the C++
+        module (see ereducer.cpp), and Python objects are only created
+        for the nodes of the resulting tree.
+
+        If on_parsed is given, it is called when the parser has completed
+        its work and the reduction is about to start."""
+        if not self._native_allowed(parser):
+            forest = parser.go(tokens, root=root)
+            if on_parsed is not None:
+                on_parsed()
+            return self._python_reduce(forest)
+        with parser.parse_forest(tokens, root=root) as (job, c_forest):
+            if on_parsed is not None:
+                on_parsed()
+            result = self._native_reduce(job, c_forest)
+            if result is not None and not os.environ.get("GREYNIR_REDUCER_PARITY"):
+                return result
+            # The C++ reducer declined to handle this forest,
+            # or we are checking its work: reduce the forest in Python
+            py_forest = Node.from_c_node(job, c_forest)
+        assert py_forest is not None
+        py_result = self._python_reduce(py_forest)
+        if result is not None and not (
+            result[1] == py_result[1]
+            and result[2] == py_result[2]
+            and same_forest(result[0], py_result[0])
+        ):
+            with Reducer._native_lock:
+                Reducer.parity_mismatches += 1
+        return py_result
