@@ -13,13 +13,16 @@
 """
 
 import os
+import random
 from contextlib import contextmanager
-from typing import Iterator, List, Optional
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 from tokenizer import TOK
+from tokenizer.definitions import BIN_Tuple
 
 from reynir import Greynir
-from reynir.binparser import BIN_Token
+from reynir._eparser import lib as eparser, ffi  # type: ignore
+from reynir.binparser import BIN_Token, encode_token_matching_data
 from reynir.fastparser import Fast_Parser
 
 # A corpus exercising all producible token kinds and all families of
@@ -129,6 +132,93 @@ REQUIRED_TOKEN_KINDS = frozenset(
         TOK.USERNAME,
     )
 )
+
+
+# Sentences with verbs in all sorts of forms, for the tests of native
+# matching of verb terminals: impersonal verbs with subjects in oblique
+# cases, middle voice, past participles in various cases, supine,
+# imperative (also clipped), subjunctive, question forms with a clitic,
+# expletives, abbreviated and unknown verbs, verbs with zero to two
+# arguments, and adjectives that take a subject in an oblique case
+VERB_SENTENCES = [
+    "Mig langar að fara heim en mér þykir það samt leitt.",
+    "Hana dreymdi illa og hún hafði ekki sofið vel.",
+    "Það rignir og það snjóar og hann blæs á móti.",
+    "Farðu út og kom þú aftur, far vel og gakktu hægt.",
+    "Ertu kominn, viltu kaffi, áttu bíl og gerðirðu þetta?",
+    "Bókin var lesin, húsin voru byggð og mennirnir voru handteknir.",
+    "Hann sagðist hafa eignast barn og þau kynntust í skólanum.",
+    "Henni var gefin bókin og honum voru sagðar sögurnar.",
+    "Ég hefði viljað að hann kæmi fyrr og færi seinna.",
+    "Mér líkar þetta, hann vantar peninga og okkur sárnaði framkoman.",
+    "Þess gætir víða og misskilnings gætti í málinu.",
+    "Hann gaf henni blóm, sýndi þeim húsið og rændi þá aleigunni.",
+    "Hún kenndi börnunum íslensku og spurði manninn spurningar.",
+    "Þeir veipuðu og gúggluðu þetta en dílaði hún við það?",
+    "Ath. að fundurinn hefst kl. 10 og honum lýkur um hádegi.",
+    "Sofandi maðurinn var vakinn af hlæjandi börnum.",
+    "Hann er samþykkur tillögunni, líkur föður sínum og fullur efasemda.",
+    "Við höfum verið beðin um að láta vita ef eitthvað breytist.",
+    "Skipið hefur sokkið, ísinn hefur bráðnað og sólin er sest.",
+    "Honum tókst að opna dyrnar og henni leiddist biðin.",
+    "Sástu hann, vissirðu þetta og hélstu að hún kæmi?",
+    "Hún lét sig hverfa, þau gerðu sér dagamun og hann dreif sig af stað.",
+    "Því var haldið fram að honum hefði verið sagt upp.",
+    "Stjórnin kvaðst myndu endurskoða ákvörðunina og óskaði eftir fresti.",
+]
+
+
+def _token_records(
+    fp: Fast_Parser, sentences: List[str]
+) -> Iterator[Tuple[BIN_Token, Any]]:
+    """Generate the distinct tokens of the sentences, as wrapped by the
+    parser, with their packed matching data"""
+    g = Greynir()
+    table = fp._matching_table
+    assert table is not None
+    seen = set()
+    for sentence in sentences:
+        for tok in fp._wrap(list(g.tokenize(sentence))):
+            if tok.key in seen:
+                continue
+            seen.add(tok.key)
+            data = encode_token_matching_data(tok, table, fp._verb_profiles)
+            yield tok, ffi.new("BYTE[]", data)
+
+
+def _compare_native_with_python(
+    fp: Fast_Parser, sentences: List[str], *, verbs_only: bool = False
+) -> Dict[str, int]:
+    """For the distinct tokens of the sentences and (nearly) all terminals
+    of the grammar, check that every match that the C++ core would decide
+    by itself is decided the way that BIN_Token.matches() decides it.
+    The parser only asks about the terminals that its predictions lead
+    to; here, they are all asked about. Literal terminals, which are four
+    out of five and are simple, are only checked for every sixth token,
+    to keep the running time down. Returns counts of what was seen."""
+    count = dict(native=0, python=0, verb_native=0, verb_true=0, tokens=0)
+    terminals = fp._terminals
+    for tok, rec in _token_records(fp, sentences):
+        count["tokens"] += 1
+        with_literals = count["tokens"] % 6 == 0 and not verbs_only
+        for ix, t in terminals.items():
+            first = getattr(t, "first", "")
+            if verbs_only and first != "so":
+                continue
+            if t.is_literal and not with_literals:
+                continue
+            answer = eparser.nativeMatch(fp._c_parser, rec, ix)
+            if answer < 0:
+                # Python is asked
+                count["python"] += 1
+                continue
+            expected = tok.matches(t)
+            assert bool(answer) == expected, (tok, t)
+            count["native"] += 1
+            if first == "so" and not t.is_literal:
+                count["verb_native"] += 1
+                count["verb_true"] += expected
+    return count
 
 
 _MODES = {
@@ -370,6 +460,209 @@ def test_gate_token_subclass_with_other_overrides():
             return BIN_Token(t, ix)
 
     assert PlainParser._native_token_class() is BIN_Token
+
+
+def test_all_terminals_against_python():
+    """Every match that the core decides natively, for any terminal of the
+    grammar and any token of the test sentences, is what Python decides"""
+    fp = Fast_Parser()
+    try:
+        assert fp.uses_native_matching
+        count = _compare_native_with_python(fp, SENTENCES + VERB_SENTENCES)
+        assert count["tokens"] > 300
+        # Nearly everything is decided natively...
+        assert count["native"] > 30 * count["python"]
+        # ...verb terminals included, and they do match some verbs
+        assert count["verb_native"] > 50_000
+        assert count["verb_true"] > 1000
+    finally:
+        fp.cleanup()
+
+
+def test_verb_terminals_with_random_forms():
+    """Verb terminals against verbs with pseudo-random inflection strings:
+    combinations of grammatical features that are rare or absent in BÍN,
+    but which BIN_Token.verb_matches() has an opinion on all the same"""
+    rnd = random.Random(1904)
+    lemmas = [
+        # With zero, one and two arguments, impersonal, middle voice only,
+        # with subjects in oblique cases, composite and unknown
+        "vera", "hafa", "fara", "gefa", "segja", "kenna", "spyrja", "ræna",
+        "langa", "þykja", "dreyma", "vanta", "líka", "gæta", "rigna", "snjóa",
+        "eignast", "eigna", "kynnast", "kynna", "takast", "leiðast", "sárna",
+        "frá-segja", "endur-skoða", "gúggla", "veipa", "xyzzyja",
+    ]
+
+    def random_form() -> str:
+        parts = []
+        if rnd.random() < 0.15:
+            parts.append("OP")
+        if rnd.random() < 0.15:
+            parts.append("það")
+        parts.append(rnd.choice(("GM", "GM", "MM")))
+        mood = rnd.choice(("FH", "FH", "VH", "NH", "BH", "LHÞT", "LH-NT", "SAGNB"))
+        parts.append(mood)
+        if mood == "LHÞT":
+            parts.append(rnd.choice(("SB", "VB")))
+            parts.append(rnd.choice(("KK", "KVK", "HK")))
+            parts.append(rnd.choice(("NF", "ÞF", "ÞGF", "EF")) + rnd.choice(("ET", "FT")))
+        elif mood in ("FH", "VH"):
+            parts.append(rnd.choice(("NT", "ÞT")))
+            parts.append(rnd.choice(("1P", "2P", "3P")))
+            parts.append(rnd.choice(("ET", "FT")))
+        elif mood == "BH":
+            if rnd.random() < 0.5:
+                parts.append("ST")
+            parts.append(rnd.choice(("ET", "FT")))
+        if rnd.random() < 0.1:
+            parts.append("SP")
+        return "-".join(parts)
+
+    fp = Fast_Parser()
+    try:
+        table = fp._matching_table
+        assert table is not None
+        so = [
+            (ix, t)
+            for ix, t in fp._terminals.items()
+            if getattr(t, "first", "") == "so" and not t.is_literal
+        ]
+        num_true = num_subj_true = 0
+        for _ in range(500):
+            lemma = rnd.choice(lemmas)
+            form = "-" if rnd.random() < 0.03 else random_form()
+            meanings = [BIN_Tuple(lemma, 0, "so", "alm", "orðið", form)]
+            tok = BIN_Token(TOK.Word("orðið", meanings), 0)
+            rec = ffi.new(
+                "BYTE[]", encode_token_matching_data(tok, table, fp._verb_profiles)
+            )
+            for ix, t in so:
+                answer = eparser.nativeMatch(fp._c_parser, rec, ix)
+                assert answer >= 0
+                expected = tok.matches(t)
+                assert bool(answer) == expected, (lemma, form, t)
+                num_true += expected
+                num_subj_true += expected and t.is_subj
+        assert num_true > 2000
+        assert num_subj_true > 100
+    finally:
+        fp.cleanup()
+
+
+def test_verb_terminals_with_hooks():
+    """Verb terminals are matched natively for tokens of a class that
+    overrides the methods that BIN_Token.verb_matches() calls, with those
+    methods being respected (this is what the tokens of GreynirCorrect do)"""
+
+    class HookToken(BIN_Token):
+        _RESTRICTIVE_VARIANTS = ("sagnb", "lhþt", "bh")
+
+        @classmethod
+        def verb_is_strictly_impersonal(cls, verb, form):
+            return verb.startswith("d")
+
+        @classmethod
+        def verb_cannot_be_impersonal(cls, verb, form):
+            return any(f in form for f in ("BH", "NH", "FT"))
+
+        @classmethod
+        def verb_subject_matches(cls, verb, subj):
+            return super().verb_subject_matches(verb, subj) or verb.startswith("l")
+
+        @classmethod
+        def verb_matches_arguments(cls, key):
+            return super().verb_matches_arguments(key) or key.endswith("a_þgf")
+
+    class HookParser(Fast_Parser):
+        @staticmethod
+        def wrap_token(t, ix):
+            return HookToken(t, ix)
+
+    fp = Fast_Parser()
+    hfp = HookParser()
+    try:
+        assert hfp.uses_native_matching
+        count = _compare_native_with_python(
+            hfp, SENTENCES + VERB_SENTENCES, verbs_only=True
+        )
+        plain = _compare_native_with_python(
+            fp, SENTENCES + VERB_SENTENCES, verbs_only=True
+        )
+        assert count["python"] == 0
+        assert count["verb_native"] == plain["verb_native"] > 50_000
+        # The hooks make a difference
+        assert count["verb_true"] != plain["verb_true"]
+    finally:
+        fp.cleanup()
+        hfp.cleanup()
+
+
+def test_verb_terminals_with_own_verb_matches():
+    """If the class of the tokens has its own verb_matches() method, verb
+    terminals are matched with verbs in Python, and everything else
+    natively as usual"""
+
+    class OwnToken(BIN_Token):
+        @classmethod
+        def verb_matches(cls, verb, terminal, form):
+            return "NH" in form
+
+    class OwnParser(Fast_Parser):
+        @staticmethod
+        def wrap_token(t, ix):
+            return OwnToken(t, ix)
+
+    fp = OwnParser()
+    try:
+        assert fp.uses_native_matching
+        assert fp._verb_profiles is None
+        count = _compare_native_with_python(fp, VERB_SENTENCES, verbs_only=True)
+        # Verb terminals are decided natively for the tokens that have
+        # no verb meanings, and in Python for those that do
+        assert count["native"] > 0 and count["python"] > 0
+        assert count["verb_true"] == 0
+        # The method is in effect: any infinitive matches any verb terminal
+        g = Greynir()
+        tok = fp._wrap(list(g.tokenize("fara")))[0]
+        so = [t for t in fp._terminals.values() if getattr(t, "first", "") == "so"]
+        assert all(tok.matches(t) for t in so if not t.is_literal)
+    finally:
+        fp.cleanup()
+
+
+def test_prefilled_matching_cache(monkeypatch):
+    """When a token is seen for the first time, most terminals are marked
+    as not matching it without being evaluated one by one. None of
+    those may match the token."""
+    # Nothing is prefilled in parity mode, where every match is evaluated
+    monkeypatch.delenv("GREYNIR_MATCHING_PARITY", raising=False)
+    fp = Fast_Parser()
+    try:
+        size = (fp.grammar.num_terminals + 1 + 3) // 4
+        num_prefilled = num_tokens = num_nonwords = 0
+        for tok, rec in _token_records(fp, SENTENCES + VERB_SENTENCES[0:6]):
+            num_tokens += 1
+            if tok.t0 != TOK.WORD:
+                num_nonwords += 1
+            elif num_tokens % 5:
+                # All tokens that are not words, and every fifth word
+                continue
+            cache = ffi.new("BYTE[]", size)
+            eparser.prefillMatchCache(fp._c_parser, cache, rec)
+            # Terminal 0 does not exist; its entry marks a prefilled cache
+            assert cache[0] & 3 == 3
+            for ix, t in fp._terminals.items():
+                value = (cache[ix >> 2] >> ((ix & 3) << 1)) & 3
+                if value:
+                    # 2 means that the terminal is known not to match
+                    assert value == 2
+                    assert not tok.matches(t), (tok, t)
+                    num_prefilled += 1
+        assert num_nonwords > 30
+        # Most terminals are prefilled, for most tokens
+        assert num_prefilled > 4000 * num_nonwords
+    finally:
+        fp.cleanup()
 
 
 def test_gate_class_flag():

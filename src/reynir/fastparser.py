@@ -76,6 +76,7 @@ from typing import (
 import os
 import operator
 from contextlib import contextmanager
+from inspect import getattr_static
 from threading import Lock
 from functools import reduce
 
@@ -83,8 +84,10 @@ from .binparser import (
     BIN_Parser,
     BIN_Token,
     MatchingTable,
+    VerbProfileCache,
     build_matching_table,
     encode_token_matching_data,
+    matching_masks,
     simplify_terminal,
     augment_terminal,
     Tok,
@@ -146,6 +149,9 @@ class ParseJob:
         self.c_parser: Any = ffi_NULL
         # The class of the tokens that may be matched natively
         self.token_class: Optional[type] = BIN_Token
+        # A cache of what is known about verbs, for native matching of
+        # verb terminals; None if they are to be matched in Python
+        self.verb_profiles: Optional[VerbProfileCache] = None
         # Support for reduction of the parse forest within the C++ module:
         # the object that answers the questions that the C++ reducer has
         # about verbs, prepositions and particles while it works (an
@@ -190,7 +196,7 @@ class ParseJob:
         key = tok.key
         b: Any = self.meanings_cache.get(key)
         if b is None:
-            data = encode_token_matching_data(tok, table)
+            data = encode_token_matching_data(tok, table, self.verb_profiles)
             b = self.meanings_cache[key] = ffi_new("BYTE[]", data)
         return b
 
@@ -1058,8 +1064,20 @@ class Fast_Parser(BIN_Parser):
         self._matching_table: Optional[MatchingTable] = None
         # The class of the tokens that can be matched natively
         self._matching_token_class: Optional[type] = None
+        # What is known about the verbs seen so far, for native matching
+        # of verb terminals; None if they are matched in Python
+        self._verb_profiles: Optional[VerbProfileCache] = None
         if self._cpp_matching_allowed():
-            self._matching_token_class = self._native_token_class()
+            token_class = self._native_token_class()
+            assert token_class is not None
+            self._matching_token_class = token_class
+            if getattr_static(token_class, "verb_matches") is getattr_static(
+                BIN_Token, "verb_matches"
+            ):
+                # The tokens match verb terminals as BIN_Token does (apart
+                # from the hooks that verb_matches() calls, which are
+                # respected): verb terminals can be matched natively
+                self._verb_profiles = dict()
             table = build_matching_table(self.grammar)
             parity = 1 if os.environ.get("GREYNIR_MATCHING_PARITY") else 0
             eparser.setMatchingTable(  # type: ignore
@@ -1067,7 +1085,7 @@ class Fast_Parser(BIN_Parser):
                 table.specs,
                 table.num_specs,
                 eparser.meanings_func,  # type: ignore
-                table.masks,
+                matching_masks(cast(Any, token_class)),
                 parity,
             )
             self._matching_table = table
@@ -1106,6 +1124,8 @@ class Fast_Parser(BIN_Parser):
             # C++ core points into alive until those jobs complete.
             self._matching_cache = dict()
             self._meanings_cache = dict()
+            if self._verb_profiles is not None:
+                self._verb_profiles = dict()
 
         # Use the context manager protocol to guarantee that the parse job
         # handle will be properly deleted even if an exception is thrown
@@ -1121,6 +1141,7 @@ class Fast_Parser(BIN_Parser):
 
             job.c_parser = self._c_parser
             job.token_class = self._matching_token_class
+            job.verb_profiles = self._verb_profiles
             # Determine the root nonterminal to be used for this parse
             if root is None:
                 # Use the parser's default root

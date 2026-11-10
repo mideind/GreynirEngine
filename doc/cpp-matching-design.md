@@ -36,6 +36,13 @@ matched with verbs in Python in any case. This is how GreynirCorrect's
 tokens are made, so it uses the fast path as well. See section 9.4 of
 `earley-core-performance.md`.
 
+Update, 2026-11-10 (2): verb terminals are matched natively as well, as
+are adjective terminals with subject cases; and the core no longer calls
+Python for prepositions, names and the like unless the token has the
+property that their matchers look for. Section 3.4 below ("What stays in
+Python") is thus out of date: see section 10 of
+`earley-core-performance.md`.
+
 Incidental finding during verification: reduction of exact score ties
 is not stable across repeated parses of the same sentence (independent
 of this work - it reproduces with pure Python matching); see

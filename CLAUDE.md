@@ -121,11 +121,21 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    index that a failed parse reports. Token/terminal matches and
    "can this class of nonterminals begin with this token" are cached per
    distinct token (by `BIN_Token.key`), two bits each, in
-   `Fast_Parser._matching_cache`. Most matches are decided natively in
-   the core (`doc/cpp-matching-design.md`); this also applies to parsers
-   whose tokens are of a class derived from `BIN_Token` that only
-   overrides the hooks of `BIN_Token.verb_matches()`, as in GreynirCorrect
-   (`Fast_Parser._native_token_class()`).
+   `Fast_Parser._matching_cache`. Nearly all matches of words are decided
+   natively in the core (`doc/cpp-matching-design.md`, and section 10 of
+   the performance document), from tables built in `binparser.py`
+   (`build_matching_table()`, `encode_token_matching_data()`). **The
+   native matchers replicate the Python ones in `binparser.py`
+   (`WordMatchers`, `BIN_Token.verb_matches()`): a change to the matching
+   logic there must be made in `evalMatch()`/`verbMatchMeaning()` in
+   `eparser.cpp`, or in the tables, as well.** `GREYNIR_MATCHING_PARITY=1`
+   compares the two for every match that the parser evaluates, and
+   `test/test_native_matching.py` for all terminals. Native matching also
+   applies to parsers whose tokens are of a class derived from `BIN_Token`
+   that only overrides the hooks that `BIN_Token.verb_matches()` calls, as
+   in GreynirCorrect (`Fast_Parser._native_token_class()`); the hooks are
+   consulted when the matching data of a token is created
+   (`_verb_profile()`), so they must be pure functions of their arguments.
 
 4. **Reduction** — `reducer.py` scores the parse forest and reduces it to the
    single most likely tree, using preferences from `config/Prefs.conf`,
@@ -223,11 +233,11 @@ notes for 3.9.0) and from the 3.10.0 work; none started:
   drop sentence-initial SamkvæmtHeimild; run a second usage census over
   headings/non-news text before touching rules that only win in other
   text types.
-- **Performance** (see "What remains" in section 9 of
-  `doc/earley-core-performance.md`): native matching of verb terminals
-  (the bulk of the Python matching calls for tokens that have not been
-  seen before); tokenization, now a fifth of a warm parse; precomputed
-  nullability in the core. GreynirServer's query module still calls
+- **Performance** (see "What remains" in sections 9 and 10 of
+  `doc/earley-core-performance.md`): tokenization, now a fifth of a warm
+  parse; the reducer's hash tables and the scoring of terminals in Python;
+  precomputed nullability in the core; matching of tokens that are not
+  words. GreynirServer's query module still calls
   `go()` + `num_combinations()` + `Reducer.go()`, and could use
   `Reducer.parse_and_reduce()` (which handles `no_reduce`).
 - **Method note**: a "never wins in N sentences" census verdict is not

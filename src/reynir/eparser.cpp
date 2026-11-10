@@ -869,6 +869,10 @@ void Column::startParse(UINT nHandle)
       // Fetch the packed matching data for this column's token,
       // if a native matching table has been installed
       this->m_pTokenRec = this->m_pParser->fetchTokenRec(nHandle, this->m_nToken);
+      if (this->m_pTokenRec && !(this->m_abCache[0] & 3))
+         // The token has not been seen before: mark the terminals
+         // that it can't match by the look of it
+         this->m_pParser->prefillCache(this->m_abCache, this->m_pTokenRec);
    }
 }
 
@@ -967,40 +971,60 @@ BOOL Column::computeStart(UINT nHandle, UINT nClass)
    return false;
 }
 
+BOOL Parser::matchNatively(UINT nTerminal, const BYTE* pRec, BOOL& b) const
+{
+   // Decide whether a terminal matches a token, given the packed
+   // matching data of the token, if that can be done without asking
+   // Python. Returns true if so, and the answer in b.
+   b = false;
+   const TerminalSpec* pSpec = this->getSpec(nTerminal);
+   if (pSpec == NULL || pRec == NULL)
+      return false;
+   const UINT nKindFlags = pSpec->nKindFlags;
+   const UINT nKind = nKindFlags & 0xFFu;
+   const UINT nTokenFlags = ((const TokenRec*)pRec)->nCountFlags;
+   if (nKind != T_PYTHON &&
+      (nKind == T_TEXT || (nTokenFlags & (TKF_FAST | TKF_EMPTY_WORD)) != 0) &&
+      (nKind != T_CAT_SO || (nTokenFlags & (TKF_VERBS | TKF_EMPTY_WORD)) != 0)) {
+      // The native fast path can decide T_TEXT terminals for any token,
+      // and all non-T_PYTHON terminals for word tokens (TKF_FAST for
+      // tokens with BÍN meanings, TKF_EMPTY_WORD for unknown words) -
+      // except that verb terminals can only be decided for tokens
+      // whose meaning records describe their verbs (TKF_VERBS)
+      b = Parser::evalMatch(pSpec, pRec, this->m_masks);
+      return true;
+   }
+   if ((nKindFlags & TF_NO_NONWORD) != 0 && (nTokenFlags & TKF_NONWORD) != 0)
+      // The terminal can only match word tokens, and this is not one
+      // (it is a number, a person name, punctuation, etc.): no match
+      return true;
+   if ((nKindFlags & TF_NEEDS_CAT) != 0 && (nTokenFlags & TKF_FAST) != 0 &&
+      !hasCategory(pRec, pSpec->nCatId))
+      // The terminal is matched in Python, but it can only match a
+      // meaning of its own word category, and the token has none
+      // (typically, a verb terminal and a word that is not a verb)
+      return true;
+   if ((nKindFlags & (TF_NEEDS_FLAG | TF_IS_FLAG)) != 0 && (nTokenFlags & TKF_FAST) != 0) {
+      // The terminal is matched in Python, by a matcher that depends
+      // on a property of the token which is noted in its flags
+      if ((nTokenFlags & pSpec->nExtra) == 0)
+         // The token lacks the property: no match (typically,
+         // a preposition terminal and a word that is not a preposition)
+         return true;
+      if (nKindFlags & TF_IS_FLAG) {
+         // The property is all that the matcher looks at
+         b = true;
+         return true;
+      }
+   }
+   return false;
+}
+
 BOOL Column::matchUncached(UINT nHandle, UINT nTerminal) const
 {
    // Not cached: obtain a result and store it in the cache
    BOOL b = false;
-   BOOL bNative = false;
-   const TerminalSpec* pSpec = this->m_pParser->getSpec(nTerminal);
-   const BYTE* pRec = this->m_pTokenRec;
-   if (pSpec != NULL && pRec != NULL) {
-      const UINT nKindFlags = pSpec->nKindFlags;
-      const UINT nKind = nKindFlags & 0xFFu;
-      const UINT nTokenFlags = ((const TokenRec*)pRec)->nCountFlags;
-      if (nKind != T_PYTHON &&
-         (nKind == T_TEXT || (nTokenFlags & (TKF_FAST | TKF_EMPTY_WORD)) != 0)) {
-         // The native fast path can decide T_TEXT terminals for any token,
-         // and all non-T_PYTHON terminals for word tokens (TKF_FAST for
-         // tokens with BÍN meanings, TKF_EMPTY_WORD for unknown words)
-         b = Parser::evalMatch(pSpec, pRec, this->m_pParser->getMasks());
-         bNative = true;
-      }
-      else
-      if ((nKindFlags & TF_NO_NONWORD) != 0 && (nTokenFlags & TKF_NONWORD) != 0) {
-         // The terminal can only match word tokens, and this is not one
-         // (it is a number, a person name, punctuation, etc.): no match
-         bNative = true;
-      }
-      else
-      if ((nKindFlags & TF_NEEDS_CAT) != 0 && (nTokenFlags & TKF_FAST) != 0 &&
-         !hasCategory(pRec, pSpec->nCatId)) {
-         // The terminal is matched in Python, but it can only match a
-         // meaning of its own word category, and the token has none
-         // (typically, a verb terminal and a word that is not a verb)
-         bNative = true;
-      }
-   }
+   BOOL bNative = this->m_pParser->matchNatively(nTerminal, this->m_pTokenRec, b);
    if (bNative) {
       this->m_nNativeMatches++; // Count native match evaluations
       if (this->m_pParser->parityMode()) {
@@ -1723,6 +1747,10 @@ void Parser::setMatchingTable(const BYTE* pSpecs, UINT nSpecs,
    this->m_bParity = bParity;
    this->m_nParityMismatches.store(0, std::memory_order_relaxed);
    memset(&this->m_masks, 0, sizeof(MatchMasks));
+   this->m_prefillWord.clear();
+   this->m_prefillNonword.clear();
+   this->m_litStart.clear();
+   this->m_litTerminals.clear();
    if (!pSpecs || !nSpecs || !fpMeanings || !pMasks)
       return;
    this->m_pSpecs = new TerminalSpec[nSpecs];
@@ -1731,6 +1759,99 @@ void Parser::setMatchingTable(const BYTE* pSpecs, UINT nSpecs,
    this->m_nSpecs = nSpecs;
    memcpy(&this->m_masks, pMasks, sizeof(MatchMasks));
    this->m_pMeaningsFunc = fpMeanings;
+
+   // Prepare for prefilling of matching caches (see prefillCache()).
+   // In parity mode, every match is evaluated, so nothing is prefilled.
+   if (bParity)
+      return;
+   UINT nTerminals = this->getNumTerminals();
+   UINT nLast = nSpecs - 1 < nTerminals ? nSpecs - 1 : nTerminals;
+   UINT nBytes = Parser::matchCacheSize(nTerminals);
+   std::vector<BYTE> word(nBytes, 0);
+   std::vector<BYTE> nonword(nBytes, 0);
+   UINT nMaxLit = 0;
+   for (UINT t = 1; t <= nLast; t++) {
+      const TerminalSpec& spec = this->m_pSpecs[t];
+      UINT nKind = spec.nKindFlags & 0xFFu;
+      BOOL bLiteral = nKind == T_TEXT || nKind == T_TEXT_CAT || nKind == T_LEMMA;
+      // The value 2 in the matching cache means 'known not to match'
+      BYTE bNo = (BYTE)(2u << ((t & 3) << 1));
+      if (bLiteral) {
+         // A literal terminal can't match a word unless the text of
+         // the word, or one of its lemmas, is the literal (cf. evalMatch())
+         word[t >> 2] |= bNo;
+         if (spec.nLitId > nMaxLit)
+            nMaxLit = spec.nLitId;
+      }
+      if (nKind == T_TEXT || (spec.nKindFlags & TF_NO_NONWORD))
+         // A strong literal without a category can't match a token that
+         // is not a word unless its text is the literal; and some
+         // terminals never match such tokens (cf. matchUncached())
+         nonword[t >> 2] |= bNo;
+   }
+   // Index the literal terminals by the id of their literal
+   std::vector<UINT> start(nMaxLit + 2, 0);
+   for (UINT t = 1; t <= nLast; t++) {
+      const TerminalSpec& spec = this->m_pSpecs[t];
+      UINT nKind = spec.nKindFlags & 0xFFu;
+      if (nKind == T_TEXT || nKind == T_TEXT_CAT || nKind == T_LEMMA)
+         start[spec.nLitId + 1]++;
+   }
+   for (UINT i = 0; i <= nMaxLit; i++)
+      start[i + 1] += start[i];
+   std::vector<UINT> terminals(start[nMaxLit + 1], 0);
+   std::vector<UINT> fill(start.begin(), start.end() - 1);
+   for (UINT t = 1; t <= nLast; t++) {
+      const TerminalSpec& spec = this->m_pSpecs[t];
+      UINT nKind = spec.nKindFlags & 0xFFu;
+      if (nKind == T_TEXT || nKind == T_TEXT_CAT || nKind == T_LEMMA)
+         terminals[fill[spec.nLitId]++] = t;
+   }
+   this->m_prefillWord.swap(word);
+   this->m_prefillNonword.swap(nonword);
+   this->m_litStart.swap(start);
+   this->m_litTerminals.swap(terminals);
+}
+
+void Parser::prefillCache(BYTE* abCache, const BYTE* pTokenRec) const
+{
+   // Called when a token is seen for the first time, i.e. when its
+   // matching cache is empty. Most of the terminals of the grammar are
+   // literals, which can only match a token if its text or one of its
+   // lemmas is that very literal. Rather than finding that out for one
+   // terminal at a time, as the parser happens to ask about them (it
+   // asks about half of all terminals for every new token), we mark all
+   // literal terminals as not matching in one go - except the few whose
+   // literal does occur in the token, which are left to be evaluated
+   // in the normal way. For a token that is not a word, the same goes
+   // for the terminals that never match such tokens.
+   const TokenRec* pHdr = (const TokenRec*)pTokenRec;
+   const UINT nTokenFlags = pHdr->nCountFlags;
+   const std::vector<BYTE>& pattern =
+      (nTokenFlags & (TKF_FAST | TKF_EMPTY_WORD)) ? this->m_prefillWord : this->m_prefillNonword;
+   if (pattern.empty() || !(nTokenFlags & (TKF_FAST | TKF_EMPTY_WORD | TKF_NONWORD)))
+      return;
+   std::vector<BYTE> fill(pattern);
+   const UINT nLits = (UINT)this->m_litStart.size();
+   // Leave the terminals of a literal that occurs in the token alone
+   UINT nCount = (nTokenFlags & TKF_FAST) ? (nTokenFlags & 0xFFFFu) : 0;
+   const MeaningRec* pm = (const MeaningRec*)(pTokenRec + sizeof(TokenRec));
+   for (UINT i = 0; i <= nCount; i++) {
+      UINT nLit = i == 0 ? pHdr->nFormId : pm[i - 1].nLemmaId;
+      if (!nLit || nLit + 1 >= nLits)
+         continue;
+      for (UINT k = this->m_litStart[nLit]; k < this->m_litStart[nLit + 1]; k++) {
+         UINT t = this->m_litTerminals[k];
+         fill[t >> 2] &= (BYTE)~(3u << ((t & 3) << 1));
+      }
+   }
+   // As elsewhere, bits are only ever set in a matching cache, and to
+   // the same values by all threads that may be working on the same token
+   for (size_t i = 0; i < fill.size(); i++)
+      abCache[i] |= fill[i];
+   // The entry of terminal 0, which does not exist,
+   // tells that the cache has been prefilled
+   abCache[0] |= 3;
 }
 
 static inline BOOL defaultMatchMeaning(const TerminalSpec* pSpec,
@@ -1748,6 +1869,102 @@ static inline BOOL defaultMatchMeaning(const TerminalSpec* pSpec,
       return pSpec->nFbits == 0;
    }
    return (pSpec->nFbits & ~m.nFbits) == 0;
+}
+
+static BOOL verbMatchMeaning(const TerminalSpec* pSpec,
+   const MeaningRec& m, const MatchMasks& mk)
+{
+   // Mirrors BIN_Token.verb_matches() in binparser.py: does a verb
+   // terminal (so_...) match a meaning of a verb? T has a bit for each
+   // variant of the terminal, and F a bit for each variant whose BÍN
+   // string occurs in the inflection string of the verb. What the Python
+   // method asks other methods about the lemma of the verb has been asked
+   // in advance, and is in the meaning record (see _verb_profile()).
+   // The order of the tests is that of the Python method.
+   const UINT64 T = pSpec->nFbits;
+   const UINT64 F = m.nFbits;
+   const UINT nFlags = pSpec->nExtra;
+   if (T & mk.subj) {
+      // A verb whose subject is not in the nominative case
+      // ('mig langar', 'Páli þykir')
+      if ((T & mk.nh) && !(F & mk.nh))
+         return false;
+      if (T & mk.mm)
+         // For subj_mm, nothing but the middle voice matters
+         return (F & mk.mm) != 0;
+      if ((T & mk.gm) && !(F & mk.gm))
+         return false;
+      if ((T & mk.et) && !(F & mk.et))
+         return false;
+      if ((T & mk.ft) && !(F & mk.ft))
+         return false;
+      if (F & mk.expl)
+         // No expletive forms for subj terminals
+         return false;
+      const BOOL bFormLh = (F & mk.lhpt) != 0;
+      if (T & mk.lhpt)
+         // Subject kind 0 is 'lhþt'
+         return bFormLh && (m.nSubjects & 1u) != 0;
+      if (bFormLh)
+         return false;
+      const BOOL bFormSagnb = (F & mk.sagnb) != 0;
+      if (nFlags & SF_NONE) {
+         if (((T & mk.sagnb) != 0) != bFormSagnb)
+            return false;
+         // Subject kind 1 is 'none'
+         return (m.nSubjects & 2u) != 0;
+      }
+      if (bFormSagnb && !(T & mk.sagnb))
+         return false;
+      if ((T & mk.op) && (m.nVerbFlags & VF_CANNOT_BE_IMPERSONAL))
+         return false;
+      if (nFlags & SF_SUBJ_NARGS) {
+         // so_1_þf_subj_op_þgf: one argument, in the given case
+         if (nFlags & SF_SUBJ_LAST_EF)
+            // A genitive subject is not combined with an object
+            return false;
+         if (!((m.nArgsPlain >> ((pSpec->nMask >> 8) & 0xFFu)) & 1u))
+            return false;
+      }
+      // Finally, the subject case, which is the last variant of the terminal
+      return ((m.nSubjects >> ((pSpec->nMask >> 16) & 0xFFu)) & 1u) != 0;
+   }
+   // Not a subj terminal
+   if (m.nVerbFlags & VF_STRICTLY_IMPERSONAL)
+      return false;
+   if ((T & mk.expl) && !(F & mk.expl))
+      return false;
+   if ((T & mk.et) && (F & mk.ft))
+      return false;
+   if ((T & mk.ft) && (F & mk.et))
+      return false;
+   if (T & mk.verbVariants & ~F)
+      // The terminal has a variant (person, mood, voice, etc.)
+      // that the verb form does not have
+      return false;
+   if (F & mk.restrictive & ~T)
+      // The verb form has a variant that must be
+      // explicitly present in the terminal, but is not
+      return false;
+   if ((T & mk.lhpt) && (F & mk.vb) && !(T & mk.vb))
+      // Only the strong declension of the past participle, unless
+      // the weak one is asked for
+      return false;
+   if ((T & mk.bh) && (m.nVerbFlags & VF_ST))
+      // Not the clipped imperative
+      return false;
+   if (!(nFlags & SF_HAS_NARGS)) {
+      // No number of arguments in the terminal: all verbs match,
+      // except that a past participle terminal can specify a case
+      if ((T & mk.lhpt) && (T & mk.cases & ~F))
+         return false;
+      return true;
+   }
+   // Can the verb take arguments in the cases that the terminal has?
+   if ((m.nArgs >> (pSpec->nMask & 0xFFu)) & 1u)
+      return true;
+   // An unknown verb can match a terminal without arguments
+   return (nFlags & SF_NO_CASES) && (m.nVerbFlags & VF_UNKNOWN);
 }
 
 BOOL Parser::evalMatch(const TerminalSpec* pSpec, const BYTE* pTokenRec,
@@ -1835,10 +2052,29 @@ BOOL Parser::evalMatch(const TerminalSpec* pSpec, const BYTE* pTokenRec,
             }
             break;
          case T_CAT_LO:
-            // lo_... without subject cases or ending constraints
-            // (matcher_lo): abbreviations match regardless of variants
-            if (m.nCatId == pSpec->nCatId
-               && ((m.nFlags & MF_NO_BEYGING) || (pSpec->nFbits & ~m.nFbits) == 0))
+            // lo_... without ending constraints (matcher_lo)
+            if (m.nCatId != pSpec->nCatId)
+               break;
+            if ((pSpec->nKindFlags & TF_SCASE) && !((m.nSubjects >> pSpec->nExtra) & 1u))
+               // The terminal demands an adjective that can take a subject
+               // in a particular case, and this one can not
+               break;
+            // Abbreviations match regardless of variants
+            if ((m.nFlags & MF_NO_BEYGING) || (pSpec->nFbits & ~m.nFbits) == 0)
+               return true;
+            break;
+         case T_CAT_SO:
+            // so_...: mirrors matcher_so()
+            if (m.nCatId != pSpec->nCatId)
+               break;
+            if (m.nFlags & MF_NO_BEYGING) {
+               // An abbreviated verb matches all forms
+               // except the present participle
+               if ((pSpec->nFbits & mk.lhnt) != mk.lhnt)
+                  return true;
+               break;
+            }
+            if (verbMatchMeaning(pSpec, m, mk))
                return true;
             break;
          case T_CAT_AO:
@@ -2542,6 +2778,28 @@ void setLookahead(Parser* pParser, BOOL bLookahead)
 {
    if (pParser)
       pParser->setLookahead(bLookahead);
+}
+
+INT nativeMatch(Parser* pParser, const BYTE* pTokenRec, UINT nTerminal)
+{
+   if (!pParser || !pTokenRec)
+      return -1;
+   BOOL b;
+   if (!pParser->matchNatively(nTerminal, pTokenRec, b))
+      return -1;
+   return b ? 1 : 0;
+}
+
+void prefillMatchCache(Parser* pParser, BYTE* abCache, const BYTE* pTokenRec)
+{
+   if (!pParser || !abCache || !pTokenRec)
+      return;
+   try {
+      pParser->prefillCache(abCache, pTokenRec);
+   }
+   catch (...) {
+      // See note in newGrammar()
+   }
 }
 
 void deleteForest(Node* pNode)
