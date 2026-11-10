@@ -2570,6 +2570,7 @@ _T_CAT_FIRST = 6
 _T_CAT_NOUN = 7
 _T_CAT_LO = 8
 _T_CAT_AO = 9
+_T_CAT_SO = 10
 
 # Terminal spec flags
 _TF_ABBREV = 0x0100
@@ -2577,11 +2578,45 @@ _TF_MM_EXCLUDE = 0x0200
 _TF_MATCHES_EMPTY = 0x0400
 _TF_NO_NONWORD = 0x0800
 _TF_NEEDS_CAT = 0x1000
+_TF_SCASE = 0x2000
+_TF_NEEDS_FLAG = 0x4000
+_TF_IS_FLAG = 0x8000
+
+# Verb terminal flags (in the nExtra field of the spec of a T_CAT_SO terminal)
+_SF_NONE = 0x01  # The terminal has the variant 'none' (so_subj_..._none)
+_SF_HAS_NARGS = 0x02  # The first variant is the number of arguments
+_SF_NO_CASES = 0x04  # ...and there are no argument cases (so_0)
+_SF_SUBJ_NARGS = 0x08  # A subj terminal with one argument (so_1_þf_subj_...)
+_SF_SUBJ_LAST_EF = 0x10  # The last variant of a subj terminal is 'ef'
 
 # Token header flags
 _TKF_FAST = 0x00010000
 _TKF_EMPTY_WORD = 0x00020000
 _TKF_NONWORD = 0x00040000
+_TKF_VERBS = 0x00080000
+# Properties of a word token with meanings, which decide whether some
+# terminals that are otherwise matched in Python can match it at all
+_TKF_PREP = 0x00100000  # Can be a preposition (cf. matcher_fs())
+_TKF_PROPER = 0x00200000  # Can be a proper name (cf. matcher_sérnafn())
+_TKF_EO = 0x00400000  # Matches eo terminals (matcher_eo())
+_TKF_NAME = 0x00800000  # Has a meaning that is a person or family name
+_TKF_PLACE = 0x01000000  # Has a meaning that is a street or place name
+
+# Terminals that are matched in Python by one of these matchers can only
+# match a word token with meanings if the token has the given flag - or,
+# in the case of matcher_eo(), match it if and only if it has the flag
+_FLAG_MATCHERS = {
+    "matcher_fs": (_TF_NEEDS_FLAG, _TKF_PREP),
+    "matcher_sérnafn": (_TF_NEEDS_FLAG, _TKF_PROPER),
+    "matcher_eo": (_TF_IS_FLAG, _TKF_EO),
+    "matcher_person": (_TF_NEEDS_FLAG, _TKF_NAME),
+    "matcher_gata": (_TF_NEEDS_FLAG, _TKF_PLACE),
+}
+
+# The values of the 'fl' attribute of the meanings that
+# matcher_person() and matcher_gata() look for
+_NAME_FL = frozenset(("nafn", "ætt"))
+_PLACE_FL = frozenset(("göt", "örn", "bær", "þor"))
 
 # Meaning record flags
 _MF_NO_BEYGING = 1
@@ -2589,8 +2624,22 @@ _MF_NAME_FL = 2
 _MF_IS_NOUN = 4
 _MF_IS_LO_SO = 8
 
+# Verb meaning flags (in the nVerbFlags field of a meaning record)
+_VF_STRICTLY_IMPERSONAL = 0x01
+_VF_CANNOT_BE_IMPERSONAL = 0x02
+_VF_ST = 0x04
+_VF_UNKNOWN = 0x08
+
+# The maximum number of distinct argument case combinations of verb
+# terminals, and of distinct subject kinds, that fit in a meaning record
+_MAX_VERB_BITS = 32
+
+# The subject kinds that BIN_Token.verb_matches() asks about by name;
+# they come first in the list of subject kinds (see MatchingTable)
+_FIXED_SUBJECTS = ("lhþt", "none")
+
 # Terminal categories whose matchers cannot be encoded natively
-_PYTHON_FIRSTS = frozenset(("so", "eo", "fs", "person", "gata", "sérnafn", "stt"))
+_PYTHON_FIRSTS = frozenset(("eo", "fs", "person", "gata", "sérnafn", "stt"))
 
 # Terminal categories whose matchers (WordMatchers.matcher_so() and
 # matcher_lo()) only match a word meaning of that same category, and which
@@ -2606,8 +2655,11 @@ _NUMBER_FIRSTS = frozenset(("tala", "ártal", "töl", "to"))
 
 _STRUCT_SPEC = struct.Struct("<IIIIQQ")  # TerminalSpec
 _STRUCT_HDR = struct.Struct("<II")  # TokenRec
-_STRUCT_REC = struct.Struct("<IIIIQ")  # MeaningRec
-_STRUCT_MASKS = struct.Struct("<QQQQQ")  # MatchMasks
+_STRUCT_REC = struct.Struct("<IIIIQIIII")  # MeaningRec
+_STRUCT_MASKS = struct.Struct("<19Q")  # MatchMasks
+
+# The type of a cache of verb profiles (see _verb_profile())
+VerbProfileCache = Dict[Tuple[str, str], Tuple[int, int, int, int]]
 
 
 class MatchingTable:
@@ -2615,27 +2667,80 @@ class MatchingTable:
     """Precomputed data enabling the C++ parser core to decide most
     token/terminal matches natively; built once per loaded grammar"""
 
-    __slots__ = ("specs", "num_specs", "masks", "lexicon", "catmap")
+    __slots__ = ("specs", "num_specs", "lexicon", "catmap", "cases", "subjects")
 
     def __init__(
         self,
         specs: bytes,
         num_specs: int,
-        masks: bytes,
         lexicon: Dict[str, int],
         catmap: Dict[str, int],
+        cases: List[str],
+        subjects: List[str],
     ) -> None:
         self.specs = specs
         self.num_specs = num_specs
-        self.masks = masks
         # Interned literal lemma/form strings from the grammar
         self.lexicon = lexicon
         # Interned word category (ordfl/terminal first part) strings
         self.catmap = catmap
+        # The argument case combinations of the verb terminals of the
+        # grammar ('', '_þf', '_þgf_þf', ...) and the subject kinds that
+        # they ask for ('lhþt', 'none', 'þgf', ...). A verb terminal
+        # refers to these by index, and the meaning record of a verb has
+        # a bit for each of them (see _verb_profile()).
+        self.cases = cases
+        self.subjects = subjects
+
+
+def _verb_terminal_parts(t: "BIN_Terminal") -> Optional[Tuple[int, str, str, str]]:
+    """Analyze a verb terminal (so_...) for native matching, which
+    replicates BIN_Token.verb_matches(). Returns its flags, its argument
+    cases, the argument cases that it asks about if it is a subj
+    terminal with an argument, and the subject kind that it asks for (the
+    latter two being empty strings if not applicable) - or None if the
+    terminal is not understood well enough to be matched natively."""
+    if t._matcher is not WordMatchers.matcher_so:
+        return None
+    if t.has_any_vbits(BIN_Token.VBIT_ENDING):
+        return None
+    vparts = t._vparts
+    for i, v in enumerate(vparts):
+        # Every variant must be one that verb_matches() knows what to do with
+        if v not in BIN_Token.VBIT and v != "none" and not (i == 0 and v in "012"):
+            return None
+    has_nargs = bool(vparts) and vparts[0] in "012"
+    if has_nargs and vparts[0] not in ("0", "1", "2"):
+        return None
+    flags = 0
+    subj_cases = subject = ""
+    if t.is_subj:
+        if "none" in t._vset:
+            flags |= _SF_NONE
+        if has_nargs:
+            # so_1_þf_subj_op_þgf: one argument, whose case is the variant
+            # that follows the number of arguments
+            if vparts[0] != "1" or len(vparts) < 2:
+                return None
+            flags |= _SF_SUBJ_NARGS
+            subj_cases = "_" + vparts[1]
+        if vparts[-1] == "ef":
+            flags |= _SF_SUBJ_LAST_EF
+        # The subject kind is always the last variant
+        subject = vparts[-1]
+    if has_nargs:
+        flags |= _SF_HAS_NARGS
+        if t.verb_cases == "":
+            flags |= _SF_NO_CASES
+    return flags, t.verb_cases if has_nargs else "", subj_cases, subject
 
 
 def _make_terminal_spec(
-    t: Terminal, lexicon: Dict[str, int], catmap: Dict[str, int]
+    t: Terminal,
+    lexicon: Dict[str, int],
+    catmap: Dict[str, int],
+    cases: Dict[str, int],
+    subjects: Dict[str, int],
 ) -> bytes:
     """Classify a terminal and encode its native matching spec.
     Any terminal that is not fully understood is conservatively
@@ -2657,6 +2762,7 @@ def _make_terminal_spec(
     flags = 0
     cat = 0
     lit = 0
+    extra = 0
     fbits = 0
     mask = 0
     # Note: exact type checks, not isinstance(); terminal subclasses
@@ -2714,8 +2820,35 @@ def _make_terminal_spec(
         if first in _WORD_ONLY_FIRSTS:
             # See the comment on _WORD_ONLY_FIRSTS
             flags |= _TF_NO_NONWORD
-        if first not in _PYTHON_FIRSTS and not t.has_any_vbits(
-            BIN_Token.VBIT_ENDING | BIN_Token.VBIT_SCASES
+        if first == "so":
+            # A verb terminal. It only matches word meanings of its own
+            # category, so the core doesn't need to ask if the token has
+            # none. If it does, the match can be decided natively,
+            # provided that the terminal is understood and that the
+            # meaning records of the token describe its verbs (which
+            # depends on the class of the token; see _verb_profile()).
+            flags |= _TF_NEEDS_CAT
+            cat = intern_cat(first)
+            parts = _verb_terminal_parts(t)
+            if parts is not None:
+                so_flags, verb_cases, subj_cases, subject = parts
+                cases_ix = cases.get(verb_cases, 0) if so_flags & _SF_HAS_NARGS else 0
+                subj_cases_ix = cases.get(subj_cases, 0) if subj_cases else 0
+                subject_ix = subjects.get(subject, 0) if subject else 0
+                if (
+                    (not (so_flags & _SF_HAS_NARGS) or verb_cases in cases)
+                    and (not subj_cases or subj_cases in cases)
+                    and (not subject or subject in subjects)
+                ):
+                    kind = _T_CAT_SO
+                    extra = so_flags
+                    # All variants of the terminal, also those that
+                    # have no corresponding BÍN meaning
+                    fbits = t._vbits
+                    # The indices of the argument cases and of the subject kind
+                    mask = cases_ix | (subj_cases_ix << 8) | (subject_ix << 16)
+        elif first not in _PYTHON_FIRSTS and not t.has_any_vbits(
+            BIN_Token.VBIT_ENDING | (0 if first == "lo" else BIN_Token.VBIT_SCASES)
         ):
             fbits = t._fbits
             if first == "no":
@@ -2731,6 +2864,17 @@ def _make_terminal_spec(
             elif first == "lo":
                 kind = _T_CAT_LO
                 cat = intern_cat("lo")
+                if t.has_any_vbits(BIN_Token.VBIT_SCASES):
+                    # The terminal demands an adjective that can take a
+                    # subject in a particular case (matcher_lo): note
+                    # which one, as an index into ('þf', 'þgf', 'ef')
+                    flags |= _TF_SCASE
+                    if t.has_variant("sþf"):
+                        extra = 0
+                    elif t.has_variant("sþgf"):
+                        extra = 1
+                    else:
+                        extra = 2
             elif first == "ao":
                 kind = _T_CAT_AO
                 cat = intern_cat("ao")
@@ -2753,13 +2897,25 @@ def _make_terminal_spec(
                 kind = _T_CAT_DEFAULT
                 cat = intern_cat(first)
         elif first in _WORD_ONLY_FIRSTS:
-            # Matched in Python (a verb terminal, or an adjective terminal
-            # with an ending or subject case constraint), but only against
-            # word meanings of the terminal's own category: the core
-            # doesn't need to ask if the token has no such meaning
+            # Matched in Python (an adjective terminal with an ending
+            # constraint), but only against word meanings of the
+            # terminal's own category: the core doesn't need to ask if
+            # the token has no such meaning
             flags |= _TF_NEEDS_CAT
             cat = intern_cat(first)
-    return _STRUCT_SPEC.pack(kind | flags, cat, lit, 0, fbits, mask)
+        else:
+            matcher_name = getattr(t._matcher, "__name__", "")
+            flag_matcher = _FLAG_MATCHERS.get(matcher_name)
+            if flag_matcher is not None and t._matcher is getattr(
+                WordMatchers, matcher_name
+            ):
+                # Matched in Python, by a matcher that looks at a property
+                # of the token that is noted in its flags (see
+                # _word_token_flags()): the core doesn't need to ask if a
+                # word token with meanings lacks that property
+                flags |= flag_matcher[0]
+                extra = flag_matcher[1]
+    return _STRUCT_SPEC.pack(kind | flags, cat, lit, extra, fbits, mask)
 
 
 def build_matching_table(grammar: "BIN_Grammar") -> MatchingTable:
@@ -2776,27 +2932,181 @@ def build_matching_table(grammar: "BIN_Grammar") -> MatchingTable:
     for c in BIN_Token.KIND.values():
         catmap.setdefault(c, len(catmap) + 1)
     num = grammar.num_terminals
+    # Collect the argument case combinations and the subject kinds
+    # that the verb terminals of the grammar refer to
+    case_set: Set[str] = set()
+    subject_set: Set[str] = set()
+    for t in grammar.terminals.values():
+        if type(t) is BIN_Terminal and t.first == "so":
+            parts = _verb_terminal_parts(t)
+            if parts is not None:
+                so_flags, verb_cases, subj_cases, subject = parts
+                if so_flags & _SF_HAS_NARGS:
+                    case_set.add(verb_cases)
+                if subj_cases:
+                    case_set.add(subj_cases)
+                if subject:
+                    subject_set.add(subject)
+    # Terminals that refer to something beyond the limit stay in Python
+    cases = sorted(case_set)[:_MAX_VERB_BITS]
+    subjects = list(_FIXED_SUBJECTS) + sorted(subject_set - set(_FIXED_SUBJECTS))
+    subjects = subjects[:_MAX_VERB_BITS]
+    cases_ix = {c: i for i, c in enumerate(cases)}
+    subjects_ix = {s: i for i, s in enumerate(subjects)}
     empty = _STRUCT_SPEC.pack(_T_PYTHON, 0, 0, 0, 0, 0)
     specs: List[bytes] = [empty] * (num + 1)
     for t in grammar.terminals.values():
         if 1 <= t.index <= num:
-            specs[t.index] = _make_terminal_spec(t, lexicon, catmap)
-    masks = _STRUCT_MASKS.pack(
+            specs[t.index] = _make_terminal_spec(
+                t, lexicon, catmap, cases_ix, subjects_ix
+            )
+    table = MatchingTable(b"".join(specs), num + 1, lexicon, catmap, cases, subjects)
+    setattr(grammar, "_matching_table", table)
+    return table
+
+
+def matching_masks(token_class: Type[BIN_Token] = BIN_Token) -> bytes:
+    """Return the bit masks that native matching uses (a MatchMasks
+    structure, see eparser.h), for tokens of the given class"""
+    bit = BIN_Token.VBIT
+    # Variants of a verb terminal that must be found in the form of a verb
+    verb_variants = 0
+    for v, form in token_class._VERB_FORMS.items():
+        if form and v in bit:
+            verb_variants |= bit[v]
+    # Variants that must be in a verb terminal if they are found in the
+    # form of a verb. A class derived from BIN_Token may have its own.
+    restrictive = 0
+    for v in token_class._RESTRICTIVE_VARIANTS:
+        if token_class.VARIANT.get(v) and v in bit:
+            restrictive |= bit[v]
+    return _STRUCT_MASKS.pack(
         BIN_Token.VBIT_GENDERS,
         BIN_Token.VBIT_NUMBER,
         BIN_Token.VBIT_ET,
         BIN_Token.VBIT_GR,
         BIN_Token.VBIT_MM,
+        BIN_Token.VBIT_FT,
+        BIN_Token.VBIT_SUBJ,
+        BIN_Token.VBIT_NH,
+        BIN_Token.VBIT_GM,
+        BIN_Token.VBIT_EXPL,
+        BIN_Token.VBIT_LH,
+        BIN_Token.VBIT_SAGNB,
+        BIN_Token.VBIT_OP,
+        bit["vb"],
+        BIN_Token.VBIT_BH,
+        BIN_Token.VBIT_LHNT,
+        BIN_Token.VBIT_CASES,
+        verb_variants,
+        restrictive,
     )
-    table = MatchingTable(b"".join(specs), num + 1, masks, lexicon, catmap)
-    setattr(grammar, "_matching_table", table)
-    return table
 
 
-def encode_token_matching_data(token: BIN_Token, table: MatchingTable) -> bytes:
+def _verb_profile(
+    token_class: Type[BIN_Token],
+    stofn: str,
+    form: str,
+    table: MatchingTable,
+    cache: VerbProfileCache,
+) -> Tuple[int, int, int, int]:
+    """Return what BIN_Token.verb_matches() can ask about a verb with the
+    given lemma and BÍN inflection string, when matching it with any verb
+    terminal of the grammar. The answers come from the same methods of
+    the token class as verb_matches() calls, so they reflect what a
+    derived class (such as the one in GreynirCorrect) has to say.
+    Returns a tuple of:
+
+    * a bit for each argument case combination in table.cases, set if
+      the verb can take arguments in those cases (the verb being the
+      middle voice form of the lemma, if the inflection is middle voice);
+    * the same for the lemma itself, irrespective of voice;
+    * a bit for each subject kind in table.subjects, set if the
+      verb can have that kind of subject;
+    * flags (_VF_*)."""
+    key = (stofn, form)
+    profile = cache.get(key)
+    if profile is None:
+        # As in WordMatchers.matcher_so(): for a composite verb,
+        # only the last part is looked up
+        verb = stofn.rsplit("-", maxsplit=1)[-1] if "-" in stofn else stofn
+        matches_arguments = token_class.verb_matches_arguments
+        args_plain = 0
+        for i, c in enumerate(table.cases):
+            if matches_arguments(verb + c):
+                args_plain |= 1 << i
+        if "MM" in form:
+            # Middle voice: the frames of the middle voice verb apply
+            frame_verb = token_class.mm_verb_stem(verb)
+            args = 0
+            for i, c in enumerate(table.cases):
+                if matches_arguments(frame_verb + c):
+                    args |= 1 << i
+        else:
+            frame_verb = verb
+            args = args_plain
+        subject_matches = token_class.verb_subject_matches
+        subj = 0
+        for i, s in enumerate(table.subjects):
+            if subject_matches(verb, s):
+                subj |= 1 << i
+        flags = 0
+        if token_class.verb_is_strictly_impersonal(verb, form):
+            flags |= _VF_STRICTLY_IMPERSONAL
+        if token_class.verb_cannot_be_impersonal(verb, form):
+            flags |= _VF_CANNOT_BE_IMPERSONAL
+        if "ST" in form:
+            flags |= _VF_ST
+        if not VerbFrame.known(frame_verb):
+            flags |= _VF_UNKNOWN
+        profile = cache[key] = (args, args_plain, subj, flags)
+    return profile
+
+
+def _word_token_flags(token: BIN_Token) -> int:
+    """Return the flags that describe properties of a word token with
+    meanings, for the terminals whose matchers are listed in
+    _FLAG_MATCHERS. Each flag must be set if the corresponding matcher
+    can return True for any meaning of the token and any terminal."""
+    flags = 0
+    meanings = token.meanings
+    txt = token.t1_lower
+    # matcher_fs(): the text of the token - or the lemma of the meaning,
+    # if the text is an abbreviation - must be a known preposition
+    if "." in txt:
+        if any(m.stofn in Prepositions.PP for m in meanings):
+            flags |= _TKF_PREP
+    elif txt in Prepositions.PP:
+        flags |= _TKF_PREP
+    # matcher_sérnafn(): the token must be in upper case, etc.
+    if token.is_upper and txt not in BIN_Token._NOT_PROPER_NAME and " " not in txt:
+        flags |= _TKF_PROPER
+    # matcher_eo() does not look at the terminal at all
+    matcher_eo = WordMatchers.matcher_eo
+    if any(matcher_eo(token, cast(Any, None), m) for m in meanings):
+        flags |= _TKF_EO
+    # matcher_person() and matcher_gata()
+    for m in meanings:
+        fl = m.fl
+        if fl in _NAME_FL:
+            flags |= _TKF_NAME
+        elif fl in _PLACE_FL:
+            flags |= _TKF_PLACE
+    return flags
+
+
+def encode_token_matching_data(
+    token: BIN_Token,
+    table: MatchingTable,
+    verb_profiles: Optional[VerbProfileCache] = None,
+) -> bytes:
     """Encode a token, along with its BÍN meanings, into the packed
     native matching format (a TokenRec header followed by MeaningRec
-    entries; see eparser.h)"""
+    entries; see eparser.h). If verb_profiles is given (a cache, shared
+    between the tokens of a parser), the meaning records of verbs
+    describe them well enough for verb terminals to be matched natively.
+    It must not be given if the class of the token has its own
+    verb_matches() method."""
     lexicon = table.lexicon
     catmap = table.catmap
     form_id = lexicon.get(token.t1_lower, 0)
@@ -2808,18 +3118,48 @@ def encode_token_matching_data(token: BIN_Token, table: MatchingTable) -> bytes:
             genders_set = BIN_Token.GENDERS_SET
             kind_map = BIN_Token.KIND
             get_fbits = BIN_Token.get_fbits
+            adj_arguments = BIN_Token._ADJ_ARGUMENTS
+            token_class = type(token)
             pack = _STRUCT_REC.pack
+            verbs = verb_profiles is not None
             for m in token.meanings:
                 ordfl = m.ordfl
                 mf = 0
+                args = args_plain = subj = vf = 0
                 if m.beyging == "-":
                     mf |= _MF_NO_BEYGING
                 if m.fl == "nafn" or m.fl == "ætt":
                     mf |= _MF_NAME_FL
                 if ordfl in genders_set:
                     mf |= _MF_IS_NOUN
-                elif ordfl == "lo" or ordfl == "so":
+                elif ordfl == "lo":
                     mf |= _MF_IS_LO_SO
+                    # The cases of the subjects that the adjective can
+                    # take, if any (cf. WordMatchers.matcher_lo())
+                    scases = adj_arguments.get(m.stofn.rsplit("-", maxsplit=1)[-1])
+                    if scases:
+                        if "þf" in scases:
+                            subj |= 1
+                        if "þgf" in scases:
+                            subj |= 2
+                        if "ef" in scases:
+                            subj |= 4
+                elif ordfl == "so":
+                    mf |= _MF_IS_LO_SO
+                    if verbs and m.beyging != "-":
+                        try:
+                            args, args_plain, subj, vf = _verb_profile(
+                                token_class,
+                                m.stofn,
+                                m.beyging,
+                                table,
+                                cast(VerbProfileCache, verb_profiles),
+                            )
+                        except Exception:
+                            # Something went wrong in a method of the token
+                            # class: leave the verbs of this token to
+                            # verb_matches(), which may not need to call it
+                            verbs = False
                 # For nouns, the gender is coded in ordfl; append it to
                 # the beyging field so that the corresponding feature bit
                 # is included (mirrors matcher_default/matcher_no)
@@ -2831,9 +3171,15 @@ def encode_token_matching_data(token: BIN_Token, table: MatchingTable) -> bytes:
                         catmap.get(kind_map.get(ordfl, ordfl), 0),
                         mf,
                         fb,
+                        args,
+                        args_plain,
+                        subj,
+                        vf,
                     )
                 )
-            count_flags = _TKF_FAST | len(parts)
+            count_flags = _TKF_FAST | len(parts) | _word_token_flags(token)
+            if verbs:
+                count_flags |= _TKF_VERBS
         else:
             # Word token with no BÍN meanings (unknown word)
             count_flags = _TKF_EMPTY_WORD

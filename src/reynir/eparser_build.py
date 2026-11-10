@@ -129,6 +129,8 @@ declarations = """
         MeaningsFunc fpMeanings, const BYTE* pMasks, BOOL bParity);
     UINT getParityMismatches(struct Parser*);
     void setLookahead(struct Parser*, BOOL);
+    INT nativeMatch(struct Parser*, const BYTE* pTokenRec, UINT nTerminal);
+    void prefillMatchCache(struct Parser*, BYTE* abCache, const BYTE* pTokenRec);
 
     void setReducerTables(struct Parser*,
         const UINT* pnNtFlags, const INT* pnNtScores, UINT nNonterminals,

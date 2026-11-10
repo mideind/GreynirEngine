@@ -47,6 +47,7 @@
 #include <wchar.h>
 #include <new>
 #include <atomic>
+#include <vector>
 
 
 // Assert macro. The assertions are enabled in DEBUG builds (which also
@@ -604,6 +605,7 @@ BOOL defaultMatcher(UINT nHandle, UINT nToken, UINT nTerminal);
 #define T_CAT_NOUN      7  // Noun terminal (no_...)
 #define T_CAT_LO        8  // Adjective terminal (lo_...)
 #define T_CAT_AO        9  // Adverb terminal (ao_...)
+#define T_CAT_SO       10  // Verb terminal (so_...)
 
 // Terminal spec flags (higher bits of TerminalSpec::nKindFlags)
 #define TF_ABBREV        0x0100u  // no_abbrev: matches only meanings without inflection info
@@ -614,11 +616,31 @@ BOOL defaultMatcher(UINT nHandle, UINT nToken, UINT nTerminal);
 // for terminals that are otherwise matched in Python (T_PYTHON)
 #define TF_NO_NONWORD    0x0800u  // Terminal never matches a token that is not a word
 #define TF_NEEDS_CAT     0x1000u  // Terminal only matches word meanings of category nCatId
+#define TF_SCASE         0x2000u  // Adjective terminal that demands a subject case (nExtra: 0-2)
+// For terminals that are matched in Python (T_PYTHON) by a matcher that
+// depends on a property of the token (nExtra: its TKF_* flag):
+#define TF_NEEDS_FLAG    0x4000u  // Can't match a word with meanings that lacks the flag
+#define TF_IS_FLAG       0x8000u  // Matches a word with meanings iff it has the flag
+
+// Verb terminal flags (TerminalSpec::nExtra of a T_CAT_SO terminal)
+#define SF_NONE          0x01u  // The terminal has the variant 'none'
+#define SF_HAS_NARGS     0x02u  // The first variant is the number of arguments
+#define SF_NO_CASES      0x04u  // ...and there are no argument cases (so_0)
+#define SF_SUBJ_NARGS    0x08u  // A subj terminal with one argument
+#define SF_SUBJ_LAST_EF  0x10u  // The last variant of a subj terminal is 'ef'
 
 // Token header flags (high 16 bits of TokenRec::nCountFlags)
 #define TKF_FAST        0x00010000u  // Word token with BÍN meanings: fully matchable natively
 #define TKF_EMPTY_WORD  0x00020000u  // Word token without BÍN meanings
 #define TKF_NONWORD     0x00040000u  // Not a word token (number, person name, punctuation...)
+#define TKF_VERBS       0x00080000u  // The meaning records of verbs have verb profiles
+// Properties of a word token with meanings (see _word_token_flags()
+// in binparser.py), cf. TF_NEEDS_FLAG and TF_IS_FLAG
+#define TKF_PREP        0x00100000u  // Can be a preposition
+#define TKF_PROPER      0x00200000u  // Can be a proper name
+#define TKF_EO          0x00400000u  // Matches eo terminals
+#define TKF_NAME        0x00800000u  // Has a meaning that is a person or family name
+#define TKF_PLACE       0x01000000u  // Has a meaning that is a street or place name
 
 // Meaning record flags
 #define MF_NO_BEYGING   1u  // Meaning has no inflection info (beyging == "-")
@@ -626,13 +648,22 @@ BOOL defaultMatcher(UINT nHandle, UINT nToken, UINT nTerminal);
 #define MF_IS_NOUN      4u  // Meaning ordfl is kk, kvk or hk
 #define MF_IS_LO_SO     8u  // Meaning ordfl is lo or so
 
+// Verb meaning flags (MeaningRec::nVerbFlags)
+#define VF_STRICTLY_IMPERSONAL   0x01u  // The verb never has a nominative subject
+#define VF_CANNOT_BE_IMPERSONAL  0x02u  // The verb form can't match an _op terminal
+#define VF_ST                    0x04u  // The inflection string contains 'ST'
+#define VF_UNKNOWN               0x08u  // The verb has no frames in Verbs.conf
+
 struct TerminalSpec {
    UINT nKindFlags;    // Kind in low byte, TF_* flags above
    UINT nCatId;        // Category id to compare, or 0
    UINT nLitId;        // Interned literal (lemma/form) id, or 0
-   UINT nReserved;
-   UINT64 nFbits;      // Required feature bits
-   UINT64 nMask;       // Comparison mask (T_CAT_MASK)
+   UINT nExtra;        // T_CAT_SO: SF_* flags; T_CAT_LO with TF_SCASE: the subject case
+   UINT64 nFbits;      // Required feature bits (T_CAT_SO: all variant bits)
+   UINT64 nMask;       // Comparison mask (T_CAT_MASK). T_CAT_SO: the index of
+                       // the argument cases in the lowest byte, of the argument
+                       // cases of a subj terminal in the next byte, and of
+                       // the subject kind in the third byte
 };
 
 struct MeaningRec {
@@ -641,6 +672,14 @@ struct MeaningRec {
    UINT nMappedCatId;  // Terminal-name-mapped category id (kk/kvk/hk -> no)
    UINT nFlags;        // MF_* flags
    UINT64 nFbits;      // Feature bits of this meaning (gender-augmented)
+   // The following describe a verb (see _verb_profile() in binparser.py),
+   // if the token has TKF_VERBS. For an adjective, nSubjects has a bit
+   // for each case (accusative, dative, genitive) that its subject can be in.
+   UINT nArgs;         // A bit for each combination of argument cases
+                       // that the verb can take, in its voice
+   UINT nArgsPlain;    // The same, irrespective of voice
+   UINT nSubjects;     // A bit for each kind of subject that the verb can have
+   UINT nVerbFlags;    // VF_* flags
 };
 
 struct TokenRec {
@@ -651,12 +690,28 @@ struct TokenRec {
 
 struct MatchMasks {
    // Bit masks for the feature bit space, passed from Python
-   // (the bit layout is defined by BIN_Token.VBIT)
+   // (the bit layout is defined by BIN_Token.VBIT; see matching_masks()
+   // in binparser.py)
    UINT64 genders;
    UINT64 number;
    UINT64 et;
    UINT64 gr;
    UINT64 mm;
+   // For verb terminals
+   UINT64 ft;
+   UINT64 subj;
+   UINT64 nh;
+   UINT64 gm;
+   UINT64 expl;
+   UINT64 lhpt;         // Past participle (lhþt)
+   UINT64 sagnb;
+   UINT64 op;
+   UINT64 vb;
+   UINT64 bh;
+   UINT64 lhnt;         // Present participle: both bits are required
+   UINT64 cases;
+   UINT64 verbVariants; // Variants of a terminal that the verb form must have
+   UINT64 restrictive;  // Variants that the terminal must have if the verb form does
 };
 
 
@@ -758,6 +813,15 @@ private:
    // Atomic (like the diagnostic allocation counters), since it is
    // incremented from within concurrent parses
    std::atomic<UINT> m_nParityMismatches;
+   // Prefilling of the matching cache of a token that is seen for the
+   // first time (see prefillCache()): matching cache contents where the
+   // terminals that can't match a word token (resp. a token that is not
+   // a word) without further ado are marked as not matching; and an
+   // index of the literal terminals by the id of their literal
+   std::vector<BYTE> m_prefillWord;
+   std::vector<BYTE> m_prefillNonword;
+   std::vector<UINT> m_litStart;
+   std::vector<UINT> m_litTerminals;
 
    // Tables for the reducer (may be absent)
    ReducerTables m_rt;
@@ -835,6 +899,11 @@ public:
 
    // Evaluate a native token/terminal match
    static BOOL evalMatch(const TerminalSpec*, const BYTE* pTokenRec, const MatchMasks&);
+   // Decide a token/terminal match natively, if possible
+   BOOL matchNatively(UINT nTerminal, const BYTE* pTokenRec, BOOL& b) const;
+   // Mark the terminals that can't match a token, going by its
+   // packed matching data alone, in its matching cache
+   void prefillCache(BYTE* abCache, const BYTE* pTokenRec) const;
 
    // If pnToklist is NULL, a sequence of integers 0..nTokens-1 will be used
    Node* parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
@@ -867,6 +936,14 @@ extern "C" UINT getParityMismatches(Parser*);
 
 // Turn the lookahead filter of the parser on (the default) or off
 extern "C" void setLookahead(Parser*, BOOL);
+
+// For testing: decide natively whether a terminal matches a token, given
+// its packed matching data. Returns 1 or 0, or -1 if Python must be asked.
+extern "C" INT nativeMatch(Parser*, const BYTE* pTokenRec, UINT nTerminal);
+
+// For testing: prefill a matching cache (see Parser::prefillCache());
+// the cache must have Parser::matchCacheSize() bytes
+extern "C" void prefillMatchCache(Parser*, BYTE* abCache, const BYTE* pTokenRec);
 
 // Install the tables and callbacks that the reducer needs. The tables
 // have one entry per nonterminal, and one per terminal (1-based, so

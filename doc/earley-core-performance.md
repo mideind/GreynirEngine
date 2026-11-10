@@ -1,6 +1,6 @@
 # Performance of the C++ Earley-Scott core
 
-Status: IMPLEMENTED (stages 1, 2 and 3) — 2026-11-10; section 8: findings
+Status: IMPLEMENTED (stages 1 to 4) — 2026-11-10; section 8: findings
 only (its lookahead filter is implemented in stage 3)
 
 ## 0. Summary
@@ -17,7 +17,9 @@ goes beyond the core: the parse forest is now reduced in C++ rather than
 in Python, the core has a lookahead filter, and the native matching of
 tokens with terminals also serves GreynirCorrect. Stage 3 made parsing
 of news text about 8x faster again (3.7x for text that has not been seen
-before); its results are in section 9.
+before); its results are in section 9. Section 10 is about a fourth round
+(stage 4), which deals with the work that is done the first time that a
+token is seen, and makes a first pass over news text twice as fast again.
 
 Stages 1 and 2 taken together, on the machine where stage 2 was done:
 
@@ -867,6 +869,7 @@ simplification of the tree 12%.
    cases, impersonal or not), computed through the hooks of the token
    class so that GreynirCorrect is served as well. This is the largest
    remaining item for text that has not been seen before.
+   **Done in stage 4; see section 10.**
 2. **Tokenization** is now a fifth of a warm parse. It has not been looked
    at in this work.
 3. **Nullable nonterminals** (section 8) are still handled through the H
@@ -875,3 +878,143 @@ simplification of the tree 12%.
    tables indexed by node would be faster. Its Python part could move to
    C++ as well, if the heuristics of `_score_options()` are expressed as
    data.
+
+## 10. Stage 4: the first encounter with a token
+
+Status: IMPLEMENTED — 2026-11-10
+
+After stage 3, a first pass over news text took 2.4 times as long as a
+warm one. The difference is work that is done once for each distinct
+token (by `BIN_Token.key`), with the results kept in the matching cache.
+For 2,032 new tokens in 300 sentences of news text:
+
+* **43 calls into Python per token**, to `BIN_Token.matches()`: 77% of
+  the time in them for verb terminals, 13% for adjective terminals that
+  demand a subject case, the rest for prepositions, names and the like.
+* **3,045 terminals evaluated per new token**, nearly half of all the
+  terminals in the grammar. Four out of five terminals are literals
+  (`"vera:so"_et_p3`), and the parser gets to ask about most of them, one
+  by one, for every new token.
+
+### 10.1 Verb terminals
+
+Whether a verb terminal (`so_1_þgf_et_p3`, `so_subj_op_þf`, ...) matches a
+verb is decided by `BIN_Token.verb_matches()`, from three things: the
+variants of the terminal, the BÍN inflection string of the verb form, and
+what a handful of other methods say about the lemma: which argument cases
+it takes (`verb_matches_arguments()`), which subjects
+(`verb_subject_matches()`), and whether it is impersonal
+(`verb_is_strictly_impersonal()`, `verb_cannot_be_impersonal()`).
+GreynirCorrect overrides those four, and the class attribute
+`_RESTRICTIVE_VARIANTS`.
+
+The method is now replicated in C++ (`verbMatchMeaning()` in
+`eparser.cpp`):
+
+* The variants of the terminal and the features of the verb form were
+  already bit sets, with the same bit for a variant and for its BÍN string
+  (`BIN_Token.VBIT`), so most of the method becomes a few masks.
+* What the other methods say about a verb is asked in advance, once for
+  each lemma and inflection string, when the packed matching data of a
+  token is created (`_verb_profile()` in `binparser.py`), and stored in
+  the meaning record: a bit for each of the 14 combinations of argument
+  cases that the verb terminals of the grammar have, a bit for each of the
+  9 kinds of subject that they ask for, and four flags.
+* The questions go to the methods of the class of the token. A derived
+  class that overrides them, as GreynirCorrect's does, thus gets its own
+  answers, and its verb terminals are matched natively as well.
+  `_RESTRICTIVE_VARIANTS` is passed as a mask, per parser.
+* If a derived class overrides `verb_matches()` itself, the verbs of its
+  tokens are matched in Python as before (the token records then lack the
+  flag `TKF_VERBS`).
+
+All 367 verb terminals of the grammar are handled this way.
+
+### 10.2 The other terminals that were matched in Python
+
+* **Adjective terminals with a subject case** (`lo_sþgf_...`, 180
+  terminals): the meaning record of an adjective says which cases its
+  subject can be in.
+* **Prepositions, proper names, person names, street names, and adverbs
+  that are not prepositions** (`fs`, `sérnafn`, `person`, `gata`, `eo`): the
+  matchers of these look at a property of the token as a whole, before
+  anything else: is its text a known preposition, is it capitalized, has
+  it a meaning that is a name. Those properties are now flags in the token
+  record (`_word_token_flags()`), and the core does not call Python for a
+  word that lacks the property. For `eo`, the flag is the whole answer.
+
+Of the 6,264 terminals of the grammar, 42 can still lead to a call into
+Python for a word with meanings in BÍN (36 of them only if the word has
+the property in question). Tokens that are not words (numbers, dates,
+person names and so on) are matched in Python as before, unless the
+terminal is one that never matches such tokens.
+
+Since the hooks are now called when the matching data of a token is
+created, rather than when a match is evaluated, they must be pure
+functions of their arguments. (`verb_matches()` was already cached on
+that assumption.)
+
+### 10.3 Prefilling the matching cache
+
+A literal terminal can only match a word if the text of the word, or one
+of its lemmas, is that literal. When a token is seen for the first time,
+all literal terminals are marked as not matching it in one step, by
+combining a prepared bit pattern with the (empty) matching cache of the
+token (`Parser::prefillCache()`) - except those whose literal does occur
+in the token, which are found through an index and left to be evaluated
+in the normal way. For a token that is not a word, the pattern also
+covers the terminals that never match such tokens. Nothing is prefilled
+in parity mode, where every match is evaluated both ways.
+
+### Results
+
+For the 300 sentences: 43 calls into Python per token became 8, and
+3,045 evaluations per new token became 597.
+
+`benchmarks/bench_parse.py`, stage 3 against stage 4 on the same machine:
+
+| | Stage 3 | Stage 4 | Speedup |
+|---|---|---|---|
+| 1,000 news sentences, first pass | 11.3 s | 5.6 s | 2.0x |
+| ... of which in the core | 7.9 s | 2.5 s | 3.1x |
+| `benchmarks/corpus.txt`, cold | 0.48 s | 0.19 s | 2.5x |
+| GreynirCorrect, 300 news sentences, first pass | 6.8 s | 4.9 s | 1.4x |
+
+Warm passes are unchanged (4.3 s for the news sentences), so a first pass
+is now 1.3 times a warm one. Against the commit before stage 3, the first
+pass over the news sentences is 7.5x faster (41.9 s to 5.6 s), and
+GreynirCorrect's 8.2x (40.0 s to 4.9 s). Memory use is unchanged; a
+meaning record is 16 bytes larger.
+
+### Verification
+
+* **Parity**: in matching parity mode, where every native decision is
+  compared with that of `BIN_Token.matches()`, there are no differences
+  over 3,709 sentences, nor in GreynirCorrect with its own token class
+  over 300 sentences and its test suite.
+* **Exhaustive tests** (`test/test_native_matching.py`): the parser only
+  asks about the terminals that its predictions lead to, so the tests ask
+  about all of them, through a test entry point (`nativeMatch()`): every
+  verb terminal against every token of a set of sentences rich in verb
+  forms; against verbs with pseudo-random inflection strings; with a token
+  class that overrides the hooks; and with one that has its own
+  `verb_matches()`. The prefilled cache entries are checked against
+  Python as well.
+* **Mutation testing**: of 47 bugs deliberately introduced into the new
+  code, one at a time, the tests catch 45. The other two are in a test
+  for subj terminals with middle voice, of which the grammar has none, and
+  in a test that the next one repeats (as in the Python original).
+* **End to end**: trees, scores, numbers of trees and error positions are
+  identical to those from before stage 3 for 3,764 sentences;
+  GreynirCorrect's trees and annotations are identical for 300 sentences.
+* The tests and 1,175 sentences run clean under AddressSanitizer and UBSan
+  with assertions enabled; the full suite (146 tests), ruff and mypy pass;
+  the core, reducer and matching tests pass on PyPy 3.11.
+
+### What remains of a first pass
+
+What is left of the difference between a first pass and a warm one is
+spread over: the lookups of new words in BÍN by the tokenizer; the
+creation of the token records (some tens of microseconds per new token);
+the calls into Python for tokens that are not words (8 per token overall);
+and the 600 native evaluations per new token.
