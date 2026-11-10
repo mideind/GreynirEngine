@@ -170,22 +170,53 @@ wheels = [
 
 [[package]]
 name = "islenska"
-version = "1.3.2"
+version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cffi" },
+    { name = "islenska-data" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/04/c9/c84235e9b5019c7f30440c14b39958fd99554d7de5e5b5cc2cdab5074e80/islenska-1.3.2.tar.gz", hash = "sha256:debd07a1ef9d534f56f01c910bf3c84494ef960212c143e309510336a3b9110e", size = 50397548, upload-time = "2026-06-23T15:27:33.774Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/69/5d/303cdbbcc927fce38c7f2bad99c41a5ef67c5c277741b3460fddfc4bc14a/islenska-2.1.0.tar.gz", hash = "sha256:aff7ed9ec24d538ba836494e2a58ff1e71c31868e9005f5ee723acfe1bb2a774", size = 141368, upload-time = "2026-10-15T18:25:37.346Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0b/32/81bf5ab46fa387de9438c713c33c9768ef5092fc3aeb0cd45cd194779b72/islenska-1.3.2-cp39-abi3-macosx_10_9_x86_64.whl", hash = "sha256:e89fec978e563a62899b66ad23bf90217c262b5073899382867c7d51c393ed3e", size = 50471533, upload-time = "2026-06-23T15:27:08.173Z" },
-    { url = "https://files.pythonhosted.org/packages/d8/71/89073daff8d4f34b04aaca339733b6830c984a9be2745664e9afd892f318/islenska-1.3.2-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:86ccf3430d6cffabf2be1fea01d0a387f9ce8cc3dd2448cfca064844e37aa252", size = 50470361, upload-time = "2026-06-23T15:27:11.342Z" },
-    { url = "https://files.pythonhosted.org/packages/26/ed/f5f82bce0c4c688a3c5220c9eeb50c963ff4ae87a900f1d72efb93e3679f/islenska-1.3.2-cp39-abi3-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1df0528480b988cad6ac1b72a8e221fbd36a02452b5b909fc127ee9c0e845a11", size = 51021633, upload-time = "2026-06-23T15:27:14.659Z" },
-    { url = "https://files.pythonhosted.org/packages/12/40/ed2e603e0a3ed4f8f298b09d0556660ecd140b3ce4b3d3bdc5e95f1937a7/islenska-1.3.2-cp39-abi3-win_amd64.whl", hash = "sha256:abebaaf94fcce9595af6a32298cb08b59a935dad57abb3c0ddf2650ccca97bce", size = 50657669, upload-time = "2026-06-23T15:27:17.674Z" },
-    { url = "https://files.pythonhosted.org/packages/34/85/fdd835172a4ab1d910bbd3b6ca6d78748d02b02d946aebaedc538049834d/islenska-1.3.2-pp311-pypy311_pp73-macosx_10_15_x86_64.whl", hash = "sha256:51a58d7be6240b53a2e60de2012273255168c114413c7331c5311fac362d1909", size = 50464002, upload-time = "2026-06-23T15:27:21.129Z" },
-    { url = "https://files.pythonhosted.org/packages/4b/9e/160f283b66bf80481d576b2222ff357e44f75265a7b78be783974a139379/islenska-1.3.2-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "sha256:165e61c9cf4cd6172bd71077fb2db87dc74bcd5298fd8824d0c08b5db70c73af", size = 50462405, upload-time = "2026-06-23T15:27:24.573Z" },
-    { url = "https://files.pythonhosted.org/packages/37/f5/efbf0fb9996465e43876c45387a2f852d08a4d9b3fd0b55b1da44545e18b/islenska-1.3.2-pp311-pypy311_pp73-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9c0ccb5e1c985710dc691c968e943c41b61f5bca0031f293ee239f8d7de71189", size = 50467012, upload-time = "2026-06-23T15:27:27.646Z" },
-    { url = "https://files.pythonhosted.org/packages/62/b8/c036792983c7dbe714f55b5bd2e06419d28f129f7eabb2ed50d3987b21f4/islenska-1.3.2-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:988aeadf80d5853910a353d9490a18755522e2a98a2a9424b7342390c2437ed7", size = 50669468, upload-time = "2026-06-23T15:27:30.768Z" },
+    { url = "https://files.pythonhosted.org/packages/40/ee/153d7ba29c2cf6cd19ba4f0ef747761ccb1fbf35abd3f757ba2941f4e6c6/islenska-2.1.0-cp310-abi3-macosx_10_13_x86_64.whl", hash = "sha256:faea4f3f84f491d92ee15144dbef37d4358645f82a663c2408312ce268d739a8", size = 137456, upload-time = "2026-10-15T18:24:52.833Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/56/9ea0bcb96348cd37835819b2165b2341480ca26db0c90f949d50de6e962e/islenska-2.1.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:d090dc3cafc1d5aa1af229c93182672c5a2f9d75fbff5a3f531f059ebb09a3e0", size = 135198, upload-time = "2026-10-15T18:24:54.646Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/85/9c21956cce8832de283d3dc1b8a2827778f337ae13eebd1dfdcb77ec2bbe/islenska-2.1.0-cp310-abi3-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:24d21b94d47ffbc4135edc46974d7552b95ddc083335b7ba073773c7ecccaa41", size = 794072, upload-time = "2026-10-15T18:24:56.201Z" },
+    { url = "https://files.pythonhosted.org/packages/21/ff/30bdfdbed193e6dc6eb81fd4691f08438f9101a888a34bbe09b7248d7d3d/islenska-2.1.0-cp310-abi3-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:42d1d9c1862d3ae82c5911d51d3a1ed50692a86ae3887c76d7d03bb4578d63e2", size = 808555, upload-time = "2026-10-15T18:24:57.728Z" },
+    { url = "https://files.pythonhosted.org/packages/06/22/50397127813d8c1f90d4883ee034081c00cdce93c99b1e219700ec82fe93/islenska-2.1.0-cp310-abi3-win_amd64.whl", hash = "sha256:542bb6551d67b0810693f416b861eb6fac34cbefa1878719aba1794e3c8b1939", size = 330120, upload-time = "2026-10-15T18:24:59.411Z" },
+    { url = "https://files.pythonhosted.org/packages/6d/de/47ed3c04e81820c6f172eb9935c9bdc057d83c1d82b5bae399609d351898/islenska-2.1.0-cp314-cp314t-macosx_10_15_x86_64.whl", hash = "sha256:0ac49c5d5dcbb6b61f38929c7f66c2216b05b3dbaa6448dc542fbc9a1344101b", size = 137714, upload-time = "2026-10-15T18:25:00.814Z" },
+    { url = "https://files.pythonhosted.org/packages/13/02/cb83f6112ce99e38d2856b60b48e74004107e13aa06cedd45e8fe03d5965/islenska-2.1.0-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:968ca805538ac57bc6c67be4cae631e6be9500d1fe3e73ae75b6bb7088ce93ce", size = 135416, upload-time = "2026-10-15T18:25:02.099Z" },
+    { url = "https://files.pythonhosted.org/packages/49/32/dbb8791f44ead2b7ad7c10ffe81e0a9a447922e3976d6d2bb385c209acf1/islenska-2.1.0-cp314-cp314t-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:2f8d98142d322d06bc4589fdfe3c7dfccb14cb95f7f65880e2ea3bf47f3b0647", size = 803794, upload-time = "2026-10-15T18:25:03.478Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/ef/39a38570903fcc73eaab16bfdc4881242477e6ed99cbc0706e3ddbeddb72/islenska-2.1.0-cp314-cp314t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c892e2e805e6e9115491f79a8ceb07f93f39d43b591e26d2e942b084d82db752", size = 820267, upload-time = "2026-10-15T18:25:04.939Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/33/59df6ac94e102a80a28c335a70a3cff54333987cfa1250d50193b699845c/islenska-2.1.0-cp314-cp314t-win_amd64.whl", hash = "sha256:36fad6c942588bc2046c3d54062083e2c41d4b2acecb69090ec80fea742934e5", size = 338905, upload-time = "2026-10-15T18:25:06.39Z" },
+    { url = "https://files.pythonhosted.org/packages/70/88/637a6076ecdb469d5aede8eb0fbe57ec37760352696e2f5b14b42d6b1f2c/islenska-2.1.0-cp315-cp315t-macosx_10_15_x86_64.whl", hash = "sha256:7758b3595b5884e7b69e014332ee24f509e464fc307ad354b5d6279b9035e501", size = 137579, upload-time = "2026-10-15T18:25:07.781Z" },
+    { url = "https://files.pythonhosted.org/packages/8e/09/c165622de500adbaec1ca10e64594dcfc9749f5ff42a0e4b6cc793cf1058/islenska-2.1.0-cp315-cp315t-macosx_11_0_arm64.whl", hash = "sha256:aa5421c0d86d0f6bdcbdadc0e71e36ed45f650e856de98d91921824f6d53b5e3", size = 135381, upload-time = "2026-10-15T18:25:09.373Z" },
+    { url = "https://files.pythonhosted.org/packages/ee/5f/9854edb93b4ce378038a197034c4d6638ea63f3cfd53b5b7da980d62a32f/islenska-2.1.0-cp315-cp315t-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:2975d9f10ebbb0702dd7099c911cb314df919e7259e1454ed730d0765b07195f", size = 794932, upload-time = "2026-10-15T18:25:10.976Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/6f/3ef323d09cbc517c713bae92a849fbb2d61ee6a04b509c731ba6c14606c4/islenska-2.1.0-cp315-cp315t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:474b1306e4098bbec17e32982971c8bfee76e89eaa94129e957d1477ed782d2e", size = 810665, upload-time = "2026-10-15T18:25:12.702Z" },
+    { url = "https://files.pythonhosted.org/packages/54/18/949597ffec3a6d584e544bd87da53e3ac6c046e8890fafb4cd62b4df81d6/islenska-2.1.0-cp315-cp315t-win_amd64.whl", hash = "sha256:c3c072746d5fc4594442bbe015534b1c03601810f74267508e553c81b78dc0e1", size = 338803, upload-time = "2026-10-15T18:25:14.233Z" },
+    { url = "https://files.pythonhosted.org/packages/60/27/6358067656f664eda5299166425ea04417ec3f87af132ad2daabb488e101/islenska-2.1.0-pp311-pypy311_pp73-macosx_10_15_x86_64.whl", hash = "sha256:b1b32f9b55a9e8098791e3e3f5da1530879ddae48641c331cb34165f74f0b747", size = 168976, upload-time = "2026-10-15T18:25:15.905Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/da/1cdc760e92c1e969e88f6b5e6aac6e534449f62dba884d9ba8d334fbff25/islenska-2.1.0-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "sha256:f91295edbfd4822d8af69f3d7cbfa8112696fa5b3e370dcc03b4a4a40a584dc3", size = 164323, upload-time = "2026-10-15T18:25:17.548Z" },
+    { url = "https://files.pythonhosted.org/packages/b2/7b/aafce639da941bdadb2017c32369d636d35c3411081340ac9f9c3793abc6/islenska-2.1.0-pp311-pypy311_pp73-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:96d87792d46304b0c027b976f733f11270dc867add9b8659ade21ec7aa22ad80", size = 137313, upload-time = "2026-10-15T18:25:18.979Z" },
+    { url = "https://files.pythonhosted.org/packages/10/70/960eaff7c9fa05152eebd8765f0b389c21c6c01162dfa8bf523c696803f9/islenska-2.1.0-pp311-pypy311_pp73-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0ca5f49e6eab4349ca09515203804ae241ff366e449fbc09d219fb5ba78531de", size = 139812, upload-time = "2026-10-15T18:25:20.537Z" },
+    { url = "https://files.pythonhosted.org/packages/39/d9/ef4ebe13954414be5010817d40a66c062822a4c974aa3edf1899b24e7e96/islenska-2.1.0-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:cf53eea8c4f3b1fa8a3b5d462fecc7e9db581f2fe8e97f899266126476a6b312", size = 390552, upload-time = "2026-10-15T18:25:22.106Z" },
+    { url = "https://files.pythonhosted.org/packages/ee/40/5ac80058bea182bbb3e409c45b49045c51002232dcbbfb78915d88348750/islenska-2.1.0-pp311-pypy311_pp80-macosx_10_15_x86_64.whl", hash = "sha256:94bc4b7d28fcdf5996e3fd0870bf6f38b5753d87a544657e17b5910dc15f390f", size = 129299, upload-time = "2026-10-15T18:25:23.612Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/81/617510f75cdd342f0a0119fb36fb3d6e4a9a1032027bb60f98a5de120c58/islenska-2.1.0-pp311-pypy311_pp80-macosx_11_0_arm64.whl", hash = "sha256:fd0d8145c6f627d1983aed19e9eb60319d947f609c905aaa969dbd5676c83747", size = 126969, upload-time = "2026-10-15T18:25:25.223Z" },
+    { url = "https://files.pythonhosted.org/packages/af/bf/7ed68254998b0863272686b27f87f332b64e4495b88ccd7fd80949dff5ba/islenska-2.1.0-pp311-pypy311_pp80-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:c23404da92ee2039b94173f6821a04a73ffeaa2351c6e811a27334b619cbd562", size = 137312, upload-time = "2026-10-15T18:25:26.574Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/ec/786064a02bfa5fd0f99051c4b4ee30204f05867944edcc1e389cae52224e/islenska-2.1.0-pp311-pypy311_pp80-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:f4096db16bb23b84fd8b73721ecdb3c98b71b4b7de76d1cbe0c2948c946db79d", size = 139811, upload-time = "2026-10-15T18:25:27.886Z" },
+    { url = "https://files.pythonhosted.org/packages/e3/d3/f4db3c72a5b5dcac9990211bd7e12b9492b10f25b2c1d2c08e18a987288f/islenska-2.1.0-pp311-pypy311_pp80-win_amd64.whl", hash = "sha256:3e53dc844bbfdc1157bfbd291992f62df55a7f1c22338bda9f898acf09346d6e", size = 388007, upload-time = "2026-10-15T18:25:29.18Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/5e/09a760f6102ecdcd2ef33346034580acfef39071628143ba45f804cad972/islenska-2.1.0-pp312-pypy312_pp80-macosx_10_15_x86_64.whl", hash = "sha256:b333d21b779dca52e2bf5d0947956fc6c3217afda52d903ea0b469bfed7d27fc", size = 129298, upload-time = "2026-10-15T18:25:30.631Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/62/3302dfbd0607376059ac648cb4fea05ded4f176cebe4a72158eb13b38758/islenska-2.1.0-pp312-pypy312_pp80-macosx_11_0_arm64.whl", hash = "sha256:46103acd617db9da1298e0a1bd592f04e80d64e30356ae7be08038e5eda779c8", size = 126974, upload-time = "2026-10-15T18:25:31.9Z" },
+    { url = "https://files.pythonhosted.org/packages/23/5e/cc8091b23025cd5fa0cfd88d67c4462e8e9264d3f604b849e5b156debc68/islenska-2.1.0-pp312-pypy312_pp80-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:d686347713903374a6777c88b8a4fec9934ec09615e28934db01ca54ce251bab", size = 137311, upload-time = "2026-10-15T18:25:33.204Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/b5/819d74513c3c2fa31032bd3b0a7ff3aed17188caa3327f165b838f13ff16/islenska-2.1.0-pp312-pypy312_pp80-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:114f4ee086b9846d46fd29b2ac9e2447c411597f4cbc83bcef6111729efbad3d", size = 139812, upload-time = "2026-10-15T18:25:34.5Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/7b/36741ebe8eee1ababf9e7007d5a96f692d0d6f2835003f50b102a85440e0/islenska-2.1.0-pp312-pypy312_pp80-win_amd64.whl", hash = "sha256:93dd44a24d1ec0250fd1d5a440efa8e4779f16266693c643018a3ca462671fe5", size = 388006, upload-time = "2026-10-15T18:25:35.838Z" },
+]
+
+[[package]]
+name = "islenska-data"
+version = "5.0.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5b/23/9c85ab69cdd0424ea5cfdd3551fac9c483bb7d8eed0ce2c41c366abbf91c/islenska_data-5.0.0-py3-none-any.whl", hash = "sha256:89f3d1b7cfa13efb9f717ca419d4b8b696b69c31b7c8df898ab6ed1352e7105f", size = 30114471, upload-time = "2026-10-13T20:00:21.648Z" },
 ]
 
 [[package]]
@@ -409,7 +440,7 @@ wheels = [
 
 [[package]]
 name = "reynir"
-version = "3.10.0"
+version = "4.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "cffi" },
@@ -441,7 +472,7 @@ dev = [
 requires-dist = [
     { name = "cffi", specifier = ">=1.17.1" },
     { name = "filelock", specifier = ">=3.9.0" },
-    { name = "islenska", specifier = ">=1.3.2" },
+    { name = "islenska", specifier = ">=2.1.0" },
     { name = "mypy", marker = "implementation_name != 'pypy' and extra == 'dev'" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "ruff", marker = "extra == 'dev'" },

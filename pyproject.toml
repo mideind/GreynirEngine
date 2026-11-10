@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reynir"
-version = "3.10.0"
+version = "4.0.0"
 description = "A natural language parser for Icelandic"
 authors = [{ name = "Miðeind ehf.", email = "mideind@mideind.is" }]
 maintainers = [{ name = "Miðeind ehf.", email = "mideind@mideind.is" }]
@@ -39,7 +39,7 @@ requires-python = ">=3.10"
 dependencies = [
     "cffi>=1.17.1",
     "tokenizer>=3.6.3",
-    "islenska>=1.3.2",
+    "islenska>=2.1.0",
     "filelock>=3.9.0",
     "typing_extensions",
 ]

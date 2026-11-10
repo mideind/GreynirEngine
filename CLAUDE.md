@@ -200,10 +200,11 @@ The public API is defined by the exports in `src/reynir/__init__.py`.
 - The `old/` and `build/` directories contain legacy/build artifacts — do not
   edit code there.
 
-## Backlog (post-3.10.0 candidates)
+## Backlog (post-4.0.0 candidates)
 
 Potential next steps from the 2026 grammar-coverage study (see release
-notes for 3.9.0) and from the 3.10.0 work; none started:
+notes for 3.9.0), from the 3.10.0 work and from the performance work of
+4.0.0; none started:
 
 - **Coverage clusters**: auxiliary/copula gapping in a second conjunct
   ("höfðu dáið og 23 særst"); smaller items — "var lýst sem" passives,
