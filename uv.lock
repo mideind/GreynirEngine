@@ -419,6 +419,15 @@ dependencies = [
     { name = "typing-extensions" },
 ]
 
+[package.optional-dependencies]
+dev = [
+    { name = "mypy", marker = "implementation_name != 'pypy'" },
+    { name = "pytest" },
+    { name = "ruff" },
+    { name = "setuptools" },
+    { name = "types-cffi" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "mypy", marker = "implementation_name != 'pypy'" },
@@ -433,9 +442,15 @@ requires-dist = [
     { name = "cffi", specifier = ">=1.17.1" },
     { name = "filelock", specifier = ">=3.9.0" },
     { name = "islenska", specifier = ">=1.3.2" },
+    { name = "mypy", marker = "implementation_name != 'pypy' and extra == 'dev'" },
+    { name = "pytest", marker = "extra == 'dev'" },
+    { name = "ruff", marker = "extra == 'dev'" },
+    { name = "setuptools", marker = "extra == 'dev'" },
     { name = "tokenizer", specifier = ">=3.6.3" },
+    { name = "types-cffi", marker = "extra == 'dev'" },
     { name = "typing-extensions" },
 ]
+provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [

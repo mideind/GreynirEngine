@@ -50,10 +50,23 @@ Homepage = "https://greynir.is"
 Documentation = "https://greynir.is/doc/"
 Issues = "https://github.com/mideind/GreynirEngine/issues"
 
-[dependency-groups]
-# Development dependencies: uv installs these automatically with 'uv sync';
-# with pip (>=25.1), use 'pip install --group dev'.
+[project.optional-dependencies]
+# Development dependencies, as an extra: 'uv sync --extra dev', or
+# 'pip install -e ".[dev]"'. This is the same list as in the 'dev'
+# dependency group below; keep the two in step.
 # mypy is excluded on PyPy, where its native dependencies don't build.
+dev = [
+    "pytest",
+    "ruff",
+    "mypy; implementation_name != 'pypy'",
+    "types-cffi",
+    "setuptools",
+]
+
+[dependency-groups]
+# Development dependencies, as a dependency group: uv installs these
+# automatically with a plain 'uv sync' (which is what CI does);
+# with pip (>=25.1), use 'pip install --group dev'.
 dev = [
     "pytest",
     "ruff",

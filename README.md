@@ -203,8 +203,9 @@ uv sync
 uv run pytest
 ````
 
-Alternatively, install [pytest](https://docs.pytest.org/en/latest) into
-your virtualenv and run `python -m pytest`.
+`uv sync` installs the development tools (pytest, ruff, mypy) along with
+the package; `uv sync --extra dev` does the same. Without uv, install them
+into your virtualenv with `pip install -e ".[dev]"` and run `python -m pytest`.
 
 ## Evaluation
 

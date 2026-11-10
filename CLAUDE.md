@@ -11,8 +11,11 @@ via CFFI. Source lives in `src/reynir/`. Supports CPython 3.10+ and PyPy 3.11+.
 
 ## Commands
 
-The project uses [uv](https://docs.astral.sh/uv/) with a committed `uv.lock`;
-dev dependencies live in `[dependency-groups]` in `pyproject.toml`.
+The project uses [uv](https://docs.astral.sh/uv/) with a committed `uv.lock`.
+The dev dependencies (pytest, ruff, mypy, ...) are in `pyproject.toml` twice,
+with the same content: as the `dev` dependency group, which a plain `uv sync`
+installs, and as the `dev` extra, for `uv sync --extra dev` and
+`pip install -e ".[dev]"`. Keep the two lists in step.
 
 ```sh
 # Set up the dev environment (installs dev deps from uv.lock and
