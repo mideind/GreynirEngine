@@ -116,7 +116,11 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    order, but must leave the content of the forest intact: check with
    `bench_parse.py --digest --unordered` before and after, and compare
    the final trees of a larger sample. Forest nodes live in a per-parse
-   arena (`Forest`) that is freed as a whole by `deleteForest()`. See
+   arena (`Forest`) that is freed as a whole by `deleteForest()`. The
+   buffers of the tokens that have been seen before (matching cache,
+   matching data) are handed to the core when it is called
+   (`ParseJob.known_buffers()`, `earleyParseEx()`); it asks for the
+   others through callbacks (`alloc_func()`, `meanings_func()`). See
    `doc/earley-core-performance.md`; `test/test_earley_core.py` tests the
    core in isolation with synthetic grammars.
    The core has a lookahead filter: a state is only created if what
@@ -241,8 +245,9 @@ notes for 3.9.0), from the 3.10.0 work and from the performance work of
   headings/non-news text before touching rules that only win in other
   text types.
 - **Performance** (see "What remains" in sections 9 to 11 of
-  `doc/earley-core-performance.md`): the core is the largest part of a
-  warm parse again (precomputed nullability; the two per-token callbacks);
+  `doc/earley-core-performance.md`, and section 12): the core is the
+  largest part of a warm parse again (precomputed nullability; a memo of
+  the predictions per distinct token);
   the scoring of terminals in Python; tokenization would need fewer
   passes over the tokens; matching of tokens that are not words.
   GreynirServer's query module still calls

@@ -44,7 +44,10 @@
     * determinism: repeated parses give identical forests, including the
       order of the families of children of each node (which determines
       the outcome of tie-breaks in the reducer);
-    * consistency of the internal allocation counters.
+    * consistency of the internal allocation counters;
+    * the entry point where the caller hands the buffers of the tokens
+      over in advance, which must give the same forests as the one
+      where the core asks for them.
 
     These tests guard the data structures on the hot path of the core
     (the state lists of the columns, the set of states for detecting
@@ -240,14 +243,30 @@ class Core:
         self._forests: List[Any] = []
         self.error_token = 0
 
-    def parse(self, tokens: Sequence[int]) -> Optional[Forest]:
+    def parse(self, tokens: Sequence[int], entry: str = "plain") -> Optional[Forest]:
         """Parse a sequence of terminal indices. Returns None if there
-        is no parse, in which case self.error_token is set."""
+        is no parse, in which case self.error_token is set. The entry
+        point of the core that is used is earleyParse() ("plain"), or
+        earleyParseEx(), either without any buffers ("null") or with the
+        buffers of the tokens that have been seen before ("handover")."""
         toks: Any = [Tok(t) for t in tokens]
         err = ffi.new("unsigned int*")
         grammar: Any = None  # Only needed for conversion to Python nodes
         with ParseJob.make(grammar, toks, self._terminals, self._cache) as job:
-            node = eparser.earleyParse(self._parser, len(toks), 0, job.handle, err)
+            if entry == "plain":
+                node = eparser.earleyParse(
+                    self._parser, len(toks), 0, job.handle, err
+                )
+            else:
+                caches: Any = ffi.NULL
+                records: Any = ffi.NULL
+                if entry == "handover":
+                    caches, records = job.known_buffers()
+                else:
+                    assert entry == "null"
+                node = eparser.earleyParseEx(
+                    self._parser, len(toks), 0, job.handle, err, caches, records
+                )
         self.error_token = err[0]
         if node == ffi.NULL:
             return None
@@ -656,6 +675,78 @@ def random_nullable_grammar(rnd: random.Random) -> GrammarSpec:
         spec.append(prods)
     spec[-1].extend([t] for t in range(1, num_t + 1) if [t] not in spec[-1])
     return spec
+
+
+def test_buffer_handover(core, monkeypatch) -> None:
+    """The caller of the core can hand the matching cache buffers of the
+    tokens over when it starts a parse (earleyParseEx()), instead of the
+    core asking for each of them through a callback when it gets to the
+    token. The forest must be the same either way, and the core must
+    ask for exactly those buffers that it was not given."""
+    asked: List[int] = []
+    alloc_cache = ParseJob.alloc_cache
+
+    def counting_alloc_cache(self: ParseJob, token: int, size: int) -> Any:
+        asked.append(token)
+        return alloc_cache(self, token, size)
+
+    monkeypatch.setattr(ParseJob, "alloc_cache", counting_alloc_cache)
+
+    nullable = False
+
+    def result(c: Core, tokens: Sequence[int], entry: str) -> Tuple[Any, List[int]]:
+        """Parse the tokens. Returns the outcome and the indices
+        of the tokens whose buffers the core asked for."""
+        asked.clear()
+        forest = c.parse(tokens, entry)
+        outcome: Any
+        if forest is None:
+            outcome = ("error", c.error_token)
+        elif nullable:
+            # The forest may contain cycles
+            outcome = forest.content()
+        else:
+            # Compare the order of the families as well
+            outcome = forest.dump()
+        return outcome, list(asked)
+
+    rnd = random.Random(20261110)
+    num_parsed = num_failed = num_handed_over = num_mixed = 0
+    for i in range(80):
+        nullable = i % 2 == 1
+        spec = random_nullable_grammar(rnd) if nullable else random_grammar(rnd)
+        num_t = num_terminals(spec)
+        # Each instance has its own cache of buffers
+        plain, null, handover = core(spec), core(spec), core(spec)
+        for _ in range(20):
+            tokens = [rnd.randint(1, num_t) for _ in range(rnd.randint(1, 9))]
+            expected, started = result(plain, tokens, "plain")
+            # The core asks for the buffer of each token that it gets to
+            # (it does not get to the tokens that follow an error)
+            assert started == list(range(len(started)))
+            assert 0 < len(started) <= len(tokens)
+            # No buffers at all: the same as earleyParse()
+            assert result(null, tokens, "null") == (expected, started)
+            # The buffers of the tokens that have been seen before
+            known = set(handover._cache)
+            outcome, asked_for = result(handover, tokens, "handover")
+            assert outcome == expected, (spec, tokens)
+            assert asked_for == [ix for ix in started if (tokens[ix],) not in known]
+            num_handed_over += len(started) - len(asked_for)
+            num_mixed += 0 < len(asked_for) < len(started)
+            # Now, all of them have been seen
+            assert result(handover, tokens, "handover") == (expected, [])
+            if expected[0] == "error":
+                num_failed += 1
+            else:
+                num_parsed += 1
+        for c in (plain, null, handover):
+            c.close()
+    # Make sure that the test is not vacuous
+    assert num_parsed > 300
+    assert num_failed > 300
+    assert num_handed_over > 2000
+    assert num_mixed > 20
 
 
 def test_lookahead(core) -> None:

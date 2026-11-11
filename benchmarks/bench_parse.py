@@ -29,7 +29,7 @@
 
     This program measures the parsing speed of GreynirEngine on a corpus
     of sentences, and how the time divides between the C++ Earley-Scott
-    parser core (the earleyParse() function in eparser.cpp) and the rest
+    parser core (the earleyParseEx() function in eparser.cpp) and the rest
     of the pipeline (tokenization, token/terminal matching callbacks,
     conversion of the parse forest to Python objects, and reduction).
 
@@ -168,7 +168,7 @@ def forest_digest_unordered(root: Any) -> str:
 class CoreProbe:
 
     """A stand-in for the CFFI library object of the C++ core, which
-    measures the time spent in earleyParse() and optionally calculates
+    measures the time spent in the core and optionally calculates
     digests of the returned parse forests. All other attributes are
     delegated to the real library object."""
 
@@ -192,11 +192,7 @@ class CoreProbe:
     def __getattr__(self, name: str) -> Any:
         return getattr(self._lib, name)
 
-    def earleyParse(
-        self, parser: Any, num_tokens: int, root: int, handle: int, err: Any
-    ) -> Any:
-        t0 = time.perf_counter()
-        node = self._lib.earleyParse(parser, num_tokens, root, handle, err)
+    def _record(self, t0: float, num_tokens: int, node: Any, err: Any) -> None:
         self.seconds += time.perf_counter() - t0
         self.tokens += num_tokens
         self.parses += 1
@@ -205,6 +201,32 @@ class CoreProbe:
                 self.digests.append("no parse, error at {0}".format(err[0]))
             else:
                 self.digests.append(self._digest_func(node))
+
+    def earleyParse(
+        self, parser: Any, num_tokens: int, root: int, handle: int, err: Any
+    ) -> Any:
+        t0 = time.perf_counter()
+        node = self._lib.earleyParse(parser, num_tokens, root, handle, err)
+        self._record(t0, num_tokens, node, err)
+        return node
+
+    def earleyParseEx(
+        self,
+        parser: Any,
+        num_tokens: int,
+        root: int,
+        handle: int,
+        err: Any,
+        caches: Any,
+        records: Any,
+    ) -> Any:
+        """The entry point that fastparser.py uses, where the buffers of
+        the tokens that have been seen before are handed over"""
+        t0 = time.perf_counter()
+        node = self._lib.earleyParseEx(
+            parser, num_tokens, root, handle, err, caches, records
+        )
+        self._record(t0, num_tokens, node, err)
         return node
 
 

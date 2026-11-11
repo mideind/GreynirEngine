@@ -320,7 +320,7 @@ public:
    UINT getToken(void) const
       { return this->m_nToken; }
 
-   void startParse(UINT nHandle);
+   void startParse(UINT nHandle, BYTE* abCache = NULL, const BYTE* pTokenRec = NULL);
    void stopParse(void);
 
    // Add a state to the column, at the end of the state list
@@ -856,19 +856,28 @@ Column::~Column(void)
    Column::ac--;
 }
 
-void Column::startParse(UINT nHandle)
+void Column::startParse(UINT nHandle, BYTE* abCache, const BYTE* pTokenRec)
 {
-   // Called when the parser starts processing this column
+   // Called when the parser starts processing this column. The caller
+   // of the parser may have handed the matching cache of the token of
+   // this column over in advance, and likewise its packed matching data;
+   // what it did not hand over is asked for here, through the callbacks.
    ASSERT(this->m_abCache == NULL);
-   // Ask the parser to create a matching cache for us
-   // (or eventually re-use a previous one)
    if (this->m_nToken != (UINT)-1) {
-      this->m_abCache = this->m_pParser->allocCache(nHandle, this->m_nToken, &this->m_bNeedsRelease);
+      if (abCache) {
+         this->m_abCache = abCache;
+         this->m_bNeedsRelease = false;
+      }
+      else
+         // Ask the parser to create a matching cache for us
+         // (or eventually re-use a previous one)
+         this->m_abCache = this->m_pParser->allocCache(nHandle, this->m_nToken, &this->m_bNeedsRelease);
       // The lookahead cache follows the matching cache
       this->m_abStart = this->m_abCache + Parser::matchCacheSize(this->m_pParser->getNumTerminals());
       // Fetch the packed matching data for this column's token,
       // if a native matching table has been installed
-      this->m_pTokenRec = this->m_pParser->fetchTokenRec(nHandle, this->m_nToken);
+      this->m_pTokenRec = pTokenRec ? pTokenRec :
+         this->m_pParser->fetchTokenRec(nHandle, this->m_nToken);
       if (this->m_pTokenRec && !(this->m_abCache[0] & 3))
          // The token has not been seen before: mark the terminals
          // that it can't match by the look of it
@@ -2255,8 +2264,15 @@ void Parser::push(UINT nHandle, State* pState, Column* pE, State*& pQ,
 }
 
 Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
-   UINT nTokens, const UINT pnToklist[])
+   UINT nTokens, const UINT pnToklist[],
+   BYTE* const* ppCaches, const BYTE* const* ppTokenRecs)
 {
+   // If ppCaches is given, it has the matching cache of each token (the
+   // buffer that the cache allocation callback would return for it), or
+   // NULL for the tokens whose cache is to be asked for through the
+   // callback. Likewise ppTokenRecs and the packed matching data of the
+   // tokens. This saves two calls into the host language for every token
+   // that it has seen before.
    // If pnToklist is NULL, a sequence of integers 0..nTokens-1 will be used
    // Sanity checks
    if (!nTokens)
@@ -2290,7 +2306,8 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
    StateSet states;
 
    // Prepare the the first column
-   pCol[0]->startParse(nHandle);
+   pCol[0]->startParse(nHandle,
+      ppCaches ? ppCaches[0] : NULL, ppTokenRecs ? ppTokenRecs[0] : NULL);
 
    // The lookahead filter can find out that the parse is going to fail
    // one column earlier than is found out without it. In that case, the
@@ -2485,7 +2502,11 @@ Node* Parser::parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
          Label label(pEi->getToken(), 0, NULL, i, i + 1);
          pV = pForest->newNode(label);
          // Open up the next column
-         pCol[i + 1]->startParse(nHandle);
+         // (the last column, at i + 1 == nTokens, has no token)
+         BOOL bToken = i + 1 < nTokens;
+         pCol[i + 1]->startParse(nHandle,
+            (bToken && ppCaches) ? ppCaches[i + 1] : NULL,
+            (bToken && ppTokenRecs) ? ppTokenRecs[i + 1] : NULL);
       }
 
       bOther = false;
@@ -2820,6 +2841,12 @@ UINT numCombinations(Node* pNode)
 
 Node* earleyParse(Parser* pParser, UINT nTokens, INT iRoot, UINT nHandle, UINT* pnErrorToken)
 {
+   return earleyParseEx(pParser, nTokens, iRoot, nHandle, pnErrorToken, NULL, NULL);
+}
+
+Node* earleyParseEx(Parser* pParser, UINT nTokens, INT iRoot, UINT nHandle, UINT* pnErrorToken,
+   BYTE* const* ppCaches, const BYTE* const* ppTokenRecs)
+{
    // Preparation and sanity checks
    if (!nTokens)
       return NULL;
@@ -2841,7 +2868,8 @@ Node* earleyParse(Parser* pParser, UINT nTokens, INT iRoot, UINT nHandle, UINT* 
 #endif
    Node* pNode;
    try {
-      pNode = pParser->parse(nHandle, iRoot, pnErrorToken, nTokens);
+      pNode = pParser->parse(nHandle, iRoot, pnErrorToken, nTokens, NULL,
+         ppCaches, ppTokenRecs);
    }
    catch (...) {
       // See note in newGrammar(). If an exception (most likely
