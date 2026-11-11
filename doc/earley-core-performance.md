@@ -1,7 +1,7 @@
 # Performance of the C++ Earley-Scott core
 
-Status: IMPLEMENTED (stages 1 to 5) — 2026-11-10; section 8: findings
-only (its lookahead filter is implemented in stage 3)
+Status: IMPLEMENTED (stages 1 to 5, and section 12) — 2026-11-11;
+section 8: findings only (its lookahead filter is implemented in stage 3)
 
 ## 0. Summary
 
@@ -21,7 +21,9 @@ before); its results are in section 9. Section 10 is about a fourth round
 (stage 4), which deals with the work that is done the first time that a
 token is seen, and makes a first pass over news text twice as fast again.
 Section 11 (stage 5) is about tokenization and other work outside the
-core, and makes a warm parse a quarter faster.
+core, and makes a warm parse a quarter faster. Section 12 records where
+the core spends its time after all this, and a small change that follows
+from it.
 
 Stages 1 and 2 taken together, on the machine where stage 2 was done:
 
@@ -1137,9 +1139,113 @@ creation of the Python nodes 5), tokenization 17%, and simplification 11%.
    about a thousand states per token, a good part of them for nullable
    nonterminals (section 8). Two calls into Python per token per sentence
    remain in a warm parse (for the matching cache and the token record),
-   which are about 4% of the core.
+   which are about 4% of the core. **Those calls are no longer made for
+   tokens that have been seen before; see section 12.**
 2. **The scoring of terminals** (`Reducer._score_options()`) is Python
    code that works on dicts keyed by terminals, whose hash function is
    also Python code.
 3. **Tokenization** would need restructuring to get much faster: fewer
    passes over the tokens, rather than faster ones.
+
+## 12. Where the core spends its time, and handing the buffers over
+
+Status: IMPLEMENTED — 2026-11-11
+
+### What the core does, per token
+
+To see what is left to gain in the core - and whether it would pay to
+generate machine code for the grammar, or for each column - the core was
+built with cycle counters around its parts (a temporary build, not in the
+repository) and run on a warm pass over the 1,000 news sentences. The
+core then takes about 215,000 cycles per token (63 µs on the i7-4770),
+which is 40% of the parse. They divide as follows:
+
+| Part of the core | Share | Per token |
+|---|---|---|
+| Predictor | 36% | 315 nonterminals predicted; 1,659 productions tested against the lookahead filter, 616 states created |
+| Completer, spans with tokens | 35% | 179 completed states; 581 waiting states tested, 263 states created |
+| Nullable nonterminals | 17% | 72 nullable nonterminals predicted, each of them through an empty production; 50 nonterminals predicted that can't begin with the token; 160 states created by stepping over nonterminals that derive nothing |
+| Start and end of a column | 9% | of which the two calls into Python, for the matching cache and the token record: 4.9% |
+| Scanner | 2% | 27 states tested, 16 moved to the next column |
+| Setup and teardown of a parse | 2% | |
+
+Of the 1,659 productions that the predictor tests per token, 440 begin
+with a terminal (21 of which match the token), 965 with a nonterminal
+that is not nullable (421 of which can begin with the token), 182 with
+nullable nonterminals and 72 are empty.
+
+The conclusions that were drawn from this:
+
+* **Machine code would not buy much.** The inner loops are already
+  short: a prediction that fails costs a few table lookups (two bits per
+  terminal or class of nonterminals), and the rest of the time goes into
+  creating states, looking them up and linking forest nodes, which
+  generated code would have to do as well. Its gain was estimated to be
+  of the same order as that of the items below, at many times the cost
+  and with a platform dependency that the package does not have now.
+* **The calls into Python at the start of each column** are the one part
+  that is pure overhead. This is what was done; see below.
+* **Nullable nonterminals** take a sixth of the core through the H set
+  and the empty completions, although the grammar is fixed: which
+  nonterminals derive nothing, and which states follow from stepping
+  over them, could be calculated when the grammar is loaded (section 8).
+  Estimated gain: 4 to 5% of a warm parse.
+* **The predictor repeats itself**: what a nonterminal predicts in a
+  column only depends on the nonterminal and on the token of the column,
+  so the list of productions that pass the filter could be kept per
+  distinct token, next to the matching cache. Estimated gain: 2 to 4%
+  of a warm parse.
+
+### The change
+
+The core used to call back into Python twice at the start of every
+column: `alloc_func()`, for the matching cache of the token of the
+column, and `meanings_func()`, for its packed matching data. In a warm
+parse, both calls end in a dictionary lookup that finds a buffer that
+is already there.
+
+`Fast_Parser.parse_forest()` now looks those buffers up before it calls
+the core (`ParseJob.known_buffers()`), and passes them in two arrays, one
+entry per token, to a new entry point, `earleyParseEx()`. An entry is
+NULL for a token that has not been seen before (or for all tokens, if an
+array is not given); `Column::startParse()` then asks for the buffer
+through the callbacks, as before. The buffers are thus created by the
+same code as before, at the same point in the parse, and those of tokens
+that the core never gets to - the ones that follow an error - are not
+created. `earleyParse()` remains, and is the same as `earleyParseEx()`
+with no arrays.
+
+### Results
+
+Measured within one process, alternating between the two ways (best of
+8 passes over the news sentences, and of 30 over the corpus file):
+
+| Whole parse, warm | Callbacks | Hand-over | Gain |
+|---|---|---|---|
+| 1,000 news sentences | 3.38 s | 3.27 s | 3.4% |
+| `benchmarks/corpus.txt` | 0.0856 s | 0.0838 s | 2.1% |
+
+The time that `bench_parse.py` reports for the core goes from 1.38 s to
+1.27 s for the news sentences, but part of that work has only moved: the
+arrays are now built in Python before the core is called. A first pass
+is as before, as it mostly consists of tokens that are new.
+
+### Verification
+
+* Trees, scores, numbers of trees and error positions of the 1,000 news
+  sentences (1,003 as the parser splits them, 148 of which fail), in two
+  passes, are identical to those of release 4.0.0 from PyPI.
+* `test/test_earley_core.py::test_buffer_handover`: for pseudo-random
+  grammars, with and without empty productions, the three ways of calling
+  the core (`earleyParse()`, `earleyParseEx()` without arrays and with
+  them) give the same forests and error positions, and the core asks for
+  exactly the buffers that it was not handed.
+* `test/test_native_matching.py::test_buffer_handover`: with the real
+  grammar, a second pass over a set of sentences makes no calls for
+  buffers, and all results are the same as in the first pass and as
+  without the hand-over.
+* The full test suite in the default mode and with
+  `GREYNIR_MATCHING_PARITY=1 GREYNIR_REDUCER_PARITY=1`; the tests of the
+  core, the matching and the reducer and the news sentences in a build
+  with AddressSanitizer, UndefinedBehaviorSanitizer and the assertions of
+  the core; ruff and mypy; the tests of GreynirCorrect.

@@ -906,8 +906,11 @@ public:
    void prefillCache(BYTE* abCache, const BYTE* pTokenRec) const;
 
    // If pnToklist is NULL, a sequence of integers 0..nTokens-1 will be used
+   // If ppCaches and/or ppTokenRecs are given, they have an entry
+   // for each token; see Parser::parse()
    Node* parse(UINT nHandle, INT iStartNt, UINT* pnErrorToken,
-      UINT nTokens, const UINT pnToklist[] = NULL);
+      UINT nTokens, const UINT pnToklist[] = NULL,
+      BYTE* const* ppCaches = NULL, const BYTE* const* ppTokenRecs = NULL);
 
 };
 
@@ -916,6 +919,14 @@ extern "C" void printAllocationReport(void);
 
 // Parse a token stream
 extern "C" Node* earleyParse(Parser*, UINT nTokens, INT iRoot, UINT nHandle, UINT* pnErrorToken);
+
+// Parse a token stream, with the matching caches and/or the packed
+// matching data of the tokens handed over in advance: arrays with an
+// entry for each token, or NULL. An entry is what the cache allocation
+// callback (resp. the matching data callback) would return for that
+// token, or NULL to have the callback asked.
+extern "C" Node* earleyParseEx(Parser*, UINT nTokens, INT iRoot, UINT nHandle, UINT* pnErrorToken,
+   BYTE* const* ppCaches, const BYTE* const* ppTokenRecs);
 
 extern "C" Grammar* newGrammar(const CHAR* pszGrammarFile);
 

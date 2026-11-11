@@ -117,6 +117,8 @@ declarations = """
         const UINT* pnVerbs, UINT nVerbs);
 
     struct Node* earleyParse(struct Parser*, UINT nTokens, INT iRoot, UINT nHandle, UINT* pnErrorToken);
+    struct Node* earleyParseEx(struct Parser*, UINT nTokens, INT iRoot, UINT nHandle, UINT* pnErrorToken,
+        BYTE* const* ppCaches, const BYTE* const* ppTokenRecs);
     struct Grammar* newGrammar(const CHAR* pszGrammarFile);
     void deleteGrammar(struct Grammar*);
     struct Parser* newParser(struct Grammar*, MatchingFunc fpMatcher, AllocFunc fpAlloc);

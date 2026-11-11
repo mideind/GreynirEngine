@@ -200,6 +200,46 @@ class ParseJob:
             b = self.meanings_cache[key] = ffi_new("BYTE[]", data)
         return b
 
+    def known_buffers(self) -> Tuple[Any, Any]:
+        """Return what is already known about the tokens of this job, to
+        be handed over to the C++ parser when it is called: an array with
+        the token/terminal matching cache buffer of each token, and an
+        array with the packed native matching data of each token. An
+        entry is NULL if the token has not been seen before (and an
+        array is NULL if there is nothing to hand over); the parser
+        then asks for the buffer when it gets to the token, through
+        alloc_func() and meanings_func(). For the tokens that have been
+        seen before - nearly all of them, in a process that has been
+        running for a while - this saves the parser two calls into
+        Python per token."""
+        tokens = self.tokens
+        try:
+            keys = [tok.key for tok in tokens]
+            cache_get = self.matching_cache.get
+            # (Initializing an array from a list is faster than
+            # assigning to its items one by one)
+            caches: Any = ffi_new(
+                "BYTE*[]", [cache_get(key, ffi_NULL) for key in keys]
+            )
+        except TypeError:
+            # An unhashable key: leave it to alloc_cache() to complain
+            return ffi_NULL, ffi_NULL
+        if self.matching_table is None:
+            # No native matching
+            return caches, ffi_NULL
+        # Matching data is only handed over for tokens of the class
+        # that native matching was enabled for (cf. token_matching_data())
+        token_class = self.token_class
+        record_get = self.meanings_cache.get
+        records: Any = ffi_new(
+            "BYTE*[]",
+            [
+                record_get(key, ffi_NULL) if type(tok) is token_class else ffi_NULL
+                for tok, key in zip(tokens, keys)
+            ],
+        )
+        return caches, records
+
     def reset(self) -> None:
         """Reset the node pointer conversion dictionary"""
         self.c_dict = dict()
@@ -315,7 +355,7 @@ def matching_func(handle: int, token_index: int, terminal_index: int) -> bool:
     whether a token matches a terminal. The token is referenced
     by 0-based index, and the terminal by a 1-based index.
     The handle is an arbitrary UINT that was passed to
-    earleyParse(). In this case, it is used to identify
+    earleyParseEx(). In this case, it is used to identify
     a ParseJob object that dispatches the match query."""
     return ParseJob.dispatch(handle, token_index, terminal_index)
 
@@ -1150,7 +1190,13 @@ class Fast_Parser(BIN_Parser):
                 # Override the default root for this parse
                 root_index = self.grammar.nonterminals[root].index
 
-            node: Any = eparser.earleyParse(self._c_parser, lw, root_index, job.handle, err)  # type: ignore
+            # Hand the buffers of the tokens that have been seen before
+            # over to the parser. Note that they are kept alive by the
+            # caches of the job, and the arrays by these variables.
+            caches, records = job.known_buffers()
+            node: Any = eparser.earleyParseEx(  # type: ignore
+                self._c_parser, lw, root_index, job.handle, err, caches, records
+            )
 
             if node == ffi_NULL:
                 ix = err[0]  # Token index

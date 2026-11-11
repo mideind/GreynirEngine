@@ -23,7 +23,7 @@ from tokenizer.definitions import BIN_Tuple
 from reynir import Greynir
 from reynir._eparser import lib as eparser, ffi  # type: ignore
 from reynir.binparser import BIN_Token, encode_token_matching_data
-from reynir.fastparser import Fast_Parser
+from reynir.fastparser import Fast_Parser, ParseJob
 
 # A corpus exercising all producible token kinds and all families of
 # token/terminal matching: strong and lemma literal terminals, category
@@ -663,6 +663,61 @@ def test_prefilled_matching_cache(monkeypatch):
         assert num_prefilled > 4000 * num_nonwords
     finally:
         fp.cleanup()
+
+
+def test_buffer_handover(monkeypatch):
+    """The parser hands the buffers of the tokens that have been seen
+    before - the matching cache and the packed matching data - over to
+    the C++ core when it calls it, so the core only calls back to ask
+    for the buffers of tokens that are new. The results must not
+    depend on which way the core gets a buffer."""
+    calls = {"alloc": 0, "data": 0}
+    alloc_cache = ParseJob.alloc_cache
+    token_matching_data = ParseJob.token_matching_data
+
+    def counting_alloc_cache(self, token, size):
+        calls["alloc"] += 1
+        return alloc_cache(self, token, size)
+
+    def counting_token_matching_data(self, token):
+        calls["data"] += 1
+        return token_matching_data(self, token)
+
+    monkeypatch.setattr(ParseJob, "alloc_cache", counting_alloc_cache)
+    monkeypatch.setattr(ParseJob, "token_matching_data", counting_token_matching_data)
+
+    def results(g: Greynir) -> List[Any]:
+        result: List[Any] = []
+        for s in SENTENCES:
+            r = g.parse_single(s)
+            assert r is not None
+            if r.tree is None:
+                result.append(("error", r.err_index))
+            else:
+                result.append((r.combinations, r.score, r.tree.flat))
+        return result
+
+    with _matching_mode("native") as g:
+        num_tokens = sum(len(list(g.tokenize(s))) for s in SENTENCES)
+        first = results(g)
+        # In the first pass, the core asks for the buffers of the tokens
+        # that it has not seen before: of most tokens, but not all
+        first_calls = dict(calls)
+        assert num_tokens // 2 < first_calls["alloc"] < num_tokens
+        assert num_tokens // 2 < first_calls["data"] < num_tokens
+        # In the second pass, it has no need to ask for anything
+        second = results(g)
+        assert calls == first_calls
+        assert second == first
+        # Some sentences parse, and some don't
+        assert sum(r[0] == "error" for r in first) in range(1, 3)
+    # Without hand-over (callbacks only), the results are the same
+    with _matching_mode("native") as g:
+        monkeypatch.setattr(
+            ParseJob, "known_buffers", lambda self: (ffi.NULL, ffi.NULL)
+        )
+        assert results(g) == first
+        assert calls["alloc"] > first_calls["alloc"] + num_tokens // 2
 
 
 def test_gate_class_flag():
