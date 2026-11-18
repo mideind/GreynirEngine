@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=77.0.3", "cffi>=1.15.1"]
+requires = ["setuptools>=77.0.3", "cffi>=2.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -36,8 +36,10 @@ classifiers = [
     "Topic :: Text Processing :: Linguistic",
 ]
 requires-python = ">=3.10"
+# cffi 2.0 is the first that runs free-threaded Python without the GIL;
+# islenska 2.1.0 the first with free-threaded wheels
 dependencies = [
-    "cffi>=1.17.1",
+    "cffi>=2.0.0",
     "tokenizer>=3.6.3",
     "islenska>=2.1.0",
     "filelock>=3.9.0",

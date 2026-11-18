@@ -470,7 +470,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cffi", specifier = ">=1.17.1" },
+    { name = "cffi", specifier = ">=2.0.0" },
     { name = "filelock", specifier = ">=3.9.0" },
     { name = "islenska", specifier = ">=2.1.0" },
     { name = "mypy", marker = "implementation_name != 'pypy' and extra == 'dev'" },

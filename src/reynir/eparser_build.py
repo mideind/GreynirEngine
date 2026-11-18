@@ -37,6 +37,7 @@
 
 import os
 import platform
+import sysconfig
 import cffi
 
 # Don't change the name of this variable unless you
@@ -46,6 +47,7 @@ ffibuilder = cffi.FFI()
 WINDOWS = platform.system() == "Windows"
 MACOS = platform.system() == "Darwin"
 IMPLEMENTATION = platform.python_implementation()
+FREE_THREADED = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 
 # What follows is the actual Python-wrapped C interface to eparser.*.so
 
@@ -188,13 +190,12 @@ elif not WINDOWS and not MACOS:
     os.environ.setdefault("LDSHARED", "c++ -shared")
     os.environ.setdefault("LDCXXSHARED", "c++ -shared")
 
-# Use the Python stable ABI (abi3) for CPython, allowing a single wheel
-# to work across multiple Python versions (3.9+). PyPy doesn't support abi3.
 # Compile the extension against the stable ABI (Py_LIMITED_API) on
 # CPython, producing an _eparser.abi3.so module usable on any CPython
 # version >= 3.10. The matching cp310-abi3 wheel tag is set via the
-# bdist_wheel py_limited_api option in setup.py.
-py_limited_api = "cp310" if IMPLEMENTATION == "CPython" else False
+# bdist_wheel py_limited_api option in setup.py. Neither PyPy nor
+# free-threaded CPython supports the stable ABI.
+py_limited_api = "cp310" if IMPLEMENTATION == "CPython" and not FREE_THREADED else False
 
 ffibuilder.cdef(declarations + callbacks)
 
