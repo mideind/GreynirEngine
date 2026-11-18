@@ -62,6 +62,7 @@ from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 import random
 import re
 import struct
+import uuid
 from contextlib import contextmanager
 from functools import lru_cache
 
@@ -305,7 +306,8 @@ def core(tmp_path):
     cores: List[Core] = []
 
     def make(spec: GrammarSpec) -> Core:
-        c = Core(spec, tmp_path / "grammar{0}.bin".format(len(cores)))
+        # Unique names, as the threads of a parallel test run share the fixture
+        c = Core(spec, tmp_path / "grammar-{0}.bin".format(uuid.uuid4().hex))
         cores.append(c)
         return c
 

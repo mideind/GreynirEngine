@@ -17,6 +17,7 @@ import random
 from contextlib import contextmanager
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
+import pytest
 from tokenizer import TOK
 from tokenizer.definitions import BIN_Tuple
 
@@ -232,6 +233,11 @@ _MODES = {
 }
 
 
+# _matching_mode() replaces the shared parser, so pytest-run-parallel must run
+# the tests that use it in one thread (it detects monkeypatch by itself)
+thread_unsafe = pytest.mark.thread_unsafe(reason="replaces the shared parser")
+
+
 @contextmanager
 def _matching_mode(mode: str) -> Iterator[Greynir]:
     """Yield a fresh Greynir instance whose parser uses the given matching mode"""
@@ -291,6 +297,7 @@ def test_corpus_token_coverage():
     )
 
 
+@thread_unsafe
 def test_native_python_equivalence():
     """The native fast path must produce exactly the same parse forests as
     Python matching, with no discrepancy in any single match evaluation.
@@ -310,6 +317,7 @@ def test_native_python_equivalence():
     assert sum(1 for r in native if r is not None) >= len(SENTENCES) - 2
 
 
+@thread_unsafe
 def test_python_matching_switch():
     """GREYNIR_DISABLE_CPP_MATCHING must switch the parser to Python matching,
     which must give the same forest as native matching"""

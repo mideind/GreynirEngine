@@ -439,6 +439,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-run-parallel"
+version = "0.10.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/07/88/090a2113eec19240cfcf4ab61e02a88f1d8e9cf20cb7cd489fa2cfc625c2/pytest_run_parallel-0.10.0.tar.gz", hash = "sha256:25e5f9fb90fa15e4ee56537a2f4a3fca12ef0e9b524fa4a4d3ebb728b3161408", size = 66386, upload-time = "2026-08-04T16:14:21.571Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a1/46/b22fd3dd6ea72efe88766ce734ba81536f56198de979f75cb0a5b463c2c5/pytest_run_parallel-0.10.0-py3-none-any.whl", hash = "sha256:712e96f4dac3e7dc14eff747ffba4180030db11ff22fd62513d9cf81289a1681", size = 19612, upload-time = "2026-08-04T16:14:20.291Z" },
+]
+
+[[package]]
 name = "reynir"
 version = "4.0.0"
 source = { editable = "." }
@@ -454,6 +466,7 @@ dependencies = [
 dev = [
     { name = "mypy", marker = "implementation_name != 'pypy'" },
     { name = "pytest" },
+    { name = "pytest-run-parallel" },
     { name = "ruff" },
     { name = "setuptools" },
     { name = "types-cffi" },
@@ -463,6 +476,7 @@ dev = [
 dev = [
     { name = "mypy", marker = "implementation_name != 'pypy'" },
     { name = "pytest" },
+    { name = "pytest-run-parallel" },
     { name = "ruff" },
     { name = "setuptools" },
     { name = "types-cffi" },
@@ -475,6 +489,7 @@ requires-dist = [
     { name = "islenska", specifier = ">=2.1.0" },
     { name = "mypy", marker = "implementation_name != 'pypy' and extra == 'dev'" },
     { name = "pytest", marker = "extra == 'dev'" },
+    { name = "pytest-run-parallel", marker = "extra == 'dev'" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "setuptools", marker = "extra == 'dev'" },
     { name = "tokenizer", specifier = ">=3.6.3" },
@@ -487,6 +502,7 @@ provides-extras = ["dev"]
 dev = [
     { name = "mypy", marker = "implementation_name != 'pypy'" },
     { name = "pytest" },
+    { name = "pytest-run-parallel" },
     { name = "ruff" },
     { name = "setuptools" },
     { name = "types-cffi" },

@@ -52,6 +52,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 import random
 import struct
+import uuid
 
 import pytest
 
@@ -382,7 +383,8 @@ def fake_parser(tmp_path):
     parsers: List[FakeParser] = []
 
     def make(grammar: FakeGrammar) -> FakeParser:
-        p = FakeParser(grammar, tmp_path / "grammar{0}.bin".format(len(parsers)))
+        # Unique names, as the threads of a parallel test run share the fixture
+        p = FakeParser(grammar, tmp_path / "grammar-{0}.bin".format(uuid.uuid4().hex))
         parsers.append(p)
         return p
 

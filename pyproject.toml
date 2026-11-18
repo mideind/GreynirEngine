@@ -59,6 +59,7 @@ Issues = "https://github.com/mideind/GreynirEngine/issues"
 # mypy is excluded on PyPy, where its native dependencies don't build.
 dev = [
     "pytest",
+    "pytest-run-parallel",
     "ruff",
     "mypy; implementation_name != 'pypy'",
     "types-cffi",
@@ -71,6 +72,7 @@ dev = [
 # with pip (>=25.1), use 'pip install --group dev'.
 dev = [
     "pytest",
+    "pytest-run-parallel",
     "ruff",
     "mypy; implementation_name != 'pypy'",
     "types-cffi",
