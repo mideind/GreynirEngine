@@ -275,10 +275,14 @@ class ParseJob:
     ) -> "ParseJob":
         """Create a new parse job with for a given token sequence and set of terminals"""
         with cls._lock:
+            if len(cls._jobs) >= cls._MAX_JOBS:
+                raise RuntimeError("Too many parse jobs at once")
+            # Skip the handles of jobs that are still open, e.g. a long parse
+            # in another thread, whose callbacks would otherwise go astray
+            while cls._seq in cls._jobs:
+                cls._seq = (cls._seq + 1) % cls._MAX_JOBS
             h = cls._seq
-            cls._seq += 1
-            if cls._seq >= cls._MAX_JOBS:
-                cls._seq = 0
+            cls._seq = (h + 1) % cls._MAX_JOBS
             j = cls._jobs[h] = ParseJob(
                 h,
                 grammar,

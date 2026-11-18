@@ -11,11 +11,12 @@ import sys
 import sysconfig
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 import pytest
 
 from reynir import Greynir, bindb
-from reynir.fastparser import Fast_Parser
+from reynir.fastparser import Fast_Parser, ParseJob
 
 FREE_THREADED = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 # With the GIL the threads take turns, so more of them add run time but little coverage
@@ -79,6 +80,28 @@ def test_parallel_parses_match_serial(monkeypatch: pytest.MonkeyPatch) -> None:
     with ThreadPoolExecutor(THREADS) as pool:
         mismatches = [m for ms in pool.map(work, range(THREADS)) for m in ms]
     assert mismatches == []
+
+
+def test_open_jobs_keep_their_handles(monkeypatch: pytest.MonkeyPatch) -> None:
+    # A long parse keeps its handle while the jobs of other threads cycle
+    # through the rest
+    monkeypatch.setattr(ParseJob, "_MAX_JOBS", 4)
+    grammar: Any = None  # Not used by these jobs
+
+    def make() -> ParseJob:
+        return ParseJob.make(grammar, [], {}, {})
+
+    with make() as held:
+        for _ in range(10):
+            with make() as other:
+                assert other.handle != held.handle
+        assert ParseJob._jobs[held.handle] is held
+        others = [make() for _ in range(3)]
+        # All handles are in use
+        with pytest.raises(RuntimeError):
+            make()
+        for job in others:
+            ParseJob.delete(job.handle)
 
 
 @pytest.mark.skipif(not FREE_THREADED, reason="needs free-threaded Python")
