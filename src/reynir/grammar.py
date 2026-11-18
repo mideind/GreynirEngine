@@ -85,6 +85,7 @@ import time
 
 from datetime import datetime
 from collections import defaultdict
+from threading import Lock
 
 # pylint: disable=no-name-in-module
 if TYPE_CHECKING or __package__:
@@ -536,6 +537,10 @@ class Grammar:
 
     """
 
+    # The terminals, nonterminals and productions of a grammar are numbered
+    # from class-level counters, so grammars are read one at a time
+    _read_lock = Lock()
+
     def __init__(self) -> None:
 
         self._nonterminals: Dict[str, Nonterminal] = dict()
@@ -775,6 +780,20 @@ class Grammar:
         a fresh binary file if the grammar text file is newer than the
         existing binary file. Set force_new_binary=True to write a fresh
         binary file regardless of timestamps."""
+        with Grammar._read_lock:
+            self._read_from_generator(
+                fname, line_generator, verbose, binary_fname, force_new_binary
+            )
+
+    def _read_from_generator(
+        self,
+        fname: str,
+        line_generator: Iterator[str],
+        verbose: bool,
+        binary_fname: Optional[str],
+        force_new_binary: bool,
+    ) -> None:
+        """Read grammar from a generator of lines; see read_from_generator()"""
 
         # Clear previous file info, if any
         self._file_time = self._file_name = None
