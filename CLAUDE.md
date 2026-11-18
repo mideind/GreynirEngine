@@ -226,11 +226,11 @@ The public API is defined by the exports in `src/reynir/__init__.py`.
 - The `old/` and `build/` directories contain legacy/build artifacts — do not
   edit code there.
 
-## Backlog (post-4.0.0 candidates)
+## Backlog (post-4.1.0 candidates)
 
 Potential next steps from the 2026 grammar-coverage study (see release
-notes for 3.9.0), from the 3.10.0 work and from the performance work of
-4.0.0; none started:
+notes for 3.9.0), from the 3.10.0 work, from the performance work of
+4.0.0 and from the free-threading work of 4.1.0; none started:
 
 - **Coverage clusters**: auxiliary/copula gapping in a second conjunct
   ("höfðu dáið og 23 særst"); smaller items — "var lýst sem" passives,
@@ -275,6 +275,16 @@ notes for 3.9.0), from the 3.10.0 work and from the performance work of
   GreynirServer's query module still calls
   `go()` + `num_combinations()` + `Reducer.go()`, and could use
   `Reducer.parse_and_reduce()` (which handles `no_reduce`).
+- **Threads**: `Fast_Parser._load_binary_grammar()` (when the binary
+  grammar has a new timestamp) and `Greynir.cleanup()` free the shared C++
+  grammar while other threads may be parsing with it; the README tells
+  users to call `cleanup()` only when no other thread is parsing.
+- **Wheel builds**: the macOS job takes 11 minutes, against 2 to 4 for
+  Linux and Windows. `CIBW_BEFORE_BUILD_MACOS` installs setuptools, wheel
+  and cffi where the isolated build never sees them, which on PyPy for
+  x86_64 compiles cffi from source (over 2 minutes); the PyPy wheels for
+  x86_64 macOS take half of the job. Check a change to `wheels.yml` by
+  pushing a tag that contains `test` (the publish job skips those).
 - **Method note**: a "never wins in N sentences" census verdict is not
   proof of dead grammar — always re-probe a rule with the construction
   it actually targets before deleting (news-corpus frequency ≠ reachability).

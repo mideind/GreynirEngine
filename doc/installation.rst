@@ -6,8 +6,9 @@ Installation
 Prerequisites
 -------------
 
-Greynir runs on **CPython 3.10** or newer, and on **PyPy 3.11**
-or newer (more info on PyPy `here <http://pypy.org/>`_).
+Greynir runs on **CPython 3.10** or newer, including free-threaded
+CPython 3.14t and newer, and on **PyPy 3.11** or newer (more info on
+PyPy `here <http://pypy.org/>`_).
 
 On GNU/Linux and similar systems, you may need to have ``python3-dev``
 installed on your system:
