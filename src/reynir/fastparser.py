@@ -176,8 +176,11 @@ class ParseJob:
             # Do we already have a token/terminal cache match buffer for this key?
             b = self.matching_cache.get(key)
             if b is None:
-                # No: create a fresh one (assumed to be initialized to zero)
-                b = self.matching_cache[key] = ffi_new("BYTE[]", size)
+                # No: create a fresh one (assumed to be initialized to zero).
+                # The cache keeps the buffer alive while the C++ core uses
+                # it, so threads that add one for the same key at once must
+                # all get the same buffer: setdefault() never replaces one.
+                b = self.matching_cache.setdefault(key, ffi_new("BYTE[]", size))
         except TypeError:
             assert False, "alloc_cache() unable to hash key: {0}".format(repr(key))
         return b
@@ -197,7 +200,8 @@ class ParseJob:
         b: Any = self.meanings_cache.get(key)
         if b is None:
             data = encode_token_matching_data(tok, table, self.verb_profiles)
-            b = self.meanings_cache[key] = ffi_new("BYTE[]", data)
+            # (setdefault(): see alloc_cache())
+            b = self.meanings_cache.setdefault(key, ffi_new("BYTE[]", data))
         return b
 
     def known_buffers(self) -> Tuple[Any, Any]:
