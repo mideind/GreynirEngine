@@ -180,6 +180,19 @@ else:
     # faster; see doc/earley-core-performance.md.
     extra_compile_args = ["-std=c++11", "-fno-semantic-interposition"]
 
+if not WINDOWS:
+    # Some distributions (e.g. Gentoo) record no optimization level for
+    # extension builds, which leaves the parser core at -O0
+    _flags = " ".join(
+        (
+            sysconfig.get_config_var("CFLAGS") or "",
+            os.environ.get("CFLAGS", ""),
+            os.environ.get("CXXFLAGS", ""),
+        )
+    )
+    if not any(f.startswith("-O") for f in _flags.split()):
+        extra_compile_args.append("-O2")
+
 # On some systems, the linker needs to be told to use the C++ compiler
 # due to changes in the default behaviour of distutils/setuptools, which
 # otherwise link the C++ extension with the C driver and omit libstdc++,
