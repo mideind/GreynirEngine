@@ -85,6 +85,7 @@ import time
 
 from datetime import datetime
 from collections import defaultdict
+from itertools import count
 from threading import Lock
 
 # pylint: disable=no-name-in-module
@@ -156,7 +157,10 @@ class Nonterminal(GrammarItem):
     """A nonterminal, either at the left hand side of
     a rule or within a production"""
 
-    _index = -1  # Running sequence number (negative) of all nonterminals
+    # Running sequence number (negative) of all nonterminals. It is kept in a
+    # counter, as assigning to a class attribute modifies the class, and after
+    # 1,000 modifications CPython stops caching lookups of its attributes.
+    _counter = count(-1, -1)
 
     # If no_reduce is True for a nonterminal, its child families are
     # not reduced to the single highest-scoring family after parsing.
@@ -177,8 +181,7 @@ class Nonterminal(GrammarItem):
         # explicitly nullable?
         self._optional = name.endswith("?") or name.endswith("*")
         # Give all nonterminals a unique, negative sequence number for hashing purposes
-        self._index = Nonterminal._index
-        Nonterminal._index -= 1
+        self._index = next(Nonterminal._counter)
         # Use the creation-order sequence number as the hash. It is
         # deterministic between runs (unlike id()), so that iteration
         # order over sets and dicts of nonterminals is stable, and it
@@ -271,13 +274,12 @@ class Terminal(GrammarItem):
 
     """A terminal within a right-hand-side production"""
 
-    _index = 1  # Running sequence number (positive) of all terminals
+    _counter = count(1)  # Running sequence number of all terminals (see Nonterminal)
 
     def __init__(self, name: str) -> None:
         super().__init__()
         self._name = name
-        self._index = Terminal._index
-        Terminal._index += 1
+        self._index = next(Terminal._counter)
         # The hash is used quite often so it is worth caching.
         # Use the creation-order sequence number: it is deterministic
         # between runs (unlike id()), so that iteration order over sets
@@ -401,7 +403,7 @@ class Production:
 
     """A right-hand side of a grammar rule"""
 
-    _index = 0  # Running sequence number of all productions
+    _counter = count()  # Running sequence number of all productions (see Nonterminal)
 
     def __init__(
         self,
@@ -423,15 +425,14 @@ class Production:
         # Cache the length of the production as it is used A LOT
         self._len = len(self._rhs)
         # Give all productions a unique sequence number for hashing purposes
-        self._index = Production._index
-        Production._index += 1
+        self._index = next(Production._counter)
         # Cached tuple representation of this production
         self._tuple: Optional[Tuple[int, ...]] = None
 
     @classmethod
     def reset(cls) -> None:
         """Reset the production index sequence to zero"""
-        cls._index = 0
+        cls._counter = count()
 
     def append(self, t: GrammarItem) -> None:
         """Append a terminal or nonterminal to this production"""

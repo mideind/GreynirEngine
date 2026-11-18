@@ -159,8 +159,13 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    it (`setdefault()` in `ParseJob.alloc_cache()` and
    `token_matching_data()`; a full cache is replaced, not cleared).
    Grammars are read one at a time (`Grammar._read_lock`), as their items
-   are numbered from class-level counters. `test/test_threads.py` checks
-   parses in threads against serial ones.
+   are numbered from class-level counters. Those counters are
+   `itertools.count` objects: code that runs per instance or per parse must
+   not assign to class attributes, as after 1,000 modifications a class
+   loses CPython's type cache, and on free-threaded Python its attribute
+   lookups then contend for an interpreter-wide lock (parsing in 16 threads
+   was slower than in 8). `test/test_threads.py` checks parses in threads
+   against serial ones.
 
 4. **Reduction** — `reducer.py` scores the parse forest and reduces it to the
    single most likely tree, using preferences from `config/Prefs.conf`,

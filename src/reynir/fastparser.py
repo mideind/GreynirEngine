@@ -79,6 +79,7 @@ from contextlib import contextmanager
 from inspect import getattr_static
 from threading import Lock
 from functools import reduce
+from itertools import count
 
 from .binparser import (
     BIN_Parser,
@@ -119,7 +120,7 @@ class ParseJob:
 
     # Parse jobs have rotating integer IDs, reaching _MAX_JOBS before cycling back
     _MAX_JOBS = 10_000
-    _seq = 0
+    _seq = count()  # Not an int, so that making a job doesn't modify the class
     _jobs: Dict[int, "ParseJob"] = dict()
     _lock = Lock()
 
@@ -279,10 +280,9 @@ class ParseJob:
                 raise RuntimeError("Too many parse jobs at once")
             # Skip the handles of jobs that are still open, e.g. a long parse
             # in another thread, whose callbacks would otherwise go astray
-            while cls._seq in cls._jobs:
-                cls._seq = (cls._seq + 1) % cls._MAX_JOBS
-            h = cls._seq
-            cls._seq = (h + 1) % cls._MAX_JOBS
+            h = next(cls._seq) % cls._MAX_JOBS
+            while h in cls._jobs:
+                h = next(cls._seq) % cls._MAX_JOBS
             j = cls._jobs[h] = ParseJob(
                 h,
                 grammar,
