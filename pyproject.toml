@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=77.0.3", "cffi>=1.15.1"]
+requires = ["setuptools>=77.0.3", "cffi>=2.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -29,6 +29,8 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Programming Language :: Python :: Free Threading :: 3 - Stable",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -36,8 +38,10 @@ classifiers = [
     "Topic :: Text Processing :: Linguistic",
 ]
 requires-python = ">=3.10"
+# cffi 2.0 is the first that runs free-threaded Python without the GIL;
+# islenska 2.1.0 the first with free-threaded wheels
 dependencies = [
-    "cffi>=1.17.1",
+    "cffi>=2.0.0",
     "tokenizer>=3.6.3",
     "islenska>=2.1.0",
     "filelock>=3.9.0",
@@ -57,6 +61,7 @@ Issues = "https://github.com/mideind/GreynirEngine/issues"
 # mypy is excluded on PyPy, where its native dependencies don't build.
 dev = [
     "pytest",
+    "pytest-run-parallel",
     "ruff",
     "mypy; implementation_name != 'pypy'",
     "types-cffi",
@@ -69,6 +74,7 @@ dev = [
 # with pip (>=25.1), use 'pip install --group dev'.
 dev = [
     "pytest",
+    "pytest-run-parallel",
     "ruff",
     "mypy; implementation_name != 'pypy'",
     "types-cffi",

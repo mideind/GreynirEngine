@@ -7,7 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 GreynirEngine (PyPI package name: `reynir`, imported as `reynir`) is an NLP engine
 for parsing Icelandic text into sentence trees. It combines a hand-written
 context-free grammar for Icelandic with a C++ Earley-Scott parser core, wrapped
-via CFFI. Source lives in `src/reynir/`. Supports CPython 3.10+ and PyPy 3.11+.
+via CFFI. Source lives in `src/reynir/`. Supports CPython 3.10+ (free-threaded
+from 3.14t) and PyPy 3.11+.
 
 ## Commands
 
@@ -35,6 +36,11 @@ uv run ruff check src/reynir
 # Type check (config in pyproject.toml [tool.mypy]; runs as a CI gate
 # on non-PyPy jobs, so it must stay clean)
 uv run mypy src/reynir
+
+# Run each test in 8 threads at once on free-threaded Python, as CI does
+# on 3.14t and 3.15t (tests that use monkeypatch or capfd, or are marked
+# thread_unsafe, run in one thread)
+UV_PROJECT_ENVIRONMENT=.venv-3.14t uv run --python 3.14t pytest --parallel-threads=8
 
 # Benchmark parsing speed (total and C++ core time, cold and warm)
 uv run python benchmarks/bench_parse.py
@@ -146,6 +152,20 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    in GreynirCorrect (`Fast_Parser._native_token_class()`); the hooks are
    consulted when the matching data of a token is created
    (`_verb_profile()`), so they must be pure functions of their arguments.
+   Parses run concurrently in threads: the core always did (cffi releases
+   the GIL around it), and on free-threaded Python the callbacks do too.
+   The caches of a parser are shared by its parses and the core points into
+   their buffers, so a buffer must never be replaced while a parse may use
+   it (`setdefault()` in `ParseJob.alloc_cache()` and
+   `token_matching_data()`; a full cache is replaced, not cleared).
+   Grammars are read one at a time (`Grammar._read_lock`), as their items
+   are numbered from class-level counters. Those counters are
+   `itertools.count` objects: code that runs per instance or per parse must
+   not assign to class attributes, as after 1,000 modifications a class
+   loses CPython's type cache, and on free-threaded Python its attribute
+   lookups then contend for an interpreter-wide lock (parsing in 16 threads
+   was slower than in 8). `test/test_threads.py` checks parses in threads
+   against serial ones.
 
 4. **Reduction** — `reducer.py` scores the parse forest and reduces it to the
    single most likely tree, using preferences from `config/Prefs.conf`,
@@ -198,9 +218,11 @@ The public API is defined by the exports in `src/reynir/__init__.py`.
   name generation. The value must be declared as a variant first.
 - Ruff line length is 88; `E731` (lambda assignment) is ignored.
 - CI (`.github/workflows/python-package.yml`) runs ruff + pytest via
-  `uv sync --locked` on Python 3.10–3.14 and PyPy 3.11 on Linux, plus one
-  job each on Windows and macOS. Wheels are built on tag push via a pinned
-  cibuildwheel (`cp310` abi3 wheel for CPython, version-specific for PyPy).
+  `uv sync --locked` on Python 3.10–3.15, free-threaded 3.14t and 3.15t
+  (also with `--parallel-threads=8`) and PyPy 3.11 on Linux, plus one
+  job each on Windows and macOS. Wheels are built on tag push via pinned
+  cibuildwheel versions (`cp310` abi3 wheel for CPython, version-specific
+  for free-threaded CPython and for PyPy, as both pp73 and pp80).
 - The `old/` and `build/` directories contain legacy/build artifacts — do not
   edit code there.
 

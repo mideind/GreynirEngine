@@ -79,6 +79,7 @@ from contextlib import contextmanager
 from inspect import getattr_static
 from threading import Lock
 from functools import reduce
+from itertools import count
 
 from .binparser import (
     BIN_Parser,
@@ -119,7 +120,7 @@ class ParseJob:
 
     # Parse jobs have rotating integer IDs, reaching _MAX_JOBS before cycling back
     _MAX_JOBS = 10_000
-    _seq = 0
+    _seq = count()  # Not an int, so that making a job doesn't modify the class
     _jobs: Dict[int, "ParseJob"] = dict()
     _lock = Lock()
 
@@ -176,8 +177,11 @@ class ParseJob:
             # Do we already have a token/terminal cache match buffer for this key?
             b = self.matching_cache.get(key)
             if b is None:
-                # No: create a fresh one (assumed to be initialized to zero)
-                b = self.matching_cache[key] = ffi_new("BYTE[]", size)
+                # No: create a fresh one (assumed to be initialized to zero).
+                # The cache keeps the buffer alive while the C++ core uses
+                # it, so threads that add one for the same key at once must
+                # all get the same buffer: setdefault() never replaces one.
+                b = self.matching_cache.setdefault(key, ffi_new("BYTE[]", size))
         except TypeError:
             assert False, "alloc_cache() unable to hash key: {0}".format(repr(key))
         return b
@@ -197,7 +201,8 @@ class ParseJob:
         b: Any = self.meanings_cache.get(key)
         if b is None:
             data = encode_token_matching_data(tok, table, self.verb_profiles)
-            b = self.meanings_cache[key] = ffi_new("BYTE[]", data)
+            # (setdefault(): see alloc_cache())
+            b = self.meanings_cache.setdefault(key, ffi_new("BYTE[]", data))
         return b
 
     def known_buffers(self) -> Tuple[Any, Any]:
@@ -271,10 +276,13 @@ class ParseJob:
     ) -> "ParseJob":
         """Create a new parse job with for a given token sequence and set of terminals"""
         with cls._lock:
-            h = cls._seq
-            cls._seq += 1
-            if cls._seq >= cls._MAX_JOBS:
-                cls._seq = 0
+            if len(cls._jobs) >= cls._MAX_JOBS:
+                raise RuntimeError("Too many parse jobs at once")
+            # Skip the handles of jobs that are still open, e.g. a long parse
+            # in another thread, whose callbacks would otherwise go astray
+            h = next(cls._seq) % cls._MAX_JOBS
+            while h in cls._jobs:
+                h = next(cls._seq) % cls._MAX_JOBS
             j = cls._jobs[h] = ParseJob(
                 h,
                 grammar,

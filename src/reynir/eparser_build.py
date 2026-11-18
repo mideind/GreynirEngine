@@ -37,6 +37,7 @@
 
 import os
 import platform
+import sysconfig
 import cffi
 
 # Don't change the name of this variable unless you
@@ -46,6 +47,7 @@ ffibuilder = cffi.FFI()
 WINDOWS = platform.system() == "Windows"
 MACOS = platform.system() == "Darwin"
 IMPLEMENTATION = platform.python_implementation()
+FREE_THREADED = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 
 # What follows is the actual Python-wrapped C interface to eparser.*.so
 
@@ -178,6 +180,20 @@ else:
     # faster; see doc/earley-core-performance.md.
     extra_compile_args = ["-std=c++11", "-fno-semantic-interposition"]
 
+if not WINDOWS:
+    # setuptools compiles C++ with CXXFLAGS, or else the CFLAGS of the Python
+    # build, plus CPPFLAGS. Without an optimization level there (e.g. on
+    # Gentoo, or with CXXFLAGS set), the parser core would be built at -O0.
+    _flags = " ".join(
+        (
+            # (An interpreter may have no CFLAGS on record)
+            os.environ.get("CXXFLAGS", sysconfig.get_config_var("CFLAGS") or ""),
+            os.environ.get("CPPFLAGS", ""),
+        )
+    )
+    if not any(f.startswith("-O") for f in _flags.split()):
+        extra_compile_args.append("-O2")
+
 # On some systems, the linker needs to be told to use the C++ compiler
 # due to changes in the default behaviour of distutils/setuptools, which
 # otherwise link the C++ extension with the C driver and omit libstdc++,
@@ -188,13 +204,12 @@ elif not WINDOWS and not MACOS:
     os.environ.setdefault("LDSHARED", "c++ -shared")
     os.environ.setdefault("LDCXXSHARED", "c++ -shared")
 
-# Use the Python stable ABI (abi3) for CPython, allowing a single wheel
-# to work across multiple Python versions (3.9+). PyPy doesn't support abi3.
 # Compile the extension against the stable ABI (Py_LIMITED_API) on
 # CPython, producing an _eparser.abi3.so module usable on any CPython
 # version >= 3.10. The matching cp310-abi3 wheel tag is set via the
-# bdist_wheel py_limited_api option in setup.py.
-py_limited_api = "cp310" if IMPLEMENTATION == "CPython" else False
+# bdist_wheel py_limited_api option in setup.py. Neither PyPy nor
+# free-threaded CPython supports the stable ABI.
+py_limited_api = "cp310" if IMPLEMENTATION == "CPython" and not FREE_THREADED else False
 
 ffibuilder.cdef(declarations + callbacks)
 

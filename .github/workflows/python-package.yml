@@ -62,7 +62,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "pypy3.11"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "3.14t", "3.15t", "pypy3.11"]
         # The Windows and macOS wheels are built from the same sources,
         # so test at least one Python version on each of those platforms
         include:
@@ -88,6 +88,10 @@ jobs:
       run: uv run mypy src/reynir
     - name: Test with pytest
       run: uv run pytest
+    - name: Test with pytest in parallel threads
+      # On free-threaded Python, also run each test in 8 threads at once
+      if: ${{ endsWith(matrix.python-version, 't') }}
+      run: uv run pytest --parallel-threads=8
     - name: Slack notification
       uses: 8398a7/action-slack@v3
       with:

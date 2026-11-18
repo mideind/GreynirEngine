@@ -145,9 +145,21 @@ and each token annotated with its lemma and POS tag (`no`=noun, `so`=verb):
 <span data-lemma="Ása" data-pos="no">Ása</span><span data-lemma="sjá" data-pos="so">   sá</span><span data-lemma="sól" data-pos="no">   sól</span><span data-lemma="." data-pos="">.</span>
 ````
 
+## Threads
+
+A `Greynir` instance can be used from several threads at once, and all
+instances in a process share one parser. On free-threaded Python (3.14t and
+newer), the threads parse in parallel. With the GIL, only the C++ parser
+core runs in parallel, and the threads take turns at the rest of the work,
+so use processes to parse in parallel there.
+
+`Greynir.cleanup()` frees the shared parser: call it only when no other
+thread is parsing.
+
 ## Prerequisites
 
-This package runs on CPython 3.10 or newer, and on PyPy 3.11 or newer.
+This package runs on CPython 3.10 or newer, including free-threaded CPython
+3.14t and newer, and on PyPy 3.11 or newer.
 
 To find out which version of Python you have, enter:
 
