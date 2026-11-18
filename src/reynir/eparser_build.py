@@ -181,13 +181,13 @@ else:
     extra_compile_args = ["-std=c++11", "-fno-semantic-interposition"]
 
 if not WINDOWS:
-    # Some distributions (e.g. Gentoo) record no optimization level for
-    # extension builds, which leaves the parser core at -O0
+    # setuptools compiles C++ with CXXFLAGS, or else the CFLAGS of the Python
+    # build, plus CPPFLAGS. Without an optimization level there (e.g. on
+    # Gentoo, or with CXXFLAGS set), the parser core would be built at -O0.
     _flags = " ".join(
         (
-            sysconfig.get_config_var("CFLAGS") or "",
-            os.environ.get("CFLAGS", ""),
-            os.environ.get("CXXFLAGS", ""),
+            os.environ.get("CXXFLAGS", sysconfig.get_config_var("CFLAGS")),
+            os.environ.get("CPPFLAGS", ""),
         )
     )
     if not any(f.startswith("-O") for f in _flags.split()):
