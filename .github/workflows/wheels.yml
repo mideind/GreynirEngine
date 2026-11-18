@@ -18,6 +18,26 @@ jobs:
         # the annotation "The configuration ... is not supported".
         os: [ubuntu-latest, macos-15, windows-latest]
 
+    # Options (https://cibuildwheel.readthedocs.io/en/stable/options/)
+    env:
+      # Build abi3 wheel for CPython 3.10+ (one wheel for all versions)
+      # and version-specific wheels for free-threaded CPython and PyPy
+      # (neither supports abi3)
+      CIBW_SKIP: "*musllinux*"
+      CIBW_ENABLE: pypy
+      CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
+      CIBW_BEFORE_BUILD_MACOS: python3 -m pip install --upgrade setuptools wheel cffi
+      CIBW_ARCHS_MACOS: "x86_64 arm64"
+      CIBW_ARCHS_WINDOWS: "AMD64"
+      CIBW_ARCHS_LINUX: "x86_64"
+      CIBW_BUILD_FRONTEND: "build"
+      # Every wheel must parse a sentence, and on free-threaded Python
+      # keep the GIL off
+      CIBW_TEST_COMMAND: >-
+        python -c "import sys, sysconfig; from reynir import Greynir;
+        assert Greynir().parse_single('Hundurinn beit manninn.').tree is not None;
+        assert not (sysconfig.get_config_var('Py_GIL_DISABLED') and sys._is_gil_enabled())"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -26,24 +46,50 @@ jobs:
           python-version: '3.11'
 
       - name: Install cibuildwheel
-        # Pinned so that releases only change toolchain when we choose to
-        run: python -m pip install --upgrade pip wheel setuptools cibuildwheel==4.1.0
+        run: python -m pip install --upgrade pipx
 
-      - name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse
-        # Options (https://cibuildwheel.readthedocs.io/en/stable/options/)
+      # cibuildwheel is pinned, so that releases only change toolchain when
+      # we choose to. 4.3 builds cp315t, and builds PyPy 3.11 as PyPy 8.0
+      # (ABI pp80).
+      - name: Build wheels (CPython abi3 and free-threaded, PyPy 8.0)
+        run: pipx run --spec cibuildwheel==4.3.1 cibuildwheel --output-dir wheelhouse
         env:
-          # Build abi3 wheel for CPython 3.10+ (one wheel for all versions)
-          # Build version-specific wheel for PyPy (which doesn't support abi3)
-          CIBW_BUILD: cp310-* pp311-*
-          CIBW_SKIP: "*musllinux*"
-          CIBW_ENABLE: pypy
-          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
-          CIBW_BEFORE_BUILD_MACOS: python3 -m pip install --upgrade setuptools wheel cffi
-          CIBW_ARCHS_MACOS: "x86_64 arm64"
-          CIBW_ARCHS_WINDOWS: "AMD64"
-          CIBW_ARCHS_LINUX: "x86_64"
-          CIBW_BUILD_FRONTEND: "build"
+          CIBW_BUILD: cp310-* cp314t-* cp315t-* pp311-*
+
+      # cibuildwheel 4.2 builds PyPy 3.11 as PyPy 7.3 (ABI pp73). pip picks
+      # the newest reynir even if it has to build it from source, so keep
+      # these wheels for the users of PyPy 7.3.
+      - name: Build wheels (PyPy 7.3)
+        run: pipx run --spec cibuildwheel==4.2.1 cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_BUILD: pp311-*
+
+      # cibuildwheel fails only if a build selector matches nothing at all,
+      # so check that every expected wheel was built for every architecture
+      - name: Check that every expected wheel was built
+        shell: bash
+        run: |
+          ls -lh wheelhouse
+          python - <<'PY'
+          import collections, glob, os, sys
+          expected = {
+              "cp310-abi3", "cp314-cp314t", "cp315-cp315t",
+              "pp311-pypy311_pp73", "pp311-pypy311_pp80",
+          }
+          archs = {"Linux": 1, "macOS": 2, "Windows": 1}[os.environ["RUNNER_OS"]]
+          found = collections.defaultdict(set)
+          for w in glob.glob("wheelhouse/*.whl"):
+              _, _, py, abi, plat = os.path.basename(w)[: -len(".whl")].split("-")
+              arch = next(a for a in ("x86_64", "aarch64", "arm64", "amd64") if plat.endswith(a))
+              found[arch].add(f"{py}-{abi}")
+          ok = len(found) == archs
+          for arch, tags in sorted(found.items()):
+              if tags != expected:
+                  ok = False
+                  print(f"{arch}: missing {sorted(expected - tags)}, unexpected {sorted(tags - expected)}")
+          print(f"{sum(map(len, found.values()))} wheels for {sorted(found)}")
+          sys.exit(0 if ok else 1)
+          PY
 
       - uses: actions/upload-artifact@v4
         with:
