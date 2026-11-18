@@ -186,7 +186,8 @@ if not WINDOWS:
     # Gentoo, or with CXXFLAGS set), the parser core would be built at -O0.
     _flags = " ".join(
         (
-            os.environ.get("CXXFLAGS", sysconfig.get_config_var("CFLAGS")),
+            # (An interpreter may have no CFLAGS on record)
+            os.environ.get("CXXFLAGS", sysconfig.get_config_var("CFLAGS") or ""),
             os.environ.get("CPPFLAGS", ""),
         )
     )
