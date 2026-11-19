@@ -282,6 +282,12 @@ notes for 3.9.0), from the 3.10.0 work, from the performance work of
   grammar has a new timestamp) and `Greynir.cleanup()` free the shared C++
   grammar while other threads may be parsing with it; the README tells
   users to call `cleanup()` only when no other thread is parsing.
+- **Python 3.10** (end of life since October 2026): filelock has no
+  release for it with the security fixes of 4.2.1, so `pyproject.toml`
+  has two filelock requirements and `uv.lock` two versions (4.1.0 for
+  3.10), and the Dependabot alerts for filelock stay open. Dropping 3.10
+  (`requires-python`, the `cp310` abi3 tag in `setup.py`,
+  `eparser_build.py` and `wheels.yml`, the CI matrix) removes both.
 - **Method note**: a "never wins in N sentences" census verdict is not
   proof of dead grammar — always re-probe a rule with the construction
   it actually targets before deleting (news-corpus frequency ≠ reachability).
