@@ -22,11 +22,12 @@ jobs:
     env:
       # Build abi3 wheel for CPython 3.10+ (one wheel for all versions)
       # and version-specific wheels for free-threaded CPython and PyPy
-      # (neither supports abi3)
-      CIBW_SKIP: "*musllinux*"
+      # (neither supports abi3). No PyPy wheels for x86_64 macOS: building
+      # them under Rosetta took half the time of the macOS job, for a
+      # platform with next to no users, who can still build from the sdist.
+      CIBW_SKIP: "*musllinux* pp*-macosx_x86_64"
       CIBW_ENABLE: pypy
       CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
-      CIBW_BEFORE_BUILD_MACOS: python3 -m pip install --upgrade setuptools wheel cffi
       CIBW_ARCHS_MACOS: "x86_64 arm64"
       CIBW_ARCHS_WINDOWS: "AMD64"
       CIBW_ARCHS_LINUX: "x86_64"
@@ -76,7 +77,8 @@ jobs:
               "cp310-abi3", "cp314-cp314t", "cp315-cp315t",
               "pp311-pypy311_pp73", "pp311-pypy311_pp80",
           }
-          archs = {"Linux": 1, "macOS": 2, "Windows": 1}[os.environ["RUNNER_OS"]]
+          runner = os.environ["RUNNER_OS"]
+          archs = {"Linux": 1, "macOS": 2, "Windows": 1}[runner]
           found = collections.defaultdict(set)
           for w in glob.glob("wheelhouse/*.whl"):
               _, _, py, abi, plat = os.path.basename(w)[: -len(".whl")].split("-")
@@ -84,9 +86,12 @@ jobs:
               found[arch].add(f"{py}-{abi}")
           ok = len(found) == archs
           for arch, tags in sorted(found.items()):
-              if tags != expected:
+              # No PyPy wheels for x86_64 macOS (see CIBW_SKIP)
+              no_pypy = runner == "macOS" and arch == "x86_64"
+              wanted = {t for t in expected if not (no_pypy and t.startswith("pp"))}
+              if tags != wanted:
                   ok = False
-                  print(f"{arch}: missing {sorted(expected - tags)}, unexpected {sorted(tags - expected)}")
+                  print(f"{arch}: missing {sorted(wanted - tags)}, unexpected {sorted(tags - wanted)}")
           print(f"{sum(map(len, found.values()))} wheels for {sorted(found)}")
           sys.exit(0 if ok else 1)
           PY

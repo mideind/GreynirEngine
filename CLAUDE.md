@@ -222,7 +222,10 @@ The public API is defined by the exports in `src/reynir/__init__.py`.
   (also with `--parallel-threads=8`) and PyPy 3.11 on Linux, plus one
   job each on Windows and macOS. Wheels are built on tag push via pinned
   cibuildwheel versions (`cp310` abi3 wheel for CPython, version-specific
-  for free-threaded CPython and for PyPy, as both pp73 and pp80).
+  for free-threaded CPython and for PyPy, as both pp73 and pp80; no PyPy
+  wheels for x86_64 macOS). Check a change to `wheels.yml` by pushing a
+  tag that contains `test`: the wheels are built and tested, but not
+  published.
 - The `old/` and `build/` directories contain legacy/build artifacts — do not
   edit code there.
 
@@ -279,12 +282,6 @@ notes for 3.9.0), from the 3.10.0 work, from the performance work of
   grammar has a new timestamp) and `Greynir.cleanup()` free the shared C++
   grammar while other threads may be parsing with it; the README tells
   users to call `cleanup()` only when no other thread is parsing.
-- **Wheel builds**: the macOS job takes 11 minutes, against 2 to 4 for
-  Linux and Windows. `CIBW_BEFORE_BUILD_MACOS` installs setuptools, wheel
-  and cffi where the isolated build never sees them, which on PyPy for
-  x86_64 compiles cffi from source (over 2 minutes); the PyPy wheels for
-  x86_64 macOS take half of the job. Check a change to `wheels.yml` by
-  pushing a tag that contains `test` (the publish job skips those).
 - **Method note**: a "never wins in N sentences" census verdict is not
   proof of dead grammar — always re-probe a rule with the construction
   it actually targets before deleting (news-corpus frequency ≠ reachability).
