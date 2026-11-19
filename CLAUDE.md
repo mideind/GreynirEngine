@@ -97,8 +97,7 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    acquisition times out with a `GrammarError` instead of hanging. The lock
    is only taken when the binary is missing or stale — the warm path is
    lock-free, guarded only by an in-process `threading.Lock` protecting the
-   class-level grammar caches. `glock.py` is a deprecated compatibility shim
-   over `filelock`, no longer used internally. The binary is a pure function
+   class-level grammar caches. The binary is a pure function
    of the grammar text (`test/test_binary_grammar.py` compiles it under two
    hash seeds): nothing in `grammar.py` that decides the order or numbering
    of productions may iterate over a set. A rule's free variants (those not
