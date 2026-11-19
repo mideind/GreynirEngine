@@ -51,6 +51,10 @@ uv run python benchmarks/bench_parse.py
 # depend on the order of the families of children of each node.
 uv run python benchmarks/bench_parse.py --digest
 uv run python benchmarks/bench_parse.py --digest --unordered
+
+# Build the documentation in doc/ (Sphinx, Python 3.11+; not a CI job).
+# greynir.is/doc/ is such a build, served by GreynirServer's nginx
+uv run --no-project --with sphinx python -m sphinx -W -b html doc /tmp/reynir-doc
 ```
 
 Note: after changing the C++ sources (`eparser.cpp`, `ereducer.cpp`,
