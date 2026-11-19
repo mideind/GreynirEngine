@@ -39,12 +39,16 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 # cffi 2.0 is the first that runs free-threaded Python without the GIL;
-# islenska 2.1.0 the first with free-threaded wheels
+# islenska 2.1.0 the first with free-threaded wheels.
+# filelock 4.2.1 fixes a number of security advisories (among them
+# GHSA-69hj-f68j-2879 in FileLock, which we use), but needs Python 3.11;
+# the last filelock for Python 3.10 is 4.1.0, which has no fix
 dependencies = [
     "cffi>=2.0.0",
     "tokenizer>=3.6.3",
     "islenska>=2.1.0",
-    "filelock>=3.9.0",
+    "filelock>=4.2.1; python_version >= '3.11'",
+    "filelock>=3.9.0; python_version < '3.11'",
     "typing_extensions",
 ]
 
