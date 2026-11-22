@@ -82,6 +82,9 @@ static const UINT MAX_DEPTH = 1000;
 
 // The second half of the context signature of a token (see calcToken())
 static const UINT TOKEN_SIG = 0xFFFFFFFFu;
+// The value on the stack of preposition bonus verbs within a phrase
+// that is attached to a noun phrase (RN_NOUN_PREP_SCOPE); not a list
+static const UINT NOUN_ZONE = 0xFFFFFFFEu;
 
 
 // What the reducer learns about a subtree by scoring it
@@ -929,6 +932,11 @@ RResult Reducer::calcToken(RChild& c, UINT nPrepBonus)
    if (nFlags & RT_AO_LITERAL)
       e.r.nAo = c.nToken + 1;
    if (nFlags & RT_FS) {
+      if (nPrepBonus == NOUN_ZONE)
+         // In a phrase that is attached to a noun phrase: the bonus
+         // depends on the noun before the preposition (verb 0)
+         nSc += this->prepBonus(c, 0);
+      else
       if (nPrepBonus) {
          // Within a preposition bonus zone: give the
          // highest bonus that any of the enclosing verbs yields
@@ -1002,6 +1010,11 @@ RResult Reducer::calc(RNode* pR, UINT a, UINT b)
          this->m_prepBonus.push_back(0);
          bPushed = true;
          nVerb = 0;
+      }
+      else
+      if (nFlags & RN_NOUN_PREP_SCOPE) {
+         this->m_prepBonus.push_back(NOUN_ZONE);
+         bPushed = true;
       }
       this->m_currentVerb.push_back(nVerb);
 
@@ -1109,7 +1122,8 @@ RResult Reducer::calc(RNode* pR, UINT a, UINT b)
          if (nFlags & RN_APPLY_LENGTH_BONUS)
             // A bonus that depends on the number of tokens spanned
             r.nSc += ((INT)(pR->nEnd - pR->nStart) - 1) * this->m_prt->nLengthFactor;
-         if ((nFlags & RN_APPLY_PREP_BONUS) && this->m_prepBonus.back() != 0)
+         if ((nFlags & RN_APPLY_PREP_BONUS) && this->m_prepBonus.back() != 0 &&
+            this->m_prepBonus.back() != NOUN_ZONE)
             // A nonterminal that we like to see in a verb context
             r.nSc += this->m_prt->nPrepBonus;
          if ((nFlags & RN_PICK_UP_VERB) && r.nSo)

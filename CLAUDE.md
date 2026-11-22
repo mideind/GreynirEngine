@@ -168,14 +168,22 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
 
 4. **Reduction** — `reducer.py` scores the parse forest and reduces it to the
    single most likely tree, using preferences from `config/Prefs.conf`,
-   production priorities and `$score()` pragmas in the grammar, and
-   verb-preposition matching driven by `config/Verbs.conf`.
+   production priorities and `$score()` pragmas in the grammar,
+   verb-preposition matching driven by `config/Verbs.conf`, and
+   noun-preposition matching driven by `config/NounPredicates.conf` and
+   `config/NounPrepositions.conf`: a preposition in a phrase attached to
+   a noun phrase (`FsRunaEftirNl`, tagged `noun_prep_scope`) gets a bonus
+   if the token before it is a noun that takes it (`noun_prep_bonus()`;
+   strong entries outweigh a verb that lists the preposition, entries
+   marked `$weak` do not).
    `Reducer.parse_and_reduce()` is what `Greynir` and `IncrementalParser`
    call: it parses and reduces in one go, with the forest staying in C++
    (`ereducer.cpp`) and Python objects only created for the nodes of the
    winning tree (`Node.from_serialized()`). The scores of token/terminal
    matches are still calculated in Python (`Reducer._score_options()`), as
-   are the verb/preposition and verb/particle bonuses, through callbacks.
+   are the verb/preposition, noun/preposition and verb/particle bonuses,
+   through callbacks (the noun/preposition bonus goes through the
+   verb/preposition callback, with verb terminal 0).
    The older route - `Fast_Parser.go()`, `Fast_Parser.num_combinations()`,
    `Reducer.go_with_score()` - does the same in Python on a forest of
    `Node` objects; it remains as public API, as the reference
@@ -232,7 +240,50 @@ The public API is defined by the exports in `src/reynir/__init__.py`.
 
 Potential next steps from the 2026 grammar-coverage study (see release
 notes for 3.9.0), from the 3.10.0 work, from the performance work of
-4.0.0 and from the free-threading work of 4.1.0; none started:
+4.0.0 and from the free-threading work of 4.1.0; none started.
+
+**Measured priorities (November 2026).** Two measurements, both to be
+repeated before and after a change (the data and scripts are outside
+the repository; ask for the coverage study):
+
+- *Sentences that do not parse*: 404 of a fixed sample of 5,000 news
+  sentences of 2026 (8.1%). 232 are gaps in the grammar or the
+  vocabulary, each diagnosed with a minimal failing sentence and a
+  minimal parsing one. By size: names (43: a name that is also a word
+  form in BÍN, such as "EFLA", "Adams", "El Mencho", gets only the BÍN
+  meanings; an unknown name after an adjective, "hinn 29 ára gamli
+  Sanches"), dates, numbers and measures (23: a weekday after "í gær"
+  or "á morgun", "tímabil" as a time noun, "um það bil"/"yfir hundrað"
+  before a numeral), fixed phrases (20: "af hálfu", "eitthvað slíkt"),
+  punctuation (19: a clause in parentheses), verb frames (13), word
+  order after a fronted element (13: "Þá kasta læknarnir fram tölum",
+  "Í dag er spáð rigningu"), gapping (12), agreement stricter than usage
+  (12: "Henni fylgir rigning og snjókoma"), "sem" phrases (11: "Þá
+  starfaði hann sem kennari"). Sentences with more names than known
+  words are rejected as foreign before parsing ("Manchester United
+  kom.").
+- *Sentences that parse wrongly*: against the hand-corrected gold
+  standard of GreynirCorpus (4,500 development trees; keep the 500 test
+  trees for final figures), labelled bracket F1 is 0.74 and 72% of the
+  prepositional phrases with the same span hang where the gold standard
+  has them. Largest kinds of difference after PP attachment: an adverb
+  of the clause read as a modifier of the next phrase ("Þetta er ekki
+  ljóst", 525), a passive participle read as an adjective (354), the
+  subject of a subordinate clause with "vera" + PP read as its predicate
+  ("að leikarinn væri á bak við aðganginn", 152), the preposition "á"
+  read as the verb "eiga" (141), accusative/dative confusion after
+  "í"/"á"/"með" (about 300). Part of the difference is convention, not
+  error (the scorer's `normalise()` lists what it removes).
+- *PP attachment, what is left*: a phrase on a bare person name or
+  reflexive pronoun is right about one time in four (only personal
+  pronouns are penalised, `FsEftirPfn`); "til", "með", "eftir" and
+  "vegna" phrases on a noun are right about one time in three;
+  NounPrepositions.conf only looks at the token directly before the
+  preposition, so "áhrif stjórnvalda á málið" gets no bonus; a verb
+  gives its preposition bonus to every phrase with that preposition,
+  not to one.
+
+Older items:
 
 - **Coverage clusters**: auxiliary/copula gapping in a second conjunct
   ("höfðu dáið og 23 særst"); smaller items — "var lýst sem" passives,

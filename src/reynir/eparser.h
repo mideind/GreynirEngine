@@ -732,6 +732,7 @@ struct MatchMasks {
 #define RN_PICK_UP_VERB          0x0080u  // Tag pick_up_verb
 #define RN_PURGE_VERB            0x0100u  // Tag purge_verb
 #define RN_NO_REDUCE             0x0200u  // Tag no_reduce
+#define RN_NOUN_PREP_SCOPE       0x0400u  // Tag noun_prep_scope
 
 // Terminal flags for the reducer (one BYTE per terminal, 1-based)
 #define RT_AO_LITERAL   0x01u  // Literal terminal of the adverb category
@@ -739,7 +740,10 @@ struct MatchMasks {
 #define RT_SO           0x04u  // Verb terminal
 
 // Return the bonus (or penalty) for a preposition terminal, matching
-// a token, in the context of a verb terminal matching another token
+// a token, in the context of a verb terminal matching another token.
+// A verb terminal of 0 stands for no verb: the preposition is then in
+// a phrase that is attached to a noun phrase (tag noun_prep_scope), and
+// the bonus depends on the token before it.
 typedef INT (*PrepBonusFunc)(UINT nHandle, UINT nPrepTerminal, UINT nPrepToken,
    UINT nVerbTerminal, UINT nVerbToken);
 

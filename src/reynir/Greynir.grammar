@@ -4171,8 +4171,6 @@ NlStak_p3/tala/fall/kyn →
 
     NlKjarni/tala/fall/kyn NlStakTagl/tala/fall/kyn?
     | NlFornafn/tala/fall/kyn
-    | Pfn/kyn/tala/fall to/tala/fall/kyn? 'persónulega:ao'? # 'þið tvær', 'hann einn', 'hán eitt'
-    | Pfn/kyn/tala/fall LoEftirNl/tala/fall/kyn # '(með) hann fremstan (í fararbroddi)', '(ég hitti) hana glaða'
     | LoTöluorð_ef 'konar:kk'_ef_et NlKjarni/tala/fall/kyn  # 'tvenns/þrenns/ferns konar innstungur'
     | Raðnr/fall/kyn NlKjarni/tala/fall/kyn Fornafn/tala/fall/kyn*   # 1. verðlaunin öll, 1.-3. sætið, 10. og 12. árið
     | NlStakNema/tala/fall/kyn
@@ -4183,6 +4181,28 @@ NlStak_p3/tala/fall/kyn →
 # '(afskrifuðu) engar eignir nema hlutaféð'
 NlStakNema/tala/fall/kyn →
     NlStakNemaFn/tala/fall/kyn Nl/fall/tala/kyn? NlNema/fall
+
+# Persónufornafn í 3. persónu sem kjarni nafnliðar. Það stendur utan
+# við NlStak_p3 svo að forsetningarliður á eftir því fái eigið skor
+# (sjá FsEftirPfn)
+NlStakPfn/tala/fall/kyn →
+    Pfn/kyn/tala/fall to/tala/fall/kyn? 'persónulega:ao'? # 'þið tvær', 'hann einn', 'hán eitt'
+
+# Persónufornafn með lýsingarorði á eftir: þar á forsetningarliðurinn
+# við lýsingarorðið og fær engan frádrátt
+NlStakPfnLo/tala/fall/kyn →
+    Pfn/kyn/tala/fall LoEftirNl/tala/fall/kyn # '(með) hann fremstan (í fararbroddi)', '(ég hitti) hana glaða'
+
+# Forsetningarliður sem hangir á persónufornafni: 'þeir í nefndinni',
+# 'hún á skrifstofunni'. Þetta er sjaldgæft; í 'Hann hitti hana í
+# viðtalinu' á liðurinn við sögnina. Í gullstaðli GreynirCorpus var
+# slík tenging rétt í 5 tilvikum af 76. Frádrátturinn þarf að vega upp
+# FsRunaEftirNl (+1) og það sem sögn án forsetningarinnar í ramma sínum
+# dregur frá lið sem hangir á henni (-2).
+FsEftirPfn →
+    FsRunaEftirNl
+
+$score(-8) FsEftirPfn
 
 NlNema/fall → 'nema:st' Nl/fall
 
@@ -4697,6 +4717,8 @@ Tala_hk_nf → to_et_hk_nf | to_ft_hk_nf
 
 NlStak_et_p3/fall/kyn →
     NlStak_p3_et/fall/kyn VeikSögnLhÞt_et/fall/kyn? FsRunaEftirNl?  # fulltrúi bankans í nefndinni
+    | NlStakPfn_et/fall/kyn VeikSögnLhÞt_et/fall/kyn? FsEftirPfn?   # hann, hún ein, (þau sáu) hana [í nefndinni]
+    | NlStakPfnLo_et/fall/kyn VeikSögnLhÞt_et/fall/kyn? FsRunaEftirNl? # (með) hann fremstan í fararbroddi
     | NlStak_et_p3/fall/kyn Eða NlStak_p3_et/fall                   # Þingnefnd eða hluti Alþingismanna getur lagt fram frumvarp
     | AnnaðhvortSt Nl/fall Eða Nl/fall/kyn                          # Hér er annaðhvort snjór eða sól  
     | AnnaðhvortSt Nl/fall/kyn Eða Nl/fall                          # Hér er annaðhvort snjór eða sól  
@@ -4860,11 +4882,14 @@ Vörunúmer/fall → vörunúmer/fall
 Vefslóð/fall → vefslóð/fall
 
 NlStak_p3_et/fall → NlStak_p3_et/fall/kyn # Samtenging tveggja eintöluliða með 'eða' krefst ekki sama kyns báðum megin
+NlStak_p3_et/fall → NlStakPfn_et/fall/kyn | NlStakPfnLo_et/fall/kyn # (Jón) eða hún
 
 # 3p. fleirtala
 
 NlStak_ft_p3/fall/kyn →
     NlStak_p3_ft/fall/kyn VeikSögnLhÞt_ft/fall/kyn? FsRunaEftirNl?  # fulltrúar bankans í nefndinni
+    | NlStakPfn_ft/fall/kyn VeikSögnLhÞt_ft/fall/kyn? FsEftirPfn?   # þeir, þær tvær, þau [í nefndinni]
+    | NlStakPfnLo_ft/fall/kyn VeikSögnLhÞt_ft/fall/kyn? FsRunaEftirNl? # (með) þá fremsta í fararbroddi
     | 'allur:fn'_ft/fall/kyn 'sá:fn'_ft/fall/kyn                    # Allir þeir, allar þær, öll þau
     | VillaEinnAf/fall/kyn           # Einn af mönnunum *gengu á vegg; ein af hverjum fjórum stúlkum *stóðu sig vel
     | VillaFjöldiHluti/fall/kyn      # Mikill fjöldi/meirihluti/minnihluti unglinga [reyndust hæfir → reyndist hæfur]
@@ -6727,6 +6752,9 @@ OgAtvFsEftirNl →
 # Hvetja létt til þess að forsetningar séu tengdar nafnlið
 $score(+1) FsRunaEftirNl
 $tag(purge_prep) FsRunaEftirNl # Ekki senda innifaldar forsetningar upp tréð
+# Forsetningar í liðnum fá bónus ef nafnorðið næst á undan tekur
+# með sér þá forsetningu (NounPredicates.conf): 'áhrif á', 'þátttaka í'
+$tag(noun_prep_scope) FsRunaEftirNl
 
 # Atviksliðir eru ekki leyfðir milli sagnar og andlags, enda
 # er ætlast til að AtviksliðurEinkunn fylgi andlaginu sem slíku.

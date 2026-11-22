@@ -3616,6 +3616,77 @@ def test_question_clause_after_preposition(r):
     assert "CP-QUE" not in s.tree.flat
 
 
+def test_prepositional_phrase_after_pronoun(r):
+    """A prepositional phrase is not attached to a personal pronoun
+    when it can belong to the verb"""
+    s = r.parse_single("Hann hitti hana í viðtalinu.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ pfn_kk_et_nf /NP-SUBJ VP VP so_1_þf_et_p3 /VP "
+        "NP-OBJ pfn_kvk_et_þf /NP-OBJ PP P fs_þgf /P NP no_et_þgf_hk /NP /PP "
+        "/VP /IP /S-MAIN p /S0"
+    )
+    # 'þess' is not what the phrase belongs to
+    s = r.parse_single("Hann er markahæsti leikmaður þess frá upphafi.")
+    assert s and s.tree
+    assert "NP-POSS pfn_hk_et_ef /NP-POSS PP " in s.tree.flat
+    # Where there is no verb for it, the phrase stays with the pronoun
+    s = r.parse_single("Þeir í nefndinni vildu það ekki.")
+    assert s and s.tree
+    assert s.tree.flat.startswith(
+        "S0 S-MAIN IP NP-SUBJ pfn_kk_ft_nf PP P fs_þgf /P NP no_et_þgf_kvk /NP "
+        "/PP /NP-SUBJ VP "
+    )
+    # The phrase after pronoun + adjective belongs to the adjective
+    # (see also test_pronoun_postposed_adjective)
+    s = r.parse_single("Með hann fremstan í fararbroddi vann liðið leikinn.")
+    assert s and s.tree
+    assert "lo_þf_et_kk PP P fs_þgf /P NP no_et_þgf_kk /NP /PP /NP /PP " in s.tree.flat
+
+
+def test_noun_prepositions(r):
+    """A prepositional phrase that directly follows a noun is attached
+    to the noun if the noun takes that preposition (NounPredicates.conf,
+    NounPrepositions.conf), also when the verb lists it too"""
+    from reynir.settings import NounPredicates
+
+    assert NounPredicates.strength("áhrif", "á", "þf") == 2
+    assert NounPredicates.strength("áhrif", "á", None) == 2
+    assert NounPredicates.strength("bók", "í", "þgf") == 1
+    assert NounPredicates.strength("áhrif", "undir", "þf") == 0
+    assert NounPredicates.strength("ekkiorð", "á", "þf") == 0
+    # An entry with $error() is not a preference
+    assert NounPredicates.strength("áhyggjur", "að", "þgf") == 0
+
+    for sentence, inside in (
+        ("Hún hefur mikil áhrif á hana.", "no_ft_þf_hk PP P fs_þf /P NP "),
+        ("Hann tók þátt í keppninni.", "no_et_þf_kk PP P fs_þgf /P NP "),
+        ("Þau lýstu áhyggjum af stöðunni.", "no_ft_þgf_kvk PP P fs_þgf /P NP "),
+        # The last part of a compound word decides
+        (
+            "Þau ræddu um langtímaáhrif á heilsuna.",
+            "NP no_ft_þf_hk PP P fs_þf /P NP no_et_þf_kvk /NP /PP /NP /PP ",
+        ),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert inside in s.tree.flat, sentence
+        assert "/NP-OBJ PP " not in s.tree.flat, sentence
+    # A weak entry ('bók /í') does not outweigh a verb that takes
+    # the preposition
+    s = r.parse_single("Hún setti bókina í hillu.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ pfn_kvk_et_nf /NP-SUBJ VP VP so_1_þf_et_p3 /VP "
+        "NP-OBJ no_et_þf_kvk /NP-OBJ PP P fs_þf /P NP no_et_þf_kvk /NP /PP /VP "
+        "/IP /S-MAIN p /S0"
+    )
+    # Without an entry, the phrase goes to a verb that takes it
+    s = r.parse_single("Hún lagði blaðið á borðið.")
+    assert s and s.tree
+    assert "/NP-OBJ PP P fs_þf /P " in s.tree.flat
+
+
 def test_question_clause_without_subject(r):
     """Question clauses, and direct questions, with an impersonal verb
     and no subject: 'hvernig megi koma til móts við þá'"""
@@ -3624,8 +3695,8 @@ def test_question_clause_without_subject(r):
     assert s.tree.flat == (
         "S0 S-MAIN IP NP-SUBJ pfn_kvk_et_nf /NP-SUBJ VP VP so_1_þf_et_p3 /VP "
         "CP-QUE-OBJ ADVP ao /ADVP IP VP VP-AUX so_et_p3 /VP-AUX VP so_0_nh /VP "
-        "PP P fs_þf /P NP no_et_þf_kk /NP /PP PP P fs_þf /P NP lo_þf_ft_hk "
-        "no_ft_þf_hk /NP /PP /VP /IP /CP-QUE-OBJ /VP /IP /S-MAIN p /S0"
+        "PP P fs_þf /P NP no_et_þf_kk PP P fs_þf /P NP lo_þf_ft_hk "
+        "no_ft_þf_hk /NP /PP /NP /PP /VP /IP /CP-QUE-OBJ /VP /IP /S-MAIN p /S0"
     )
     for sent in (
         "Hann spurði hvenær ætti að flagga.",
