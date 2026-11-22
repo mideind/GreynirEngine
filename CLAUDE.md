@@ -268,9 +268,15 @@ the repository; ask for the coverage study):
   prepositional phrases with the same span hang where the gold standard
   has them. Largest kinds of difference after PP attachment: an adverb
   of the clause read as a modifier of the next phrase ("Þetta er ekki
-  ljóst", 525), a passive participle read as an adjective (354), the
-  preposition "á" read as the verb "eiga" (141), accusative/dative
-  confusion after "í"/"á"/"með" (about 300). Part of the difference is
+  ljóst", 525), a passive participle read as an adjective (354),
+  accusative/dative confusion after "í"/"á"/"með" (about 300). The
+  preposition "á" was read as the verb "eiga" in 136 places and is in 73
+  (`Reducer._a_verb_adjustment()` lowers the verb where a noun phrase
+  follows, the word before is not a likely subject and a finite verb
+  stands earlier in the sentence): what is left has a name or a pronoun
+  before "á", or no reading with the preposition at all, often because
+  a subordinate clause may lack its subject ("bundu loksins enda á
+  taphrinuna" reads "enda" as a conjunction). Part of the difference is
   convention, not error (the scorer's `normalise()` lists what it
   removes). The subject of a subordinate clause read as a predicate or
   an object in front of the verb ("að málið sé í skoðun") is penalised

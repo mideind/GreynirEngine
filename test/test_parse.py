@@ -3704,7 +3704,7 @@ def test_subject_before_verb_in_subordinate_clause(r):
         ),
         (
             "Svo getur verið að breyting verði þar á.",
-            "CP-THT-PRD C st /C IP NP-SUBJ no_et_nf_kvk /NP-SUBJ VP ",
+            "C st /C IP NP-SUBJ no_et_nf_kvk /NP-SUBJ VP VP so_0_et_p3 /VP ",
         ),
         (
             "Hef ég trú á því að eitthvað batni eftir kosningar?",
@@ -3730,6 +3730,62 @@ def test_subject_before_verb_in_subordinate_clause(r):
     s = r.parse_single("Ég taldi að sést hefði til himins.")
     assert s and s.tree
     assert "NP-SUBJ" not in s.tree.flat.split("CP-THT-OBJ", 1)[1]
+
+
+def test_a_preposition_or_verb(r):
+    """The word 'á' is the preposition and not the verb 'eiga' where a
+    noun phrase follows it, the word before it is not a likely subject
+    and the sentence has a finite verb earlier on"""
+    # These had a second clause with 'á' as its verb
+    for sentence in (
+        "Píratar ræða vaxtarverki og viðburðaríkt ár á aðalfundi.",
+        "Hann réðst fyrst á stúlkurnar tvær.",
+        "Þá horfir Depp heldur ekki á sjálfan sig.",
+        "Vantrausti var lýst í yfirlýsingu sem birt var á vefsíðu samtakanna.",
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        flat = s.tree.flat
+        assert flat.count("S-MAIN") == 2, sentence  # One main clause
+        assert "CP-ADV" not in flat, sentence
+        assert " so_1_þf_et_p3 " not in flat, sentence
+        assert "P fs_" in flat, sentence
+    # The verb 'eiga', also with a noun as its subject
+    for sentence in (
+        "Hann á bíl.",
+        "Jón á tvo hunda.",
+        "Fyrirtækið á húsið.",
+        "Fyrirtækið á húsið en leigir það út.",
+        "Konan á þrjú börn og býr í Reykjavík.",
+        "Maðurinn sem á bílinn kom.",
+        "Þar sem liðið á þrjá leiki eftir getur það unnið.",
+        "Hann sagði að félagið á tvo leiki inni.",
+        "Þegar fyrirtækið á eignir getur það tekið lán.",
+        "Ríkið á stóran hlut í bankanum og vill selja hann.",
+        "Forstjórinn á stóran hlut í félaginu sem hann stýrir.",
+        "Þó að bærinn á landið má hann ekki selja það.",
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert " so_1_þf_et_p3 " in s.tree.flat, sentence
+    s = r.parse_single("Hún á að fara heim.")
+    assert s and s.tree
+    assert "VP VP so_0_et_p3 /VP IP-INF TO nhm /TO " in s.tree.flat
+    # After a question pronoun, 'á' is the verb: these were
+    # questions with no verb
+    for sentence, verb in (
+        ("Hver á bílinn?", "IP VP VP so_1_þf_et_p3 /VP NP-OBJ no_et_þf_kk /NP-OBJ"),
+        ("Hver á þetta hús?", "IP VP VP so_1_þf_et_p3 /VP NP-OBJ "),
+        ("Hvað á að gera við landamærin?", "IP VP VP so_0_et_p3 /VP IP-INF TO nhm"),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert s.tree.flat.startswith("S0 S-QUE NP fn_et_nf_"), sentence
+        assert verb in s.tree.flat, sentence
+    # ... unless what follows can only be the object of a preposition
+    s = r.parse_single("Hver á fundinum sagði þetta?")
+    assert s and s.tree
+    assert s.tree.flat.startswith("S0 S-QUE NP fn_et_nf_kk /NP PP P fs_þgf /P ")
 
 
 def test_question_clause_without_subject(r):

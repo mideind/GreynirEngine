@@ -120,7 +120,7 @@ from collections import defaultdict
 from threading import Lock
 from types import MappingProxyType
 
-from tokenizer import Tok
+from tokenizer import TOK, Tok
 from tokenizer.definitions import BIN_Tuple
 
 from .grammar import Grammar, Production
@@ -191,6 +191,11 @@ _VERB_WEAK_ONLY_PENALTY = -6
 # ('bók í') must not: 'setja bók í hillu'.
 _NOUN_PREP_BONUS = 8
 _NOUN_PREP_WEAK_BONUS = 5
+# Penalty for reading the word 'á' as the verb 'eiga' where it is
+# probably the preposition, and bonus where it follows a question
+# pronoun ('Hver á bílinn?'); see Reducer._a_verb_adjustment()
+_A_VERB_PENALTY = -24
+_A_VERB_QUESTION_BONUS = 10
 _LENGTH_BONUS_FACTOR = 10  # For length bonus, multiply number of tokens by this factor
 
 _CASES_SET = BIN_Token.CASES_SET
@@ -974,6 +979,9 @@ class Reducer:
                 for bt, adj in adj_better.items():
                     sc[bt] += adj
 
+            # Adjustment for the word 'á' as a verb (found on demand)
+            a_adj: Optional[int] = None
+
             # Apply heuristics to each terminal that potentially matches this token
             for t in s:
 
@@ -1047,6 +1055,10 @@ class Reducer:
                     ):
                         sc[t] -= 50
                 elif tfirst == "so":
+                    if txt == "á":
+                        if a_adj is None:
+                            a_adj = self._a_verb_adjustment(tokens, i, start, end)
+                        sc[t] += a_adj
                     if t.num_variants > 0 and t.variant(0) in "012":
                         # Consider verb arguments
                         # Normally, we give a bonus for verb arguments:
@@ -1186,6 +1198,101 @@ class Reducer:
                     sc[t] += 4
 
         return scores
+
+    # Words after 'á' with which it is a form of the verb 'eiga':
+    # 'á að fara', 'á við', 'á eftir að', 'á ekki', 'á sér stað', 'á heima'
+    _A_VERB_NEXT = frozenset(
+        (
+            "að", "við", "eftir", "ekki", "sér", "sig", "enn", "þó", "líka",
+            "einnig", "aldrei", "alltaf", "samt",
+            # 'á von á', 'á rétt á', 'á erfitt með', 'á möguleika á',
+            # 'á hlut í', 'á sæti í', 'á leið um', 'á það skilið'
+            "von", "rétt", "erfitt", "auðvelt", "bágt", "möguleika", "kost",
+            "hlut", "þátt", "sæti", "leið", "skilið", "heima", "afmæli",
+        )
+    )
+    _A_NOMINALS = frozenset(
+        ("kk", "kvk", "hk", "lo", "fn", "pfn", "abfn", "gr", "to", "töl", "tala")
+    )
+    _A_SUBJECT_PRONOUNS = frozenset(("pfn", "fn", "abfn"))
+
+    _A_QUESTION_PRONOUNS = frozenset(("hver", "hvað", "hverjir", "hverjar", "hvor"))
+    _A_NAME_KINDS = frozenset((TOK.PERSON, TOK.ENTITY, TOK.COMPANY))
+    # Words that have a finite verb form in BÍN but are seldom verbs
+    # ('sem' of 'semja', 'undir' of 'una', 'vel' of 'velja')
+    _A_NOT_VERBS = frozenset(
+        (
+            "á", "sem", "enda", "undir", "nema", "bæði", "sá", "líka", "mest",
+            "minna", "vel", "lengi", "sökum", "sakir", "gegnum", "móti",
+        )
+    )
+
+    @classmethod
+    def _a_verb_adjustment(
+        cls, tokens: TokensDict, i: int, start: int, end: int
+    ) -> int:
+        """The word 'á' can be the preposition or the verb 'eiga' ('Hún á
+        bíl'). Where a noun follows, the parser took it for the verb four
+        times out of five against the gold standard of GreynirCorpus:
+        'ræða vaxtarverki og viðburðaríkt ár á aðalfundi' became two clauses,
+        the second with a year that owns meetings. After a question pronoun
+        it erred the other way: 'Hver á bílinn?' was a question with no verb.
+
+        Return the adjustment of the score of 'á', the token with index i,
+        as a verb. It is a penalty if 'á' is probably the preposition: a
+        noun phrase can follow it, what stands before it is not a likely
+        subject of 'eiga' (a pronoun in the nominative, a name, 'sem'), and
+        a word that can be a finite verb stands earlier in the sentence."""
+        nxt = tokens.get(i + 1)
+        prev = tokens.get(i - 1) if i > start else None
+        if (
+            prev is not None
+            and i - 1 == start
+            and nxt is not None
+            and prev.lower in cls._A_QUESTION_PRONOUNS
+        ):
+            # 'Hver á bílinn?', 'Hvað á að gera?'
+            return _A_VERB_QUESTION_BONUS
+        if nxt is None or nxt.lower in cls._A_VERB_NEXT:
+            return 0
+        if (
+            nxt.is_word
+            and nxt.meanings
+            and not any(m.ordfl in cls._A_NOMINALS for m in nxt.meanings)
+        ):
+            # Not a word that a noun phrase can start with
+            # (an unknown word is probably a name or a noun)
+            return 0
+        if prev is None:
+            # At the start: 'Á Jón bíl?' (and 'Á morgun rignir')
+            return 0
+        if not prev.is_word:
+            if prev.t0 in cls._A_NAME_KINDS:
+                # 'Jón Jónsson á bílinn'
+                return 0
+        else:
+            if prev.lower == "sem" or (prev.is_upper and i - 1 > start):
+                # 'maðurinn sem á bílinn', '(Þar) á Ísland tvo fulltrúa'
+                return 0
+            if any(
+                m.ordfl in cls._A_SUBJECT_PRONOUNS and "NF" in m.beyging
+                for m in prev.meanings
+            ):
+                # 'hún á bíl', 'þetta á rætur að rekja'
+                return 0
+        # Is there a word before it that can be the finite verb of the clause?
+        # ('ræða ... ár á aðalfundi'; the word directly before 'á' is left
+        # out, as it would be the subject: 'þar sem liðið á þrjá leiki eftir')
+        for k in range(start, i - 1):
+            tok = tokens.get(k)
+            if tok is None or not tok.is_word or tok.lower in cls._A_NOT_VERBS:
+                continue
+            if any(
+                m.ordfl == "so" and ("FH" in m.beyging or "VH" in m.beyging)
+                for m in tok.meanings
+            ):
+                return _A_VERB_PENALTY
+        return 0
 
     def _reduce(self, w: Node, scores: ScoreDict) -> ResultDict:
         """Reduce a forest with a root in w based on subtree scores"""
