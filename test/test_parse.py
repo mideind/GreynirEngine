@@ -3354,6 +3354,414 @@ def test_reflexive_agreement(r):
     )
 
 
+def test_noun_phrase_and_question_clause_after_um(r):
+    """The preposition 'um' can govern a noun phrase and a question clause
+    joined by a conjunction: 'upplýsingar um líðan mannsins eða hvort
+    einhver hefði verið handtekinn'. This is one prepositional phrase;
+    without the rule FsUmNlOgSpurn, the conjunction could only begin a new
+    main clause that had the question clause as its subject, and the
+    sentence did not parse unless a verb happened to follow."""
+    s = r.parse_single(
+        "Ekki höfðu borist frekari upplýsingar um líðan mannsins eftir komuna "
+        "á sjúkrahús eða hvort einhver hefði verið handtekinn vegna árásarinnar."
+    )
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP ADVP ao /ADVP VP VP-AUX so_ft_p3 /VP-AUX VP so_sagnb /VP "
+        "NP-SUBJ lo_nf_ft_kvk no_ft_nf_kvk PP P fs_þf /P NP no_et_þf_kvk NP-POSS "
+        "no_et_ef_kk PP P fs_þf /P NP no_et_þf_kvk PP P fs_þf /P NP no_et_þf_hk "
+        "/NP /PP /NP /PP /NP-POSS /NP C st /C CP-QUE C st /C IP NP-SUBJ "
+        "fn_et_nf_kk /NP-SUBJ VP VP-AUX VP so_et_p3 /VP VP so_sagnb /VP /VP-AUX "
+        "VP so_lhþt_sb_nf_et_kk /VP PP P fs_ef /P NP no_et_ef_kvk /NP /PP /VP "
+        "/IP /CP-QUE /PP /NP-SUBJ /VP /IP /S-MAIN p /S0"
+    )
+    # The same reading is preferred where the two-main-clause reading
+    # is also available ('hvenær varan' as a subject, 'hvort Ísland'
+    # as 'which Iceland')
+    pp = "PP P fs_þf /P NP no_et_þf_hk /NP C st /C CP-QUE "
+    s = r.parse_single("Hún spurði um verðið og hvenær varan kæmi.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ pfn_kvk_et_nf /NP-SUBJ VP VP so_0_et_p3 /VP "
+        + pp
+        + "ADVP ao /ADVP IP NP-SUBJ no_et_nf_kvk /NP-SUBJ VP so_0_et_p3 /VP "
+        "/IP /CP-QUE /PP /VP /IP /S-MAIN p /S0"
+    )
+    for sent in (
+        "Engar upplýsingar bárust um líðan mannsins og hvort einhver hefði "
+        "verið handtekinn.",
+        "Upplýsingar um líðan mannsins eða hvort einhver hefði verið "
+        "handtekinn höfðu ekki borist.",
+        "Þau deildu um verðið og hver ætti að borga.",
+        "Hún talaði um bókina, og hvers vegna hún skrifaði hana.",
+        "Mikil umræða hefur verið um óvissu í efnahagsmálum og hvort Ísland "
+        "sé orðið of dýrt fyrir ferðamenn.",
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        flat = s.tree.flat
+        assert flat.count("S-MAIN") == 2, sent  # One main clause: S-MAIN, /S-MAIN
+        assert "/NP C st /C CP-QUE " in flat or "/NP p C st /C CP-QUE " in flat, sent
+        assert "CP-QUE-SUBJ" not in flat, sent
+    # A lone question phrase after the conjunction is not drawn into
+    # the prepositional phrase: it is a question of its own
+    for sent in (
+        "Þeir hugsa bara um sinn eigin hag, eða hvað?",
+        "Hvers konar sögur segjum við um mold og af hverju?",
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        assert "CP-QUE" not in s.tree.flat, sent
+        assert "S-QUE" in s.tree.flat, sent
+    # A question clause that is the subject of a second main clause
+    s = r.parse_single(
+        "Þeir töluðu um veðrið og hver þeirra var bestur kom í ljós síðar."
+    )
+    assert s and s.tree
+    assert "/S-MAIN C st /C S-MAIN IP CP-QUE-SUBJ" in s.tree.flat
+    # Other objects of 'um' are as before
+    s = r.parse_single("Hún spurði um verðið og gæðin.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ pfn_kvk_et_nf /NP-SUBJ VP VP so_0_et_p3 /VP PP P "
+        "fs_þf /P NP no_et_þf_hk C st /C no_ft_þf_hk /NP /PP /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single(
+        "Ekki höfðu borist upplýsingar um hvort einhver hefði verið handtekinn."
+    )
+    assert s and s.tree
+    assert "PP P fs_þf /P CP-QUE C st /C IP " in s.tree.flat
+
+
+def test_noun_phrase_and_question_clause(r):
+    """A noun phrase and a question clause can also be joined as the
+    objects of a verb, and after other prepositions than 'um'"""
+    s = r.parse_single("Hún veit nafn mannsins og hvar hann býr.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ pfn_kvk_et_nf /NP-SUBJ VP VP so_1_þf_et_p3 /VP "
+        "NP-OBJ no_et_þf_hk NP-POSS no_et_ef_kk /NP-POSS C st /C CP-QUE ADVP ao "
+        "/ADVP IP NP-SUBJ pfn_kk_et_nf /NP-SUBJ VP so_0_et_p3 /VP /IP /CP-QUE "
+        "/NP-OBJ /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Þau segja frá stemningunni og hvar skyggnið var best.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ pfn_hk_ft_nf /NP-SUBJ VP VP so_0_ft_p3 /VP PP P "
+        "fs_þgf /P NP no_et_þgf_kvk /NP C st /C CP-QUE ADVP ao /ADVP IP NP-SUBJ "
+        "no_et_nf_hk /NP-SUBJ VP VP-AUX so_et_p3 /VP-AUX NP-PRD lo_sb_nf_et_hk "
+        "/NP-PRD /VP /IP /CP-QUE /PP /VP /IP /S-MAIN p /S0"
+    )
+    for sent in (
+        "Lögreglan rannsakar tildrög slyssins og hvort ökumaðurinn hafi verið "
+        "ölvaður.",
+        "Hann útskýrði reglurnar og hvernig leikurinn færi fram.",
+        "Hann nefnir glugga og gler og hvort rakablettir séu þar í kring.",
+        "Hún var spurð út í viðbrögð stuðningsmannanna og hvort hún hefði "
+        "rætt þau við leikmenn.",
+        "Í dag er ég ánægð með mína sjálfsmynd og hvað ég stend fyrir.",
+        # More than one noun phrase before the clause
+        "Við vitum mikið um Evrópusambandið, regluverk þess og hvernig fyrri "
+        "samningar hafa verið gerðir.",
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        flat = s.tree.flat
+        assert flat.count("S-MAIN") == 2, sent
+        assert " C st /C CP-QUE " in flat, sent
+        assert "CP-QUE-SUBJ" not in flat, sent
+    # A question clause that is the subject or the object of a second
+    # main clause is not drawn into the first one
+    for sent in (
+        "Hún keypti bókina og hvort hann las hana veit ég ekki.",
+        "Hún las bókina og hvenær hann kemur er óvíst.",
+        "Orð hafa áhrif og hvernig við notum þau getur haft jákvæð áhrif á "
+        "líf okkar.",
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        assert "/S-MAIN C st /C S-MAIN " in s.tree.flat, sent
+        assert " C st /C CP-QUE " not in s.tree.flat, sent
+    # 'hver' and 'hvert' in the sense 'each', after a conjunction
+    s = r.parse_single(
+        "Öll ráðuneyti eiga aðkomu að áætluninni og hvert þeirra ber ábyrgð "
+        "á einni aðgerð."
+    )
+    assert s and s.tree
+    assert "/S-MAIN C st /C S-MAIN IP NP-SUBJ fn_et_nf_hk " in s.tree.flat
+    assert "CP-QUE" not in s.tree.flat
+    # Where 'um' and another preposition could both govern the question
+    # clause, it is 'um' that does (see also the test above)
+    s = r.parse_single(
+        "Engar upplýsingar bárust um ástandið í húsinu eða hvort einhver "
+        "hefði slasast."
+    )
+    assert s and s.tree
+    assert "PP P fs_þgf /P NP no_et_þgf_hk /NP /PP /NP C st /C CP-QUE " in s.tree.flat
+
+
+def test_coordinated_question_clauses(r):
+    """Question clauses can be joined by a conjunction, wherever a
+    question clause can stand. The second one used to be read as the
+    subject of a new main clause, or as something worse"""
+    s = r.parse_single("Ég veit hvar hann býr og hvenær hún fór.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ pfn_et_nf /NP-SUBJ VP VP so_1_þf_et_p1 /VP "
+        "CP-QUE-OBJ ADVP ao /ADVP IP NP-SUBJ pfn_kk_et_nf /NP-SUBJ VP "
+        "so_0_et_p3 /VP /IP C st /C ADVP ao /ADVP IP NP-SUBJ pfn_kvk_et_nf "
+        "/NP-SUBJ VP so_0_et_p3 /VP /IP /CP-QUE-OBJ /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Hvar hann býr og hvenær hún fór er óljóst.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP CP-QUE-SUBJ ADVP ao /ADVP IP NP-SUBJ pfn_kk_et_nf "
+        "/NP-SUBJ VP so_0_et_p3 /VP /IP C st /C ADVP ao /ADVP IP NP-SUBJ "
+        "pfn_kvk_et_nf /NP-SUBJ VP so_0_et_p3 /VP /IP /CP-QUE-SUBJ VP VP-AUX "
+        "so_et_p3 /VP-AUX NP-PRD lo_sb_nf_et_hk /NP-PRD /VP /IP /S-MAIN p /S0"
+    )
+    for sent, clauses in (
+        ("Þau vita hvar þau eiga skjól og hvert þau geta leitað.", 2),
+        ("Ekki er ljóst hvað olli sprengingunni né hvort fleiri hafi slasast.", 2),
+        (
+            "Því skiptir máli hvað ráðherrann vissi, hvenær hann vissi það og "
+            "hvers vegna svör hans urðu afdráttarlaus.",
+            3,
+        ),
+        # After 'um', and after 'það'
+        ("Hún spurði um hvort hann kæmi eða hvenær hún færi.", 2),
+        (
+            "Ég var stöðugt að hugsa um hvernig hárið lægi og hvort einhver "
+            "sæi blettina.",
+            2,
+        ),
+        (
+            "Þetta snýst um það hvernig ákvarðanir eru teknar og hvort þær "
+            "séu teknar með nægilegu gagnsæi.",
+            2,
+        ),
+        # The first clause ends with a noun phrase, which is not joined
+        # with the second clause
+        ("Ekki er vitað hvort hann bjó í húsinu eða hvar hann hélt til.", 2),
+        ("Ég veit ekki hvort hann keypti bílinn eða hvort hann leigði hann.", 2),
+        (
+            "Ekki er ljóst hvort hann hafi fallið fyrir eigin hendi eða hvort "
+            "lögreglan hafi drepið hann.",
+            2,
+        ),
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        flat = s.tree.flat
+        assert flat.count("S-MAIN") == 2, sent  # One main clause
+        # The clauses are in one CP-QUE, each with an IP of its own
+        que = flat[flat.index("CP-QUE") : flat.rindex("/CP-QUE")]
+        assert que.count(" IP ") == clauses, sent
+        assert "C st /C CP-QUE" not in flat, sent
+    # A second main clause, with a question clause as its object
+    s = r.parse_single("Ég veit hvar hann býr og hvenær hún fór veit enginn.")
+    assert s and s.tree
+    assert "/S-MAIN C st /C S-MAIN IP VP CP-QUE-OBJ " in s.tree.flat
+    # Question words joined in front of one clause
+    for sent in (
+        "Ég veit ekki hvort eða hvenær hann kemur.",
+        "Það verður að koma í ljós hvort og hvenær það verður.",
+        "Enginn veit hvar og hvenær þetta gerðist.",
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        flat = s.tree.flat
+        que = flat[flat.index("CP-QUE") : flat.rindex("/CP-QUE")]
+        assert " C st /C ADVP ao /ADVP IP NP-SUBJ " in que, sent
+        assert que.count(" IP ") == 1, sent
+
+
+def test_question_clause_after_preposition(r):
+    """Prepositions other than 'um' can also govern a question clause,
+    without 'það/því': 'sáttur við hvernig okkur hefur gengið'"""
+    s = r.parse_single("Ég er mjög sáttur við hvernig okkur hefur gengið.")
+    assert s and s.tree
+    assert "PP P fs_þf /P CP-QUE ADVP ao /ADVP IP NP-SUBJ pfn_ft_þgf " in s.tree.flat
+    s = r.parse_single("Það fer eftir hvort veðrið verður gott.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ pfn_hk_et_nf /NP-SUBJ VP VP so_0_et_p3 /VP PP P "
+        "fs_þgf /P CP-QUE C st /C IP NP-SUBJ no_et_nf_hk /NP-SUBJ VP VP-AUX "
+        "so_et_p3 /VP-AUX NP-PRD lo_sb_nf_et_hk /NP-PRD /VP /IP /CP-QUE /PP /VP "
+        "/IP /S-MAIN p /S0"
+    )
+    s = r.parse_single(
+        "Ég er sáttur við hvernig okkur hefur gengið og hvernig þetta hefur þróast."
+    )
+    assert s and s.tree
+    flat = s.tree.flat
+    assert "PP P fs_þf /P CP-QUE ADVP ao /ADVP IP " in flat
+    assert flat[flat.index("CP-QUE") : flat.rindex("/CP-QUE")].count(" IP ") == 2
+    # A question pronoun after the preposition belongs to the clause
+    s = r.parse_single("Ég veit ekki við hvern hún talaði.")
+    assert s and s.tree
+    assert "PP P fs_þf /P NP fn_et_þf_kk /NP /PP IP NP-SUBJ " in s.tree.flat
+    # 'við' is the subject here, not a preposition
+    s = r.parse_single("Vitum við hvort hann kemur?")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-QUE IP VP VP so_1_þf_ft_p1 /VP NP-SUBJ pfn_ft_nf /NP-SUBJ "
+        "CP-QUE-OBJ C st /C IP NP-SUBJ pfn_kk_et_nf /NP-SUBJ VP so_0_et_p3 /VP "
+        "/IP /CP-QUE-OBJ /VP /IP p /S-QUE /S0"
+    )
+    # 'hvert' after a preposition is a pronoun
+    s = r.parse_single("Húðin roðnar í hvert skipti sem hún þvær sér.")
+    assert s and s.tree
+    assert "PP P fs_þf /P NP fn_et_þf_hk no_et_þf_hk CP-REL " in s.tree.flat
+    assert "CP-QUE" not in s.tree.flat
+
+
+def test_question_clause_without_subject(r):
+    """Question clauses, and direct questions, with an impersonal verb
+    and no subject: 'hvernig megi koma til móts við þá'"""
+    s = r.parse_single("Hún spurði hvernig mætti koma í veg fyrir fleiri slys.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ pfn_kvk_et_nf /NP-SUBJ VP VP so_1_þf_et_p3 /VP "
+        "CP-QUE-OBJ ADVP ao /ADVP IP VP VP-AUX so_et_p3 /VP-AUX VP so_0_nh /VP "
+        "PP P fs_þf /P NP no_et_þf_kk /NP /PP PP P fs_þf /P NP lo_þf_ft_hk "
+        "no_ft_þf_hk /NP /PP /VP /IP /CP-QUE-OBJ /VP /IP /S-MAIN p /S0"
+    )
+    for sent in (
+        "Hann spurði hvenær ætti að flagga.",
+        "Ekki er ljóst hvernig eigi að vinna þessi mál.",
+        "Þau ræddu um slysið og hvernig mætti koma í veg fyrir fleiri slys.",
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        flat = s.tree.flat
+        assert flat.count("S-MAIN") == 2, sent
+        assert " ADVP ao /ADVP IP VP " in flat[flat.index("CP-QUE") :], sent
+    s = r.parse_single("Hvernig stendur á því að verðið hækkar?")
+    assert s and s.tree
+    assert s.tree.flat.startswith(
+        "S0 S-QUE ADVP ao /ADVP IP VP VP so_0_et_p3 /VP PP P fs_þgf /P NP "
+        "fn_et_þgf_hk CP-THT "
+    )
+    # A nominative after the verb is its subject where that is possible
+    s = r.parse_single("Hvar er draumurinn?")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-QUE ADVP ao /ADVP IP VP VP so_0_et_p3 /VP NP-SUBJ no_et_nf_kk "
+        "/NP-SUBJ /VP /IP p /S-QUE /S0"
+    )
+
+
+def test_question_adverb_and_noun(r):
+    """Question adverbs do not modify the noun that follows them:
+    'hvenær varan (kæmi)' is not a noun phrase. 'hvernig' can ask about
+    the kind of a noun ('hvernig bíl'), but that is the less likely
+    reading where the noun can be the subject of the clause"""
+    s = r.parse_single("Hún spurði hvenær varan kæmi.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ pfn_kvk_et_nf /NP-SUBJ VP VP so_1_þf_et_p3 /VP "
+        "CP-QUE-OBJ ADVP ao /ADVP IP NP-SUBJ no_et_nf_kvk /NP-SUBJ VP "
+        "so_0_et_p3 /VP /IP /CP-QUE-OBJ /VP /IP /S-MAIN p /S0"
+    )
+    s = r.parse_single("Tíminn leiðir í ljós hvernig aðrir flokkar stíga fram.")
+    assert s and s.tree
+    assert (
+        "CP-QUE-OBJ ADVP ao /ADVP IP NP-SUBJ fn_ft_nf_kk no_ft_nf_kk /NP-SUBJ "
+        in s.tree.flat
+    )
+    s = r.parse_single("Hún veit hvernig bíl hann á.")
+    assert s and s.tree
+    assert "CP-QUE-OBJ NP ao NP no_et_þf_kk /NP /NP IP NP-SUBJ " in s.tree.flat
+    # 'víðast hvar' is a fixed phrase
+    s = r.parse_single("Vegir eru víðast hvar opnir.")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-MAIN IP NP-SUBJ no_ft_nf_kk /NP-SUBJ VP VP-AUX so_ft_p3 /VP-AUX "
+        "NP-PRD eo eo lo_sb_nf_ft_kk /NP-PRD /VP /IP /S-MAIN p /S0"
+    )
+
+
+def test_direct_questions(r):
+    """A sentence that ends with a question mark, and can be a question,
+    is one. Many of these used to be read as statements"""
+    for sent, start in (
+        ("Þarf að ferðast svona langt?", "S0 S-QUE IP VP VP so_1_þf_et_p3 "),
+        ("Hver veit allt um ömmu?", "S0 S-QUE NP fn_et_nf_kk /NP IP VP "),
+        (
+            "Hvaða tækifæri hefðu skapast á Húsavík?",
+            "S0 S-QUE NP fn_ft_nf_hk NP no_ft_nf_hk /NP /NP IP VP ",
+        ),
+        ("Verður farið gegn stjórnarskránni?", "S0 S-QUE IP VP "),
+        ("Hvar er draumurinn?", "S0 S-QUE ADVP ao /ADVP IP VP "),
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        assert s.tree.flat.startswith(start), sent
+        assert s.tree.flat.endswith(" p /S-QUE /S0"), sent
+    # A question tag after a statement
+    s = r.parse_single("Þeir hugsa bara um sinn eigin hag, eða hvað?")
+    assert s and s.tree
+    assert s.tree.flat.endswith(
+        "/S-MAIN p C st /C S-QUE NP fn_et_nf_hk /NP p /S-QUE /S0"
+    )
+
+
+def test_joined_direct_questions(r):
+    """Two or more direct questions can share one question mark:
+    'Hverjir móta reglurnar og hverjir hagnast á þeim?'. Each of them
+    is a question clause of its own, as when a question follows a
+    statement"""
+    s = r.parse_single("Hvað kostar þetta og hvar fæst það?")
+    assert s and s.tree
+    assert s.tree.flat == (
+        "S0 S-QUE NP fn_et_nf_hk /NP IP VP VP so_1_þf_et_p3 /VP NP-OBJ "
+        "fn_et_þf_hk /NP-OBJ /VP /IP /S-QUE C st /C S-QUE ADVP ao /ADVP IP VP "
+        "VP so_0_et_p3 /VP NP-SUBJ pfn_hk_et_nf /NP-SUBJ /VP /IP p /S-QUE /S0"
+    )
+    for sent, questions in (
+        (
+            "Hverjir móta leikreglurnar og hverjir hagnast mest á því að þær "
+            "haldist óbreyttar?",
+            2,
+        ),
+        ("Áttu eitthvað eftirminnilegt tískuslys og hvernig var það?", 2),
+        (
+            "Hvenær á að kalla eftir vottorðum og hvaða áhrif hefur það á "
+            "þjónustuna?",
+            2,
+        ),
+        ("Hver á húsið, hver leigir það og hver borgar viðhaldið?", 3),
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        flat = s.tree.flat
+        assert flat.count(" S-QUE ") == questions, sent
+        assert "/S-QUE C st /C S-QUE " in flat, sent
+        assert "S-MAIN" not in flat and "CP-QUE" not in flat, sent
+        assert flat.endswith(" p /S-QUE /S0"), sent
+    # A statement followed by a question is as before
+    s = r.parse_single("Hann fór heim og hvað gerði hann þá?")
+    assert s and s.tree
+    assert "/S-MAIN C st /C S-QUE NP fn_et_nf_hk /NP IP " in s.tree.flat
+    # Joined question clauses within one question
+    for sent in (
+        "Veistu hvar hann býr og hvenær hún fór?",
+        "Hver veit hvar hann býr og hvenær hún fór?",
+    ):
+        s = r.parse_single(sent)
+        assert s and s.tree, sent
+        flat = s.tree.flat
+        assert flat.count(" S-QUE ") == 1, sent
+        assert "/IP C st /C ADVP ao /ADVP IP " in flat, sent
+    # A verb after the conjunction usually belongs to the same question
+    s = r.parse_single(
+        "Viljum við fara og sprengja þá í tætlur og klára þá fyrir fullt og allt?"
+    )
+    assert s and s.tree
+    assert s.tree.flat.count(" S-QUE ") == 1 and "S-MAIN" not in s.tree.flat
+
+
 def test_lookup_cache(r: Greynir, monkeypatch) -> None:
     """GreynirBin.lookup_g() caches its results; callers get lists of
     their own, and the cache is emptied when it is full"""

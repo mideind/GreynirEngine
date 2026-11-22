@@ -246,6 +246,35 @@ notes for 3.9.0), from the 3.10.0 work, from the performance work of
   locative "þar sem" clauses ("Þar sem hann fór var mér kalt"); "kerfið
   sem til stendur að hjálpa/breyta" (dative/genitive object: the
   subject-gap reading still wins).
+- **Question clauses** (left over from the work on joined question
+  clauses, "hvar hann býr og hvenær hún fór", and on a noun phrase joined
+  with a question clause, "um líðan mannsins eða hvort einhver hefði
+  verið handtekinn"): two verb-first questions that share a question
+  mark ("Fór hann í varðhald eða var hann settur í farbann?") are read
+  as one question, as SpurnarsetningSögnFremst has no score beyond that
+  of a single question (with one, the last verb of "Viljum við fara og
+  klára þetta?" becomes a question of its own); the score of
+  Spurnarsetning (+32) in turn splits a verb-first "question" off the
+  end of a few statements that end with a question mark ("Jón ... og
+  spurði hvaðan þetta hefði komið?"); a noun phrase followed by a list of
+  clauses ("deila um fundi, hverjir voru boðaðir og hvernig hlutirnir
+  voru": a rule for it, with the scores of FsNlOgSpurn/NlOgSpurn, took
+  the second and third clause of plain three-clause lists); "hvorki X né
+  hvernig ..."; clauses with a fronted object and a verb that requires
+  one ("hvaða kunnáttu störfin krefjast"), with an oblique subject
+  ("hvernig ávinnslu réttinda er háttað") or with the verb second ("hvar
+  hefur barnið verið"); headings that are a bare question clause ("Hvar
+  áhrifin verða minnst"), which no longer parse as statements; "og hvað
+  þá X". Seen on the way, older than that work: "Ekki er ljóst hvort ..."
+  has "ljóst" as the subject and the clause as an object; "Ég veit að
+  hann kom og að hún fór" reads "að hún" as a prepositional phrase.
+  The scores of these rules were set against five samples of news
+  sentences (general, with "og/eða" + question word, with a question
+  word, direct questions) and some 90 sentences with a known structure:
+  when one of them is changed, check both the reading it competes with
+  (a second main clause with the question clause as its subject) and
+  the attachment of the clause (to the nearest noun phrase, or to the
+  clause before it).
 - **Reflexive agreement** (left over from the `_sjálfur` rules, which
   make "sjálfa sig"/"sjálfum sér" agree with the subject where the verb
   phrase nonterminals carry /tala/kyn): infinitive clauses with "að"
