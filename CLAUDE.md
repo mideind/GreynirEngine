@@ -269,11 +269,15 @@ the repository; ask for the coverage study):
   has them. Largest kinds of difference after PP attachment: an adverb
   of the clause read as a modifier of the next phrase ("Þetta er ekki
   ljóst", 525), a passive participle read as an adjective (354), the
-  subject of a subordinate clause with "vera" + PP read as its predicate
-  ("að leikarinn væri á bak við aðganginn", 152), the preposition "á"
-  read as the verb "eiga" (141), accusative/dative confusion after
-  "í"/"á"/"með" (about 300). Part of the difference is convention, not
-  error (the scorer's `normalise()` lists what it removes).
+  preposition "á" read as the verb "eiga" (141), accusative/dative
+  confusion after "í"/"á"/"með" (about 300). Part of the difference is
+  convention, not error (the scorer's `normalise()` lists what it
+  removes). The subject of a subordinate clause read as a predicate or
+  an object in front of the verb ("að málið sé í skoðun") is penalised
+  (SagnfyllingFremst, AndlagFremst); what the scorer still counts there
+  is mostly convention ("hægt" in "er hægt að" is a subject in the gold
+  standard), plus "sú sem hún er", where "hún" is the subject of a
+  relative clause that lacks its predicate.
 - *PP attachment, what is left*: a phrase on a bare person name or
   reflexive pronoun is right about one time in four (only personal
   pronouns are penalised, `FsEftirPfn`); "til", "með", "eftir" and
@@ -281,7 +285,9 @@ the repository; ask for the coverage study):
   NounPrepositions.conf only looks at the token directly before the
   preposition, so "áhrif stjórnvalda á málið" gets no bonus; a verb
   gives its preposition bonus to every phrase with that preposition,
-  not to one.
+  not to one; a phrase at the end of a subordinate clause goes to the
+  verb of the main clause if only that verb lists its preposition in
+  that case ("kom í ljós að leikarinn væri á bak við aðganginn").
 
 Older items:
 

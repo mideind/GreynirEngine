@@ -2381,9 +2381,9 @@ Sögn_0/tala/pers/kyn →
     | So_1_sagnb/aukafall HjSögn/tala/pers NlBeintAndlag/aukafall LoTengtSögn_nf/tala/kyn?
 
     # Konurnar sem leikarar höfðu [sjálfar/galvaskar] verið    
-    | NlSagnfylling_nf HjSögn/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_sagnb_nf
+    | SagnfyllingFremst HjSögn/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_sagnb_nf
     # Konurnar sem matinn höfðu [sjálfar/galvaskar] borðað
-    | NlBeintAndlag/aukafall HjSögn/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_sagnb/aukafall
+    | AndlagFremst/aukafall HjSögn/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_sagnb/aukafall
 
     # Konurnar sem vera munu leikarar [allar/galvaskar]
     | So_1_nh_nf HjSögnNh/tala/pers NlSagnfylling_nf LoTengtSögn_nf/tala/kyn?
@@ -2391,14 +2391,14 @@ Sögn_0/tala/pers/kyn →
     | So_1_nh/aukafall HjSögnNh/tala/pers NlBeintAndlag/aukafall LoTengtSögn_nf/tala/kyn?
 
     # Konurnar sem leikarar munu [allar/galvaskar] vera
-    | NlSagnfylling_nf HjSögnNh/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_nh_nf
+    | SagnfyllingFremst HjSögnNh/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_nh_nf
     # Konurnar sem matinn munu [allar/galvaskar] borða
-    | NlBeintAndlag/aukafall HjSögnNh/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_nh/aukafall
+    | AndlagFremst/aukafall HjSögnNh/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_nh/aukafall
 
+    # Konurnar sem leikarar [lengi] voru [báðar/galvaskar]
+    | SagnfyllingFremst AtvFs? so_1_nf/tala/pers LoTengtSögn_nf/tala/kyn?
     # Konurnar sem matinn [snarlega] borðuðu [báðar/galvaskar]
-    | NlSagnfylling_nf AtvFs? so_1_nf/tala/pers LoTengtSögn_nf/tala/kyn?
-    # Konurnar sem matinn [snarlega] borðuðu [báðar/galvaskar]
-    | NlBeintAndlag/aukafall AtvFs? so_1/aukafall/tala/pers LoTengtSögn_nf/tala/kyn?
+    | AndlagFremst/aukafall AtvFs? so_1/aukafall/tala/pers LoTengtSögn_nf/tala/kyn?
 
     # Konan sem gefin hafði verið/skal/mun Páli
     | so_2_þgf_þf_lhþt/tala/kyn HjSögnLhÞtSM/tala/pers NlÓbeintAndlag_þgf
@@ -2423,6 +2423,28 @@ Sögn_0/tala/pers/kyn →
 
 # Sögn með tveimur viðföngum sem stendur í undirsetningu
 # ('Konan sem gaf Páli gjöfina')
+# Sagnfylling í nefnifalli sem stendur á undan sögn í setningu án
+# frumlags: '(konurnar sem) leikarar voru'. Þetta er sjaldgæft. Mun
+# oftar er nafnliður í nefnifalli á undan sögninni frumlag hennar, og
+# sagnfyllingin þá ekki nafnliður: '(að) málið sé í skoðun', '(þegar)
+# hálf mínúta var eftir', '(að) fjölskyldan væri að brenna inni'. Án
+# frádráttar vinnur lesturinn án frumlags, því að sögn með viðfangi
+# (so_1_nf) fær hærra skor en sögn án viðfangs (so_0). Í gullstaðli
+# GreynirCorpus var frumlag lesið sem sagnfylling í 151 málsgrein af 3.925.
+SagnfyllingFremst →
+    NlSagnfylling_nf
+
+$score(-12) SagnfyllingFremst
+
+# Andlag sem stendur á undan sögn í setningu án frumlags: '(konurnar
+# sem) matinn borðuðu'. Sama á við og um SagnfyllingFremst: orðmynd sem
+# er eins í nefnifalli og þolfalli er oftast frumlag ('(að) samskiptin
+# verði í báðar áttir').
+AndlagFremst/aukafall →
+    NlBeintAndlag/aukafall
+
+$score(-12) AndlagFremst/aukafall
+
 ÖfugSögn_2/tala/pers/kyn →
 
     so_2_þgf_þf_sagnb HjSögn/tala/pers  Andlög_þgf_þf                # Konurnar sem gefið hafa Páli gjöfina

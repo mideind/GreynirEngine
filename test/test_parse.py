@@ -3687,6 +3687,51 @@ def test_noun_prepositions(r):
     assert "/NP-OBJ PP P fs_þf /P " in s.tree.flat
 
 
+def test_subject_before_verb_in_subordinate_clause(r):
+    """A nominative noun phrase before the verb of a subordinate clause
+    is its subject, also when what follows the verb is not a noun
+    phrase or an adjective. It used to be read as a predicate (or, where
+    nominative and accusative are the same, an object) that had been
+    moved in front of the verb in a clause without a subject."""
+    for sentence, clause in (
+        (
+            "Ég held að fjölskyldan sé að brenna inni.",
+            "CP-THT-OBJ C st /C IP NP-SUBJ no_et_nf_kvk /NP-SUBJ VP VP so_0_et_p3 /VP ",
+        ),
+        (
+            "Hann kom þeim yfir þegar hálf mínúta var eftir.",
+            "CP-ADV-TEMP C st /C IP NP-SUBJ lo_nf_et_kvk no_et_nf_kvk /NP-SUBJ VP ",
+        ),
+        (
+            "Svo getur verið að breyting verði þar á.",
+            "CP-THT-PRD C st /C IP NP-SUBJ no_et_nf_kvk /NP-SUBJ VP ",
+        ),
+        (
+            "Hef ég trú á því að eitthvað batni eftir kosningar?",
+            "CP-THT C st /C IP NP-SUBJ fn_et_nf_hk /NP-SUBJ VP ",
+        ),
+        (
+            "Það er mikilvægt að samskiptin verði í báðar áttir.",
+            "CP-THT C st /C IP NP-SUBJ no_ft_nf_hk /NP-SUBJ VP ",
+        ),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert clause in s.tree.flat, sentence
+    # In a relative clause, where the subject is what is missing,
+    # the readings with a predicate or an object first remain
+    s = r.parse_single("Konurnar sem leikarar voru komu.")
+    assert s and s.tree
+    assert "CP-REL C stt /C IP VP NP-PRD no_ft_nf_kk /NP-PRD VP " in s.tree.flat
+    s = r.parse_single("Konurnar sem matinn borðuðu fóru heim.")
+    assert s and s.tree
+    assert "CP-REL C stt /C IP VP NP-OBJ no_et_þf_kk /NP-OBJ VP " in s.tree.flat
+    # A clause that does lack a subject
+    s = r.parse_single("Ég taldi að sést hefði til himins.")
+    assert s and s.tree
+    assert "NP-SUBJ" not in s.tree.flat.split("CP-THT-OBJ", 1)[1]
+
+
 def test_question_clause_without_subject(r):
     """Question clauses, and direct questions, with an impersonal verb
     and no subject: 'hvernig megi koma til móts við þá'"""
