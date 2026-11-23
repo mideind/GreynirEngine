@@ -471,6 +471,45 @@ class AdjectivePredicates:
             AdjectivePredicates.ERROR_PREPOSITIONS[adj].update(prepositions)
 
 
+class NounPredicates:
+    """Prepositions that follow nouns as part of their noun phrase, for
+    instance 'áhrif /á þf' or 'þátttaka /í þgf', read from the
+    [noun_predicates] sections of NounPredicates.conf and
+    NounPrepositions.conf. The reducer prefers to attach such a
+    prepositional phrase to the noun when it directly follows it. An
+    entry marked $weak is a loose association ('bók /í þgf'): it does not
+    outweigh a verb that takes the preposition ('setja bók í hillu')."""
+
+    # dict { noun lemma : dict { (preposition, case) : strong? } }
+    PREPOSITIONS: Dict[str, Dict[Tuple[str, str], bool]] = defaultdict(dict)
+
+    @staticmethod
+    def add(
+        noun: str, prepositions: Iterable[Tuple[str, str]], strong: bool = True
+    ) -> None:
+        d = NounPredicates.PREPOSITIONS[noun]
+        for p in prepositions:
+            # A strong entry is not weakened by a weak one
+            d[p] = strong or d.get(p, False)
+
+    @staticmethod
+    def strength(noun: str, prep: str, case: Optional[str]) -> int:
+        """How strongly does the noun (a lemma) take the preposition:
+        2 for a strong entry, 1 for a weak one and 0 for none.
+        A case of None matches any case."""
+        entry = NounPredicates.PREPOSITIONS.get(noun)
+        if not entry:
+            return 0
+        if case is not None:
+            strong = entry.get((prep, case))
+            return 0 if strong is None else 2 if strong else 1
+        result = 0
+        for (p, _), strong in entry.items():
+            if p == prep:
+                result = max(result, 2 if strong else 1)
+        return result
+
+
 class Preferences:
     """Wrapper around disambiguation hints, initialized from the config file"""
 
@@ -856,6 +895,32 @@ class Settings:
             AdjectivePredicates.add(adj, a[1:], prepositions)
 
     @staticmethod
+    def _handle_noun_predicates(s: str) -> None:
+        """Handle a noun with its prepositions, such as 'áhrif /á þf'"""
+        if "$error(" in s:
+            # Entries that describe wrong usage ('áhyggjur /að þgf') are
+            # there for error detection: they are not preferences
+            return
+        strong = True
+        if s.endswith("$weak"):
+            strong = False
+            s = s[:-5].rstrip()
+        ap = s.split("/")
+        a = ap[0].split()
+        if len(a) != 1 or len(ap) < 2:
+            raise ConfigError("Expected a noun followed by /preposition case")
+        prepositions: List[Tuple[str, str]] = []
+        for p in ap[1:]:
+            parg = p.split()
+            if len(parg) != 2:
+                raise ConfigError("Preposition should have exactly one argument")
+            if parg[1] not in ALL_CASES and parg[1] != "nh":
+                raise ConfigError("Unknown argument case for preposition")
+            # Multi-word prepositions are written with underscores
+            prepositions.append((parg[0].replace("_", " "), parg[1]))
+        NounPredicates.add(a[0], prepositions, strong)
+
+    @staticmethod
     def read(fname: str, force: bool = False) -> None:
         """Read configuration file"""
 
@@ -879,6 +944,7 @@ class Settings:
                 "noindex_words": Settings._handle_noindex_words,
                 "topics": Settings._handle_topics,
                 "adjective_predicates": Settings._handle_adjective_predicates,
+                "noun_predicates": Settings._handle_noun_predicates,
             }
             handler: Optional[Callable[[str], None]] = None  # Current section handler
 

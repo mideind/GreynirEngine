@@ -689,7 +689,22 @@ class BIN_Token(Token):
     # !!! NOTE: This set should probably include all abbreviations that
     # !!! can represent adverbial phrases as well as other meanings,
     # !!! such as 'f.h.' which is both 'fyrir hádegi' and 'fyrir hönd'.
-    _NOT_EO = frozenset(("og", "eða", "sem", "ekkert", "f.h.", "m.v."))
+    _NOT_EO = frozenset(
+        (
+            "og",
+            "eða",
+            "sem",
+            "ekkert",
+            "f.h.",
+            "m.v.",
+            # Question adverbs: 'hvenær varan (kæmi)' is not a noun phrase
+            "hvernig",
+            "hvenær",
+            "hvar",
+            "hvaðan",
+            "hví",
+        )
+    )
 
     # Prepositions that nevertheless must be allowed as adverbs
     # 'Fyrirtækið hefur skilað inn ársreikningi'

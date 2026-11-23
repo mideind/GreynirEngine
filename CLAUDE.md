@@ -172,14 +172,22 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
 
 4. **Reduction** — `reducer.py` scores the parse forest and reduces it to the
    single most likely tree, using preferences from `config/Prefs.conf`,
-   production priorities and `$score()` pragmas in the grammar, and
-   verb-preposition matching driven by `config/Verbs.conf`.
+   production priorities and `$score()` pragmas in the grammar,
+   verb-preposition matching driven by `config/Verbs.conf`, and
+   noun-preposition matching driven by `config/NounPredicates.conf` and
+   `config/NounPrepositions.conf`: a preposition in a phrase attached to
+   a noun phrase (`FsRunaEftirNl`, tagged `noun_prep_scope`) gets a bonus
+   if the token before it is a noun that takes it (`noun_prep_bonus()`;
+   strong entries outweigh a verb that lists the preposition, entries
+   marked `$weak` do not).
    `Reducer.parse_and_reduce()` is what `Greynir` and `IncrementalParser`
    call: it parses and reduces in one go, with the forest staying in C++
    (`ereducer.cpp`) and Python objects only created for the nodes of the
    winning tree (`Node.from_serialized()`). The scores of token/terminal
    matches are still calculated in Python (`Reducer._score_options()`), as
-   are the verb/preposition and verb/particle bonuses, through callbacks.
+   are the verb/preposition, noun/preposition and verb/particle bonuses,
+   through callbacks (the noun/preposition bonus goes through the
+   verb/preposition callback, with verb terminal 0).
    The older route - `Fast_Parser.go()`, `Fast_Parser.num_combinations()`,
    `Reducer.go_with_score()` - does the same in Python on a forest of
    `Node` objects; it remains as public API, as the reference
@@ -236,7 +244,62 @@ The public API is defined by the exports in `src/reynir/__init__.py`.
 
 Potential next steps from the 2026 grammar-coverage study (see release
 notes for 3.9.0), from the 3.10.0 work, from the performance work of
-4.0.0 and from the free-threading work of 4.1.0; none started:
+4.0.0 and from the free-threading work of 4.1.0; none started.
+
+**Measured priorities (November 2026).** Two measurements, both to be
+repeated before and after a change (the data and scripts are outside
+the repository; ask for the coverage study):
+
+- *Sentences that do not parse*: 404 of a fixed sample of 5,000 news
+  sentences of 2026 (8.1%). 232 are gaps in the grammar or the
+  vocabulary, each diagnosed with a minimal failing sentence and a
+  minimal parsing one. By size: names (43: a name that is also a word
+  form in BÍN, such as "EFLA", "Adams", "El Mencho", gets only the BÍN
+  meanings; an unknown name after an adjective, "hinn 29 ára gamli
+  Sanches"), dates, numbers and measures (23: a weekday after "í gær"
+  or "á morgun", "tímabil" as a time noun, "um það bil"/"yfir hundrað"
+  before a numeral), fixed phrases (20: "af hálfu", "eitthvað slíkt"),
+  punctuation (19: a clause in parentheses), verb frames (13), word
+  order after a fronted element (13: "Þá kasta læknarnir fram tölum",
+  "Í dag er spáð rigningu"), gapping (12), agreement stricter than usage
+  (12: "Henni fylgir rigning og snjókoma"), "sem" phrases (11: "Þá
+  starfaði hann sem kennari"). Sentences with more names than known
+  words are rejected as foreign before parsing ("Manchester United
+  kom.").
+- *Sentences that parse wrongly*: against the hand-corrected gold
+  standard of GreynirCorpus (4,500 development trees; keep the 500 test
+  trees for final figures), labelled bracket F1 is 0.74 and 72% of the
+  prepositional phrases with the same span hang where the gold standard
+  has them. Largest kinds of difference after PP attachment: an adverb
+  of the clause read as a modifier of the next phrase ("Þetta er ekki
+  ljóst", 525), a passive participle read as an adjective (354),
+  accusative/dative confusion after "í"/"á"/"með" (about 300). The
+  preposition "á" was read as the verb "eiga" in 136 places and is in 73
+  (`Reducer._a_verb_adjustment()` lowers the verb where a noun phrase
+  follows, the word before is not a likely subject and a finite verb
+  stands earlier in the sentence): what is left has a name or a pronoun
+  before "á", or no reading with the preposition at all, often because
+  a subordinate clause may lack its subject ("bundu loksins enda á
+  taphrinuna" reads "enda" as a conjunction). Part of the difference is
+  convention, not error (the scorer's `normalise()` lists what it
+  removes). The subject of a subordinate clause read as a predicate or
+  an object in front of the verb ("að málið sé í skoðun") is penalised
+  (SagnfyllingFremst, AndlagFremst); what the scorer still counts there
+  is mostly convention ("hægt" in "er hægt að" is a subject in the gold
+  standard), plus "sú sem hún er", where "hún" is the subject of a
+  relative clause that lacks its predicate.
+- *PP attachment, what is left*: a phrase on a bare person name or
+  reflexive pronoun is right about one time in four (only personal
+  pronouns are penalised, `FsEftirPfn`); "til", "með", "eftir" and
+  "vegna" phrases on a noun are right about one time in three;
+  NounPrepositions.conf only looks at the token directly before the
+  preposition, so "áhrif stjórnvalda á málið" gets no bonus; a verb
+  gives its preposition bonus to every phrase with that preposition,
+  not to one; a phrase at the end of a subordinate clause goes to the
+  verb of the main clause if only that verb lists its preposition in
+  that case ("kom í ljós að leikarinn væri á bak við aðganginn").
+
+Older items:
 
 - **Coverage clusters**: auxiliary/copula gapping in a second conjunct
   ("höfðu dáið og 23 særst"); smaller items — "var lýst sem" passives,
@@ -250,6 +313,35 @@ notes for 3.9.0), from the 3.10.0 work, from the performance work of
   locative "þar sem" clauses ("Þar sem hann fór var mér kalt"); "kerfið
   sem til stendur að hjálpa/breyta" (dative/genitive object: the
   subject-gap reading still wins).
+- **Question clauses** (left over from the work on joined question
+  clauses, "hvar hann býr og hvenær hún fór", and on a noun phrase joined
+  with a question clause, "um líðan mannsins eða hvort einhver hefði
+  verið handtekinn"): two verb-first questions that share a question
+  mark ("Fór hann í varðhald eða var hann settur í farbann?") are read
+  as one question, as SpurnarsetningSögnFremst has no score beyond that
+  of a single question (with one, the last verb of "Viljum við fara og
+  klára þetta?" becomes a question of its own); the score of
+  Spurnarsetning (+32) in turn splits a verb-first "question" off the
+  end of a few statements that end with a question mark ("Jón ... og
+  spurði hvaðan þetta hefði komið?"); a noun phrase followed by a list of
+  clauses ("deila um fundi, hverjir voru boðaðir og hvernig hlutirnir
+  voru": a rule for it, with the scores of FsNlOgSpurn/NlOgSpurn, took
+  the second and third clause of plain three-clause lists); "hvorki X né
+  hvernig ..."; clauses with a fronted object and a verb that requires
+  one ("hvaða kunnáttu störfin krefjast"), with an oblique subject
+  ("hvernig ávinnslu réttinda er háttað") or with the verb second ("hvar
+  hefur barnið verið"); headings that are a bare question clause ("Hvar
+  áhrifin verða minnst"), which no longer parse as statements; "og hvað
+  þá X". Seen on the way, older than that work: "Ekki er ljóst hvort ..."
+  has "ljóst" as the subject and the clause as an object; "Ég veit að
+  hann kom og að hún fór" reads "að hún" as a prepositional phrase.
+  The scores of these rules were set against five samples of news
+  sentences (general, with "og/eða" + question word, with a question
+  word, direct questions) and some 90 sentences with a known structure:
+  when one of them is changed, check both the reading it competes with
+  (a second main clause with the question clause as its subject) and
+  the attachment of the clause (to the nearest noun phrase, or to the
+  clause before it).
 - **Reflexive agreement** (left over from the `_sjálfur` rules, which
   make "sjálfa sig"/"sjálfum sér" agree with the subject where the verb
   phrase nonterminals carry /tala/kyn): infinitive clauses with "að"

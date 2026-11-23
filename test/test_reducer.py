@@ -74,6 +74,7 @@ TAGS = (
     "pick_up_verb",
     "purge_verb",
     "no_reduce",
+    "noun_prep_scope",
 )
 
 
@@ -296,6 +297,16 @@ class FakeForestReducer(ParseForestReducer):
             verb_token.index,
         )
         return (7, -2, 3, 0, 5, -1, 1)[h % 7]
+
+    def noun_prep_bonus(
+        self, prep_terminal: Any, prep_token: Any, noun_token: Any
+    ) -> int:
+        h = mix(
+            prep_terminal.index,
+            int(prep_token[1:]),
+            -1 if noun_token is None else noun_token.index,
+        )
+        return (8, 0, 5, 0, 0)[h % 5]
 
     def verb_particle_bonus(self, particle: str, verbs: Any) -> int:
         if not verbs:

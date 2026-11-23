@@ -404,6 +404,7 @@ $score(-32) SamtengingAð
 Yfirsetning →
     # Yfirsetning getur hafist á runu upphrópana
     Upphrópun* HreinYfirsetning
+    | Upphrópun* SpurnarsetningaRuna
 
 Upphrópun →
     uh+ NauðsynlegKomma # Jú jú, ég fór út í dag / Nei, hann kemur ekki.
@@ -429,7 +430,10 @@ $score(+1) SetningAukafallForgangur
 $score(+2) SetningLo
 $score(-1) SetningSo
 $score(+3) Setning
-$score(+12) Spurnarsetning
+# Setning sem endar á spurningarmerki og getur verið spurnarsetning er það
+# nær alltaf: án ríflegra aukastiga er hún oft lesin sem fullyrðing
+# ('Þarf að ferðast svona langt?', 'Hver veit allt um ömmu?')
+$score(+32) Spurnarsetning
 $score(+25) SamsettSetning
 
 $tag(begin_prep_scope) HreinYfirsetning # Nýtt undirtré fyrir tengingu sagnar og forsetningar
@@ -437,11 +441,57 @@ $tag(begin_prep_scope) HreinYfirsetning # Nýtt undirtré fyrir tengingu sagnar 
 # Spurnaraðalsetningar
 
 Spurnarsetning →
-    SpurnarNafnliður/tala/fall/kyn BeygingarliðurSögnFremst? Spurningarmerki   
-    | SpurnarForsetningarliður BeygingarliðurSögnFremst? Spurningarmerki       # Í hvaða fötum er barnið?
-    | SpurnarAtviksorð BeygingarliðurSögnFremst? Spurningarmerki               # Hvernig missti tröllið lífið?
-    | SpurnarFrumlag/tala/kyn BlTagl/tala/p3/kyn? Spurningarmerki              # Hvað er í pokanum?
-    | BeygingarliðurSögnFremst Spurningarmerki                                 # Getur þú hlaupið hratt? / Ferðu á ballið?
+    Spurnarkjarni Spurningarmerki
+
+Spurnarkjarni →
+    SpurnarkjarniMeðSpurnarlið
+    | BeygingarliðurSögnFremst                                 # Getur þú hlaupið hratt? / Ferðu á ballið?
+
+SpurnarkjarniMeðSpurnarlið →
+    SpurnarNafnliður/tala/fall/kyn BeygingarliðurSögnFremst?
+    | SpurnarForsetningarliður BeygingarliðurSögnFremst?       # Í hvaða fötum er barnið?
+    | SpurnarAtviksorð BeygingarliðurSögnFremst?               # Hvernig missti tröllið lífið?
+    | SpurnarAtviksorð SpurnarsetningÁnFrumlags                # Hvernig stendur á því? / Hvenær á að flagga?
+    | SpurnarFrumlag/tala/kyn BlTagl/tala/p3/kyn?              # Hvað er í pokanum?
+
+# Tvær eða fleiri spurnarsetningar með eitt spurningarmerki:
+# 'Hverjir móta reglurnar og hverjir hagnast á þeim?',
+# 'Hver á húsið, hver leigir það og hver borgar viðhaldið?',
+# 'Fór hann í varðhald eða var hann settur í farbann?'
+SpurnarsetningaRuna →
+    SpurnarsetningÁnMerkis SpurnarsetningKomma* SpurnarsetningFramhald
+
+SpurnarsetningÁnMerkis →
+    Spurnarkjarni
+
+SpurnarsetningKomma →
+    "," SpurnarsetningÁnMerkis
+
+SpurnarsetningFramhald →
+    ","? Aðaltenging SpurnarsetningMeðSpurnarlið
+    | ","? Aðaltenging SpurnarsetningSögnFremst
+
+# Spurnarliður á eftir samtengingunni sýnir að þar hefst ný spurning.
+# Sögn á þeim stað er oftar hluti af sömu spurningu ('Viljum við fara og
+# klára þetta?'), og því fær sú leið engin stig umfram staka spurnarsetningu
+SpurnarsetningMeðSpurnarlið →
+    SpurnarkjarniMeðSpurnarlið Spurningarmerki
+
+SpurnarsetningSögnFremst →
+    BeygingarliðurSögnFremst Spurningarmerki
+
+$score(+64) SpurnarsetningMeðSpurnarlið
+$score(+32) SpurnarsetningSögnFremst
+# Þrjár eða fleiri: fyrsta spurningin er annars lesin sem fullyrðing
+$score(+32) SpurnarsetningKomma
+
+# Spurnaraðalsetning án frumlags. Mínusstigin tryggja að liður í nefnifalli
+# á eftir sögninni sé frumlag hennar ef svo má vera ('Hvar er draumurinn?'),
+# ekki sagnfylling
+SpurnarsetningÁnFrumlags →
+    BlTagl_et_p3_hk
+
+$score(-10) SpurnarsetningÁnFrumlags
 
 # Spurnarorðið er frumlag setningarinnar, stendur utan beygingarliðar
 BlTagl/tala/pers/kyn →
@@ -451,8 +501,6 @@ BlTagl/tala/pers/kyn →
 
 SpurnarFrumlag/tala/kyn →
     SpurnarNafnliður/tala/nf/kyn FsMeðFallstjórn?
-
-$score(+8) Spurnarsetning
 
 # Atvikssetning fremst í setningu
 # [Ef þetta gerist](, þá) getur fatan dottið
@@ -600,6 +648,8 @@ SkýringarsetningFramhald → Skýringartenging SkýringarBotn
 # Spurnaraukasetningar
 Spurnaraukasetning →
     StakurSpurnarliður
+    # Stakt spurnarfrumlag: '(ég veit ekki) hver', '(hún spurði) hvaða maður'
+    | SpurnarFrumlag/tala/kyn
     | HeilSpurnaraukasetning
 
 StakurSpurnarliður →
@@ -610,16 +660,64 @@ StakurSpurnarliður →
 
 $score(-18) StakurSpurnarliður
 
-HeilSpurnaraukasetning → 
+# Ein spurnaraukasetning með sögn, eða fleiri hliðskipaðar:
+# '(ég veit) hvar hann býr [, hvað hann gerir] og hvenær hann kemur'
+HeilSpurnaraukasetning →
+    SpurnaraukasetningMeðSögn
+    | SpurnaraukasetningaRuna
+
+# Tvær eða fleiri hliðskipaðar spurnaraukasetningar
+SpurnaraukasetningaRuna →
+    SpurnaraukasetningMeðSögn SpurnarKommuliður* SpurnarFramhald
+    # Án samtengingar: '(að vita) hvað þau merkja, hvernig þau tengjast'
+    | SpurnaraukasetningMeðSögn SpurnarKommuliður+
+
+SpurnarKommuliður →
+    "," SpurnaraukasetningMeðSögn
+
+SpurnarFramhald →
+    KommaOgEða SpurnaraukasetningMeðSögn
+
+# Án aukastiga er 'og'/'eða' + spurnaraukasetning oftast lesin sem
+# upphaf nýrrar aðalsetningar, með spurnaraukasetninguna sem frumlag
+$score(+64) SpurnarFramhald
+
+# Spurnaraukasetning með sögn, þ.e. ekki aðeins spurnarliðurinn sjálfur
+SpurnaraukasetningMeðSögn →
     SpurnarNafnliður/tala/fall/kyn FsMeðFallstjórn? BeygingarliðurÁnUmröðunar
     | SpurnarNafnliður/tala/fall/kyn FsMeðFallstjórn? SetningSoÞað
     | SpurnarForsetningarliður BeygingarliðurÁnUmröðunar
     | SpurnarForsetningarliður SetningSoÞað
-    | SpurnarAtviksorð FsMeðFallstjórn? BeygingarliðurÁnUmröðunar
-    | SpurnarAtviksorð FsMeðFallstjórn? SetningSoÞað
-    | SpurnarSamtenging FsMeðFallstjórn? BeygingarliðurÁnUmröðunar
-    | SpurnarSamtenging FsMeðFallstjórn? SetningSoÞað
-    | SpurnarFrumlag/tala/kyn BlTagl/tala/p3/kyn?
+    | SpurnaraukasetningAtv
+    | SpurnarFrumlag/tala/kyn BlTagl/tala/p3/kyn
+
+# Spurnaraukasetning sem hefst á spurnaratviksorði eða 'hvort'
+SpurnaraukasetningAtv →
+    SpurnarAtviksorð SpurnarBotn
+    | SpurnarSamtenging SpurnarBotn
+    | SpurnarOrðRuna SpurnarBotn
+
+# 'hvort og hvenær (hann kemur)', 'hvar og hvernig (þetta gerðist)',
+# 'hvort og þá hvernig (þetta verður gert)'
+SpurnarOrðRuna →
+    SpurnarAtviksorð OgEða "þá:ao"? SpurnarAtviksorð
+    | SpurnarSamtenging OgEða "þá:ao"? SpurnarAtviksorð
+
+$score(+64) SpurnarOrðRuna
+
+SpurnarBotn →
+    FsMeðFallstjórn? BeygingarliðurÁnUmröðunar
+    | FsMeðFallstjórn? SetningSoÞað
+    | SpurnarBotnÁnFrumlags
+
+# Spurnaraukasetning án frumlags: '(hvernig) megi koma til móts við þá',
+# '(hvenær) eigi að flagga'. Mínusstigin halda aftur af því að spurning
+# fremst í málsgrein ('Hvar skal þá bera niður?') sé lesin sem
+# spurnaraukasetning í frumlagssæti
+SpurnarBotnÁnFrumlags →
+    BlTagl_et_p3_hk
+
+$score(-6) SpurnarBotnÁnFrumlags
 
 
 SpurnarNafnliður/tala/fall/kyn →
@@ -632,16 +730,28 @@ SpurnarNafnliður/tala/fall/kyn →
     | 'hver:fn'_ef_et_kk 'konar:kk'_ef_et Nl/fall/tala/kyn # hvers konar blóm
     | HversuHve Lo/fall/tala/kyn Nl/fall/tala/kyn # hversu mikinn þrýsting
     | HversuHve Lo/fall/tala/kyn AfLiður/kyn?     # hversu mikið af bensíni
-    | "hvernig:ao" Nl/fall/tala/kyn     # Hægt að nota hliðstætt með nafnlið
+    | HvernigNl/tala/fall/kyn           # Hægt að nota hliðstætt með nafnlið
     | HversuHve ao                      # TODO þrengja í ao sem tákna tíð, hátt, ...?
+
+# 'hvernig bíl (áttu)', 'hvernig stemningu (vilduð þið skapa)'.
+# Mun sjaldgæfara en að 'hvernig' sé spurnaratviksorð og nafnliðurinn
+# frumlag setningarinnar: 'hvernig starfsfólk (fær stuðning)'
+HvernigNl/tala/fall/kyn →
+    "hvernig:ao" Nl/fall/tala/kyn
+
+$score(-12) HvernigNl/tala/fall/kyn
 
 SpurnarForsetningarliður →
     fs/fall SpurnarNafnliður/tala/fall/kyn
 
 SpurnarAtviksorð →
+    SpurnarAtviksorðÁnHvert
+    | 'hvert:ao'
+
+SpurnarAtviksorðÁnHvert →
     "hvernig:ao" | 'af:fs'_þgf 'hver:fn'_þgf_et_hk | "hví:ao" | "afhverju:ao"
     | 'til:fs'_ef 'hver:fn'_ef_et_hk | 'hver:fn'_ef_et_hk 'vegna:fs'_ef
-    | 'hvar:ao' | 'hvaðan:ao' | 'hvenær:ao' | 'hví:ao' | 'hvert:ao'
+    | 'hvar:ao' | 'hvaðan:ao' | 'hvenær:ao' | 'hví:ao'
 
 SpurnarSamtenging →
     "hvort:st" AðvörunAð?
@@ -2271,9 +2381,9 @@ Sögn_0/tala/pers/kyn →
     | So_1_sagnb/aukafall HjSögn/tala/pers NlBeintAndlag/aukafall LoTengtSögn_nf/tala/kyn?
 
     # Konurnar sem leikarar höfðu [sjálfar/galvaskar] verið    
-    | NlSagnfylling_nf HjSögn/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_sagnb_nf
+    | SagnfyllingFremst HjSögn/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_sagnb_nf
     # Konurnar sem matinn höfðu [sjálfar/galvaskar] borðað
-    | NlBeintAndlag/aukafall HjSögn/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_sagnb/aukafall
+    | AndlagFremst/aukafall HjSögn/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_sagnb/aukafall
 
     # Konurnar sem vera munu leikarar [allar/galvaskar]
     | So_1_nh_nf HjSögnNh/tala/pers NlSagnfylling_nf LoTengtSögn_nf/tala/kyn?
@@ -2281,14 +2391,14 @@ Sögn_0/tala/pers/kyn →
     | So_1_nh/aukafall HjSögnNh/tala/pers NlBeintAndlag/aukafall LoTengtSögn_nf/tala/kyn?
 
     # Konurnar sem leikarar munu [allar/galvaskar] vera
-    | NlSagnfylling_nf HjSögnNh/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_nh_nf
+    | SagnfyllingFremst HjSögnNh/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_nh_nf
     # Konurnar sem matinn munu [allar/galvaskar] borða
-    | NlBeintAndlag/aukafall HjSögnNh/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_nh/aukafall
+    | AndlagFremst/aukafall HjSögnNh/tala/pers LoTengtSögn_nf/tala/kyn? FsAtv? So_1_nh/aukafall
 
+    # Konurnar sem leikarar [lengi] voru [báðar/galvaskar]
+    | SagnfyllingFremst AtvFs? so_1_nf/tala/pers LoTengtSögn_nf/tala/kyn?
     # Konurnar sem matinn [snarlega] borðuðu [báðar/galvaskar]
-    | NlSagnfylling_nf AtvFs? so_1_nf/tala/pers LoTengtSögn_nf/tala/kyn?
-    # Konurnar sem matinn [snarlega] borðuðu [báðar/galvaskar]
-    | NlBeintAndlag/aukafall AtvFs? so_1/aukafall/tala/pers LoTengtSögn_nf/tala/kyn?
+    | AndlagFremst/aukafall AtvFs? so_1/aukafall/tala/pers LoTengtSögn_nf/tala/kyn?
 
     # Konan sem gefin hafði verið/skal/mun Páli
     | so_2_þgf_þf_lhþt/tala/kyn HjSögnLhÞtSM/tala/pers NlÓbeintAndlag_þgf
@@ -2313,6 +2423,28 @@ Sögn_0/tala/pers/kyn →
 
 # Sögn með tveimur viðföngum sem stendur í undirsetningu
 # ('Konan sem gaf Páli gjöfina')
+# Sagnfylling í nefnifalli sem stendur á undan sögn í setningu án
+# frumlags: '(konurnar sem) leikarar voru'. Þetta er sjaldgæft. Mun
+# oftar er nafnliður í nefnifalli á undan sögninni frumlag hennar, og
+# sagnfyllingin þá ekki nafnliður: '(að) málið sé í skoðun', '(þegar)
+# hálf mínúta var eftir', '(að) fjölskyldan væri að brenna inni'. Án
+# frádráttar vinnur lesturinn án frumlags, því að sögn með viðfangi
+# (so_1_nf) fær hærra skor en sögn án viðfangs (so_0). Í gullstaðli
+# GreynirCorpus var frumlag lesið sem sagnfylling í 151 málsgrein af 3.925.
+SagnfyllingFremst →
+    NlSagnfylling_nf
+
+$score(-12) SagnfyllingFremst
+
+# Andlag sem stendur á undan sögn í setningu án frumlags: '(konurnar
+# sem) matinn borðuðu'. Sama á við og um SagnfyllingFremst: orðmynd sem
+# er eins í nefnifalli og þolfalli er oftast frumlag ('(að) samskiptin
+# verði í báðar áttir').
+AndlagFremst/aukafall →
+    NlBeintAndlag/aukafall
+
+$score(-12) AndlagFremst/aukafall
+
 ÖfugSögn_2/tala/pers/kyn →
 
     so_2_þgf_þf_sagnb HjSögn/tala/pers  Andlög_þgf_þf                # Konurnar sem gefið hafa Páli gjöfina
@@ -3748,7 +3880,14 @@ NlFrumlag_þf_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | Spur
 NlFrumlag_þgf_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
 NlFrumlag_ef_et → SkýringarsetningFrumlag | NafnháttarsetningFrumlag | SpurnaraukasetningFrumlag
 
-NlBeintAndlag/fall → Nl/fall | SpurnaraukasetningBeintAndlag | SkýringarsetningBeintAndlag | NafnháttarsetningBeintAndlag
+NlBeintAndlag/fall → Nl/fall | SpurnaraukasetningBeintAndlag | SkýringarsetningBeintAndlag | NafnháttarsetningBeintAndlag | NlOgSpurn/fall
+
+# Nafnliður og spurnaraukasetning, hliðskipuð sem andlag sagnar:
+# '(hún veit) nafn mannsins og hvar hann býr'
+NlOgSpurn/fall →
+    Nl/fall KommuSamtenging/fall* KommaOgEða HeilSpurnaraukasetning
+
+$score(+24) NlOgSpurn/fall
 
 NlBeintAndlag/fall/tala/pers/kyn → Nl/fall/tala/pers/kyn
 NlBeintAndlag_nf_et_p3_hk → SpurnaraukasetningBeintAndlag | SkýringarsetningBeintAndlag | NafnháttarsetningBeintAndlag
@@ -4054,8 +4193,6 @@ NlStak_p3/tala/fall/kyn →
 
     NlKjarni/tala/fall/kyn NlStakTagl/tala/fall/kyn?
     | NlFornafn/tala/fall/kyn
-    | Pfn/kyn/tala/fall to/tala/fall/kyn? 'persónulega:ao'? # 'þið tvær', 'hann einn', 'hán eitt'
-    | Pfn/kyn/tala/fall LoEftirNl/tala/fall/kyn # '(með) hann fremstan (í fararbroddi)', '(ég hitti) hana glaða'
     | LoTöluorð_ef 'konar:kk'_ef_et NlKjarni/tala/fall/kyn  # 'tvenns/þrenns/ferns konar innstungur'
     | Raðnr/fall/kyn NlKjarni/tala/fall/kyn Fornafn/tala/fall/kyn*   # 1. verðlaunin öll, 1.-3. sætið, 10. og 12. árið
     | NlStakNema/tala/fall/kyn
@@ -4066,6 +4203,28 @@ NlStak_p3/tala/fall/kyn →
 # '(afskrifuðu) engar eignir nema hlutaféð'
 NlStakNema/tala/fall/kyn →
     NlStakNemaFn/tala/fall/kyn Nl/fall/tala/kyn? NlNema/fall
+
+# Persónufornafn í 3. persónu sem kjarni nafnliðar. Það stendur utan
+# við NlStak_p3 svo að forsetningarliður á eftir því fái eigið skor
+# (sjá FsEftirPfn)
+NlStakPfn/tala/fall/kyn →
+    Pfn/kyn/tala/fall to/tala/fall/kyn? 'persónulega:ao'? # 'þið tvær', 'hann einn', 'hán eitt'
+
+# Persónufornafn með lýsingarorði á eftir: þar á forsetningarliðurinn
+# við lýsingarorðið og fær engan frádrátt
+NlStakPfnLo/tala/fall/kyn →
+    Pfn/kyn/tala/fall LoEftirNl/tala/fall/kyn # '(með) hann fremstan (í fararbroddi)', '(ég hitti) hana glaða'
+
+# Forsetningarliður sem hangir á persónufornafni: 'þeir í nefndinni',
+# 'hún á skrifstofunni'. Þetta er sjaldgæft; í 'Hann hitti hana í
+# viðtalinu' á liðurinn við sögnina. Í gullstaðli GreynirCorpus var
+# slík tenging rétt í 5 tilvikum af 76. Frádrátturinn þarf að vega upp
+# FsRunaEftirNl (+1) og það sem sögn án forsetningarinnar í ramma sínum
+# dregur frá lið sem hangir á henni (-2).
+FsEftirPfn →
+    FsRunaEftirNl
+
+$score(-8) FsEftirPfn
 
 NlNema/fall → 'nema:st' Nl/fall
 
@@ -4580,6 +4739,8 @@ Tala_hk_nf → to_et_hk_nf | to_ft_hk_nf
 
 NlStak_et_p3/fall/kyn →
     NlStak_p3_et/fall/kyn VeikSögnLhÞt_et/fall/kyn? FsRunaEftirNl?  # fulltrúi bankans í nefndinni
+    | NlStakPfn_et/fall/kyn VeikSögnLhÞt_et/fall/kyn? FsEftirPfn?   # hann, hún ein, (þau sáu) hana [í nefndinni]
+    | NlStakPfnLo_et/fall/kyn VeikSögnLhÞt_et/fall/kyn? FsRunaEftirNl? # (með) hann fremstan í fararbroddi
     | NlStak_et_p3/fall/kyn Eða NlStak_p3_et/fall                   # Þingnefnd eða hluti Alþingismanna getur lagt fram frumvarp
     | AnnaðhvortSt Nl/fall Eða Nl/fall/kyn                          # Hér er annaðhvort snjór eða sól  
     | AnnaðhvortSt Nl/fall/kyn Eða Nl/fall                          # Hér er annaðhvort snjór eða sól  
@@ -4743,11 +4904,14 @@ Vörunúmer/fall → vörunúmer/fall
 Vefslóð/fall → vefslóð/fall
 
 NlStak_p3_et/fall → NlStak_p3_et/fall/kyn # Samtenging tveggja eintöluliða með 'eða' krefst ekki sama kyns báðum megin
+NlStak_p3_et/fall → NlStakPfn_et/fall/kyn | NlStakPfnLo_et/fall/kyn # (Jón) eða hún
 
 # 3p. fleirtala
 
 NlStak_ft_p3/fall/kyn →
     NlStak_p3_ft/fall/kyn VeikSögnLhÞt_ft/fall/kyn? FsRunaEftirNl?  # fulltrúar bankans í nefndinni
+    | NlStakPfn_ft/fall/kyn VeikSögnLhÞt_ft/fall/kyn? FsEftirPfn?   # þeir, þær tvær, þau [í nefndinni]
+    | NlStakPfnLo_ft/fall/kyn VeikSögnLhÞt_ft/fall/kyn? FsRunaEftirNl? # (með) þá fremsta í fararbroddi
     | 'allur:fn'_ft/fall/kyn 'sá:fn'_ft/fall/kyn                    # Allir þeir, allar þær, öll þau
     | VillaEinnAf/fall/kyn           # Einn af mönnunum *gengu á vegg; ein af hverjum fjórum stúlkum *stóðu sig vel
     | VillaFjöldiHluti/fall/kyn      # Mikill fjöldi/meirihluti/minnihluti unglinga [reyndust hæfir → reyndist hæfur]
@@ -6234,6 +6398,12 @@ FsMeðFallstjórn →
     #| 'um:fs'_þf "að:st" HreinYfirsetning ","?
     # 'um hvort/hvenær/af hverju/til hvers/hví Jón kaus Framsóknarflokkinn'
     | 'um:fs'_þf Spurnaraukasetning ","?
+    # 'ánægður með hvernig okkur hefur gengið', 'fer eftir hvort veðrið verður gott'
+    | FsSpurn
+    # 'um líðan mannsins eða hvort einhver hefði verið handtekinn'
+    | FsUmNlOgSpurn
+    # 'spurður út í viðbrögðin og hvort hann hefði rætt þau'
+    | FsNlOgSpurn
     # 'er bjartsýnn á að Alfreð komi aftur í liðið' - Ath: 'á það/því að' er höndlað í ÞaðTenging
     | 'á:fs'_þf "að:st" HreinYfirsetning ","?
     | 'að:fs'_þgf 'nafn:hk'_þgf_et person_nf            # Ég ræddi við konu að nafni Aðalbjörg Jónsdóttir
@@ -6313,6 +6483,55 @@ FsUmOgEftir →
     'um:fs'_þf Og 'eftir:fs'_þf Nl_þf
 
 $score(+8) FsUmOgEftir
+
+# Spurnaraukasetning sem andlag forsetningar: '(ánægður) með hvernig okkur
+# hefur gengið', '(það fer) eftir hvort veðrið verður gott', '(sagði) frá
+# hvernig trén litu út [og hve stór holan var]'.
+# Aðeins setningar sem hefjast á spurnaratviksorði eða 'hvort': spurnarfornafn
+# á eftir forsetningu er spurnarliður setningarinnar ('við hvern hún talaði'),
+# og 'hvert' er þar nær alltaf fornafn ('í hvert skipti').
+# 'um' tekur allar gerðir spurnaraukasetninga, sjá FsMeðFallstjórn.
+FsSpurn →
+    FsFyrirSpurn SpurnaraukasetningEftirFs ","?
+
+# Forsetningarnar eru taldar upp, hver í einu falli: fall forsetningarinnar
+# skiptir ekki máli á undan setningu, og fleiri en eitt fall gæfi jafngildar
+# afleiðslur. Agnir á borð við 'út' og 'upp' eru ekki með ('finna út hvar').
+FsFyrirSpurn →
+    'á:fs'_þf | 'að:fs'_þgf | 'af:fs'_þgf | 'eftir:fs'_þgf | 'frá:fs'_þgf
+    | 'fyrir:fs'_þgf | 'í:fs'_þgf | 'með:fs'_þgf | 'til:fs'_ef | 'úr:fs'_þgf
+    | 'við:fs'_þf | 'yfir:fs'_þf | 'varðandi:fs'_þf | 'gagnvart:fs'_þgf
+
+SpurnaraukasetningEftirFs →
+    SpurnarOrðEftirFs SpurnarBotn
+    | SpurnarOrðEftirFs SpurnarBotn SpurnarKommuliður* SpurnarFramhald
+
+SpurnarOrðEftirFs →
+    SpurnarAtviksorðÁnHvert
+    | SpurnarSamtenging
+    | SpurnarOrðRuna
+
+$score(+40) FsSpurn
+
+# Nafnliður og spurnaraukasetning, hliðskipuð sem andlag forsetningar:
+# '(upplýsingar) um líðan mannsins eða hvort einhver hefði verið handtekinn',
+# '(hún spurði) um verðið og hvenær varan kæmi',
+# '(spurður) út í viðbrögðin og hvort hann hefði rætt þau'.
+# Aðeins spurnaraukasetningar með sögn: stakur spurnarliður eftir samtengingu
+# er oftast sjálfstæð spurning ('... eða hvað?', '... og af hverju?').
+# Reglurnar fá aukastig þar sem 'og'/'eða' + spurnaraukasetning er annars
+# lesin sem upphaf nýrrar aðalsetningar, með spurnaraukasetninguna sem frumlag.
+# 'um' fær fleiri stig en aðrar forsetningar: þegar fleiri en ein forsetning
+# kemur til greina ('upplýsingar um líðan mannsins eftir komuna á sjúkrahús
+# eða hvort ...') er það oftast hún sem stýrir setningunni
+FsUmNlOgSpurn →
+    'um:fs'_þf Nl_þf KommuSamtenging_þf* KommaOgEða HeilSpurnaraukasetning ","?
+
+FsNlOgSpurn →
+    fs/fall Nl/fall KommuSamtenging/fall* KommaOgEða HeilSpurnaraukasetning ","?
+
+$score(+48) FsUmNlOgSpurn
+$score(+24) FsNlOgSpurn
 
 FsÍGegnUm →
     "í_gegn:ao" 'um:fs'_þf Nl_þf
@@ -6555,6 +6774,9 @@ OgAtvFsEftirNl →
 # Hvetja létt til þess að forsetningar séu tengdar nafnlið
 $score(+1) FsRunaEftirNl
 $tag(purge_prep) FsRunaEftirNl # Ekki senda innifaldar forsetningar upp tréð
+# Forsetningar í liðnum fá bónus ef nafnorðið næst á undan tekur
+# með sér þá forsetningu (NounPredicates.conf): 'áhrif á', 'þátttaka í'
+$tag(noun_prep_scope) FsRunaEftirNl
 
 # Atviksliðir eru ekki leyfðir milli sagnar og andlags, enda
 # er ætlast til að AtviksliðurEinkunn fylgi andlaginu sem slíku.
