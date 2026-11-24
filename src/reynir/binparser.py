@@ -438,7 +438,7 @@ class WordMatchers:
             # capitalized 'Meta', 'EFLA' or 'El (Mencho)' is then probably
             # a name that happens to be spelled like another word. At the
             # start of a sentence, only a word in all capitals qualifies.
-            if not token.is_lower_case_word:
+            if not token.is_capitalized_common_word:
                 return False
             return not token.at_sentence_start or (
                 len(token.t1) > 1 and token.t1.isupper()
@@ -887,10 +887,12 @@ class BIN_Token(Token):
         return self.t0 == TOK.WORD
 
     @property
-    def is_lower_case_word(self) -> bool:
-        """True for a capitalized word token all of whose meanings in BÍN
-        are of a word in lower case ('Meta': the verb 'meta' and the noun
-        'met'), i.e. BÍN does not know it as a name"""
+    def is_capitalized_common_word(self) -> bool:
+        """True for a word that is capitalized in the text but that BÍN
+        only knows as a common word, i.e. all of its meanings are of a
+        word in lower case ('Meta': the verb 'meta' and the noun 'met').
+        False for a word that is not capitalized, that is not in BÍN at
+        all, or that BÍN has as a name too ('Björn')."""
         if self.t0 != TOK.WORD or not self.is_upper or not self.t2:
             return False
         return all(
@@ -1614,7 +1616,7 @@ class BIN_Token(Token):
             # For words, the t2 tuple is significant because it may have been
             # cut down by the tokenizer due to the word's context, cf. the
             # [ambiguous_phrases] section in Main.conf
-            if self.at_sentence_start and self.is_lower_case_word:
+            if self.at_sentence_start and self.is_capitalized_common_word:
                 # The position decides whether the word can be a
                 # proper name (see matcher_sérnafn())
                 return self.t0, self.t1, self.t2, True

@@ -266,8 +266,9 @@ the repository; ask for the coverage study):
 - *Names*: a capitalized word in the middle of a sentence that BÍN only
   knows in lower case ("El Mencho", "Meta", "Pars"; in all capitals also
   at the start, "EFLA") can match the bare `sérnafn` terminal
-  (`matcher_sérnafn()`, `BIN_Token.is_lower_case_word`; the position is
-  set in `BIN_Parser._wrap()` and is part of the token's key). An
+  (`matcher_sérnafn()`, `BIN_Token.is_capitalized_common_word`; the
+  position is set in `BIN_Parser._wrap()` and is part of the token's
+  key). An
   unknown name can have qualifiers in front (EinkunnOgSérnafn: "hinn 29
   ára gamli Sanches"), and names outside BÍN no longer count towards a
   sentence being foreign (`tokens_are_foreign()`). The sample of 5,000
