@@ -253,19 +253,45 @@ the repository; ask for the coverage study):
 - *Sentences that do not parse*: 404 of a fixed sample of 5,000 news
   sentences of 2026 (8.1%). 232 are gaps in the grammar or the
   vocabulary, each diagnosed with a minimal failing sentence and a
-  minimal parsing one. By size: names (43: a name that is also a word
-  form in BÍN, such as "EFLA", "Adams", "El Mencho", gets only the BÍN
-  meanings; an unknown name after an adjective, "hinn 29 ára gamli
-  Sanches"), dates, numbers and measures (23: a weekday after "í gær"
+  minimal parsing one. By size: names (43, of which 26 parse since the
+  work on names described below), dates, numbers and measures (23: a
+  weekday after "í gær"
   or "á morgun", "tímabil" as a time noun, "um það bil"/"yfir hundrað"
   before a numeral), fixed phrases (20: "af hálfu", "eitthvað slíkt"),
   punctuation (19: a clause in parentheses), verb frames (13), word
   order after a fronted element (13: "Þá kasta læknarnir fram tölum",
   "Í dag er spáð rigningu"), gapping (12), agreement stricter than usage
   (12: "Henni fylgir rigning og snjókoma"), "sem" phrases (11: "Þá
-  starfaði hann sem kennari"). Sentences with more names than known
-  words are rejected as foreign before parsing ("Manchester United
-  kom.").
+  starfaði hann sem kennari").
+- *Names*: a capitalized word in the middle of a sentence that BÍN only
+  knows in lower case ("El Mencho", "Meta", "Pars"; in all capitals also
+  at the start, "EFLA") can match the bare `sérnafn` terminal
+  (`matcher_sérnafn()`, `BIN_Token.is_capitalized_common_word`; the
+  position is set in `BIN_Parser._wrap()` and is part of the token's
+  key). An
+  unknown name can have qualifiers in front (EinkunnOgSérnafn: "hinn 29
+  ára gamli Sanches"), and names outside BÍN no longer count towards a
+  sentence being foreign (`tokens_are_foreign()`). The sample of 5,000
+  went from 404 to 351 unparsed. A name that these rules do not reach
+  goes in the `[static_phrases]` section of `config/Phrases.conf`,
+  which has lists of people, companies and places: there it is a name
+  in all cases and at the start of a sentence too ("Adams", otherwise
+  only the genitive of Adam; "Bondi", a form of a verb; "von der
+  Leyen" without a first name; "Rolling Stones"). Where one phrase is
+  the start of another, the longest that matches is taken, and the
+  shorter one if the rest does not follow ("San Antonio Spurs" and "San
+  Antonio"; `MatchingStream.process()`). Left: a first name in
+  a case that BÍN has it in, with an unknown surname ("Carli Kierny
+  sendi": the dative of Carl), where letting any person name match a
+  caseless `sérnafn` is known to bring wrong parses (see
+  `matches_PERSON()`); a single word in the static phrases that BÍN has
+  as a person name ("í Indíana" stays the woman's name);
+  a name that is also a word at the very start of a sentence and not in
+  the list ("El Azizi lék"); a name
+  directly before a noun, which is read as its prefix also where it is
+  the subject ("Í júní birti SKE umræðuskjal": SKE umræðuskjal, as with
+  KSÍ); photo credits ("EPA / Nafn Nafnsson") now parse, as a noun with
+  a possessor.
 - *Sentences that parse wrongly*: against the hand-corrected gold
   standard of GreynirCorpus (4,500 development trees; keep the 500 test
   trees for final figures), labelled bracket F1 is 0.74 and 72% of the

@@ -4830,6 +4830,18 @@ NlSérnafnEf → no_ef
 # Forðast að nota sérnöfn sem nafnliði, ef aðrir kostir eru í boði
 $score(-16) NlSérnafn
 
+# Óþekkt sérnafn með einkunn á undan: 'hinn franska Bardella',
+# 'fyrrnefndan Ziko', 'hinn 29 ára gamli Sanches'. Þekkt mannanöfn fara
+# sömu leið og nafnorð (Fyrirbæri → Manneskja); óþekkt nafn hefur hvorki
+# kyn né fall, og einkunnin ein ræður þeim hér.
+NlStak_p3_et/fall/kyn →
+    EinkunnOgSérnafn_et/fall/kyn
+
+EinkunnOgSérnafn/tala/fall/kyn →
+    Einkunn/tala/fall/kyn+ Sérnafn
+
+$score(-16) EinkunnOgSérnafn/tala/fall/kyn
+
 Sérnafn →
     sérnafn tala? | entity tala? | LangtSérnafn
 

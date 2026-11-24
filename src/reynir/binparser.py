@@ -431,8 +431,18 @@ class WordMatchers:
             # For bare 'sérnafn' terminals, we don't allow
             # tokens that have absolute BÍN matches
             # (an absolute match being a match that does not
-            # require compounding)
-            return not token.has_meanings or ("-" in token.meanings[0].stofn)
+            # require compounding)...
+            if not token.has_meanings or ("-" in token.meanings[0].stofn):
+                return True
+            # ...unless BÍN only knows the word in lower case: a
+            # capitalized 'Meta', 'EFLA' or 'El (Mencho)' is then probably
+            # a name that happens to be spelled like another word. At the
+            # start of a sentence, only a word in all capitals qualifies.
+            if not token.is_capitalized_common_word:
+                return False
+            return not token.at_sentence_start or (
+                len(token.t1) > 1 and token.t1.isupper()
+            )
         # The terminal is sérnafn_case: We only accept nouns or adjectives
         # that match the given case
         fbits = BIN_Token.get_fbits(m.beyging) & BIN_Token.VBIT_CASES
@@ -855,6 +865,10 @@ class BIN_Token(Token):
         self.is_upper = self.t1[0] != self.t1_lower[0]
         self._hash: Optional[int] = None  # Cached hash
         self._index = original_index  # Index of original token within sentence
+        # True if the token is the first one of its sentence, or follows
+        # a colon: a capital letter there says nothing about the word.
+        # Set by BIN_Parser._wrap(), before the token is used.
+        self.at_sentence_start = False
 
         # Copy error information from the original token, if any
         self._error: Any = getattr(t, "error", None)
@@ -871,6 +885,20 @@ class BIN_Token(Token):
     @property
     def is_word(self) -> bool:
         return self.t0 == TOK.WORD
+
+    @property
+    def is_capitalized_common_word(self) -> bool:
+        """True for a word that is capitalized in the text but that BÍN
+        only knows as a common word, i.e. all of its meanings are of a
+        word in lower case ('Meta': the verb 'meta' and the noun 'met').
+        False for a word that is not capitalized, that is not in BÍN at
+        all, or that BÍN has as a name too ('Björn')."""
+        if self.t0 != TOK.WORD or not self.is_upper or not self.t2:
+            return False
+        return all(
+            not m.ordmynd[:1].isupper() and not m.stofn[:1].isupper()
+            for m in cast(BIN_TupleList, self.t2)
+        )
 
     @property
     def has_meanings(self) -> bool:
@@ -1588,6 +1616,10 @@ class BIN_Token(Token):
             # For words, the t2 tuple is significant because it may have been
             # cut down by the tokenizer due to the word's context, cf. the
             # [ambiguous_phrases] section in Main.conf
+            if self.at_sentence_start and self.is_capitalized_common_word:
+                # The position decides whether the word can be a
+                # proper name (see matcher_sérnafn())
+                return self.t0, self.t1, self.t2, True
             return self.t0, self.t1, self.t2
         # Otherwise, the t0 and t1 fields are enough
         return self.t0, self.t1
@@ -2199,11 +2231,23 @@ class BIN_Parser(Base_Parser):
 
     def _wrap(self, tokens: Iterable[Tok]) -> List[BIN_Token]:
         """Sanitize the 'raw' tokens and wrap them in BIN_Token() wrappers"""
-        return wrap_tokens(
+        wrapped = wrap_tokens(
             tokens,
             wrap_func=self.wrap_token,
             understood_punctuation=self._UNDERSTOOD_PUNCTUATION,
         )
+        # Note which tokens stand where a capital letter is expected
+        # anyway: first in the sentence, and after a colon
+        start = True
+        for tok in wrapped:
+            if tok.t0 == TOK.PUNCTUATION:
+                if tok.t1 == ":":
+                    start = True
+            else:
+                if start:
+                    tok.at_sentence_start = True
+                start = False
+        return wrapped
 
 
 # Abbreviations and stuff that we ignore inside parentheses
