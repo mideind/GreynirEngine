@@ -3788,6 +3788,141 @@ def test_a_preposition_or_verb(r):
     assert s.tree.flat.startswith("S0 S-QUE NP fn_et_nf_kk /NP PP P fs_þgf /P ")
 
 
+def test_names_that_are_also_words(r):
+    """A capitalized word in the middle of a sentence that BÍN only knows
+    in lower case can be a name: 'El' is a form of the verb 'ala', 'Pars'
+    of the noun 'par', 'ske' and 'efla' are verbs"""
+    for sentence, name in (
+        ("Herinn felldi El Mencho.", "NP-OBJ sérnafn sérnafn /NP-OBJ"),
+        ("Þeir réðust á Pars.", "PP P fs_þf /P NP sérnafn /NP /PP"),
+        (
+            "Hann vinnur hjá dagblaðinu El País.",
+            "NP no_gr_et_þgf_hk sérnafn sérnafn /NP",
+        ),
+        ("Árás var gerð á eyjuna Sitra.", "NP no_gr_et_þf_kvk sérnafn /NP"),
+        ("Þau sömdu við Meta í gær.", "PP P fs_þf /P NP sérnafn /NP /PP"),
+        # In all capitals, also at the start of a sentence
+        ("EFLA hækkaði gjaldið.", "S0 S-MAIN IP NP-SUBJ sérnafn /NP-SUBJ VP "),
+        ("SKE hækkaði gjaldið.", "S0 S-MAIN IP NP-SUBJ sérnafn /NP-SUBJ VP "),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert name in s.tree.flat, sentence
+    # The first word of a sentence has a capital letter anyway
+    for sentence in (
+        "Íbúum New York fannst þetta óþægilegt.",
+        "Meta þarf tíma til að meta þetta.",
+        "Efla þarf varnirnar.",
+        "Hann sagði: Efla þarf varnirnar.",
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert "sérnafn" not in s.tree.flat, sentence
+    # A word that BÍN knows with a capital letter is not affected
+    s = r.parse_single("Hún fór til Íslands í gær.")
+    assert s and s.tree and "sérnafn" not in s.tree.flat
+
+
+def test_names_in_static_phrases(r):
+    """Names listed in the [static_phrases] section of Phrases.conf are
+    names in all cases, also where BÍN has the word form as something
+    else: 'Adams' is the genitive of Adam, 'Bondi' a form of a verb,
+    'von' a noun"""
+    for sentence, name in (
+        ("Adams kom í gær.", "S0 S-MAIN IP NP-SUBJ person_nf_kk /NP-SUBJ VP "),
+        ("Jacobs hljóp.", "S0 S-MAIN IP NP-SUBJ person_nf_kk /NP-SUBJ VP "),
+        ("Bondi kom heim.", "S0 S-MAIN IP NP-SUBJ person_nf_kvk /NP-SUBJ VP "),
+        (
+            "Hann hitti von der Leyen.",
+            "NP-OBJ person_þf_kvk person_þf_kvk person_þf_kvk /NP-OBJ",
+        ),
+        (
+            "Von der Leyen varpaði fram hugmyndinni um aukaaðild.",
+            "S0 S-MAIN IP NP-SUBJ person_nf_kvk person_nf_kvk person_nf_kvk /NP-SUBJ",
+        ),
+        ("Rolling Stones eru hér.", "S0 S-MAIN IP NP-SUBJ entity entity /NP-SUBJ VP "),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert name in s.tree.flat, sentence
+    # The genitive of Adam is still there
+    s = r.parse_single("Hún las bók Adams.")
+    assert s and s.tree
+    assert "NP-OBJ no_et_þf_kvk NP-POSS person_ef_kk /NP-POSS /NP-OBJ" in s.tree.flat
+
+
+def test_longest_static_phrase(r):
+    """Where one static phrase is the start of another, the longest one
+    that matches is taken, and the shorter one if the rest does not
+    follow: 'San Antonio' and 'San Antonio Spurs', 'New York' and 'New
+    York Times', 'þvert á' and 'þvert á móti'"""
+
+    def words(sentence):
+        s = r.parse_single(sentence)
+        assert s is not None and s.tree is not None, sentence
+        return [t.txt for t in s.tokens]
+
+    assert "San Antonio Spurs" in words("Leikur San Antonio Spurs fór fram í gær.")
+    assert "San Antonio" in words("Hann býr í San Antonio.")
+    assert "San Antonio" in words("Hann býr í San Antonio og vinnur þar.")
+    assert "San Antonio Spurs" in words("Hann sá San Antonio Spurs")
+    assert "New York Times" in words("Hann las New York Times í gær.")
+    assert "New York" in words("Hún býr í New York.")
+    assert "Manchester United" in words("Manchester United vann leikinn.")
+    assert "Manchester" in words("Hann fór til Manchester.")
+    assert "Þvert á móti" in words("Þvert á móti er þetta gott.")
+    w = words("Þetta er þvert á það sem sagt var.")
+    assert "þvert á" in w and "það" in w
+    assert "Elvis Presley" in words("Elvis Presley söng.")
+    assert "Elvis" in words("Elvis söng.")
+
+
+def test_unknown_name_after_adjective(r):
+    """An unknown name can have a determiner, an age and adjectives in
+    front of it, as a known person name can"""
+    s = r.parse_single("Hann hitti hinn franska Bardella.")
+    assert s and s.tree
+    assert "NP-OBJ gr_et_þf_kk lo_þf_et_kk sérnafn /NP-OBJ" in s.tree.flat
+    s = r.parse_single("Hinn 29 ára gamli Sanches varð Evrópumeistari.")
+    assert s and s.tree
+    assert s.tree.flat.startswith(
+        "S0 S-MAIN IP NP-SUBJ fn_et_nf_kk NP-AGE tala_ft_ef_hk no_hk_ef_ft "
+        "/NP-AGE lo_nf_et_kk sérnafn /NP-SUBJ VP "
+    )
+    for sentence in (
+        "Hann hitti fyrrnefndan Ziko.",
+        "Hinn 28 ára gamli Hadi Matar var í dag sakfelldur.",
+        "Stuðningsmenn halda hópinn í risastóru Fan Zone.",
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+    # A known name goes the same way as before
+    s = r.parse_single("Hinn 28 ára gamli Jón var sakfelldur.")
+    assert s and s.tree and "person_nf_kk" in s.tree.flat
+
+
+def test_names_and_foreign_sentences(r):
+    """Names that are not in BÍN do not make a sentence foreign"""
+    for sentence in (
+        "Manchester United og Chelsea fylgjast vel með Tomas Araujo.",
+        "Skoðaðu Adidas Handball Spezial hér.",
+        "Forsíða Daily Mirror.",
+    ):
+        s = r.parse_single(sentence)
+        assert s and not s.is_foreign(), sentence
+        assert s.tree, sentence
+    # Sentences in other languages are still left alone
+    for sentence in (
+        "The record belongs to Curaçao.",
+        "Live casino med ekte dealere.",
+        "RICE DRAGS MAVROPANOS INTO THE GOAL AFTER A BEAR HUG.",
+        "Owing to the urgency, the case was dealt with by order of its President.",
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.is_foreign(), sentence
+        assert s.tree is None, sentence
+
+
 def test_question_clause_without_subject(r):
     """Question clauses, and direct questions, with an impersonal verb
     and no subject: 'hvernig megi koma til móts við þá'"""

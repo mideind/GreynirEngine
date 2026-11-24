@@ -1851,110 +1851,154 @@ class MatchingStream:
         return 0
 
     def process(self, token_stream: TokenIterator) -> TokenIterator:
-        """Generate an output stream from the input token stream"""
+        """Generate an output stream from the input token stream. Where
+        one phrase is the start of another ('San Antonio' and 'San
+        Antonio Spurs'), the longest one that matches is taken."""
         # Token queue
         tq: List[Tok] = []
         # Phrases we're considering
         state: StateDict = defaultdict(list)
         pdict = self._pdict  # The phrase dictionary
         token: Optional[Tok]
+        # A phrase that matches the first tokens of the queue, held back
+        # while a longer phrase may still match: its index, and the
+        # number of tokens that were in the queue when it matched
+        pending: Optional[Tuple[int, int]] = None
+        # Tokens that were read as the continuation of a longer phrase
+        # that did not match in the end: they are processed again
+        pushback: List[Tok] = []
 
-        try:
+        def release() -> TokenIterator:
+            """Yield the phrase that was held back; what follows it in
+            the queue goes back to be processed again"""
+            nonlocal tq, pending
+            assert pending is not None
+            ix, n = pending
+            pending = None
+            head = tq[:n]
+            pushback[0:0] = tq[n:]
+            tq = []
+            phrase_length = self.length(ix)
+            while len(head) > phrase_length:
+                yield head.pop(0)
+            if head:
+                yield from self.match(head, ix)
 
-            while True:
+        while True:
 
-                token = next(token_stream)
-
-                if not token.txt:
-                    # Not a word: no match; yield the token queue
-                    if tq:
-                        yield from tq
-                        tq = []
-                    # Discard the previous state, if any
-                    if state:
-                        state = defaultdict(list)
-                    # ...and yield the non-matching token
-                    yield token
+            if pushback:
+                token = pushback.pop(0)
+            else:
+                try:
+                    token = next(token_stream)
+                except StopIteration:
+                    # Token stream is exhausted
+                    if pending is None:
+                        break
+                    yield from release()
+                    state = defaultdict(list)
                     continue
 
-                # Look for matches in the current state and build a new state
-                newstate: StateDict = defaultdict(list)
-                key = self.key(token)
+            if not token.txt:
+                # Not a word: no match; yield the token queue
+                if tq:
+                    if pending is not None:
+                        pushback.insert(0, token)
+                        yield from release()
+                        state = defaultdict(list)
+                        continue
+                    yield from tq
+                    tq = []
+                # Discard the previous state, if any
+                if state:
+                    state = defaultdict(list)
+                # ...and yield the non-matching token
+                yield token
+                continue
 
-                def add_to_state(slist: List[str], index: int) -> None:
-                    """Add the list of subsequent words to the new parser state"""
-                    next_key = slist[0]
-                    rest = slist[1:]
-                    newstate[next_key].append((rest, index))
+            # Look for matches in the current state and build a new state
+            newstate: StateDict = defaultdict(list)
+            key = self.key(token)
 
-                def accept(state: List[Tuple[List[str], int]]) -> TokenIterator:
-                    """The current token matches the given state, either as
-                    a continuation of a previous state or as an initiation
-                    of a new phrase"""
-                    nonlocal token, newstate, tq
-                    if token:
-                        tq.append(token)
-                        token = cast(Tok, None)
-                    # sl is the continuation list (possible next tokens)
-                    # for each state
-                    for sl, ix in state:
-                        if not sl:
-                            # No continuation token from this state:
-                            # this is a complete match
-                            phrase_length = self.length(ix)
-                            while len(tq) > phrase_length:
-                                # We have extra queued tokens in the token queue
-                                # that belong to a previously seen partial phrase
-                                # that was not completed: yield them first
-                                yield tq.pop(0)
-                            if tq:
-                                # Let the match function decide what to yield
-                                # from this matched state
-                                yield from self.match(tq, ix)
-                                tq = []
-                            # Make sure that we start from a fresh state and
-                            # a fresh token queue when processing the next token
-                            if newstate:
-                                newstate = defaultdict(list)
-                            # Note that it is possible to match even longer phrases
-                            # by including a starting phrase in its entirety in
-                            # the static phrase dictionary
-                            break
+            def add_to_state(slist: List[str], index: int) -> None:
+                """Add the list of subsequent words to the new parser state"""
+                next_key = slist[0]
+                rest = slist[1:]
+                newstate[next_key].append((rest, index))
+
+            def accept(state: List[Tuple[List[str], int]]) -> TokenIterator:
+                """The current token matches the given state, either as
+                a continuation of a previous state or as an initiation
+                of a new phrase"""
+                nonlocal token, tq, pending
+                if token:
+                    tq.append(token)
+                    token = cast(Tok, None)
+                complete: Optional[int] = None
+                # sl is the continuation list (possible next tokens)
+                # for each state
+                for sl, ix in state:
+                    if sl:
                         # Nonempty continuation: add it to the next state
                         add_to_state(sl, ix)
+                    elif complete is None:
+                        # No continuation token from this state:
+                        # this is a complete match
+                        complete = ix
+                if complete is None:
+                    return
+                if newstate:
+                    # A longer phrase may still match: hold this one back
+                    pending = (complete, len(tq))
+                    return
+                pending = None
+                phrase_length = self.length(complete)
+                while len(tq) > phrase_length:
+                    # We have extra queued tokens in the token queue
+                    # that belong to a previously seen partial phrase
+                    # that was not completed: yield them first
+                    yield tq.pop(0)
+                if tq:
+                    # Let the match function decide what to yield
+                    # from this matched state
+                    yield from self.match(tq, complete)
+                    tq = []
 
-                siter = self.match_state(key, state)
+            siter = self.match_state(key, state)
+            if siter:
+                # This matches an expected token:
+                # go through potential continuations
+                yield from accept(siter)
+            else:
+                # This matches no expected token, i.e. is not a
+                # continuation of any previously pushed state
+                if tq:
+                    if pending is not None:
+                        # A shorter phrase did match: yield it, and start
+                        # afresh with what came after it
+                        pushback.insert(0, token)
+                        yield from release()
+                        state = defaultdict(list)
+                        continue
+                    # Yield the accumulated token queue
+                    yield from tq
+                    tq = []
+                # Check whether this token starts a new phrase.
+                # Note: we cannot allow the last token of a
+                # previous phrase to start a new phrase, since it
+                # has already been consumed and acted upon
+                # (and, indeed, in that case the token variable
+                # would contain None at this point)
+                siter = self.match_state(key, pdict)
                 if siter:
-                    # This matches an expected token:
-                    # go through potential continuations
+                    # This word potentially starts a new phrase
                     yield from accept(siter)
-                else:
-                    # This matches no expected token, i.e. is not a
-                    # continuation of any previously pushed state
-                    if tq:
-                        # Yield the accumulated token queue
-                        yield from tq
-                        tq = []
-                    # Check whether this token starts a new phrase.
-                    # Note: we cannot allow the last token of a
-                    # previous phrase to start a new phrase, since it
-                    # has already been consumed and acted upon
-                    # (and, indeed, in that case the token variable
-                    # would contain None at this point)
-                    siter = self.match_state(key, pdict)
-                    if siter:
-                        # This word potentially starts a new phrase
-                        yield from accept(siter)
-                    elif token:
-                        # Not starting a new phrase: pass the token through
-                        yield token
+                elif token:
+                    # Not starting a new phrase: pass the token through
+                    yield token
 
-                # Transition to the new state
-                state = newstate
-
-        except StopIteration:
-            # Token stream is exhausted
-            pass
+            # Transition to the new state
+            state = newstate
 
         # Yield any tokens remaining in queue
         yield from tq
@@ -2246,15 +2290,24 @@ def tokenize(text: StringIterable, **options: Any) -> TokenIterator:
 
 
 def tokens_are_foreign(tokens: TokenIterable, min_icelandic_ratio: float) -> bool:
-    """Return True if the given tokens are probably not in Icelandic"""
+    """Return True if the given tokens are probably not in Icelandic.
+    Names that are not in BÍN - entity names and capitalized unknown
+    words - say little about the language of a sentence ('Manchester
+    United og Chelsea fylgjast vel með Tomas Araujo'), so they are
+    left out of the ratio. A sentence of such names only, with no word
+    that is found in BÍN, is still taken to be foreign."""
     words_in_bin = 0
     words_not_in_bin = 0
+    names = 0
     # Enumerate through the tokens
     for t in tokens:
         if t.kind == TOK.WORD:
             if t.val:
                 # The word has at least one meaning
                 words_in_bin += 1
+            elif t.txt[:1].isupper():
+                # An unknown word with a capital letter: probably a name
+                names += 1
             else:
                 # The word has no recognized meaning
                 words_not_in_bin += 1
@@ -2264,9 +2317,12 @@ def tokens_are_foreign(tokens: TokenIterable, min_icelandic_ratio: float) -> boo
         elif t.kind == TOK.ENTITY:
             # Entity names do not count as recognized words;
             # we count each enclosed word in the entity name
-            words_not_in_bin += t.txt.count(" ") + 1
-    # Return True if the sentence has at least three words
-    # but less than 60% of them are found in BÍN
+            names += t.txt.count(" ") + 1
+    if words_in_bin == 0:
+        # No word is found in BÍN: foreign if there are three or more
+        return words_not_in_bin + names > 2
+    # Return True if the sentence has at least three words, other than
+    # names, but less than the given ratio of them are found in BÍN
     num_words = words_in_bin + words_not_in_bin
     return num_words > 2 and words_in_bin / num_words < min_icelandic_ratio
 
