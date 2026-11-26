@@ -347,6 +347,21 @@ the repository; ask for the coverage study):
   verb of the main clause if only that verb lists its preposition in
   that case ("kom í ljós að leikarinn væri á bak við aðganginn").
 
+- *The noun/preposition table* (NounPrepositions.conf) was audited in
+  November 2026 and 353 of its 6,992 entries were removed (see the head
+  of the file): those on words that are seldom nouns ("ekki /í",
+  "sig /á"), which came from misparses and rewarded them; those of time
+  nouns with "í"/"á"; those of nouns in fixed phrases ("ljós /í"); and
+  202 that could never match (16 names got their capital letter
+  instead). Tried and not done, as the figures got worse: weakening
+  the strong entries where the preposition is no more common after the
+  noun than after nouns in general, and dropping the weak ones where
+  it is rarer. Left: nouns whose form is usually a verb ("koma /á",
+  "taka /á", "vera /í"), which do no measurable harm now that the
+  reducer goes by the reading. The generator is not in the repository
+  (`harvest.py`, `mktable.py` and `np_prune.py`, with the coverage
+  study): a regenerated file has to be pruned again.
+
 Older items:
 
 - **Coverage clusters**: auxiliary/copula gapping in a second conjunct
