@@ -259,18 +259,20 @@ The public API is defined by the exports in `src/reynir/__init__.py`.
 - The `old/` and `build/` directories contain legacy/build artifacts — do not
   edit code there.
 
-## Backlog (post-4.1.0 candidates)
+## Backlog (post-4.2.0 candidates)
 
 Potential next steps from the 2026 grammar-coverage study (see release
 notes for 3.9.0), from the 3.10.0 work, from the performance work of
-4.0.0 and from the free-threading work of 4.1.0; none started.
+4.0.0, from the free-threading work of 4.1.0 and from the work on
+parse quality of 4.2.0; none started.
 
 **Measured priorities (November 2026).** Two measurements, both to be
 repeated before and after a change (the data and scripts are outside
 the repository; ask for the coverage study):
 
 - *Sentences that do not parse*: 404 of a fixed sample of 5,000 news
-  sentences of 2026 (8.1%). 232 are gaps in the grammar or the
+  sentences of 2026 (8.1%) with 4.1.0, and 346 (6.9%) with 4.2.0. Of
+  the 404, 232 are gaps in the grammar or the
   vocabulary, each diagnosed with a minimal failing sentence and a
   minimal parsing one. By size: names (43, of which 26 parse since the
   work on names described below), dates, numbers and measures (23: a
@@ -435,6 +437,11 @@ Older items:
   the predictions per distinct token);
   the scoring of terminals in Python; tokenization would need fewer
   passes over the tokens; matching of tokens that are not words.
+  4.2.0 is about 7% slower than 4.1.0 on a warm pass over 1,000 news
+  sentences (1.69 s against 1.58 s; the core 0.65 s against 0.63 s),
+  with 14 more of them parsed: the rest is outside the core (the
+  noun/preposition callbacks, the scoring of "á", the static phrases)
+  and has not been profiled.
   GreynirServer's query module still calls
   `go()` + `num_combinations()` + `Reducer.go()`, and could use
   `Reducer.parse_and_reduce()` (which handles `no_reduce`).
