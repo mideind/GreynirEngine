@@ -2580,7 +2580,7 @@ def test_deterministic_tie_break() -> None:
     from reynir.reducer import _ReductionScope
 
     class FakeReducer:
-        """Stand-in for ParseForestReducer with no verb context"""
+        """Stand-in for ParseForestReducer with no verb or noun context"""
 
         def get_current_verb(self):
             return None
@@ -2593,6 +2593,11 @@ def test_deterministic_tie_break() -> None:
 
         def pop_current_verb(self):
             pass
+
+        get_current_noun = get_current_verb
+        set_current_noun = set_current_verb
+        push_current_noun = push_current_verb
+        pop_current_noun = pop_current_verb
 
     class FakeNode:
         is_completed = False
@@ -3685,6 +3690,71 @@ def test_noun_prepositions(r):
     s = r.parse_single("Hún lagði blaðið á borðið.")
     assert s and s.tree
     assert "/NP-OBJ PP P fs_þf /P " in s.tree.flat
+
+
+def test_noun_prepositions_head_noun(r):
+    """The noun that decides is the head of the noun phrase that the
+    prepositional phrase hangs on, as it is read in that tree: not any
+    word before the preposition that could have been a noun"""
+    for sentence, inside in (
+        # 'sig' is a pronoun here, not the noun 'sig' ('landsig á Reykjanesi')
+        (
+            "Hann hafði ekki áttað sig á því.",
+            "NP-OBJ abfn_þf /NP-OBJ PP P fs_þgf /P ",
+        ),
+        # 'ekki' is not the noun 'ekki'
+        ("Fundirnir eru ekki í lagi.", "ADVP ao /ADVP PP P fs_þgf /P "),
+        # The head noun takes the preposition, the possessor in between
+        # does not: the phrase hangs on the outer noun phrase
+        (
+            "Þau ræddu áhrif stjórnvalda á málið.",
+            "NP-POSS no_ft_ef_hk /NP-POSS PP P fs_þf /P NP no_et_þf_hk /NP /PP "
+            "/NP-OBJ ",
+        ),
+        (
+            "Liðið fagnaði sigri Íslands á Úkraínu.",
+            "/NP-POSS PP P fs_þgf /P NP no_et_þgf_kvk /NP /PP /NP-OBJ ",
+        ),
+        (
+            "Aðild nýrra ríkja að samtökunum krefst samþykkis.",
+            "/NP-POSS PP P fs_þgf /P NP no_ft_þgf_hk /NP /PP /NP-SUBJ ",
+        ),
+        # The second phrase of a run belongs to the noun of the first one,
+        # also when the first noun takes its preposition ('lögregla í')
+        (
+            "Lögreglan í Mehamn í Noregi fékk tilkynningu.",
+            "NP-SUBJ no_et_nf_kvk PP P fs_þgf /P NP no_et_þgf_hk PP P fs_þgf /P "
+            "NP no_et_þgf_kk /NP /PP /NP /PP /NP-SUBJ ",
+        ),
+        # A phrase after a name goes to the verb
+        ("Hún hitti Jón í búðinni.", "NP-OBJ person_þf_kk /NP-OBJ PP P fs_þgf /P "),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert inside in s.tree.flat, sentence
+
+
+def test_a_medal(r):
+    """In 'á meðal' and 'á milli', the word 'á' is not the noun
+    (a river, or a form of 'ær'); it may still be the verb 'eiga'"""
+    for sentence, inside in (
+        (
+            "Þeir voru ekki á meðal markaskorara.",
+            "ADVP ao /ADVP PP ao P fs_ef /P NP no_et_ef_kk /NP /PP /VP ",
+        ),
+        ("Hún er á meðal þeirra bestu.", "VP so_0_et_p3 /VP PP ao P fs_ef /P "),
+        ("Einstaklingar falla á milli kerfa.", "/VP PP ao P fs_ef /P NP no_ft_ef_hk "),
+        ("Þar á meðal eru þrjú börn.", "S-PREFIX C ao ao ao /C /S-PREFIX "),
+        ("Hún á meðal annars þrjá hesta.", "VP so_1_þf_et_p3 /VP NP-OBJ "),
+        ("Hann á meðal við því.", "VP so_1_þf_et_p3 /VP NP-OBJ no_et_þf_hk /NP-OBJ "),
+        (
+            "Fólkið vann myrkranna á milli við erfiðar aðstæður.",
+            "/VP ADVP ao ao ao /ADVP PP P fs_þf /P ",
+        ),
+    ):
+        s = r.parse_single(sentence)
+        assert s and s.tree, sentence
+        assert inside in s.tree.flat, sentence
 
 
 def test_subject_before_verb_in_subordinate_clause(r):
