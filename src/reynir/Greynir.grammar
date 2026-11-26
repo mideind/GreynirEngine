@@ -4226,6 +4226,15 @@ FsEftirPfn →
 
 $score(-8) FsEftirPfn
 
+# Forsetningarliður á eftir persónufornafni með lýsingarorði á við
+# lýsingarorðið ('með hann fremstan í fararbroddi'). Þar er ekkert
+# nafnorð sem liðurinn hangir á, og skorið vegur upp frádráttinn sem
+# hann fær þess vegna (_NOUN_PREP_NO_HEAD_PENALTY í reducer.py).
+FsEftirPfnLo →
+    FsRunaEftirNl
+
+$score(+4) FsEftirPfnLo
+
 NlNema/fall → 'nema:st' Nl/fall
 
 NlStakNemaFn/tala/fall/kyn →
@@ -4740,7 +4749,7 @@ Tala_hk_nf → to_et_hk_nf | to_ft_hk_nf
 NlStak_et_p3/fall/kyn →
     NlStak_p3_et/fall/kyn VeikSögnLhÞt_et/fall/kyn? FsRunaEftirNl?  # fulltrúi bankans í nefndinni
     | NlStakPfn_et/fall/kyn VeikSögnLhÞt_et/fall/kyn? FsEftirPfn?   # hann, hún ein, (þau sáu) hana [í nefndinni]
-    | NlStakPfnLo_et/fall/kyn VeikSögnLhÞt_et/fall/kyn? FsRunaEftirNl? # (með) hann fremstan í fararbroddi
+    | NlStakPfnLo_et/fall/kyn VeikSögnLhÞt_et/fall/kyn? FsEftirPfnLo? # (með) hann fremstan í fararbroddi
     | NlStak_et_p3/fall/kyn Eða NlStak_p3_et/fall                   # Þingnefnd eða hluti Alþingismanna getur lagt fram frumvarp
     | AnnaðhvortSt Nl/fall Eða Nl/fall/kyn                          # Hér er annaðhvort snjór eða sól  
     | AnnaðhvortSt Nl/fall/kyn Eða Nl/fall                          # Hér er annaðhvort snjór eða sól  
@@ -4923,7 +4932,7 @@ NlStak_p3_et/fall → NlStakPfn_et/fall/kyn | NlStakPfnLo_et/fall/kyn # (Jón) e
 NlStak_ft_p3/fall/kyn →
     NlStak_p3_ft/fall/kyn VeikSögnLhÞt_ft/fall/kyn? FsRunaEftirNl?  # fulltrúar bankans í nefndinni
     | NlStakPfn_ft/fall/kyn VeikSögnLhÞt_ft/fall/kyn? FsEftirPfn?   # þeir, þær tvær, þau [í nefndinni]
-    | NlStakPfnLo_ft/fall/kyn VeikSögnLhÞt_ft/fall/kyn? FsRunaEftirNl? # (með) þá fremsta í fararbroddi
+    | NlStakPfnLo_ft/fall/kyn VeikSögnLhÞt_ft/fall/kyn? FsEftirPfnLo? # (með) þá fremsta í fararbroddi
     | 'allur:fn'_ft/fall/kyn 'sá:fn'_ft/fall/kyn                    # Allir þeir, allar þær, öll þau
     | VillaEinnAf/fall/kyn           # Einn af mönnunum *gengu á vegg; ein af hverjum fjórum stúlkum *stóðu sig vel
     | VillaFjöldiHluti/fall/kyn      # Mikill fjöldi/meirihluti/minnihluti unglinga [reyndust hæfir → reyndist hæfur]
@@ -6786,9 +6795,31 @@ OgAtvFsEftirNl →
 # Hvetja létt til þess að forsetningar séu tengdar nafnlið
 $score(+1) FsRunaEftirNl
 $tag(purge_prep) FsRunaEftirNl # Ekki senda innifaldar forsetningar upp tréð
-# Forsetningar í liðnum fá bónus ef nafnorðið næst á undan tekur
-# með sér þá forsetningu (NounPredicates.conf): 'áhrif á', 'þátttaka í'
+# Forsetningar í liðnum fá bónus ef höfuðorð nafnliðarins sem hann
+# hangir á tekur með sér þá forsetningu (NounPredicates.conf):
+# 'áhrif á', 'þátttaka í'. Höfuðorðið er nafnorðið eins og það er
+# lesið í þeirri afleiðslu sem verið er að meta: það berst upp tréð
+# í gegnum nafnliði (Nl*) og þau millitákn sem merkt eru noun_head,
+# en ekki í gegnum önnur, svo að nafnorð í eignarfallslið ('áhrif
+# stjórnvalda á málið'), einkunn eða tilvísunarsetningu teljast ekki með.
 $tag(noun_prep_scope) FsRunaEftirNl
+
+# Millitákn sem bera höfuðorð nafnliðar upp til hans
+$tag(noun_head) Fyrirbæri/fall/kyn
+$tag(noun_head) Fyrirbæri_ft/fall/kyn
+$tag(noun_head) FyrirbæriMeðGreini/fall/kyn
+$tag(noun_head) FyrirbæriMeðGreini_ft/fall/kyn
+$tag(noun_head) FyrirbæriMeðEignarfornafni/fall/kyn
+$tag(noun_head) SamstættFall/fall/kyn
+$tag(noun_head) SamstættFall_nf/kyn
+$tag(noun_head) ÓsamstættFall/aukafall/kyn
+$tag(noun_head) Skilgreining/fall/kyn
+$tag(noun_head) Úrslit/fall/kyn
+$tag(noun_head) Virði_hk/fall
+
+# NlViðbót getur hafist á forsetningarlið sem á við höfuðorðið á undan
+# ('skýrsla um málið, kennd við höfundinn'): það gildir því áfram þar
+$tag(inherit_noun) NlViðbót/tala/fall/kyn
 
 # Atviksliðir eru ekki leyfðir milli sagnar og andlags, enda
 # er ætlast til að AtviksliðurEinkunn fylgi andlaginu sem slíku.

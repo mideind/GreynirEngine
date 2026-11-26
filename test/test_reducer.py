@@ -75,6 +75,8 @@ TAGS = (
     "purge_verb",
     "no_reduce",
     "noun_prep_scope",
+    "noun_head",
+    "inherit_noun",
 )
 
 
@@ -88,6 +90,18 @@ VERB_TAGS = {
     "begin_prep_scope": 0.08,
     "purge_verb": 0.08,
     "no_reduce": 0.25,
+}
+
+# The probabilities of tags in grammars that are rich in noun contexts
+NOUN_TAGS = {
+    "noun_prep_scope": 0.4,
+    "noun_head": 0.5,
+    "inherit_noun": 0.25,
+    "enable_prep_bonus": 0.15,
+    "pick_up_verb": 0.2,
+    "apply_prep_bonus": 0.2,
+    "begin_prep_scope": 0.08,
+    "no_reduce": 0.15,
 }
 
 # Stand-ins for the grammar objects that the reducers work with
@@ -157,10 +171,16 @@ class FakeGrammar:
     index -1-n; nonterminal 0 is the root."""
 
     def __init__(
-        self, rnd: random.Random, cyclic: bool = False, verbs: bool = False
+        self,
+        rnd: random.Random,
+        cyclic: bool = False,
+        verbs: bool = False,
+        nouns: bool = False,
     ) -> None:
         """If verbs is True, the grammar is rich in the tags and terminal
-        categories that make the reducer track verbs and prepositions"""
+        categories that make the reducer track verbs and prepositions; if
+        nouns is True, in those that make it track the head nouns of noun
+        phrases and the prepositions of phrases attached to them"""
         num_nt = rnd.randint(2, 6)
         num_t = rnd.randint(2, 5)
         self.num_nonterminals = num_nt
@@ -172,15 +192,19 @@ class FakeGrammar:
         for n in range(num_nt):
             if verbs:
                 tags = set(tag for tag in TAGS if rnd.random() < VERB_TAGS.get(tag, 0.1))
+            elif nouns:
+                tags = set(tag for tag in TAGS if rnd.random() < NOUN_TAGS.get(tag, 0.1))
             else:
                 tags = set(tag for tag in TAGS if rnd.random() < 0.18)
-            fnt = FakeNonterminal(-1 - n, tags, rnd.random() < 0.15)
+            fnt = FakeNonterminal(-1 - n, tags, rnd.random() < (0.3 if nouns else 0.15))
             self.nonterminals_by_ix[-1 - n] = fnt
             if rnd.random() < 0.5:
                 self._nt_scores[fnt] = rnd.randint(-4, 4)
         for t in range(1, num_t + 1):
             if verbs:
                 cat = rnd.choice(("ao", "ao", "fs", "fs", "so", "so", "so"))
+            elif nouns:
+                cat = rnd.choice(("no", "no", "no", "fs", "fs", "fs", "so", "ao", "lo"))
             else:
                 cat = rnd.choice(("ao", "ao", "fs", "fs", "so", "so", "no", "lo"))
             self.terminals_by_ix[t] = FakeTerminal(t, cat, rnd.random() < 0.8)
@@ -299,14 +323,15 @@ class FakeForestReducer(ParseForestReducer):
         return (7, -2, 3, 0, 5, -1, 1)[h % 7]
 
     def noun_prep_bonus(
-        self, prep_terminal: Any, prep_token: Any, noun_token: Any
+        self, prep_terminal: Any, prep_token: Any, noun_terminal: Any, noun_token: Any
     ) -> int:
         h = mix(
             prep_terminal.index,
             int(prep_token[1:]),
-            -1 if noun_token is None else noun_token.index,
+            noun_terminal.index,
+            noun_token.index,
         )
-        return (8, 0, 5, 0, 0)[h % 5]
+        return (8, 0, 5, 0, 0, -3)[h % 6]
 
     def verb_particle_bonus(self, particle: str, verbs: Any) -> int:
         if not verbs:
@@ -423,9 +448,10 @@ def test_random_grammars(fake_parser) -> None:
     of pseudo-random grammars"""
     rnd = random.Random(31337)
     num_parsed = num_ambiguous = num_reduced = num_no_reduce = 0
-    for count in range(600):
-        # Two out of three grammars are rich in verb contexts
-        grammar = FakeGrammar(rnd, verbs=count % 3 != 0)
+    for count in range(900):
+        # One grammar out of three is rich in verb contexts,
+        # and one in noun contexts
+        grammar = FakeGrammar(rnd, verbs=count % 3 == 1, nouns=count % 3 == 2)
         parser = fake_parser(grammar)
         for _ in range(16):
             tokens = random_tokens(rnd, grammar, rnd.choice((4, 6, 9, 14, 20)))
@@ -561,6 +587,166 @@ def test_shared_node_in_two_contexts(fake_parser) -> None:
     x = families[0][1][1]
     assert x is families[1][1][1]
     assert x is not None and x.num_families == 1
+
+
+def test_head_noun_of_noun_phrase(fake_parser) -> None:
+    """A preposition in a phrase that is attached to a noun phrase is
+    scored in the context of the head noun of that phrase, as it is read
+    in the derivation at hand: not the noun of a possessive, and not a
+    token that could have been a noun but is something else there"""
+    seen: List[Tuple[int, int]] = []
+
+    class ForestReducer(ParseForestReducer):
+        def noun_prep_bonus(
+            self, prep_terminal: Any, prep_token: Any, noun_terminal: Any, noun_token: Any
+        ) -> int:
+            seen.append((noun_terminal.index, noun_token.index))
+            return 8
+
+    class ZeroReducer(Reducer):
+        _forest_reducer_class = ForestReducer
+
+        def _score_options(self, finals: Any, tokens: Any, start: int, end: int) -> Any:
+            # The adjective reading of a token is the better one by itself
+            return {
+                i: {t: 3 if t.index == 2 else 0 for t in finals[i]}
+                for i in range(start, end)
+            }
+
+    grammar = explicit_grammar(
+        [
+            # R -> NP
+            (set(), [[-2]]),
+            # NP -> H POSS? X, where H is a noun or an adjective
+            (set(), [[-3, -4, -5], [-3, -5], [-6, -5]]),
+            # H -> noun: the head of the noun phrase
+            ({"noun_head"}, [[1]]),
+            # POSS -> noun: its noun does not get out
+            (set(), [[1]]),
+            # X -> preposition | preposition, in a phrase that is
+            # attached to the noun phrase
+            ({"noun_prep_scope"}, [[3], [4]]),
+            # A -> adjective
+            (set(), [[2]]),
+        ],
+        ["no", "lo", "fs", "fs"],
+    )
+    grammar.nonterminals_by_ix[-2].is_noun_phrase = True
+    parser = fake_parser(grammar)
+    parser.reducer = ZeroReducer(grammar)  # type: ignore
+    # Noun, noun of a possessive, preposition: only the head noun counts
+    # (a forest with a single tree is not scored, hence two prepositions)
+    tokens = [FakeToken(0, {1}), FakeToken(1, {1}), FakeToken(2, {3, 4})]
+    native, python = parser.reduce_both_ways(tokens)
+    assert native is not None and python is not None
+    # (the bonus is one lower, as the noun is not directly before)
+    assert native[1:] == python[1:] == (2, 7)
+    assert set(seen) == {(1, 0)}
+    # A token that is a noun or an adjective, and a preposition: as an
+    # adjective it scores 3 and yields no noun; as a noun, 0 and the bonus
+    del seen[:]
+    tokens = [FakeToken(0, {1, 2}), FakeToken(1, {3})]
+    native, python = parser.reduce_both_ways(tokens)
+    assert native is not None and python is not None
+    assert native[1:] == python[1:] == (2, 8)
+    assert same_forest(native[0], python[0])
+    assert set(seen) == {(1, 0)}
+
+
+def test_noun_contexts(fake_parser) -> None:
+    """Compare the two reducers on sentences of a grammar that has the
+    shape of noun phrases with prepositional phrases attached to them,
+    where a phrase can also be attached to an inner noun phrase or to
+    the verb, and tokens can be read as more than one thing"""
+    num_bonus = 0
+
+    class CountingForestReducer(FakeForestReducer):
+        def noun_prep_bonus(self, *args: Any) -> int:
+            nonlocal num_bonus
+            num_bonus += 1
+            return super().noun_prep_bonus(*args)
+
+    class CountingReducer(FakeReducer):
+        _forest_reducer_class = CountingForestReducer
+
+    rnd = random.Random(4711)
+    num_ambiguous = 0
+    for variant in range(8):
+        grammar = explicit_grammar(
+            [
+                # S -> NP | V NP | V NP PPv
+                (set(), [[-3], [-2, -3], [-2, -3, -8]]),
+                # V -> verb
+                ({"pick_up_verb"}, [[1]]),
+                # NP -> H | H PPn | H POSS | H POSS PPn | H MOD | pronoun PPn?
+                # | H OPT | OPT
+                (
+                    set(),
+                    [
+                        [-4], [-4, -6], [-4, -5], [-4, -5, -6], [-4, -9],
+                        [5], [5, -6], [-4, -10], [-10],
+                    ],
+                ),
+                # H -> noun | adjective noun | noun noun
+                ({"noun_head"}, [[2], [4, 2], [2, 6]]),
+                # POSS -> NP
+                (set(), [[-3]]),
+                # PPn -> PP | PP PP: attached to the noun phrase
+                ({"noun_prep_scope"}, [[-7], [-7, -7]]),
+                # PP -> preposition NP
+                (set(), [[3, -3], [7, -3]]),
+                # PPv -> PP: attached to the verb
+                ({"enable_prep_bonus"}, [[-7]]),
+                # MOD -> adjective | PPn adjective
+                ({"inherit_noun"}, [[4], [-6, 4]]),
+                # OPT -> H | PPn | H PPn: the wrapper of an optional item,
+                # which passes the head noun both up and down
+                (set(), [[-4], [-6], [-4, -6]]),
+            ],
+            ["so", "no", "fs", "lo", "ao", "no", "fs"],
+        )
+        grammar.nonterminals_by_ix[-3].is_noun_phrase = True
+        grammar.nonterminals_by_ix[-10].name = "X?"
+        # Like NlViðbót, MOD may be named as a noun phrase
+        grammar.nonterminals_by_ix[-9].is_noun_phrase = bool(variant & 1)
+        if variant & 2:
+            grammar._nt_scores[grammar.nonterminals_by_ix[-6]] = 1
+        if variant & 4:
+            grammar.nonterminals_by_ix[-1]._tags.add("no_reduce")
+            grammar.nonterminals_by_ix[-1].no_reduce = True
+        parser = fake_parser(grammar)
+        parser.reducer = CountingReducer(grammar)  # type: ignore
+
+        def derive(n: int, depth: int) -> List[int]:
+            """A pseudo-random sentence of nonterminal n; the first
+            production of each nonterminal is the one that ends"""
+            prods = grammar.spec[n]
+            p = rnd.choice(prods) if depth > 0 else prods[0]
+            result: List[int] = []
+            for item in p.items:
+                result.extend([item] if item > 0 else derive(-1 - item, depth - 1))
+            return result
+
+        for _ in range(60):
+            tokens = []
+            for ix, t in enumerate(derive(0, rnd.choice((3, 4, 5, 6)))[:24]):
+                terminals = {t}
+                while rnd.random() < 0.3:
+                    terminals.add(rnd.randint(1, grammar.num_terminals))
+                tokens.append(FakeToken(ix, terminals))
+            native, python = parser.reduce_both_ways(tokens)
+            if python is None:
+                # Cut short, and not a sentence any more
+                assert native is None
+                continue
+            assert native is not None
+            assert native[1:] == python[1:]
+            assert same_forest(native[0], python[0])
+            if python[1] > 1:
+                num_ambiguous += 1
+    # Check that the test tests what it is meant to test
+    assert num_ambiguous > 200
+    assert num_bonus > 500
 
 
 def catalan(n: int) -> int:

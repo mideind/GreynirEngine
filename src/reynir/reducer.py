@@ -90,6 +90,26 @@
     nodes that actually receive different scores depending on the context
     are terminal nodes whose names have the form fs_*.
 
+    Nouns have a context of the same kind. A prepositional phrase that
+    is attached to a noun phrase (FsRunaEftirNl, tagged "noun_prep_scope")
+    gets a bonus if the head noun of that phrase takes the preposition
+    (NounPredicates.conf). The head noun is found in the same way as the
+    verbs: a noun terminal passes its match up the tree, through noun
+    phrase nonterminals and those tagged "noun_head" (all others drop it,
+    so that the noun of a possessive or of a relative clause does not get
+    out), and the nouns that the children of a family have yielded so far
+    are the "current noun" for the children that follow. A node tagged
+    "noun_prep_scope" turns the current noun into its preposition bonus
+    zone, which applies to the first prepositional phrase within it. If
+    there is no current noun (the head of the phrase is a name or a
+    pronoun), the preposition gets a penalty. The current noun is only visible to such nodes, to nodes tagged
+    "inherit_noun" (NlViðbót, which may start with such a phrase), to
+    the nonterminals that the grammar reader makes for optional and
+    repeated items (X?, X*, X+) and to the interior nodes of a production,
+    so that it is only part of the context signature of those. The noun is the terminal that matched
+    the token in the derivation at hand, as with verbs: a word that has
+    a noun among its meanings, but is not read as one, yields nothing.
+
     The scoring and reduction described above is normally not done by the
     Python code in this module, but by C++ code that replicates it exactly
     (ereducer.cpp), working on the parse forest before any Python objects
@@ -110,6 +130,7 @@ from typing import (
     Set,
     Tuple,
     Optional,
+    Union,
     Any,
     cast,
 )
@@ -142,6 +163,9 @@ from .binparser import BIN_Token, BIN_Terminal
 
 VerbTuple = Tuple[BIN_Terminal, BIN_Token]
 VerbList = List[VerbTuple]
+# A noun: the terminal, the token and the index of the token
+NounTuple = Tuple[BIN_Terminal, BIN_Token, int]
+NounList = List[NounTuple]
 
 
 class ResultDict(TypedDict, total=False):
@@ -150,6 +174,9 @@ class ResultDict(TypedDict, total=False):
     # Verb scope information
     so: VerbList
     sl: VerbList
+    # The head noun(s) of a noun phrase, passed up to where a
+    # prepositional phrase can be attached to it
+    no: NounList
     # Text of an adverb matched by a literal terminal (only at token nodes)
     ao: str
     # Text of a verb particle (SagnÖgn), passed to the enclosing verb phrase
@@ -157,6 +184,7 @@ class ResultDict(TypedDict, total=False):
 
 
 VerbStack = List[Optional[VerbList]]
+NounStack = List[Optional[NounList]]
 ChildDict = DefaultDict[int, ResultDict]
 ScoreDict = Dict[int, Dict[BIN_Terminal, int]]
 BonusCache = Dict[Tuple[BIN_Terminal, str, BIN_Terminal, BIN_Token], int]
@@ -183,14 +211,28 @@ _VERB_PARTICLE_PENALTY = -6
 # frames with a reflexive pronoun ('eiga sér |þf' -> eiga_þgf_þf), so that
 # a reading with arbitrary objects in those cases is discouraged
 _VERB_WEAK_ONLY_PENALTY = -6
-# Bonus for a preposition that is attached to the noun directly before it,
-# if the noun takes that preposition (NounPredicates.conf): 'áhrif á',
-# 'þátttaka í'. Together with the score of FsRunaEftirNl, it has to
+# Bonus for a preposition in a phrase that is attached to a noun phrase,
+# if the head noun of that phrase takes the preposition
+# (NounPredicates.conf): 'áhrif á', 'þátttaka í'. Together with the score of FsRunaEftirNl, it has to
 # outweigh _VERB_PREP_BONUS, since a verb such as 'hafa' or 'taka' often
 # lists the same preposition ('hafa áhrif á'). The bonus for a weak entry
 # ('bók í') must not: 'setja bók í hillu'.
 _NOUN_PREP_BONUS = 8
 _NOUN_PREP_WEAK_BONUS = 5
+# The bonus is this much lower if the noun is not directly before the
+# preposition ('áhrif stjórnvalda á málið'), so that of two nouns that
+# take the preposition equally strongly, the nearer one gets the phrase
+# ('stjórnvalda' here, if it took 'á' as strongly as 'áhrif' does)
+_NOUN_PREP_DISTANCE_PENALTY = 1
+# Penalty for a preposition in a phrase that is attached to a noun phrase
+# without a head noun: a name or a pronoun ('Jón í nefndinni', 'allir í
+# hópnum'). Such a phrase mostly belongs to the verb, or to an outer noun
+# phrase ('sigur Íslands á Úkraínu'). The penalty has to outweigh the
+# score of FsRunaEftirNl (+1) and what a verb without the preposition in
+# its frames takes off a phrase that hangs on it (_VERB_PREP_PENALTY).
+# Against the gold standard of GreynirCorpus, everything from -4 to -12
+# gives the same result; -1 gives half of the improvement.
+_NOUN_PREP_NO_HEAD_PENALTY = -4
 # Penalty for reading the word 'á' as the verb 'eiga' where it is
 # probably the preposition, and bonus where it follows a question
 # pronoun ('Hver á bílinn?'); see Reducer._a_verb_adjustment()
@@ -226,17 +268,64 @@ _NT_TAG_FLAGS = (
     ("purge_verb", 0x0100),
     ("no_reduce", 0x0200),
     ("noun_prep_scope", 0x0400),
+    ("noun_head", 0x0800),
+    ("inherit_noun", 0x1000),
 )
 _NT_FLAG_NOUN_PHRASE = 0x0004
+_NT_FLAG_NOUN_HEAD = 0x0800
+_NT_FLAG_INHERIT_NOUN = 0x1000
 
-# The value on the preposition bonus stack within a prepositional phrase
-# that is attached to a noun phrase (nonterminals tagged noun_prep_scope):
-# there are no verbs to match there, but the noun before the phrase
-_NOUN_ZONE: "VerbList" = []
+
+class _NounZone(List[NounTuple]):
+
+    """The value on the preposition bonus stack within a prepositional
+    phrase that is attached to a noun phrase (nonterminals tagged
+    noun_prep_scope): there are no verbs to match there, but the head
+    nouns of that noun phrase. The list is empty if the phrase has no
+    such noun (a pronoun, a name). The zone starts at the token with the
+    index start, and only applies to a preposition there or directly
+    after it, i.e. to the first prepositional phrase of a run: in
+    'lögreglan í Mehamn í Noregi', the second phrase is not scored
+    against 'lögregla'. (In the gold standard of GreynirCorpus, such a
+    phrase belongs to the noun of the phrase before it three times out
+    of four, whether or not the first noun takes its preposition.)"""
+
+    __slots__ = ("start",)
+
+    def __init__(self, nouns: Iterable[NounTuple], start: int) -> None:
+        super().__init__(nouns)
+        self.start = start
+
+
 _NOUN_GENDERS = frozenset(("kk", "kvk", "hk"))
 _T_FLAG_AO_LITERAL = 0x01
 _T_FLAG_FS = 0x02
 _T_FLAG_SO = 0x04
+_T_FLAG_NO = 0x08
+
+
+def _is_wrapper(nt: Any) -> bool:
+    """Is this a nonterminal that the grammar reader made for an optional
+    or repeated item of a production (X?, X*, X+)? Such a nonterminal is
+    transparent to the head noun of a noun phrase, in both directions."""
+    return getattr(nt, "name", "")[-1:] in ("?", "*", "+")
+
+
+def _inherits_noun(nt: Any) -> bool:
+    """Does the current noun reach into this nonterminal?"""
+    return nt.has_tag("inherit_noun") or _is_wrapper(nt)
+
+
+def _passes_noun(nt: Any) -> bool:
+    """Does the head noun of a noun phrase pass up through this nonterminal?"""
+    return nt.is_noun_phrase or nt.has_tag("noun_head") or _is_wrapper(nt)
+
+
+def _is_noun_terminal(terminal: Any) -> bool:
+    """Is this a terminal for a noun: no_et_nf_kk, or a literal terminal
+    with the category of a noun, such as 'hluti:kk'_et/fall?"""
+    mc = terminal.matches_category
+    return mc("no") or mc("kk") or mc("kvk") or mc("hk")
 
 
 class _ReductionScope:
@@ -244,7 +333,9 @@ class _ReductionScope:
     """Class to accumulate information about a nonterminal and its
     child productions during reduction"""
 
-    __slots__ = ("reducer", "sc", "keys", "pushed_prep_bonus", "start_verb", "nt")
+    __slots__ = (
+        "reducer", "sc", "keys", "pushed_prep_bonus", "start_verb", "start_noun", "nt",
+    )
 
     def __init__(self, reducer: "ParseForestReducer", node: Node) -> None:
         self.reducer = reducer
@@ -258,6 +349,9 @@ class _ReductionScope:
         # Verb/preposition matching stuff
         self.pushed_prep_bonus = False
         verb = reducer.get_current_verb()
+        # The noun(s) that the preceding children of the enclosing family
+        # have yielded: the head of the noun phrase that we are within
+        noun = reducer.get_current_noun()
         if nt:
             if nt.has_tag("enable_prep_bonus"):
                 # SagnInnskot has this tag
@@ -272,10 +366,17 @@ class _ReductionScope:
             elif nt.has_tag("noun_prep_scope"):
                 # FsRunaEftirNl has this tag: a prepositional phrase
                 # that is attached to the noun phrase before it
-                reducer.push_prep_bonus(_NOUN_ZONE)
+                reducer.push_prep_bonus(_NounZone(noun or (), node.start))
                 self.pushed_prep_bonus = True
         reducer.push_current_verb(verb)
         self.start_verb = verb
+        # The current noun does not reach into the node, unless it is
+        # within a production (an interior node), tagged inherit_noun or
+        # the wrapper of an optional or repeated item
+        if nt is not None and not _inherits_noun(nt):
+            noun = None
+        reducer.push_current_noun(noun)
+        self.start_noun = noun
 
     def start_family(
         self, ix: int, prod: Production, children: Iterable[Optional[Node]]
@@ -296,6 +397,7 @@ class _ReductionScope:
             tuple((ch.start, ch.end) for ch in children if ch is not None),
         )
         self.reducer.set_current_verb(self.start_verb)
+        self.reducer.set_current_noun(self.start_noun)
 
     def add_child(self, ix: int, rd: ResultDict) -> None:
         """Add a child node's score to the parent family's score,
@@ -318,6 +420,14 @@ class _ReductionScope:
                     d[key] = rd[key][:]  # type: ignore
                 if key == "sl":
                     self.reducer.set_current_verb(rd["sl"])
+        if "no" in rd:
+            # Carry the head noun(s) up the tree; they are also the
+            # current noun for the children that follow in this family
+            # (a new list each time: the previous one may be in use as
+            # the current noun of a context signature)
+            no = d["no"] + rd["no"] if "no" in d else rd["no"]
+            d["no"] = no
+            self.reducer.set_current_noun(no)
 
     def process(self, node: Node) -> Tuple[ResultDict, int]:
         """After accumulating scores for all possible productions
@@ -373,7 +483,7 @@ class _ReductionScope:
                 if (
                     nt.has_tag("apply_prep_bonus")
                     and self.reducer.get_prep_bonus() is not None
-                    and self.reducer.get_prep_bonus() is not _NOUN_ZONE
+                    and not isinstance(self.reducer.get_prep_bonus(), _NounZone)
                 ):
                     # This is a nonterminal that we like to see in a verb/prep context
                     # An example is Dagsetning which we like to be associated
@@ -393,6 +503,11 @@ class _ReductionScope:
                     sc.pop("sl", None)
                     sc.pop("pcl", None)
 
+                if "no" in sc and not _passes_noun(nt):
+                    # The head noun only passes up through noun phrases
+                    # and the nonterminals between them and the noun
+                    del sc["no"]
+
             return sc, ix
 
         finally:
@@ -400,6 +515,7 @@ class _ReductionScope:
             if self.pushed_prep_bonus:
                 self.reducer.pop_prep_bonus()
             self.reducer.pop_current_verb()
+            self.reducer.pop_current_noun()
 
 
 class ParseForestReducer:
@@ -414,21 +530,19 @@ class ParseForestReducer:
         self._scores = scores
         self._grammar = grammar
         self._score_adj = grammar._nt_scores
-        self._prep_bonus_stack: VerbStack = [None]
+        self._prep_bonus_stack: List[Any] = [None]
         self._current_verb_stack: VerbStack = [None]
+        self._current_noun_stack: NounStack = [None]
         self._bonus_cache: BonusCache = dict()
-        self._noun_bonus_cache: Dict[Tuple[BIN_Terminal, str, BIN_Token], int] = dict()
-        # The root of the forest being reduced in Python, and its tokens
-        self._root: Optional[Node] = None
-        self._tokens: Optional[TokensDict] = None
+        self._noun_bonus_cache: BonusCache = dict()
 
-    def push_prep_bonus(self, val: Optional[VerbList]) -> None:
+    def push_prep_bonus(self, val: "Optional[Union[VerbList, _NounZone]]") -> None:
         self._prep_bonus_stack.append(val)
 
     def pop_prep_bonus(self) -> None:
         self._prep_bonus_stack.pop()
 
-    def get_prep_bonus(self) -> Optional[VerbList]:
+    def get_prep_bonus(self) -> "Optional[Union[VerbList, _NounZone]]":
         return self._prep_bonus_stack[-1]
 
     def push_current_verb(self, val: Optional[VerbList]) -> None:
@@ -442,6 +556,18 @@ class ParseForestReducer:
 
     def set_current_verb(self, val: Optional[VerbList]) -> None:
         self._current_verb_stack[-1] = val
+
+    def push_current_noun(self, val: Optional[NounList]) -> None:
+        self._current_noun_stack.append(val)
+
+    def pop_current_noun(self) -> None:
+        self._current_noun_stack.pop()
+
+    def get_current_noun(self) -> Optional[NounList]:
+        return self._current_noun_stack[-1]
+
+    def set_current_noun(self, val: Optional[NounList]) -> None:
+        self._current_noun_stack[-1] = val
 
     def verb_prep_bonus(
         self,
@@ -484,17 +610,15 @@ class ParseForestReducer:
         self,
         prep_terminal: BIN_Terminal,
         prep_token: str,
-        noun_token: Optional[BIN_Token],
+        noun_terminal: BIN_Terminal,
+        noun_token: BIN_Token,
     ) -> int:
-        """Return a bonus for a preposition that is attached to a noun
-        phrase, if the token before it is a noun that takes the preposition
+        """Return a bonus for a preposition in a phrase that is attached
+        to a noun phrase, if the head noun of that phrase - the given
+        token, as matched by the given terminal - takes the preposition
         as a complement"""
-        if noun_token is None or not NounPredicates.PREPOSITIONS:
+        if not NounPredicates.PREPOSITIONS:
             return 0
-        key = (prep_terminal, prep_token, noun_token)
-        bonus = self._noun_bonus_cache.get(key)
-        if bonus is not None:
-            return bonus
         bonus = 0
         meanings = noun_token.t2
         if isinstance(meanings, tuple) and meanings:
@@ -505,6 +629,10 @@ class ParseForestReducer:
                     case = None
             for m in meanings:
                 if not isinstance(m, BIN_Tuple) or m.ordfl not in _NOUN_GENDERS:
+                    continue
+                if not noun_terminal.matches_token(noun_token, m):
+                    # Not the noun that the token is read as here:
+                    # 'verði' is a form of both 'verð' and 'vörður'
                     continue
                 # The lemma of a compound word has hyphens between its
                 # parts ('kosninga-barátta'): its last part decides
@@ -519,17 +647,26 @@ class ParseForestReducer:
                     break
                 if strength == 1:
                     bonus = _NOUN_PREP_WEAK_BONUS
-        self._noun_bonus_cache[key] = bonus
         return bonus
 
-    def _token_at(self, index: int) -> Optional[BIN_Token]:
-        """Return the token with the given index, if it is in the forest
-        being reduced. Only used when the forest is reduced in Python."""
-        if self._tokens is None:
-            self._tokens = dict()
-            if self._root is not None:
-                OptionFinder(defaultdict(set), self._tokens).go(self._root)
-        return self._tokens.get(index)
+    def _noun_bonus(
+        self,
+        prep_terminal: BIN_Terminal,
+        prep_token: str,
+        noun_terminal: BIN_Terminal,
+        noun_token: BIN_Token,
+        adjacent: bool,
+    ) -> int:
+        """The bonus for a preposition in a phrase that is attached to a
+        noun phrase with the given head noun, which is directly before the
+        preposition or not"""
+        key = (prep_terminal, prep_token, noun_terminal, noun_token)
+        bonus = self._noun_bonus_cache.get(key)
+        if bonus is None:
+            bonus = self._noun_bonus_cache[key] = self.noun_prep_bonus(*key)
+        if bonus > 0 and not adjacent:
+            bonus -= _NOUN_PREP_DISTANCE_PENALTY
+        return bonus
 
     def verb_particle_bonus(self, particle: str, verbs: Optional[VerbList]) -> int:
         """Return a bonus if any of the given verbs takes the particle
@@ -555,16 +692,23 @@ class ParseForestReducer:
         verb_token: int,
     ) -> int:
         """Called from the C++ reducer (via fastparser.prep_bonus_func())
-        to obtain a verb/preposition match bonus, where the terminals and
-        the tokens are referenced by their indices"""
+        to obtain a verb/preposition match bonus - or a noun/preposition
+        one, if the 'verb' is a noun - where the terminals and the tokens
+        are referenced by their indices"""
         terminals = job.terminals
         tokens = job.tokens
         if verb_terminal == 0:
-            # No verb: the preposition is attached to a noun phrase
-            return self.noun_prep_bonus(
+            # In a phrase that is attached to a noun phrase without a head noun
+            return _NOUN_PREP_NO_HEAD_PENALTY
+        if _is_noun_terminal(terminals[verb_terminal]):
+            # Not a verb, but the head noun of the noun phrase
+            # that the phrase of the preposition is attached to
+            return self._noun_bonus(
                 cast(BIN_Terminal, terminals[prep_terminal]),
                 tokens[prep_token].lower,
-                tokens[prep_token - 1] if prep_token > 0 else None,
+                cast(BIN_Terminal, terminals[verb_terminal]),
+                tokens[verb_token],
+                prep_token - verb_token == 1,
             )
         # The same lookup, with the same cache, as in visit_token()
         key = (
@@ -606,14 +750,26 @@ class ParseForestReducer:
             # Preposition terminal - this is either a normal fs_case terminal
             # or a literal terminal such as "á:fs"
             prep_bonus = self.get_prep_bonus()
-            if prep_bonus is _NOUN_ZONE:
+            if isinstance(prep_bonus, _NounZone):
                 # A preposition of a phrase that is attached to a noun phrase:
-                # give bonus points if the noun before it takes the preposition
-                sc += self.noun_prep_bonus(
-                    nt,
-                    cast(BIN_Token, node.token).lower,
-                    self._token_at(node.start - 1),
-                )
+                # give bonus points if the head noun of that phrase takes
+                # the preposition - but only for the first phrase of a run
+                if node.start - prep_bonus.start <= 1:
+                    # (No head noun: a name or a pronoun)
+                    noun_bonus = None if prep_bonus else _NOUN_PREP_NO_HEAD_PENALTY
+                    for noun_terminal, noun_token, index in prep_bonus:
+                        nb = self._noun_bonus(
+                            nt,
+                            cast(BIN_Token, node.token).lower,
+                            noun_terminal,
+                            noun_token,
+                            node.start - index == 1,
+                        )
+                        # Give the highest bonus that is available
+                        if noun_bonus is None or nb > noun_bonus:
+                            noun_bonus = nb
+                    if noun_bonus is not None:
+                        sc += noun_bonus
             elif prep_bonus is not None:
                 # We are inside a preposition bonus zone:
                 # give bonus points if this preposition terminal matches
@@ -638,6 +794,9 @@ class ParseForestReducer:
         elif nt.matches_category("so"):  # !!! Was .startswith("so")
             # Verb terminal: pick up the verb
             d["so"] = [(nt, cast(BIN_Token, node.token))]
+        elif _is_noun_terminal(nt):
+            # Noun terminal: it may be the head of a noun phrase
+            d["no"] = [(nt, cast(BIN_Token, node.token), node.start)]
         d["sc"] = node.score = sc
         return d
 
@@ -645,20 +804,23 @@ class ParseForestReducer:
         """Perform the reduction, scoring shared packed subtrees
         separately for each distinct verb context they occur in"""
 
-        self._root = root_node
-        self._tokens = None
         # Memoization/caching dict, keyed by node and context signature
         visited: Dict[Tuple[Node, Any], ResultDict] = dict()
         # Signature of a context-independent subtree
-        NEUTRAL: Tuple[Any, Any] = (None, None)
+        NEUTRAL: Tuple[Any, Any, Any] = (None, None, None)
 
-        def vsig(vl: Optional[VerbList]) -> Any:
-            """Hashable identity signature of a verb list"""
-            return (
-                None
-                if vl is None
-                else tuple((id(t), id(tok)) for t, tok in vl)
-            )
+        def nsig(nl: Optional[NounList]) -> Any:
+            """Hashable identity signature of a list of nouns"""
+            return None if nl is None else tuple((id(t), ix) for t, _, ix in nl)
+
+        def vsig(vl: "Optional[Union[VerbList, _NounZone]]") -> Any:
+            """Hashable identity signature of a list of verbs,
+            or of the nouns of a noun zone"""
+            if vl is None:
+                return None
+            if isinstance(vl, _NounZone):
+                return ("no", vl.start, nsig(vl))
+            return tuple((id(t), id(tok)) for t, tok in vl)
 
         def context_sig(w: Node) -> Any:
             """Return the part of the reducer state that the score of
@@ -672,22 +834,40 @@ class ParseForestReducer:
                 # but the signature is cheap enough to include always)
                 pb = self.get_prep_bonus()
                 return None if pb is None else vsig(pb)
+            # The current noun only reaches into interior nodes and into
+            # nodes tagged noun_prep_scope (which make a preposition bonus
+            # zone of it) or that inherit it (see _inherits_noun())
+            noun_sig = None
             if w.is_completed:
                 nt = w.nonterminal
-                if nt is not None and (
-                    nt.has_tag("begin_prep_scope") or nt.is_noun_phrase
-                ):
-                    # This node resets both the prep bonus zone and the
-                    # current verb on entry, so its score is the same
-                    # in all contexts
-                    return NEUTRAL
+                if nt is not None:
+                    noun = self.get_current_noun()
+                    inherits = noun is not None and _inherits_noun(nt)
+                    if inherits or (
+                        noun is not None and nt.has_tag("noun_prep_scope")
+                    ):
+                        noun_sig = nsig(noun)
+                    if nt.has_tag("begin_prep_scope") or nt.is_noun_phrase:
+                        # This node resets both the prep bonus zone and the
+                        # current verb on entry, so its score is the same
+                        # in all contexts - of verbs, that is
+                        if inherits:
+                            return (None, None, noun_sig)
+                        return NEUTRAL
                 if w.is_empty:
                     # Explicitly nullable nonterminal with no child
                     return NEUTRAL
-            # The score may depend both on the enclosing prep bonus zone
-            # (for enclosed fs terminals) and on the current verb (which
-            # an enclosed enable_prep_bonus node would capture)
-            return (vsig(self.get_prep_bonus()), vsig(self.get_current_verb()))
+            else:
+                noun_sig = nsig(self.get_current_noun())
+            # The score may depend on the enclosing prep bonus zone
+            # (for enclosed fs terminals), on the current verb (which
+            # an enclosed enable_prep_bonus node would capture) and on
+            # the current noun (likewise, for a noun_prep_scope node)
+            return (
+                vsig(self.get_prep_bonus()),
+                vsig(self.get_current_verb()),
+                noun_sig,
+            )
 
         # Winning family index and per-family child lists (with the
         # context signatures they were scored under), keyed like visited.
@@ -1336,6 +1516,10 @@ class Reducer:
                     flags |= flag
             if nt.is_noun_phrase:
                 flags |= _NT_FLAG_NOUN_PHRASE
+            if _is_wrapper(nt):
+                # The wrapper of an optional or repeated item is
+                # transparent to the head noun of a noun phrase
+                flags |= _NT_FLAG_NOUN_HEAD | _NT_FLAG_INHERIT_NOUN
             nt_flags[i] = flags
             nt_scores[i] = nt_score_adj.get(nt, 0)
         # Terminal indices are positive, starting with 1
@@ -1354,6 +1538,8 @@ class Reducer:
                 flags |= _T_FLAG_FS
             if matches_category("so"):
                 flags |= _T_FLAG_SO
+            elif _is_noun_terminal(t):
+                flags |= _T_FLAG_NO
             t_flags[ix] = flags
         eparser.setReducerTables(  # type: ignore
             parser._c_parser,

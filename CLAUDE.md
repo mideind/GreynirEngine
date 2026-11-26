@@ -177,9 +177,27 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    noun-preposition matching driven by `config/NounPredicates.conf` and
    `config/NounPrepositions.conf`: a preposition in a phrase attached to
    a noun phrase (`FsRunaEftirNl`, tagged `noun_prep_scope`) gets a bonus
-   if the token before it is a noun that takes it (`noun_prep_bonus()`;
+   if the head noun of that phrase takes it (`noun_prep_bonus()`;
    strong entries outweigh a verb that lists the preposition, entries
-   marked `$weak` do not).
+   marked `$weak` do not). The head noun is found as verbs are: a noun
+   terminal passes its match up the tree, through noun phrase
+   nonterminals (`Nl*`), those tagged `noun_head` (`Fyrirbæri` and what
+   is below it) and the nonterminals that the grammar reader makes for
+   `X?`, `X*` and `X+`; all others drop it, so the noun of a possessor
+   or a relative clause does not get out. What the children of a family
+   have yielded so far is the "current noun" of the children that
+   follow, and a `noun_prep_scope` node makes its bonus zone of it. So
+   the noun is the word as it is read in that tree ("sig" as a pronoun
+   yields nothing), and it need not stand directly before the phrase
+   ("áhrif stjórnvalda á málið"). Three rules, set against the gold
+   standard: only the first phrase of a run is scored against the head
+   ("lögreglan í Mehamn í Noregi": the second belongs to the nearer
+   noun three times in four); the bonus is one lower when the noun is
+   not directly before the preposition, so the nearer of two equally
+   strong nouns wins; and a phrase on a noun phrase without a head noun
+   (a name, a pronoun) gets a penalty (`_NOUN_PREP_NO_HEAD_PENALTY`).
+   A new nonterminal on the path from a noun to its noun phrase needs
+   the `noun_head` tag, or the nouns below it get no bonus.
    `Reducer.parse_and_reduce()` is what `Greynir` and `IncrementalParser`
    call: it parses and reduces in one go, with the forest staying in C++
    (`ereducer.cpp`) and Python objects only created for the nodes of the
@@ -187,7 +205,8 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    matches are still calculated in Python (`Reducer._score_options()`), as
    are the verb/preposition, noun/preposition and verb/particle bonuses,
    through callbacks (the noun/preposition bonus goes through the
-   verb/preposition callback, with verb terminal 0).
+   verb/preposition callback, with the terminal and the token of the
+   noun in place of the verb's; terminal 0 stands for no head noun).
    The older route - `Fast_Parser.go()`, `Fast_Parser.num_combinations()`,
    `Reducer.go_with_score()` - does the same in Python on a forest of
    `Node` objects; it remains as public API, as the reference
@@ -294,7 +313,7 @@ the repository; ask for the coverage study):
   a possessor.
 - *Sentences that parse wrongly*: against the hand-corrected gold
   standard of GreynirCorpus (4,500 development trees; keep the 500 test
-  trees for final figures), labelled bracket F1 is 0.74 and 72% of the
+  trees for final figures), labelled bracket F1 is 0.75 and 73% of the
   prepositional phrases with the same span hang where the gold standard
   has them. Largest kinds of difference after PP attachment: an adverb
   of the clause read as a modifier of the next phrase ("Þetta er ekki
@@ -314,16 +333,36 @@ the repository; ask for the coverage study):
   is mostly convention ("hægt" in "er hægt að" is a subject in the gold
   standard), plus "sú sem hún er", where "hún" is the subject of a
   relative clause that lacks its predicate.
-- *PP attachment, what is left*: a phrase on a bare person name or
-  reflexive pronoun is right about one time in four (only personal
-  pronouns are penalised, `FsEftirPfn`); "til", "með", "eftir" and
-  "vegna" phrases on a noun are right about one time in three;
-  NounPrepositions.conf only looks at the token directly before the
-  preposition, so "áhrif stjórnvalda á málið" gets no bonus; a verb
+- *PP attachment, what is left*: "til", "með", "eftir" and
+  "vegna" phrases on a noun are right about one time in three; where
+  a possessor stands between a noun and a phrase and both nouns take
+  the preposition equally strongly, the nearer one gets it ("skýrsla
+  nefndarinnar um málið" hangs the phrase on "nefnd"); a name that
+  BÍN has as one word gets no bonus through its last part
+  ("Ingunnarskóli í Grafarholti"); a personal pronoun with a phrase
+  is penalised twice (`FsEftirPfn` and the reducer's penalty for a
+  phrase without a head noun), which could be one; a verb
   gives its preposition bonus to every phrase with that preposition,
   not to one; a phrase at the end of a subordinate clause goes to the
   verb of the main clause if only that verb lists its preposition in
   that case ("kom í ljós að leikarinn væri á bak við aðganginn").
+
+- *The noun/preposition table* (NounPrepositions.conf) was audited in
+  November 2026 and 374 of its 6,992 entries were removed (see the head
+  of the file): those on words that are seldom nouns ("ekki /í",
+  "sig /á"), which came from misparses and rewarded them; those of
+  nouns whose forms are mostly verb forms ("vera /í", "koma /á",
+  "taka /á"), which costs the noun its phrase where it is one ("við
+  komu skipsins í Hvalfjörð"); those of time nouns with "í"/"á"; those
+  of nouns in fixed phrases ("ljós /í"); and 202 that could never match
+  (8 names got their capital letter instead, "Íslandsmót /í"; people
+  and parties with a phrase of place did not). Tried and not done, as
+  the figures got worse: weakening the strong entries where the
+  preposition is no more common after the noun than after nouns in
+  general, and dropping the weak ones where it is rarer. The generator
+  is not in the repository (`harvest.py`, `mktable.py` and
+  `np_prune.py`, with the coverage study): a regenerated file has to
+  be pruned again.
 
 Older items:
 

@@ -82,9 +82,17 @@ static const UINT MAX_DEPTH = 1000;
 
 // The second half of the context signature of a token (see calcToken())
 static const UINT TOKEN_SIG = 0xFFFFFFFFu;
-// The value on the stack of preposition bonus verbs within a phrase
-// that is attached to a noun phrase (RN_NOUN_PREP_SCOPE); not a list
-static const UINT NOUN_ZONE = 0xFFFFFFFEu;
+// Set in a value on the stack of preposition bonus verbs within a phrase
+// that is attached to a noun phrase (RN_NOUN_PREP_SCOPE): the rest of
+// the value is then a list of the token index that the phrase starts
+// at (see ZONE_ELEM) and the head nouns of that noun phrase, not of verbs
+static const UINT NOUN_ZONE = 0x80000000u;
+// Set in an element of a list that stands for a pair of lists: the
+// current verb and the current noun of a context signature
+static const UINT64 PAIR_ELEM = 0x8000000000000000ull;
+// Set in the first element of the list of a noun zone, which holds the
+// index of the token that the zone starts at; the nouns follow
+static const UINT64 ZONE_ELEM = 0xC000000000000000ull;
 
 
 // What the reducer learns about a subtree by scoring it
@@ -95,6 +103,7 @@ struct RResult {
    UINT nSl;      // The verbs that are in effect after the subtree
    UINT nPcl;     // A verb particle: the index of its token + 1, or 0
    UINT nAo;      // A token matched by a literal adverb terminal, likewise
+   UINT nNo;      // The head nouns of the subtree (a list id, or 0)
 };
 
 // A memoized result for a node in a given context
@@ -362,7 +371,7 @@ private:
          { this->prod.set(1); }
    };
 
-   // A list of verbs: a slice of m_elems
+   // A list of verbs (or of nouns): a slice of m_elems
    struct ListRec {
       UINT nOffset;
       UINT nLen;
@@ -422,6 +431,7 @@ private:
    UINT m_nHandle;
    std::vector<UINT> m_prepBonus;      // The stack of preposition bonus verbs
    std::vector<UINT> m_currentVerb;    // The stack of current verbs
+   std::vector<UINT> m_currentNoun;    // The stack of current nouns
    std::vector<UINT64> m_elems;        // The verbs of all lists of verbs
    std::vector<ListRec> m_lists;       // The lists of verbs; entry 0 is 'none'
    std::unordered_multimap<UINT64, UINT> m_listIndex;
@@ -454,7 +464,7 @@ private:
       {
          return pR->bCompleted ? this->m_prt->pnNtFlags[~((UINT)pR->iNt)] : 0;
       }
-   void contextSig(const RNode*, UINT& a, UINT& b) const;
+   void contextSig(const RNode*, UINT& a, UINT& b);
    INT prepBonus(const RChild&, UINT64 nVerb);
    INT particleBonus(UINT nParticleToken, UINT nVerbs);
    void addChild(RResult& acc, const RResult& r, UINT nFlags);
@@ -807,25 +817,44 @@ UINT Reducer::concat(UINT nList1, UINT nList2)
    return this->internList(tmp.empty() ? NULL : &tmp[0], (UINT)tmp.size());
 }
 
-void Reducer::contextSig(const RNode* pR, UINT& a, UINT& b) const
+void Reducer::contextSig(const RNode* pR, UINT& a, UINT& b)
 {
    // The part of the state of the reducer that the score of a subtree
-   // can depend on: the preposition bonus verbs and the current verb
+   // can depend on: the preposition bonus verbs, the current verb and
+   // the current noun. The current noun only reaches into interior
+   // nodes and into nodes tagged noun_prep_scope or inherit_noun.
+   UINT nNoun = 0;
+   a = b = 0;
    if (pR->bCompleted) {
-      if (this->ntFlags(pR) & (RN_BEGIN_PREP_SCOPE | RN_NOUN_PHRASE)) {
-         // The node resets both on entry
-         a = b = 0;
-         return;
+      UINT nFlags = this->ntFlags(pR);
+      if (nFlags & (RN_NOUN_PREP_SCOPE | RN_INHERIT_NOUN))
+         nNoun = this->m_currentNoun.back();
+      if (nFlags & (RN_BEGIN_PREP_SCOPE | RN_NOUN_PHRASE)) {
+         // The node resets the verbs on entry
+         if (!(nFlags & RN_INHERIT_NOUN))
+            return;
       }
+      else
       if (pR->nFamilies == 0 ||
-         (pR->nFamilies == 1 && pR->pFamilies[0].nChildren == 0)) {
+         (pR->nFamilies == 1 && pR->pFamilies[0].nChildren == 0))
          // An empty node
-         a = b = 0;
          return;
+      else {
+         a = this->m_prepBonus.back();
+         b = this->m_currentVerb.back();
       }
    }
-   a = this->m_prepBonus.back();
-   b = this->m_currentVerb.back();
+   else {
+      nNoun = this->m_currentNoun.back();
+      a = this->m_prepBonus.back();
+      b = this->m_currentVerb.back();
+   }
+   if (nNoun) {
+      // The second half of the signature stands for both the
+      // current verb and the current noun: a list of its own
+      UINT64 nPair = PAIR_ELEM | ((UINT64)b << 32) | nNoun;
+      b = this->internList(&nPair, 1);
+   }
 }
 
 INT Reducer::prepBonus(const RChild& c, UINT64 nVerb)
@@ -876,6 +905,12 @@ void Reducer::addChild(RResult& acc, const RResult& r, UINT nFlags)
    if (r.nSl) {
       acc.nSl = acc.nSl ? this->concat(acc.nSl, r.nSl) : r.nSl;
       this->m_currentVerb.back() = r.nSl;
+   }
+   if (r.nNo) {
+      // Carry the head nouns up the tree; they are also the current
+      // noun for the children that follow in the family
+      acc.nNo = acc.nNo ? this->concat(acc.nNo, r.nNo) : r.nNo;
+      this->m_currentNoun.back() = acc.nNo;
    }
 }
 
@@ -932,18 +967,27 @@ RResult Reducer::calcToken(RChild& c, UINT nPrepBonus)
    if (nFlags & RT_AO_LITERAL)
       e.r.nAo = c.nToken + 1;
    if (nFlags & RT_FS) {
-      if (nPrepBonus == NOUN_ZONE)
-         // In a phrase that is attached to a noun phrase: the bonus
-         // depends on the noun before the preposition (verb 0)
-         nSc += this->prepBonus(c, 0);
-      else
       if (nPrepBonus) {
-         // Within a preposition bonus zone: give the
-         // highest bonus that any of the enclosing verbs yields
-         const ListRec rec = this->m_lists[nPrepBonus];
+         // Within a preposition bonus zone: give the highest bonus that
+         // any of the enclosing verbs yields - or, in a phrase that is
+         // attached to a noun phrase, any of the head nouns of that
+         // phrase (the callback tells the two apart by the terminal)
+         ListRec rec = this->m_lists[nPrepBonus & ~NOUN_ZONE];
+         UINT iFirst = 0;
+         if (nPrepBonus & NOUN_ZONE) {
+            // The nouns only apply to the first prepositional phrase of
+            // the zone: a preposition at its start or directly after it
+            iFirst = 1;
+            if (c.nToken - (UINT)this->m_elems[rec.nOffset] > 1)
+               rec.nLen = 0;
+            else
+            if (rec.nLen == 1)
+               // No head noun (a name or a pronoun): 'verb' 0
+               nSc += this->prepBonus(c, 0);
+         }
          BOOL bAny = false;
          INT nBest = 0;
-         for (UINT i = 0; i < rec.nLen; i++) {
+         for (UINT i = iFirst; i < rec.nLen; i++) {
             INT nBonus = this->prepBonus(c, this->m_elems[rec.nOffset + i]);
             if (!bAny || nBonus > nBest)
                nBest = nBonus;
@@ -958,6 +1002,12 @@ RResult Reducer::calcToken(RChild& c, UINT nPrepBonus)
       // A verb: pick it up
       UINT64 nVerb = ((UINT64)(UINT)c.iTerminal << 32) | c.nToken;
       e.r.nSo = this->internList(&nVerb, 1);
+   }
+   else
+   if (nFlags & RT_NO) {
+      // A noun: it may be the head of a noun phrase
+      UINT64 nNoun = ((UINT64)(UINT)c.iTerminal << 32) | c.nToken;
+      e.r.nNo = this->internList(&nNoun, 1);
    }
    e.r.nSc = nSc;
    // The score of a node is the one from the context that was
@@ -1000,6 +1050,7 @@ RResult Reducer::calc(RNode* pR, UINT a, UINT b)
       // Enter the scope of the node (_ReductionScope.__init__())
       UINT nFlags = this->ntFlags(pR);
       UINT nVerb = this->m_currentVerb.back();
+      UINT nNoun = this->m_currentNoun.back();
       BOOL bPushed = false;
       if (nFlags & RN_ENABLE_PREP_BONUS) {
          this->m_prepBonus.push_back(nVerb);
@@ -1013,10 +1064,26 @@ RResult Reducer::calc(RNode* pR, UINT a, UINT b)
       }
       else
       if (nFlags & RN_NOUN_PREP_SCOPE) {
-         this->m_prepBonus.push_back(NOUN_ZONE);
+         // A phrase that is attached to the noun phrase before it: its
+         // zone is the token index that it starts at, and the head
+         // nouns of the noun phrase (the current noun)
+         const ListRec rec = this->m_lists[nNoun];
+         std::vector<UINT64> zone;
+         zone.reserve(rec.nLen + 1);
+         zone.push_back(ZONE_ELEM | pR->nStart);
+         zone.insert(zone.end(),
+            this->m_elems.begin() + rec.nOffset,
+            this->m_elems.begin() + rec.nOffset + rec.nLen);
+         this->m_prepBonus.push_back(
+            NOUN_ZONE | this->internList(&zone[0], (UINT)zone.size()));
          bPushed = true;
       }
       this->m_currentVerb.push_back(nVerb);
+      // The current noun does not reach into the node, unless it is
+      // within a production (an interior node) or tagged inherit_noun
+      if (pR->bCompleted && !(nFlags & RN_INHERIT_NOUN))
+         nNoun = 0;
+      this->m_currentNoun.push_back(nNoun);
 
       // Score the families. The vectors used here are shared by
       // all levels of the recursion, each level working at their end,
@@ -1030,8 +1097,9 @@ RResult Reducer::calc(RNode* pR, UINT a, UINT b)
          const RFamily& family = pR->pFamilies[i];
          // Productions with higher priorities (lower
          // priority numbers) get a starting bonus
-         RResult acc = { -10 * (INT)family.pProd->getPriority(), 0, 0, 0, 0 };
+         RResult acc = { -10 * (INT)family.pProd->getPriority(), 0, 0, 0, 0, 0 };
          this->m_currentVerb.back() = nVerb;
+         this->m_currentNoun.back() = nNoun;
          this->m_tmpOffsets.push_back(this->m_tmpSigs.size());
          for (UINT j = 0; j < family.nChildren; j++) {
             RChild& c = family.pChildren[j];
@@ -1123,7 +1191,7 @@ RResult Reducer::calc(RNode* pR, UINT a, UINT b)
             // A bonus that depends on the number of tokens spanned
             r.nSc += ((INT)(pR->nEnd - pR->nStart) - 1) * this->m_prt->nLengthFactor;
          if ((nFlags & RN_APPLY_PREP_BONUS) && this->m_prepBonus.back() != 0 &&
-            this->m_prepBonus.back() != NOUN_ZONE)
+            !(this->m_prepBonus.back() & NOUN_ZONE))
             // A nonterminal that we like to see in a verb context
             r.nSc += this->m_prt->nPrepBonus;
          if ((nFlags & RN_PICK_UP_VERB) && r.nSo)
@@ -1131,6 +1199,10 @@ RResult Reducer::calc(RNode* pR, UINT a, UINT b)
          if (nFlags & (RN_BEGIN_PREP_SCOPE | RN_PURGE_VERB))
             // Forget the contained verbs
             r.nSo = r.nSl = r.nPcl = 0;
+         if (!(nFlags & (RN_NOUN_PHRASE | RN_NOUN_HEAD)))
+            // The head noun only passes up through noun phrases
+            // and the nonterminals between them and the noun
+            r.nNo = 0;
       }
       e.r = r;
       e.iChosen = (INT)iBest;
@@ -1157,6 +1229,7 @@ RResult Reducer::calc(RNode* pR, UINT a, UINT b)
       if (bPushed)
          this->m_prepBonus.pop_back();
       this->m_currentVerb.pop_back();
+      this->m_currentNoun.pop_back();
       this->m_nDepth--;
    }
 
@@ -1305,6 +1378,7 @@ BOOL Reducer::run(Reduction* pRed, const INT* pnScores, UINT nHandle)
       this->m_lists.push_back(none);
       this->m_prepBonus.push_back(0);
       this->m_currentVerb.push_back(0);
+      this->m_currentNoun.push_back(0);
       UINT a, b;
       this->contextSig(pRoot, a, b);
       // First pass: score the forest without changing it
