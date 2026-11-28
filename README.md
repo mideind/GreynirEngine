@@ -73,7 +73,8 @@ to finished sentence trees at these rates:
 This was measured on an Intel Core i5-13500 (6 performance cores and
 8 efficiency cores) with Python 3.14, in a process that had seen the text
 before, so that its caches were warm; the first pass over the same text
-takes about a fifth longer. 93% of the sentences were parsed.
+takes about a fifth longer. 93% of the sentences were parseable under the
+grammar and returned parse trees.
 
 ## Examples
 
