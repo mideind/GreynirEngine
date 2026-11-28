@@ -32,7 +32,7 @@ for smart devices such as iOS and Android phones.
 
 Greynir includes a hand-written
 [context-free grammar](https://github.com/mideind/GreynirEngine/blob/master/src/reynir/Greynir.grammar)
-for the Icelandic language, consisting of over 7,000 lines of grammatical
+for the Icelandic language, consisting of over 8,000 lines of grammatical
 productions in [extended Backus-Naur format](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form).
 Its fast C++ parser core is able to cope with long and ambiguous sentences,
 using an [Earley-type parser](https://en.wikipedia.org/wiki/Earley_parser)
@@ -42,6 +42,38 @@ Greynir employs the [Tokenizer](https://pypi.org/project/tokenizer/) package,
 by the same authors, to tokenize text, and
 uses [BinPackage](https://pypi.org/project/islenska/) as its database of
 Icelandic vocabulary and morphology.
+
+## Size and speed
+
+The figures below are for version 4.2.
+
+The grammar is written as about 800 nonterminals. Most of them have
+variants for case, number, gender, person and other features, and the
+grammar that the parser works with is the result of expanding them:
+
+| | |
+|---|---|
+| Nonterminals | 7,500 |
+| Terminals | 6,300 |
+| Productions | 27,800 |
+
+The parser core finds all parses of a sentence under this grammar, as a
+shared forest, and the most likely tree is then picked from the forest by
+scoring.
+
+On a sample of 5,000 sentences from Icelandic news sites, with 18.5 tokens
+(words and punctuation) per sentence on average, Greynir goes from text
+to finished sentence trees at these rates:
+
+| | Sentences per second | Tokens per second |
+|---|---|---|
+| One thread | 480 | 8,900 |
+| 8 threads, free-threaded Python | 2,400 | 44,800 |
+
+This was measured on an Intel Core i5-13500 (6 performance cores and
+8 efficiency cores) with Python 3.14, in a process that had seen the text
+before, so that its caches were warm; the first pass over the same text
+takes about a fifth longer. 93% of the sentences were parsed.
 
 ## Examples
 
@@ -151,7 +183,8 @@ A `Greynir` instance can be used from several threads at once, and all
 instances in a process share one parser. On free-threaded Python (3.14t and
 newer), the threads parse in parallel. With the GIL, only the C++ parser
 core runs in parallel, and the threads take turns at the rest of the work,
-so use processes to parse in parallel there.
+so use processes to parse in parallel there. See
+[Size and speed](#size-and-speed) for what the threads give.
 
 `Greynir.cleanup()` frees the shared parser: call it only when no other
 thread is parsing.

@@ -92,7 +92,7 @@ The parsing pipeline, orchestrated by the `Greynir` class in `reynir.py`
    lookup of a word is much more work than fetching its entries; the
    cached tuples are shared between callers.
 
-2. **Grammar** — `Greynir.grammar` is a ~7,500-line CFG for Icelandic in extended
+2. **Grammar** — `Greynir.grammar` is a ~8,300-line CFG for Icelandic in extended
    BNF, read by `grammar.py`. It is compiled to a binary form
    (`Greynir.grammar.bin`, gitignored) automatically at runtime whenever the
    source grammar file is newer. The binary is written atomically (temp file +
